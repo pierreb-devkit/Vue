@@ -13,13 +13,14 @@
         <v-theme-provider dark>
           <v-container fill-height>
             <v-row align="center" class="white--text mx-auto" justify="center">
-              <v-col class="white--text text-center" cols="12" tag="h1">
+              <v-col class="white--text text-center" cols="6" tag="h1">
                 <span
-                  v-if="app.title"
+                  v-if="app.title && !app.logo"
                   :class="[$vuetify.breakpoint.smAndDown ? 'display-3' : 'display-4']"
                   class="font-weight-black"
                   >{{ app.title }}</span
                 >
+                <center><v-img v-if="app.logo" :src="require('@/assets/images/' + this.config.app.logo)" aspect-ratio="5" max-width="450"></v-img></center>
                 <br />
                 <span
                   v-if="app.subtitle"

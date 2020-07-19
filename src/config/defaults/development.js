@@ -1,6 +1,7 @@
 module.exports = {
   app: {
     title: 'WAOS Dev',
+    logo: 'logo.png', // null to use title by default
     subtitle: 'welcome to demo.',
     description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) ',
     keywords: 'vue, vuetify, axios, jest, cypress',
