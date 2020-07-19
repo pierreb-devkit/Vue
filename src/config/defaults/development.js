@@ -85,7 +85,7 @@ module.exports = {
     links: [ // top left
       {
         label: 'Blog',
-        url: 'https://weareopensource.me',
+        url: 'https://blog.weareopensource.me',
       },
     ],
     socials: [ // top right icons
@@ -98,7 +98,7 @@ module.exports = {
   },
   home: {
     subscriptions: true, // disbale / enable
-    temporalBackground: 'https://weareopensource.me/content/images/2020/06', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
+    temporalBackground: 'https://blog.weareopensource.me/content/images/2020/06', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
     abouts: [
       {
         title: 'About Us',
@@ -139,7 +139,7 @@ module.exports = {
     },
     blog: { // actually dev for Ghost Blog
       title: 'Blog',
-      url: 'https://weareopensource.me',
+      url: 'https://blog.weareopensource.me',
       key: '0415f48774e7c49c713204f787',
     },
     contact: {
@@ -152,7 +152,7 @@ module.exports = {
         items: [{ // set null to hide
           label: 'Blog',
           icon: 'fa-rss',
-          url: 'https://weareopensource.me',
+          url: 'https://blog.weareopensource.me',
         }],
       },
       {

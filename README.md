@@ -12,17 +12,16 @@ More informations about us in our [global repo](https://github.com/weareopensour
 
 Quick links :
 
-* Mindset and what we would like to create : [introduction](https://weareopensource.me/introduction/) (in construction)
-* How to create a fullstack from our repo : [global wiki](https://github.com/weareopensource/weareopensource.github.io/wiki) (in construciton).
-* Global roadmap and  ideas about stacks : [board](https://github.com/weareopensource/weareopensource.github.io/projects/1)
-* How to contribute and help us : [here](https://github.com/weareopensource/weareopensource.github.io/blob/master/CONTRIBUTE.md)
+* [Mindset and what we would like to create](https://weareopensource.me/)
+* [How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/)
+* [Global roadmap and  ideas about stacks](https://github.com/weareopensource/weareopensource.github.io/projects/1)
+* [How to contribute and help us](https://blog.weareopensource.me/how-to-contribute/)
 
 Our stack Vue is actually in Alpha.
 
 # :computer: Vue 4.x / Vuetify / Jwt
 
-* [**Wiki**](#) - wip
-* [**Knowledges JS**](https://github.com/weareopensource/weareopensource.github.io/wiki/Knowledges-JS)
+* [**Knowledges JS**](https://blog.weareopensource.me/js-knwoledges/)
 * [**Demo**](https://vue.weareopensource.me) (working with [Node](https://github.com/weareopensource/Node) stack, email: *test@waos.me*, password: *TestWaos@2019*)
 
 ## :package: Technology Overview
@@ -127,8 +126,7 @@ This work is based on [MEAN.js](http://meanjs.org) and more precisely on a fork 
 
 ## :globe_with_meridians: [We Are Open Source, Who we are ?](https://weareopensource.me)
 
-Today, we dreams to create Backs/Fronts, aligns on feats, in multiple languages, in order to allow anyone to compose fullstack on demand (React, Angular, VusJS, Node, Nest, Swift, Go).
-Feel free to discuss, share other kind of bricks, and invite whoever you want with this mindset to come help us.
+We dreams to create stacks Backs / Fronts, aligns on feats & Architecture, in multiple languages. This to allow anyone to create fullstack on demand (VueJS, Node, Swift …) and keep updates. While exploring resilient and scalable deployment, as well as growth hacking via our articles.
 
 ## :clipboard: Licence
 
@@ -144,4 +142,4 @@ Feel free to help us ! :)
 
 ## :link: Links
 
-[![Blog](https://badges.weareopensource.me/badge/Read-our%20Blog-1abc9c.svg?style=flat-square)](https://weareopensource.me) [![Slack](https://badges.weareopensource.me/badge/Chat-on%20our%20Slack-d0355b.svg?style=flat-square)](https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw) [![Discord](https://badges.weareopensource.me/badge/Chat-on%20our%20Discord-516DB9.svg?style=flat-square)](https://discord.gg/U2a2vVm)  [![Mail](https://badges.weareopensource.me/badge/Contact-us%20by%20mail-00a8ff.svg?style=flat-square)](mailto:weareopensource.me@gmail.com?subject=Contact)
+[![Blog](https://badges.weareopensource.me/badge/Read-our%20Blog-1abc9c.svg?style=flat-square)](https://blog.weareopensource.me) [![Slack](https://badges.weareopensource.me/badge/Chat-on%20our%20Slack-d0355b.svg?style=flat-square)](https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw) [![Discord](https://badges.weareopensource.me/badge/Chat-on%20our%20Discord-516DB9.svg?style=flat-square)](https://discord.gg/U2a2vVm)  [![Mail](https://badges.weareopensource.me/badge/Contact-us%20by%20mail-00a8ff.svg?style=flat-square)](mailto:weareopensource.me@gmail.com?subject=Contact)
