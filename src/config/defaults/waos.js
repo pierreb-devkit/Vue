@@ -85,7 +85,7 @@ module.exports = _.merge(defaultConfig, {
   },
   home: {
     subscriptions: true, // disbale / enable
-    temporalBackground: 'https://weareopensource.me/content/images/2020/06', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
+    temporalBackground: 'https://blog.weareopensource.me/content/images/2020/06', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
     abouts: [
       {
         title: 'Concept',
@@ -100,6 +100,21 @@ module.exports = _.merge(defaultConfig, {
         button: null,
         link: null,
       },
+    ],
+    abouts2: [
+      {
+        title: 'History',
+        text: 'This work was originally based on [MEAN.js](http://meanjs.org/) and a fork named [Riess.js](https://github.com/lirantal/Riess.js). It being stopped we wished to take it back, we want to create updated stack with same mindset "simple", "easy to use". Not only for Node and Angular, but every language. <br /><br />  **Little by little ... we targeted the toolbox to start projects.**',
+        image: null,
+        button: null,
+        link: null,
+      }, {
+        title: 'Links',
+        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> [Some recommendations on the labels of a repo](https://blog.weareopensource.me/labels-recommendation-for-issues/) <br /> [Some information about who we are and our tools](https://blog.weareopensource.me/us/) <br /> <br /> Some knwoledges : [JS](https://blog.weareopensource.me/js-knwoledges/) [Swift](https://blog.weareopensource.me/js-knwoledges-2/)',
+        image: null,
+        button: null,
+        link: null,
+      }
     ],
     features: {
       title: 'Stacks',
@@ -131,8 +146,13 @@ module.exports = _.merge(defaultConfig, {
       ],
     },
     blog: { // actually dev for Ghost Blog
-      title: 'Blog',
-      url: 'https://weareopensource.me',
+      title: 'Articles',
+      url: 'https://blog.weareopensource.me',
+      key: 'e4925fb7f5698f998daeb128d8',
+    },
+    blog2: { // actually dev for Ghost Blog
+      title: 'Hobbies',
+      url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     contact: {
@@ -145,27 +165,47 @@ module.exports = _.merge(defaultConfig, {
         items: [{
           label: 'Blog',
           icon: 'fa-rss',
-          url: 'https://weareopensource.me',
-        }, {
-          label: 'Github',
+          url: 'https://blog.weareopensource.me',
+        },{
           icon: 'fab fa-github',
+          label: 'Github',
           url: 'https://github.com/weareopensource',
-        }],
-      },
-      {
-        title: 'About',
-        items: [{ // set null to hide
+        },{ // set null to hide
           label: 'Changelogs',
           icon: 'fa-clipboard-list',
           url: '/changelogs',
         }],
       },
       {
+        title: 'About',
+        items: [{
+          icon: 'fab fa-discord',
+          label: 'Discord',
+          url: 'https://discord.gg/U2a2vVm',
+        },{
+          icon: 'fab fa-slack',
+          label: 'Slack',
+          url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
+        },{
+          icon: 'fab fa-twitter',
+          label: 'Twitter',
+          url: 'https://twitter.com/waos_io',
+        }],
+      },
+      {
         title: 'Others',
         items: [{
-          label: 'Lou',
-          icon: 'fab fa-wolf-pack-battalion',
-          url: 'https://lou.comes.io',
+          icon: 'fab fa-docker',
+          label: 'Docker',
+          url: 'https://hub.docker.com/orgs/weareopensource/repositories',
+        },{
+          icon: 'fab fa-github-alt',
+          label: 'Github projects',
+          url: 'https://github.com/WeAreOpenSourceProjects',
+        },{
+          icon: 'fas fa-vial',
+          label: 'Travis',
+          url: 'https://travis-ci.org/github/weareopensource',
         }],
       },
     ],

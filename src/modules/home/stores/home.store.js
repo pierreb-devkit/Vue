@@ -19,6 +19,7 @@ const getters = {
   subscription: (state) => state.subscription,
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
+  news2: (state) => state.news2,
 };
 
 /**
@@ -65,12 +66,33 @@ const actions = {
       // const users = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/stats`);
       const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/releases`);
       const pulls = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/pulls`);
+      const ghost = new GhostContentAPI({
+        url: config.home.blog.url,
+        key: config.home.blog.key,
+        version: 'v3',
+      });
+      const articles = await ghost.posts.browse({ limit: 1 });
+
       commit('statistics_set', {
         // tasks: tasks.data.data,
         // users: users.data.data,
         releases: releases.data.data,
         pulls: pulls.data.data,
+        articles: articles.meta,
       });
+    } catch (err) {
+      commit('error', err);
+    }
+  },
+  getNews2: async ({ commit }) => {
+    try {
+      const ghost = new GhostContentAPI({
+        url: config.home.blog2.url,
+        key: config.home.blog2.key,
+        version: 'v3',
+      });
+      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:hobbies' });
+      commit('news2_set', res);
     } catch (err) {
       commit('error', err);
     }
@@ -91,7 +113,6 @@ const mutations = {
   // news
   news_set(state, data) {
     state.news = data;
-    config.home.stats.data[2] = [state.news.meta.pagination.total, 'Articles'];
   },
   // mail
   subscription_set(state, data) {
@@ -114,7 +135,14 @@ const mutations = {
     config.home.stats.data[1] = [_.sum(
       _.flatten(state.statistics.releases.map((release) => (release.list[0].name[0] === 'v' ? release.list[0].name.substr(1).split('.') : release.list[0].name.split('.')))).map((x) => +x),
     ), 'Releases'];
+    console.log(state.statistics);
+
+    config.home.stats.data[2] = [state.statistics.articles.pagination.total, 'Articles'];
     config.home.stats.data[3] = [_.sum(state.statistics.pulls.map((pull) => pull.data.pull_count)), 'Pulls'];
+  },
+  // news
+  news2_set(state, data) {
+    state.news2 = data;
   },
 };
 
@@ -127,6 +155,7 @@ const state = {
   subscription: {},
   contact: {},
   statistics: {},
+  news2: [],
 };
 
 /**

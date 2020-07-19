@@ -92,10 +92,34 @@
       </v-parallax>
     </section>
 
+    <section id="about-me" v-if="config.home.abouts2.length > 0" :style="{ background: config.vuetify.theme.themes[theme].surface }">
+      <v-container class="text-center pb-12">
+        <v-row align="center" justify="center">
+          <v-col
+            v-for="({ title, text, image, button, link }, i) in config.home.abouts2"
+            :key="i"
+            cols="12"
+            md="6"
+          >
+            <h2 class="display-1 font-weight-bold mb-3 py-8  text-uppercase" v-text="title"></h2>
+            <v-responsive class="mx-auto title font-weight-light mb-8" max-width="720">
+              <vue-markdown :source="text" />
+            </v-responsive>
+            <v-avatar v-if="image" class="elevation-12 mb-12" size="128">
+              <v-img :src="image"></v-img>
+            </v-avatar>
+            <br v-if="link" />
+            <v-btn v-if="link" color="grey" :href="link" outlined large>
+              <span class="grey--text text--darken-1 font-weight-bold" v-text="button"></span>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+    </section>
+
     <section
       id="blog"
       class="py-12"
-      :style="{ background: config.vuetify.theme.themes[theme].surface }"
     >
       <v-container>
         <h2
@@ -109,6 +133,38 @@
         <v-row>
           <v-col
             v-for="({ feature_image, excerpt, title, url }, i) in news"
+            :key="i"
+            cols="12"
+            md="4"
+          >
+            <v-img :src="feature_image" class="mb-4" height="275" max-width="100%"></v-img>
+            <h3 class="mb-4 text--primary" v-text="title"></h3>
+            <div class="subtitle-1 text--secondary"><vue-markdown :source="excerpt" /></div>
+            <v-btn class="ml-n5 font-weight-black" :href="url" target="_blank" text
+              >Continue Reading</v-btn
+            >
+          </v-col>
+        </v-row>
+      </v-container>
+    </section>
+
+    <section
+      id="blog"
+      class="py-12"
+      :style="{ background: config.vuetify.theme.themes[theme].surface }"
+    >
+      <v-container>
+        <h2
+          class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase"
+          v-if="config.home.blog2.title"
+        >
+          <a :href="config.home.blog2.url" style="font-weight:inherit; color:inherit !important;">{{
+            config.home.blog2.title
+          }}</a>
+        </h2>
+        <v-row>
+          <v-col
+            v-for="({ feature_image, excerpt, title, url }, i) in news2"
             :key="i"
             cols="12"
             md="4"
@@ -202,7 +258,7 @@ export default {
     homeLinksComponent,
   },
   computed: {
-    ...mapGetters(['theme', 'news', 'contact', 'statistics']),
+    ...mapGetters(['theme', 'news', 'contact', 'statistics', 'news2']),
     subject: {
       get() {
         return this.contact.subject;
@@ -226,6 +282,7 @@ export default {
     AOS.init();
     this.$store.dispatch('getStatistics').then(() => {
       this.$store.dispatch('getNews');
+      this.$store.dispatch('getNews2');
     });
   },
   methods: {
