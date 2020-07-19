@@ -95,7 +95,7 @@ module.exports = _.merge(defaultConfig, {
         link: null,
       }, {
         title: 'Technical',
-        text: 'We dreams to create stacks **Backs / Fronts**, **aligns on feats**, in multiple languages, to allow anyone to **compose fullstack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updates. While exploring resilient and easily scalable deployment, as well as growth hacking concepts via our [articles](https://blog.weareopensource.me).',
+        text: 'We dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This to allow anyone to **create fullstack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updates. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -107,17 +107,17 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fab fa-vuejs',
           title: 'Vue',
-          text: 'Easily request and **transform API data**, to **homogenize** or to have an **API version buffer**. This is available directly from our interface by **JSON**.',
+          text: '**Alpha Front Stack** <br> Classic auth with landing page, tasks & subscription example. <br/> *Vuetify, Vuex, Vuetify, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
         },
         {
           icon: 'fab fa-node',
           title: 'Node',
-          text: 'Save the data into **delta** (data variation history), **browsable** from our interface with some statistics. Be immediately **informed by email** in case of failure.',
+          text: '**Beta Back Stack** <br> Classic auth with tasks, subscription & GDPR & uploads example. <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
         },
         {
           icon: "fab fa-swift",
           title: 'Swift',
-          text: 'Expose your data via a **secure API** to your other applications in a few clicks. Your data is then saved on our side and exposed from classic [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) [stateless](https://www.jbspeakr.cc/purpose-jwt-stateless-authentication/) API.',
+          text: '**Alpha Front Stack** <br> Classic auth with on Boarding, profile & GDPR &  tasks example. <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
         },
       ],
     },
@@ -132,7 +132,7 @@ module.exports = _.merge(defaultConfig, {
     },
     blog: { // actually dev for Ghost Blog
       title: 'Blog',
-      url: 'https://blog.weareopensource.me',
+      url: 'https://weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     contact: {

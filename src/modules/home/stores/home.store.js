@@ -62,12 +62,14 @@ const actions = {
   getStatistics: async ({ commit }) => {
     try {
       // const tasks = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
-      const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/releases`);
       // const users = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/stats`);
+      const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/releases`);
+      const pulls = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/pulls`);
       commit('statistics_set', {
         // tasks: tasks.data.data,
-        releases: releases.data.data,
         // users: users.data.data,
+        releases: releases.data.data,
+        pulls: pulls.data.data,
       });
     } catch (err) {
       commit('error', err);
@@ -112,6 +114,7 @@ const mutations = {
     config.home.stats.data[1] = [_.sum(
       _.flatten(state.statistics.releases.map((release) => (release.list[0].name[0] === 'v' ? release.list[0].name.substr(1).split('.') : release.list[0].name.split('.')))).map((x) => +x),
     ), 'Releases'];
+    config.home.stats.data[3] = [_.sum(state.statistics.pulls.map((pull) => pull.data.pull_count)), 'Pulls'];
   },
 };
 
