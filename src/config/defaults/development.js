@@ -2,7 +2,7 @@ module.exports = {
   app: {
     title: 'WAOS Dev',
     logo: 'logo.png', // null to use title by default
-    subtitle: 'welcome to demo.',
+    subtitle: 'welcome to demo. welcome to demo. welcome to demo.',
     description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) ',
     keywords: 'vue, vuetify, axios, jest, cypress',
   },
@@ -33,7 +33,7 @@ module.exports = {
       snackbar: { // kind of notifications on requests
         status: true, // activate for error
         methods: ['post', 'put'], // show on sucess depends of methods
-        sucessColor: 'secondary',
+        sucessColor: 'success',
         errorColor: 'error',
       },
       navigation: {
@@ -48,11 +48,13 @@ module.exports = {
           background: '#1F1F1F',
           surface: '#282A2E',
           error: '#CF6679',
+          success: '#119178',
           onPrimary: '#FFFFFF',
           onSecondary: '#FFFFFF',
           onBackground: '#FFFFFF',
           onSurface: '#FEFEFE',
           onError: '#000000',
+          onSuccess: '#000000',
         },
         light: {
           primary: '#34495e',
@@ -60,11 +62,13 @@ module.exports = {
           background: '#f3f3f6',
           surface: '#ffffff',
           error: '#B00020',
+          success: '#119178',
           onPrimary: '#ffffff',
           onSecondary: '#FFFFFF',
           onBackground: '#1d1d1f',
           onSurface: '#1d1d1f',
           onError: '#FFFFFF',
+          onSuccess: '#FFFFFF',
         },
       },
       options: {
