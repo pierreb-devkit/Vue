@@ -18,9 +18,9 @@
 
     <waosNav v-if="!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn" />
 
-    <v-content :style="{background: config.vuetify.theme.themes[theme].background}">
+    <v-main :style="{background: config.vuetify.theme.themes[theme].background}">
       <router-view />
-    </v-content>
+    </v-main>
 
     <waosFooter v-if="config.vuetify.theme.footer" />
   </v-app>

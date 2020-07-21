@@ -6,13 +6,10 @@
     v-if="news.length > 0"
   >
     <v-container>
-      <h2
-        class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase"
-        v-if="config.home.blog.title"
-      >
-        <a :href="config.home.blog.url" style="font-weight:inherit; color:inherit !important;">
+      <h2 class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase" v-if="title">
+        <a :href="url" style="font-weight:inherit; color:inherit !important;">
           {{
-          config.home.blog.title
+          title
           }}
         </a>
       </h2>
@@ -45,7 +42,7 @@ import VueMarkdown from 'vue-markdown';
  */
 export default {
   name: 'homeBlogComponent',
-  props: ['news', 'custom'],
+  props: ['title', 'url', 'news', 'custom'],
   components: {
     VueMarkdown,
   },
