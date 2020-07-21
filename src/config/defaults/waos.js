@@ -139,10 +139,19 @@ module.exports = _.merge(defaultConfig, {
     stats: {
       background: null,
       data: [
-        ['0', 'Stacks'],
-        ['0', 'Releases'],
-        ['0', 'Articles'],
-        ['0', 'Pulls'],
+        {
+          value: '0',
+          title: 'Stacks',
+        }, {
+          value: '0',
+          title: 'Releases',
+        }, {
+          value: '0',
+          title: 'Articles',
+        }, {
+          value: '0',
+          title: 'Pulls',
+        },
       ],
     },
     blog: { // actually dev for Ghost Blog

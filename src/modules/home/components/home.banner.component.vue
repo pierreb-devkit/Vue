@@ -98,7 +98,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['theme', 'subscription']),
+    ...mapGetters(['subscription']),
     email: {
       get() {
         return this.subscription.email;

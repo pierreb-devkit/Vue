@@ -130,15 +130,12 @@ const mutations = {
   },
   // statistics
   statistics_set(state, data) {
-    state.statistics = data;
-    config.home.stats.data[0] = [state.statistics.releases.length, 'Stacks'];
-    config.home.stats.data[1] = [_.sum(
-      _.flatten(state.statistics.releases.map((release) => (release.list[0].name[0] === 'v' ? release.list[0].name.substr(1).split('.') : release.list[0].name.split('.')))).map((x) => +x),
-    ), 'Releases'];
-    console.log(state.statistics);
-
-    config.home.stats.data[2] = [state.statistics.articles.pagination.total, 'Articles'];
-    config.home.stats.data[3] = [_.sum(state.statistics.pulls.map((pull) => pull.data.pull_count)), 'Pulls'];
+    state.statistics[0].value = data.releases.length;
+    state.statistics[1].value = _.sum(
+      _.flatten(data.releases.map((release) => (release.list[0].name[0] === 'v' ? release.list[0].name.substr(1).split('.') : release.list[0].name.split('.')))).map((x) => +x),
+    );
+    state.statistics[2].value = data.articles.pagination.total;
+    state.statistics[3].value = _.sum(data.pulls.map((pull) => pull.data.pull_count));
   },
   // news
   news2_set(state, data) {
@@ -154,7 +151,7 @@ const state = {
   news: [],
   subscription: {},
   contact: {},
-  statistics: {},
+  statistics: config.home.stats.data,
   news2: [],
 };
 

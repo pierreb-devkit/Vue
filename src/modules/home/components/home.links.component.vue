@@ -2,7 +2,7 @@
   <section
     id="features"
     class="py-12"
-    :style="{ background: config.vuetify.theme.themes[theme].surface }"
+    :style="custom && custom.section ? custom.section : null"
     v-if="links.length > 0"
   >
     <v-container>
@@ -15,10 +15,10 @@
         >
           <v-card
             :flat="config.vuetify.theme.flat"
-            :style="{ background: config.vuetify.theme.themes[theme].surface }"
+            :style="custom && custom.section ? custom.section : null"
           >
             <v-card-title class="justify-center text--secondary" v-text="title"></v-card-title>
-            <v-list dense :style="{ background: config.vuetify.theme.themes[theme].surface }">
+            <v-list dense :style="custom && custom.section ? custom.section : null">
               <v-list-item-group color="primary">
                 <v-list-item v-for="(item, i) in items" :key="i">
                   <v-list-item-content>
@@ -40,17 +40,10 @@
 
 <script>
 /**
- * Module dependencies.
- */
-import { mapGetters } from 'vuex';
-/**
  * Export default
  */
 export default {
   name: 'homeLinksComponent',
-  props: ['links'],
-  computed: {
-    ...mapGetters(['theme']),
-  },
+  props: ['links', 'custom'],
 };
 </script>
