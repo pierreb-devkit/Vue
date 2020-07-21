@@ -66,7 +66,7 @@ module.exports = _.merge(defaultConfig, {
         url: 'https://hub.docker.com/orgs/weareopensource/repositories',
       },{
         icon: 'fab fa-github-alt',
-        label: 'Github projects',
+        label: 'Projects',
         url: 'https://github.com/WeAreOpenSourceProjects',
       },{
         icon: 'fab fa-discord',
