@@ -4,7 +4,7 @@ const defaultConfig = require('./development');
 module.exports = _.merge(defaultConfig, {
   app: {
     title: 'WAOS',
-    subtitle: 'Sharing of knowledge - #LetsGetTogether',
+    subtitle: 'Knowledge sharing #LetsGetTogether',
     keywords: 'opensource, stack, fullstack',
   },
   port: 8020,
@@ -23,6 +23,14 @@ module.exports = _.merge(defaultConfig, {
   },
   cookie: {
     prefix: 'waos',
+  },
+  analytics: {
+    matomo: {
+      host: 'https://mtm.weareopensource.me',
+      siteId: 1,
+      router: this.$router, // Enables automatically registering pageviews on the router
+      //requireConsent: true, // Require consent before sending tracking information to matomo
+    },
   },
   vuetify: {
     theme: {
@@ -141,16 +149,16 @@ module.exports = _.merge(defaultConfig, {
       data: [
         {
           value: '0',
-          title: 'Stacks',
+          title: 'Git Stacks',
         }, {
           value: '0',
-          title: 'Releases',
+          title: 'Git Releases',
         }, {
           value: '0',
-          title: 'Articles',
+          title: 'Blog Articles',
         }, {
           value: '0',
-          title: 'Pulls',
+          title: 'Docker Pulls',
         },
       ],
     },
