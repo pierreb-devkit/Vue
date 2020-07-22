@@ -149,13 +149,13 @@ module.exports = _.merge(defaultConfig, {
       data: [
         {
           value: '0',
-          title: 'Git Stacks',
+          title: 'Stacks',
         }, {
           value: '0',
-          title: 'Git Releases',
+          title: 'Releases',
         }, {
           value: '0',
-          title: 'Blog Articles',
+          title: 'Articles',
         }, {
           value: '0',
           title: 'Docker Pulls',
