@@ -29,7 +29,7 @@ module.exports = _.merge(defaultConfig, {
       host: 'https://mtm.weareopensource.me',
       siteId: 1,
       router: this.$router, // Enables automatically registering pageviews on the router
-      //requireConsent: true, // Require consent before sending tracking information to matomo
+      // requireConsent: true, // Require consent before sending tracking information to matomo
     },
   },
   vuetify: {
