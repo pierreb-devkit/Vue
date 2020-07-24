@@ -6,6 +6,9 @@
       v-bind:features="config.home.features"
       v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }, card: { background: config.vuetify.theme.themes[theme].background }}"
     ></homeFeaturesComponent>
+    <homeFeaturesComponent
+      v-bind:features="config.home.tools"
+    ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
     <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"></homeAboutsComponent>
     <homeBlogComponent

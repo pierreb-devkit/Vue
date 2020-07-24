@@ -148,12 +148,27 @@ module.exports = _.merge(defaultConfig, {
         },
       ],
     },
+    tools: {
+      title: 'Tools',
+      data: [
+        {
+          icon: 'fas fa-terminal',
+          title: 'Conventional Changelog',
+          text: '**NPM package** <br> Prompt to format commits for conventional changelog generation <br /> [Repo](https://github.com/weareopensource/conventional-changelog) - [Changelog](/changelogs) - [NPM](https://www.npmjs.com/package/@weareopensource/conventional-changelog)',
+        },
+        {
+          icon: 'fas fa-hat-cowboy',
+          title: 'Rancher Catalog',
+          text: '**Rancher Catalog** <br> Applications that make it easy to deploy our stacks or suggested tools <br/> [Repo](https://github.com/weareopensource/rancher-catalog) - [Changelog](/changelogs)',
+        },
+      ],
+    },
     stats: {
       background: null,
       data: [
         {
           value: '0',
-          title: 'Stacks',
+          title: 'Repos',
         }, {
           value: '0',
           title: 'Releases',
