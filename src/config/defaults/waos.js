@@ -97,13 +97,13 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text: '[WAOS](https://weareopensource.me)"s goal is to simplify the **start** of a new **tech project** / **startup**. It must be **fast**, **efficient** while **avoiding the refactor** afterwards. Whether through the creation of [open source](https://github.com/weareopensource) **stacks** / **tools** or **articles** on this subject, we try to **share our knowledge** around this theme.',
+        text: '[WAOS](https://weareopensource.me)"s goal is to simplify the **start** of a new **tech project** / **startup**. It must be **fast**, **efficient** while **avoiding the refactor** afterward. Whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles** on this subject, we try to **share our knowledge** around this theme.',
         image: null,
         button: null,
         link: null,
       }, {
         title: 'Technical',
-        text: 'We dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This to allow anyone to **create fullstack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updates. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
+        text: 'We dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
