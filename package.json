@@ -68,6 +68,7 @@
     "@vue/cli-service": "^4.4.6",
     "@vue/eslint-config-airbnb": "^5.1.0",
     "@vue/test-utils": "1.0.3",
+    "@weareopensource/conventional-changelog": "^1.6.0",
     "babel-eslint": "^10.1.0",
     "chalk": "^4.1.0",
     "commitizen": "^4.1.2",
@@ -81,12 +82,11 @@
     "standard-version": "^8.0.2",
     "vue-cli-plugin-vuetify": "^2.0.7",
     "vue-template-compiler": "^2.6.11",
-    "vuetify-loader": "^1.6.0",
-    "waos-conventional-changelog": "^1.10.0"
+    "vuetify-loader": "^1.6.0"
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/waos-conventional-changelog"
+      "path": "./node_modules/@weareopensource/conventional-changelog"
     }
   },
   "snyk": true
