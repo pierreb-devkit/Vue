@@ -10,7 +10,7 @@
         class="display-1 font-weight-bold mb-3 pb-8 text-uppercase"
         v-if="features.title"
       >{{ features.title }}</h2>
-      <v-row>
+      <v-row justify="center">
         <v-col
           v-for="({ icon, title, text }, i) in features.data"
           :key="i"
