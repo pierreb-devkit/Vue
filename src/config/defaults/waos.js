@@ -88,6 +88,10 @@ module.exports = _.merge(defaultConfig, {
         icon: 'fab fa-twitter',
         label: 'Twitter',
         url: 'https://twitter.com/waos_io',
+      }, {
+        label: 'Linkedin',
+        icon: 'fab fa-linkedin',
+        url: 'https://www.linkedin.com/company/weareopensource-me',
       },
     ],
   },
