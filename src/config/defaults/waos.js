@@ -112,7 +112,7 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text: 'This work was originally based on [MEAN.js](http://meanjs.org/) and a fork named [Riess.js](https://github.com/lirantal/Riess.js). It being stopped we wished to take it back, we want to create updated stack with same mindset "simple", "easy to use". Not only for Node and Angular, but every language. <br /><br />  **Little by little ... we targeted the toolbox to start projects.**',
+        text: 'This work was originally based on [MEAN.js](http://meanjs.org/) and a fork named [Riess.js](https://github.com/lirantal/Riess.js). It was stopped, we wished to take it back. We want to create updated stack with same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br /><br />  **Little by little ... we targeted the toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
