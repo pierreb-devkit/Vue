@@ -5,6 +5,7 @@ import Vue from 'vue';
 import _ from 'lodash';
 import config from '@/config';
 import model from '@/lib/middlewares/model';
+import tools from '@/lib/helpers/tools';
 import GhostContentAPI from '@tryghost/content-api';
 
 const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
@@ -132,8 +133,9 @@ const mutations = {
   statistics_set(state, data) {
     state.statistics[0].value = data.releases.length;
     state.statistics[1].value = _.sum(_.flatten(data.releases.map((release) => {
-      if (release.list.length) return release.list[0].name[0] === 'v' ? release.list[0].name.substr(1).split('.') : release.list[0].name.split('.');
-      return 0;
+      if (release.list.length > 0) {
+        return tools.releasesNumber(release.list[0].name);
+      } return 0;
     })).map((x) => +x));
     state.statistics[2].value = data.articles.pagination.total;
     state.statistics[3].value = _.sum(data.pulls.map((pull) => pull.data.pull_count));
