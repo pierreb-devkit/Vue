@@ -25,6 +25,9 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
+  // meta
+  document.title = to.name;
+  // secu
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (store.getters.isLoggedIn) {
       next();
