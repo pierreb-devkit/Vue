@@ -2,7 +2,7 @@
   [![Dependabot badge](https://badges.weareopensource.me/badge/Dependabot-enabled-2768cf.svg?style=flat-square)](https://dependabot.com)
  [![Known Vulnerabilities](https://snyk.io/test/github/weareopensource/vue/badge.svg?style=flat-square)](https://snyk.io/test/github/weareopensource/vue) [![Docker Pulls](https://badges.weareopensource.me/docker/pulls/weareopensource/vue?style=flat-square)](https://hub.docker.com/repository/docker/weareopensource/vue)
 
-# :globe_with_meridians: [WeAreOpenSource](https://weareopensource.me) Vue 4.x
+# :globe_with_meridians: [WeAreOpenSource](https://weareopensource.me) Vue 4.x - Alpha
 
 ## :book: Presentation
 
@@ -31,7 +31,7 @@ Our stack Vue is actually in Alpha.
 | Security | JWT Stateless - have a look on [Node](https://github.com/weareopensource/Node) stack for more informations
 | CI  | [Travis CI](https://travis-ci.org/weareopensource/Node)
 | Linter  | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)
-| Developer  | [Coveralls](https://coveralls.io/github/weareopensource/Vue) - [Code Climate](https://codeclimate.com/github/weareopensource/Vue) - [Dependency status](https://david-dm.org/weareopensource/vue) - [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/weareopensource/vue) <br> [standard-version](https://github.com/conventional-changelog/standard-version) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) - [waos-conventional-changelog](https://github.com/WeAreOpenSourceProjects/waos-conventional-changelog)
+| Developer  | [Coveralls](https://coveralls.io/github/weareopensource/Vue) - [Code Climate](https://codeclimate.com/github/weareopensource/Vue) - [Dependency status](https://david-dm.org/weareopensource/vue) - [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/weareopensource/vue) <br> [standard-version](https://github.com/conventional-changelog/standard-version) / [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) - [@weareopensource/conventional-changelog](https://github.com/weareopensource/conventional-changelog)
 | Dependencies  | [npm](https://www.npmjs.com)
 | Deliver | Docker & Docker-compose
 | **Being released** |
@@ -88,7 +88,8 @@ npm i
 * test unit : `npm run test:unit`
 * lint : `npm run lint`
 * commit : `npm run commit`
-* release : `npm run release`
+* release : `npm run release -- --first-release` **standard version, changelog, tag & choose version number : -- --release-as 1.1.1**
+* release:auto : `GITHUB_TOKEN=XXXXX npm run release:auto` **semantic release, changelog, tag, release** *require repositoryUrl conf in package.json*
 * generateConfig : `npm run generateConfig`
 
 ## :whale: Docker Way
