@@ -1,6 +1,7 @@
 /**
  * Module dependencies.
  */
+import config from '@/config';
 import home from '@/modules/home/views/home.view.vue';
 import pages from '@/modules/home/views/pages.view.vue';
 
@@ -10,7 +11,7 @@ import pages from '@/modules/home/views/pages.view.vue';
 export default [
   {
     path: '/',
-    name: 'Home',
+    name: config.app.title,
     component: home,
     meta: {
       icon: 'home',
