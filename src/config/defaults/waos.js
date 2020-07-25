@@ -117,8 +117,8 @@ module.exports = _.merge(defaultConfig, {
         button: null,
         link: null,
       }, {
-        title: 'Links',
-        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> [Some recommendations on the labels of a repo](https://blog.weareopensource.me/labels-recommendation-for-issues/) <br /> [Some information about who we are and our tools](https://blog.weareopensource.me/us/) <br /> <br /> Some knwoledges : [JS](https://blog.weareopensource.me/js-knwoledges/) [Swift](https://blog.weareopensource.me/js-knwoledges-2/)',
+        title: 'Knwoledges',
+        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> <br /> Deployment : [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code : [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other : [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/)',
         image: null,
         button: null,
         link: null,
@@ -231,13 +231,13 @@ module.exports = _.merge(defaultConfig, {
           label: 'Docker',
           url: 'https://hub.docker.com/orgs/weareopensource/repositories',
         },{
-          icon: 'fab fa-github-alt',
-          label: 'Github projects',
-          url: 'https://github.com/WeAreOpenSourceProjects',
-        },{
           icon: 'fas fa-vial',
           label: 'Travis',
           url: 'https://travis-ci.org/github/weareopensource',
+        },{
+          icon: 'fa-users',
+          label: 'Us ?',
+          url: 'https://blog.weareopensource.me/us/',
         }],
       },
     ],
