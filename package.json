@@ -16,7 +16,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/weareopensource/Vue.git"
+    "url": "https://github.com/pierrebrisorgueil/waos_node.git"
   },
   "engines": {
     "node": ">=10.16.3",
@@ -95,7 +95,7 @@
       }
     ],
     "ci": false,
-    "repositoryUrl": "https://github.com/weareopensource/Vue.git",
+    "repositoryUrl": "https://github.com/pierrebrisorgueil/waos_node.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
