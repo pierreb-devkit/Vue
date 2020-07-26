@@ -97,13 +97,13 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text: '[WAOS](https://weareopensource.me)"s goal is to simplify the **start** of a new **tech project** / **startup**. It must be **fast**, **efficient** while **avoiding the refactor** afterward. Whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles** on this subject, we try to **share our knowledge** around this theme.',
+        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of a new **tech project** / **startup**. It must be **fast**, **efficient** while **avoiding the refactor** afterward. Whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles** on this subject, we try to **share our knowledge** around this theme.',
         image: null,
         button: null,
         link: null,
       }, {
         title: 'Technical',
-        text: 'We dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -118,7 +118,7 @@ module.exports = _.merge(defaultConfig, {
         link: null,
       }, {
         title: 'Knwoledges',
-        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> <br /> Deployment : [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code : [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other : [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/)',
+        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> <br /> Deployment : [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code : [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other : [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
