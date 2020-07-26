@@ -183,6 +183,11 @@ module.exports = _.merge(defaultConfig, {
       key: 'e4925fb7f5698f998daeb128d8',
     },
     blog2: { // actually dev for Ghost Blog
+      title: 'News',
+      url: 'https://blog.weareopensource.me',
+      key: 'e4925fb7f5698f998daeb128d8',
+    },
+    blog3: { // actually dev for Ghost Blog
       title: 'Hobbies',
       url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',

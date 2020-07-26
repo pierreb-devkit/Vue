@@ -21,6 +21,7 @@ const getters = {
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
   news2: (state) => state.news2,
+  news3: (state) => state.news3,
 };
 
 /**
@@ -92,8 +93,21 @@ const actions = {
         key: config.home.blog2.key,
         version: 'v3',
       });
-      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:hobbies' });
+      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:news' });
       commit('news2_set', res);
+    } catch (err) {
+      commit('error', err);
+    }
+  },
+  getNews3: async ({ commit }) => {
+    try {
+      const ghost = new GhostContentAPI({
+        url: config.home.blog2.url,
+        key: config.home.blog2.key,
+        version: 'v3',
+      });
+      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:hobbies' });
+      commit('news3_set', res);
     } catch (err) {
       commit('error', err);
     }
@@ -144,6 +158,9 @@ const mutations = {
   news2_set(state, data) {
     state.news2 = data;
   },
+  news3_set(state, data) {
+    state.news3 = data;
+  },
 };
 
 /**
@@ -156,6 +173,7 @@ const state = {
   contact: {},
   statistics: config.home.stats.data,
   news2: [],
+  news3: [],
 };
 
 /**

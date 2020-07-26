@@ -10,17 +10,23 @@
       v-bind:features="config.home.tools"
     ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
-    <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"></homeAboutsComponent>
+    <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="null"></homeAboutsComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
       v-bind:news="news"
-      v-bind:custom="null"
+      v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
     ></homeBlogComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog2.title"
       v-bind:url="config.home.blog2.url"
       v-bind:news="news2"
+      v-bind:custom="null"
+    ></homeBlogComponent>
+    <homeBlogComponent
+      v-bind:title="config.home.blog3.title"
+      v-bind:url="config.home.blog3.url"
+      v-bind:news="news3"
       v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
     ></homeBlogComponent>
     <homeContactComponent></homeContactComponent>
@@ -60,13 +66,14 @@ export default {
     homeLinksComponent,
   },
   computed: {
-    ...mapGetters(['theme', 'news', 'statistics', 'news2']),
+    ...mapGetters(['theme', 'news', 'statistics', 'news2', 'news3']),
   },
   created() {
     AOS.init();
     this.$store.dispatch('getStatistics').then(() => {
       this.$store.dispatch('getNews');
       this.$store.dispatch('getNews2');
+      this.$store.dispatch('getNews3');
     });
   },
 };
