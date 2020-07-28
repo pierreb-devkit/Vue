@@ -1,7 +1,7 @@
 <template>
   <div>
     <homeBannerComponent v-bind:ratio="1" v-bind:subscribe="true" v-bind:app="config.app"></homeBannerComponent>
-    <homeAboutsComponent v-bind:abouts="config.home.abouts" v-bind:custom="null"></homeAboutsComponent>
+    <homeAboutsComponent v-bind:abouts="config.home.abouts" v-bind:md="6" v-bind:custom="null"></homeAboutsComponent>
     <homeFeaturesComponent
       v-bind:features="config.home.features"
       v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }, card: { background: config.vuetify.theme.themes[theme].background }}"
