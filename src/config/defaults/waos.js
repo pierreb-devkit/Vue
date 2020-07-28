@@ -103,7 +103,7 @@ module.exports = _.merge(defaultConfig, {
         link: null,
       }, {
         title: 'Technical',
-        text: '[We](https://blog.weareopensource.me/us/) dreams to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, as well as [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dream to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, and [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -112,13 +112,13 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text: 'This work was originally based on [MEAN.js](http://meanjs.org/) and a fork named [Riess.js](https://github.com/lirantal/Riess.js). It was stopped, we wished to take it back. We want to create updated stack with same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br /><br />  **Little by little ... we targeted the toolbox to start projects.**',
+        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). They stopped it. we wished to take it back. We want to create updated stack with same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br /><br />  **Little by little... we targeted the toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
       }, {
         title: 'Knwoledges',
-        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> [How to contribute and help us to maintain our stacks](https://blog.weareopensource.me/how-to-contribute/) <br /> <br /> Deployment : [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code : [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other : [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
+        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/weareopensource/weareopensource.github.io/projects/1)? Want to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
