@@ -7,6 +7,7 @@
       v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
       v-bind:height="700"
       v-bind:full="true"
+      v-bind:interval="10000"
     ></homeSlideshowComponent>
     <homeFeaturesComponent
       v-bind:features="config.home.features"
