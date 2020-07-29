@@ -6,7 +6,7 @@
     v-if="slides.data.length > 0"
   >
     <!-- slideshow full -->
-    <v-carousel v-if="full" cycle :height="height" hide-delimiter-background :show-arrows="false">
+    <v-carousel v-if="full" cycle :height="height" hide-delimiter-background :show-arrows="false" :interval="interval || 6000">
       <v-carousel-item v-for="({img, title}, i) in slides.data" :key="i">
         <v-sheet color="transparent" height="100%">
           <v-row class="fill-height" align="center" justify="center">
@@ -23,7 +23,7 @@
         class="display-1 font-weight-bold mb-3 text-uppercase"
         v-if="slides.title"
       >{{ slides.title }}</h2>
-      <v-carousel cycle :height="height + 100" hide-delimiter-background :light='this.theme === "light" ? true : false' :show-arrows="false">
+      <v-carousel cycle :height="height + 100" hide-delimiter-background :light='this.theme === "light" ? true : false' :show-arrows="false" :interval="interval || 6000">
         <v-carousel-item v-for="({ img, icon, title, text }, i) in slides.data" :key="i">
           <v-sheet color="transparent" height="100%">
             <v-row justify="center" align="center" class="fill-height">
@@ -70,7 +70,7 @@ import VueMarkdown from 'vue-markdown';
  */
 export default {
   name: 'homeSlideshowComponent',
-  props: ['slides', 'custom', 'height', 'mdImage', 'mdText', 'full'],
+  props: ['slides', 'custom', 'height', 'mdImage', 'mdText', 'full', 'interval'],
   computed: {
     ...mapGetters(['theme']),
   },
