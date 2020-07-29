@@ -159,6 +159,23 @@ module.exports = _.merge(defaultConfig, {
         },
       ],
     },
+    slideshow: {
+      title: 'Demos',
+      data: [
+        {
+          img: '01.jpg',
+          icon: null,
+          title: null,
+          text: null,
+        },
+        {
+          img: '02.jpg',
+          icon: null,
+          title: null,
+          text: null,
+        },
+      ],
+    },
     stats: {
       background: null,
       data: [
