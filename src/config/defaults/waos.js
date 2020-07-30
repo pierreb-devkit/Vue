@@ -97,13 +97,13 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of a new **tech project** / **startup**. It must be **fast**, **efficient** while **avoiding the refactor** afterward. Whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles** on this subject, we try to **share our knowledge** around this theme.',
+        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. As we know It"s must be **fast**, **efficient** while **avoiding the refactor** afterward. So whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles**, we **share our knowledge** around this subject.',
         image: null,
         button: null,
         link: null,
       }, {
         title: 'Technical',
-        text: '[We](https://blog.weareopensource.me/us/) dream to create stacks **Backs / Fronts**, **aligns on feats** & **Architecture**, in multiple languages. This allows anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep updated. While exploring resilient and scalable deployment, and [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dream to create stacks **back/fronts**, **aligns on feats** & **architecture**, in multiple languages. Allowing anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep it updated, while exploring scalable deployment, or tips like [growth hacking](https://en.wikipedia.org/wiki/Growth_hacking) via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -112,13 +112,13 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). They stopped it. we wished to take it back. We want to create updated stack with same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br /><br />  **Little by little... we targeted the toolbox to start projects.**',
+        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). They stopped it. We wished to take it back. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br /><br />  **Little by little... we built a toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
       }, {
-        title: 'Knwoledges',
-        text: '[How to start a project and maintain updates from stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/weareopensource/weareopensource.github.io/projects/1)? Want to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
+        title: 'Knowledges',
+        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/weareopensource/weareopensource.github.io/projects/1)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
