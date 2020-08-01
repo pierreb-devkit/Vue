@@ -5,7 +5,7 @@
     <homeSlideshowComponent
       v-bind:slides="config.home.slideshow"
       v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
-      v-bind:height="700"
+      v-bind:height="pageHeight/1.5"
       v-bind:full="true"
       v-bind:interval="10000"
     ></homeSlideshowComponent>
@@ -64,6 +64,11 @@ import homeLinksComponent from '../components/home.links.component.vue';
  * Export default
  */
 export default {
+  data() {
+    return {
+      pageHeight: 0,
+    };
+  },
   components: {
     homeBannerComponent,
     homeAboutsComponent,
@@ -84,6 +89,9 @@ export default {
       this.$store.dispatch('getNews2');
       this.$store.dispatch('getNews3');
     });
+  },
+  mounted() {
+    this.pageHeight = window.innerHeight;
   },
 };
 </script>
