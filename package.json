@@ -49,12 +49,12 @@
     "axios": "^0.19.2",
     "core-js": "^3.6.5",
     "lodash": "^4.17.19",
-    "snyk": "^1.366.2",
+    "snyk": "^1.369.2",
     "vue": "^2.6.11",
     "vue-markdown": "^2.2.4",
     "vue-matomo": "^3.13.5-0",
     "vue-router": "^3.3.4",
-    "vuetify": "^2.3.6",
+    "vuetify": "^2.3.7",
     "vuex": "^3.5.1"
   },
   "devDependencies": {

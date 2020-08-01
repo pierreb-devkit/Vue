@@ -126,7 +126,7 @@ module.exports = {
     abouts: [
       {
         title: 'About Us',
-        text: 'Today, we dreams to create Backs/Fronts, **aligns on feats**, in **multiple languages**, in order to allow anyone to **compose fullstack on demand** (React, Angular, VusJS, Node, Nest, Swift, Go). Feel free to discuss, share other kind of bricks, and invite whoever you want with this mindset to come [help us](https://github.com/weareopensource/). There are so many innovations possible, starting a clean test should be simple.',
+        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. As we know It"s must be **fast**, **efficient** while **avoiding the refactor** afterward. So whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles**, we **share our knowledge** around this subject.',
         image: 'https://avatars3.githubusercontent.com/u/8588816?s=200&v=4',
         button: 'Github',
         link: 'https://github.com/weareopensource',
@@ -139,6 +139,7 @@ module.exports = {
           icon: 'fa-users',
           title: 'Vibrant Community',
           text: '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque harum excepturi nemo velit tempora! Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
+                    // color: 'red' background color option
         },
         {
           icon: 'fa-cloud-upload-alt',
