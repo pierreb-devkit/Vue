@@ -18,7 +18,7 @@
 
     <waosNav v-if="!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn" />
 
-    <v-main :style="{background: config.vuetify.theme.themes[theme].background}">
+    <v-main :style="{ background: config.vuetify.theme.themes[theme].background }">
       <router-view />
     </v-main>
 
@@ -64,11 +64,9 @@ export default {
     this.axios.interceptors.response.use(
       (response) => {
         if (
-          this.config.vuetify.theme.snackbar.status
-          && response.config
-          && this.config.vuetify.theme.snackbar.methods.indexOf(
-            response.config.method,
-          ) > -1
+          this.config.vuetify.theme.snackbar.status &&
+          response.config &&
+          this.config.vuetify.theme.snackbar.methods.indexOf(response.config.method) > -1
         ) {
           this.snackbar.text = `${response.data.type}: ${response.data.message}`;
           this.snackbar.color = this.config.vuetify.theme.snackbar.sucessColor;
@@ -78,9 +76,9 @@ export default {
       },
       (err) => new Promise(() => {
         if (
-          err.response.status === 401
-            && err.config
-            && !err.config.__isRetryRequest
+          err.response.status === 401 &&
+          err.config &&
+          !err.config.__isRetryRequest
         ) {
           this.$store.dispatch('signout');
           this.snackbar.text = 'Signin failed';
@@ -89,10 +87,10 @@ export default {
           router.push('/signin');
         }
         if (
-          this.config.vuetify.theme.snackbar.status
-            && err.response
-            && err.response.data
-            && err.response.data.description
+          this.config.vuetify.theme.snackbar.status &&
+          err.response &&
+          err.response.data &&
+          err.response.data.description
         ) {
           this.snackbar.text = err.response.data.description;
           this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
@@ -108,7 +106,8 @@ export default {
 </script>
 
 <style>
-.v-application header a, .v-application nav a{
+.v-application header a,
+.v-application nav a {
   text-decoration: none !important;
   color: var(--v-onPrimary-base) !important;
 }

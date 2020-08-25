@@ -2,8 +2,12 @@
   <section id="hero">
     <v-row no-gutters>
       <v-img
-        :min-height="'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'"
-        :max-height="'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'"
+        :min-height="
+          'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'
+        "
+        :max-height="
+          'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'
+        "
         :src="
           config.home.temporalBackground
             ? generateTemporalBackground()
@@ -16,16 +20,27 @@
               <v-col class="white--text text-center" cols="12" tag="h1">
                 <span
                   v-if="app.title && !app.logo"
-                  :class="[$vuetify.breakpoint.smAndDown ? 'display-3' : 'display-4']"
+                  :class="[
+                    $vuetify.breakpoint.smAndDown ? 'display-3' : 'display-4',
+                  ]"
                   class="font-weight-black"
                   >{{ app.title }}</span
                 >
-                <center><v-img v-if="app.logo" :src="require('@/assets/images/' + this.config.app.logo)" aspect-ratio="5" max-width="375"></v-img></center>
+                <center>
+                  <v-img
+                    v-if="app.logo"
+                    :src="require('@/assets/images/' + this.config.app.logo)"
+                    aspect-ratio="5"
+                    max-width="375"
+                  ></v-img>
+                </center>
                 <br />
                 <span
                   v-if="app.subtitle"
                   class="font-weight-light"
-                  :class="[$vuetify.breakpoint.smAndDown ? 'display-1' : 'display-1']"
+                  :class="[
+                    $vuetify.breakpoint.smAndDown ? 'display-1' : 'display-1',
+                  ]"
                   >{{ app.subtitle }}</span
                 >
               </v-col>
@@ -49,7 +64,7 @@
                 md="7"
                 lg="6"
                 xl="5"
-                style="bottom: 10%; position: absolute; opacity:75%;"
+                style="bottom: 10%; position: absolute; opacity: 75%;"
                 data-aos="fade-up"
                 v-if="config.home.subscriptions && subscribe"
               >
@@ -111,7 +126,9 @@ export default {
   },
   methods: {
     generateTemporalBackground() {
-      return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
+      return `${
+        this.config.home.temporalBackground
+      }/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
     },
     createSubscription() {
       if (this.rules.email(this.subscription.email)) {

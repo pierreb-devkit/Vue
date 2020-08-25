@@ -13,7 +13,7 @@
             class="mx-3 pa-8"
             outlined
             tile
-            :style="{background: config.vuetify.theme.themes[theme].surface}"
+            :style="{ background: config.vuetify.theme.themes[theme].surface }"
             :flat="config.vuetify.theme.flat"
           >
             <h2 class="text-center">No Tasks found :( !</h2>

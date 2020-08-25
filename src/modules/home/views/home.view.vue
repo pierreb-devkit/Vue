@@ -11,18 +11,21 @@
     ></homeSlideshowComponent>
     <homeFeaturesComponent
       v-bind:features="config.home.features"
-      v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }, card: { background: config.vuetify.theme.themes[theme].background }}"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+        card: { background: config.vuetify.theme.themes[theme].background },
+      }"
     ></homeFeaturesComponent>
-    <homeFeaturesComponent
-      v-bind:features="config.home.tools"
-    ></homeFeaturesComponent>
+    <homeFeaturesComponent v-bind:features="config.home.tools"></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
     <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="null" v-bind:md="6"></homeAboutsComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
       v-bind:news="news"
-      v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+      }"
     ></homeBlogComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog2.title"
@@ -39,7 +42,9 @@
     <homeContactComponent></homeContactComponent>
     <homeLinksComponent
       v-bind:links="config.home.links"
-      v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface }}"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+      }"
     ></homeLinksComponent>
   </div>
 </template>

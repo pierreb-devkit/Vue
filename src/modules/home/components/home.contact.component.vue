@@ -4,7 +4,9 @@
       <h2
         class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase"
         v-if="config.home.contact.title"
-      >{{ config.home.contact.title }}</h2>
+      >
+        {{ config.home.contact.title }}
+      </h2>
       <v-theme-provider light>
         <v-form ref="form">
           <v-row>
@@ -18,16 +20,24 @@
               ></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-textarea v-model="body" :flat="config.vuetify.theme.flat" label="Message*" solo></v-textarea>
+              <v-textarea
+                v-model="body"
+                :flat="config.vuetify.theme.flat"
+                label="Message*"
+                solo
+              ></v-textarea>
             </v-col>
             <v-col class="mx-auto" cols="auto">
               <v-btn
                 @click="sendMail()"
                 :color="config.vuetify.theme.themes[theme].secondary"
-                :style="{ color: config.vuetify.theme.themes[theme].onSecondary }"
+                :style="{
+                  color: config.vuetify.theme.themes[theme].onSecondary,
+                }"
                 depressed
                 x-large
-              >Send</v-btn>
+                >Send</v-btn
+              >
             </v-col>
           </v-row>
         </v-form>

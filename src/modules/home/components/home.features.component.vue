@@ -9,7 +9,9 @@
       <h2
         class="display-1 font-weight-bold mb-3 pb-8 text-uppercase"
         v-if="features.title"
-      >{{ features.title }}</h2>
+      >
+        {{ features.title }}
+      </h2>
       <v-row justify="center">
         <v-col
           v-for="({ icon, title, text, color }, i) in features.data"
@@ -27,7 +29,10 @@
                 <v-icon dark large data-aos="fade-up">{{ icon }}</v-icon>
               </v-avatar>
             </div>
-            <v-card-title class="justify-center font-weight-black text-uppercase" v-text="title"></v-card-title>
+            <v-card-title
+              class="justify-center font-weight-black text-uppercase"
+              v-text="title"
+            ></v-card-title>
             <v-card-text class="subtitle-1 text--secondary">
               <vue-markdown :source="text" />
             </v-card-text>

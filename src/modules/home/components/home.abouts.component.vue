@@ -1,5 +1,9 @@
 <template>
-  <section id="about-me" v-if="abouts.length > 0" :style="custom && custom.section ? custom.section : null">
+  <section
+    id="about-me"
+    v-if="abouts.length > 0"
+    :style="custom && custom.section ? custom.section : null"
+  >
     <v-container class="text-center pb-12">
       <v-row align="center" justify="center">
         <v-col
@@ -8,8 +12,14 @@
           cols="12"
           :md="md"
         >
-          <h2 class="display-1 font-weight-bold mb-3 py-8 text-uppercase" v-text="title"></h2>
-          <v-responsive class="mx-auto title font-weight-light mb-8" max-width="720">
+          <h2
+            class="display-1 font-weight-bold mb-3 py-8 text-uppercase"
+            v-text="title"
+          ></h2>
+          <v-responsive
+            class="mx-auto title font-weight-light mb-8"
+            max-width="720"
+          >
             <vue-markdown :source="text" />
           </v-responsive>
           <v-avatar v-if="image" class="elevation-12 mb-12" size="128">
@@ -17,7 +27,10 @@
           </v-avatar>
           <br v-if="link" />
           <v-btn v-if="link" color="grey" :href="link" outlined large>
-            <span class="grey--text text--darken-1 font-weight-bold" v-text="button"></span>
+            <span
+              class="grey--text text--darken-1 font-weight-bold"
+              v-text="button"
+            ></span>
           </v-btn>
         </v-col>
       </v-row>

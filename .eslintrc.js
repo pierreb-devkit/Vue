@@ -22,6 +22,7 @@ module.exports = {
     'consistent-return': 0,
     'no-underscore-dangle': 0,
     'no-shadow': 0,
+    'operator-linebreak': 0,
   },
   parserOptions: {
     parser: 'babel-eslint',

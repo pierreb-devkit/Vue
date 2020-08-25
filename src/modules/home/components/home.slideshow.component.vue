@@ -1,7 +1,7 @@
 <template>
   <section
     id="features"
-    :class="full ? '': 'py-12'"
+    :class="full ? '' : 'py-12'"
     :style="custom && custom.section ? custom.section : null"
     v-if="slides.data.length > 0"
   >
@@ -14,16 +14,40 @@
       :show-arrows="false"
       :interval="interval || 6000"
     >
-      <v-carousel-item v-for="({img, text, position, dark}, i) in slides.data" :key="i">
+      <v-carousel-item
+        v-for="({ img, text, position, dark, color }, i) in slides.data"
+        :key="i"
+      >
         <v-sheet color="transparent" height="100%">
           <v-row class="fill-height" align="center" justify="center">
-            <v-img :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}`: img" class="mb-4" height="100%" max-width="100%">
+            <v-img
+              :src="
+                dark
+                  ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}`
+                  : img
+              "
+              class="mb-4"
+              height="100%"
+              max-width="100%"
+            >
               <v-container fill-height fluid class="hidden-sm-and-down">
                 <v-row>
                   <v-col cols="12">
-                    <v-row align="center" :justify="position ? position : 'center'" class="text-center display-2 pa-10 ma-10">
+                    <v-row
+                      align="center"
+                      :justify="position ? position : 'center'"
+                      class="text-center display-2 pa-10 ma-10"
+                    >
                       <v-col cols="6" md="4">
-                        <h3 :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">{{text}}</h3>
+                        <h3
+                          :style="{
+                            color:
+                              color ||
+                              config.vuetify.theme.themes[theme].onPrimary,
+                          }"
+                        >
+                          {{ text }}
+                        </h3>
                       </v-col>
                     </v-row>
                   </v-col>
@@ -32,9 +56,21 @@
               <v-container fluid class="hidden-md-and-up">
                 <v-row>
                   <v-col cols="12">
-                    <v-row align="start" justify="center" class="text-center display-1">
+                    <v-row
+                      align="start"
+                      justify="center"
+                      class="text-center display-1"
+                    >
                       <v-col cols="12" md="12">
-                        <h4 class="grey--text text--darken-2">{{text}}</h4>
+                        <h4
+                          :style="{
+                            color:
+                              color ||
+                              config.vuetify.theme.themes[theme].onPrimary,
+                          }"
+                        >
+                          {{ text }}
+                        </h4>
                       </v-col>
                     </v-row>
                   </v-col>
@@ -50,7 +86,9 @@
       <h2
         class="display-1 font-weight-bold mb-3 text-uppercase"
         v-if="slides.title"
-      >{{ slides.title }}</h2>
+      >
+        {{ slides.title }}
+      </h2>
       <v-carousel
         cycle
         :height="height + 100"
@@ -59,11 +97,23 @@
         :show-arrows="false"
         :interval="interval || 6000"
       >
-        <v-carousel-item v-for="({ img, icon, title, text }, i) in slides.data" :key="i">
+        <v-carousel-item
+          v-for="({ img, icon, title, text, color }, i) in slides.data"
+          :key="i"
+        >
           <v-sheet color="transparent" height="100%">
             <v-row justify="center" align="center" class="fill-height">
               <v-col cols="12" :md="mdImage || 6">
-                <v-img :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}`: img" class="mb-4" :height="height" max-width="100%"></v-img>
+                <v-img
+                  :src="
+                    dark
+                      ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}`
+                      : img
+                  "
+                  class="mb-4"
+                  :height="height"
+                  max-width="100%"
+                ></v-img>
               </v-col>
               <v-col v-if="title || text || icon" cols="12" :md="mdText || 6">
                 <v-card
@@ -79,6 +129,11 @@
                   <v-card-title
                     v-if="title"
                     class="justify-center font-weight-black text-uppercase"
+                    :style="{
+                      color:
+                        color ||
+                        config.vuetify.theme.themes[theme].onBackground,
+                    }"
                     v-text="title"
                   ></v-card-title>
                   <v-card-text v-if="text" class="subtitle-1 text--secondary">
