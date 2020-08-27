@@ -68,23 +68,28 @@ module.exports = _.merge(defaultConfig, {
         icon: 'fab fa-github',
         label: 'Github',
         url: 'https://github.com/weareopensource',
-      },{
+      },
+      {
         icon: 'fab fa-docker',
         label: 'Docker',
         url: 'https://hub.docker.com/orgs/weareopensource/repositories',
-      },{
+      },
+      {
         icon: 'fab fa-discord',
         label: 'Discord',
         url: 'https://discord.gg/U2a2vVm',
-      },{
+      },
+      {
         icon: 'fab fa-slack',
         label: 'Slack',
         url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
-      },{
+      },
+      {
         icon: 'fab fa-twitter',
         label: 'Twitter',
         url: 'https://twitter.com/waos_io',
-      }, {
+      },
+      {
         label: 'Linkedin',
         icon: 'fab fa-linkedin',
         url: 'https://www.linkedin.com/company/weareopensource-me',
@@ -101,7 +106,8 @@ module.exports = _.merge(defaultConfig, {
         image: null,
         button: null,
         link: null,
-      }, {
+      },
+      {
         title: 'Technical',
         text: '[We](https://blog.weareopensource.me/us/) dream to create stacks **back/fronts**, **aligns on feats** & **architecture**, in multiple languages. Allowing anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep it updated, while exploring scalable deployment, or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
         image: null,
@@ -116,13 +122,14 @@ module.exports = _.merge(defaultConfig, {
         image: null,
         button: null,
         link: null,
-      }, {
+      },
+      {
         title: 'Knowledges',
-        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/weareopensource/weareopensource.github.io/projects/1)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
+        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
-      }
+      },
     ],
     features: {
       title: 'Stacks',
@@ -140,7 +147,7 @@ module.exports = _.merge(defaultConfig, {
           color: '#56a049',
         },
         {
-          icon: "fab fa-swift",
+          icon: 'fab fa-swift',
           title: 'Swift',
           text: '**Alpha Front Stack** <br> Classic auth with on Boarding, profile & GDPR &  tasks example. <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
           color: '#f74e38',
@@ -187,29 +194,35 @@ module.exports = _.merge(defaultConfig, {
         {
           value: '0',
           title: 'Repos',
-        }, {
+        },
+        {
           value: '0',
           title: 'Releases',
-        }, {
+        },
+        {
           value: '0',
           title: 'Articles',
-        }, {
+        },
+        {
           value: '0',
           title: 'Docker Pulls',
         },
       ],
     },
-    blog: { // actually dev for Ghost Blog
+    blog: {
+      // actually dev for Ghost Blog
       title: 'Articles',
       url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
     },
-    blog2: { // actually dev for Ghost Blog
+    blog2: {
+      // actually dev for Ghost Blog
       title: 'News',
       url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
     },
-    blog3: { // actually dev for Ghost Blog
+    blog3: {
+      // actually dev for Ghost Blog
       title: 'Hobbies',
       url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
@@ -221,51 +234,64 @@ module.exports = _.merge(defaultConfig, {
     links: [
       {
         title: 'Useful',
-        items: [{
-          label: 'Blog',
-          icon: 'fa-rss',
-          url: 'https://blog.weareopensource.me',
-        },{
-          icon: 'fab fa-github',
-          label: 'Github',
-          url: 'https://github.com/weareopensource',
-        },{ // set null to hide
-          label: 'Changelogs',
-          icon: 'fa-clipboard-list',
-          url: '/changelogs',
-        }],
+        items: [
+          {
+            label: 'Blog',
+            icon: 'fa-rss',
+            url: 'https://blog.weareopensource.me',
+          },
+          {
+            icon: 'fab fa-github',
+            label: 'Github',
+            url: 'https://github.com/weareopensource',
+          },
+          {
+            // set null to hide
+            label: 'Changelogs',
+            icon: 'fa-clipboard-list',
+            url: '/changelogs',
+          },
+        ],
       },
       {
         title: 'About',
-        items: [{
-          icon: 'fab fa-discord',
-          label: 'Discord',
-          url: 'https://discord.gg/U2a2vVm',
-        },{
-          icon: 'fab fa-slack',
-          label: 'Slack',
-          url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
-        },{
-          icon: 'fab fa-twitter',
-          label: 'Twitter',
-          url: 'https://twitter.com/waos_io',
-        }],
+        items: [
+          {
+            icon: 'fab fa-discord',
+            label: 'Discord',
+            url: 'https://discord.gg/U2a2vVm',
+          },
+          {
+            icon: 'fab fa-slack',
+            label: 'Slack',
+            url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
+          },
+          {
+            icon: 'fab fa-twitter',
+            label: 'Twitter',
+            url: 'https://twitter.com/waos_io',
+          },
+        ],
       },
       {
         title: 'Others',
-        items: [{
-          icon: 'fab fa-docker',
-          label: 'Docker',
-          url: 'https://hub.docker.com/orgs/weareopensource/repositories',
-        },{
-          icon: 'fas fa-vial',
-          label: 'Travis',
-          url: 'https://travis-ci.org/github/weareopensource',
-        },{
-          icon: 'fa-users',
-          label: 'Us ?',
-          url: 'https://blog.weareopensource.me/us/',
-        }],
+        items: [
+          {
+            icon: 'fab fa-docker',
+            label: 'Docker',
+            url: 'https://hub.docker.com/orgs/weareopensource/repositories',
+          },
+          {
+            icon: 'fas fa-vial',
+            label: 'Travis',
+            url: 'https://travis-ci.org/github/weareopensource',
+          },
+          {
+            icon: 'fa-users',
+            label: 'Us ?',
+            url: 'https://blog.weareopensource.me/us/',
+          },
+        ],
       },
     ],
   },
