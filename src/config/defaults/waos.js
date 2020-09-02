@@ -102,14 +102,14 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. As we know It must be **fast**, **efficient** while **avoiding the refactor** afterward. So through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or the writing of **articles**, we **share our knowledge** around this subject.',
+        text: '[WAOS](https://blog.weareopensource.me/us/) aims at simplifying the **start** of new **tech projects** / **startups**. This critical step must be **fast**, **efficient** while avoiding any costly ulterior **refactorings**. Through the creation of [Open-Source](https://github.com/weareopensource) **stacks** and **tools** or the writing of **articles**, WAOS helps to **share knowledge** around this subject.',
         image: null,
         button: null,
         link: null,
       },
       {
         title: 'Technical',
-        text: '[We](https://blog.weareopensource.me/us/) dream to create stacks **back/fronts**, **aligns on feats** & **architecture**, in multiple languages. Allowing anyone to **create full-stack** on demand ([VueJS](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource)) and keep it updated, while exploring scalable deployment, or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dream to create **stacks**, in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource), **aligned** on **features** & **architecture**. We want to allow anyone to **create a full-stack** on demand with its favorite languages, and keep it updated, while exploring scalable deployment, or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -118,13 +118,13 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Creators stopped working on it and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
+        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Its creators stopped working on it and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
       },
       {
-        title: 'Knowledges',
+        title: 'Knowledge',
         text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
