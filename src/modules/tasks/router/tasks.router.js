@@ -15,21 +15,23 @@ export default [
     meta: {
       icon: 'tasks',
     },
-  }, {
+  },
+  {
     path: '/task',
     name: 'task create',
     component: task,
     meta: {
       display: false, // hide any time
-      requiresAuth: true,
+      roles: ['user'], // proteced, require one of this roles
     },
-  }, {
+  },
+  {
     path: '/tasks/:id',
     name: 'task',
     component: task,
     meta: {
       display: false, // hide any time
-      requiresAuth: true,
+      roles: ['user'], // proteced, require one of this roles
     },
   },
 ];

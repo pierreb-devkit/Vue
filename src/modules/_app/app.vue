@@ -74,30 +74,27 @@ export default {
         }
         return response;
       },
-      (err) => new Promise(() => {
-        if (
-          err.response.status === 401 &&
-          err.config &&
-          !err.config.__isRetryRequest
-        ) {
-          this.$store.dispatch('signout');
-          this.snackbar.text = 'Signin failed';
-          this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
-          this.snackbar.status = true;
-          router.push('/signin');
-        }
-        if (
-          this.config.vuetify.theme.snackbar.status &&
-          err.response &&
-          err.response.data &&
-          err.response.data.description
-        ) {
-          this.snackbar.text = err.response.data.description;
-          this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
-          this.snackbar.status = true;
-        }
-        throw err;
-      }),
+      (err) =>
+        new Promise(() => {
+          if (err.response.status === 401 && err.config && !err.config.__isRetryRequest) {
+            this.$store.dispatch('signout');
+            this.snackbar.text = 'Signin failed';
+            this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
+            this.snackbar.status = true;
+            router.push('/signin');
+          }
+          if (
+            this.config.vuetify.theme.snackbar.status &&
+            err.response &&
+            err.response.data &&
+            err.response.data.description
+          ) {
+            this.snackbar.text = err.response.data.description;
+            this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
+            this.snackbar.status = true;
+          }
+          throw err;
+        }),
     );
     // set base theme
     this.$vuetify.theme.dark = theme.isDark(this.config.vuetify.theme.dark);
@@ -118,5 +115,12 @@ export default {
 }
 .v-card {
   border: none !important;
+}
+
+@media only screen and (max-width: 600px) {
+  .container {
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+  }
 }
 </style>

@@ -77,9 +77,7 @@ export default {
   },
   methods: {
     generateTemporalBackground() {
-      return `${
-        this.config.home.temporalBackground
-      }/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
+      return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
     },
   },
 };

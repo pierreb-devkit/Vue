@@ -30,11 +30,23 @@ const getters = {
 const actions = {
   getChangelogs: async ({ commit }) => {
     try {
-      const changelogs = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/changelogs`);
-      commit('contents_set', changelogs.data.data.map((item) => ({
-        title: item.title,
-        markdown: decodeURIComponent(Array.prototype.map.call(atob(item.data.content), (c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`).join('')),
-      })));
+      const changelogs = await Vue.prototype.axios.get(
+        `${api}/${config.api.endPoints.core}/changelogs`,
+      );
+      commit(
+        'contents_set',
+        changelogs.data.data.map((item) => ({
+          title: item.title,
+          markdown: decodeURIComponent(
+            Array.prototype.map
+              .call(
+                atob(item.data.content),
+                (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`,
+              )
+              .join(''),
+          ),
+        })),
+      );
     } catch (err) {
       commit('error', err);
     }
@@ -56,7 +68,10 @@ const actions = {
     try {
       const obj = model.clean(params, whitelists);
       obj.news = true;
-      const res = await Vue.prototype.axios.post(`${api}/${config.api.endPoints.subscriptions}/`, obj);
+      const res = await Vue.prototype.axios.post(
+        `${api}/${config.api.endPoints.subscriptions}/`,
+        obj,
+      );
       commit('subscription_set', res.data.data);
     } catch (err) {
       commit('error', err);

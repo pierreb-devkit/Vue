@@ -47,21 +47,14 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-btn
-                :disabled="!valid"
-                color="success"
-                class="mr-4"
-                @click="validate"
+              <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate"
                 >Validate</v-btn
               >
-              <v-btn color="error" class="mr-4" @click="reset"
-                >Reset Form</v-btn
-              >
+              <v-btn color="error" class="mr-4" @click="reset">Reset Form</v-btn>
             </v-row>
           </v-form>
           <br />
-          <router-link to="/signin">Sign In</router-link> if you already have an
-          account :) !
+          <router-link to="/signin">Sign In</router-link>if you already have an account :) !
         </v-container>
       </v-card>
     </v-row>

@@ -6,19 +6,11 @@
     v-if="features.data.length > 0"
   >
     <v-container class="text-center">
-      <h2
-        class="display-1 font-weight-bold mb-3 pb-8 text-uppercase"
-        v-if="features.title"
-      >
+      <h2 class="display-1 font-weight-bold mb-3 pb-8 text-uppercase" v-if="features.title">
         {{ features.title }}
       </h2>
       <v-row justify="center">
-        <v-col
-          v-for="({ icon, title, text, color }, i) in features.data"
-          :key="i"
-          cols="12"
-          md="4"
-        >
+        <v-col v-for="({ icon, title, text, color }, i) in features.data" :key="i" cols="12" md="4">
           <v-card
             class="py-12 px-4"
             :flat="config.vuetify.theme.flat"

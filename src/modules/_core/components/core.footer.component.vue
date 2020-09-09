@@ -9,9 +9,7 @@
     <div class="flex-grow-1"></div>
     <div>
       &copy; 2019
-      <a
-        href="https://weareopensource.me"
-        style="color: white; text-decoration: none;"
+      <a href="https://weareopensource.me" style="color: white; text-decoration: none;"
         >We Are Open Source</a
       >
     </div>

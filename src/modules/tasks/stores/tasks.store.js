@@ -49,7 +49,10 @@ const actions = {
   updateTask: async ({ commit, state }, params) => {
     try {
       const obj = model.clean(_.merge(state.task, params), whitelists);
-      const res = await Vue.prototype.axios.put(`${api}/${config.api.endPoints.tasks}/${params.id}`, obj);
+      const res = await Vue.prototype.axios.put(
+        `${api}/${config.api.endPoints.tasks}/${params.id}`,
+        obj,
+      );
       commit('task_update', res.data.data);
     } catch (err) {
       commit('task_error', err);

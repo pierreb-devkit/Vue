@@ -1,4 +1,6 @@
 module.exports = {
   singleQuote: true,
-  tailingComma: 'all'
+  trailingComma: 'all',
+  arrowParens: 'always',
+  extends: 'airbnb',
 };

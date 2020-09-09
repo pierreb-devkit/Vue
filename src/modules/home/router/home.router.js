@@ -16,7 +16,8 @@ export default [
     meta: {
       icon: 'home',
     },
-  }, {
+  },
+  {
     path: '/changelogs',
     name: 'changelogs',
     component: pages,
@@ -25,7 +26,8 @@ export default [
       title: 'Changelogs',
       data: 'getChangelogs', // array of {title: ..., markdown: ...}
     },
-  }, {
+  },
+  {
     path: '*',
     redirect: { name: 'Home' },
     meta: {

@@ -1,13 +1,23 @@
 <template>
   <div>
-    <homeBannerComponent v-bind:ratio="1" v-bind:subscribe="true" v-bind:app="config.app"></homeBannerComponent>
-    <homeAboutsComponent v-bind:abouts="config.home.abouts" v-bind:md="6" v-bind:custom="null"></homeAboutsComponent>
+    <homeBannerComponent
+      v-bind:ratio="1"
+      v-bind:subscribe="true"
+      v-bind:app="config.app"
+    ></homeBannerComponent>
+    <homeAboutsComponent
+      v-bind:abouts="config.home.abouts"
+      v-bind:md="6"
+      v-bind:custom="null"
+    ></homeAboutsComponent>
     <homeSlideshowComponent
       v-bind:slides="config.home.slideshow"
-      v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
-      v-bind:height="pageHeight/1.5"
+      v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
+      v-bind:height="pageHeight / 1.5"
       v-bind:full="true"
       v-bind:interval="10000"
+      v-bind:mdImage="null"
+      v-bind:mdText="null"
     ></homeSlideshowComponent>
     <homeFeaturesComponent
       v-bind:features="config.home.features"
@@ -16,9 +26,16 @@
         card: { background: config.vuetify.theme.themes[theme].background },
       }"
     ></homeFeaturesComponent>
-    <homeFeaturesComponent v-bind:features="config.home.tools"></homeFeaturesComponent>
+    <homeFeaturesComponent
+      v-bind:features="config.home.tools"
+      v-bind:custom="null"
+    ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
-    <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="null" v-bind:md="6"></homeAboutsComponent>
+    <homeAboutsComponent
+      v-bind:abouts="config.home.abouts2"
+      v-bind:custom="null"
+      v-bind:md="6"
+    ></homeAboutsComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
@@ -37,7 +54,7 @@
       v-bind:title="config.home.blog3.title"
       v-bind:url="config.home.blog3.url"
       v-bind:news="news3"
-      v-bind:custom="{ section : { background: config.vuetify.theme.themes[theme].surface }}"
+      v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
     ></homeBlogComponent>
     <homeContactComponent></homeContactComponent>
     <homeLinksComponent

@@ -51,11 +51,7 @@
                 </v-col>
               </v-row>
               <v-row v-if="!this.task.id">
-                <v-btn
-                  :disabled="!valid"
-                  color="success"
-                  class="mr-4"
-                  @click="create"
+                <v-btn :disabled="!valid" color="success" class="mr-4" @click="create"
                   >Validate</v-btn
                 >
               </v-row>

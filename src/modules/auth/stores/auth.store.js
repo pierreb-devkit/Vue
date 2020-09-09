@@ -25,6 +25,7 @@ const actions = {
         data: params,
         method: 'POST',
       });
+      localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       commit('auth_success', res.data);
       dispatch('refreshNav');
@@ -40,6 +41,7 @@ const actions = {
         data: params,
         method: 'POST',
       });
+      localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       commit('auth_success', res.data);
       dispatch('refreshNav');
@@ -51,6 +53,7 @@ const actions = {
   signout({ commit }) {
     return new Promise((resolve) => {
       commit('auth_logout');
+      localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
       resolve();
     });
