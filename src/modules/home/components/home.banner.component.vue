@@ -120,10 +120,10 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['subscription']),
+    ...mapGetters(['homeSubscription']),
     email: {
       get() {
-        return this.subscription.email;
+        return this.homeSubscription.email;
       },
       set(email) {
         this.save = true;
@@ -136,9 +136,9 @@ export default {
       return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
     },
     createSubscription() {
-      if (this.rules.email(this.subscription.email)) {
+      if (this.rules.email(this.homeSubscription.email)) {
         this.$store
-          .dispatch('createSubscription', this.subscription)
+          .dispatch('createSubscription', this.homeSubscription)
           .catch((err) => console.log(err));
       }
     },

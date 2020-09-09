@@ -169,7 +169,7 @@ export default {
     signout() {
       this.$store.dispatch('signout').then(() => {
         this.$store.dispatch('refreshNav');
-        if (this.$route.path !== '/') this.$router.push('/home');
+        if (this.$route.path !== '/') this.$router.push('/');
       });
     },
   },
