@@ -210,7 +210,7 @@ module.exports = _.merge(defaultConfig, {
       ],
     },
     suggestions: {
-      title: 'suggested softs',
+      title: 'Softs',
       data: [
         [{
           title: 'Github',
