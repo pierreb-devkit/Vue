@@ -1,3 +1,18 @@
+<!--
+  - Call example
+    <homeBannerComponent
+      v-bind:ratio="1"
+      v-bind:subscribe="true"
+      v-bind:app="app"
+    ></homeBannerComponent>
+  - Data Example
+  app: {
+    title: 'WAOS Dev',
+    logo: 'logo.png', // null to use title by default
+    subtitle: 'welcome to demo.',
+    description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) '
+  },
+-->
 <template>
   <section id="hero">
     <v-row no-gutters>

@@ -1,3 +1,30 @@
+<!--
+  - Call example
+    <homeStatsComponent v-bind:statistics="stats"></homeStatsComponent>
+  - Data Example
+  sponsors: {
+    stats: {
+      background: null,
+      data: [
+        {
+          value: '0',
+          title: 'Repos',
+        },
+        {
+          value: '0',
+          title: 'Releases',
+        },
+        {
+          value: '0',
+          title: 'Articles',
+        },
+        {
+          value: '0',
+          title: 'Docker Pulls',
+        },
+      ],
+    },
+-->
 <template>
   <section id="stats" class="black" v-if="statistics.length > 0">
     <v-parallax

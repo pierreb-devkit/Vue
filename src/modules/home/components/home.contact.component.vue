@@ -1,3 +1,7 @@
+<!--
+  - Call example
+    <homeContactComponent></homeContactComponent>
+-->
 <template>
   <section id="contact" class="py-12">
     <v-container>

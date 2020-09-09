@@ -1,3 +1,33 @@
+<!--
+  - Call example
+    <homeSlideshowComponent
+      v-bind:slides="slideshow"
+      v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
+      v-bind:height="pageHeight / 1.75"
+      v-bind:full="true"
+      v-bind:interval="10000"
+      v-bind:mdImage="null"
+      v-bind:mdText="null"
+    ></homeSlideshowComponent>
+  - Data Example
+    slideshow: {
+      title: 'Demos',
+      data: [
+        {
+          img: '01.jpg',
+          icon: null,
+          title: null,
+          text: null,
+        },
+        {
+          img: '02.jpg',
+          icon: null,
+          title: null,
+          text: null,
+        },
+      ],
+    },
+-->
 <template>
   <section
     id="features"

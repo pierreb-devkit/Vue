@@ -1,3 +1,22 @@
+<!--
+  - Call example
+    <homeFeaturesComponent
+      v-bind:features="features"
+      v-bind:custom="null"
+    ></homeFeaturesComponent>
+  - Data Example
+    features: {
+      title: 'Stacks',
+      data: [
+        {
+          icon: 'fab fa-vuejs',
+          title: 'Vue',
+          text: '**Alpha Front Stack** <br> Classic auth with landing page ...',
+          color: '#186b9f',
+        },
+      ],
+    },
+-->
 <template>
   <section
     id="features"
@@ -12,7 +31,7 @@
       <v-row justify="center">
         <v-col v-for="({ icon, title, text, color }, i) in features.data" :key="i" cols="12" md="4">
           <v-card
-            class="py-12 px-4"
+            class="pt-8 pb-2 px-4"
             :flat="config.vuetify.theme.flat"
             :style="custom && custom.card ? custom.card : null"
           >

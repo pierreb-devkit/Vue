@@ -1,3 +1,43 @@
+<!--
+  - Call example
+    <homeLinksComponent
+      v-bind:links="links"
+      v-bind:custom="null"
+    ></homeLinksComponent>
+  - Data Example
+    links: [
+      {
+        title: 'Useful',
+        items: [
+          {
+            label: 'Blog',
+            icon: 'fa-rss',
+            url: 'https://blog.weareopensource.me',
+          },
+        ],
+      },
+      {
+        title: 'About',
+        items: [
+          {
+            icon: 'fab fa-discord',
+            label: 'Discord',
+            url: 'https://discord.gg/U2a2vVm',
+          },
+        ],
+      },
+      {
+        title: 'Others',
+        items: [
+          {
+            icon: 'fab fa-docker',
+            label: 'Docker',
+            url: 'https://hub.docker.com/orgs/weareopensource/repositories',
+          },
+        ],
+      },
+    ],
+-->
 <template>
   <section
     id="features"

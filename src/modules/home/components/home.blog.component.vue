@@ -1,3 +1,19 @@
+<!--
+  - Call example
+    <homeBlogComponent
+      v-bind:title="blog"
+      v-bind:url="config.home.blog2.url"
+      v-bind:news="news2"
+      v-bind:custom="null"
+    ></homeBlogComponent>
+  - Data Example
+    blog: {
+      // actually dev for Ghost Blog
+      title: 'Articles',
+      url: 'https://blog.weareopensource.me',
+      key: 'yourkey',
+    },
+-->
 <template>
   <section
     id="blog"

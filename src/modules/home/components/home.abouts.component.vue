@@ -1,3 +1,21 @@
+<!--
+  - Call example
+    <homeAboutsComponent
+      v-bind:abouts="abouts"
+      v-bind:custom="null"
+      v-bind:md="6"
+    ></homeAboutsComponent>
+  - Data Example
+    abouts: [
+      {
+        title: 'Concept',
+        text: '[WAOS](https://blog.weareopensource.me/us/) aims at simpli ... ',
+        image: null,
+        button: null,
+        link: null,
+      },
+    ],
+-->
 <template>
   <section
     id="about-me"

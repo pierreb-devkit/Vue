@@ -1,3 +1,31 @@
+<!--
+  - Call example
+  <homeLogosComponent
+    v-bind:logos="sponsors"
+    v-bind:size="150"
+    v-bind:ratio="1"
+    v-bind:custom="null"
+  ></homeLogosComponent>
+  - Data Example
+  sponsors: {
+    title: 'Sponsor',
+    data: [
+      [{
+        title: 'OpenCollective',
+        image: 'logos/opencollective.png',
+        link: 'https://opencollective.com/weareopensource',
+      }, {
+        title: 'Ko-fi',
+        image: 'logos/patreon.png',
+        link: 'https://ko-fi.com/weareopensource',
+      }, {
+        title: 'Patreon',
+        image: 'logos/kofi.png',
+        link: 'https://patreon.com/weareopensource',
+      }],
+    ],
+  },
+-->
 <template>
   <section
     id="features"
@@ -36,7 +64,6 @@
     </v-container>
   </section>
 </template>
-
 <script>
 /**
  * Export default
