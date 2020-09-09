@@ -13,7 +13,7 @@
     <homeSlideshowComponent
       v-bind:slides="config.home.slideshow"
       v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
-      v-bind:height="pageHeight / 1.5"
+      v-bind:height="pageHeight / 1.75"
       v-bind:full="true"
       v-bind:interval="10000"
       v-bind:mdImage="null"
@@ -36,26 +36,45 @@
       v-bind:custom="null"
       v-bind:md="6"
     ></homeAboutsComponent>
+    <homeLogosComponent
+      v-bind:logos="config.home.suggestions"
+      v-bind:size="75"
+      v-bind:ratio="2"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+        card: { background: config.vuetify.theme.themes[theme].background },
+      }"
+    ></homeLogosComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
       v-bind:news="news"
-      v-bind:custom="{
-        section: { background: config.vuetify.theme.themes[theme].surface },
-      }"
+      v-bind:custom="null"
     ></homeBlogComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog2.title"
       v-bind:url="config.home.blog2.url"
       v-bind:news="news2"
-      v-bind:custom="null"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+        card: { background: config.vuetify.theme.themes[theme].background },
+      }"
     ></homeBlogComponent>
     <homeBlogComponent
       v-bind:title="config.home.blog3.title"
       v-bind:url="config.home.blog3.url"
       v-bind:news="news3"
-      v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
+      v-bind:custom="null"
     ></homeBlogComponent>
+    <homeLogosComponent
+      v-bind:logos="config.home.sponsors"
+      v-bind:size="150"
+      v-bind:ratio="1"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].surface },
+        card: { background: config.vuetify.theme.themes[theme].background },
+      }"
+    ></homeLogosComponent>
     <homeContactComponent></homeContactComponent>
     <homeLinksComponent
       v-bind:links="config.home.links"
@@ -81,6 +100,7 @@ import homeStatsComponent from '../components/home.stats.component.vue';
 import homeBlogComponent from '../components/home.blog.component.vue';
 import homeContactComponent from '../components/home.contact.component.vue';
 import homeLinksComponent from '../components/home.links.component.vue';
+import homeLogosComponent from '../components/home.logos.component.vue';
 
 /**
  * Export default
@@ -100,6 +120,7 @@ export default {
     homeBlogComponent,
     homeContactComponent,
     homeLinksComponent,
+    homeLogosComponent,
   },
   computed: {
     ...mapGetters(['theme', 'news', 'statistics', 'news2', 'news3']),

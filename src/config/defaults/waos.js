@@ -209,6 +209,84 @@ module.exports = _.merge(defaultConfig, {
         },
       ],
     },
+    suggestions: {
+      title: 'suggested softs',
+      data: [
+        [{
+          title: 'Github',
+          image: 'logos/github.png',
+          link: 'https://github.com/',
+        }, {
+          title: 'Gogs',
+          image: 'logos/gogs.png',
+          link: 'https://gogs.io/',
+        }, {
+          title: 'Shields',
+          image: 'logos/shields.png',
+          link: 'https://shields.io/',
+        }, {
+          title: 'Coveralls',
+          image: 'logos/coveralls.jpeg',
+          link: 'https://coveralls.io/',
+        }, {
+          title: 'CodeClimate',
+          image: 'logos/codeclimate.jpg',
+          link: 'https://codeclimate.com/',
+        }, {
+          title: 'Dependabot',
+          image: 'logos/dependabot.png',
+          link: 'https://dependabot.com/',
+        }, {
+          title: 'Snyk',
+          image: 'logos/snyk.jpg',
+          link: 'https://snyk.io/',
+        }, {
+          title: 'Travis',
+          image: 'logos/travis.jpg',
+          link: 'https://travis-ci.org/',
+        }, {
+          title: 'Drone',
+          image: 'logos/drone.png',
+          link: 'https://drone.io/',
+        }, {
+          title: 'Docker',
+          image: 'logos/docker.png',
+          link: 'https://www.docker.com/',
+        }, {
+          title: 'Kubernetes',
+          image: 'logos/kubernetes.png',
+          link: 'https://kubernetes.io/',
+        }, {
+          title: 'Rancher',
+          image: 'logos/rancher.png',
+          link: 'https://rancher.com/',
+        }, {
+          title: 'Keel',
+          image: 'logos/keel.png',
+          link: 'https://keel.sh/',
+        }, {
+          title: 'Slack',
+          image: 'logos/slack.png',
+          link: 'https://slack.com/',
+        }, {
+          title: 'Discord',
+          image: 'logos/discord.jpg',
+          link: 'https://discord.com/',
+        }, {
+          title: 'Ghost',
+          image: 'logos/ghost.png',
+          link: 'https://ghost.org/',
+        }, {
+          title: 'Zapier',
+          image: 'logos/zapier.png',
+          link: 'https://zapier.com/',
+        }, {
+          title: 'Matomo',
+          image: 'logos/matomo.png',
+          link: 'https://fr.matomo.org/',
+        }],
+      ],
+    },
     blog: {
       // actually dev for Ghost Blog
       title: 'Articles',
@@ -230,6 +308,24 @@ module.exports = _.merge(defaultConfig, {
     contact: {
       title: 'Contact Us',
       mail: 'mailto:pierre@weareopensource.me',
+    },
+    sponsors: {
+      title: 'Sponsor',
+      data: [
+        [{
+          title: 'OpenCollective',
+          image: 'logos/opencollective.png',
+          link: 'https://opencollective.com/weareopensource',
+        }, {
+          title: 'Ko-fi',
+          image: 'logos/patreon.png',
+          link: 'https://ko-fi.com/weareopensource',
+        }, {
+          title: 'Patreon',
+          image: 'logos/kofi.png',
+          link: 'https://patreon.com/weareopensource',
+        }],
+      ],
     },
     links: [
       {
