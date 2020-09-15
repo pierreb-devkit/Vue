@@ -24,6 +24,10 @@ module.exports = _.merge(defaultConfig, {
   cookie: {
     prefix: 'waos',
   },
+  oAuth: {
+    google: true, // require server side oAuth config
+    apple: true, // require server side oAuth config
+  },
   analytics: {
     matomo: {
       host: 'https://mtm.weareopensource.me',
