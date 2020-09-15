@@ -25,8 +25,8 @@ module.exports = _.merge(defaultConfig, {
     prefix: 'waos',
   },
   oAuth: {
-    google: true, // require server side oAuth config
-    apple: true, // require server side oAuth config
+    google: false, // require server side oAuth config
+    apple: false, // require server side oAuth config
   },
   analytics: {
     matomo: {
