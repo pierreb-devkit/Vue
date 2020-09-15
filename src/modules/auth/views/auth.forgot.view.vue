@@ -10,7 +10,7 @@
         :flat="config.vuetify.theme.flat"
       >
         <v-col cols="12">
-          <v-subheader><h4>Sign In</h4></v-subheader>
+          <v-subheader><h4>Forgot</h4></v-subheader>
           <v-divider></v-divider>
         </v-col>
         <v-container>
@@ -24,48 +24,29 @@
                   prepend-icon="fa fa-envelope"
                   required
                 ></v-text-field>
-                <v-text-field
-                  :type="'password'"
-                  :rules="[rules.password]"
-                  v-model="password"
-                  label="Password"
-                  prepend-icon="fa fa-key"
-                  required
-                ></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate"
+                <v-btn
+                  :disabled="!valid || mail.status"
+                  color="success"
+                  class="mr-4"
+                  @click="validate"
                   >Validate</v-btn
                 >
                 <v-btn color="error" class="mr-4" @click="reset">Reset Form</v-btn>
-              </v-col>
-              <v-col cols="12">
-                <v-btn
-                  v-if="config.oAuth.google"
-                  :href="`${oAuth}/google`"
-                  class="white--text mr-4 blue"
-                  ><v-icon class="mr-4">fab fa-google</v-icon> Sign In</v-btn
-                >
-                <v-btn
-                  v-if="config.oAuth.apple"
-                  :href="`${oAuth}/apple`"
-                  class="white--text mr-4 grey darken-2"
-                  ><v-icon class="mr-4">fab fa-apple</v-icon> Sign In</v-btn
-                >
               </v-col>
             </v-row>
           </v-form>
           <br />
           <p v-if="config.vuetify.theme.signup">
             <b>
-              <router-link to="/signup">Sign Up</router-link>
+              <router-link to="/signin">Back</router-link>
             </b>
-            if you don't have an account yet :) ! or maybe
-            <b>
-              <router-link to="/forgot">reset</router-link>
-            </b>
-            your password ?
+            to sign in !
           </p>
+          <v-alert v-if="mail.message" type="success">
+            {{ mail.message }}
+          </v-alert>
         </v-container>
       </v-card>
     </v-row>
@@ -85,27 +66,20 @@ export default {
     return {
       valid: false,
       email: '',
-      password: '',
-      oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
-        password: (v) => !!v || 'Password is required',
       },
     };
   },
   computed: {
-    ...mapGetters(['theme']),
+    ...mapGetters(['theme', 'mail']),
   },
   methods: {
     validate() {
       if (this.$refs.form.validate()) {
         const { email } = this;
-        const { password } = this;
-        this.$store
-          .dispatch('signin', { email, password })
-          .then(() => this.$router.push(this.config.sign.route))
-          .catch((err) => console.log(err));
+        this.$store.dispatch('forgot', { email }).catch((err) => console.log(err));
       }
     },
     reset() {
