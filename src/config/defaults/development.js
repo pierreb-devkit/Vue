@@ -88,7 +88,7 @@ module.exports = {
           secondary: '#EE5A24',
           background: '#f3f3f6',
           surface: '#ffffff',
-          error: '#EA2027',
+          error: '#e01f26',
           success: '#119178',
           onPrimary: '#ffffff',
           onSecondary: '#FFFFFF',

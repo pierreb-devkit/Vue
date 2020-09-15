@@ -12,6 +12,8 @@ ARG WAOS_VUE_api_host='localhost'
 ARG WAOS_VUE_api_port='3000'
 ARG WAOS_VUE_api_base='api'
 ARG WAOS_VUE_cookie='waos'
+ARG WAOS_VUE_oAuth_google=false
+ARG WAOS_VUE_oAuth_apple=false
 
 # Install app dependencies & build
 COPY package*.json ./
