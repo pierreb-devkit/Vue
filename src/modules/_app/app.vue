@@ -116,11 +116,4 @@ export default {
 .v-card {
   border: none !important;
 }
-
-@media only screen and (max-width: 600px) {
-  .container {
-    padding-left: 0px !important;
-    padding-right: 0px !important;
-  }
-}
 </style>

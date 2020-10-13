@@ -35,7 +35,7 @@
             </v-row>
           </v-form>
           <br />
-          <p v-if="config.vuetify.theme.signup">
+          <p v-if="config.sign.up">
             <b>
               <router-link to="/signin">Back</router-link>
             </b>

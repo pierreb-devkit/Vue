@@ -37,14 +37,8 @@ const actions = {
         'contents_set',
         changelogs.data.data.map((item) => ({
           title: item.title,
-          markdown: decodeURIComponent(
-            Array.prototype.map
-              .call(
-                atob(item.data.content),
-                (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`,
-              )
-              .join(''),
-          ),
+          markdown: item.markdown.replace(/\[([^\\[\]]*)\]\((.*?)\)/gm, '').replace(/\(\)/g, ''),
+          style: 'air',
         })),
       );
     } catch (err) {

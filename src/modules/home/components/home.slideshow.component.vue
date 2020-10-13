@@ -79,13 +79,13 @@
                   <v-col cols="12">
                     <v-row align="start" justify="center" class="text-center display-1">
                       <v-col cols="12" md="12">
-                        <h4
+                        <h5
                           :style="{
                             color: color || config.vuetify.theme.themes[theme].onPrimary,
                           }"
                         >
                           {{ text }}
-                        </h4>
+                        </h5>
                       </v-col>
                     </v-row>
                   </v-col>

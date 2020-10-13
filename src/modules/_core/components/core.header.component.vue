@@ -103,7 +103,7 @@
       </v-list>
     </v-menu>
     <!-- user menu -->
-    <v-tooltip v-if="!isLoggedIn && config.vuetify.theme.signin" bottom>
+    <v-tooltip v-if="!isLoggedIn && config.sign.in" bottom>
       <template v-slot:activator="{ on, attrs }">
         <v-btn v-on="on" v-bind="attrs" min-width="50" min-height="50" x-small icon>
           <router-link to="/signin">
