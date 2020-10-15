@@ -29,8 +29,8 @@ module.exports = {
     prefix: 'waos',
   },
   oAuth: {
-    google: false, // require server side oAuth config
-    apple: false, // require server side oAuth config
+    google: true, // require server side oAuth config
+    apple: true, // require server side oAuth config
   },
   analytics: {
     matomo: {
