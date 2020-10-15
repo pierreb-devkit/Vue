@@ -37,7 +37,7 @@ const actions = {
         'contents_set',
         changelogs.data.data.map((item) => ({
           title: item.title,
-          markdown: item.markdown.replace(/\[([^\\[\]]*)\]\((.*?)\)/gm, '').replace(/\(\)/g, ''),
+          markdown: item.markdown.replace(/\[([^\\[\]]*)\]\((.*?)\)/gm, '$1').replace(/\(\w{7}\)/g, ''),
           style: 'air',
         })),
       );

@@ -21,6 +21,7 @@ module.exports = {
     'no-shadow': 0,
     'operator-linebreak': 0,
     'implicit-arrow-linebreak': 0,
+    'vue/experimental-script-setup-vars': 0,
   },
   parserOptions: {
     parser: 'babel-eslint',
