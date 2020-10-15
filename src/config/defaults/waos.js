@@ -21,6 +21,10 @@ module.exports = _.merge(defaultConfig, {
       historys: 'historys',
     },
   },
+  sign: {
+    in: false, // display signin link
+    up: false, // display signup link
+  },
   cookie: {
     prefix: 'waos',
   },
