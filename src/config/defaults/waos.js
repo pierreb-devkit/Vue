@@ -133,7 +133,7 @@ module.exports = _.merge(defaultConfig, {
       },
       {
         title: 'Knowledge',
-        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/rancher-2-how-to-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
+        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/tag/rancher-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
@@ -145,19 +145,19 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fab fa-vuejs',
           title: 'Vue',
-          text: '**Alpha Front Stack** <br> Classic auth with landing page, tasks & subscription example. <br/> *Vuetify, Vuex, Vuetify, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
+          text: '**Alpha Front Stack** <br> Landing page, Classic auth, Tasks, Subscriptions, Users. <br/> *Vuetify, Vuex, Vuetify, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
           color: '#186b9f',
         },
         {
           icon: 'fab fa-node',
           title: 'Node',
-          text: '**Beta Back Stack** <br> Classic auth with tasks, subscription & GDPR & uploads example. <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
+          text: '**Beta Back Stack** <br> Classic auth, Tasks, Subscription, GDPR, Uploads ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
           color: '#56a049',
         },
         {
           icon: 'fab fa-swift',
           title: 'Swift',
-          text: '**Alpha Front Stack** <br> Classic auth with on Boarding, profile & GDPR &  tasks example. <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
+          text: '**Alpha Front Stack** <br> On boarding, Classic auth, Tasks, User, GDPR. <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
           color: '#f74e38',
         },
       ],
