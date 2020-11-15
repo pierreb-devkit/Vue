@@ -106,7 +106,7 @@ module.exports = _.merge(defaultConfig, {
   },
   home: {
     subscriptions: true, // disbale / enable
-    temporalBackground: 'https://blog.weareopensource.me/content/images/2020/06', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
+    temporalBackground: 'https://blog.weareopensource.me/content/images/size/w1600/2020/11', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
     abouts: [
       {
         title: 'Concept',
