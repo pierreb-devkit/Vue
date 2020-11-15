@@ -27,7 +27,7 @@
       >
         <v-theme-provider dark>
           <v-container fill-height>
-            <v-row align="center" class="white--text mx-auto" justify="center">
+            <v-row align="center" class="white--text mx-auto" justify="center" style="margin-top:-100px;">
               <v-col class="white--text text-center" cols="12" tag="h1">
                 <span
                   v-if="app.title && !app.logo"
@@ -41,8 +41,17 @@
                     :src="require('@/assets/images/' + this.config.app.logo)"
                     aspect-ratio="5"
                     max-width="375"
-                  ></v-img>
+                    class="mb-2"
+                  >
+                  </v-img>
                 </center>
+                <span
+                  v-if="app.status && app.status !== ''"
+                  class="font-weight-light display-0"
+                  style="opacity:0.5;"
+                  >{{ app.status }}</span
+                >
+                <br />
                 <br />
                 <span
                   v-if="app.subtitle"
@@ -71,7 +80,7 @@
                 md="7"
                 lg="6"
                 xl="5"
-                style="bottom: 10%; position: absolute; opacity: 75%;"
+                style="bottom: 5%; position: absolute; opacity: 75%;"
                 data-aos="fade-up"
                 v-if="config.home.subscriptions && subscribe"
               >
@@ -109,7 +118,7 @@ import { mapGetters } from 'vuex';
  */
 export default {
   name: 'homeBannerComponent',
-  props: ['ratio', 'subscribe', 'app'],
+  props: ['ratio', 'subscribe', 'app', 'statusMargin'],
   data() {
     return {
       valid: false,

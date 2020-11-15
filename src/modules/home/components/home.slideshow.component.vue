@@ -30,7 +30,7 @@
 -->
 <template>
   <section
-    id="features"
+    id="slideShow"
     :class="full ? '' : 'py-12'"
     :style="custom && custom.section ? custom.section : null"
     v-if="slides.data.length > 0"
@@ -43,9 +43,10 @@
       hide-delimiter-background
       :show-arrows="false"
       :interval="interval || 6000"
+      style="max-height:900px !important;"
     >
       <v-carousel-item v-for="({ img, text, position, dark, color }, i) in slides.data" :key="i">
-        <v-sheet color="transparent" height="100%">
+        <v-sheet color="transparent" height="100%"  style="max-height:900px !important;">
           <v-row class="fill-height" align="center" justify="center">
             <v-img
               :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}` : img"
@@ -78,7 +79,7 @@
                 <v-row>
                   <v-col cols="12">
                     <v-row align="start" justify="center" class="text-center display-1">
-                      <v-col cols="12" md="12">
+                      <v-col cols="12" md="12" class="mt-0 pt-0">
                         <h5
                           :style="{
                             color: color || config.vuetify.theme.themes[theme].onPrimary,

@@ -3,6 +3,7 @@ const defaultConfig = require('./development');
 
 module.exports = _.merge(defaultConfig, {
   app: {
-    title: 'WAOS Prod',
+    title: 'WAOS',
+    status: 'Prod',
   },
 });

@@ -41,6 +41,18 @@ import theme from '@/lib/helpers/theme';
  * Export default
  */
 export default {
+  name: 'App',
+  metaInfo() {
+    return {
+      title: this.config.app.title,
+      titleTemplate: `%s | ${this.$route.name}`,
+      meta: [
+        { name: 'description', content: this.config.app.description },
+        { name: 'keywords', content: this.config.app.keywords },
+        { name: 'author', content: this.config.app.author },
+      ],
+    };
+  },
   data() {
     return {
       snackbar: {

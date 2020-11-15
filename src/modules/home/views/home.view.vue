@@ -4,6 +4,7 @@
       v-bind:ratio="1"
       v-bind:subscribe="true"
       v-bind:app="config.app"
+      v-bind:statusMargin="450"
     ></homeBannerComponent>
     <homeAboutsComponent
       v-bind:abouts="config.home.abouts"
