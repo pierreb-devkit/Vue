@@ -15,6 +15,7 @@ const whitelists = ['email', 'news'];
  * Getters: get state
  */
 const getters = {
+  team: (state) => state.team,
   contents: (state) => state.contents,
   news: (state) => state.news,
   homeSubscription: (state) => state.subscription,
@@ -28,10 +29,18 @@ const getters = {
  * Actions
  */
 const actions = {
+  getTeam: async ({ commit }) => {
+    try {
+      const team = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/team`);
+      commit('team_set', team.data.data);
+    } catch (err) {
+      commit('error', err);
+    }
+  },
   getChangelogs: async ({ commit }) => {
     try {
       const changelogs = await Vue.prototype.axios.get(
-        `${api}/${config.api.endPoints.core}/changelogs`,
+        `${api}/${config.api.endPoints.home}/changelogs`,
       );
       commit(
         'contents_set',
@@ -75,8 +84,8 @@ const actions = {
     try {
       // const tasks = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
       // const users = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/stats`);
-      const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/releases`);
-      const pulls = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.core}/pulls`);
+      const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/releases`);
+      const pulls = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/pulls`);
       const ghost = new GhostContentAPI({
         url: config.home.blog.url,
         key: config.home.blog.key,
@@ -130,6 +139,10 @@ const mutations = {
   error(err) {
     console.log(err);
   },
+  // team
+  team_set(state, data) {
+    state.team = data;
+  },
   // news
   contents_set(state, data) {
     state.contents = data;
@@ -176,6 +189,7 @@ const mutations = {
  * State
  */
 const state = {
+  team: [],
   contents: [],
   news: [],
   subscription: {},

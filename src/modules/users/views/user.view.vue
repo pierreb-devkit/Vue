@@ -52,13 +52,14 @@
                 </v-col>
                 <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2">
                   <center>
-                    <userArrayComponent
+                    <userAvatarComponent
                       :user="user"
                       :width="'200px'"
                       :height="'200px'"
                       :radius="'50%'"
                       :border="'0px'"
                       :color="'#000'"
+                      :size="512"
                     />
                   </center>
                 </v-col>
@@ -73,6 +74,7 @@
                     clearable
                     counter
                   ></v-textarea>
+                  <v-text-field v-model="position" label="Position" required></v-text-field>
                   <v-select
                     v-model="roles"
                     :items="rolesItems"
@@ -126,7 +128,7 @@
  * Module dependencies.
  */
 import { mapGetters } from 'vuex';
-import userArrayComponent from '../components/user.avatar.component.vue';
+import userAvatarComponent from '../components/user.avatar.component.vue';
 
 /**
  * Export default
@@ -146,7 +148,7 @@ export default {
     };
   },
   components: {
-    userArrayComponent,
+    userAvatarComponent,
   },
   computed: {
     ...mapGetters(['theme', 'user', 'result']),
@@ -186,6 +188,15 @@ export default {
         this.$store.commit('user_update', { bio });
       },
     },
+    position: {
+      get() {
+        return this.user.position;
+      },
+      set(position) {
+        this.save = true;
+        this.$store.commit('user_update', { position });
+      },
+    },
     roles: {
       get() {
         return this.user.roles;
@@ -212,6 +223,7 @@ export default {
         const { lastName } = this;
         const { email } = this;
         const { bio } = this;
+        const { position } = this;
         const { roles } = this;
         const { avatar } = this;
 
@@ -221,6 +233,7 @@ export default {
           lastName,
           email,
           bio,
+          position,
           roles,
           avatar,
         };

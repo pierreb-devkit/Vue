@@ -7,6 +7,7 @@
  :radius="'50%'"
  :border="'0px'"
  :color="'#000'"
+ :size="256"
  />
 -->
 <template>
@@ -16,7 +17,7 @@
         <v-img
           v-if="user.avatar && user.avatar != ''"
           v-on="on"
-          :src="setImages(config.api, user.avatar, '256', null)"
+          :src="setImages(config.api, user.avatar, size ? size : 64, null)"
           :style="{
             width: width,
             height: height,
@@ -29,6 +30,7 @@
           v-on="on"
           :email="user.email"
           default-img="mp"
+          :size="size ? size : 64"
           :style="{
             'margin-top': '7px',
             width: width,
@@ -50,7 +52,7 @@
  * Export default
  */
 export default {
-  name: 'userArrayComponent',
-  props: ['user', 'width', 'height', 'radius', 'border', 'color'],
+  name: 'userAvatarComponent',
+  props: ['user', 'width', 'height', 'radius', 'border', 'color', 'size'],
 };
 </script>

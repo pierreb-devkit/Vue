@@ -15,7 +15,7 @@ module.exports = {
     port: '3000',
     base: 'api',
     endPoints: {
-      core: 'core',
+      home: 'home',
       auth: 'auth',
       users: 'users',
       subscriptions: 'subscriptions',
@@ -242,6 +242,11 @@ module.exports = {
         items: [
           {
             // set null to hide
+            label: 'Us ?',
+            icon: 'fa-users',
+            url: '/team',
+          },
+          {
             label: 'Changelogs',
             icon: 'fa-clipboard-list',
             url: '/changelogs',

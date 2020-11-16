@@ -7,7 +7,7 @@ import config from '@/config';
 import model from '@/lib/middlewares/model';
 
 const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-const whitelists = ['firstName', 'lastName', 'bio', 'email', 'avatar', 'roles'];
+const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar', 'roles'];
 
 /**
  * Getters: get state
@@ -91,6 +91,7 @@ const state = {
     firstName: '',
     lastName: '',
     bio: '',
+    position: '',
     email: '',
     avatar: '',
     roles: [],
