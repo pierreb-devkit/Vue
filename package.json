@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.1",
-    "@tryghost/content-api": "1.4.9",
+    "@tryghost/content-api": "1.4.10",
     "aos": "^2.3.4",
     "axios": "^0.21.0",
     "core-js": "^3.7.0",
@@ -85,7 +85,7 @@
     "object-path": "^0.11.5",
     "sass": "^1.29.0",
     "sass-loader": "^10.1.0",
-    "semantic-release": "^17.2.2",
+    "semantic-release": "^17.2.3",
     "standard-version": "^9.0.0",
     "vue-cli-plugin-vuetify": "^2.0.7",
     "vue-template-compiler": "^2.6.12",

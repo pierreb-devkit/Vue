@@ -24,7 +24,7 @@
           :search="search"
         >
           <template v-slot:[`item.avatar`]="{ item }">
-            <userArrayComponent
+            <userAvatarComponent
               :user="item"
               :width="'37px'"
               :height="'37px'"
@@ -71,7 +71,7 @@
  * Module dependencies.
  */
 import { mapGetters } from 'vuex';
-import userArrayComponent from '../../users/components/user.avatar.component.vue';
+import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 
 /**
  * Export default
@@ -89,7 +89,7 @@ export default {
     ],
   }),
   components: {
-    userArrayComponent,
+    userAvatarComponent,
   },
   computed: {
     ...mapGetters(['theme', 'isLoggedIn', 'subscriptions']),

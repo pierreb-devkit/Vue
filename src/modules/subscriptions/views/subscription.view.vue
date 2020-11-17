@@ -51,7 +51,7 @@
                 </v-col>
                 <v-col cols="12" xs="12" sm="12" md="3" lg="2" xl="1">
                   <center>
-                    <userArrayComponent
+                    <userAvatarComponent
                       :user="subscription"
                       :width="'125px'"
                       :height="'125px'"
@@ -80,7 +80,7 @@
  * Module dependencies.
  */
 import { mapGetters } from 'vuex';
-import userArrayComponent from '../../users/components/user.avatar.component.vue';
+import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 
 /**
  * Export default
@@ -100,7 +100,7 @@ export default {
     };
   },
   components: {
-    userArrayComponent,
+    userAvatarComponent,
   },
   computed: {
     ...mapGetters(['theme', 'subscription', 'result']),

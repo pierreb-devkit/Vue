@@ -1,6 +1,6 @@
 <!--
  Example:
- <userArrayComponent
+ <userAvatarComponent
  :user="user"
  :width="'200px'"
  :height="'200px'"
@@ -17,7 +17,7 @@
         <v-img
           v-if="user.avatar && user.avatar != ''"
           v-on="on"
-          :src="setImages(config.api, user.avatar, size ? size : 64, null)"
+          :src="setImages(config.api, user.avatar, size ? size : 128, null)"
           :style="{
             width: width,
             height: height,
@@ -30,7 +30,7 @@
           v-on="on"
           :email="user.email"
           default-img="mp"
-          :size="size ? size : 64"
+          :size="size ? size : 128"
           :style="{
             'margin-top': '7px',
             width: width,
