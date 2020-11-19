@@ -53,6 +53,8 @@
                 >
                 <br />
                 <br />
+                <br v-if="!app.title && !app.logo" />
+                <br v-if="!app.title && !app.logo" />
                 <span
                   v-if="app.subtitle"
                   class="font-weight-light"

@@ -234,6 +234,10 @@ module.exports = {
             label: 'Blog',
             icon: 'fa-rss',
             url: 'https://blog.weareopensource.me',
+          }, {
+            label: 'Twitter',
+            icon: 'fab fa-twitter',
+            url: 'https://weareopensource.me',
           },
         ],
       },
@@ -257,9 +261,14 @@ module.exports = {
         title: 'Others',
         items: [
           {
-            label: 'Twitter',
-            icon: 'fab fa-twitter',
-            url: 'https://weareopensource.me',
+            // set null to hide
+            label: 'TOU / CGU',
+            icon: 'fa-file-alt',
+            url: '/pages/terms',
+          }, {
+            label: 'Comes Legal',
+            icon: 'fa-stamp',
+            url: '/pages/legal',
           },
         ],
       },

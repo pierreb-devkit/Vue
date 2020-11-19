@@ -86,36 +86,28 @@
                   ></v-select>
                 </v-col>
               </v-row>
-              <!-- <v-row>
-                <v-col cols="12">
-                  <h4 color="gray">Avatar</h4>
-                  <v-divider></v-divider>
-                </v-col>
-                <v-col cols="12" sm="12" md="6" lg="5">
-                  <v-text-field v-model="avatar" label="Banner" required></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="12" md="6" lg="5">
-                  <v-file-input
-                    v-model="avatar"
-                    accept="image/jpeg"
-                    chips
-                    show-size
-                    prepend-icon="fa-camera"
-                    label="Set New Banner"
-                  ></v-file-input>
-                </v-col>
-                <v-col cols="12" sm="12" md="2" lg="2">
-                  <v-btn color="primary" @click="uploadAvatar" :disabled="file ? false : true"
-                    >Upload</v-btn
-                  >
-                </v-col>
-              </v-row> -->
-              <v-row v-if="!id">
-                <v-btn :disabled="!valid" color="success" class="mr-4" @click="create"
-                  >Validate</v-btn
-                >
-              </v-row>
             </v-form>
+            <!-- <v-row >
+              <v-col cols="12">
+                <h4 color="gray">Images</h4>
+                <v-divider></v-divider>
+              </v-col>
+              <v-col cols="12" sm="10" md="10" lg="10">
+                <v-file-input
+                  v-model="file.avatar"
+                  accept="image/jpeg"
+                  chips
+                  show-size
+                  prepend-icon="fa-camera"
+                  label="Set New Banner"
+                ></v-file-input>
+              </v-col>
+              <v-col cols="12" sm="2" md="2" lg="2">
+                <v-btn color="primary" @click="uploadAvatar" :disabled="file.avatar ? false : true"
+                  >Upload</v-btn
+                >
+              </v-col>
+            </v-row> -->
           </v-card>
         </v-row>
       </v-col>
@@ -140,6 +132,9 @@ export default {
       id: this.$route.params.id ? this.$route.params.id : null,
       save: false,
       valid: false,
+      // file: {
+      //   avatar: null,
+      // },
       rules: {
         bio: [(v) => !v || (v && v.length <= 200) || 'Max 200 characters'],
       },
@@ -256,6 +251,16 @@ export default {
           .catch((err) => console.log(err));
       }
     },
+    // uploadAvatar() {
+    //   if (this.file.avatar) {
+    //     this.$store
+    //       .dispatch('uploadAvatar', { id: this.user.id, file: this.file.avatar })
+    //       .then(() => {
+    //         this.$router.push(`/users/${this.sample.id}`);
+    //       })
+    //       .catch((err) => console.log(err));
+    //   }
+    // },
   },
   created() {
     if (this.id) {

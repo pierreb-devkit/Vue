@@ -37,6 +37,15 @@ export default [
     },
   },
   {
+    path: '/pages/:name',
+    name: 'Pages',
+    component: pages,
+    meta: {
+      display: false, // hide any time
+      data: 'getPages', // array of {title: ..., markdown: ...}
+    },
+  },
+  {
     path: '*',
     redirect: { name: 'Home' },
     meta: {

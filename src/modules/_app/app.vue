@@ -45,7 +45,7 @@ export default {
   metaInfo() {
     return {
       title: this.config.app.title,
-      titleTemplate: `%s | ${this.$route.name}`,
+      titleTemplate: `%s | ${this.$route.params.name || this.$route.name}`,
       meta: [
         { name: 'description', content: this.config.app.description },
         { name: 'keywords', content: this.config.app.keywords },
@@ -88,7 +88,7 @@ export default {
       },
       (err) =>
         new Promise(() => {
-          if (err.response.status === 401 && err.config && !err.config.__isRetryRequest) {
+          if (err && err.response && err.response.status === 401 && err.config && !err.config.__isRetryRequest) {
             this.$store.dispatch('signout');
             this.snackbar.text = 'Signin failed';
             this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;

@@ -12,6 +12,7 @@ const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${co
 const getters = {
   isLoggedIn: (state) => !!state.cookieExpire,
   authStatus: (state) => state.status,
+  auth: (state) => state.auth,
   mail: (state) => state.mail,
 };
 
@@ -127,7 +128,7 @@ const mutations = {
  */
 const state = {
   cookieExpire: localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0,
-  user: {},
+  auth: {},
   mail: {
     status: false,
     message: '',

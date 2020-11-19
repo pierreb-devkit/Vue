@@ -57,6 +57,20 @@ const actions = {
       commit('user_error', err);
     }
   },
+  // uploadAvatar: async ({ commit }, params) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('img', params.file);
+  //     const res = await Vue.prototype.axios.post(
+  //       `${api}/${config.api.endPoints...}/..../avatar/${params.id}`,
+  //       formData,
+  //       { headers: { 'Content-Type': 'multipart/form-data' } },
+  //     );
+  //     commit('sample_update', res.data.data);
+  //   } catch (err) {
+  //     commit('sample_error', err);
+  //   }
+  // },
 };
 
 /**
