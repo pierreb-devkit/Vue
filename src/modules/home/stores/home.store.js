@@ -59,11 +59,15 @@ const actions = {
       const pages = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/pages/${name}`);
       commit(
         'contents_set',
-        pages.data.data.map((item) => ({
-          title: null,
-          markdown: item.markdown,
-          style: 'classic',
-        })),
+        pages.data.data.map((item) => {
+          const firstLine = item.markdown.split('\n')[0];
+          return {
+            title: null,
+            banner: firstLine[0] === '!' ? /\(([^)]+)\)/.exec(firstLine)[1] : null,
+            markdown: firstLine[0] === '!' ? item.markdown.substring(firstLine.length + 2) : item.markdown,
+            style: 'classic',
+          };
+        }),
       );
     } catch (err) {
       commit('task_error', err);

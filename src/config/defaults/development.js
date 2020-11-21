@@ -262,11 +262,11 @@ module.exports = {
         items: [
           {
             // set null to hide
-            label: 'TOU / CGU',
+            label: 'T&C / CGU',
             icon: 'fa-file-alt',
             url: '/pages/terms',
           }, {
-            label: 'Comes Legal',
+            label: 'Legal',
             icon: 'fa-stamp',
             url: '/pages/legal',
           },

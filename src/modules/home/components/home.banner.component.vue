@@ -19,11 +19,12 @@
       <v-img
         :min-height="'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'"
         :max-height="'calc(100vh/' + ratio + ' - ' + $vuetify.application.top + 'px)'"
-        :src="
+        :src="banner ? banner : (
           config.home.temporalBackground
             ? generateTemporalBackground()
-            : require('@/assets/images/background.jpg')
+            : require('@/assets/images/background.jpg'))
         "
+        :gradient="banner ? 'rgba(0,0,0,.25), rgba(0,0,0,.25)' : ''"
       >
         <v-theme-provider dark>
           <v-container fill-height>
@@ -67,7 +68,7 @@
                   class="align-self-end"
                   fab
                   outlined
-                  @click="$vuetify.goTo('#about-me')"
+                  @click="$vuetify.goTo('#downloads')"
                   data-aos="fade-up"
                 >
                   <v-icon>fa-angle-down</v-icon>
@@ -120,7 +121,7 @@ import { mapGetters } from 'vuex';
  */
 export default {
   name: 'homeBannerComponent',
-  props: ['ratio', 'subscribe', 'app', 'statusMargin'],
+  props: ['ratio', 'subscribe', 'app', 'statusMargin', 'banner'],
   data() {
     return {
       valid: false,
