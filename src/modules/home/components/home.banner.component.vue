@@ -68,7 +68,7 @@
                   class="align-self-end"
                   fab
                   outlined
-                  @click="$vuetify.goTo('#downloads')"
+                  @click="$vuetify.goTo('#about-me')"
                   data-aos="fade-up"
                 >
                   <v-icon>fa-angle-down</v-icon>

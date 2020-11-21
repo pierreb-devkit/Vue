@@ -4,6 +4,7 @@
 import config from '@/config';
 import home from '@/modules/home/views/home.view.vue';
 import pages from '@/modules/home/views/pages.view.vue';
+import team from '@/modules/home/views/team.view.vue';
 
 /**
  * Router configuration
@@ -28,7 +29,6 @@ export default [
     },
   },
   {
-<<<<<<< Updated upstream
     path: '/team',
     name: 'Team',
     component: team,
@@ -47,8 +47,6 @@ export default [
     },
   },
   {
-=======
->>>>>>> Stashed changes
     path: '*',
     redirect: { name: 'Home' },
     meta: {
