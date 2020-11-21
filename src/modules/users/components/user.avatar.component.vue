@@ -38,7 +38,6 @@
             default-img="mp"
             :size="size ? size : 128"
             :style="{
-              'margin-top': '7px',
               width: width,
               height: height,
               'border-radius': radius,
