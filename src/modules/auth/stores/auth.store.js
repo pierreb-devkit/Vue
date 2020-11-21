@@ -102,6 +102,7 @@ const actions = {
  */
 const mutations = {
   auth_success(state, data) {
+    state.auth = true;
     state.cookieExpire = data.tokenExpiresIn;
     state.user = data.user;
   },
@@ -128,7 +129,7 @@ const mutations = {
  */
 const state = {
   cookieExpire: localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0,
-  auth: {},
+  auth: false,
   mail: {
     status: false,
     message: '',

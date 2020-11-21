@@ -101,7 +101,7 @@ export default {
   },
   watch: {
     auth(auth) {
-      if (auth.email) this.$router.push(this.config.sign.route);
+      if (auth) this.$router.push(this.config.sign.route);
     },
   },
   methods: {
