@@ -4,6 +4,7 @@ const defaultConfig = require('./development');
 module.exports = _.merge(defaultConfig, {
   app: {
     title: 'WAOS',
+    status: '',
     subtitle: 'Knowledge sharing #LetsGetTogether',
     keywords: 'opensource, stack, fullstack',
   },
