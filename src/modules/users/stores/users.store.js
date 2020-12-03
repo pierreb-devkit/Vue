@@ -21,9 +21,9 @@ const getters = {
  * Actions
  */
 const actions = {
-  getUsers: async ({ commit }) => {
+  getUsers: async ({ commit }, params) => {
     try {
-      const res = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/`);
+      const res = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/page/${params}`);
       commit('users_set', res.data.data);
     } catch (err) {
       commit('user_error', err);

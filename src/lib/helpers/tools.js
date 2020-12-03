@@ -9,3 +9,26 @@ exports.releasesNumber = (release) => {
   numbers[0] = numbers[0] === '1' ? '1' : String(parseInt(numbers[0], 10) * 10); // calc aproximativly number of release
   return numbers;
 };
+
+/**
+ * @desc Function generate pagniation request
+ * @param {Int} page
+ * @param {Int} perPage
+ * @param {String} search
+ * @return {String} server-items-length
+ */
+exports.pageRequest = (page, perPage, search) => {
+  let request = `${page - 1}&${perPage}`;
+  if (search && search !== '') request += `&${search}`;
+  return request;
+};
+
+/**
+ * @desc Function get a dynamic total count from dataTable
+ * @param {Array} array of items
+ * @param {Object} Object options from vuetify dataTable
+ * @return {String} server-items-length
+ */
+exports.serverItemsLength = (items, options) => (items.length === options.itemsPerPage
+  ? options.page * options.itemsPerPage + options.itemsPerPage
+  : options.page * options.itemsPerPage);

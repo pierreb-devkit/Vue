@@ -18,10 +18,15 @@
           :items="users"
           :sort-by="['createdAt']"
           :sort-desc="[true]"
-          :items-per-page="row"
+          :search="search"
+          :options.sync="options"
+          :loading="loading"
+          :server-items-length="totalCount"
+          :footer-props="{
+            'items-per-page-options': perPage,
+          }"
           :style="{ background: config.vuetify.theme.themes[theme].surface }"
           :flat="config.vuetify.theme.flat"
-          :search="search"
         >
           <template v-slot:[`item.avatar`]="{ item }">
             <userAvatarComponent
@@ -71,6 +76,7 @@
  * Module dependencies.
  */
 import { mapGetters } from 'vuex';
+import tools from '@/lib/helpers/tools';
 import userAvatarComponent from '../components/user.avatar.component.vue';
 
 /**
@@ -79,7 +85,10 @@ import userAvatarComponent from '../components/user.avatar.component.vue';
 export default {
   data: () => ({
     search: '',
-    row: 20,
+    loading: true,
+    totalCount: 40,
+    perPage: [20, 50, 100],
+    options: {},
     headers: [
       { text: 'Avatar', value: 'avatar' },
       { text: 'FirstName', value: 'firstName' },
@@ -97,8 +106,44 @@ export default {
   computed: {
     ...mapGetters(['theme', 'isLoggedIn', 'users']),
   },
+  watch: {
+    options(options) {
+      this.loading = true;
+      this.$store
+        .dispatch('getUsers', tools.pageRequest(options.page, options.itemsPerPage, this.search))
+        .then(() => {
+          this.totalCount = tools.serverItemsLength(this.users, this.options);
+          this.loading = false;
+        });
+    },
+  },
+  methods: {
+    getSearch() {
+      this.loading = true;
+      this.$store
+        .dispatch('getUsers', tools.pageRequest(1, this.options.itemsPerPage, this.search))
+        .then(() => {
+          this.totalCount = tools.serverItemsLength(this.users, this.options);
+          this.loading = false;
+        });
+    },
+  },
   created() {
-    this.$store.dispatch('getUsers');
+    this.$store
+      .dispatch('getUsers', tools.pageRequest(1, this.perPage[0], this.search))
+      .then(() => {
+        this.totalCount = tools.serverItemsLength(this.users, this.options);
+        this.loading = false;
+      });
+    this.watchSearch = this.$watch(
+      'search',
+      this._.debounce(() => {
+        this.getSearch();
+      }, 1000),
+    );
+  },
+  beforeDestroy() {
+    this.watchSearch();
   },
 };
 </script>
