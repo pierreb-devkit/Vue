@@ -111,14 +111,14 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text: '[WAOS](https://blog.weareopensource.me/us/) aims at simplifying the **start** of new **tech projects** / **startups**. This critical step must be **fast**, **efficient** while avoiding any costly ulterior **refactorings**. Through the creation of [Open-Source](https://github.com/weareopensource) **stacks** and **tools** or the writing of **articles**, WAOS helps to **share knowledge** around this subject.',
+        text: '[WAOS](https://blog.weareopensource.me/us/) aims at simplifying the **start** of new **tech projects**/**startups**. This critical step must be **fast**, **efficient** while avoiding any costly ulterior **refactorings**. By creating [Open-Source](https://github.com/weareopensource) **stacks** and **tools** or the writing of **articles**, WAOS helps to **share knowledge** around this subject.',
         image: null,
         button: null,
         link: null,
       },
       {
         title: 'Technical',
-        text: '[We](https://blog.weareopensource.me/us/) dream to create **stacks**, in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource), **aligned** on **features** & **architecture**. We want to allow anyone to **create a full-stack** on demand with its favorite languages, and keep it updated, while exploring scalable deployment, or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dream dream of creating **stacks** in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource), **aligned** on **features** & **architecture**. We want to allow anyone to **create a full-stack** on-demand with its favorite languages and keep it updated while exploring scalable deployment or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -127,7 +127,7 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text: 'This work was originally based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Its creators stopped working on it and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
+        text: 'This work was initially based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Its creators stopped working on it, and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
