@@ -20,6 +20,7 @@
                 :flat="config.vuetify.theme.flat"
                 name="subject"
                 label="Subject*"
+                class="rounded-xl"
                 solo
               ></v-text-field>
             </v-col>
@@ -28,6 +29,7 @@
                 v-model="body"
                 :flat="config.vuetify.theme.flat"
                 label="Message*"
+                class="rounded-xl"
                 solo
               ></v-textarea>
             </v-col>

@@ -29,15 +29,20 @@
         {{ features.title }}
       </h2>
       <v-row justify="center">
-        <v-col v-for="({ icon, title, text, color }, i) in features.data" :key="i" cols="12" md="4">
+        <v-col
+          v-for="({ icon, title, text, color }, i) in features.data"
+          :key="i"
+          cols="12"
+          md="4"
+        >
           <v-card
-            class="pt-8 pb-2 px-4"
+            class="pt-8 pb-2 px-4 rounded-xl"
             :flat="config.vuetify.theme.flat"
             :style="custom && custom.card ? custom.card : null"
           >
             <div>
               <v-avatar :color="color ? color : 'primary'" size="88">
-                <v-icon dark large data-aos="fade-up">{{ icon }}</v-icon>
+                <v-icon dark large>{{ icon }}</v-icon>
               </v-avatar>
             </div>
             <v-card-title

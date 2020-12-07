@@ -119,7 +119,7 @@
               <v-col cols="12" :md="mdImage || 6">
                 <v-img
                   :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}` : img"
-                  class="mb-4"
+                  class="mb-4 rounded-xl"
                   :height="height"
                   max-width="100%"
                 ></v-img>

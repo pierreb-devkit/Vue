@@ -1,4 +1,4 @@
-[![Build Status](https://badges.weareopensource.me/travis/weareopensource/Vue.svg?style=flat-square)](https://travis-ci.org/weareopensource/Vue) [![Code Climate](https://badges.weareopensource.me/codeclimate/maintainability-percentage/weareopensource/Vue.svg?style=flat-square)](https://codeclimate.com/github/weareopensource/Vue/maintainability)
+[![Build Status](https://badges.weareopensource.me/travis/weareopensource/Vue.svg?style=flat-square)](https://travis-ci.org/weareopensource/Vue) [![Drone](https://badges.weareopensource.me/drone/build/weareopensource/Vue?style=flat-square)](https://cloud.drone.io/weareopensource/Node) [![Code Climate](https://badges.weareopensource.me/codeclimate/maintainability-percentage/weareopensource/Vue.svg?style=flat-square)](https://codeclimate.com/github/weareopensource/Vue/maintainability)
   [![Dependabot badge](https://badges.weareopensource.me/badge/Dependabot-enabled-2768cf.svg?style=flat-square)](https://dependabot.com)
  [![Known Vulnerabilities](https://snyk.io/test/github/weareopensource/vue/badge.svg?style=flat-square)](https://snyk.io/test/github/weareopensource/vue) [![Docker Pulls](https://badges.weareopensource.me/docker/pulls/weareopensource/vue?style=flat-square)](https://hub.docker.com/repository/docker/weareopensource/vue)
 
@@ -29,7 +29,7 @@ Our stack Vue is actually in Alpha.
 | **Available** |
 | Architecture | Layered Architecture : everything is separated in layers, and the upper layers are abstractions of the lower ones, that's why every layer should only reference the immediate lower layer (vertical modules architecture)
 | Security | JWT Stateless - have a look on [Node](https://github.com/weareopensource/Node) stack for more informations
-| CI  | [Travis CI](https://travis-ci.org/weareopensource/Node)
+| CI  | [Travis CI](https://travis-ci.org/weareopensource/Vue) - [Drone.io](https://cloud.drone.io/weareopensource/Vue)
 | Linter  | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)
 | Developer  | [Coveralls](https://coveralls.io/github/weareopensource/Vue) - [Code Climate](https://codeclimate.com/github/weareopensource/Vue) - [Dependency status](https://david-dm.org/weareopensource/vue) - [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/weareopensource/vue) <br> [standard-version](https://github.com/conventional-changelog/standard-version) / [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) - [@weareopensource/conventional-changelog](https://github.com/weareopensource/conventional-changelog)
 | Dependencies  | [npm](https://www.npmjs.com)
