@@ -2,7 +2,6 @@
   <div>
     <homeBannerComponent
       v-bind:ratio="3"
-      v-bind:subscribe="false"
       v-bind:app="{ subtitle: this.$route.meta.title || this._.startCase(this.$route.params.name) }"
       v-bind:banner="(contents.length == 1 && contents[0].banner) ? contents[0].banner : null"
     ></homeBannerComponent>

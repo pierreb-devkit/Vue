@@ -9,11 +9,10 @@ import config from '@/config';
 import home from '@/modules/home/router/home.router';
 import auth from '@/modules/auth/router/auth.router';
 import users from '@/modules/users/router/users.router';
-import subscriptions from '@/modules/subscriptions/router/subscriptions.router';
 import secure from '@/modules/secure/router/secure.router';
 import tasks from '@/modules/tasks/router/tasks.router';
 
-const routes = [].concat(home, auth, users, subscriptions, secure, tasks);
+const routes = [].concat(home, auth, users, secure, tasks);
 
 /**
  * Router configuration

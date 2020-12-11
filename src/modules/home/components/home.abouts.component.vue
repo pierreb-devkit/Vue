@@ -29,7 +29,6 @@
           :key="i"
           cols="12"
           :md="md"
-          data-aos="fade-up"
         >
           <h2 class="display-1 font-weight-bold mb-3 py-8 text-uppercase" v-text="title"></h2>
           <v-responsive class="mx-auto title font-weight-light mb-8" max-width="720">

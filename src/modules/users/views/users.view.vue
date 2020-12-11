@@ -129,12 +129,6 @@ export default {
     },
   },
   created() {
-    this.$store
-      .dispatch('getUsers', tools.pageRequest(1, this.perPage[0], this.search))
-      .then(() => {
-        this.totalCount = tools.serverItemsLength(this.users, this.options);
-        this.loading = false;
-      });
     this.watchSearch = this.$watch(
       'search',
       this._.debounce(() => {

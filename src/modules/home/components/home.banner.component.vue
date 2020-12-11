@@ -2,7 +2,6 @@
   - Call example
     <homeBannerComponent
       v-bind:ratio="1"
-      v-bind:subscribe="true"
       v-bind:app="app"
     ></homeBannerComponent>
   - Data Example
@@ -10,7 +9,12 @@
     title: 'WAOS Dev',
     logo: 'logo.png', // null to use title by default
     subtitle: 'welcome to demo.',
-    description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) '
+    description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha)'
+    home: {
+      blog: {
+        subscribe: '...'
+      }
+    }
   },
 -->
 <template>
@@ -85,23 +89,17 @@
                 xl="5"
                 style="bottom: 5%; position: absolute; opacity: 75%;"
                 data-aos="fade-up"
-                v-if="config.home.subscriptions && subscribe"
+                v-if="config.home.blog && config.home.blog.subscribe"
               >
-                <v-text-field
-                  v-model="email"
-                  :flat="config.vuetify.theme.flat"
-                  :rules="[rules.email]"
-                  :append-icon="'fa-envelope'"
-                  @click:append="createSubscription"
-                  @keydown.enter="createSubscription"
+                <v-btn
+                  :href="config.home.blog.subscribe"
+                  target="_blank"
+                  class="px-10"
                   height="55"
-                  name="Mail"
-                  placeholder="Stay informed by email."
-                  class="centered-input"
-                  solo
+                  elevation="0"
                   rounded
                   light
-                ></v-text-field>
+                ><span style="color:gray;">Stay informed by email<v-icon class="pl-8">fa-paper-plane</v-icon></span></v-btn>
               </v-col>
             </v-row>
           </v-container>
@@ -113,15 +111,11 @@
 
 <script>
 /**
- * Module dependencies.
- */
-import { mapGetters } from 'vuex';
-/**
  * Export default
  */
 export default {
   name: 'homeBannerComponent',
-  props: ['ratio', 'subscribe', 'app', 'statusMargin', 'banner'],
+  props: ['ratio', 'app', 'statusMargin', 'banner'],
   data() {
     return {
       valid: false,
@@ -131,28 +125,9 @@ export default {
       },
     };
   },
-  computed: {
-    ...mapGetters(['homeSubscription']),
-    email: {
-      get() {
-        return this.homeSubscription.email;
-      },
-      set(email) {
-        this.save = true;
-        this.$store.commit('subscription_update', { email });
-      },
-    },
-  },
   methods: {
     generateTemporalBackground() {
       return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
-    },
-    createSubscription() {
-      if (this.rules.email(this.homeSubscription.email)) {
-        this.$store
-          .dispatch('createSubscription', this.homeSubscription)
-          .catch((err) => console.log(err));
-      }
     },
   },
 };

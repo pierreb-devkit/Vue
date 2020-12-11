@@ -4,12 +4,10 @@
 import Vue from 'vue';
 import _ from 'lodash';
 import config from '@/config';
-import model from '@/lib/middlewares/model';
 import tools from '@/lib/helpers/tools';
 import GhostContentAPI from '@tryghost/content-api';
 
 const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-const whitelists = ['email', 'news'];
 
 /**
  * Getters: get state
@@ -18,7 +16,6 @@ const getters = {
   team: (state) => state.team,
   contents: (state) => state.contents,
   news: (state) => state.news,
-  homeSubscription: (state) => state.subscription,
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
   news2: (state) => state.news2,
@@ -82,19 +79,6 @@ const actions = {
       });
       const res = await ghost.posts.browse({ limit: 3, filter: 'tag:article' });
       commit('news_set', res);
-    } catch (err) {
-      commit('error', err);
-    }
-  },
-  createSubscription: async ({ commit }, params) => {
-    try {
-      const obj = model.clean(params, whitelists);
-      obj.news = true;
-      const res = await Vue.prototype.axios.post(
-        `${api}/${config.api.endPoints.subscriptions}/`,
-        obj,
-      );
-      commit('subscription_set', res.data.data);
     } catch (err) {
       commit('error', err);
     }
@@ -171,13 +155,6 @@ const mutations = {
     state.news = data;
   },
   // mail
-  subscription_set(state, data) {
-    state.subscription = data;
-  },
-  subscription_update(state, data) {
-    _.merge(state.subscription, data);
-  },
-  // mail
   contact_set(state, data) {
     state.contact = data;
   },
@@ -211,7 +188,6 @@ const state = {
   team: [],
   contents: [],
   news: [],
-  subscription: {},
   contact: {},
   statistics: config.home.stats.data,
   news2: [],

@@ -18,7 +18,6 @@ module.exports = {
       home: 'home',
       auth: 'auth',
       users: 'users',
-      subscriptions: 'subscriptions',
       tasks: 'tasks',
     },
   },
@@ -133,7 +132,6 @@ module.exports = {
     ],
   },
   home: {
-    subscriptions: true, // disbale / enable
     temporalBackground: 'https://blog.weareopensource.me/content/images/size/w1600/2020/11', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
     abouts: [
       {
@@ -219,6 +217,7 @@ module.exports = {
       // actually dev for Ghost Blog
       title: 'Blog',
       url: 'https://blog.weareopensource.me',
+      subscribe: 'https://blog.weareopensource.me/#subscribe',
       key: '0415f48774e7c49c713204f787',
     },
     contact: {

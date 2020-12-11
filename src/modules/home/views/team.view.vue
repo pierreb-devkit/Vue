@@ -2,7 +2,6 @@
   <div>
     <homeBannerComponent
       v-bind:ratio="3"
-      v-bind:subscribe="false"
       v-bind:app="{ subtitle: this.$route.meta.title }"
     ></homeBannerComponent>
     <v-container fluid>
