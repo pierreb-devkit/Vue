@@ -28,7 +28,10 @@
     ></homeFeaturesComponent>
     <homeFeaturesComponent
       v-bind:features="config.home.tools"
-      v-bind:custom="null"
+      v-bind:custom="{
+        section: { background: config.vuetify.theme.themes[theme].background },
+        card: { background: config.vuetify.theme.themes[theme].surface },
+      }"
     ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
     <homeAboutsComponent
