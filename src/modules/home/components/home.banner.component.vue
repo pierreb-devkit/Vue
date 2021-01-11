@@ -73,6 +73,8 @@
                   fab
                   @click="$vuetify.goTo('#about-me')"
                   data-aos="fade-up"
+                  color="transparent"
+                  elevation="0"
                 >
                   <v-icon>fa-angle-down</v-icon>
                 </v-btn>
