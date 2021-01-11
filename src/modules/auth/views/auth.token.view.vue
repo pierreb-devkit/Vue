@@ -2,9 +2,7 @@
   <v-container fluid>
     <v-row align="start" justify="center">
       <v-card
-        class="mx-6 my-3 pa-5"
-        outlined
-        tile
+        class="ma-6 pa-6"
         width="100%"
         :style="{ background: config.vuetify.theme.themes[theme].surface }"
         :flat="config.vuetify.theme.flat"

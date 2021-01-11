@@ -22,42 +22,37 @@
       </v-btn>
     </v-row>
     <!-- First Form -->
-    <v-row class="mx-3">
+    <v-row class="mx-0">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
-        <v-row align="start" justify="center">
-          <v-card
-            outlined
-            tile
-            width="100%"
-            class="px-10 pa-6"
-            :style="{ background: config.vuetify.theme.themes[theme].surface }"
-            :flat="config.vuetify.theme.flat"
-          >
-            <v-form ref="form" v-model="valid">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="title"
-                    :rules="[rules.required]"
-                    label="Title"
-                    required
-                  ></v-text-field>
-                  <v-text-field
-                    v-model="description"
-                    :rules="[rules.required]"
-                    label="Description"
-                    required
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <v-row v-if="!this.task.id">
-                <v-btn :disabled="!valid" color="success" class="mr-4" @click="create"
-                  >Validate</v-btn
-                >
-              </v-row>
-            </v-form>
-          </v-card>
-        </v-row>
+        <v-card
+          class="pa-6"
+          :style="{ background: config.vuetify.theme.themes[theme].surface }"
+          :flat="config.vuetify.theme.flat"
+        >
+          <v-form ref="form" v-model="valid">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="title"
+                  :rules="[rules.required]"
+                  label="Title"
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="description"
+                  :rules="[rules.required]"
+                  label="Description"
+                  required
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row v-if="!this.task.id">
+              <v-btn :disabled="!valid" color="success" class="mr-4" @click="create"
+                >Validate</v-btn
+              >
+            </v-row>
+          </v-form>
+        </v-card>
       </v-col>
       <taskComponent v-bind:item="{ title, description }"></taskComponent>
     </v-row>

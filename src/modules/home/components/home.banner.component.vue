@@ -71,7 +71,6 @@
                 <v-btn
                   class="align-self-end"
                   fab
-                  outlined
                   @click="$vuetify.goTo('#about-me')"
                   data-aos="fade-up"
                 >

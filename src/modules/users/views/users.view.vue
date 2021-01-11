@@ -2,8 +2,6 @@
   <v-container fluid>
     <v-layout class="ma-3" wrap align-content-space-around text-xs-center>
       <v-card
-        outlined
-        tile
         width="100%"
         :style="{ background: config.vuetify.theme.themes[theme].surface }"
         :flat="config.vuetify.theme.flat"
@@ -57,9 +55,6 @@
       <v-row v-if="!users.length" align="start" justify="center">
         <v-col cols="12">
           <v-card
-            class="mx-3 pa-8"
-            outlined
-            tile
             :style="{ background: config.vuetify.theme.themes[theme].surface }"
             :flat="config.vuetify.theme.flat"
           >

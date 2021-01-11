@@ -2,7 +2,6 @@
   <v-col cols="12" sm="12" md="6" lg="4" xl="3">
     <v-card
       class="mx-auto"
-      :outlined="true"
       :style="{ background: config.vuetify.theme.themes[theme].surface }"
       :flat="config.vuetify.theme.flat"
     >
