@@ -3,10 +3,10 @@ const defaultConfig = require('./development');
 
 module.exports = _.merge(defaultConfig, {
   app: {
-    title: 'WAOS',
+    title: 'We Are Open Source',
     status: '',
     subtitle: 'Knowledge sharing #LetsGetTogether',
-    description: 'WAOS aims at simplifying the start of new tech projects/startups. This critical step must be fast, efficient while avoiding any costly ulterior refactorings. By creating Open-Source stacks and tools or the writing of articles, WAOS helps to share knowledge around this subject.',
+    description: 'We Are Open Source aims at simplifying the start of new tech projects/startups. This critical step must be fast, efficient while avoiding any costly ulterior refactorings. By creating Open-Source stacks and tools or the writing of articles, WAOS helps to share knowledge around this subject.',
     keywords: 'opensource, stack, fullstack, startup, tool, start, project, node, vue, swift',
     author: 'pierre@weareopensource.me',
   },
