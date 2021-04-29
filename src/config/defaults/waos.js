@@ -172,7 +172,7 @@ module.exports = _.merge(defaultConfig, {
           color: '#56a049',
         },
         {
-          icon: 'fas fa-text-height',
+          icon: 'fab fa-tumblr-square',
           title: 'TypeScript',
           text:
             '**Alpha Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Repo](https://github.com/weareopensource/Typescript) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/typescript)',
