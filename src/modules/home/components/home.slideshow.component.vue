@@ -29,12 +29,7 @@
     },
 -->
 <template>
-  <section
-    id="slideShow"
-    :class="full ? '' : 'py-12'"
-    :style="custom && custom.section ? custom.section : null"
-    v-if="slides.data.length > 0"
-  >
+  <section id="slideShow" :class="full ? '' : 'py-12'" :style="custom && custom.section ? custom.section : null" v-if="slides.data.length > 0">
     <!-- slideshow full -->
     <v-carousel
       v-if="full"
@@ -43,25 +38,16 @@
       hide-delimiter-background
       :show-arrows="false"
       :interval="interval || 6000"
-      style="max-height:900px !important;"
+      style="max-height: 900px !important"
     >
       <v-carousel-item v-for="({ img, text, position, dark, color }, i) in slides.data" :key="i">
-        <v-sheet color="transparent" height="100%"  style="max-height:900px !important;">
+        <v-sheet color="transparent" height="100%" style="max-height: 900px !important">
           <v-row class="fill-height" align="center" justify="center">
-            <v-img
-              :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}` : img"
-              class="mb-4"
-              height="100%"
-              max-width="100%"
-            >
+            <v-img :src="dark ? `${img.split('.')[0]}-${theme}.${img.split('.')[1]}` : img" class="mb-4" height="100%" max-width="100%">
               <v-container fill-height fluid class="hidden-sm-and-down">
                 <v-row>
                   <v-col cols="12">
-                    <v-row
-                      align="center"
-                      :justify="position ? position : 'center'"
-                      class="text-center display-2 pa-10 ma-10"
-                    >
+                    <v-row align="center" :justify="position ? position : 'center'" class="text-center display-2 pa-10 ma-10">
                       <v-col cols="6" md="4">
                         <h3
                           :style="{
@@ -110,10 +96,7 @@
         :show-arrows="false"
         :interval="interval || 6000"
       >
-        <v-carousel-item
-          v-for="({ img, icon, title, text, dark, color }, i) in slides.data"
-          :key="i"
-        >
+        <v-carousel-item v-for="({ img, icon, title, text, dark, color }, i) in slides.data" :key="i">
           <v-sheet color="transparent" height="100%">
             <v-row justify="center" align="center" class="fill-height">
               <v-col cols="12" :md="mdImage || 6">
@@ -125,11 +108,7 @@
                 ></v-img>
               </v-col>
               <v-col v-if="title || text || icon" cols="12" :md="mdText || 6">
-                <v-card
-                  class="py-12 px-4"
-                  :flat="config.vuetify.theme.flat"
-                  color="rgb(255, 255, 255, 0)"
-                >
+                <v-card class="py-12 px-4" :flat="config.vuetify.theme.flat" color="rgb(255, 255, 255, 0)">
                   <div>
                     <v-avatar v-if="icon" color="primary" size="88">
                       <v-icon dark large data-aos="fade-up">{{ icon }}</v-icon>

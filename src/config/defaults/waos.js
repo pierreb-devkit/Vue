@@ -94,8 +94,7 @@ module.exports = _.merge(defaultConfig, {
       {
         icon: 'fab fa-slack',
         label: 'Slack',
-        url:
-          'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
+        url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
       },
       {
         icon: 'fab fa-twitter',
@@ -173,7 +172,7 @@ module.exports = _.merge(defaultConfig, {
           color: '#56a049',
         },
         {
-          icon: 'fas text-height',
+          icon: 'fas fa-text-height',
           title: 'TypeScript',
           text:
             '**Alpha Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Repo](https://github.com/weareopensource/Typescript) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/typescript)',
@@ -338,20 +337,14 @@ module.exports = _.merge(defaultConfig, {
     blog: {
       // actually dev for Ghost Blog
       title: 'Articles',
-      url: 'https://blog.weareopensource.me',
+      url: 'https://blog.weareopensource.me/tag/article/',
       subscribe: 'https://blog.weareopensource.me/#subscribe',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     blog2: {
       // actually dev for Ghost Blog
       title: 'Snippets',
-      url: 'https://blog.weareopensource.me',
-      key: 'e4925fb7f5698f998daeb128d8',
-    },
-    blog3: {
-      // actually dev for Ghost Blog
-      title: 'Hobbies',
-      url: 'https://blog.weareopensource.me',
+      url: 'https://blog.weareopensource.me/tag/snippet/',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     contact: {
@@ -408,8 +401,7 @@ module.exports = _.merge(defaultConfig, {
           {
             icon: 'fab fa-slack',
             label: 'Slack',
-            url:
-              'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
+            url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
           },
           {
             icon: 'fab fa-twitter',

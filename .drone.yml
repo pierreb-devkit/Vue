@@ -1,16 +1,5 @@
 ---
 kind: pipeline
-name: node13
-
-steps:
-  - name: test node 13
-    image: node:13
-    commands:
-      - npm i
-      - npm run build
-
----
-kind: pipeline
 name: node14
 
 steps:
@@ -19,6 +8,7 @@ steps:
     commands:
       - npm i
       - npm run build
+      - npm run lint
 
 ---
 kind: pipeline
@@ -31,3 +21,4 @@ steps:
     commands:
       - npm i
       - npm run build
+      - npm run lint

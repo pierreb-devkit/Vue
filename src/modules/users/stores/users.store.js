@@ -40,10 +40,7 @@ const actions = {
   updateUser: async ({ commit, state }, params) => {
     try {
       const obj = model.clean(_.merge(state.user, params), whitelists);
-      const res = await Vue.prototype.axios.put(
-        `${api}/${config.api.endPoints.users}/${params.id}`,
-        obj,
-      );
+      const res = await Vue.prototype.axios.put(`${api}/${config.api.endPoints.users}/${params.id}`, obj);
       commit('user_update', res.data.data);
     } catch (err) {
       commit('user_error', err);
@@ -90,7 +87,7 @@ const mutations = {
     state.user = data;
   },
   user_update(state, data) {
-    _.merge(state.user, data);
+    _.assign(state.user, data);
   },
   user_reset(state) {
     state.user = {};

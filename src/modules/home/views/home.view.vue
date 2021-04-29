@@ -1,15 +1,7 @@
 <template>
   <div>
-    <homeBannerComponent
-      v-bind:ratio="1"
-      v-bind:app="config.app"
-      v-bind:statusMargin="450"
-    ></homeBannerComponent>
-    <homeAboutsComponent
-      v-bind:abouts="config.home.abouts"
-      v-bind:md="6"
-      v-bind:custom="null"
-    ></homeAboutsComponent>
+    <homeBannerComponent v-bind:ratio="1" v-bind:app="config.app" v-bind:statusMargin="450"></homeBannerComponent>
+    <homeAboutsComponent v-bind:abouts="config.home.abouts" v-bind:md="6" v-bind:custom="null"></homeAboutsComponent>
     <homeSlideshowComponent
       v-bind:slides="config.home.slideshow"
       v-bind:custom="{ section: { background: config.vuetify.theme.themes[theme].surface } }"
@@ -34,11 +26,7 @@
       }"
     ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
-    <homeAboutsComponent
-      v-bind:abouts="config.home.abouts2"
-      v-bind:custom="null"
-      v-bind:md="6"
-    ></homeAboutsComponent>
+    <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="null" v-bind:md="6"></homeAboutsComponent>
     <homeLogosComponent
       v-bind:logos="config.home.suggestions"
       v-bind:size="75"
@@ -52,21 +40,9 @@
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
       v-bind:news="news"
-      v-bind:custom="null"
-    ></homeBlogComponent>
-    <homeBlogComponent
-      v-bind:title="config.home.blog2.title"
-      v-bind:url="config.home.blog2.url"
-      v-bind:news="news2"
-      v-bind:custom="{
-        section: { background: config.vuetify.theme.themes[theme].surface },
-        card: { background: config.vuetify.theme.themes[theme].background },
-      }"
-    ></homeBlogComponent>
-    <homeBlogComponent
-      v-bind:title="config.home.blog3.title"
-      v-bind:url="config.home.blog3.url"
-      v-bind:news="news3"
+      v-bind:titled="config.home.blog2.title"
+      v-bind:urld="config.home.blog2.url"
+      v-bind:newsd="news2"
       v-bind:custom="null"
     ></homeBlogComponent>
     <homeLogosComponent
@@ -93,8 +69,6 @@
  * Module dependencies.
  */
 import { mapGetters } from 'vuex';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
 import homeBannerComponent from '../components/home.banner.component.vue';
 import homeAboutsComponent from '../components/home.abouts.component.vue';
 import homeFeaturesComponent from '../components/home.features.component.vue';
@@ -126,14 +100,12 @@ export default {
     homeLogosComponent,
   },
   computed: {
-    ...mapGetters(['theme', 'news', 'statistics', 'news2', 'news3']),
+    ...mapGetters(['theme', 'news', 'statistics', 'news2']),
   },
   created() {
-    AOS.init();
     this.$store.dispatch('getStatistics').then(() => {
       this.$store.dispatch('getNews');
       this.$store.dispatch('getNews2');
-      this.$store.dispatch('getNews3');
     });
   },
   mounted() {

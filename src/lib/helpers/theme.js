@@ -5,9 +5,7 @@
  */
 exports.defineTheme = (theme) => {
   if (theme === 'auto') {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   return theme ? 'dark' : 'light';
 };

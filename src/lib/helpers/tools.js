@@ -29,6 +29,5 @@ exports.pageRequest = (page, perPage, search) => {
  * @param {Object} Object options from vuetify dataTable
  * @return {String} server-items-length
  */
-exports.serverItemsLength = (items, options) => (items.length === options.itemsPerPage
-  ? options.page * options.itemsPerPage + options.itemsPerPage
-  : options.page * options.itemsPerPage);
+exports.serverItemsLength = (items, options) =>
+  items.length === options.itemsPerPage ? options.page * options.itemsPerPage + options.itemsPerPage : options.page * options.itemsPerPage;

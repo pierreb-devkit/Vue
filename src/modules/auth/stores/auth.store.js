@@ -22,10 +22,7 @@ const getters = {
 const actions = {
   signin: async ({ commit, dispatch }, params) => {
     try {
-      const res = await Vue.prototype.axios.post(
-        `${api}/${config.api.endPoints.auth}/signin`,
-        params,
-      );
+      const res = await Vue.prototype.axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
       localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       commit('auth_success', res.data);
@@ -37,10 +34,7 @@ const actions = {
   },
   signup: async ({ commit, dispatch }, params) => {
     try {
-      const res = await Vue.prototype.axios.post(
-        `${api}/${config.api.endPoints.auth}/signup`,
-        params,
-      );
+      const res = await Vue.prototype.axios.post(`${api}/${config.api.endPoints.auth}/signup`, params);
       localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       commit('auth_success', res.data);
@@ -71,10 +65,7 @@ const actions = {
   },
   forgot: async ({ commit }, params) => {
     try {
-      const res = await Vue.prototype.axios.post(
-        `${api}/${config.api.endPoints.auth}/forgot`,
-        params,
-      );
+      const res = await Vue.prototype.axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
       commit('forgot_success', res.data);
     } catch (err) {
       commit('auth_error', err);
@@ -82,10 +73,7 @@ const actions = {
   },
   reset: async ({ commit, dispatch }, params) => {
     try {
-      const res = await Vue.prototype.axios.post(
-        `${api}/${config.api.endPoints.auth}/reset`,
-        params,
-      );
+      const res = await Vue.prototype.axios.post(`${api}/${config.api.endPoints.auth}/reset`, params);
       localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       commit('auth_success', res.data);

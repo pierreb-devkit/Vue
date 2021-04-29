@@ -1,3 +1,4 @@
+/* eslint-disable no-multi-str */
 module.exports = {
   app: {
     title: 'WAOS',
@@ -33,13 +34,19 @@ module.exports = {
     google: true, // require server side oAuth config
     apple: true, // require server side oAuth config
   },
+  whitelists: {
+    users: {
+      roles: ['user', 'admin'],
+    },
+  },
   analytics: {
     matomo: {
       // host: 'https://mtm.weareopensource.me',
       // siteId: 2,
       // router: this.$router, // Enables automatically registering pageviews on the router
       // trackerFileName: 'matomo', // Changes the default .js and .php endpoint's filename
-      // enableLinkTracking: true, // Enables link tracking on regular links. Note that this won't work for routing links (ie. internal Vue router links)
+      // enableLinkTracking: true, // Enables link tracking on regular links. Note that
+      // this won't work for routing links (ie. internal Vue router links)
       // requireConsent: false, // Require consent before sending tracking information to matomo
       // trackInitialView: true, // Whether to track the initial page view
       // disableCookies: false, // Run Matomo without cookies
@@ -132,12 +139,16 @@ module.exports = {
     ],
   },
   home: {
-    temporalBackground: 'https://blog.weareopensource.me/content/images/size/w1600/2020/11', // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
+    temporalBackground: 'https://blog.weareopensource.me/content/images/size/w1600/2020/11',
+    // one by hour 00.jpg, 01.jpg; 02.jpg ... set to null default background would be in @/assets/images/background.jpg
     abouts: [
       {
         title: 'About Us',
         text:
-          '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. As we know It"s must be **fast**, **efficient** while **avoiding the refactor** afterward. So whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles**, we **share our knowledge** around this subject.',
+          '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. \
+          As we know It"s must be **fast**, **efficient** while **avoiding the refactor** afterward. \
+          So whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles**, \
+          we **share our knowledge** around this subject.',
         image: 'https://avatars3.githubusercontent.com/u/8588816?s=200&v=4',
         button: 'Github',
         link: 'https://github.com/weareopensource',
@@ -150,20 +161,24 @@ module.exports = {
           icon: 'fa-users',
           title: 'Vibrant Community',
           text:
-            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque harum excepturi nemo velit tempora! Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
+            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. \
+            Iusto cupiditate sint possimus quidem atque harum excepturi nemo velit tempora! \
+            Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
           // color: 'red' background color option
         },
         {
           icon: 'fa-cloud-upload-alt',
           title: 'Frequent Updates',
           text:
-            '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui, a luctus ex blandit. Lorem ipsum dolor sit amet consectetur adipisicing elit. qui ipsum eveniet facilis obcaecati corrupti consectetur adipisicing elit.',
+            '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui, a luctus ex blandit. \
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. qui ipsum eveniet facilis obcaecati corrupti consectetur adipisicing elit.',
         },
         {
           icon: 'fa-history',
           title: 'Long-term Support',
           text:
-            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque harum excepturi nemo velit tempora! Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
+            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque \
+            harum excepturi nemo velit tempora! Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
         },
       ],
     },
@@ -175,8 +190,7 @@ module.exports = {
             'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80',
           icon: 'fa-users',
           title: 'Vibrant Community',
-          text:
-            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint ...',
+          text: '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint ...',
           // color: 'red'
           // position: 'end', start / center / end text position for full slideshow only
           // dark: true, start / center / end text position for full slideshow only dark / light option for image => 01-dark.jpg 01-light.jpg
@@ -187,7 +201,7 @@ module.exports = {
           icon: 'fa-cloud-upload-alt',
           title: 'Frequent Updates',
           // color: 'red'
-          // text: '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui, a luctus ex blandit. Lorem ipsum dolor sit amet consectetur adipisicing elit. qui ipsum eveniet facilis obcaecati corrupti consectetur adipisicing elit.',
+          // text: '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui,
         },
       ],
     },
@@ -233,7 +247,8 @@ module.exports = {
             label: 'Blog',
             icon: 'fa-rss',
             url: 'https://blog.weareopensource.me',
-          }, {
+          },
+          {
             label: 'Twitter',
             icon: 'fab fa-twitter',
             url: 'https://weareopensource.me',
@@ -264,7 +279,8 @@ module.exports = {
             label: 'T&C / CGU',
             icon: 'fa-file-alt',
             url: '/pages/terms',
-          }, {
+          },
+          {
             label: 'Legal',
             icon: 'fa-stamp',
             url: '/pages/legal',

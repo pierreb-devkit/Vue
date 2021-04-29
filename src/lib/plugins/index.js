@@ -6,3 +6,4 @@ import './matomo';
 import './moment';
 import './gravatar';
 import './images';
+import './aos';

@@ -19,7 +19,6 @@ const getters = {
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
   news2: (state) => state.news2,
-  news3: (state) => state.news3,
 };
 
 /**
@@ -36,9 +35,7 @@ const actions = {
   },
   getChangelogs: async ({ commit }) => {
     try {
-      const changelogs = await Vue.prototype.axios.get(
-        `${api}/${config.api.endPoints.home}/changelogs`,
-      );
+      const changelogs = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/changelogs`);
       commit(
         'contents_set',
         changelogs.data.data.map((item) => ({
@@ -120,19 +117,6 @@ const actions = {
       commit('error', err);
     }
   },
-  getNews3: async ({ commit }) => {
-    try {
-      const ghost = new GhostContentAPI({
-        url: config.home.blog2.url,
-        key: config.home.blog2.key,
-        version: 'v3',
-      });
-      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:hobbies' });
-      commit('news3_set', res);
-    } catch (err) {
-      commit('error', err);
-    }
-  },
 };
 
 /**
@@ -164,20 +148,22 @@ const mutations = {
   // statistics
   statistics_set(state, data) {
     state.statistics[0].value = data.releases.length;
-    state.statistics[1].value = _.sum(_.flatten(data.releases.map((release) => {
-      if (release.list.length > 0) {
-        return tools.releasesNumber(release.list[0].name);
-      } return 0;
-    })).map((x) => +x));
+    state.statistics[1].value = _.sum(
+      _.flatten(
+        data.releases.map((release) => {
+          if (release.list.length > 0) {
+            return tools.releasesNumber(release.list[0].name);
+          }
+          return 0;
+        }),
+      ).map((x) => +x),
+    );
     state.statistics[2].value = data.articles.pagination.total;
     state.statistics[3].value = _.sum(data.pulls.map((pull) => pull.data.pull_count));
   },
   // news
   news2_set(state, data) {
     state.news2 = data;
-  },
-  news3_set(state, data) {
-    state.news3 = data;
   },
 };
 
@@ -191,7 +177,6 @@ const state = {
   contact: {},
   statistics: config.home.stats.data,
   news2: [],
-  news3: [],
 };
 
 /**

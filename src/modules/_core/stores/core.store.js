@@ -31,14 +31,11 @@ const actions = {
           // hidden item
           if (!('roles' in i.meta)) return i; // auth undefined, always displayed
           if (!i.meta.roles && !rootGetters.isLoggedIn) return i; // auth false, not logged
-          if (
-            i.meta.roles &&
-            rootGetters.isLoggedIn &&
-            i.meta.roles.some((r) => userRoles.includes(r))
-          ) {
+          if (i.meta.roles && rootGetters.isLoggedIn && i.meta.roles.some((r) => userRoles.includes(r))) {
             return i; // auth true and loggedd
           }
         }
+        return null;
       }),
       ['meta.roles'],
       ['desc'],

@@ -18,17 +18,14 @@
         :to="item.path"
         :style="
           config.vuetify.theme.navigation.selectBorder && testRoute(item.path, $route.path)
-            ? `border-left: 4px solid ${(item.meta.color && item.meta.color.border) ||
-                config.vuetify.theme.themes[theme][config.vuetify.theme.navigation.selectBorder]};`
+            ? `border-left: 4px solid ${
+                (item.meta.color && item.meta.color.border) || config.vuetify.theme.themes[theme][config.vuetify.theme.navigation.selectBorder]
+              };`
             : 'border-left: 4px solid transparent;'
         "
       >
         <v-list-item-action
-          :style="
-            config.vuetify.theme.navigation.selectBorder && testRoute(item.path, $route.path)
-              ? 'margin-left: -4px;'
-              : 'margin-left: -4px;'
-          "
+          :style="config.vuetify.theme.navigation.selectBorder && testRoute(item.path, $route.path) ? 'margin-left: -4px;' : 'margin-left: -4px;'"
         >
           <v-tooltip right>
             <template v-slot:activator="{ on, attrs }">
@@ -36,9 +33,7 @@
                 v-bind="attrs"
                 v-on="on"
                 :style="{
-                  color:
-                    (item.meta.color && item.meta.color.icon) ||
-                    config.vuetify.theme.themes[theme].onPrimary,
+                  color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.themes[theme].onPrimary,
                 }"
                 >fa-{{ item.meta.icon }}</v-icon
               >
@@ -47,9 +42,7 @@
           </v-tooltip>
         </v-list-item-action>
         <v-list-item-content>
-          <v-list-item-title :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">{{
-            item.name
-          }}</v-list-item-title>
+          <v-list-item-title :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">{{ item.name }}</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
     </v-list>

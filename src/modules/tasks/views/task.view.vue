@@ -10,46 +10,23 @@
       <v-btn v-if="this.task.id" color="red lighten-3" @click="remove" icon>
         <v-icon>fa-trash</v-icon>
       </v-btn>
-      <v-btn
-        v-if="this.task.id"
-        class="mr-5"
-        color="blue lighten-2"
-        @click="update()"
-        :disabled="!save"
-        icon
-      >
+      <v-btn v-if="this.task.id" class="mr-5" color="blue lighten-2" @click="update()" :disabled="!save" icon>
         <v-icon>fa-save</v-icon>
       </v-btn>
     </v-row>
     <!-- First Form -->
     <v-row class="mx-0">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
-        <v-card
-          class="pa-6"
-          :style="{ background: config.vuetify.theme.themes[theme].surface }"
-          :flat="config.vuetify.theme.flat"
-        >
+        <v-card class="pa-6" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
-                <v-text-field
-                  v-model="title"
-                  :rules="[rules.required]"
-                  label="Title"
-                  required
-                ></v-text-field>
-                <v-text-field
-                  v-model="description"
-                  :rules="[rules.required]"
-                  label="Description"
-                  required
-                ></v-text-field>
+                <v-text-field v-model="title" :rules="[rules.required]" label="Title" required></v-text-field>
+                <v-text-field v-model="description" :rules="[rules.required]" label="Description" required></v-text-field>
               </v-col>
             </v-row>
             <v-row v-if="!this.task.id">
-              <v-btn :disabled="!valid" color="success" class="mr-4" @click="create"
-                >Validate</v-btn
-              >
+              <v-btn :disabled="!valid" color="success" class="mr-4" @click="create">Validate</v-btn>
             </v-row>
           </v-form>
         </v-card>

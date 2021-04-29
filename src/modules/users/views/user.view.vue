@@ -13,17 +13,11 @@
       <v-dialog v-model="removeConfirm" max-width="290">
         <v-card>
           <v-card-title class="headline">Delete this item ?</v-card-title>
-          <v-card-text>
-            Are you sure you want to delete this item ? we will not be able to recover it.
-          </v-card-text>
+          <v-card-text> Are you sure you want to delete this item ? we will not be able to recover it. </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" text @click="removeConfirm = false">
-              Close
-            </v-btn>
-            <v-btn color="red darken-1" text @click="remove">
-              Delete
-            </v-btn>
+            <v-btn color="green darken-1" text @click="removeConfirm = false"> Close </v-btn>
+            <v-btn color="red darken-1" text @click="remove"> Delete </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -34,12 +28,7 @@
     <!-- First Form -->
     <v-row class="mx-0">
       <v-col cols="12" sm="12" md="12" lg="12" xl="12">
-        <v-card
-          width="100%"
-          class="px-10 pa-6"
-          :style="{ background: config.vuetify.theme.themes[theme].surface }"
-          :flat="config.vuetify.theme.flat"
-        >
+        <v-card width="100%" class="px-10 pa-6" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" xs="12" sm="12" md="8" lg="9" xl="10">
@@ -49,38 +38,15 @@
               </v-col>
               <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2">
                 <center>
-                  <userAvatarComponent
-                    :user="user"
-                    :width="'200px'"
-                    :height="'200px'"
-                    :radius="'50%'"
-                    :border="'0px'"
-                    :color="'#000'"
-                    :size="512"
-                  />
+                  <userAvatarComponent :user="user" :width="'200px'" :height="'200px'" :radius="'50%'" :border="'0px'" :color="'#000'" :size="512" />
                 </center>
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12">
-                <v-textarea
-                  v-model="bio"
-                  :rules="rules.bio"
-                  label="Bio"
-                  auto-grow
-                  clearable
-                  counter
-                ></v-textarea>
+                <v-textarea v-model="bio" :rules="rules.bio" label="Bio" auto-grow clearable counter></v-textarea>
                 <v-text-field v-model="position" label="Position" required></v-text-field>
-                <v-select
-                  v-model="roles"
-                  :items="rolesItems"
-                  attach
-                  chips
-                  label="Users"
-                  multiple
-                  required
-                ></v-select>
+                <v-select v-model="roles" :items="rolesItems" attach chips label="Users" multiple required></v-select>
               </v-col>
             </v-row>
           </v-form>
@@ -134,7 +100,7 @@ export default {
       rules: {
         bio: [(v) => !v || (v && v.length <= 200) || 'Max 200 characters'],
       },
-      rolesItems: ['admin', 'user'],
+      rolesItems: this.config.whitelists.users.roles,
       removeConfirm: false,
     };
   },

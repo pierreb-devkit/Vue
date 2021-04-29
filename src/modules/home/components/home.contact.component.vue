@@ -5,10 +5,7 @@
 <template>
   <section id="contact" class="py-12">
     <v-container>
-      <h2
-        class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase"
-        v-if="config.home.contact.title"
-      >
+      <h2 class="display-1 font-weight-bold mb-3 pb-8 text-center text-uppercase" v-if="config.home.contact.title">
         {{ config.home.contact.title }}
       </h2>
       <v-theme-provider light>
@@ -25,13 +22,7 @@
               ></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-textarea
-                v-model="body"
-                :flat="config.vuetify.theme.flat"
-                label="Message*"
-                class="rounded-xl"
-                solo
-              ></v-textarea>
+              <v-textarea v-model="body" :flat="config.vuetify.theme.flat" label="Message*" class="rounded-xl" solo></v-textarea>
             </v-col>
             <v-col class="mx-auto" cols="auto">
               <v-btn
@@ -85,9 +76,7 @@ export default {
   },
   methods: {
     sendMail() {
-      window.location.href = `${this.config.home.contact.mail}?subject=${
-        this.contact.subject
-      }&body=${this.contact.body.replace(/\n/g, '%0D%0A')}`;
+      window.location.href = `${this.config.home.contact.mail}?subject=${this.contact.subject}&body=${this.contact.body.replace(/\n/g, '%0D%0A')}`;
       this.$refs.form.reset();
     },
   },

@@ -1,10 +1,6 @@
 <template>
   <v-col cols="12" sm="6" md="6" lg="4" xl="3">
-    <v-card
-      class="mx-auto"
-      :style="{ background: config.vuetify.theme.themes[theme].surface }"
-      :flat="config.vuetify.theme.flat"
-    >
+    <v-card class="mx-auto" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
       <v-img
         :src="require('@/assets/images/background.jpg')"
         height="175"

@@ -39,12 +39,7 @@
     ],
 -->
 <template>
-  <section
-    id="features"
-    class="py-12"
-    :style="custom && custom.section ? custom.section : null"
-    v-if="links.length > 0"
-  >
+  <section id="features" class="py-12" :style="custom && custom.section ? custom.section : null" v-if="links.length > 0">
     <v-container>
       <v-row>
         <v-col
@@ -53,10 +48,7 @@
           cols="12"
           :md="12 / links.filter((section) => section.items).length"
         >
-          <v-card
-            :flat="config.vuetify.theme.flat"
-            :style="custom && custom.section ? custom.section : null"
-          >
+          <v-card :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="justify-center text--secondary" v-text="title"></v-card-title>
             <v-list dense :style="custom && custom.section ? custom.section : null">
               <v-list-item-group color="primary">

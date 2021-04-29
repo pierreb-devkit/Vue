@@ -13,9 +13,8 @@ import Vue from 'vue';
  */
 Vue.prototype.setImages = (api, file, size, operation) => {
   const base = file.split('.');
-  let name = '';
   if (base.length !== 2) return file;
-  name = base[0];
+  let [name] = base;
   if (size) name = `${name}-${size}`;
   if (operation) name = `${name}-${operation}`;
   name = `${name}.${base[1]}`;

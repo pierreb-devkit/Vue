@@ -27,12 +27,7 @@
   },
 -->
 <template>
-  <section
-    id="features"
-    class="py-12"
-    :style="custom && custom.section ? custom.section : null"
-    v-if="logos.data.length > 0"
-  >
+  <section id="features" class="py-12" :style="custom && custom.section ? custom.section : null" v-if="logos.data.length > 0">
     <v-container class="text-center">
       <h2 class="display-1 font-weight-bold mb-3 pb-8 text-uppercase" v-if="logos.title">
         {{ logos.title }}

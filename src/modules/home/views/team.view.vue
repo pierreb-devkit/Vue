@@ -1,17 +1,9 @@
 <template>
   <div>
-    <homeBannerComponent
-      v-bind:ratio="3"
-      v-bind:app="{ subtitle: this.$route.meta.title }"
-    ></homeBannerComponent>
+    <homeBannerComponent v-bind:ratio="3" v-bind:app="{ subtitle: this.$route.meta.title }"></homeBannerComponent>
     <v-container fluid>
       <v-layout wrap align-content-space-around text-xs-center>
-        <teamMemberComponent
-          v-for="(item, index) in team"
-          v-bind:item="item"
-          v-bind:index="index"
-          v-bind:key="item.id"
-        ></teamMemberComponent>
+        <teamMemberComponent v-for="(item, index) in team" v-bind:item="item" v-bind:index="index" v-bind:key="item.id"></teamMemberComponent>
       </v-layout>
     </v-container>
   </div>

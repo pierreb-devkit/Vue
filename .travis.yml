@@ -11,6 +11,8 @@ install:
   - npm i
 before_script:
   - npm run build
+after_success:
+  - npm run lint
 jobs:
   include:
     - stage: allow_failures

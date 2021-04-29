@@ -1,12 +1,7 @@
 <template>
   <v-container fluid>
     <v-row align="start" justify="center">
-      <v-card
-        class="ma-6 pa-6"
-        width="100%"
-        :style="{ background: config.vuetify.theme.themes[theme].surface }"
-        :flat="config.vuetify.theme.flat"
-      >
+      <v-card class="ma-6 pa-6" width="100%" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
         <v-col cols="12">
           <v-subheader><h4>Sign In</h4></v-subheader>
           <v-divider></v-divider>
@@ -34,19 +29,9 @@
             </v-row>
             <v-row>
               <v-col cols="6">
-                <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate"
-                  >Validate</v-btn
-                >
-                <v-btn
-                  v-if="config.oAuth.google"
-                  :href="`${oAuth}/google`"
-                  class="white--text mr-4 blue"
-                  ><v-icon>fab fa-google</v-icon>
-                </v-btn>
-                <v-btn
-                  v-if="config.oAuth.apple"
-                  :href="`${oAuth}/apple`"
-                  class="white--text mr-4 grey darken-2"
+                <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate">Validate</v-btn>
+                <v-btn v-if="config.oAuth.google" :href="`${oAuth}/google`" class="white--text mr-4 blue"><v-icon>fab fa-google</v-icon> </v-btn>
+                <v-btn v-if="config.oAuth.apple" :href="`${oAuth}/apple`" class="white--text mr-4 grey darken-2"
                   ><v-icon>fab fa-apple</v-icon>
                 </v-btn>
               </v-col>
@@ -86,7 +71,9 @@ export default {
       valid: false,
       email: '',
       password: '',
-      oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
+      oAuth: `${this.config.api.protocol}://
+      ${this.config.api.host}:${this.config.api.port}
+      /${this.config.api.base}/${this.config.api.endPoints.auth}`,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
@@ -107,9 +94,7 @@ export default {
       if (this.$refs.form.validate()) {
         const { email } = this;
         const { password } = this;
-        this.$store
-          .dispatch('signin', { email, password })
-          .catch((err) => console.log(err));
+        this.$store.dispatch('signin', { email, password }).catch((err) => console.log(err));
       }
     },
     reset() {

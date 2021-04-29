@@ -1,11 +1,7 @@
 <template>
   <v-container fluid>
     <v-layout class="ma-3" wrap align-content-space-around text-xs-center>
-      <v-card
-        width="100%"
-        :style="{ background: config.vuetify.theme.themes[theme].surface }"
-        :flat="config.vuetify.theme.flat"
-      >
+      <v-card width="100%" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
         <v-card-title>
           Users
           <v-spacer></v-spacer>
@@ -27,24 +23,13 @@
           :flat="config.vuetify.theme.flat"
         >
           <template v-slot:[`item.avatar`]="{ item }">
-            <userAvatarComponent
-              :user="item"
-              :width="'37px'"
-              :height="'37px'"
-              :radius="'50%'"
-              :border="'0px'"
-              :color="'#000'"
-            />
+            <userAvatarComponent :user="item" :width="'37px'" :height="'37px'" :radius="'50%'" :border="'0px'" :color="'#000'" />
           </template>
           <template v-slot:[`item.email`]="{ item }"
             ><a :href="`mailto:${item.email}`">{{ item.email }}</a></template
           >
-          <template v-slot:[`item.createdAt`]="{ item }"
-            >{{ moment(new Date(item.createdAt)).format('DD/MM/YY à HH:mm') }}
-          </template>
-          <template v-slot:[`item.updatedAt`]="{ item }"
-            >{{ moment(new Date(item.createdAt)).format('DD/MM/YY à HH:mm') }}
-          </template>
+          <template v-slot:[`item.createdAt`]="{ item }">{{ moment(new Date(item.createdAt)).format('DD/MM/YY à HH:mm') }} </template>
+          <template v-slot:[`item.updatedAt`]="{ item }">{{ moment(new Date(item.createdAt)).format('DD/MM/YY à HH:mm') }} </template>
           <template v-slot:[`item.id`]="{ item }">
             <v-btn v-if="item.id" :to="`/users/${item.id}`" icon>
               <v-icon>fa-eye</v-icon>
@@ -54,10 +39,7 @@
       </v-card>
       <v-row v-if="!users.length" align="start" justify="center">
         <v-col cols="12">
-          <v-card
-            :style="{ background: config.vuetify.theme.themes[theme].surface }"
-            :flat="config.vuetify.theme.flat"
-          >
+          <v-card :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
             <h2 class="text-center">No Users found :( !</h2>
           </v-card>
         </v-col>
@@ -104,23 +86,19 @@ export default {
   watch: {
     options(options) {
       this.loading = true;
-      this.$store
-        .dispatch('getUsers', tools.pageRequest(options.page, options.itemsPerPage, this.search))
-        .then(() => {
-          this.totalCount = tools.serverItemsLength(this.users, this.options);
-          this.loading = false;
-        });
+      this.$store.dispatch('getUsers', tools.pageRequest(options.page, options.itemsPerPage, this.search)).then(() => {
+        this.totalCount = tools.serverItemsLength(this.users, this.options);
+        this.loading = false;
+      });
     },
   },
   methods: {
     getSearch() {
       this.loading = true;
-      this.$store
-        .dispatch('getUsers', tools.pageRequest(1, this.options.itemsPerPage, this.search))
-        .then(() => {
-          this.totalCount = tools.serverItemsLength(this.users, this.options);
-          this.loading = false;
-        });
+      this.$store.dispatch('getUsers', tools.pageRequest(1, this.options.itemsPerPage, this.search)).then(() => {
+        this.totalCount = tools.serverItemsLength(this.users, this.options);
+        this.loading = false;
+      });
     },
   },
   created() {

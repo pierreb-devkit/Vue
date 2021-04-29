@@ -95,12 +95,7 @@ export default {
             this.snackbar.status = true;
             router.push('/signin');
           }
-          if (
-            this.config.vuetify.theme.snackbar.status &&
-            err.response &&
-            err.response.data &&
-            err.response.data.description
-          ) {
+          if (this.config.vuetify.theme.snackbar.status && err.response && err.response.data && err.response.data.description) {
             this.snackbar.text = err.response.data.description;
             this.snackbar.color = this.config.vuetify.theme.snackbar.errorColor;
             this.snackbar.status = true;
