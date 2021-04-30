@@ -337,14 +337,14 @@ module.exports = _.merge(defaultConfig, {
     blog: {
       // actually dev for Ghost Blog
       title: 'Articles',
-      url: 'https://blog.weareopensource.me/tag/article/',
+      url: 'https://blog.weareopensource.me',
       subscribe: 'https://blog.weareopensource.me/#subscribe',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     blog2: {
       // actually dev for Ghost Blog
       title: 'Snippets',
-      url: 'https://blog.weareopensource.me/tag/snippet/',
+      url: 'https://blog.weareopensource.me',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     contact: {
