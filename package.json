@@ -16,7 +16,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pierrebrisorgueil/waos_node.git"
+    "url": "https://github.com/weareopensource/Vue.git"
   },
   "engines": {
     "node": ">=10.16.3",
@@ -70,7 +70,6 @@
     "@vue/cli-plugin-unit-jest": "^4.5.12",
     "@vue/cli-plugin-vuex": "^4.5.12",
     "@vue/cli-service": "^4.5.12",
-    "@vue/compiler-sfc": "^3.0.11",
     "@vue/eslint-config-airbnb": "^5.3.0",
     "@vue/test-utils": "1.1.4",
     "@weareopensource/conventional-changelog": "^1.7.0",
@@ -103,7 +102,7 @@
       }
     ],
     "ci": false,
-    "repositoryUrl": "https://github.com/pierrebrisorgueil/waos_node.git",
+    "repositoryUrl": "https://github.com/weareopensource/Vue.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
