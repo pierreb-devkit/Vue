@@ -18,6 +18,7 @@ const getters = {
   news: (state) => state.news,
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
+  news2: (state) => state.news2,
 };
 
 /**
@@ -81,14 +82,37 @@ const actions = {
   },
   getStatistics: async ({ commit }) => {
     try {
-      const tasks = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
+      // const tasks = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
+      // const users = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/stats`);
       const releases = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/releases`);
-      const users = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.users}/stats`);
-      commit('statistics_set', {
-        tasks: tasks.data.data,
-        releases: releases.data.data,
-        users: users.data.data,
+      const pulls = await Vue.prototype.axios.get(`${api}/${config.api.endPoints.home}/pulls`);
+      const ghost = new GhostContentAPI({
+        url: config.home.blog.url,
+        key: config.home.blog.key,
+        version: 'v3',
       });
+      const articles = await ghost.posts.browse({ limit: 1 });
+
+      commit('statistics_set', {
+        // tasks: tasks.data.data,
+        // users: users.data.data,
+        releases: releases.data.data,
+        pulls: pulls.data.data,
+        articles: articles.meta,
+      });
+    } catch (err) {
+      commit('error', err);
+    }
+  },
+  getNews2: async ({ commit }) => {
+    try {
+      const ghost = new GhostContentAPI({
+        url: config.home.blog2.url,
+        key: config.home.blog2.key,
+        version: 'v3',
+      });
+      const res = await ghost.posts.browse({ limit: 3, filter: 'tag:snippet' });
+      commit('news2_set', res);
     } catch (err) {
       commit('error', err);
     }
@@ -123,7 +147,7 @@ const mutations = {
   },
   // statistics
   statistics_set(state, data) {
-    state.statistics[0].value = data.tasks;
+    state.statistics[0].value = data.releases.length;
     state.statistics[1].value = _.sum(
       _.flatten(
         data.releases.map((release) => {
@@ -134,7 +158,12 @@ const mutations = {
         }),
       ).map((x) => +x),
     );
-    state.statistics[2].value = data.users;
+    state.statistics[2].value = data.articles.pagination.total;
+    state.statistics[3].value = _.sum(data.pulls.map((pull) => pull.data.pull_count));
+  },
+  // news
+  news2_set(state, data) {
+    state.news2 = data;
   },
 };
 
@@ -147,6 +176,7 @@ const state = {
   news: [],
   contact: {},
   statistics: config.home.stats.data,
+  news2: [],
 };
 
 /**
