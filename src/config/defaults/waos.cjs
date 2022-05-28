@@ -78,33 +78,33 @@ module.exports = _.merge(defaultConfig, {
   header: {
     socials: [
       {
-        icon: 'fab fa-github',
+        icon: 'fa-brands fa-github',
         label: 'Github',
         url: 'https://github.com/weareopensource',
       },
       {
-        icon: 'fab fa-docker',
+        icon: 'fa-brands fa-docker',
         label: 'Docker',
         url: 'https://hub.docker.com/orgs/weareopensource/repositories',
       },
       {
-        icon: 'fab fa-discord',
+        icon: 'fa-brands fa-discord',
         label: 'Discord',
         url: 'https://discord.gg/U2a2vVm',
       },
       {
-        icon: 'fab fa-slack',
+        icon: 'fa-brands fa-slack',
         label: 'Slack',
         url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
       },
       {
-        icon: 'fab fa-twitter',
+        icon: 'fa-brands fa-twitter',
         label: 'Twitter',
         url: 'https://twitter.com/waos_io',
       },
       {
         label: 'Linkedin',
-        icon: 'fab fa-linkedin',
+        icon: 'fa-brands fa-linkedin',
         url: 'https://www.linkedin.com/company/weareopensource-me',
       },
     ],
@@ -152,28 +152,28 @@ module.exports = _.merge(defaultConfig, {
       title: 'Stacks',
       data: [
         {
-          icon: 'fab fa-vuejs',
+          icon: 'fa-brands fa-vuejs',
           title: 'Vue',
           text:
             '**Beta Front Stack** <br> Landing page, Auth, Users, Subscriptions, Pages/Terms, Tasks example ... <br/> *Vuetify, Vuex, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
           color: '#186b9f',
         },
         {
-          icon: 'fab fa-swift',
+          icon: 'fa-brands fa-swift',
           title: 'Swift',
           text:
             '**Beta Front Stack** <br> On boarding, Auth, User, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
           color: '#f74e38',
         },
         {
-          icon: 'fab fa-node',
+          icon: 'fa-brands fa-node',
           title: 'Node',
           text:
             '**Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
           color: '#56a049',
         },
         {
-          icon: 'fab fa-tumblr-square',
+          icon: 'fa-brands fa-tumblr-square',
           title: 'TypeScript',
           text:
             '**Alpha Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Repo](https://github.com/weareopensource/Typescript) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/typescript)',
@@ -375,18 +375,18 @@ module.exports = _.merge(defaultConfig, {
         items: [
           {
             label: 'Blog',
-            icon: 'fa-rss',
+            icon: 'fa-solid fa-rss',
             url: 'https://blog.weareopensource.me',
           },
           {
-            icon: 'fab fa-github',
+            icon: 'fa-brands fa-github',
             label: 'Github',
             url: 'https://github.com/weareopensource',
           },
           {
             // set null to hide
             label: 'Changelogs',
-            icon: 'fa-clipboard-list',
+            icon: 'fa-solid fa-clipboard-list',
             url: '/changelogs',
           },
         ],
@@ -395,17 +395,17 @@ module.exports = _.merge(defaultConfig, {
         title: 'About',
         items: [
           {
-            icon: 'fab fa-discord',
+            icon: 'fa-brands fa-discord',
             label: 'Discord',
             url: 'https://discord.gg/U2a2vVm',
           },
           {
-            icon: 'fab fa-slack',
+            icon: 'fa-brands fa-slack',
             label: 'Slack',
             url: 'https://join.slack.com/t/weareopensource/shared_invite/zt-62p1qxna-PEQn289qx6mmHobzKW8QFw',
           },
           {
-            icon: 'fab fa-twitter',
+            icon: 'fa-brands fa-twitter',
             label: 'Twitter',
             url: 'https://twitter.com/waos_io',
           },
@@ -415,17 +415,17 @@ module.exports = _.merge(defaultConfig, {
         title: 'Others',
         items: [
           {
-            icon: 'fab fa-docker',
+            icon: 'fa-brands fa-docker',
             label: 'Docker',
             url: 'https://hub.docker.com/orgs/weareopensource/repositories',
           },
           {
-            icon: 'fas fa-vial',
+            icon: 'fa-solid fa-vial',
             label: 'Travis',
             url: 'https://travis-ci.org/github/weareopensource',
           },
           {
-            icon: 'fa-users',
+            icon: 'fa-solid fa-users',
             label: 'Us ?',
             url: 'https://blog.weareopensource.me/us/',
           },
