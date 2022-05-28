@@ -1,6 +1,6 @@
 <template>
-  <v-footer v-if="enabled" class="pa-0 align-end" :style="{ background: config.vuetify.theme.themes[theme].colors.background }" app>
-    <v-container class="footer pa-6" :style="custom && custom.section ? custom.section : null" v-if="links.length > 0">
+  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="{ background: config.vuetify.theme.themes[theme].colors.background }" app>
+    <v-container class="pa-6" :style="custom && custom.section ? custom.section : null" v-if="links.length > 0">
       <v-row>
         <v-col
           v-for="({ items, title }, i) in links.filter((section) => section.items)"
@@ -53,3 +53,9 @@ export default {
   },
 };
 </script>
+
+<style>
+.footer {
+  position: relative !important;
+}
+</style>
