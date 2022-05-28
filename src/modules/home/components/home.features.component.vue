@@ -35,7 +35,7 @@
               </v-avatar>
             </div>
             <v-card-title class="justify-center font-weight-black text-uppercase" v-text="title"></v-card-title>
-            <v-card-text class="subtitle-1 text--secondary">
+            <v-card-text class="subtitle-1 text-secondary">
               <v-markdown :source="text" />
             </v-card-text>
           </v-card>

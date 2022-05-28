@@ -98,7 +98,7 @@
                     }"
                     v-text="title"
                   ></v-card-title>
-                  <v-card-text v-if="text" class="subtitle-1 text--secondary">
+                  <v-card-text v-if="text" class="subtitle-1 text-secondary">
                     <v-markdown :source="text" />
                   </v-card-text>
                 </v-card>

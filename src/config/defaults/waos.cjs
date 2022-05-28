@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const defaultConfig = require('./development');
+const defaultConfig = require('./development.cjs');
 
 module.exports = _.merge(defaultConfig, {
   app: {
@@ -49,17 +49,18 @@ module.exports = _.merge(defaultConfig, {
       dark: 'auto',
       signin: false, // display signin link
       signup: false, // display signup link
-      navigation: {
-        displayIfLogged: true, // show nav only if user is logged (easy for one page site)
-      },
       themes: {
-        dark: {
-          primary: '#2c3e50',
-          secondary: '#ff6b81',
-        },
         light: {
-          primary: '#2c3e50',
-          secondary: '#ff4757',
+          colors: {
+            primary: '#2c3e50',
+            secondary: '#ff4757',
+          },
+        },
+        dark: {
+          colors: {
+            primary: '#2c3e50',
+            secondary: '#ff6b81',
+          },
         },
       },
     },
