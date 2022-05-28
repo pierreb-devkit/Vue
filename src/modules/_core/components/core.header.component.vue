@@ -7,16 +7,13 @@
     :flat="config.vuetify.theme.flat"
   >
     <!-- Navigation button -->
-    <template v-slot:prepend v-if="config.vuetify.theme.navigation.ifLogged">
+    <template v-slot:prepend v-if="!config.vuetify.theme.navigation.ifLogged">
       <!-- v-if="isLoggedIn" -->
       <v-app-bar-nav-icon
         :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }"
         class="ml-0"
         @click.stop="drawer = !drawer"
       ></v-app-bar-nav-icon>
-    </template>
-    <template v-slot:prepend v-else>
-      <v-app-bar-nav-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
     </template>
     <!-- Title -->
     <v-app-bar-title>
