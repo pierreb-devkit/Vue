@@ -1,22 +1,30 @@
 /**
  * Module dependencies.
  */
-import '@fortawesome/fontawesome-free/css/all.css';
-import '@/lib/plugins';
-import 'vuetify/dist/vuetify.min.css';
+import { createApp } from 'vue';
+import { createMetaManager, plugin as metaPlugin } from 'vue-meta';
+import store from './modules/_app/app.store';
+import router from './modules/_app/app.router';
+import plugins from './lib/plugins';
+import config from './config/index.cjs';
+import App from './modules/_app/app.vue';
 
-import Vue from 'vue';
-import App from '@/modules/_app/app.vue';
-import store from '@/modules/_app/app.store';
-import router from '@/modules/_app/app.router';
-import vuetify from '@/lib/plugins/vuetify';
+const app = createApp(App);
 
-// Vuetify
-Vue.config.productionTip = false;
+app.config.globalProperties.config = config;
 
-new Vue({
-  router,
-  store,
-  vuetify,
-  render: (h) => h(App),
-}).$mount('#app');
+app
+  .use(store(app))
+  .use(router(app))
+  .use(createMetaManager())
+  .use(metaPlugin)
+  .use(plugins.aos)
+  .use(plugins.axios)
+  .use(plugins.images)
+  .use(plugins.lodash)
+  .use(plugins.markdown)
+  .use(plugins.matomo)
+  .use(plugins.moment)
+  .use(plugins.vuetify)
+  .use(plugins.gravatar)
+  .mount('#app');

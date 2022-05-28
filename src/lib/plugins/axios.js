@@ -1,9 +1,15 @@
 /**
  * Module dependencies.
  */
-import Vue from 'vue';
 import axios from 'axios';
 
-Vue.prototype.axios = axios.create({
-  withCredentials: true,
-});
+/**
+ * Plugin Setup
+ */
+export default {
+  install: (app) => {
+    app.config.globalProperties.axios = axios.create({
+      withCredentials: true,
+    });
+  },
+};

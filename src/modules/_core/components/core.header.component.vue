@@ -1,100 +1,62 @@
 <template>
   <v-app-bar
-    :clipped-left="config.vuetify.drawer.clipped"
     :style="{
-      background: config.vuetify.theme.themes[theme].primary,
-      color: config.vuetify.theme.themes[theme].onPrimary,
+      background: config.vuetify.theme.themes[theme].colors.primary,
+      color: config.vuetify.theme.themes[theme].colors.onPrimary,
     }"
     :flat="config.vuetify.theme.flat"
-    app
   >
-    <v-app-bar-nav-icon
-      :style="{ color: config.vuetify.theme.themes[theme].onPrimary }"
-      v-if="
-        config.vuetify.drawer.type !== 'permanent' &&
-        config.vuetify.drawer.type !== 'mini' &&
-        (!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn)
-      "
-      @click.stop="drawer = !drawer"
-    ></v-app-bar-nav-icon>
-    <v-app-bar-nav-icon
-      :style="{ color: config.vuetify.theme.themes[theme].onPrimary }"
-      v-if="
-        config.vuetify.drawer.type === 'mini' &&
-        (!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn) &&
-        !this.$vuetify.breakpoint.mdAndDown
-      "
-      @click.stop="mini = !mini"
-    ></v-app-bar-nav-icon>
-    <v-app-bar-nav-icon
-      :style="{ color: config.vuetify.theme.themes[theme].onPrimary }"
-      v-if="
-        config.vuetify.drawer.type === 'mini' &&
-        (!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn) &&
-        this.$vuetify.breakpoint.mdAndDown
-      "
-      @click.stop="
-        drawer = !drawer;
-        mini = false;
-      "
-    ></v-app-bar-nav-icon>
-    <v-toolbar-title>
+    <!-- Navigation button -->
+    <template v-slot:prepend v-if="config.vuetify.theme.navigation.ifLogged">
+      <!-- v-if="isLoggedIn" -->
+      <v-app-bar-nav-icon
+        :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }"
+        class="ml-0"
+        @click.stop="drawer = !drawer"
+      ></v-app-bar-nav-icon>
+    </template>
+    <template v-slot:prepend v-else>
+      <v-app-bar-nav-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+    </template>
+    <!-- Title -->
+    <v-app-bar-title>
       <router-link to="/">{{ config.app.title }}</router-link>
       <a v-for="({ label, url }, i) in config.header.links" :key="i" :href="url" class="ml-6">{{ label }}</a>
-    </v-toolbar-title>
-    <div class="flex-grow-1"></div>
-    <!-- custom menu -->
-    <v-tooltip v-for="({ icon, label, url }, i) in config.header.socials" :key="i" bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn class="hidden-sm-and-down" v-bind="attrs" v-on="on" min-width="50" min-height="50" x-small icon>
-          <a :href="url">
-            <v-icon :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">{{ icon }}</v-icon>
-          </a>
-        </v-btn>
-      </template>
-      <span>{{ label }}</span>
-    </v-tooltip>
-    <v-menu offset-y>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn class="hidden-md-and-up" v-bind="attrs" v-on="on" min-width="50" min-height="50" x-small icon>
-          <v-icon :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">fa-ellipsis-h</v-icon>
+    </v-app-bar-title>
+    <!-- Social buttons -->
+    <v-btn v-for="({ icon, label, url }, i) in config.header.socials" :key="i" class="hidden-sm-and-down" icon>
+      <v-tooltip :text="label" activator="parent" anchor="bottom" />
+      <a :href="url">
+        <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">{{ icon }}</v-icon>
+      </a>
+    </v-btn>
+    <!-- Mobile Menu -->
+    <v-menu>
+      <template v-slot:activator="{ props }">
+        <v-btn v-bind="props" class="hidden-md-and-up" icon>
+          <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-ellipsis</v-icon>
         </v-btn>
       </template>
       <v-list>
         <v-list-item v-for="({ icon, label, url }, i) in config.header.socials" :key="i" :href="url">
-          <v-list-item-action :style="config.vuetify.theme.navigation.selectBorder">
-            <v-tooltip left>
-              <template v-slot:activator="{ on, attrs }">
-                <v-icon v-bind="attrs" v-on="on">{{ icon }}</v-icon>
-              </template>
-              <span>{{ label }}</span>
-            </v-tooltip>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>{{ label }}</v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-avatar left>
+            <v-icon :icon="icon"></v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title v-text="label"></v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
-    <!-- user menu -->
-    <v-tooltip v-if="!isLoggedIn && config.sign.in" bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn v-on="on" v-bind="attrs" min-width="50" min-height="50" x-small icon>
-          <router-link to="/signin">
-            <v-icon :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">fa-user</v-icon>
-          </router-link>
-        </v-btn>
-      </template>
-      <span>Sign In</span>
-    </v-tooltip>
-    <v-tooltip v-if="isLoggedIn" bottom>
-      <template v-slot:activator="{ on, attrs }">
-        <v-btn v-on="on" v-bind="attrs" @click="signout" min-width="50" min-height="50" x-small icon>
-          <v-icon :style="{ color: config.vuetify.theme.themes[theme].onPrimary }">fa-arrow-right</v-icon>
-        </v-btn>
-      </template>
-      <span>Sign Out</span>
-    </v-tooltip>
+    <!-- Login buttons -->
+    <v-btn v-if="!isLoggedIn && config.sign.in" icon>
+      <v-tooltip text="Sign In" activator="parent" anchor="bottom" />
+      <router-link to="/signin">
+        <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-user</v-icon>
+      </router-link>
+    </v-btn>
+    <v-btn v-if="isLoggedIn" @click="signout" icon>
+      <v-tooltip text="Sign Out" activator="parent" anchor="bottom" />
+      <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-arrow-right</v-icon>
+    </v-btn>
   </v-app-bar>
 </template>
 <script>
@@ -116,14 +78,6 @@ export default {
       },
       set(v) {
         return this.$store.commit('set_drawer', v);
-      },
-    },
-    mini: {
-      get() {
-        return this.$store.getters.mini;
-      },
-      set(v) {
-        return this.$store.commit('set_mini', v);
       },
     },
   },

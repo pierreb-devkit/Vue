@@ -63,7 +63,6 @@ module.exports = {
     theme: {
       dark: 'auto', // dark theme true / false / auto (based on prefers-color-scheme)
       flat: true, // flat by default
-      footer: false, // display footer
       snackbar: {
         // kind of notifications on requests
         status: true, // activate for error
@@ -72,38 +71,47 @@ module.exports = {
         errorColor: 'error',
       },
       navigation: {
-        displayIfLogged: false, // show nav only if user is logged (easy for one page site)
-        background: undefined, // url / undefined
+        ifLogged: true, // show nav only if user is logged (easy for one page site)
         selectBorder: 'secondary', // color / undefined
+        drawer: {
+          model: false,
+          floating: true,
+          expand: true, // Collapses the drawer to a mini-variant until hovering with the mouse
+          rail: true, // Small navigation, icon only
+        },
       },
       themes: {
-        dark: {
-          primary: '#34495e',
-          secondary: '#e67e22',
-          background: '#1F1F1F',
-          surface: '#282A2E',
-          error: '#CF6679',
-          success: '#119178',
-          onPrimary: '#FFFFFF',
-          onSecondary: '#FFFFFF',
-          onBackground: '#FFFFFF',
-          onSurface: '#FEFEFE',
-          onError: '#000000',
-          onSuccess: '#000000',
-        },
         light: {
-          primary: '#34495e',
-          secondary: '#EE5A24',
-          background: '#f3f3f6',
-          surface: '#ffffff',
-          error: '#e01f26',
-          success: '#119178',
-          onPrimary: '#ffffff',
-          onSecondary: '#FFFFFF',
-          onBackground: '#1d1d1f',
-          onSurface: '#1d1d1f',
-          onError: '#FFFFFF',
-          onSuccess: '#FFFFFF',
+          colors: {
+            primary: '#34495e',
+            secondary: '#EE5A24',
+            background: '#f3f3f6',
+            surface: '#ffffff',
+            error: '#e01f26',
+            success: '#119178',
+            onPrimary: '#ffffff',
+            onSecondary: '#FFFFFF',
+            onBackground: '#1d1d1f',
+            onSurface: '#1d1d1f',
+            onError: '#FFFFFF',
+            onSuccess: '#FFFFFF',
+          },
+        },
+        dark: {
+          colors: {
+            primary: '#34495e',
+            secondary: '#e67e22',
+            background: '#1F1F1F',
+            surface: '#282A2E',
+            error: '#CF6679',
+            success: '#119178',
+            onPrimary: '#FFFFFF',
+            onSecondary: '#FFFFFF',
+            onBackground: '#FFFFFF',
+            onSurface: '#FEFEFE',
+            onError: '#000000',
+            onSuccess: '#000000',
+          },
         },
       },
       options: {
@@ -111,14 +119,7 @@ module.exports = {
       },
     },
     icons: {
-      iconfont: 'fa',
-    },
-    drawer: {
-      model: null,
-      type: 'mini', // default / permanent / temporary / mini
-      clipped: true, // fixed
-      floating: true,
-      mini: true, // mini or full
+      defaultSet: 'fa',
     },
   },
   header: {
@@ -132,7 +133,7 @@ module.exports = {
     socials: [
       // top right icons
       {
-        icon: 'fab fa-github',
+        icon: 'fa-brands fa-github',
         label: 'Github',
         url: 'https://github.com/weareopensource/',
       },
@@ -144,8 +145,7 @@ module.exports = {
     abouts: [
       {
         title: 'About Us',
-        text:
-          '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. \
+        text: '[WAOS](https://blog.weareopensource.me/us/)"s goal is to simplify the **start** of new **tech projects** / **startups**. \
           As we know It"s must be **fast**, **efficient** while **avoiding the refactor** afterward. \
           So whether through the creation of [Open-Source](https://github.com/weareopensource) **stacks** / **tools** or **articles**, \
           we **share our knowledge** around this subject.',
@@ -158,26 +158,23 @@ module.exports = {
       title: 'Vuetify features',
       data: [
         {
-          icon: 'fa-users',
+          icon: 'fa-solid fa-users',
           title: 'Vibrant Community',
-          text:
-            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. \
+          text: '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. \
             Iusto cupiditate sint possimus quidem atque harum excepturi nemo velit tempora! \
             Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
           // color: 'red' background color option
         },
         {
-          icon: 'fa-cloud-upload-alt',
+          icon: 'fa-solid fa-cloud-arrow-up',
           title: 'Frequent Updates',
-          text:
-            '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui, a luctus ex blandit. \
+          text: '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui, a luctus ex blandit. \
             Lorem ipsum dolor sit amet consectetur adipisicing elit. qui ipsum eveniet facilis obcaecati corrupti consectetur adipisicing elit.',
         },
         {
-          icon: 'fa-history',
+          icon: 'fa-solid fa-headset',
           title: 'Long-term Support',
-          text:
-            '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque \
+          text: '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint possimus quidem atque \
             harum excepturi nemo velit tempora! Enim inventore fuga, qui ipsum eveniet facilis obcaecati corrupti asperiores nam',
         },
       ],
@@ -186,9 +183,8 @@ module.exports = {
       title: 'Demos',
       data: [
         {
-          img:
-            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80',
-          icon: 'fa-users',
+          img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80',
+          icon: 'fa-solid fa-users',
           title: 'Vibrant Community',
           text: '**Lorem** ipsum dolor sit amet consectetur adipisicing elit. Iusto cupiditate sint ...',
           // color: 'red'
@@ -196,9 +192,8 @@ module.exports = {
           // dark: true, start / center / end text position for full slideshow only dark / light option for image => 01-dark.jpg 01-light.jpg
         },
         {
-          img:
-            'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80',
-          icon: 'fa-cloud-upload-alt',
+          img: 'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1950&q=80',
+          icon: 'fa-solid fa-cloud-arrow-up',
           title: 'Frequent Updates',
           // color: 'red'
           // text: '**Sed** ut elementum justo. Suspendisse non justo enim. Vestibulum cursus mauris dui,
@@ -245,12 +240,12 @@ module.exports = {
           {
             // set null to hide
             label: 'Blog',
-            icon: 'fa-rss',
+            icon: 'fa-solid fa-rss',
             url: 'https://blog.weareopensource.me',
           },
           {
             label: 'Twitter',
-            icon: 'fab fa-twitter',
+            icon: 'fa-brands fa-twitter',
             url: 'https://weareopensource.me',
           },
         ],
@@ -261,12 +256,12 @@ module.exports = {
           {
             // set null to hide
             label: 'Us ?',
-            icon: 'fa-users',
+            icon: 'fa-solid fa-users',
             url: '/team',
           },
           {
             label: 'Changelogs',
-            icon: 'fa-clipboard-list',
+            icon: 'fa-solid fa-clipboard-list',
             url: '/changelogs',
           },
         ],
@@ -277,12 +272,12 @@ module.exports = {
           {
             // set null to hide
             label: 'T&C / CGU',
-            icon: 'fa-file-alt',
+            icon: 'fa-solid fa-file-lines',
             url: '/pages/terms',
           },
           {
             label: 'Legal',
-            icon: 'fa-stamp',
+            icon: 'fa-solid fa-stamp',
             url: '/pages/legal',
           },
         ],

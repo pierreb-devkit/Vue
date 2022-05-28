@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
-    <v-row align="start" justify="center">
-      <v-card class="ma-6 pa-6" width="100%" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
+    <v-row class="ma-2" align="start" justify="center">
+      <v-card class="pa-6" width="100%" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
         <h2 class="text-center">This page is protected by auth</h2>
       </v-card>
     </v-row>

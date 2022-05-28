@@ -1,16 +1,42 @@
 /**
  * Module dependencies.
  */
-import Vue from 'vue';
-import Vuetify from 'vuetify/lib';
-import config from '@/config';
+/* eslint-disable import/extensions */
+import 'vuetify/styles';
+import '@fortawesome/fontawesome-free/css/all.css';
+import '@mdi/font/css/materialdesignicons.css';
 
-Vue.use(Vuetify);
+// Vuetify
+import { createVuetify } from 'vuetify';
+import { aliases, fa } from 'vuetify/lib/iconsets/fa';
+import { mdi } from 'vuetify/lib/iconsets/mdi';
+import config from '../../config/index.cjs';
 
-/**
- * Export default
- */
-export default new Vuetify({
+// Toto: switch theme to TS
+// const myCustomLightTheme: ThemeDefinition = {
+//   dark: false,
+//   colors: {
+//     background: '#FFFFFF',
+//     surface: '#FFFFFF',
+//     primary: '#6200EE',
+//     'primary-darken-1': '#3700B3',
+//     secondary: '#03DAC6',
+//     'secondary-darken-1': '#018786',
+//     error: '#B00020',
+//     info: '#2196F3',
+//     success: '#4CAF50',
+//     warning: '#FB8C00',
+//   },
+// };
+
+export default createVuetify({
   theme: config.vuetify.theme,
-  icons: config.vuetify.icons,
+  icons: {
+    defaultSet: config.vuetify.icons.defaultSet,
+    aliases,
+    sets: {
+      fa,
+      mdi,
+    },
+  },
 });

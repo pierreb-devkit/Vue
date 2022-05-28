@@ -1,10 +1,10 @@
 ---
 kind: pipeline
-name: node14
+name: node16
 
 steps:
-  - name: test node 14
-    image: node:14
+  - name: test node 16
+    image: node:16
     commands:
       - npm i
       - npm run build
@@ -12,11 +12,11 @@ steps:
 
 ---
 kind: pipeline
-name: node15
+name: node17
 
 steps:
-  - name: test node 15
-    image: node:15
+  - name: test node 17
+    image: node:17
     failure: ignore
     commands:
       - npm i

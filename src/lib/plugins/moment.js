@@ -2,6 +2,12 @@
  * Module dependencies.
  */
 import moment from 'moment';
-import Vue from 'vue';
 
-Vue.prototype.moment = moment;
+/**
+ * Plugin Setup
+ */
+export default {
+  install: (app) => {
+    app.config.globalProperties.moment = moment;
+  },
+};

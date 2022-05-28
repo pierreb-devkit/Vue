@@ -1,16 +1,14 @@
 <template>
   <v-container fluid>
     <!-- Header -->
-    <v-row class="mt-3 mx-3">
-      <v-subheader>
-        <v-icon class="mr-5">fa-user</v-icon>
-        <b>{{ firstName }} {{ lastName }}</b>
-      </v-subheader>
-      <div class="flex-grow-1"></div>
-      <v-btn v-if="id" color="red lighten-3" @click.stop="removeConfirm = true" icon>
-        <v-icon>fa-trash</v-icon>
+    <v-row class="mx-2 my-1">
+      <v-icon class="ma-2" icon="fa-solid fa-user"></v-icon>
+      <h2 class="my-1 text-capitalize">{{ firstName }} {{ lastName }}</h2>
+      <v-spacer></v-spacer>
+      <v-btn v-if="id" class="mx-1" color="error" @click.stop="removeConfirm = true" :flat="config.vuetify.theme.flat" icon>
+        <v-icon icon="fa-solid fa-trash"></v-icon>
       </v-btn>
-      <v-dialog v-model="removeConfirm" max-width="290">
+      <v-dialog v-model="removeConfirm" max-width="500">
         <v-card>
           <v-card-title class="headline">Delete this item ?</v-card-title>
           <v-card-text> Are you sure you want to delete this item ? we will not be able to recover it. </v-card-text>
@@ -21,14 +19,19 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-btn v-if="id" class="mr-5" color="blue lighten-2" @click="update()" :disabled="!save" icon>
-        <v-icon>fa-save</v-icon>
+      <v-btn v-if="id" class="mx-1" color="success" @click="update()" :flat="config.vuetify.theme.flat" :disabled="!save" icon>
+        <v-icon icon="fa-solid fa-save"></v-icon>
       </v-btn>
     </v-row>
-    <!-- First Form -->
-    <v-row class="mx-0">
+    <!-- Form -->
+    <v-row class="pa-2">
       <v-col cols="12" sm="12" md="12" lg="12" xl="12">
-        <v-card width="100%" class="px-10 pa-6" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
+        <v-card
+          width="100%"
+          class="px-10 pa-6"
+          :style="{ background: config.vuetify.theme.themes[theme].colors.surface }"
+          :flat="config.vuetify.theme.flat"
+        >
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" xs="12" sm="12" md="8" lg="9" xl="10">
@@ -36,10 +39,8 @@
                 <v-text-field v-model="lastName" label="LastName" required></v-text-field>
                 <v-text-field v-model="email" label="Email" required></v-text-field>
               </v-col>
-              <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2">
-                <center>
-                  <userAvatarComponent :user="user" :width="'200px'" :height="'200px'" :radius="'50%'" :border="'0px'" :color="'#000'" :size="512" />
-                </center>
+              <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2" align="center">
+                <userAvatarComponent :user="user" :width="'200px'" :height="'200px'" :radius="'50%'" :border="'0px'" :color="'#000'" :size="512" />
               </v-col>
             </v-row>
             <v-row>
@@ -81,6 +82,7 @@
 /**
  * Module dependencies.
  */
+import _ from 'lodash';
 import { mapGetters } from 'vuex';
 import userAvatarComponent from '../components/user.avatar.component.vue';
 
@@ -100,6 +102,7 @@ export default {
       rules: {
         bio: [(v) => !v || (v && v.length <= 200) || 'Max 200 characters'],
       },
+      userRoles: [],
       rolesItems: this.config.whitelists.users.roles,
       removeConfirm: false,
     };
@@ -108,13 +111,12 @@ export default {
     userAvatarComponent,
   },
   computed: {
-    ...mapGetters(['theme', 'user', 'result']),
+    ...mapGetters(['theme', 'user', 'result', 'isLoggedIn']),
     firstName: {
       get() {
         return this.user.firstName;
       },
       set(firstName) {
-        this.save = true;
         this.$store.commit('user_update', { firstName });
       },
     },
@@ -123,7 +125,6 @@ export default {
         return this.user.lastName;
       },
       set(lastName) {
-        this.save = true;
         this.$store.commit('user_update', { lastName });
       },
     },
@@ -132,7 +133,6 @@ export default {
         return this.user.email;
       },
       set(email) {
-        this.save = true;
         this.$store.commit('user_update', { email });
       },
     },
@@ -141,7 +141,6 @@ export default {
         return this.user.bio;
       },
       set(bio) {
-        this.save = true;
         this.$store.commit('user_update', { bio });
       },
     },
@@ -150,17 +149,17 @@ export default {
         return this.user.position;
       },
       set(position) {
-        this.save = true;
         this.$store.commit('user_update', { position });
       },
     },
     roles: {
       get() {
-        return this.user.roles;
+        return this.userRoles;
       },
       set(roles) {
+        this.userRoles = roles;
         this.save = true;
-        this.$store.commit('user_update', { roles });
+        this.$store.commit('user_update', { roles: _.cloneDeep(this.userRoles) });
       },
     },
     avatar: {
@@ -168,43 +167,35 @@ export default {
         return this.user.avatar;
       },
       set(avatar) {
-        this.save = true;
         this.$store.commit('user_update', { avatar });
       },
     },
   },
+  watch: {
+    user: {
+      handler() {
+        this.save = true;
+      },
+      deep: true,
+    },
+  },
   methods: {
-    update() {
-      if (this.$refs.form.validate()) {
-        const { firstName } = this;
-        const { lastName } = this;
-        const { email } = this;
-        const { bio } = this;
-        const { position } = this;
-        const { roles } = this;
-        const { avatar } = this;
-
-        const data = {
-          id: this.id,
-          firstName,
-          lastName,
-          email,
-          bio,
-          position,
-          roles,
-          avatar,
-        };
+    async update() {
+      const form = await this.$refs.form.validate();
+      if (form.valid) {
+        await this.$store.commit('user_update', { roles: this.roles });
 
         this.$store
-          .dispatch('updateUser', data)
+          .dispatch('updateUser', { id: this.id })
           .then(() => {
             this.save = false;
           })
           .catch((err) => console.log(err));
       }
     },
-    remove() {
-      if (this.$refs.form.validate()) {
+    async remove() {
+      const form = await this.$refs.form.validate();
+      if (form.valid) {
         this.$store
           .dispatch('deleteUser', { id: this.id })
           .then(() => {
@@ -227,7 +218,13 @@ export default {
   created() {
     if (this.id) {
       this.$store.commit('user_reset');
-      this.$store.dispatch('getUser', this.id).catch((err) => console.log(err));
+      this.$store
+        .dispatch('getUser', { id: this.id })
+        .then(() => {
+          this.userRoles = _.cloneDeep(this.user.roles);
+          this.save = false;
+        })
+        .catch((err) => console.log(err));
     } else {
       this.$store.commit('user_reset');
     }

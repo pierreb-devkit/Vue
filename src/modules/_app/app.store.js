@@ -1,31 +1,32 @@
 /**
  * Module dependencies.
  */
-import Vue from 'vue';
-import Vuex from 'vuex';
-import core from '@/modules/_core/stores/core.store';
-import auth from '@/modules/auth/stores/auth.store';
-import users from '@/modules/users/stores/users.store';
-import home from '@/modules/home/stores/home.store';
-import tasks from '@/modules/tasks/stores/tasks.store';
+import { createStore } from 'vuex';
+import core from '../_core/stores/core.store';
+import auth from '../auth/stores/auth.store';
+import users from '../users/stores/users.store';
+import home from '../home/stores/home.store';
+import tasks from '../tasks/stores/tasks.store';
 
 const debug = process.env.NODE_ENV !== 'production';
 
 /**
  * Vuex configuration
  */
-Vue.use(Vuex);
+const getStore = (app) => {
+  return createStore({
+    state: {
+      name: 'Vue',
+    },
+    modules: {
+      core: core(app),
+      auth: auth(app),
+      users: users(app),
+      home: home(app),
+      tasks: tasks(app),
+    },
+    strict: debug,
+  });
+};
 
-/**
- * Export default
- */
-export default new Vuex.Store({
-  modules: {
-    core,
-    auth,
-    users,
-    home,
-    tasks,
-  },
-  strict: debug,
-});
+export default getStore;

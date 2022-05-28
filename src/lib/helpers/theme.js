@@ -3,7 +3,7 @@
  * @param {String} option in config
  * @return {String} theme
  */
-exports.defineTheme = (theme) => {
+export const defineTheme = (theme) => {
   if (theme === 'auto') {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
@@ -15,9 +15,14 @@ exports.defineTheme = (theme) => {
  * @param {String} option in config
  * @return {Boolean} dark value
  */
-exports.isDark = (theme) => {
+export const isDark = (theme) => {
   if (theme === 'auto') {
     return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
   return !!theme;
 };
+
+/**
+ * @desc default export
+ */
+export default { defineTheme, isDark };

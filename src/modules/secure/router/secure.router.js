@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import secure from '@/modules/secure/views/secure.view.vue';
+import secure from '../views/secure.view.vue';
 
 /**
  * Router configuration
@@ -12,7 +12,7 @@ export default [
     name: 'Secure',
     component: secure,
     meta: {
-      icon: 'lock',
+      icon: 'fa-solid fa-lock',
       roles: ['user'], // proteced, require one of this roles
     },
   },

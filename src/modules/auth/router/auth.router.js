@@ -1,11 +1,11 @@
 /**
  * Module dependencies.
  */
-import signin from '@/modules/auth/views/auth.signin.view.vue';
-import signup from '@/modules/auth/views/auth.signup.view.vue';
-import forgot from '@/modules/auth/views/auth.forgot.view.vue';
-import reset from '@/modules/auth/views/auth.reset.view.vue';
-import token from '@/modules/auth/views/auth.token.view.vue';
+import signin from '../views/auth.signin.view.vue';
+import signup from '../views/auth.signup.view.vue';
+import forgot from '../views/auth.forgot.view.vue';
+import reset from '../views/auth.reset.view.vue';
+import token from '../views/auth.token.view.vue';
 
 /**
  * Router configuration
@@ -16,8 +16,8 @@ export default [
     name: 'Signin',
     component: signin,
     meta: {
-      icon: 'user',
-      display: false, // hide any time
+      icon: 'fa-solid fa-user',
+      display: false, // hide from drawer any time
     },
   },
   {
@@ -25,7 +25,7 @@ export default [
     name: 'Signup',
     component: signup,
     meta: {
-      display: false, // hide any time
+      display: false, // hide from drawer any time
     },
   },
   {
@@ -33,7 +33,7 @@ export default [
     name: 'Forgot',
     component: forgot,
     meta: {
-      display: false, // hide any time
+      display: false, // hide from drawer any time
     },
   },
   {
@@ -41,7 +41,7 @@ export default [
     name: 'Reset',
     component: reset,
     meta: {
-      display: false, // hide any time
+      display: false, // hide from drawer any time
     },
   },
   {
@@ -49,7 +49,7 @@ export default [
     name: 'Token',
     component: token,
     meta: {
-      display: false, // hide any time
+      display: false, // hide from drawer any time
     },
   },
 ];

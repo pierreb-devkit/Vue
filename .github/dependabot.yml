@@ -1,0 +1,48 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: core-js
+    versions:
+    - 3.10.2
+    - 3.11.1
+  - dependency-name: snyk
+    versions:
+    - 1.440.5
+    - 1.445.0
+    - 1.447.0
+    - 1.448.0
+    - 1.450.0
+    - 1.457.0
+    - 1.464.0
+    - 1.486.0
+    - 1.491.0
+    - 1.495.0
+    - 1.505.0
+    - 1.514.0
+    - 1.521.0
+    - 1.522.0
+    - 1.526.0
+    - 1.528.0
+    - 1.532.0
+    - 1.538.0
+    - 1.557.0
+    - 1.563.0
+    - 1.570.0
+  - dependency-name: vuetify
+    versions:
+    - 2.4.11
+  - dependency-name: "@vue/cli-plugin-e2e-cypress"
+    versions:
+    - 4.5.12
+  - dependency-name: "@vue/cli-plugin-vuex"
+    versions:
+    - 4.5.12
+  - dependency-name: "@commitlint/cli"
+    versions:
+    - 12.0.1

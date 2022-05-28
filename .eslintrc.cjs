@@ -21,15 +21,17 @@ module.exports = {
     'no-underscore-dangle': 0,
     'no-shadow': 0,
     'operator-linebreak': 0,
+    'vue/multi-word-component-names': 0,
   },
   parserOptions: {
-    parser: 'babel-eslint',
-    ecmaVersion: 12,
+    parser: '@babel/eslint-parser',
+    ecmaVersion: 13,
     sourceType: 'module',
+    requireConfigFile: false,
   },
   overrides: [
     {
-      files: ['**/__tests__/*.{j,t}s?(x)', '**/tests/unit/**/*.spec.{j,t}s?(x)', '*.vue'],
+      files: ['**/__tests__/*.{cj,j,t}s?(x)', '**/tests/unit/**/*.spec.{cj,j,t}s?(x)', '*.vue'],
     },
   ],
 };

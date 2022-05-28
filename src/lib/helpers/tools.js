@@ -3,7 +3,7 @@
  * @param {String} 2.3.4
  * @return {String} 23
  */
-exports.releasesNumber = (release) => {
+export const releasesNumber = (release) => {
   const numbers = release[0] === 'v' ? release.substr(1).split('.') : release.split('.'); // get numbers last release
   numbers.pop();
   numbers[0] = numbers[0] === '1' ? '1' : String(parseInt(numbers[0], 10) * 10); // calc aproximativly number of release
@@ -17,7 +17,7 @@ exports.releasesNumber = (release) => {
  * @param {String} search
  * @return {String} server-items-length
  */
-exports.pageRequest = (page, perPage, search) => {
+export const pageRequest = (page, perPage, search) => {
   let request = `${page - 1}&${perPage}`;
   if (search && search !== '') request += `&${search}`;
   return request;
@@ -29,5 +29,10 @@ exports.pageRequest = (page, perPage, search) => {
  * @param {Object} Object options from vuetify dataTable
  * @return {String} server-items-length
  */
-exports.serverItemsLength = (items, options) =>
+export const serverItemsLength = (items, options) =>
   items.length === options.itemsPerPage ? options.page * options.itemsPerPage + options.itemsPerPage : options.page * options.itemsPerPage;
+
+/**
+ * @desc default export
+ */
+export default { releasesNumber, pageRequest, serverItemsLength };

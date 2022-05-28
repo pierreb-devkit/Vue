@@ -23,7 +23,7 @@ import homeBannerComponent from '../components/home.banner.component.vue';
 export default {
   data() {
     return {
-      valid: false,
+      valid: true, // TODO: switch to false when forms will be reactive
       password: 'Password',
       rules: {
         email: (v) => /\S+@\S+\.\S+/.test(v) || '',

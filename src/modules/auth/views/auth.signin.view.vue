@@ -1,9 +1,14 @@
 <template>
   <v-container fluid>
     <v-row align="start" justify="center">
-      <v-card class="ma-6 pa-6" width="100%" :style="{ background: config.vuetify.theme.themes[theme].surface }" :flat="config.vuetify.theme.flat">
+      <v-card
+        class="ma-6 pa-6"
+        width="100%"
+        :style="{ background: config.vuetify.theme.themes[theme].colors.surface }"
+        :flat="config.vuetify.theme.flat"
+      >
         <v-col cols="12">
-          <v-subheader><h4>Sign In</h4></v-subheader>
+          <h4>Sign In</h4>
           <v-divider></v-divider>
         </v-col>
         <v-container>
@@ -29,14 +34,17 @@
             </v-row>
             <v-row>
               <v-col cols="6">
-                <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate">Validate</v-btn>
-                <v-btn v-if="config.oAuth.google" :href="`${oAuth}/google`" class="white--text mr-4 blue"><v-icon>fab fa-google</v-icon> </v-btn>
-                <v-btn v-if="config.oAuth.apple" :href="`${oAuth}/apple`" class="white--text mr-4 grey darken-2"
-                  ><v-icon>fab fa-apple</v-icon>
+                <!-- TODO fix diabled <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate">Validate</v-btn> -->
+                <v-btn :flat="config.vuetify.theme.flat" color="success" class="mr-4" @click="validate">Validate</v-btn>
+                <v-btn variant="outlined" color="secondary" v-if="config.oAuth.google" :href="`${oAuth}/google`" class="text-white mr-4 blue"
+                  ><v-icon icon="fab fa-google"></v-icon>
+                </v-btn>
+                <v-btn variant="outlined" color="secondary" v-if="config.oAuth.apple" :href="`${oAuth}/apple`" class="text-white mr-4 grey darken-2"
+                  ><v-icon icon="fab fa-apple"></v-icon>
                 </v-btn>
               </v-col>
               <v-col cols="6" class="text-right">
-                <v-btn color="error" class="mr-4" @click="reset">Reset Form</v-btn>
+                <v-btn :flat="config.vuetify.theme.flat" color="error" class="mr-4" @click="reset">Reset Form</v-btn>
               </v-col>
             </v-row>
           </v-form>
@@ -68,7 +76,7 @@ import { mapGetters } from 'vuex';
 export default {
   data() {
     return {
-      valid: false,
+      valid: true, // TODO: switch to false when forms will be reactive
       email: '',
       password: '',
       oAuth: `${this.config.api.protocol}://
@@ -90,11 +98,15 @@ export default {
     },
   },
   methods: {
-    validate() {
-      if (this.$refs.form.validate()) {
-        const { email } = this;
-        const { password } = this;
-        this.$store.dispatch('signin', { email, password }).catch((err) => console.log(err));
+    async validate() {
+      const form = await this.$refs.form.validate();
+      if (form.valid) {
+        this.$store
+          .dispatch('signin', {
+            email: this.email,
+            password: this.password,
+          })
+          .catch((err) => console.log(err));
       }
     },
     reset() {

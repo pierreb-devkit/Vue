@@ -1,7 +1,13 @@
 /**
  * Module dependencies.
  */
-import Vue from 'vue';
 import _ from 'lodash';
 
-Vue.prototype._ = _;
+/**
+ * Plugin Setup
+ */
+export default {
+  install: (app) => {
+    app.config.globalProperties._ = _;
+  },
+};
