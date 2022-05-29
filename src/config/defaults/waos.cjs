@@ -49,6 +49,9 @@ module.exports = _.merge(defaultConfig, {
       dark: 'auto',
       signin: false, // display signin link
       signup: false, // display signup link
+      navigation: {
+        ifLogged: true,
+      },
       themes: {
         light: {
           colors: {
@@ -115,16 +118,14 @@ module.exports = _.merge(defaultConfig, {
     abouts: [
       {
         title: 'Concept',
-        text:
-          '[WAOS](https://blog.weareopensource.me/us/) aims at simplifying the **start** of new **tech projects**/**startups**. This critical step must be **fast**, **efficient** while avoiding any costly ulterior **refactorings**. By creating [Open-Source](https://github.com/weareopensource) **stacks** and **tools** or the writing of **articles**, WAOS helps to **share knowledge** around this subject.',
+        text: '[WAOS](https://blog.weareopensource.me/us/) aims at simplifying the **start** of new **tech projects**/**startups**. This critical step must be **fast**, **efficient** while avoiding any costly ulterior **refactorings**. By creating [Open-Source](https://github.com/weareopensource) **stacks** and **tools** or the writing of **articles**, WAOS helps to **share knowledge** around this subject.',
         image: null,
         button: null,
         link: null,
       },
       {
         title: 'Technical',
-        text:
-          '[We](https://blog.weareopensource.me/us/) dream dream of creating **stacks** in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource), **aligned** on **features** & **architecture**. We want to allow anyone to **create a full-stack** on-demand with its favorite languages and keep it updated while exploring scalable deployment or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
+        text: '[We](https://blog.weareopensource.me/us/) dream dream of creating **stacks** in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) [...](https://github.com/weareopensource), **aligned** on **features** & **architecture**. We want to allow anyone to **create a full-stack** on-demand with its favorite languages and keep it updated while exploring scalable deployment or tips like growth hacking via our [articles](https://blog.weareopensource.me).',
         image: null,
         button: null,
         link: null,
@@ -133,16 +134,14 @@ module.exports = _.merge(defaultConfig, {
     abouts2: [
       {
         title: 'History',
-        text:
-          'This work was initially based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Its creators stopped working on it, and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
+        text: 'This work was initially based on [MEAN.js](http://meanjs.org/), and a fork named [Riess.js](https://github.com/lirantal/Riess.js). Its creators stopped working on it, and we wished to take the project over. We want to create updated stacks with the same mindset, "simple" & "easy to use", not only for Node and Angular, but every language. <br />  **Step by step... we built a toolbox to start projects.**',
         image: null,
         button: null,
         link: null,
       },
       {
         title: 'Knowledge',
-        text:
-          '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/tag/rancher-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
+        text: '[How to start a project and maintain updated stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) <br /> What is our [roadmap](https://github.com/orgs/weareopensource/projects/3)? Willing to [contribute](https://blog.weareopensource.me/how-to-contribute/)? About [us](https://blog.weareopensource.me/us/)? <br /> <br /> Deployment: [Rancher](https://blog.weareopensource.me/tag/rancher-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Labels](https://blog.weareopensource.me/labels-recommendation-for-issues/) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/)',
         image: null,
         button: null,
         link: null,
@@ -154,29 +153,25 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fa-brands fa-vuejs',
           title: 'Vue',
-          text:
-            '**Beta Front Stack** <br> Landing page, Auth, Users, Subscriptions, Pages/Terms, Tasks example ... <br/> *Vuetify, Vuex, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
+          text: '**Beta Front Stack** <br> Landing page, Auth, Users, Subscriptions, Pages/Terms, Tasks example ... <br/> *Vuetify, Vuex, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
           color: '#186b9f',
         },
         {
           icon: 'fa-brands fa-swift',
           title: 'Swift',
-          text:
-            '**Beta Front Stack** <br> On boarding, Auth, User, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
+          text: '**Beta Front Stack** <br> On boarding, Auth, User, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *RxSwift, ReactorKit, JWT, Moya* <br /> [Repo](https://github.com/weareopensource/Swift) - [Changelog](/changelogs)',
           color: '#f74e38',
         },
         {
           icon: 'fa-brands fa-node',
           title: 'Node',
-          text:
-            '**Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
+          text: '**Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
           color: '#56a049',
         },
         {
           icon: 'fa-brands fa-tumblr-square',
           title: 'TypeScript',
-          text:
-            '**Alpha Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Repo](https://github.com/weareopensource/Typescript) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/typescript)',
+          text: '**Alpha Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Repo](https://github.com/weareopensource/Typescript) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/typescript)',
           color: '#3178c6',
         },
       ],
@@ -187,15 +182,13 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fas fa-terminal',
           title: 'Conventional Changelog',
-          text:
-            'Prompt to format commits for conventional changelog generation <br /> [Repo](https://github.com/weareopensource/conventional-changelog) - [Changelog](/changelogs) - [NPM](https://www.npmjs.com/package/@weareopensource/conventional-changelog)',
+          text: 'Prompt to format commits for conventional changelog generation <br /> [Repo](https://github.com/weareopensource/conventional-changelog) - [Changelog](/changelogs) - [NPM](https://www.npmjs.com/package/@weareopensource/conventional-changelog)',
           color: 'primary',
         },
         {
           icon: 'fas fa-hat-cowboy',
           title: 'Rancher Catalog',
-          text:
-            'Applications that make it easy to deploy our stacks or suggested tools <br/> [Repo](https://github.com/weareopensource/rancher-catalog) - [Changelog](/changelogs)',
+          text: 'Applications that make it easy to deploy our stacks or suggested tools <br/> [Repo](https://github.com/weareopensource/rancher-catalog) - [Changelog](/changelogs)',
           color: '#186b9f',
         },
       ],
