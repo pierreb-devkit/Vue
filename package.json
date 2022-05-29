@@ -58,7 +58,7 @@
     "vue-meta": "^3.0.0-alpha.8",
     "vue-router": "^4.0.14",
     "vue3-gravatar": "^3.0.0",
-    "vuetify": "^3.0.0-beta.1",
+    "vuetify": "^3.0.0-beta.2",
     "vuex": "^v4.0.2",
     "webfontloader": "^1.0.0"
   },

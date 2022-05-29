@@ -28,7 +28,7 @@
       </a>
     </v-btn>
     <!-- Mobile Menu -->
-    <v-menu>
+    <v-menu location="start">
       <template v-slot:activator="{ props }">
         <v-btn v-bind="props" class="hidden-md-and-up" icon>
           <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-ellipsis</v-icon>
