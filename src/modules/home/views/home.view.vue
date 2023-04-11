@@ -18,16 +18,9 @@
         card: { background: config.vuetify.theme.themes[theme].colors.background },
       }"
     ></homeFeaturesComponent>
-    <homeFeaturesComponent
-      v-bind:features="config.home.tools"
-      v-bind:custom="{
-        section: { background: config.vuetify.theme.themes[theme].colors.background },
-        card: { background: config.vuetify.theme.themes[theme].colors.surface },
-      }"
-    ></homeFeaturesComponent>
     <homeStatsComponent v-bind:statistics="statistics"></homeStatsComponent>
     <homeAboutsComponent v-bind:abouts="config.home.abouts2" v-bind:custom="null" v-bind:md="6"></homeAboutsComponent>
-    <homeLogosComponent
+    <!-- <homeLogosComponent
       v-bind:logos="config.home.suggestions"
       v-bind:size="75"
       v-bind:ratio="2"
@@ -35,7 +28,7 @@
         section: { background: config.vuetify.theme.themes[theme].colors.surface },
         card: { background: config.vuetify.theme.themes[theme].colors.background },
       }"
-    ></homeLogosComponent>
+    ></homeLogosComponent> -->
     <homeBlogComponent
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
@@ -43,17 +36,11 @@
       v-bind:titled="config.home.blog.title"
       v-bind:urld="config.home.blog.url"
       v-bind:newsd="news2"
-      v-bind:custom="null"
-    ></homeBlogComponent>
-    <homeLogosComponent
-      v-bind:logos="config.home.sponsors"
-      v-bind:size="150"
-      v-bind:ratio="1"
       v-bind:custom="{
         section: { background: config.vuetify.theme.themes[theme].colors.surface },
         card: { background: config.vuetify.theme.themes[theme].colors.background },
       }"
-    ></homeLogosComponent>
+    ></homeBlogComponent>
     <homeContactComponent></homeContactComponent>
   </div>
 </template>
@@ -70,7 +57,6 @@ import homeSlideshowComponent from '../components/home.slideshow.component.vue';
 import homeStatsComponent from '../components/home.stats.component.vue';
 import homeBlogComponent from '../components/home.blog.component.vue';
 import homeContactComponent from '../components/home.contact.component.vue';
-import homeLogosComponent from '../components/home.logos.component.vue';
 
 /**
  * Export default
@@ -89,7 +75,6 @@ export default {
     homeStatsComponent,
     homeBlogComponent,
     homeContactComponent,
-    homeLogosComponent,
   },
   computed: {
     ...mapGetters(['theme', 'news', 'statistics', 'news2']),

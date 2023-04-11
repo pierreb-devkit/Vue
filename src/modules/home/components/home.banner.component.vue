@@ -23,7 +23,7 @@
       <v-img
         :height="'calc(100vh/' + ratio + ' - ' + 65 + 'px)'"
         :src="banner ? banner : config.home.temporalBackground ? generateTemporalBackground() : require('@/assets/images/background.jpg')"
-        :gradient="banner ? 'rgba(0,0,0,.25), rgba(0,0,0,.25)' : ''"
+        :gradient="banner ? 'rgba(0,0,0,.5), rgba(0,0,0,.5)' : ''"
         cover
       >
         <v-container class="fill-height">
