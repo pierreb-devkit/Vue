@@ -143,7 +143,7 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fa-brands fa-vuejs',
           title: 'Vue',
-          text: '**Beta Front Stack** <br> Landing page, Auth, Users, Subscriptions, Pages/Terms, Tasks example ... <br/> *Vuetify, Vuex, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/vue)',
+          text: '**Beta Front Stack** <br> Landing page, Auth, Users, Subscriptions, Pages/Terms, Tasks example ... <br/> *Vuetify, Vuex, JWT, Jest* <br /> [Demo](https://vue.weareopensource.me) - [Repo](https://github.com/weareopensource/Vue) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/r/pierrebrisorgueil/vue)',
           color: '#186b9f',
         },
         {
@@ -155,7 +155,7 @@ module.exports = _.merge(defaultConfig, {
         {
           icon: 'fa-brands fa-node',
           title: 'Node',
-          text: '**Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/repository/docker/weareopensource/node)',
+          text: '**Back Stack** <br>  Auth, Users, Subscription, GDPR, Uploads, Page/Terms, Tasks example ... <br/> *Express, Jwt, Mongo, Sequelize* <br /> [Demo](https://node.weareopensource.me) - [Repo](https://github.com/weareopensource/Node) - [Changelog](/changelogs) - [Docker](https://hub.docker.com/r/pierrebrisorgueil/node)',
           color: '#56a049',
         },
         {
