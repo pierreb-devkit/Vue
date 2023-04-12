@@ -305,7 +305,7 @@ module.exports = _.merge(defaultConfig, {
       // actually dev for Ghost Blog
       title: 'Articles',
       url: 'https://blog.weareopensource.me',
-      subscribe: 'https://blog.weareopensource.me/#subscribe',
+      subscribe: 'https://blog.weareopensource.me/#/portal/signup/free',
       key: 'e4925fb7f5698f998daeb128d8',
     },
     blog2: {
