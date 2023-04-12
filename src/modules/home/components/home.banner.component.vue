@@ -21,7 +21,7 @@
   <section id="hero">
     <v-row no-gutters>
       <v-img
-        :height="'calc(100vh/' + ratio + ' - ' + 65 + 'px)'"
+        :height="'calc(100vh/' + ratio + ' - ' + 0 + 'px)'"
         :src="banner ? banner : config.home.temporalBackground ? generateTemporalBackground() : require('@/assets/images/background.jpg')"
         :gradient="banner ? 'rgba(0,0,0,.5), rgba(0,0,0,.5)' : ''"
         cover
