@@ -11,7 +11,7 @@
           <v-card :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-h6 text-medium-emphasis">{{ title }}</v-card-title>
             <v-list :style="custom && custom.section ? custom.section : null">
-              <v-list-item v-for="(item, i) in items" :key="i" :to="item.url" class="justify-center">
+              <v-list-item v-for="(item, i) in items" :key="i" @click="navigate(item.url)" class="justify-center">
                 <v-list-item-title>
                   <v-icon size="16" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
                   <span class="text-secondary text-subtitle-2"> {{ item.label }} </span>
@@ -41,9 +41,17 @@ export default {
     };
   },
   props: ['links', 'custom'],
-
   computed: {
     ...mapGetters(['theme']),
+  },
+  methods: {
+    navigate(link) {
+      if (link.startsWith('http')) {
+        window.open(link, '_blank');
+      } else {
+        this.$router.push(link);
+      }
+    },
   },
   watch: {
     $route(route) {

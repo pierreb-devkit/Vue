@@ -76,7 +76,6 @@ module.exports = {
       },
       navigation: {
         ifLogged: false, // show nav only if user is logged (easy for one page site)
-        selectBorder: 'secondary', // color / undefined
         drawer: {
           model: false,
           floating: true,

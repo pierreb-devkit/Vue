@@ -37,18 +37,7 @@
       :style="{ background: config.vuetify.theme.themes[theme].colors.primary, color: config.vuetify.theme.themes[theme].colors.onPrimary }"
       nav
     >
-      <v-list-item
-        v-for="item in nav"
-        :key="item.text"
-        :to="item.path"
-        :style="
-          config.vuetify.theme.navigation.selectBorder && testRoute(item.path, $route.path)
-            ? `border-left: 3px solid ${
-                (item.meta.color && item.meta.color.border) || config.vuetify.theme.themes[theme].colors[config.vuetify.theme.navigation.selectBorder]
-              };`
-            : 'border-left: 3 px solid transparent;'
-        "
-      >
+      <v-list-item v-for="item in nav" :key="item.text" :to="item.path">
         <template v-slot:prepend>
           <v-icon
             :icon="item.meta.icon"
@@ -118,9 +107,6 @@ export default {
     },
   },
   methods: {
-    testRoute(path, route) {
-      return route.split('/').includes(path.substr(1));
-    },
     signout() {
       this.$store.dispatch('signout').then(() => {
         this.$store.dispatch('refreshNav');
