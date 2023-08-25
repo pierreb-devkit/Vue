@@ -96,8 +96,8 @@
                     :style="{
                       color: color || config.vuetify.theme.themes[theme].colors.onBackground,
                     }"
-                    v-text="title"
-                  ></v-card-title>
+                    >{{ title }}</v-card-title
+                  >
                   <v-card-text v-if="text" class="subtitle-1 text-medium-emphasis text-onSurface">
                     <v-markdown :source="text" />
                   </v-card-text>

@@ -21,15 +21,16 @@
   <section id="hero">
     <v-row no-gutters>
       <v-img
-        :height="'calc(100vh/' + ratio + ' - ' + 0 + 'px)'"
+        :height="'calc(100vh)'"
         :src="banner ? banner : config.home.temporalBackground ? generateTemporalBackground() : require('@/assets/images/background.jpg')"
-        :gradient="banner ? 'rgba(0,0,0,.5), rgba(0,0,0,.5)' : ''"
+        :gradient="banner ? 'rgba(0,0,0,.25), rgba(0,0,0,.25)' : ''"
+        :style="{ 'margin-top': '-65px' }"
         cover
       >
         <v-container class="fill-height">
           <v-row class="fill-height">
             <v-row align="center" justify="center">
-              <v-col class="text-white text-center align-center" cols="12" tag="h1">
+              <v-col class="text-white text-center align-center" cols="12">
                 <span v-if="app.title && !app.logo" class="font-weight-black text-md-h4 text-h5">{{ app.title }}</span>
                 <v-img
                   v-if="app.logo"
@@ -47,11 +48,6 @@
                 <br v-if="!app.title && !app.logo" />
                 <span v-if="app.subtitle" class="font-weight-light text-md-h4 text-h5">{{ app.subtitle }}</span>
               </v-col>
-              <v-col class="text-white text-center" cols="12" v-if="ratio == 1">
-                <v-btn @click="goToAboutMe()" color="transparent" elevation="0" icon data-aos="fade-up">
-                  <v-icon>fa-solid fa-angle-down</v-icon>
-                </v-btn>
-              </v-col>
               <v-col
                 class="text-white text-center"
                 cols="11"
@@ -63,9 +59,23 @@
                 style="bottom: 5%; position: absolute; opacity: 75%"
                 v-if="config.home.blog && config.home.blog.subscribe && ratio == 1"
               >
-                <v-btn :href="config.home.blog.subscribe" target="_blank" class="px-10" height="55" elevation="0" rounded light data-aos="fade-up"
+                <v-btn
+                  :href="config.home.blog.subscribe"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-10"
+                  height="55"
+                  elevation="0"
+                  rounded
+                  light
+                  data-aos="fade-up"
                   ><span style="color: gray">Stay informed by email<v-icon class="px-2">fa-solid fa-paper-plane</v-icon></span></v-btn
                 >
+                <br />
+                <br />
+                <v-btn @click="goToAboutMe()" color="transparent" elevation="0" icon data-aos="fade-up">
+                  <v-icon>fa-solid fa-angle-down</v-icon>
+                </v-btn>
               </v-col>
             </v-row>
           </v-row>

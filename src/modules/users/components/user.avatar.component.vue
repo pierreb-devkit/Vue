@@ -37,7 +37,7 @@
       ></v-img>
       <v-gravatar
         v-if="!user.avatar || (user.avatar == '' && user.avatar)"
-        :email="'brisorgueilp@gmail.com'"
+        :email="user.email"
         default-img="mp"
         :size="size ? size : 128"
         :style="{

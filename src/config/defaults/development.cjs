@@ -8,6 +8,7 @@ module.exports = {
     description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) ',
     keywords: 'vue, vuetify, axios, jest, cypress',
     author: 'pierre@weareopensource.me',
+    icon: 'fa-solid fa-earth-americas',
   },
   port: 8080, // only available for dev env
   api: {
@@ -69,6 +70,9 @@ module.exports = {
         methods: ['post', 'put'], // show on sucess depends of methods
         sucessColor: 'success',
         errorColor: 'error',
+      },
+      appbar: {
+        opacity: 99,
       },
       navigation: {
         ifLogged: false, // show nav only if user is logged (easy for one page site)
@@ -263,6 +267,11 @@ module.exports = {
             label: 'Changelogs',
             icon: 'fa-solid fa-clipboard-list',
             url: '/changelogs',
+          },
+          {
+            label: 'WAOS 2023',
+            icon: 'fa-regular fa-copyright',
+            url: 'https://weareopensource.me',
           },
         ],
       },

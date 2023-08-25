@@ -1,9 +1,9 @@
 <template>
   <v-card width="100%" class="datatable" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
     <v-card-title>
-      Users
+      {{ title }}
       <v-spacer></v-spacer>
-      <v-text-field v-model="search" label="Search" single-line hide-details></v-text-field>
+      <v-text-field v-if="search != null ? search : true" v-model="textSearch" label="Search" single-line hide-details></v-text-field>
     </v-card-title>
     <v-progress-linear :active="this.loading" indeterminate color="secondary"></v-progress-linear>
     <v-table v-if="items && items.length > 0" fixed-header>
@@ -17,32 +17,61 @@
           <td v-for="header in headers" :key="header.text">
             <span v-if="header.value">
               <span v-if="header.kind == 'date' && header.format">
-                {{ moment(new Date(item[header.value])).format(header.format) }}
+                {{ moment(new Date(lodash.get(item, header.value))).format(header.format) }}
               </span>
               <span v-else-if="header.kind == 'icon'">
-                <v-btn v-if="header.path && header.pathValue" :to="`${header.path}${item[header.pathValue]}`" variant="contained-flat" icon>
+                <v-btn v-if="header.path && header.pathValue" :to="`${header.path}${lodash.get(item, header.pathValue)}`" variant="flat" icon>
                   <v-icon :color="header.color" :icon="header.icon"></v-icon>
                 </v-btn>
-                <v-btn v-else variant="contained-flat" icon>
+                <v-btn
+                  v-else-if="header.dispatch && header.param"
+                  @click="dispatch(header.dispatch, header.param, lodash.get(item, header.param), header.refresh)"
+                  variant="flat"
+                  icon
+                >
+                  <v-icon :color="header.color" :icon="header.icon"></v-icon>
+                </v-btn>
+                <v-btn v-else variant="flat" icon>
                   <v-icon :color="header.color" :icon="header.icon"></v-icon>
                 </v-btn>
               </span>
               <span v-else-if="header.kind == 'email'">
-                <a :href="`mailto:${item[header.value]}`">{{ item[header.value] }}</a>
+                <a :href="`mailto:${lodash.get(item, header.value)}`">{{ lodash.get(item, header.value) }}</a>
               </span>
               <span v-else-if="header.kind == 'avatar'">
                 <userAvatarComponent :user="item" :width="'37px'" :height="'37px'" :radius="'50%'" :border="'0px'" :color="'#000'" />
               </span>
-              <span v-else-if="header.kind == 'capitalize'" class="text-capitalize"> {{ item[header.value] }}</span>
+              <span v-else-if="header.kind == 'capitalize'" class="text-capitalize"> {{ lodash.get(item, header.value) }}</span>
               <span v-else-if="header.kind == 'link' && header.path && header.pathValue">
-                <v-btn :to="`${header.path}${item[header.pathValue]}`" :class="`text-${header.color}`" variant="contained-flat">
-                  {{ item[header.value] }}
+                <v-btn :to="`${header.path}${lodash.get(item, header.pathValue)}`" :class="`text-${header.color} text-capitalize`" variant="flat">
+                  {{ lodash.get(item, header.value) }}
                 </v-btn>
               </span>
               <span v-else-if="header.kind == 'tags'">
-                <v-chip class="mr-2" v-for="(role, index) in item[header.value]" v-bind:index="index" v-bind:key="index">{{ role }}</v-chip>
+                <v-chip class="mr-2" v-for="(role, index) in lodash.get(item, header.value)" v-bind:index="index" v-bind:key="index">{{
+                  role
+                }}</v-chip>
               </span>
-              <span v-else>{{ item[header.value] }}</span>
+              <span v-else-if="header.kind == 'status'">
+                <v-btn variant="flat" icon>
+                  <v-icon v-if="lodash.get(item, header.value) === true" color="green" icon="fa-solid fa-check" />
+                  <v-icon v-else-if="lodash.get(item, header.value) === false" color="red" icon="fa-solid fa-times" />
+                  <v-icon v-else class="rotating" color="orange" icon="fa-solid fa-spinner" />
+                </v-btn>
+              </span>
+              <span v-else-if="header.kind == 'superior'">
+                <span v-if="lodash.get(item, header.value) > header.condition" class="text-green">
+                  {{ lodash.get(item, header.value) }}
+                </span>
+                <span v-else class="text-red">{{ lodash.get(item, header.value) || header.condition }}</span>
+              </span>
+              <span v-else-if="header.kind == 'inferior'">
+                <span v-if="lodash.get(item, header.value) < header.condition" color="green">
+                  {{ lodash.get(item, header.value) }}
+                </span>
+                <span v-else color="red">{{ lodash.get(item, header.value) || header.condition }}</span>
+              </span>
+              <span v-else>{{ lodash.get(item, header.value) }}</span>
             </span>
           </td>
         </tr>
@@ -54,15 +83,22 @@
       </v-col>
     </v-row>
     <v-card-actions>
+      <v-switch
+        v-if="auto != null ? auto : true"
+        class="ml-2"
+        v-model="refresh"
+        label="Auto Refresh"
+        :color="config.vuetify.theme.themes[theme].colors.secondary"
+      ></v-switch>
       <v-spacer></v-spacer>
       <v-select :items="perPage" v-model="options.itemsPerPage" label="Items per page" style="max-width: 150px; width: 150px"></v-select>
-      <v-btn @click="switchPage('-')" :disabled="options.page <= 1" variant="contained-flat" class="mb-8" icon>
+      <v-btn @click="switchPage('-')" :disabled="options.page <= 1" variant="flat" class="mb-8" icon>
         <v-icon icon="fa-solid fa-angle-left"></v-icon>
       </v-btn>
-      <v-btn variant="contained-flat" disabled class="mb-8">
+      <v-btn variant="flat" disabled class="mb-8">
         {{ options.page }}
       </v-btn>
-      <v-btn @click="switchPage('+')" :disabled="items.length < options.itemsPerPage" variant="contained-flat" class="mb-8" icon>
+      <v-btn @click="switchPage('+')" :disabled="items.length < options.itemsPerPage" variant="flat" class="mb-8 mr-2" icon>
         <v-icon icon="fa-solid fa-angle-right"></v-icon>
       </v-btn>
     </v-card-actions>
@@ -89,16 +125,17 @@ import userAvatarComponent from '../../users/components/user.avatar.component.vu
 export default {
   name: 'core-datatable',
   data: () => ({
-    search: '',
+    refresh: false,
+    lodash: _,
+    textSearch: '',
     loading: true,
-    // totalCount: 10,
     perPage: [5, 50, 100],
     options: {
       page: 1,
       itemsPerPage: 5,
     },
   }),
-  props: ['headers', 'items', 'request'],
+  props: ['headers', 'items', 'request', 'title', 'settings', 'auto', 'search', 'filter'],
   computed: {
     ...mapGetters(['theme']),
   },
@@ -109,8 +146,7 @@ export default {
     options: {
       handler(options) {
         this.loading = true;
-        this.$store.dispatch(this.request, tools.pageRequest(options.page, options.itemsPerPage, this.search)).then(() => {
-          // this.totalCount = tools.serverItemsLength(this.items, this.options);
+        this.$store.dispatch(this.request, tools.pageRequest(options.page, options.itemsPerPage, this.textSearch)).then(() => {
           this.loading = false;
         });
       },
@@ -118,10 +154,9 @@ export default {
     },
   },
   methods: {
-    getSearch() {
+    gettextSearch() {
       this.loading = true;
-      this.$store.dispatch(this.request, tools.pageRequest(this.options.page, this.options.itemsPerPage, this.search)).then(() => {
-        // this.totalCount = tools.serverItemsLength(this.items, this.options);
+      this.$store.dispatch(this.request, tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch)).then(() => {
         this.loading = false;
       });
     },
@@ -133,18 +168,58 @@ export default {
         this.options.page += 1;
       }
     },
+    dispatch(dispatch, key, value, refresh) {
+      if (key && value) {
+        const option = {};
+        option[key] = value;
+        this.loading = true;
+        this.$store
+          .dispatch(dispatch, option)
+          .catch((err) => console.log(err))
+          .then(() => {
+            if (refresh) {
+              this.$store.dispatch(this.request, tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch)).then(() => {
+                this.loading = false;
+              });
+            } else {
+              this.loading = false;
+            }
+          });
+      } else this.$store.dispatch(dispatch).catch((err) => console.log(err));
+    },
   },
   created() {
-    this.getSearch();
-    this.watchSearch = this.$watch(
-      'search',
+    if (this.settings) {
+      if (this.settings.perPage) this.perPage = this.settings.perPage;
+      if (this.settings.page) this.page = this.options.settings.page;
+      if (this.settings.itemsPerPage) this.options.itemsPerPage = this.settings.itemsPerPage;
+    }
+    if (this.filter) {
+      this.textSearch = this.filter;
+    }
+    this.gettextSearch();
+    this.watchtextSearch = this.$watch(
+      'textSearch',
       _.debounce(() => {
-        this.getSearch();
+        this.gettextSearch();
       }, 1000),
     );
   },
+  mounted() {
+    window.setInterval(() => {
+      if (this.refresh) {
+        this.loading = true;
+        this.$store.dispatch(this.request, tools.pageRequest(1, this.options.itemsPerPage, this.textSearch)).then(() => {
+          this.loading = false;
+        });
+        setTimeout(() => {
+          this.loading = false;
+        }, 30000);
+      }
+    }, 5000);
+  },
   beforeDestroy() {
-    this.watchSearch();
+    this.watchtextSearch();
   },
 };
 </script>

@@ -96,8 +96,9 @@ export default {
         this.$store
           .dispatch('createTask', this.task)
           .then(() => {
-            this.$router.push(`/tasks/${this.task.id}`);
             this.save = false;
+            // this.$router.push(`/tasks/${this.task.id}`);
+            this.$router.push('/tasks');
           })
           .catch((err) => console.log(err));
       }
@@ -109,6 +110,7 @@ export default {
           .dispatch('updateTask', { id: this.id })
           .then(() => {
             this.save = false;
+            this.$router.push('/tasks');
           })
           .catch((err) => console.log(err));
       }

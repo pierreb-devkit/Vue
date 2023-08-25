@@ -12,7 +12,10 @@ export default {
       props: ['source'],
       computed: {
         markup() {
-          return marked.parse(this.source);
+          return marked.parse(this.source, {
+            mangle: false,
+            headerIds: false,
+          });
         },
       },
       template: '<span v-html="markup"></span>',

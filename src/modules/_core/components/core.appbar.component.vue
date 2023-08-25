@@ -1,19 +1,22 @@
 <template>
   <v-app-bar
+    v-if="!isLoggedIn"
     :style="{
-      background: config.vuetify.theme.themes[theme].colors.primary,
+      background: `${config.vuetify.theme.themes[theme].colors.primary}${config.vuetify.theme.appbar.opacity}`,
       color: config.vuetify.theme.themes[theme].colors.onPrimary,
+      '-webkit-backdrop-filter': 'blur(8px)',
+      'backdrop-filter': 'blur(8px)',
     }"
     :flat="config.vuetify.theme.flat"
   >
     <!-- Navigation button -->
-    <template v-slot:prepend v-if="!config.vuetify.theme.navigation.ifLogged">
+    <template v-slot:prepend v-if="!config.vuetify.theme.navigation.ifLogged || (config.vuetify.theme.navigation.ifLogged && isLoggedIn)">
       <!-- v-if="isLoggedIn" -->
-      <v-app-bar-nav-icon
+      <!-- <v-app-bar-nav-icon
         :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }"
         class="ml-0"
         @click.stop="drawer = !drawer"
-      ></v-app-bar-nav-icon>
+      ></v-app-bar-nav-icon> -->
     </template>
     <!-- Title -->
     <v-app-bar-title>
@@ -36,10 +39,10 @@
       </template>
       <v-list>
         <v-list-item v-for="({ icon, label, url }, i) in config.header.socials" :key="i" :href="url">
-          <v-list-item-avatar left>
-            <v-icon :icon="icon"></v-icon>
-          </v-list-item-avatar>
-          <v-list-item-title v-text="label"></v-list-item-title>
+          <template v-slot:prepend>
+            <v-icon>{{ icon }}</v-icon>
+          </template>
+          <v-list-item-title>{{ label }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -49,10 +52,6 @@
       <router-link to="/signin">
         <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-user</v-icon>
       </router-link>
-    </v-btn>
-    <v-btn v-if="isLoggedIn" @click="signout" icon>
-      <v-tooltip text="Sign Out" activator="parent" anchor="bottom" />
-      <v-icon :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }">fa-solid fa-arrow-right</v-icon>
     </v-btn>
   </v-app-bar>
 </template>
@@ -76,14 +75,6 @@ export default {
       set(v) {
         return this.$store.commit('set_drawer', v);
       },
-    },
-  },
-  methods: {
-    signout() {
-      this.$store.dispatch('signout').then(() => {
-        this.$store.dispatch('refreshNav');
-        if (this.$route.path !== '/') this.$router.push('/');
-      });
     },
   },
 };

@@ -71,7 +71,7 @@ const actions = (app) => {
         const ghost = new GhostContentAPI({
           url: config.home.blog.url,
           key: config.home.blog.key,
-          version: 'v3',
+          // version: 'v3.0',
         });
         const res = await ghost.posts.browse({ limit: 3, filter: 'tag:article' });
         commit('news_set', res);

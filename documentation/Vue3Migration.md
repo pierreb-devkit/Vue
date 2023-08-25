@@ -85,7 +85,7 @@ const state = () => ({
 
 - we will also udpate the actions with app const
 
-`const actions = { }` to `const actions = (app) => { }`
+`const actions = { }` to `const actions = (app) => ({ })`
 
 - and of course, this two actions will update the export
 
@@ -110,6 +110,8 @@ export default (app) => {
   };
 };
 ```
+
+- maybe remove `import Vue from 'vue';`, if it's not used anymore.
 
 ### Async form validation
 
