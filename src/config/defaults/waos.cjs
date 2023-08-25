@@ -375,6 +375,11 @@ module.exports = _.merge(defaultConfig, {
             label: 'Twitter',
             url: 'https://twitter.com/waos_io',
           },
+          {
+            label: 'WAOS 2023',
+            icon: 'fa-regular fa-copyright',
+            url: 'https://weareopensource.me',
+          },
         ],
       },
     ],

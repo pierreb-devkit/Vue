@@ -14,7 +14,6 @@ const getters = {
   news: (state) => state.news,
   contact: (state) => state.contact,
   statistics: (state) => state.statistics,
-  news2: (state) => state.news2,
 };
 
 /**
@@ -71,9 +70,9 @@ const actions = (app) => {
         const ghost = new GhostContentAPI({
           url: config.home.blog.url,
           key: config.home.blog.key,
-          // version: 'v3.0',
+          version: 'v3.0',
         });
-        const res = await ghost.posts.browse({ limit: 3, filter: 'tag:article' });
+        const res = await ghost.posts.browse({ limit: 6 });
         commit('news_set', res);
       } catch (err) {
         commit('error', err);
@@ -88,7 +87,6 @@ const actions = (app) => {
         const ghost = new GhostContentAPI({
           url: config.home.blog.url,
           key: config.home.blog.key,
-          version: 'v3',
         });
         const articles = await ghost.posts.browse({ limit: 1 });
 
@@ -99,19 +97,6 @@ const actions = (app) => {
           pulls: pulls.data.data,
           articles: articles.meta,
         });
-      } catch (err) {
-        commit('error', err);
-      }
-    },
-    getNews2: async ({ commit }) => {
-      try {
-        const ghost = new GhostContentAPI({
-          url: config.home.blog2.url,
-          key: config.home.blog2.key,
-          version: 'v3',
-        });
-        const res = await ghost.posts.browse({ limit: 3, filter: 'tag:snippet' });
-        commit('news2_set', res);
       } catch (err) {
         commit('error', err);
       }
@@ -161,10 +146,6 @@ const mutations = {
     state.statistics[2].value = data.articles.pagination.total;
     state.statistics[3].value = _.sum(data.pulls.map((pull) => pull.data.pull_count));
   },
-  // news
-  news2_set(state, data) {
-    state.news2 = data;
-  },
 };
 
 /**
@@ -177,7 +158,6 @@ const state = (app) => {
     news: [],
     contact: {},
     statistics: app.config.globalProperties.config.home.stats.data,
-    news2: [],
   };
 };
 

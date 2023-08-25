@@ -33,9 +33,6 @@
       v-bind:title="config.home.blog.title"
       v-bind:url="config.home.blog.url"
       v-bind:news="news"
-      v-bind:titled="config.home.blog.title"
-      v-bind:urld="config.home.blog.url"
-      v-bind:newsd="news2"
       v-bind:custom="{
         section: { background: config.vuetify.theme.themes[theme].colors.surface },
         card: { background: config.vuetify.theme.themes[theme].colors.background },
@@ -82,7 +79,6 @@ export default {
   created() {
     this.$store.dispatch('getStatistics').then(() => {
       this.$store.dispatch('getNews');
-      this.$store.dispatch('getNews2');
     });
   },
   mounted() {
