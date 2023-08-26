@@ -23,7 +23,7 @@ app
   .use(plugins.images)
   .use(plugins.lodash)
   .use(plugins.markdown)
-  .use(plugins.matomo)
+  .use(plugins.posthog)
   .use(plugins.moment)
   .use(plugins.vuetify)
   .use(plugins.gravatar)

@@ -19,7 +19,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <waosNav v-if="!config.vuetify.theme.navigation.displayIfLogged || isLoggedIn" />
+    <waosNav v-if="isLoggedIn" />
 
     <waosHeader />
 

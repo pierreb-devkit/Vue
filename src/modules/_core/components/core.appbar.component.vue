@@ -9,15 +9,6 @@
     }"
     :flat="config.vuetify.theme.flat"
   >
-    <!-- Navigation button -->
-    <template v-slot:prepend v-if="!config.vuetify.theme.navigation.ifLogged || (config.vuetify.theme.navigation.ifLogged && isLoggedIn)">
-      <!-- v-if="isLoggedIn" -->
-      <!-- <v-app-bar-nav-icon
-        :style="{ color: config.vuetify.theme.themes[theme].colors.onPrimary }"
-        class="ml-0"
-        @click.stop="drawer = !drawer"
-      ></v-app-bar-nav-icon> -->
-    </template>
     <!-- Title -->
     <v-app-bar-title>
       <router-link to="/">{{ config.app.title }}</router-link>
@@ -65,17 +56,9 @@ import { mapGetters } from 'vuex';
  * Export default
  */
 export default {
-  name: 'waosHeader',
+  name: 'waosAppBar',
   computed: {
     ...mapGetters(['theme', 'isLoggedIn']),
-    drawer: {
-      get() {
-        return this.$store.getters.drawer;
-      },
-      set(v) {
-        return this.$store.commit('set_drawer', v);
-      },
-    },
   },
 };
 </script>

@@ -64,7 +64,7 @@ const mutations = {
  */
 const state = (app) => {
   return {
-    drawer: app.config.globalProperties.config.vuetify.theme.navigation.drawer.model,
+    drawer: false,
     theme: theme.isDark(app.config.globalProperties.config.vuetify.theme.dark) ? 'dark' : 'light',
     nav: [],
   };

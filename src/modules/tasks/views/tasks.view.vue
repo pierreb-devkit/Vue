@@ -6,7 +6,7 @@
       icon
       to="/task"
       color="success"
-      style="position: absolute; top: 15px; right: 15px; z-index: 9999"
+      style="position: fixed; bottom: 10px; right: 10px; z-index: 9999"
     >
       <v-icon icon="fa-solid fa-plus"></v-icon>
     </v-btn>
