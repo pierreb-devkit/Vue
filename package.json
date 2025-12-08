@@ -79,7 +79,7 @@
     "sass": "^1.94",
     "semantic-release": "^25.0.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6",
+    "vite": "^7.2.7",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-vuetify": "^2.1.2",
     "vitest": "^4.0.15",
