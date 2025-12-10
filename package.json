@@ -53,7 +53,7 @@
     "video.js": "^8.23.4",
     "vue": "^3.5.25",
     "vue-router": "^4.6.3",
-    "vuetify": "^3.11.2"
+    "vuetify": "^3.11.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
