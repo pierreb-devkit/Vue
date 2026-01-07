@@ -16,9 +16,7 @@
       </template>
     </v-snackbar>
     <waosNav v-if="isLoggedIn" />
-
-    <waosHeader />
-
+    <waosHeader v-if="config.header.display" />
     <v-main class="pb-0" :style="{ background: config.vuetify.theme.themes[theme].colors.background }">
       <router-view />
     </v-main>
@@ -39,7 +37,7 @@ import { useHead } from '@unhead/vue';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { useCoreStore } from '../core/stores/core.store';
 import { setupInterceptors } from '../../lib/services/axios';
-import waosHeader from '../core/components/core.appbar.component.vue';
+import waosHeader from '../core/components/core.header.component.vue';
 import waosNav from '../core/components/core.navigation.component.vue';
 import waosFooter from '../core/components/core.footer.component.vue';
 

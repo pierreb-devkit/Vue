@@ -48,7 +48,7 @@ export default {
       dark: 'auto', // dark theme true / false / auto (based on prefers-color-scheme)
       flat: true, // flat by default
       rounded: 'rounded-lg',
-      maxWidth: '1400px',
+      maxWidth: '1200px',
       snackbar: {
         // kind of notifications on requests
         status: true, // activate for error
@@ -56,7 +56,7 @@ export default {
         sucessColor: 'success',
         errorColor: 'error',
       },
-      appbar: {
+      header: {
         background: '#2c3e50',
         color: '#FFFFFF',
         opacity: 99,
@@ -114,6 +114,7 @@ export default {
     },
   },
   header: {
+    display: true, // display header or not
     logo: {
       file: '/images/logo.webp', // null to hide
       width: '120px',
