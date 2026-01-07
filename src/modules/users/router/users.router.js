@@ -5,7 +5,7 @@ import users from '../views/users.view.vue';
 import user from '../views/user.view.vue';
 
 /**
- * Router configuration
+ * Router configuration.
  */
 export default [
   {
@@ -30,3 +30,7 @@ export default [
     },
   },
 ];
+
+/**
+ * Exports.
+ */

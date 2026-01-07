@@ -8,7 +8,7 @@ import reset from '../views/auth.reset.view.vue';
 import token from '../views/auth.token.view.vue';
 
 /**
- * Router configuration
+ * Router configuration.
  */
 export default [
   {
@@ -53,3 +53,7 @@ export default [
     },
   },
 ];
+
+/**
+ * Exports.
+ */

@@ -1,3 +1,42 @@
+## [1.3.1](https://github.com/weareopensource/Vue/compare/v1.3.0...v1.3.1) (2026-01-01)
+
+
+### Bug Fixes
+
+* **workflow:** dependabot 🐛 ([#3465](https://github.com/weareopensource/Vue/issues/3465)) ([1043727](https://github.com/weareopensource/Vue/commit/1043727a3f46a311f4c44b2a0c4da61e27a43dac))
+
+# [1.3.0](https://github.com/weareopensource/Vue/compare/v1.2.0...v1.3.0) (2025-11-22)
+
+
+### Bug Fixes
+
+* **app:** fix footer margin with nav 🐛 ([#2065](https://github.com/weareopensource/Vue/issues/2065)) ([04ad24a](https://github.com/weareopensource/Vue/commit/04ad24ab0bfc0a2a1617b66cff55dac7a6c0b755))
+* **app:** main padding with footer enabled 🐛 ([#1769](https://github.com/weareopensource/Vue/issues/1769)) ([0ed03c3](https://github.com/weareopensource/Vue/commit/0ed03c39436a5dae023b2f00ea14e730c4829e73))
+* **app:** main, prevent padding errors 🐛 ([#1767](https://github.com/weareopensource/Vue/issues/1767)) ([b1b97f1](https://github.com/weareopensource/Vue/commit/b1b97f187f53403532679e987561cc6be23501c1))
+* **auth:** signup redirection 🐛 ([#2062](https://github.com/weareopensource/Vue/issues/2062)) ([7852cb1](https://github.com/weareopensource/Vue/commit/7852cb16543c1b5c099e13c61ad4a749ca5fefbe))
+* **core:** iflogged option 🐛 ([#1765](https://github.com/weareopensource/Vue/issues/1765)) ([85a78f0](https://github.com/weareopensource/Vue/commit/85a78f0df83da57d2eb59dc9f8ee1b1fa4ea2c45))
+* **core:** loggin option 🐛 ([#1784](https://github.com/weareopensource/Vue/issues/1784)) ([f23764e](https://github.com/weareopensource/Vue/commit/f23764ef0556ff942c27dcff58a385588b55c946))
+* **core:** navigation dropdown position, prevision bug in vuetify side 🐛 ([#1766](https://github.com/weareopensource/Vue/issues/1766)) ([e1a4d59](https://github.com/weareopensource/Vue/commit/e1a4d591fc42d868910ee6e8cf4a7a7f730d3f0d))
+* **global:** clean warnings 🐛 ([#2378](https://github.com/weareopensource/Vue/issues/2378)) ([ee92c16](https://github.com/weareopensource/Vue/commit/ee92c16baa6c34ee9878a1577906d6a9e88bf55c))
+* **home:** island 🐛 ([#2493](https://github.com/weareopensource/Vue/issues/2493)) ([b1e76f8](https://github.com/weareopensource/Vue/commit/b1e76f8c942817cdd8db3e89cac1f89dcc54f31b))
+* **home:** links & navigation regressions 🐛 ([#2435](https://github.com/weareopensource/Vue/issues/2435)) ([67bf860](https://github.com/weareopensource/Vue/commit/67bf860d64e3df950a7e6af9ef44fe58ec6343cd))
+* **home:** padding 🐛 ([#2494](https://github.com/weareopensource/Vue/issues/2494)) ([e974d8a](https://github.com/weareopensource/Vue/commit/e974d8a50e21b2ae732e724ea5131f4641ddf280))
+* package.json & package-lock.json to reduce vulnerabilities ([#3382](https://github.com/weareopensource/Vue/issues/3382)) ([1037ac8](https://github.com/weareopensource/Vue/commit/1037ac88599b314a2ede8518598ae99931b88783))
+* **tasks:** add button 🐛 ([#1990](https://github.com/weareopensource/Vue/issues/1990)) ([ffdcb76](https://github.com/weareopensource/Vue/commit/ffdcb76a37521a53dbe97d87388bbde3221a1acb))
+* **tasks:** redirections 🐛 ([#2063](https://github.com/weareopensource/Vue/issues/2063)) ([312162f](https://github.com/weareopensource/Vue/commit/312162fe51ae03e9b5af2f26c1e54e33f96a4486))
+* **users:** fix avatar component 🐛 ([#1862](https://github.com/weareopensource/Vue/issues/1862)) ([d914e80](https://github.com/weareopensource/Vue/commit/d914e800cf155b383faf73463eee4dde6a07ccd2))
+
+
+### Features
+
+* **core:** datatable ✨ ([#2064](https://github.com/weareopensource/Vue/issues/2064)) ([d72a662](https://github.com/weareopensource/Vue/commit/d72a6624c6e0fdb34404a858052a81ae9faa8e67))
+* **core:** mobile naigation review ✨ ([#2437](https://github.com/weareopensource/Vue/issues/2437)) ([3a083ab](https://github.com/weareopensource/Vue/commit/3a083ab4b49ef5c5f939a0b61ffc223406c9f37c))
+* **global:** upgrade deps ✨ ([#1902](https://github.com/weareopensource/Vue/issues/1902)) ([af33b9c](https://github.com/weareopensource/Vue/commit/af33b9ce428dcd4b25ad94f24669e68ac02c9988))
+* **home:** add timeline component and review slideshow ✨ ([#2590](https://github.com/weareopensource/Vue/issues/2590)) ([d910bfb](https://github.com/weareopensource/Vue/commit/d910bfb416f4f40817cb332f6d8b3b0ab4efa0ff))
+* **home:** dynamic island ✨ ([#2492](https://github.com/weareopensource/Vue/issues/2492)) ([dcf754f](https://github.com/weareopensource/Vue/commit/dcf754fb87f7e7a44964c5020e3385a91dc5055a))
+* **home:** refactor all components ✨ ([#2487](https://github.com/weareopensource/Vue/issues/2487)) ([12d59dd](https://github.com/weareopensource/Vue/commit/12d59dddf05b3220a404d82ad0c08ffc67b9041c))
+* **plugin:** migrate from matomo to posthog ✨ ([#2436](https://github.com/weareopensource/Vue/issues/2436)) ([2668bb1](https://github.com/weareopensource/Vue/commit/2668bb1eff530ccb28190b51a6ec14d4fa483f06))
+
 # [1.2.0](https://github.com/weareopensource/Vue/compare/v1.1.1...v1.2.0) (2022-05-28)
 
 [Migration to vue 3 documentation, beta](https://github.com/weareopensource/Vue/blob/master/VUE3MIGRATION.md)

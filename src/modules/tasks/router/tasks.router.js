@@ -5,7 +5,7 @@ import tasks from '../views/tasks.view.vue';
 import task from '../views/task.view.vue';
 
 /**
- * Router configuration
+ * Router configuration.
  */
 export default [
   {
@@ -35,3 +35,7 @@ export default [
     },
   },
 ];
+
+/**
+ * Exports.
+ */

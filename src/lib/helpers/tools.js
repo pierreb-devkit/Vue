@@ -1,4 +1,8 @@
 /**
+ * Tools helpers.
+ */
+
+/**
  * @desc Function to evaluate numbers of release from last release
  * @param {String} 2.3.4
  * @return {String} 23
@@ -33,6 +37,6 @@ export const serverItemsLength = (items, options) =>
   items.length === options.itemsPerPage ? options.page * options.itemsPerPage + options.itemsPerPage : options.page * options.itemsPerPage;
 
 /**
- * @desc default export
+ * Exports.
  */
 export default { releasesNumber, pageRequest, serverItemsLength };

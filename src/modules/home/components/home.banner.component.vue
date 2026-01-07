@@ -1,113 +1,78 @@
-<!--
-  - Call example
-    <homeBannerComponent
-      v-bind:ratio="1"
-      v-bind:app="app"
-    ></homeBannerComponent>
-  - Data Example
-  app: {
-    title: 'WAOS Dev',
-    logo: 'logo.png', // null to use title by default
-    subtitle: 'welcome to demo.',
-    description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha)'
-    home: {
-      blog: {
-        subscribe: '...'
-      }
-    }
-  },
--->
 <template>
-  <section id="hero">
-    <v-row no-gutters>
-      <v-img
-        :height="`calc(${100 / ratio}vh)`"
-        :src="banner ? banner : config.home.temporalBackground ? generateTemporalBackground() : require('@/assets/images/background.jpg')"
-        :gradient="banner ? 'rgba(0,0,0,.25), rgba(0,0,0,.25)' : ''"
-        :style="{ 'margin-top': '-65px' }"
-        cover
-      >
-        <v-container class="fill-height">
-          <v-row class="fill-height">
-            <v-row align="center" justify="center">
-              <v-col class="text-white text-center align-center" cols="12">
-                <span v-if="app.title && !app.logo" class="font-weight-black text-md-h4 text-h5">{{ app.title }}</span>
-                <v-img
-                  v-if="app.logo"
-                  :src="require('@/assets/images/' + this.config.app.logo)"
-                  aspect-ratio="5"
-                  max-width="375"
-                  class="mb-2"
-                  style="margin: auto"
-                >
-                </v-img>
-                <span v-if="app.status && app.status !== ''" class="font-weight-light text-h5" style="opacity: 0.5">{{ app.status }}</span>
-                <br />
-                <br />
-                <br v-if="!app.title && !app.logo" />
-                <br v-if="!app.title && !app.logo" />
-                <span v-if="app.subtitle" class="font-weight-light text-md-h4 text-h5">{{ app.subtitle }}</span>
-              </v-col>
-              <v-col
-                class="text-white text-center"
-                cols="11"
-                xs="10"
-                sm="9"
-                md="7"
-                lg="6"
-                xl="5"
-                style="bottom: 5%; position: absolute; opacity: 75%"
-                v-if="config.home.blog && config.home.blog.subscribe && ratio == 1"
-              >
-                <v-btn
-                  :href="config.home.blog.subscribe"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="px-10"
-                  height="55"
-                  elevation="0"
-                  rounded
-                  light
-                  data-aos="fade-up"
-                  ><span style="color: gray">Stay informed by email<v-icon class="px-2">fa-solid fa-paper-plane</v-icon></span></v-btn
-                >
-                <br />
-                <br />
-                <v-btn @click="goToAboutMe()" color="transparent" elevation="0" icon data-aos="fade-up">
-                  <v-icon>fa-solid fa-angle-down</v-icon>
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-row>
-        </v-container>
-      </v-img>
-    </v-row>
+  <section id="banner">
+    <v-img
+      :height="ratio ? `calc(${100 / ratio}vh)` : $vuetify.display.smAndDown ? '70vh' : '90vh'"
+      :src="banner ? banner : generateBackground()"
+      style="margin-top: -65px"
+      max-width="100%"
+      cover
+      alt="banner"
+    >
+      <v-container class="fill-height">
+        <v-row align="center" justify="center">
+          <v-col
+            class="text-white text-center"
+            :style="{
+              'margin-top': ratio ? '5vh' : $vuetify.display.smAndDown ? '-5vh' : '-25vh',
+            }"
+          >
+            <div class="mb-5"><VMarkdown v-if="title" class="font-weight-bold text-md-h2 text-h3" :source="title" /></div>
+            <div class="mb-10"><VMarkdown v-if="subtitle" class="font-weight-medium text-h5" :source="subtitle" /></div>
+            <v-btn
+              v-if="button && button.title"
+              :href="button.link"
+              class="text-none font-weight-bold rounded-xl"
+              :style="{ 'border-color': button.color, 'border-width': '1.5px' }"
+              variant="outlined"
+              size="large"
+              >{{ button.title }}</v-btn
+            >
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-img>
   </section>
 </template>
 
 <script>
 /**
- * Export default
+ * Component definition.
  */
 export default {
-  name: 'homeBannerComponent',
-  props: ['ratio', 'app', 'statusMargin', 'banner'],
-  data() {
-    return {
-      valid: true, // TODO: switch to false when forms will be reactive
-      password: 'Password',
-      rules: {
-        email: (v) => /\S+@\S+\.\S+/.test(v) || '',
-      },
-    };
+  name: 'HomeBannerComponent',
+  props: {
+    // title to display
+    banner: {
+      type: String,
+      default: null,
+    },
+    // define a ratio to handle banne height
+    ratio: {
+      type: [Number, String],
+      default: null,
+    },
+    // title to display
+    title: {
+      type: String,
+      default: null,
+    },
+    // subtitle to display
+    subtitle: {
+      type: String,
+      default: null,
+    },
+    // button to display
+    button: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   methods: {
-    generateTemporalBackground() {
-      return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.jpg`;
-    },
-    goToAboutMe() {
-      const el = document.getElementById('about-me');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    generateBackground() {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return this.config.home.darkBackground;
+      }
+      return this.config.home.lightBackground;
     },
   },
 };

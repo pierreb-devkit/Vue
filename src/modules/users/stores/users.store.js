@@ -1,61 +1,100 @@
 /**
  * Module dependencies.
  */
-import _ from 'lodash';
+import { defineStore } from 'pinia';
+import { assign } from 'lodash-es';
+import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
 
+/**
+ * Whitelists.
+ */
 const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar', 'roles'];
 
 /**
- * Getters: get state
+ * Store definition.
  */
-const getters = {
-  users: (state) => state.users,
-  user: (state) => state.user,
-};
+export const useUsersStore = defineStore('users', {
+  state: () => ({
+    user: {
+      firstName: '',
+      lastName: '',
+      bio: '',
+      position: '',
+      email: '',
+      avatar: '',
+      roles: [],
+      updated: '',
+      created: '',
+    },
+    users: [],
+  }),
 
-/**
- * Actions
- */
-const actions = (app) => {
-  const config = app.config.globalProperties.config;
-  const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-  return {
-    getUsers: async ({ commit }, params) => {
+  actions: {
+    async getUsers(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
-        const res = await app.config.globalProperties.axios.get(`${api}/${config.api.endPoints.users}/page/${params}`);
-        commit('users_set', res.data.data);
+        const res = await axios.get(`${api}/${config.api.endPoints.users}/page/${params}`);
+        this.users = res.data.data;
       } catch (err) {
-        commit('user_error', err);
+        console.log(err);
       }
     },
-    getUser: async ({ commit }, params) => {
+
+    async getUser(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
-        const res = await app.config.globalProperties.axios.get(`${api}/${config.api.endPoints.users}/${params.id}`);
-        commit('user_set', res.data.data);
+        const res = await axios.get(`${api}/${config.api.endPoints.users}/${params.id}`);
+        this.user = res.data.data;
       } catch (err) {
-        commit('user_error', err);
+        console.log(err);
       }
     },
-    updateUser: async ({ commit, state }, params) => {
+
+    async updateUser(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
-        const obj = model.clean(state.user, whitelists);
-        const res = await app.config.globalProperties.axios.put(`${api}/${config.api.endPoints.users}/${params.id}`, obj);
-        commit('user_update', res.data.data);
+        const obj = model.clean(this.user, whitelists);
+        const res = await axios.put(`${api}/${config.api.endPoints.users}/${params.id}`, obj);
+        assign(this.user, res.data.data);
       } catch (err) {
-        commit('user_error', err);
+        console.log(err);
       }
     },
-    deleteUser: async ({ commit }, params) => {
+
+    async deleteUser(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
-        await app.config.globalProperties.axios.delete(`${api}/${config.api.endPoints.users}/${params.id}`);
-        commit('user_reset');
+        await axios.delete(`${api}/${config.api.endPoints.users}/${params.id}`);
+        this.resetUser();
       } catch (err) {
-        commit('user_error', err);
+        console.log(err);
       }
     },
-    // uploadAvatar: async ({ commit }, params) => {
+
+    resetUser() {
+      this.user = {
+        firstName: '',
+        lastName: '',
+        bio: '',
+        position: '',
+        email: '',
+        avatar: '',
+        roles: [],
+        updated: '',
+        created: '',
+      };
+    },
+
+    // uploadAvatar: async (app, params) => {
     //   try {
+    //     const config = app.config;
+    //     const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
     //     const formData = new FormData();
     //     formData.append('img', params.file);
     //     const res = await app.config.globalProperties.axios.post(
@@ -63,61 +102,15 @@ const actions = (app) => {
     //       formData,
     //       { headers: { 'Content-Type': 'multipart/form-data' } },
     //     );
-    //     commit('sample_update', res.data.data);
+    //     _.assign(this.user, res.data.data);
     //   } catch (err) {
-    //     commit('sample_error', err);
+    //     console.log(err);
     //   }
     // },
-  };
-};
-
-/**
- * Mutation: change state in a Vuex store is by committing a mutation
- */
-const mutations = {
-  user_error(err) {
-    console.log(err);
   },
-  users_set(state, data) {
-    state.users = data;
-  },
-  user_set(state, data) {
-    state.user = data;
-  },
-  user_update(state, data) {
-    _.assign(state.user, data);
-  },
-  user_reset(state) {
-    state.user = {};
-  },
-};
-
-/**
- * State
- */
-const state = () => ({
-  user: {
-    firstName: '',
-    lastName: '',
-    bio: '',
-    position: '',
-    email: '',
-    avatar: '',
-    roles: [],
-    updated: '',
-    created: '',
-  },
-  users: [],
 });
 
 /**
- * Export default
+ * Exports.
  */
-export default (app) => {
-  return {
-    state,
-    getters,
-    actions: actions(app),
-    mutations,
-  };
-};
+export default useUsersStore;

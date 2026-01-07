@@ -4,7 +4,7 @@
 import _ from 'lodash';
 
 /**
- * Plugin Setup
+ * Plugin setup.
  */
 export default {
   install: (app) => {

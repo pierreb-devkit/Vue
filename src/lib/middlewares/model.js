@@ -12,7 +12,7 @@ import _ from 'lodash';
 const clean = (data, model) => _.omitBy(_.pick(data, model), _.isNull);
 
 /**
- * Export
+ * Exports.
  */
 export default {
   clean,

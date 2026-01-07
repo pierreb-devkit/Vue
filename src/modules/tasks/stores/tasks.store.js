@@ -1,112 +1,97 @@
 /**
  * Module dependencies.
  */
-import _ from 'lodash';
+import { defineStore } from 'pinia';
+import { assign } from 'lodash-es';
+import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
 
+/**
+ * Whitelists.
+ */
 const whitelists = ['title', 'description'];
 
 /**
- * Getters: get state
+ * Store definition.
  */
-const getters = {
-  tasks: (state) => state.tasks,
-  task: (state) => state.task,
-};
+export const useTasksStore = defineStore('tasks', {
+  state: () => ({
+    task: {
+      title: '',
+      description: '',
+    },
+    tasks: [],
+  }),
 
-/**
- * Actions
- */
-const actions = (app) => {
-  const config = app.config.globalProperties.config;
-  const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+  actions: {
+    async getTasks() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
-  return {
-    getTasks: async ({ commit }) => {
       try {
-        const res = await app.config.globalProperties.axios.get(`${api}/${config.api.endPoints.tasks}/`);
-        commit('tasks_set', res.data.data);
+        const res = await axios.get(`${api}/${config.api.endPoints.tasks}/`);
+        this.tasks = res.data.data;
       } catch (err) {
-        commit('task_error', err);
+        console.log(err);
       }
     },
-    getTask: async ({ commit }, params) => {
+
+    async getTask(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
-        const res = await app.config.globalProperties.axios.get(`${api}/${config.api.endPoints.tasks}/${params.id}`);
-        commit('task_set', res.data.data);
+        const res = await axios.get(`${api}/${config.api.endPoints.tasks}/${params.id}`);
+        this.task = res.data.data;
       } catch (err) {
-        commit('task_error', err);
+        console.log(err);
       }
     },
-    createTask: async ({ commit }, params) => {
+
+    async createTask(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
       try {
         const obj = model.clean(params, whitelists);
-        const res = await app.config.globalProperties.axios.post(`${api}/${config.api.endPoints.tasks}/`, obj);
-        commit('task_set', res.data.data);
+        const res = await axios.post(`${api}/${config.api.endPoints.tasks}/`, obj);
+        this.task = res.data.data;
       } catch (err) {
-        commit('task_error', err);
+        console.log(err);
       }
     },
-    updateTask: async ({ commit, state }, params) => {
-      try {
-        const obj = model.clean(state.task, whitelists);
-        const res = await app.config.globalProperties.axios.put(`${api}/${config.api.endPoints.tasks}/${params.id}`, obj);
-        commit('task_update', res.data.data);
-      } catch (err) {
-        commit('task_error', err);
-      }
-    },
-    deleteTask: async ({ commit }, params) => {
-      try {
-        await app.config.globalProperties.axios.delete(`${api}/${config.api.endPoints.tasks}/${params.id}`);
-        commit('task_reset');
-      } catch (err) {
-        commit('task_error', err);
-      }
-    },
-  };
-};
 
-/**
- * Mutation: change state in a Vuex store is by committing a mutation
- */
-const mutations = {
-  task_error(err) {
-    console.log(err);
-  },
-  tasks_set(state, data) {
-    state.tasks = data;
-  },
-  task_set(state, data) {
-    state.task = data;
-  },
-  task_update(state, data) {
-    _.assign(state.task, data);
-  },
-  task_reset(state) {
-    state.task = {};
-  },
-};
+    async updateTask(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
-/**
- * State
- */
-const state = () => ({
-  task: {
-    title: '',
-    description: '',
+      try {
+        const obj = model.clean(this.task, whitelists);
+        const res = await axios.put(`${api}/${config.api.endPoints.tasks}/${params.id}`, obj);
+        assign(this.task, res.data.data);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    async deleteTask(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
+      try {
+        await axios.delete(`${api}/${config.api.endPoints.tasks}/${params.id}`);
+        this.resetTask();
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    resetTask() {
+      this.task = {
+        title: '',
+        description: '',
+      };
+    },
   },
-  tasks: [],
 });
 
 /**
- * Export default
+ * Exports.
  */
-export default (app) => {
-  return {
-    state,
-    getters,
-    actions: actions(app),
-    mutations,
-  };
-};
+export default useTasksStore;

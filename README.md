@@ -17,7 +17,9 @@ Quick links :
 
 Our stack Vue is actually in Beta.
 
-# :computer: Vue 3 / Vuetify 3 / Jwt
+# :computer: Vue 3 / Vuetify 3 / Vite / Jwt
+
+> **⚡ Now powered by Vite!** This project has been migrated from Vue CLI to Vite for faster development and better performance.
 
 - [**Knowledges JS**](https://blog.weareopensource.me/js-knwoledges/)
 - [**Demo**](https://vue.weareopensource.me) (working with [Node](https://github.com/weareopensource/Node) stack, email: *test@waos.me*, password: _TestWaos@2019_)
@@ -29,9 +31,9 @@ Our stack Vue is actually in Beta.
 | **Available**      |
 | Architecture       | Layered Architecture : everything is separated in layers, and the upper layers are abstractions of the lower ones, that's why every layer should only reference the immediate lower layer (vertical modules architecture)                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Security           | JWT Stateless - have a look on [Node](https://github.com/weareopensource/Node) stack for more informations                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| CI                 | [Github Action](https://github.com/weareopensource/Vue/actions)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| CI                 | [Github Action](https://github.com/weareopensource/Vue/actions)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Linter             | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Developer          | [Coveralls](https://coveralls.io/github/weareopensource/Vue) - [Code Climate](https://codeclimate.com/github/weareopensource/Vue) - [Dependency status](https://david-dm.org/weareopensource/vue) - [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/weareopensource/vue) <br> [standard-version](https://github.com/conventional-changelog/standard-version) / [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) - [@weareopensource/conventional-changelog](https://github.com/weareopensource/conventional-changelog) |
+| Developer          | [Coveralls](https://coveralls.io/github/weareopensource/Vue) - [Code Climate](https://codeclimate.com/github/weareopensource/Vue) - [Dependency status](https://david-dm.org/weareopensource/vue) - [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/weareopensource/vue) <br> [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) - [@weareopensource/conventional-changelog](https://github.com/weareopensource/conventional-changelog) |
 | Dependencies       | [npm](https://www.npmjs.com)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Deliver            | Docker & Docker-compose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | **Being released** |
@@ -55,42 +57,86 @@ Our stack Vue is actually in Beta.
 Make sure you have installed all of the following prerequisites on your development machine:
 
 - Git - [Download & Install Git](https://git-scm.com/downloads)
-- Node.js (10.x) - [Download & Install Node.js](https://nodejs.org/en/download/)
+- Node.js (22.x or 24.x) - [Download & Install Node.js](https://nodejs.org/en/download/)
+  - Recommended: Use [nvm](https://github.com/nvm-sh/nvm) for Node version management
 
 ## :boom: Installation
 
-It's straightforward (you can use yarn if you want)
+Simple and straightforward:
 
 ```bash
 git clone https://github.com/weareopensource/vue.git && cd Vue
-npm install -g @vue/cli@v4.0.0-rc.4
-npm i
+npm install
 ```
+
+**Note:** No need for global CLI tools - everything runs through Vite!
 
 ## :runner: Running Your Application
 
 ### Development
 
-- `npm start` to run a dev server with hot-reloads. Available at `http://localhost:8080/`.
+```bash
+npm start
+# or
+npm run dev
+```
 
-/!\ in order to launch Vue with our node stack, node need to accept CORS. You can specify it in config or like it `WAOS_NODE_cors_origin=['http://localhost:8080'] npm start` when you starting node.
+Runs dev server with hot-reload at `http://localhost:8080/`
+
+**CORS Note:** When connecting to the Node stack, ensure CORS is configured:
+
+```bash
+WAOS_NODE_cors_origin=['http://localhost:8080'] npm start
+```
 
 ### Production
 
-- `npm run build` to build a prod server.
+```bash
+npm run build      # Build for production
+npm run preview    # Preview production build locally
+```
 
-### others
+### Testing
 
-- vue:serve : `npm vue:serve` -> be careful, this bypass config generation of the stack
-- vue:build : `npm vue:build` -> be careful, this bypass config generation of the stack
-- test : `npm test`
-- test e2e : `npm run test:e2e`
-- test unit : `npm run test:unit`
-- lint : `npm run lint`
-- commit : `npm run commit`
-- release : `npm run release -- --first-release` **standard version, changelog, tag & choose version number : -- --release-as 1.1.1**
-- release:auto : `GITHUB_TOKEN=XXXXX npm run release:auto` **semantic release, changelog, tag, release** _require repositoryUrl conf in package.json_
-- generateConfig : `npm run generateConfig`
+```bash
+npm test                  # Run tests in watch mode
+npm run test:unit         # Run unit tests
+npm run test:coverage     # Generate coverage report
+```
+
+**Test Structure:** Tests are organized per module in `src/modules/*/tests/`
+
+### Code Quality
+
+```bash
+npm run lint              # Check code quality
+npm run lint:fix          # Auto-fix linting issues
+npm run format            # Format code with Prettier
+```
+
+### Commits & Releases
+
+```bash
+npm run commit                                    # Commit with commitizen
+npm run release -- --first-release                # First release
+npm run release -- --release-as 1.1.1             # Release specific version
+GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
+```
+
+### Configuration
+
+```bash
+npm run generateConfig                            # Generate config from environment
+npm run check:migration                           # Check Vite migration status
+```
+
+### Vite Direct Commands
+
+```bash
+npm run vite:dev          # Vite dev (bypasses config generation)
+npm run vite:build        # Vite build (bypasses config generation)
+npm run vite:preview      # Vite preview (bypasses config generation)
+```
 
 ## :whale: Docker Way
 

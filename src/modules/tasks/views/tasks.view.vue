@@ -1,8 +1,8 @@
 <template>
   <v-container fluid>
     <v-btn
-      :flat="config.vuetify.theme.flat"
       v-if="isLoggedIn"
+      :flat="config.vuetify.theme.flat"
       icon
       to="/task"
       color="success"
@@ -11,7 +11,7 @@
       <v-icon icon="fa-solid fa-plus"></v-icon>
     </v-btn>
     <v-row class="pa-2">
-      <taskComponent v-for="(item, index) in tasks" v-bind:item="item" v-bind:index="index" v-bind:key="item.id"></taskComponent>
+      <taskComponent v-for="(item, index) in tasks" :key="item.id" :item="item" :index="index"></taskComponent>
     </v-row>
     <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
       <v-col cols="12">
@@ -27,12 +27,17 @@
 /**
  * Module dependencies.
  */
-import { mapGetters } from 'vuex';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
 /**
- * Export default
+ * Component definition.
  */
 export default {
+  components: {
+    taskComponent,
+  },
   data: () => ({
     direction: 'bottom',
     fab: false,
@@ -45,14 +50,23 @@ export default {
     left: false,
     transition: 'slide-y',
   }),
-  components: {
-    taskComponent,
-  },
   computed: {
-    ...mapGetters(['theme', 'isLoggedIn', 'tasks']),
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
+    isLoggedIn() {
+      const authStore = useAuthStore();
+      return authStore.isLoggedIn;
+    },
+    tasks() {
+      const tasksStore = useTasksStore();
+      return tasksStore.tasks;
+    },
   },
   created() {
-    this.$store.dispatch('getTasks');
+    const tasksStore = useTasksStore();
+    tasksStore.getTasks();
   },
 };
 </script>

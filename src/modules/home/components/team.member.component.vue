@@ -1,29 +1,29 @@
 <template>
-  <v-col cols="12" sm="12" md="6" lg="4" xl="3">
-    <v-card class="mx-auto rounded-xl" :flat="config.vuetify.theme.flat">
+  <v-col sm="12" md="6" lg="4" xl="4">
+    <v-card :class="`mx-auto ${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat">
       <v-img
-        :src="require('@/assets/images/background.jpg')"
-        class="text-white"
+        src="/images/dark.webp"
+        class="`text-white ${config.vuetify.theme.rounded}`"
         height="150"
         cover
-        :gradient="theme == 'dark' ? 'to top right, rgba(0,0,0,.3), rgba(0,0,0,.7)' : 'to top right, rgba(255,255,255,.3), rgba(255,255,255,.7)'"
-        style="border: 5px solid transparent; border-radius: 25px 25px 0 0"
+        :gradient="theme === 'dark' ? 'to top right, rgba(0,0,0,.3), rgba(0,0,0,.7)' : 'to top right, rgba(255,255,255,.3), rgba(255,255,255,.7)'"
+        style="border: 5px solid transparent"
       >
       </v-img>
       <v-card-actions class="pt-6">
         <v-card-title class="text-capitalize"
           ><h4>{{ item.firstName }} {{ item.lastName }}</h4>
         </v-card-title>
-        <span class="pl-4 text-secondary" v-if="item.position && item.position !== ''"> {{ item.position }}</span>
+        <span v-if="item.position && item.position !== ''" class="pl-4 text-secondary"> {{ item.position }}</span>
         <v-spacer></v-spacer>
-        <v-btn @click="show = !show" v-if="item.bio" icon variant="text">
+        <v-btn v-if="item.bio" icon variant="text" @click="show = !show">
           <v-icon :icon="show ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></v-icon>
         </v-btn>
       </v-card-actions>
       <v-expand-transition>
         <div v-show="show">
           <v-card-actions class="pt-0 px-4">
-            <v-chip class="mr-2" v-for="(role, index) in item.roles" v-bind:index="index" v-bind:key="index">{{ role }}</v-chip>
+            <v-chip v-for="(role, index) in item.roles" :key="index" class="mr-2" :index="index">{{ role }}</v-chip>
             <v-spacer></v-spacer>
             <v-btn v-if="item.email" :href="`mailto:${item.email}`" icon>
               <v-icon icon="fa-solid fa-envelope"></v-icon>
@@ -55,23 +55,36 @@
 /**
  * Module dependencies.
  */
-import { mapGetters } from 'vuex';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 
 /**
- * Export default
+ * Component definition.
  */
 export default {
-  name: 'taskComponent',
-  data: () => ({
-    show: false,
-  }),
-  props: ['item'],
+  name: 'TaskComponent',
   components: {
     userAvatarComponent,
   },
+  props: {
+    item: {
+      type: Object,
+      required: true,
+    },
+  },
+  data: () => ({
+    show: false,
+  }),
   computed: {
-    ...mapGetters(['isLoggedIn', 'theme']),
+    isLoggedIn() {
+      const authStore = useAuthStore();
+      return authStore.isLoggedIn;
+    },
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
   },
 };
 </script>

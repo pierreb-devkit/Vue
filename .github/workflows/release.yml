@@ -1,0 +1,48 @@
+name: Monthly Release
+
+on:
+  # Release automatique le 1er de chaque mois à 9h00 UTC
+  schedule:
+    - cron: '0 9 1 * *'
+
+  # Permet aussi de déclencher manuellement depuis GitHub Actions UI
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: UV_USE_IO_URING=0 npm run build
+
+      - name: Run tests
+        run: |
+          npm run lint
+          npm run test:coverage
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

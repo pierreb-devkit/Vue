@@ -5,7 +5,7 @@
       <v-card-text>{{ item.description }}</v-card-text>
       <v-card-actions v-if="isLoggedIn">
         <div class="flex-grow-1"></div>
-        <v-btn color="secondary" v-if="item.id" :to="`/tasks/${item.id}`" icon>
+        <v-btn v-if="item.id" color="secondary" :to="`/tasks/${item.id}`" icon>
           <v-icon icon="fa-solid fa-eye"></v-icon>
         </v-btn>
       </v-card-actions>
@@ -17,15 +17,28 @@
 /**
  * Module dependencies.
  */
-import { mapGetters } from 'vuex';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 /**
- * Export default
+ * Component definition.
  */
 export default {
-  name: 'taskComponent',
-  props: ['item'],
+  name: 'TaskComponent',
+  props: {
+    item: {
+      type: Object,
+      required: true,
+    },
+  },
   computed: {
-    ...mapGetters(['isLoggedIn', 'theme']),
+    isLoggedIn() {
+      const authStore = useAuthStore();
+      return authStore.isLoggedIn;
+    },
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
   },
 };
 </script>

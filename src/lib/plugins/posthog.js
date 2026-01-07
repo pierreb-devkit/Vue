@@ -4,7 +4,7 @@
 import posthog from 'posthog-js';
 
 /**
- * Plugin Setup
+ * Plugin setup.
  */
 export default {
   install(app) {

@@ -4,7 +4,7 @@
 import secure from '../views/secure.view.vue';
 
 /**
- * Router configuration
+ * Router configuration.
  */
 export default [
   {
@@ -17,3 +17,7 @@ export default [
     },
   },
 ];
+
+/**
+ * Exports.
+ */

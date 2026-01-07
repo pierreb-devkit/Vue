@@ -1,21 +1,25 @@
 /* eslint-disable */
 
-const fs = require('fs');
-const _ = require('lodash');
-const objectPath = require('object-path');
-const path = require('path');
+import fs from 'fs';
+import _ from 'lodash';
+import objectPath from 'object-path';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Get the current config
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
 const getBaseConfiguration = async () => {
-  const _path = path.join(process.cwd(), './src/config', 'defaults', `${process.env.NODE_ENV}.cjs`);
+  const _path = path.join(process.cwd(), './src/config', 'defaults', `${process.env.NODE_ENV}.js`);
   if (fs.existsSync(`${_path}`)) {
     console.log(`+ Configuration based on : "${process.env.NODE_ENV}"`);
     return await import(path.join('file://', _path));
   }
   console.error(`+ Error: No configuration file found for "${process.env.NODE_ENV}" environment using development instead`);
-  return await import(path.join(process.cwd(), './src/config', 'defaults', 'development.cjs'));
+  return await import(path.join(process.cwd(), './src/config', 'defaults', 'development.js'));
 };
 
 const getConfiguration = async () => {
@@ -30,28 +34,29 @@ const getConfiguration = async () => {
   _.forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
   // Merge config files
   const config = _.merge(await defaultConfig.default, environmentConfigVars);
-  // generate config
-  fs.open('./src/config/index.cjs', 'w', (err, fd) => {
-    if (err) {
-      throw err;
-    }
-    // const envConfigFile = `\/\/ don't edit this file /!\\ \n\/\/ it' a generated one \n\/\/ edit in defaults *, see Readme \nmodule.exports = ${config};`;
-    const envConfigFile = `/**
+
+  // Generate ESM version
+  const configJSON = JSON.stringify(config, undefined, 2)
+    .replace(/"([^(")"]+)":/g, '$1:')
+    .replace(/\n|\r/g, ',\n')
+    .replace(/{,/g, '{')
+    .replace(/\[,/g, '[')
+    .replace(/,,/g, ',');
+
+  // Generate ESM file
+  const esmConfigFile = `/**
  * don't edit this file /!\\
  * it' a generated one
  * edit in defaults/*, cf readme
  */
 /* eslint-disable */
-module.exports = ${JSON.stringify(config, undefined, 2)
-      .replace(/"([^(")"]+)":/g, '$1:')
-      .replace(/"/g, "'")
-      .replace(/\n|\r/g, ',\n')
-      .replace(/{,/g, '{')
-      .replace(/\[,/g, '[')
-      .replace(/,,/g, ',')};
+export default ${configJSON};
 `;
-    fs.writeSync(fd, envConfigFile);
-  });
+
+  // Write ESM file
+  fs.writeFileSync('./src/config/index.js', esmConfigFile);
+
+  console.log('+ Configuration file generated: index.js');
 };
 
 getConfiguration();

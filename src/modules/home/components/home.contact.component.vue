@@ -1,38 +1,25 @@
-<!--
-  - Call example
-    <homeContactComponent></homeContactComponent>
--->
 <template>
-  <section id="contact" class="py-12">
-    <v-container>
-      <h2
-        class="font-weight-bold mb-3 pb-8 text-h4 text-center"
-        style="text-transform: uppercase !important"
-        v-if="config.home.contact.title"
-        v-text="config.home.contact.title"
-      ></h2>
-      <v-form ref="form">
-        <v-row>
-          <v-col cols="12">
+  <section id="contact" :style="style('section', config.home.contact)">
+    <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+      <v-row align="center" justify="center" class="px-0 py-8">
+        <homeTitleComponent :setup="config.home.contact"></homeTitleComponent>
+        <v-col>
+          <v-form ref="form">
             <v-text-field v-model="subject" :flat="config.vuetify.theme.flat" name="subject" label="Subject*"></v-text-field>
-          </v-col>
-          <v-col cols="12">
             <v-textarea v-model="body" :flat="config.vuetify.theme.flat" label="Message*"></v-textarea>
-          </v-col>
-          <v-col class="mx-auto" cols="auto">
             <v-btn
-              @click="sendMail()"
               :color="config.vuetify.theme.themes[theme].colors.secondary"
               :style="{
                 color: config.vuetify.theme.themes[theme].colors.onSecondary,
               }"
               depressed
               x-large
+              @click="sendMail()"
               >Send</v-btn
             >
-          </v-col>
-        </v-row>
-      </v-form>
+          </v-form>
+        </v-col>
+      </v-row>
     </v-container>
   </section>
 </template>
@@ -41,21 +28,36 @@
 /**
  * Module dependencies.
  */
-import { mapGetters } from 'vuex';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useHomeStore } from '../stores/home.store';
+import { style } from '../../../lib/helpers/theme';
+import homeTitleComponent from './utils/home.title.component.vue';
+
 /**
  * Export default
  */
 export default {
-  name: 'homeContactComponent',
+  name: 'HomeContactComponent',
+  components: {
+    homeTitleComponent,
+  },
   computed: {
-    ...mapGetters(['theme', 'contact']),
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
+    contact() {
+      const homeStore = useHomeStore();
+      return homeStore.contact;
+    },
     subject: {
       get() {
         return this.contact.subject;
       },
       set(subject) {
         this.save = true;
-        this.$store.commit('contact_update', { subject });
+        const homeStore = useHomeStore();
+        homeStore.updateContact({ subject });
       },
     },
     body: {
@@ -64,11 +66,13 @@ export default {
       },
       set(body) {
         this.save = true;
-        this.$store.commit('contact_update', { body });
+        const homeStore = useHomeStore();
+        homeStore.updateContact({ body });
       },
     },
   },
   methods: {
+    style,
     sendMail() {
       window.location.href = `${this.config.home.contact.mail}?subject=${this.contact.subject}&body=${this.contact.body.replace(/\n/g, '%0D%0A')}`;
       this.$refs.form.reset();

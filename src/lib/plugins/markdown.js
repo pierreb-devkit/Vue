@@ -2,23 +2,38 @@
  * Module dependencies.
  */
 import { marked } from 'marked';
+import { h } from 'vue';
 
 /**
- * Plugin Setup
+ * Configure marked options
+ */
+marked.setOptions({
+  mangle: false,
+  headerIds: false,
+});
+
+/**
+ * Plugin setup.
  */
 export default {
   install: (app) => {
-    app.component('v-markdown', {
-      props: ['source'],
-      computed: {
-        markup() {
-          return marked.parse(this.source, {
-            mangle: false,
-            headerIds: false,
-          });
+    app.component('VMarkdown', {
+      props: {
+        source: {
+          type: String,
+          default: '',
         },
       },
-      template: '<span v-html="markup"></span>',
+      render() {
+        if (!this.source) return null;
+        try {
+          const html = marked.parse(this.source);
+          return h('span', { innerHTML: html });
+        } catch (error) {
+          console.error('Markdown parsing error:', error);
+          return h('span', this.source);
+        }
+      },
     });
   },
 };

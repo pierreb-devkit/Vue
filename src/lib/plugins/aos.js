@@ -5,7 +5,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 /**
- * Plugin Setup
+ * Plugin setup.
  */
 export default {
   install: () => {

@@ -1,136 +1,139 @@
 /**
- * Getters: get state
+ * Module dependencies.
  */
-const getters = {
-  isLoggedIn: (state) => !!state.cookieExpire,
-  authStatus: (state) => state.status,
-  auth: (state) => state.auth,
-  mail: (state) => state.mail,
-};
+import { defineStore } from 'pinia';
+import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
+import { useCoreStore } from '../../core/stores/core.store';
 
 /**
- * Actions
+ * Store definition.
  */
-const actions = (app) => {
-  const config = app.config.globalProperties.config;
-  const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-  return {
-    signin: async ({ commit, dispatch }, params) => {
-      try {
-        const res = await app.config.globalProperties.axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-        commit('auth_success', res.data);
-        dispatch('refreshNav');
-      } catch (err) {
-        localStorage.removeItem('token');
-        commit('auth_error', err);
-      }
-    },
-    signup: async ({ commit, dispatch }, params) => {
-      try {
-        const res = await app.config.globalProperties.axios.post(`${api}/${config.api.endPoints.auth}/signup`, params);
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-        commit('auth_success', res.data);
-        dispatch('refreshNav');
-      } catch (err) {
-        localStorage.removeItem('token');
-        commit('auth_error', err);
-      }
-    },
-    signout: ({ commit }) =>
-      new Promise((resolve) => {
-        commit('auth_logout');
-        localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
-        localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
-        resolve();
-      }),
-    token: async ({ commit, dispatch }) => {
-      try {
-        const res = await app.config.globalProperties.axios.get(`${api}/${config.api.endPoints.auth}/token`);
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-        commit('auth_success', res.data);
-        dispatch('refreshNav');
-      } catch (err) {
-        // localStorage.removeItem('token');
-        commit('auth_error', err);
-      }
-    },
-    forgot: async ({ commit }, params) => {
-      try {
-        const res = await app.config.globalProperties.axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
-        commit('forgot_success', res.data);
-      } catch (err) {
-        commit('auth_error', err);
-      }
-    },
-    reset: async ({ commit, dispatch }, params) => {
-      try {
-        const res = await app.config.globalProperties.axios.post(`${api}/${config.api.endPoints.auth}/reset`, params);
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-        commit('auth_success', res.data);
-        dispatch('refreshNav');
-      } catch (err) {
-        localStorage.removeItem('token');
-        commit('auth_error', err);
-      }
-    },
-  };
-};
-
-/**
- * Mutation: change state in a Vuex store is by committing a mutation
- */
-const mutations = {
-  auth_success(state, data) {
-    state.auth = true;
-    state.cookieExpire = data.tokenExpiresIn;
-    state.user = data.user;
-  },
-  token_success(state, data) {
-    console.log('token_success2', data);
-  },
-  auth_error(state, err) {
-    console.log(err);
-  },
-  auth_logout(state) {
-    state.auth = false;
-    state.cookieExpire = 0;
-  },
-  forgot_success(state, data) {
-    state.mail.status = data.data.status;
-    state.mail.message = data.message;
-  },
-  reset_success(state, data) {
-    console.log(data);
-  },
-};
-
-/**
- * State
- */
-const state = (app) => {
-  return {
-    cookieExpire: localStorage.getItem(`${app.config.globalProperties.config.cookie.prefix}CookieExpire`) || 0,
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    cookieExpire: 0,
     auth: false,
+    user: null,
     mail: {
       status: false,
       message: '',
     },
-  };
-};
+  }),
+
+  getters: {
+    isLoggedIn: (state) => !!state.cookieExpire,
+    authStatus: (state) => state.status,
+  },
+
+  actions: {
+    // Initialize from localStorage
+    initFromStorage() {
+      this.cookieExpire = localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0;
+    },
+
+    async signin(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const coreStore = useCoreStore();
+
+      try {
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
+        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+
+        this.auth = true;
+        this.cookieExpire = res.data.tokenExpiresIn;
+        this.user = res.data.user;
+
+        coreStore.refreshNav(this.isLoggedIn);
+      } catch (err) {
+        localStorage.removeItem('token');
+        console.log(err);
+      }
+    },
+
+    async signup(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const coreStore = useCoreStore();
+
+      try {
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/signup`, params);
+        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+
+        this.auth = true;
+        this.cookieExpire = res.data.tokenExpiresIn;
+        this.user = res.data.user;
+
+        coreStore.refreshNav(this.isLoggedIn);
+      } catch (err) {
+        localStorage.removeItem('token');
+        console.log(err);
+      }
+    },
+
+    async signout() {
+      this.auth = false;
+      this.cookieExpire = 0;
+      this.user = null;
+
+      localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
+      localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
+    },
+
+    async token() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const coreStore = useCoreStore();
+
+      try {
+        const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
+        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+
+        this.auth = true;
+        this.cookieExpire = res.data.tokenExpiresIn;
+        this.user = res.data.user;
+
+        coreStore.refreshNav(this.isLoggedIn);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    async forgot(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
+      try {
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
+        this.mail.status = res.data.data.status;
+        this.mail.message = res.data.message;
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    async reset(params) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const coreStore = useCoreStore();
+
+      try {
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params);
+        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+
+        this.auth = true;
+        this.cookieExpire = res.data.tokenExpiresIn;
+        this.user = res.data.user;
+
+        coreStore.refreshNav(this.isLoggedIn);
+      } catch (err) {
+        localStorage.removeItem('token');
+        console.log(err);
+      }
+    },
+  },
+});
 
 /**
- * Export default
+ * Exports.
  */
-export default (app) => {
-  return {
-    state: state(app),
-    getters,
-    actions: actions(app),
-    mutations,
-  };
-};
+export default useAuthStore;

@@ -1,15 +1,14 @@
 /**
  * Module dependencies.
  */
-import axios from 'axios';
+import axios from '../services/axios';
 
 /**
- * Plugin Setup
+ * Plugin setup.
  */
 export default {
   install: (app) => {
-    app.config.globalProperties.axios = axios.create({
-      withCredentials: true,
-    });
+    // Expose axios on globalProperties for Vue components compatibility
+    app.config.globalProperties.axios = axios;
   },
 };

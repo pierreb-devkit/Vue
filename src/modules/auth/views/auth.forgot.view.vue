@@ -1,8 +1,8 @@
 <template>
-  <v-container fluid>
+  <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
       <v-card
-        class="ma-6 pa-6"
+        class="mt-8 pa-8"
         width="100%"
         :style="{ background: config.vuetify.theme.themes[theme].colors.surface }"
         :flat="config.vuetify.theme.flat"
@@ -51,9 +51,10 @@
 /**
  * Module dependencies.
  */
-import { mapGetters } from 'vuex';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useAuthStore } from '../stores/auth.store';
 /**
- * Export default
+ * Component definition.
  */
 export default {
   data() {
@@ -67,14 +68,26 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['theme', 'mail']),
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
+    mail() {
+      const authStore = useAuthStore();
+      return authStore.mail;
+    },
   },
   methods: {
     async validate() {
       const form = await this.$refs.form.validate();
       if (form.valid) {
         const { email } = this;
-        this.$store.dispatch('forgot', { email }).catch((err) => console.log(err));
+        const authStore = useAuthStore();
+        try {
+          await authStore.forgot(this, { email });
+        } catch (err) {
+          console.log(err);
+        }
       }
     },
     reset() {

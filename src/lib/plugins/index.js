@@ -1,18 +1,22 @@
+/**
+ * Module dependencies.
+ */
 import vuetify from './vuetify';
-import axios from './axios';
 import posthog from './posthog';
-import moment from './moment';
+import dayjs from './dayjs';
 import gravatar from './gravatar';
 import images from './images';
 import aos from './aos';
 import markdown from './markdown';
 import lodash from './lodash';
 
+/**
+ * Exports.
+ */
 export default {
   vuetify,
-  axios,
   posthog,
-  moment,
+  dayjs,
   gravatar,
   images,
   aos,

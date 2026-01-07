@@ -11,13 +11,18 @@
  * Module dependencies.
  */
 
-import { mapGetters } from 'vuex';
-import coreDataTableComponent from '../../_core/components/core.datatable.component.vue';
+import { useCoreStore } from '../../core/stores/core.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { useUsersStore } from '../stores/users.store';
+import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 
 /**
- * Export default
+ * Component definition.
  */
 export default {
+  components: {
+    coreDataTableComponent,
+  },
   data: () => ({
     headers: [
       {
@@ -76,11 +81,19 @@ export default {
       },
     ],
   }),
-  components: {
-    coreDataTableComponent,
-  },
   computed: {
-    ...mapGetters(['theme', 'isLoggedIn', 'users']),
+    theme() {
+      const coreStore = useCoreStore();
+      return coreStore.theme;
+    },
+    isLoggedIn() {
+      const authStore = useAuthStore();
+      return authStore.isLoggedIn;
+    },
+    users() {
+      const usersStore = useUsersStore();
+      return usersStore.users;
+    },
   },
 };
 </script>
