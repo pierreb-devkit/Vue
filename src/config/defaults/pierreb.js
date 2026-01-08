@@ -114,6 +114,7 @@ export default {
     },
   },
   header: {
+    display: false, // display header or not
     logo: {
       file: '/images/logo.webp',
       width: '120px',
