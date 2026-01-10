@@ -26,15 +26,6 @@ export default {
     homeBannerComponent,
     teamMemberComponent,
   },
-  data() {
-    return {
-      valid: true, // TODO: switch to false when forms will be reactive
-      password: 'Password',
-      rules: {
-        email: (v) => /\S+@\S+\.\S+/.test(v) || '',
-      },
-    };
-  },
   computed: {
     theme() {
       const coreStore = useCoreStore();
@@ -48,11 +39,6 @@ export default {
   created() {
     const homeStore = useHomeStore();
     homeStore.getTeam(this);
-  },
-  methods: {
-    generateTemporalBackground() {
-      return `${this.config.home.temporalBackground}/${`0${new Date().getHours()}`.slice(-2)}.webp`;
-    },
   },
 };
 </script>

@@ -1,7 +1,7 @@
 <template>
   <section id="images" :style="style('section', setup)">
     <v-container ref="imagesContainer" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
-      <v-row align="center" justify="center" class="px-3 py-8">
+      <v-row align="center" justify="center" class="px-0 py-8">
         <homeTitleComponent :setup="setup"></homeTitleComponent>
         <v-carousel
           v-if="setup.content.length > 0"

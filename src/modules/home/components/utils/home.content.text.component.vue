@@ -3,8 +3,8 @@
     <homeTitleComponent v-if="item.subtitle" :setup="{ subtitle: item.subtitle }" :offpadding="true"></homeTitleComponent>
     <VMarkdown
       v-if="item.text"
-      :style="item.quote ? { 'line-height': '2em' } : { 'line-height': '1.8em' }"
-      :class="item.quote ? 'text-h6 text-md-h5 ' : 'text-h6'"
+      :style="item.quote ? { 'line-height': '1.8em' } : { 'line-height': '1.6em' }"
+      :class="item.quote ? 'text-body-1 text-md-h6' : 'text-body-1'"
       class="text-left font-weight-regular"
       :source="item.text"
     />
@@ -12,7 +12,7 @@
       v-if="item.button && item.button.title && item.button.link"
       :href="item.button.link"
       variant="text"
-      class="my-4 text-none text-h6"
+      class="my-4 text-none text-body-1"
       color="secondary"
       size="large"
     >

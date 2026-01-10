@@ -1,7 +1,7 @@
 <template>
   <section>
     <div :style="{ width: '260px', height: '56px', display: isFixed ? 'block' : 'none' }" class="mt-10"></div>
-    <div :class="['dynamicIsland', { fixed: isFixed, expand: animate, minimize: !animate }]" class="mt-10" :style="dynamicIslandStyle">
+    <div :class="['dynamicIsland', { fixed: isFixed, expand: animate, minimize: hasAnimated && !animate }]" class="mt-10" :style="dynamicIslandStyle">
       <div :class="['content', { fadeIn: animate, fadeOut: !animate }]">
         <div class="text-center font-weight-bold text-white">
           <span v-if="text && !steps" class="ml-4 mt-1 text-h6 text-truncate">{{ text }}</span>
@@ -28,6 +28,7 @@
  * Module dependencies.
  */
 import { useCoreStore } from '../../../core/stores/core.store';
+import { liquidGlassStyle } from '../../../../lib/helpers/theme';
 /**
  * Component definition.
  */
@@ -59,8 +60,11 @@ export default {
     isVisible: false,
     isFixed: false,
     animate: false,
+    hasAnimated: false,
     disabled: false,
     stepsArray: [],
+    gradientRotation: 135,
+    ticking: false,
   }),
   computed: {
     theme() {
@@ -68,12 +72,22 @@ export default {
       return coreStore.theme;
     },
     dynamicIslandStyle() {
+      const backgroundColor = this.config.vuetify.theme.themes[this.theme].colors.background;
+      const surfaceColor = this.config.vuetify.theme.themes[this.theme].colors.surface;
       return {
-        filter: this.theme === 'dark' ? 'brightness(1.8)' : 'brightness(0.8)',
-        'background-color': `${this.config.vuetify.theme.themes[this.theme].colors.background}80`,
-        color: this.config.vuetify.theme.themes[this.theme].colors.onSurface,
-        '-webkit-backdrop-filter': 'blur(8px)',
-        'backdrop-filter': 'blur(8px)',
+        ...liquidGlassStyle({
+          theme: this.theme,
+          backgroundColor,
+          surfaceColor,
+          intensity: 1,
+          tint: this.theme === 'dark' ? 0.75 : -0.25,
+          variant: 'pill',
+          border: 'none',
+          extras: {
+            color: this.config.vuetify.theme.themes[this.theme].colors.onSurface,
+          },
+        }),
+        '--gradient-rotation': `${this.gradientRotation}deg`,
       };
     },
   },
@@ -98,13 +112,26 @@ export default {
   },
   methods: {
     checkVisibility() {
+      if (!this.ticking) {
+        requestAnimationFrame(() => {
+          this.updateVisibility();
+          this.ticking = false;
+        });
+        this.ticking = true;
+      }
+    },
+    updateVisibility() {
       const container = this.container.$el.getBoundingClientRect();
       const button = this.$el.querySelector('.dynamicIsland').getBoundingClientRect();
       const scrollDownTriger = (window.innerHeight / 3) * 2;
       const offset = 30;
+      // Mise à jour de la rotation du gradient au scroll (plus doux)
+      this.gradientRotation = (window.scrollY * 0.2) % 360;
       // Apparition : lorsque le container prend plus d'1/3 du viewport
-      // console.log(this.text, 'this.animate', this.animate, 'container.top', container.top, 'scrollDownTriger', scrollDownTriger);
-      if (!this.animate && container.top < scrollDownTriger) this.animate = true;
+      if (!this.animate && container.top < scrollDownTriger) {
+        this.animate = true;
+        this.hasAnimated = true;
+      }
       // Positionnement fixe : lorsque le bouton est au dessus de 50 du bas du viewport
       if (this.animate && !this.isFixed && button.bottom >= window.innerHeight) this.isFixed = true;
       // Positionnement relative : lorsque le bas du button atteind le bas du container
@@ -174,6 +201,22 @@ export default {
   border-radius: 30px;
   transform-origin: center;
   opacity: 0;
+  position: relative;
+}
+
+.dynamicIsland::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(var(--gradient-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .dynamicIsland.expand {

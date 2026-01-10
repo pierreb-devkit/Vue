@@ -127,14 +127,12 @@ export default {
         sublinks: [
           {
             icon: 'fa-regular fa-star',
-            color: 'secondary',
             title: 'For startuper',
             subtitle: 'Create faster, Resilient, Easily',
             url: 'https://github.com/weareopensource/',
           },
           {
             icon: 'fa-solid fa-code',
-            color: 'secondary',
             title: 'For developer',
             subtitle: 'Learn, develop, fork',
             url: 'https://github.com/weareopensource/',
@@ -146,7 +144,6 @@ export default {
         sublinks: [
           {
             icon: 'fa-regular fa-newspaper',
-            color: 'secondary',
             title: 'Blog',
             subtitle: 'Follow our updates and activities',
             url: 'https://blog.weareopensource.me',

@@ -1,10 +1,10 @@
 <template>
   <div>
     <v-card-title class="text-center">
-      <h4 v-if="item.subtitle" class="text-h5 text-md-h4 font-weight-bold my-4" v-text="item.subtitle"></h4>
+      <h4 v-if="item.subtitle" class="text-h6 text-md-h5 font-weight-bold my-3" v-text="item.subtitle"></h4>
     </v-card-title>
-    <v-card-text class="px-10">
-      <VMarkdown v-if="item.text" class="text-body-1 text-md-h6 font-weight-regular text-left" :source="item.text" />
+    <v-card-text class="px-6">
+      <VMarkdown v-if="item.text" class="text-body-1 font-weight-regular text-left" :source="item.text" />
     </v-card-text>
     <v-card-actions v-if="item.button" align="center" justify="center">
       <v-spacer>

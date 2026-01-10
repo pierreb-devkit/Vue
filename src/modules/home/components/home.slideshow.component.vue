@@ -8,7 +8,7 @@
         position: 'relative',
       }"
     >
-      <v-row align="center" justify="center" class="px-3 py-8">
+      <v-row align="center" justify="center" class="px-0 py-8">
         <homeTitleComponent :setup="setup"></homeTitleComponent>
         <v-tabs v-if="setup.slide.showTitle" v-model="step" class="mb-4" :style="style('tabs', setup)">
           <v-tab

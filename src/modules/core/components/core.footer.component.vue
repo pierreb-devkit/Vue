@@ -1,6 +1,6 @@
 <template>
   <v-footer v-if="enabled" class="footer pa-0 align-end" :style="{ background: config.vuetify.theme.themes[theme].colors.background }" app>
-    <v-container v-if="links.length > 0" class="pa-6" :style="custom && custom.section ? custom.section : null">
+    <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row align="center" justify="center">
         <v-col
           v-for="({ items, title }, i) in links.filter((section) => section.items)"
@@ -10,12 +10,12 @@
           class="text-center"
         >
           <v-card :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
-            <v-card-title class="text-center text-h6 text-medium-emphasis">{{ title }}</v-card-title>
-            <v-list :style="custom && custom.section ? custom.section : null">
+            <v-card-title class="text-center text-subtitle-2 font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
+            <v-list :style="custom && custom.section ? custom.section : null" density="compact">
               <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
                 <v-list-item-title>
-                  <v-icon size="16" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
-                  <span class="text-secondary text-center text-subtitle-2"> {{ item.label }} </span>
+                  <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
+                  <span class="text-secondary text-center text-caption"> {{ item.label }} </span>
                 </v-list-item-title>
               </v-list-item>
             </v-list>

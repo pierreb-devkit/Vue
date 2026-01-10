@@ -56,7 +56,6 @@
  * Module dependencies.
  */
 import { useCoreStore } from '../../core/stores/core.store';
-import { useAuthStore } from '../../auth/stores/auth.store';
 import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 
 /**
@@ -77,10 +76,6 @@ export default {
     show: false,
   }),
   computed: {
-    isLoggedIn() {
-      const authStore = useAuthStore();
-      return authStore.isLoggedIn;
-    },
     theme() {
       const coreStore = useCoreStore();
       return coreStore.theme;

@@ -1,7 +1,7 @@
 <template>
   <section id="logos" :style="style('section', setup)">
     <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
-      <v-row align="center" justify="center" class="px-0 py-8 pb-14">
+      <v-row align="center" justify="center" class="px-0 py-8">
         <homeTitleComponent :setup="setup"></homeTitleComponent>
         <v-window v-if="setup.content.length > 0" class="w-100" show-arrows>
           <template #prev="{ props }">
