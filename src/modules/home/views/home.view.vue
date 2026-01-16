@@ -13,11 +13,11 @@
       :background-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
       :halo-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
     ></homeHeroComponent>
+    <homeCapabilitiesComponent v-if="config.home.capabilities" :setup="config.home.capabilities"></homeCapabilitiesComponent>
     <homePresentationComponent v-if="config.home.presentation" :setup="config.home.presentation"></homePresentationComponent>
     <homeSocialComponent v-if="config.home.social" :setup="config.home.social"></homeSocialComponent>
     <homeAboutComponent v-if="config.home.about" :setup="config.home.about"></homeAboutComponent>
     <homeAboutComponent v-if="config.home.aboutFeatures" :setup="config.home.aboutFeatures"></homeAboutComponent>
-    <homeCapabilitiesComponent v-if="config.home.capabilities" :setup="config.home.capabilities"></homeCapabilitiesComponent>
     <homeFeaturesComponent v-if="config.home.features" :setup="config.home.features"></homeFeaturesComponent>
     <homeServicesComponent v-if="config.home.services" :setup="config.home.services"></homeServicesComponent>
     <homeStepsComponent v-if="config.home.steps" :setup="config.home.steps"></homeStepsComponent>
@@ -63,11 +63,6 @@ import homeContactComponent from '../components/home.contact.component.vue';
  * Component definition.
  */
 export default {
-  data() {
-    return {
-      pageHeight: 0,
-    };
-  },
   components: {
     // Noms alignés avec la configuration
     homeHeroComponent,
@@ -83,6 +78,7 @@ export default {
     homeStatisticsComponent,
     homeContactComponent,
   },
+
   data() {
     const theme = useTheme();
     return {
@@ -109,9 +105,6 @@ export default {
       homeStore.getStatistics();
     }
     if (this.config.home.articles) homeStore.getNews();
-  },
-  mounted() {
-    this.pageHeight = window.innerHeight;
   },
 };
 </script>
