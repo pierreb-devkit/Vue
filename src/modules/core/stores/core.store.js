@@ -3,7 +3,7 @@
  */
 import { defineStore } from 'pinia';
 import { pickBy, orderBy } from 'lodash-es';
-import * as theme from '../../../lib/helpers/theme';
+import { isDark } from '../../../lib/helpers/theme';
 import config from '../../../lib/services/config';
 
 // Variable globale pour stocker les routes
@@ -24,7 +24,7 @@ export const useCoreStore = defineStore('core', {
   actions: {
     init(appRoutes) {
       routes = appRoutes;
-      this.theme = theme.isDark(config.vuetify.theme.dark) ? 'dark' : 'light';
+      this.theme = isDark(config.vuetify.theme.dark) ? 'dark' : 'light';
       this.routes = routes;
     },
 

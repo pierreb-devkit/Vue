@@ -15,7 +15,7 @@
     </v-row>
     <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
       <v-col cols="12">
-        <v-card class="ma-6 pa-6" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
+        <v-card class="ma-6 pa-6" :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }" :flat="config.vuetify.theme.flat">
           <h2 class="text-center">No Tasks found :( !</h2>
         </v-card>
       </v-col>
@@ -27,7 +27,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
@@ -38,22 +38,25 @@ export default {
   components: {
     taskComponent,
   },
-  data: () => ({
-    direction: 'bottom',
-    fab: false,
-    fling: false,
-    hover: false,
-    tabs: null,
-    top: true,
-    right: true,
-    bottom: false,
-    left: false,
-    transition: 'slide-y',
-  }),
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+      direction: 'bottom',
+      fab: false,
+      fling: false,
+      hover: false,
+      tabs: null,
+      top: true,
+      right: true,
+      bottom: false,
+      left: false,
+      transition: 'slide-y',
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     isLoggedIn() {
       const authStore = useAuthStore();

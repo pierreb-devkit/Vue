@@ -1,5 +1,5 @@
 <template>
-  <v-card width="100%" class="datatable" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
+  <v-card width="100%" class="datatable" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
     <v-card-title>
       {{ title }}
       <v-spacer></v-spacer>
@@ -86,7 +86,7 @@
         v-model="refresh"
         class="ml-2"
         label="Auto Refresh"
-        :color="config.vuetify.theme.themes[theme].colors.secondary"
+        :color="theme.current.colors.secondary"
       ></v-switch>
       <v-spacer></v-spacer>
       <v-select v-model="options.itemsPerPage" :items="perPage" label="Items per page" style="max-width: 150px; width: 150px"></v-select>
@@ -108,7 +108,7 @@
  * Module dependencies.
  */
 import { debounce } from 'lodash-es';
-import { useCoreStore } from '../stores/core.store';
+import { useTheme } from 'vuetify';
 import { useUsersStore } from '../../users/stores/users.store';
 import * as tools from '../../../lib/helpers/tools';
 import userAvatarComponent from '../../users/components/user.avatar.component.vue';
@@ -154,20 +154,23 @@ export default {
       default: '',
     },
   },
-  data: () => ({
-    refresh: false,
-    textSearch: '',
-    loading: true,
-    perPage: [5, 50, 100],
-    options: {
-      page: 1,
-      itemsPerPage: 5,
-    },
-  }),
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+      refresh: false,
+      textSearch: '',
+      loading: true,
+      perPage: [5, 50, 100],
+      options: {
+        page: 1,
+        itemsPerPage: 5,
+      },
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
   },
   watch: {

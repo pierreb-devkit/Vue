@@ -1,5 +1,5 @@
 <template>
-  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="{ background: config.vuetify.theme.themes[theme].colors.background }" app>
+  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="{ background: theme.current.colors.background }" app>
     <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row align="center" justify="center">
         <v-col
@@ -30,7 +30,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../stores/core.store';
+import { useTheme } from 'vuetify';
 /**
  * Component definition.
  */
@@ -47,14 +47,15 @@ export default {
     },
   },
   data() {
+    const theme = useTheme();
     return {
+      theme,
       enabled: false,
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
   },
   watch: {

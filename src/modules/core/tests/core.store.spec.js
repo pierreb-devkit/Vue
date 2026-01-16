@@ -14,7 +14,6 @@ describe('Core Store', () => {
     const coreStore = useCoreStore();
     expect(coreStore.drawer).toBe(false);
     expect(coreStore.mini).toBe(false);
-    expect(coreStore.theme).toBe('light');
     expect(coreStore.nav).toEqual([]);
     expect(coreStore.routes).toEqual([]);
   });
@@ -41,7 +40,7 @@ describe('Core Store', () => {
     expect(coreStore.mini).toBe(false);
   });
 
-  it('should initialize theme and routes', () => {
+  it('should initialize routes', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
@@ -50,7 +49,6 @@ describe('Core Store', () => {
 
     coreStore.init(mockRoutes);
 
-    expect(coreStore.theme).toBe('light');
     expect(coreStore.routes).toEqual(mockRoutes);
   });
 

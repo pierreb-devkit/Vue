@@ -1,8 +1,41 @@
+<!--
+  HomeBlogComponent
+  =================
+  Carousel of image cards, typically used for blog posts or articles.
+
+  USAGE:
+  <homeBlogComponent :setup="{ content: news, ...config.home.blog }" />
+
+  CONFIG EXAMPLE (setup object):
+  blog: {
+    title: 'Latest Articles',
+    url: 'https://blog.example.com',
+    key: 'ghost_api_key',           // Ghost blog API key
+    slide: {
+      interval: 15000,              // Auto-slide interval in ms
+    },
+    style: {
+      section: { background: 'background' },
+    },
+  }
+
+  CONTENT FORMAT (from Ghost API or custom):
+  content: [
+    {
+      title: 'Article Title',
+      excerpt: 'Short description...',
+      feature_image: '/images/blog01.webp',
+      url: 'https://blog.example.com/post',
+    },
+  ]
+-->
 <template>
-  <section id="images" :style="style('section', setup)">
+  <section id="articles" :style="sectionStyle">
     <v-container ref="imagesContainer" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
       <v-row align="center" justify="center" class="px-0 py-8">
-        <homeTitleComponent :setup="setup"></homeTitleComponent>
+        <v-col cols="12">
+          <homeContentComponent :setup="setup"></homeContentComponent>
+        </v-col>
         <v-carousel
           v-if="setup.content.length > 0"
           v-model="step"
@@ -47,8 +80,9 @@
 /**
  * Module dependencies.
  */
+import { useTheme } from 'vuetify';
 import { style } from '../../../lib/helpers/theme';
-import homeTitleComponent from './utils/home.title.component.vue';
+import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 import homeDynamicIsland from './utils/home.dynamicIsland.component.vue';
 
@@ -56,9 +90,9 @@ import homeDynamicIsland from './utils/home.dynamicIsland.component.vue';
  * Export default
  */
 export default {
-  name: 'HomeBlogComponent',
+  name: 'HomeArticlesComponent',
   components: {
-    homeTitleComponent,
+    homeContentComponent,
     homeImgComponent,
     homeDynamicIsland,
   },
@@ -69,12 +103,24 @@ export default {
     },
   },
   data() {
+    const theme = useTheme();
     return {
       step: 0,
       imagesContainer: null,
+      theme,
     };
   },
   computed: {
+    variant() {
+      return this.setup.variant || 'default';
+    },
+    sectionStyle() {
+      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      return {
+        ...style('section', this.setup),
+        background: bgColor,
+      };
+    },
     steps() {
       return this.$vuetify.display.smAndDown ? this.setup.content.length - 1 : Math.ceil(this.setup.content.length / 2) - 1;
     },

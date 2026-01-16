@@ -21,7 +21,7 @@
         </v-btn>
         <v-menu v-if="sublinks" location="bottom" max-width="400px">
           <template #activator="{ props }">
-            <v-btn v-bind="props" class="text-none text-body-2">
+            <v-btn v-bind="props" class="text-none text-body-1">
               {{ title }}
               <v-icon class="mt-1 ml-2" size="x-small">fa-solid fa-angle-down</v-icon>
             </v-btn>
@@ -53,7 +53,7 @@
         class="hidden-sm-and-down text-none text-body-2 mr-2"
         :class="`${config.vuetify.theme.rounded}`"
         :variant="variant"
-        :style="{ color: config.vuetify.theme.themes[theme].colors.onBackground }"
+        :style="{ color: theme.current.colors.onBackground }"
         @click="navigate(url)"
       >
         {{ title }}
@@ -113,7 +113,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../stores/core.store';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
 
@@ -122,41 +122,40 @@ import { liquidGlassStyle } from '../../../lib/helpers/theme';
  */
 export default {
   name: 'WaosAppBar',
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     isLoggedIn() {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
     },
     headerStyle() {
-      const colors = this.config.vuetify.theme.themes[this.theme].colors;
       return liquidGlassStyle({
-        theme: this.theme,
-        backgroundColor: colors.background,
-        surfaceColor: colors.surfaceColor,
+        vuetifyTheme: this.theme,
         intensity: 1,
         variant: 'header',
         border: 'none',
         extras: {
-          color: colors.onSurface,
+          color: this.theme.current.colors.onSurface,
           width: '100%',
         },
       });
     },
     menuStyle() {
-      const colors = this.config.vuetify.theme.themes[this.theme].colors;
       return liquidGlassStyle({
-        theme: this.theme,
-        backgroundColor: colors.background,
-        surfaceColor: colors.surfaceColor,
+        vuetifyTheme: this.theme,
         intensity: 0.6,
         variant: 'card',
         border: 'none',
         extras: {
-          color: colors.onSurface,
+          color: this.theme.current.colors.onSurface,
         },
       });
     },
@@ -201,18 +200,6 @@ export default {
 
 <style>
 /* Global styles for teleported menu elements */
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes rotate {
-  to {
-    --angle: 360deg;
-  }
-}
-
 .gradient-border-menu {
   position: relative;
 }
@@ -223,13 +210,12 @@ export default {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(var(--angle), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.9) 100%);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  animation: rotate 8s linear infinite;
 }
 </style>

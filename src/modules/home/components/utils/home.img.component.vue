@@ -1,3 +1,29 @@
+<!--
+  HomeImgComponent
+  ================
+  Responsive image component with lazy loading, gradient overlay, and optional text.
+
+  USAGE:
+  <homeImgComponent
+    :img="'/images/photo.webp'"
+    :height="'350px'"
+    :gradient="'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.7)'"
+    :title="'Image Title'"
+    :text="'Description text'"
+  />
+
+  PROPS:
+  - img (String, required): Image source URL
+  - height (String): Custom height (default: responsive 225-350px)
+  - gradient (String): CSS gradient overlay
+  - title (String): Title text displayed on image
+  - text (String): Description text displayed on image
+
+  NOTES:
+  - Uses lazy-src for placeholder during loading
+  - Displays loading spinner while image loads
+  - Applies theme rounded corners automatically
+-->
 <template>
   <v-img
     :src="img"

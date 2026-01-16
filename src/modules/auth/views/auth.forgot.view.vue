@@ -4,7 +4,7 @@
       <v-card
         class="mt-8 pa-8"
         width="100%"
-        :style="{ background: config.vuetify.theme.themes[theme].colors.surface }"
+        :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }"
         :flat="config.vuetify.theme.flat"
       >
         <v-col cols="12">
@@ -51,14 +51,16 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
 /**
  * Component definition.
  */
 export default {
   data() {
+    const theme = useTheme();
     return {
+      theme,
       valid: true, // TODO: switch to false when forms will be reactive
       email: '',
       rules: {
@@ -68,9 +70,8 @@ export default {
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     mail() {
       const authStore = useAuthStore();

@@ -1,3 +1,38 @@
+<!--
+  TeamMemberComponent
+  ===================
+  Team member card with avatar, name, position, roles, and contact info.
+
+  USAGE:
+  <teamMemberComponent
+    v-for="(item, index) in team"
+    :key="item.id"
+    :item="item"
+    :index="index"
+  />
+
+  PROPS:
+  - item (Object): Team member data object
+  - index (Number): Index in the list
+
+  ITEM OBJECT FORMAT:
+  {
+    id: 'user-id',
+    firstName: 'John',
+    lastName: 'Doe',
+    position: 'Developer',          // Optional: Job title
+    roles: ['admin', 'developer'],  // Optional: Role chips
+    email: 'john@example.com',      // Optional: Email link
+    phone: '+1234567890',           // Optional: Phone link
+    bio: 'Short biography...',      // Optional: Expandable bio text
+    avatar: '/images/avatar.webp',  // Optional: Avatar image (uses userAvatarComponent)
+  }
+
+  NOTES:
+  - Data is fetched via homeStore.getTeam() in home.team.view.vue
+  - Expandable card shows bio, roles, and contact buttons
+  - Avatar uses userAvatarComponent with 120px size
+-->
 <template>
   <v-col sm="12" md="6" lg="4" xl="4">
     <v-card :class="`mx-auto ${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat">
@@ -6,7 +41,7 @@
         class="`text-white ${config.vuetify.theme.rounded}`"
         height="150"
         cover
-        :gradient="theme === 'dark' ? 'to top right, rgba(0,0,0,.3), rgba(0,0,0,.7)' : 'to top right, rgba(255,255,255,.3), rgba(255,255,255,.7)'"
+        :gradient="themeName === 'dark' ? 'to top right, rgba(0,0,0,.3), rgba(0,0,0,.7)' : 'to top right, rgba(255,255,255,.3), rgba(255,255,255,.7)'"
         style="border: 5px solid transparent"
       >
       </v-img>
@@ -44,7 +79,7 @@
         :height="'120px'"
         :radius="'50%'"
         :border="'5px'"
-        :color="config.vuetify.theme.themes[theme].colors.surface"
+        :color="config.vuetify.theme.themes[themeName].colors.surface"
         :size="512"
       />
     </v-card>
@@ -55,14 +90,14 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 
 /**
  * Component definition.
  */
 export default {
-  name: 'TaskComponent',
+  name: 'TeamMemberComponent',
   components: {
     userAvatarComponent,
   },
@@ -72,13 +107,16 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    show: false,
-  }),
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+      show: false,
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
   },
 };

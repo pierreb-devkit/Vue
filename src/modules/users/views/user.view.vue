@@ -29,7 +29,7 @@
         <v-card
           width="100%"
           class="px-10 pa-6"
-          :style="{ background: config.vuetify.theme.themes[theme].colors.surface }"
+          :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }"
           :flat="config.vuetify.theme.flat"
         >
           <v-form ref="form" v-model="valid">
@@ -83,7 +83,7 @@
  * Module dependencies.
  */
 import { cloneDeep } from 'lodash-es';
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useUsersStore } from '../stores/users.store';
 import userAvatarComponent from '../components/user.avatar.component.vue';
@@ -96,7 +96,9 @@ export default {
     userAvatarComponent,
   },
   data() {
+    const theme = useTheme();
     return {
+      theme,
       // vue
       id: this.$route.params.id ? this.$route.params.id : null,
       save: false,
@@ -113,9 +115,8 @@ export default {
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     user() {
       const usersStore = useUsersStore();

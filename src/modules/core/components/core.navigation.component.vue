@@ -101,7 +101,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../stores/core.store';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 
 /**
@@ -110,14 +110,15 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 export default {
   name: 'WaosNavigation',
   data() {
+    const theme = useTheme();
     return {
+      theme,
       drawer: true,
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     nav() {
       const coreStore = useCoreStore();

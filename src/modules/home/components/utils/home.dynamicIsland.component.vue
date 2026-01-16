@@ -1,3 +1,29 @@
+<!--
+  HomeDynamicIslandComponent
+  ==========================
+  Floating navigation indicator for carousels, inspired by iOS Dynamic Island.
+  Sticks to bottom of viewport when scrolled past container.
+
+  USAGE:
+  <homeDynamicIsland
+    :container="containerRef"
+    :step="currentStep"
+    :steps="totalSteps"
+    :action="stepperFunction"
+  />
+
+  PROPS:
+  - container (Object): Vue ref to parent container element
+  - text (String): Optional text to display (when no steps)
+  - step (Number): Current active step index
+  - steps (Number): Total number of steps (0-indexed, so 2 = 3 dots)
+  - action (Function): Callback when step dot is clicked, receives index
+
+  NOTES:
+  - Becomes fixed at bottom when scrolled past container
+  - Uses liquid glass effect styling
+  - Dots are clickable for navigation
+-->
 <template>
   <section>
     <div :style="{ width: '260px', height: '56px', display: isFixed ? 'block' : 'none' }" class="mt-10"></div>
@@ -27,7 +53,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { liquidGlassStyle } from '../../../../lib/helpers/theme';
 /**
  * Component definition.
@@ -56,35 +82,34 @@ export default {
       default: () => {},
     },
   },
-  data: () => ({
-    isVisible: false,
-    isFixed: false,
-    animate: false,
-    hasAnimated: false,
-    disabled: false,
-    stepsArray: [],
-    gradientRotation: 135,
-    ticking: false,
-  }),
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+      isVisible: false,
+      isFixed: false,
+      animate: false,
+      hasAnimated: false,
+      disabled: false,
+      stepsArray: [],
+      gradientRotation: 135,
+      ticking: false,
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     dynamicIslandStyle() {
-      const backgroundColor = this.config.vuetify.theme.themes[this.theme].colors.background;
-      const surfaceColor = this.config.vuetify.theme.themes[this.theme].colors.surface;
       return {
         ...liquidGlassStyle({
-          theme: this.theme,
-          backgroundColor,
-          surfaceColor,
+          vuetifyTheme: this.theme,
           intensity: 1,
-          tint: this.theme === 'dark' ? 0.75 : -0.25,
+          tint: this.themeName === 'dark' ? 0.75 : -0.5,
           variant: 'pill',
           border: 'none',
           extras: {
-            color: this.config.vuetify.theme.themes[this.theme].colors.onSurface,
+            color: this.theme.current.colors.onSurface,
           },
         }),
         '--gradient-rotation': `${this.gradientRotation}deg`,
@@ -95,7 +120,9 @@ export default {
     container: {
       immediate: true,
       handler(newValue) {
-        if (newValue && newValue.$el && this.$el) {
+        // Le container peut être un élément DOM direct ou un composant Vue
+        const el = newValue?.$el || newValue;
+        if (el && this.$el) {
           window.addEventListener('scroll', this.checkVisibility);
           this.checkVisibility();
         }
@@ -105,6 +132,14 @@ export default {
   created() {
     for (let i = 0; i <= this.steps; i += 1) {
       this.stepsArray.push(i);
+    }
+  },
+  mounted() {
+    // Ajoute le listener au montage si le container est déjà disponible
+    const containerEl = this.container?.$el || this.container;
+    if (containerEl) {
+      window.addEventListener('scroll', this.checkVisibility);
+      this.checkVisibility();
     }
   },
   beforeUnmount() {
@@ -121,7 +156,11 @@ export default {
       }
     },
     updateVisibility() {
-      const container = this.container.$el.getBoundingClientRect();
+      // Le container peut être un élément DOM direct ou un composant Vue
+      const containerEl = this.container?.$el || this.container;
+      if (!containerEl) return;
+
+      const container = containerEl.getBoundingClientRect();
       const button = this.$el.querySelector('.dynamicIsland').getBoundingClientRect();
       const scrollDownTriger = (window.innerHeight / 3) * 2;
       const offset = 30;

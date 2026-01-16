@@ -1,5 +1,5 @@
 <template>
-  <v-app id="app" :theme="theme">
+  <v-app id="app" :theme="themeName">
     <v-snackbar
       v-if="config.vuetify.theme.snackbar.status"
       v-model="snackbar.status"
@@ -17,13 +17,13 @@
     </v-snackbar>
     <waosNav v-if="isLoggedIn" />
     <waosHeader v-if="config.header.display" />
-    <v-main class="pb-0" :style="{ background: config.vuetify.theme.themes[theme].colors.background }">
+    <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
     </v-main>
     <waosFooter
       :links="config.footer.links"
       :custom="{
-        section: { background: config.vuetify.theme.themes[theme].colors.surface, 'min-width': '100%' },
+        section: { background: theme.current.colors.surface, 'min-width': '100%' },
       }"
     />
   </v-app>
@@ -34,6 +34,7 @@
  * Module dependencies.
  */
 import { useHead } from '@unhead/vue';
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { useCoreStore } from '../core/stores/core.store';
 import { setupInterceptors } from '../../lib/services/axios';
@@ -52,7 +53,9 @@ export default {
     waosFooter,
   },
   data() {
+    const theme = useTheme();
     return {
+      theme,
       snackbar: {
         status: false,
         color: 'error',
@@ -66,7 +69,7 @@ export default {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
     },
-    theme() {
+    themeName() {
       const coreStore = useCoreStore();
       return coreStore.theme;
     },

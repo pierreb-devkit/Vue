@@ -1,7 +1,12 @@
 <template>
   <v-container fluid>
     <v-row class="ma-2" align="start" justify="center">
-      <v-card class="pa-6" width="100%" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
+      <v-card
+        class="pa-6"
+        width="100%"
+        :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }"
+        :flat="config.vuetify.theme.flat"
+      >
         <h2 class="text-center">This page is protected by auth</h2>
       </v-card>
     </v-row>
@@ -12,15 +17,20 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 /**
  * Component definition.
  */
 export default {
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
   },
 };

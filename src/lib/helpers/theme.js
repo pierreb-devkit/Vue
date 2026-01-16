@@ -1,18 +1,6 @@
 /**
  * @desc Function to return actual theme
  * @param {String} option in config
- * @return {String} theme
- */
-export const defineTheme = (theme) => {
-  if (theme === 'auto') {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return theme ? 'dark' : 'light';
-};
-
-/**
- * @desc Function to return actual theme
- * @param {String} option in config
  * @return {Boolean} dark value
  */
 export const isDark = (theme) => {
@@ -98,47 +86,40 @@ const adjustBrightness = (hex, amount) => {
  * Simple and effective glassmorphism with contrast-based refraction
  *
  * @param {Object} options - Configuration object
- * @param {String} options.theme - 'dark' or 'light'
- * @param {String} options.backgroundColor - Hex color for background (e.g. '#121212')
- * @param {String} options.surfaceColor - Hex color for surface/highlight (e.g. '#FFFFFF')
- * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 1
- * @param {Number} options.tint - Adjust background brightness to stand out (-1 = darker, 0 = base, 1 = lighter). Default: 0
- * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius
+ * @param {Object} options.vuetifyTheme - Vuetify theme object (from useTheme()). Auto-extracts colors.
+ * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 0.8
+ * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
+ * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'card'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
  * @param {Object} options.extras - Additional CSS properties to merge
  * @return {Object} CSS style object with liquid glass effect
  */
-export const liquidGlassStyle = ({
-  theme,
-  backgroundColor,
-  surfaceColor,
-  intensity = 1,
-  tint = 0,
-  variant = 'card',
-  border: borderStyle = 'all',
-  extras = {},
-}) => {
-  const dark = theme === 'dark';
+export const liquidGlassStyle = ({ vuetifyTheme, intensity = 0.8, tint = 'auto', variant = 'card', border: borderStyle = 'all', extras = {} }) => {
+  // Auto-detect theme name and colors from Vuetify
+  const themeName = vuetifyTheme.global?.name?.value || 'dark';
+  const dark = themeName === 'dark';
+  const backgroundColor = vuetifyTheme.current?.colors?.background || '#121212';
+  const surfaceColor = vuetifyTheme.current?.colors?.surface || '#FFFFFF';
   const surfaceRgb = hexToRgb(surfaceColor);
 
   // Intensity multiplier (0 = flat, 1 = strong)
   const i = Math.max(0, Math.min(1, intensity));
 
-  // Tint adjustment (-1 to 1)
-  const t = Math.max(-1, Math.min(1, tint));
+  // Auto-tint: lighter for dark theme, darker for light theme
+  const t = tint === 'auto' ? (dark ? 0.3 : -0.2) : Math.max(-1, Math.min(1, tint));
 
   // === GLASS BASE ===
   // Adjust background color based on tint to make div stand out
   const bgRgb = adjustBrightness(backgroundColor, t);
-  const baseOpacity = dark ? 0.25 : 0.35;
+  const baseOpacity = dark ? 0.25 : 0.45; // More opaque in light mode for visibility
 
   // === BLUR & REFRACTION (the key to glass effect) ===
-  const blur = Math.round(6 + i * 12); // 6px to 12px
+  const blur = Math.round(6 + i * 12); // 6px to 18px
   const saturate = Math.round(100 + i * 50); // 100% to 150%
-  const contrast = Math.round(100 + i * 30); // 100% to 130% - THIS makes it look like glass
+  const contrast = Math.round(100 + i * 30); // 100% to 130%
 
-  // === HIGHLIGHT (simple top gradient) ===
-  const highlightOpacity = i * (dark ? 0.16 : 0.12);
+  // === HIGHLIGHT (simple top gradient) - stronger in light mode ===
+  const highlightOpacity = i * (dark ? 0.16 : 0.25);
 
   // Build simple layered background
   const background = `
@@ -152,7 +133,9 @@ export const liquidGlassStyle = ({
     rgba(${bgRgb}, ${baseOpacity.toFixed(2)})
   `;
 
-  const borderColor = `rgba(${surfaceRgb}, ${borderStyle !== 'all' ? 0.5 : 0.2})`;
+  // === BORDER - use dark border in light mode for contrast ===
+  const borderOpacity = dark ? 0.2 : 0.12;
+  const borderColor = dark ? `rgba(${surfaceRgb}, ${borderOpacity})` : `rgba(0, 0, 0, ${borderOpacity})`;
 
   let border = 'none';
   let borderTop = undefined;
@@ -168,6 +151,19 @@ export const liquidGlassStyle = ({
     }
   }
 
+  // === BOX SHADOW - key for light mode depth ===
+  let boxShadow;
+  if (dark) {
+    // Subtle inner glow for dark mode
+    boxShadow = i > 0 ? `inset 0 1px 1px rgba(255, 255, 255, ${(i * 0.1).toFixed(2)})` : 'none';
+  } else {
+    // Layered shadow for light mode - creates depth on white backgrounds
+    boxShadow =
+      i > 0
+        ? `0 2px 8px rgba(0, 0, 0, ${(i * 0.06).toFixed(2)}), 0 8px 24px rgba(0, 0, 0, ${(i * 0.04).toFixed(2)}), inset 0 1px 1px rgba(255, 255, 255, ${(i * 0.8).toFixed(2)})`
+        : 'none';
+  }
+
   // Border radius based on variant
   const borderRadius = variant === 'pill' ? '9999px' : variant === 'header' ? '0' : '16px';
 
@@ -175,6 +171,7 @@ export const liquidGlassStyle = ({
     background,
     border,
     borderRadius,
+    boxShadow,
     '-webkit-backdrop-filter': `blur(${blur}px) saturate(${saturate}%) contrast(${contrast}%)`,
     'backdrop-filter': `blur(${blur}px) saturate(${saturate}%) contrast(${contrast}%)`,
     ...extras,
@@ -188,6 +185,21 @@ export const liquidGlassStyle = ({
 };
 
 /**
+ * @desc Helper to lighten a hex color
+ * @param {String} hex - Hex color (e.g. #RRGGBB)
+ * @param {Number} percent - Percentage to lighten (0-100)
+ * @return {String} Hex color string
+ */
+export const lightenColor = (hex, percent) => {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
+  const B = Math.min(255, (num & 0x0000ff) + amt);
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+};
+
+/**
  * Exports.
  */
-export default { defineTheme, isDark, style, liquidGlassStyle };
+export default { isDark, style, liquidGlassStyle, lightenColor };

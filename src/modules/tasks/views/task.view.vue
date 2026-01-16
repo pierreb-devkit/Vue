@@ -15,7 +15,7 @@
     <!-- Form -->
     <v-row class="pa-2">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
-        <v-card class="pa-6" :style="{ background: config.vuetify.theme.themes[theme].colors.surface }" :flat="config.vuetify.theme.flat">
+        <v-card class="pa-6" :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }" :flat="config.vuetify.theme.flat">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
@@ -38,7 +38,7 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
 
@@ -50,7 +50,9 @@ export default {
     taskComponent,
   },
   data() {
+    const theme = useTheme();
     return {
+      theme,
       // vue
       id: this.$route.params.id ? this.$route.params.id : null,
       save: null,
@@ -64,9 +66,8 @@ export default {
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     task() {
       const tasksStore = useTasksStore();

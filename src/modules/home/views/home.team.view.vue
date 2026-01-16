@@ -1,6 +1,13 @@
 <template>
   <div>
-    <homeBannerComponent :ratio="3" :title="$route.meta.title" :subtitle="null"></homeBannerComponent>
+    <homeHeroComponent
+      variant="blur"
+      :title="$route.meta.title"
+      :ratio="3"
+      :animation-speed="config.home.hero?.blur?.animationSpeed || 1"
+      :background-colors="themeName === 'dark' ? config.home.hero?.blur?.dark?.backgroundColors : config.home.hero?.blur?.light?.backgroundColors"
+      :halo-colors="themeName === 'dark' ? config.home.hero?.blur?.dark?.haloColors : config.home.hero?.blur?.light?.haloColors"
+    ></homeHeroComponent>
     <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
       <v-layout wrap align-content-space-around text-xs-center>
         <teamMemberComponent v-for="(item, index) in team" :key="item.id" :item="item" :index="index"></teamMemberComponent>
@@ -13,23 +20,28 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useHomeStore } from '../stores/home.store';
 import teamMemberComponent from '../components/team.member.component.vue';
-import homeBannerComponent from '../components/home.banner.component.vue';
+import homeHeroComponent from '../components/home.hero.component.vue';
 
 /**
  * Component definition.
  */
 export default {
   components: {
-    homeBannerComponent,
+    homeHeroComponent,
     teamMemberComponent,
   },
+  data() {
+    const theme = useTheme();
+    return {
+      theme,
+    };
+  },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     team() {
       const homeStore = useHomeStore();

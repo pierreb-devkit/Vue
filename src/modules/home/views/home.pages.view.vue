@@ -1,11 +1,13 @@
 <template>
   <div>
-    <homeBannerComponent
+    <homeHeroComponent
+      variant="blur"
       :ratio="3"
       :title="$route.meta.title || lodash.startCase($route.params.name)"
-      :subtitle="null"
-      :banner="contents[tab] && contents[tab].banner ? contents[tab].banner : null"
-    ></homeBannerComponent>
+      :animation-speed="config.home.banner?.blur?.animationSpeed || 1"
+      :background-colors="themeName === 'dark' ? config.home.banner?.blur?.dark?.backgroundColors : config.home.banner?.blur?.light?.backgroundColors"
+      :halo-colors="themeName === 'dark' ? config.home.banner?.blur?.dark?.haloColors : config.home.banner?.blur?.light?.haloColors"
+    ></homeHeroComponent>
     <section id="page" :style="style('section', config.pages)">
       <v-container class="py-12" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
         <v-row align="center" justify="center">
@@ -31,28 +33,29 @@
 /**
  * Module dependencies.
  */
-import { useCoreStore } from '../../core/stores/core.store';
+import { useTheme } from 'vuetify';
 import { useHomeStore } from '../stores/home.store';
 import { style } from '../../../lib/helpers/theme';
-import homeBannerComponent from '../components/home.banner.component.vue';
+import homeHeroComponent from '../components/home.hero.component.vue';
 
 /**
  * Component definition.
  */
 export default {
   components: {
-    homeBannerComponent,
+    homeHeroComponent,
   },
   data() {
+    const theme = useTheme();
     return {
+      theme,
       page: null,
       tab: 0,
     };
   },
   computed: {
-    theme() {
-      const coreStore = useCoreStore();
-      return coreStore.theme;
+    themeName() {
+      return this.theme.global.name.value;
     },
     contents() {
       const homeStore = useHomeStore();
