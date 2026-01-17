@@ -75,6 +75,7 @@
               :href="button.link"
               class="text-none font-weight-bold blur-btn"
               :class="config.vuetify.theme.rounded"
+              :style="buttonStyle"
               variant="flat"
               size="large"
             >
@@ -125,6 +126,7 @@
 <script>
 import { useTheme } from 'vuetify';
 import homeBlurBackgroundComponent from './utils/home.blur.background.component.vue';
+import { liquidGlassStyle } from '../../../lib/helpers/theme';
 
 export default {
   name: 'HomeHeroComponent',
@@ -184,6 +186,22 @@ export default {
     themeName() {
       return this.theme.global.name.value;
     },
+    buttonStyle() {
+      return {
+        ...liquidGlassStyle({
+          vuetifyTheme: this.theme,
+          intensity: 1,
+          tint: 0.5,
+          variant: 'pill',
+          border: 'none',
+          glowBorder: true,
+          extras: {
+            color: '#fff',
+          },
+        }),
+        transition: 'all 0.3s ease',
+      };
+    },
   },
   methods: {
     generateBackground() {
@@ -208,16 +226,28 @@ export default {
 }
 
 .blur-btn {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  color: white !important;
-  transition: all 0.3s ease;
+  position: relative;
+}
+
+.blur-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(var(--glow-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .blur-btn:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
   transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }

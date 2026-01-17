@@ -28,7 +28,7 @@
 -->
 <template>
   <section id="steps" :style="sectionStyle">
-    <v-container ref="timelineContainer" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+    <v-container ref="timelineContainer" :style="containerStyle">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
@@ -63,7 +63,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style } from '../../../lib/helpers/theme';
+import { style, overlapStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 /**
@@ -90,6 +90,12 @@ export default {
   computed: {
     variant() {
       return this.setup.variant || 'default';
+    },
+    containerStyle() {
+      return {
+        'max-width': this.config.vuetify.theme.maxWidth,
+        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
+      };
     },
     sectionStyle() {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;

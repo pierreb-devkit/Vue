@@ -210,7 +210,7 @@ export default {
       title: 'Product Showcase',
       file: '/videos/highlight.mp4',
       poster: '/videos/highlight-poster.webp',
-      subBanner: true,
+      overlap: true,
       variant: 'alternate',
       style: {
         video: {
@@ -330,7 +330,8 @@ export default {
     // Startup use: Platform features, product capabilities, differentiators
     // Variants: 'default' | 'alternate' - Layout: Horizontal tabs + window with images
     // Tip: Perfect for SaaS products with multiple features
-    // Items structure: { id, label, icon, title, description, cta?, image, reversed? }
+    // Items structure: { id, label, color, icon, title, description, cta?, image, reversed? }
+    // Overlap: true | '30vh' | { mobile: '20vh', desktop: '40vh' } - Slides container up into previous section
     capabilities: {
       icon: 'fa-solid fa-layer-group',
       title: 'Core Capabilities',

@@ -44,7 +44,7 @@
   }
 -->
 <template>
-  <section id="statistics" :class="{ black: variant === 'parallax' }">
+  <section id="statistics" :class="{ black: variant === 'parallax' }" :style="sectionStyle">
     <!-- Blur variant -->
     <homeBlurBackgroundComponent
       v-if="variant === 'blur'"
@@ -83,6 +83,7 @@
 </template>
 
 <script>
+import { overlapStyle } from '../../../lib/helpers/theme';
 import homeBlurBackgroundComponent from './utils/home.blur.background.component.vue';
 
 export default {
@@ -120,11 +121,21 @@ export default {
       type: Array,
       default: null,
     },
+    // Overlap: slides section up into previous section
+    overlap: {
+      type: [Boolean, String, Object],
+      default: false,
+    },
   },
   computed: {
     statsRatio() {
       // Smaller ratio for stats section (taller)
       return this.$vuetify?.display?.smAndDown ? 1.5 : 2.5;
+    },
+    sectionStyle() {
+      return {
+        ...overlapStyle(this.overlap, this.$vuetify?.display),
+      };
     },
   },
 };

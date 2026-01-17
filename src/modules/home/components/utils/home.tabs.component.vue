@@ -7,21 +7,23 @@
   <home-tabs
     :items="items"
     v-model="activeIndex"
+    color="#fff"
     @update:modelValue="onTabChange"
   />
 
   PROPS:
-  - items (Array, required): Array of tab items with { id, label, icon? }
+  - items (Array, required): Array of tab items with { id, label, icon?, color? }
   - modelValue (Number): Active tab index (v-model)
   - intensity (Number): Liquid glass intensity (default: 1)
   - tint (String|Number): Liquid glass tint, 'auto' or -1 to 1 (default: 'auto')
+  - color (String): Default text color for all buttons (default: theme onSurface)
 
   EVENTS:
   - update:modelValue: Emitted when active tab changes
 
-  EXAMPLE:
+  EXAMPLE (items with per-item color):
   const items = [
-    { id: 'tab1', label: 'First Tab', icon: 'fa-solid fa-home' },
+    { id: 'tab1', label: 'First Tab', icon: 'fa-solid fa-home', color: '#fff' },
     { id: 'tab2', label: 'Second Tab', icon: 'fa-solid fa-star' },
   ]
 -->
@@ -74,6 +76,10 @@ export default {
       type: [String, Number],
       default: 'auto',
     },
+    color: {
+      type: String,
+      default: null,
+    },
   },
   emits: ['update:modelValue'],
   data() {
@@ -102,6 +108,7 @@ export default {
           tint: this.computedTint,
           variant: 'pill',
           border: 'none',
+          glowBorder: true,
         }),
         position: 'absolute',
         top: '50%',
@@ -131,8 +138,9 @@ export default {
   },
   methods: {
     btnStyle(index) {
+      const item = this.items[index];
       return {
-        color: this.theme.current.colors.onSurface,
+        color: item.color || this.color || this.theme.current.colors.onSurface,
         opacity: this.modelValue === index ? 1 : 0.7,
         transition: 'opacity 0.3s ease',
       };
@@ -179,5 +187,24 @@ export default {
 
 .sliding-indicator {
   z-index: 0;
+  border-radius: 30px;
+}
+
+.sliding-indicator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(var(--glow-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 </style>

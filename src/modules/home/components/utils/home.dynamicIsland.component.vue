@@ -108,6 +108,7 @@ export default {
           tint: this.themeName === 'dark' ? 0.75 : -0.5,
           variant: 'pill',
           border: 'none',
+          glowBorder: 'animated',
           extras: {
             color: this.theme.current.colors.onSurface,
           },
@@ -249,8 +250,11 @@ export default {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(var(--gradient-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
+  background: linear-gradient(var(--glow-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
   -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

@@ -51,33 +51,37 @@ const hexToRgb = (hex) => {
 /**
  * @desc Helper to adjust brightness of a hex color
  * @param {String} hex - Hex color (e.g. #RRGGBB)
- * @param {Number} amount - Amount to adjust (-1 to 1, negative = darker, positive = lighter)
- * @return {String} RGB string with adjusted brightness
+ * @param {Number} amount - Amount to adjust (-1 to 1, or 0-100 for legacy percent mode)
+ * @param {String} output - 'rgb' for RGB string, 'hex' for hex string. Default: 'rgb'
+ * @return {String} RGB string (e.g. "255,255,255") or hex string (e.g. "#ffffff")
  */
-const adjustBrightness = (hex, amount) => {
+const adjustColor = (hex, amount, output = 'rgb') => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return '128,128,128';
+  if (!result) return output === 'hex' ? '#808080' : '128,128,128';
 
   let r = parseInt(result[1], 16);
   let g = parseInt(result[2], 16);
   let b = parseInt(result[3], 16);
 
-  // amount: -1 to 1
-  // positive = blend towards white (lighter)
-  // negative = blend towards black (darker)
-  if (amount > 0) {
+  // Normalize: if amount > 1 or < -1, treat as percentage (0-100)
+  const normalized = Math.abs(amount) > 1 ? amount / 100 : amount;
+
+  if (normalized > 0) {
     // Lighten: blend towards 255
-    r = Math.round(r + (255 - r) * amount);
-    g = Math.round(g + (255 - g) * amount);
-    b = Math.round(b + (255 - b) * amount);
-  } else if (amount < 0) {
+    r = Math.round(r + (255 - r) * normalized);
+    g = Math.round(g + (255 - g) * normalized);
+    b = Math.round(b + (255 - b) * normalized);
+  } else if (normalized < 0) {
     // Darken: blend towards 0
-    const factor = 1 + amount; // amount is negative, so this reduces
+    const factor = 1 + normalized;
     r = Math.round(r * factor);
     g = Math.round(g * factor);
     b = Math.round(b * factor);
   }
 
+  if (output === 'hex') {
+    return `#${(0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1)}`;
+  }
   return `${r},${g},${b}`;
 };
 
@@ -91,10 +95,19 @@ const adjustBrightness = (hex, amount) => {
  * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
  * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'card'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
+ * @param {Boolean|String} options.glowBorder - false, true (static gradient), or 'animated' (rotating). Default: false
  * @param {Object} options.extras - Additional CSS properties to merge
  * @return {Object} CSS style object with liquid glass effect
  */
-export const liquidGlassStyle = ({ vuetifyTheme, intensity = 0.8, tint = 'auto', variant = 'card', border: borderStyle = 'all', extras = {} }) => {
+export const liquidGlassStyle = ({
+  vuetifyTheme,
+  intensity = 0.8,
+  tint = 'auto',
+  variant = 'card',
+  border: borderStyle = 'all',
+  glowBorder = false,
+  extras = {},
+}) => {
   // Auto-detect theme name and colors from Vuetify
   const themeName = vuetifyTheme.global?.name?.value || 'dark';
   const dark = themeName === 'dark';
@@ -110,7 +123,7 @@ export const liquidGlassStyle = ({ vuetifyTheme, intensity = 0.8, tint = 'auto',
 
   // === GLASS BASE ===
   // Adjust background color based on tint to make div stand out
-  const bgRgb = adjustBrightness(backgroundColor, t);
+  const bgRgb = adjustColor(backgroundColor, t);
   const baseOpacity = dark ? 0.25 : 0.45; // More opaque in light mode for visibility
 
   // === BLUR & REFRACTION (the key to glass effect) ===
@@ -181,7 +194,41 @@ export const liquidGlassStyle = ({ vuetifyTheme, intensity = 0.8, tint = 'auto',
   if (borderTop) result.borderTop = borderTop;
   if (borderBottom) result.borderBottom = borderBottom;
 
+  // Add glowBorder pseudo-element styles via CSS custom properties
+  if (glowBorder) {
+    result['--glow-border'] = '1';
+    result['--glow-border-radius'] = borderRadius;
+    result['--glow-rotation'] = glowBorder === 'animated' ? 'var(--gradient-rotation, 135deg)' : '135deg';
+  }
+
   return result;
+};
+
+/**
+ * @desc Generate overlap style for container (slides up into previous section)
+ * @param {Boolean|String|Object} overlap - true (defaults), string ('30vh'), or { mobile: '20vh', desktop: '40vh' }
+ * @param {Object} display - Vuetify display object ($vuetify.display)
+ * @return {Object} Style object with margin-top, position and z-index
+ */
+export const overlapStyle = (overlap, display) => {
+  if (!overlap) return {};
+
+  let marginTop;
+  if (overlap === true) {
+    marginTop = display?.smAndDown ? '-20vh' : '-40vh';
+  } else if (typeof overlap === 'string') {
+    marginTop = `-${overlap}`;
+  } else if (typeof overlap === 'object') {
+    marginTop = display?.smAndDown ? `-${overlap.mobile || '20vh'}` : `-${overlap.desktop || '40vh'}`;
+  } else {
+    return {};
+  }
+
+  return {
+    'margin-top': marginTop,
+    position: 'relative',
+    'z-index': '10',
+  };
 };
 
 /**
@@ -190,16 +237,9 @@ export const liquidGlassStyle = ({ vuetifyTheme, intensity = 0.8, tint = 'auto',
  * @param {Number} percent - Percentage to lighten (0-100)
  * @return {String} Hex color string
  */
-export const lightenColor = (hex, percent) => {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.min(255, (num >> 16) + amt);
-  const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
-  const B = Math.min(255, (num & 0x0000ff) + amt);
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
-};
+export const lightenColor = (hex, percent) => adjustColor(hex, percent, 'hex');
 
 /**
  * Exports.
  */
-export default { isDark, style, liquidGlassStyle, lightenColor };
+export default { isDark, style, liquidGlassStyle, overlapStyle, lightenColor };

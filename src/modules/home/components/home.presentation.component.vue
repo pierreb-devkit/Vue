@@ -1,7 +1,7 @@
 <!--
   HomeVideoComponent
   ==================
-  Auto-playing video section, can be positioned under banner with overlap.
+  Auto-playing video section with liquid glass effect.
 
   USAGE:
   <homeVideoComponent :setup="config.home.video" />
@@ -10,7 +10,6 @@
   video: {
     file: '/videos/highlight.mp4',
     poster: '/videos/highlight-poster.webp',
-    subBanner: true,               // Position under banner with overlap effect
     style: {
       section: { background: 'background' },
       video: { background: '#101115' },
@@ -19,7 +18,7 @@
 
   NOTES:
   - Video auto-plays, loops, and is muted by default
-  - subBanner: true creates a -40vh margin-top for overlap effect
+  - To position under hero with overlap, set hero.overlap in config
 -->
 <template>
   <section v-if="setup && setup.file" id="presentation" :style="sectionStyle" class="pa-8 pb-10">
@@ -45,7 +44,7 @@
  */
 import { useTheme } from 'vuetify';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
-import { style, liquidGlassStyle } from '../../../lib/helpers/theme';
+import { style, liquidGlassStyle, overlapStyle } from '../../../lib/helpers/theme';
 
 /**
  * Component definition.
@@ -86,8 +85,7 @@ export default {
     containerStyle() {
       return {
         'max-width': this.config.vuetify.theme.maxWidth,
-        'margin-top': this.setup.subBanner ? (this.$vuetify.display.smAndDown ? '-20vh' : '-40vh') : 0,
-        position: 'relative',
+        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
         padding: '12px',
         ...liquidGlassStyle({ vuetifyTheme: this.theme }),
       };

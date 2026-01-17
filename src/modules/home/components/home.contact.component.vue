@@ -17,7 +17,7 @@
 -->
 <template>
   <section id="contact" :style="sectionStyle">
-    <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+    <v-container :style="containerStyle">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="config.home.contact"></homeContentComponent>
@@ -49,7 +49,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useHomeStore } from '../stores/home.store';
-import { style } from '../../../lib/helpers/theme';
+import { style, overlapStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 
 /**
@@ -71,6 +71,12 @@ export default {
   computed: {
     variant() {
       return this.config.home.contact?.variant || 'default';
+    },
+    containerStyle() {
+      return {
+        'max-width': this.config.vuetify.theme.maxWidth,
+        ...overlapStyle(this.config.home.contact?.overlap, this.$vuetify?.display),
+      };
     },
     sectionStyle() {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;

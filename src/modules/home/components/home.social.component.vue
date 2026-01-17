@@ -30,7 +30,7 @@
 -->
 <template>
   <section id="social" :style="sectionStyle">
-    <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`" class="py-8">
+    <v-container :style="containerStyle" class="py-8">
       <v-row align="center" justify="center">
         <v-col cols="12" md="9" lg="8">
           <v-row align="center" class="flex-column flex-sm-row">
@@ -82,7 +82,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style } from '../../../lib/helpers/theme';
+import { style, overlapStyle } from '../../../lib/helpers/theme';
 
 /**
  * Export default
@@ -104,6 +104,12 @@ export default {
   computed: {
     variant() {
       return this.setup.variant || 'default';
+    },
+    containerStyle() {
+      return {
+        'max-width': this.config.vuetify.theme.maxWidth,
+        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
+      };
     },
     sectionStyle() {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
