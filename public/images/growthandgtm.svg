@@ -1,0 +1,195 @@
+<!-- Growth GTM Flow - Square Layout -->
+<svg viewBox="0 0 500 350" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Growth GTM Flow">
+  <defs>
+    <style>
+      .nodeText{ 
+        font: 600 20px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #111827;
+      }
+      .labelText{ 
+        font: 500 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        letter-spacing: .3px;
+        fill: #111827;
+      }
+
+      /* Card backgrounds - adapt to theme */
+      .card-bg {
+        fill: #ffffff;
+        fill-opacity: 0.9;
+        stroke-width: 4;
+      }
+
+      /* Dark mode */
+      @media (prefers-color-scheme: dark) {
+        .card-bg {
+          fill: #1a1a24;
+          fill-opacity: 0.95;
+        }
+        .nodeText {
+          fill: #fafafa;
+        }
+        .labelText {
+          fill: #9ca3af;
+        }
+      }
+
+
+      /* Liquid glass cards with gradient border */
+      .glass-card{
+        fill: #ffffff;
+        fill-opacity: 0.85;
+        stroke: url(#borderGradient);
+        stroke-width: 4;
+      }
+
+      /* Flow animation */
+      .flow{
+        stroke-dasharray: 8 8;
+        animation: dash 2s linear infinite;
+        opacity: 0.6;
+      }
+      @keyframes dash { to { stroke-dashoffset: -32; } }
+
+      /* Toggle animation */
+      .toggleKnob{ animation: knob 4s ease-in-out infinite; }
+      @keyframes knob{
+        0%,100%{ transform: translateX(0px); }
+        50%{ transform: translateX(10px); }
+      }
+
+      .reduce-motion .flow,
+      .reduce-motion .haloBlue,
+      .reduce-motion .haloOrange,
+      .reduce-motion .haloYellow,
+      .reduce-motion .toggleKnob { animation: none !important; }
+    </style>
+
+    <!-- Animated rotating gradients - one per card -->
+    <linearGradient id="grad1" gradientTransform="rotate(0)">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.9"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="grad2" gradientTransform="rotate(90)">
+      <stop offset="0%" style="stop-color:#ea580c;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#fb923c;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:0.9"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="90" to="450" dur="8s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="grad3" gradientTransform="rotate(180)">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#a78bfa;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0.9"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="180" to="540" dur="8s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="grad4" gradientTransform="rotate(270)">
+      <stop offset="0%" style="stop-color:#ca8a04;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#facc15;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#ca8a04;stop-opacity:0.9"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="270" to="630" dur="8s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:0.9">
+        <animate attributeName="stop-color" values="#2563eb;#f97316;#eab308;#8b5cf6;#2563eb" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="40%" style="stop-color:#2563eb;stop-opacity:0.9">
+        <animate attributeName="stop-color" values="#2563eb;#f97316;#eab308;#8b5cf6;#2563eb" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="70%" style="stop-color:#f97316;stop-opacity:0.9">
+        <animate attributeName="stop-color" values="#f97316;#eab308;#8b5cf6;#2563eb;#f97316" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#eab308;stop-opacity:0.9">
+        <animate attributeName="stop-color" values="#eab308;#8b5cf6;#2563eb;#f97316;#eab308" dur="8s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <!-- Liquid glass effect -->
+    <filter id="liquidGlass" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+      <feOffset in="blur" dx="0" dy="4" result="offsetBlur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.08"/>
+      <feComposite in2="offsetBlur" operator="in" result="shadow"/>
+      <feComponentTransfer in="SourceAlpha" result="opaque">
+        <feFuncA type="discrete" tableValues="1"/>
+      </feComponentTransfer>
+      <feMorphology in="opaque" operator="dilate" radius="1" result="dilated"/>
+      <feGaussianBlur in="dilated" stdDeviation="2" result="blurred"/>
+      <feFlood flood-color="#ffffff" flood-opacity="0.6"/>
+      <feComposite in2="blurred" operator="in" result="highlight"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="highlight"/>
+      </feMerge>
+    </filter>
+
+    <!-- Arrow marker -->
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#6b7280" opacity="0.7"/>
+    </marker>
+
+    <!-- Background gradient -->
+    <radialGradient id="bgGradient" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#bfdbfe;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#fafafa;stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background transparent -->
+
+  <!-- Square layout: 2x2 grid -->
+  <!-- Top-left: Activate -->
+  <g transform="translate(30, 40)">
+    <rect x="0" y="0" width="160" height="80" rx="16" class="card-bg" stroke="url(#grad1)"/>
+    <text x="80" y="37" text-anchor="middle" class="nodeText">Activate</text>
+    <text x="80" y="56" text-anchor="middle" class="labelText">PLG/PLS flows</text>
+  </g>
+
+  <!-- Top-right: Adopt -->
+  <g transform="translate(310, 40)">
+    <rect x="0" y="0" width="160" height="80" rx="16" class="card-bg" stroke="url(#grad2)"/>
+    <text x="80" y="37" text-anchor="middle" class="nodeText">Adopt</text>
+    <text x="80" y="56" text-anchor="middle" class="labelText">Engagement</text>
+  </g>
+
+  <!-- Bottom-left: Upgrade -->
+  <g transform="translate(30, 230)">
+    <rect x="0" y="0" width="160" height="80" rx="16" class="card-bg" stroke="url(#grad3)"/>
+    <text x="80" y="37" text-anchor="middle" class="nodeText">Upgrade</text>
+    <text x="80" y="56" text-anchor="middle" class="labelText">Monetization</text>
+  </g>
+
+  <!-- Bottom-right: Retain -->
+  <g transform="translate(310, 230)">
+    <rect x="0" y="0" width="160" height="80" rx="16" class="card-bg" stroke="url(#grad4)"/>
+    <text x="80" y="37" text-anchor="middle" class="nodeText">Retain</text>
+    <text x="80" y="56" text-anchor="middle" class="labelText">CRM &amp; tools</text>
+  </g>
+
+  <!-- Connectors (circular flow) -->
+  <!-- Activate → Adopt -->
+  <path d="M200 80 L300 80" stroke="#6b7280" stroke-width="2" class="flow" marker-end="url(#arrow)"/>
+  <!-- Adopt → Retain -->
+  <path d="M390 130 L390 220" stroke="#6b7280" stroke-width="2" class="flow" marker-end="url(#arrow)"/>
+  <!-- Retain → Upgrade -->
+  <path d="M300 270 L200 270" stroke="#6b7280" stroke-width="2" class="flow" marker-end="url(#arrow)"/>
+  <!-- Upgrade → Activate -->
+  <path d="M110 220 L110 130" stroke="#6b7280" stroke-width="2" class="flow" marker-end="url(#arrow)"/>
+
+  <!-- Center: experiment toggle card -->
+  <g transform="translate(170, 150)">
+    <rect x="0" y="0" width="160" height="50" rx="14" class="card-bg" stroke="url(#grad5)"/>
+    <text x="16" y="20" class="labelText">experiment</text>
+    <text x="16" y="36" class="labelText">on/off</text>
+    <!-- Switch -->
+    <g transform="translate(95 13)">
+      <rect x="0" y="0" width="50" height="24" rx="12" fill="#0b0b0d" opacity="0.8"/>
+      <circle cx="16" cy="12" r="9" fill="#3b82f6" class="toggleKnob"/>
+    </g>
+  </g>
+</svg>

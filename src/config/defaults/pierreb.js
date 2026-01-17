@@ -7,11 +7,11 @@ export default {
 
   app: {
     title: 'Pierre Brisorgueil',
-    subtitle: 'Senior Engineering Manager',
+    subtitle: 'Senior Engineering Manager Growth & GTM (B2B SaaS)',
     description:
-      'Pierre Brisorgueil - Senior Engineering Manager. Building digital products from idea to scale. From strategy to production. Node, Vue, Swift.',
+      'Pierre Brisorgueil Senior Engineering Manager (Growth & GTM). Leading product-facing engineering teams across PLG/PLS, monetization, billing, Salesforce and internal tooling. Based in Paris, open to Switzerland.',
     keywords:
-      'pierre brisorgueil, engineering manager, fullstack developer, nodejs, vuejs, swift, opensource, comes.io, montaine, startup, freelance',
+      'pierre brisorgueil, engineering manager, growth, GTM, B2B SaaS, PLG, PLS, monetization, billing, salesforce, internal tools, devkit, weareopensource, comes.io, montaine.me, l0u.me',
     author: 'pierre@pierreb.me',
     icon: 'fa-solid fa-terminal',
   },
@@ -60,17 +60,17 @@ export default {
       snackbar: {
         status: true,
         methods: ['post', 'put'],
-        sucessColor: 'success',
+        successColor: 'success',
         errorColor: 'error',
       },
       header: {
-        background: '#1a1a2e',
+        background: '#0b0b0d',
         color: '#FFFFFF',
         opacity: 95,
         scrollBehavior: 'hide',
       },
       navigation: {
-        background: '#1a1a2e',
+        background: '#0b0b0d',
         color: '#FFFFFF',
         drawer: {
           floating: true,
@@ -81,32 +81,32 @@ export default {
       themes: {
         light: {
           colors: {
-            primary: '#0ea5e9',
-            secondary: '#8b5cf6',
+            primary: '#2563eb',
+            secondary: '#f97316',
             background: '#fafafa',
             surface: '#ffffff',
             error: '#ef4444',
             success: '#10b981',
             onPrimary: '#ffffff',
-            onSecondary: '#FFFFFF',
-            onBackground: '#18181b',
-            onSurface: '#18181b',
+            onSecondary: '#111827',
+            onBackground: '#111827',
+            onSurface: '#111827',
             onError: '#FFFFFF',
             onSuccess: '#FFFFFF',
           },
         },
         dark: {
           colors: {
-            primary: '#0ea5e9',
-            secondary: '#8b5cf6',
-            background: '#0f0f14',
-            surface: '#1a1a24',
+            primary: '#3b82f6',
+            secondary: '#fb923c',
+            background: '#0b0b0d',
+            surface: '#141418',
             error: '#f87171',
             success: '#34d399',
-            onPrimary: '#FFFFFF',
-            onSecondary: '#FFFFFF',
-            onBackground: '#fafafa',
-            onSurface: '#fafafa',
+            onPrimary: '#0b0b0d',
+            onSecondary: '#0b0b0d',
+            onBackground: '#f5f5f5',
+            onSurface: '#f5f5f5',
             onError: '#000000',
             onSuccess: '#000000',
           },
@@ -143,23 +143,100 @@ export default {
     hero: {
       variant: 'blur',
       title: 'Pierre Brisorgueil',
-      subtitle: 'Senior Engineering Manager — Building digital products from idea to scale.',
+      subtitle: 'Senior Engineering Manager Growth & GTM. \n\n Leading engineering teams across PLG/PLS, monetization, billing and sales tooling.',
       button: {
-        title: 'Get in touch',
-        color: '#0ea5e9',
+        title: 'Contact',
+        color: '#2563eb',
         link: '#contact',
       },
       blur: {
         animationSpeed: 0.8,
         light: {
-          backgroundColors: ['#e0f2fe', '#dbeafe', '#e0e7ff', '#ede9fe', '#fae8ff'],
-          haloColors: ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'],
+          backgroundColors: ['#9bb2cf', '#ba9c7a', '#b5a45d', '#85a7b9', '#a09e9e'],
+          haloColors: ['#2563eb', '#f97316', '#eab308', '#0ea5e9', '#6b7280'],
         },
         dark: {
-          backgroundColors: ['#0c0c14', '#0f172a', '#1e1b4b', '#1a1a2e', '#0d0d12'],
-          haloColors: ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'],
+          backgroundColors: ['#050505', '#0a0a12', '#0f0f0f', '#0c0c10', '#060608'],
+          haloColors: ['#215ad4', '#e06915', '#cc9a05', '#0b8ac4', '#505661'],
         },
       },
+    },
+
+    // === CAPABILITIES - Focus areas (tabs interactifs) ===
+    capabilities: {
+      alignment: 'center',
+      variant: 'default',
+      overlap: true,
+      defaultActiveId: 'growth',
+      items: [
+        {
+          id: 'gtm',
+          label: 'Growth & GTM',
+          icon: 'fa-solid fa-rocket',
+          color: '#fff',
+          title: 'Growth & GTM Engineering',
+          description:
+            'I translate go-to-market needs into reliable engineering execution for **operations** and **end users**.\n\n' +
+            'Typical scope: **activation & onboarding**, self-serve flows, experimentation setup, segmentation, lifecycle messaging, and the tooling required to run this consistently.\n\n' +
+            'Recent examples include pragmati AI calls, customer care with MCP, upgrade/setup flows.',
+          reversed: false,
+          image: '/images/growthandgtm.svg',
+        },
+        {
+          id: 'data',
+          label: 'Data',
+          icon: 'fa-solid fa-database',
+          color: '#fff',
+          title: 'Data Platforms',
+          description:
+            'I make data usable and trustworthy for end users.\n\n' +
+            'Common topics: stats, metrics, data quality checks, lightweight pipelines/ETL when required, and “one source of truth” practices.\n\n' +
+            'I care a lot about **data visualization**: presenting the right information, at the right time, in the right context — so people can act with confidence.',
+          reversed: true,
+          image: '/images/dataplatforms.svg',
+        },
+        {
+          id: 'product-engineering',
+          label: 'Product Engineering',
+          icon: 'fa-solid fa-mobile-screen',
+          color: '#fff',
+          title: 'Product Engineering',
+          description:
+            'End-to-end delivery on web and mobile products.\n\n' +
+            'Typical scope: platform refactors, design improvements and product features that need clean architecture to evolve.\n\n' +
+            'I prefer simple, maintainable solutions and I avoid **over-engineering**. I care a lot about simplicity and design.',
+          reversed: false,
+          image: '/images/productengineeering.svg',
+        },
+        {
+          id: 'leadership',
+          label: 'Leadership',
+          icon: 'fa-solid fa-users',
+          color: '#fff',
+          title: 'Leadership & Team',
+          description:
+            'Building cohesive teams and helping engineers grow.\n\n' +
+            'I focus on clear ownership, predictable delivery habits, coaching, and a culture of constructive feedback.\n\n' +
+            'I’m comfortable challenging **over-process** and early **over-investment** when it doesn’t pay off.',
+          reversed: true,
+          image: '/images/leadership.svg',
+        },
+        {
+          id: 'freelance',
+          label: 'Freelance',
+          icon: 'fa-solid fa-briefcase',
+          color: '#fff',
+          title: 'Limited & non-competing',
+          description:
+            'Short, clearly scoped support outside of my full-time role: **project kickoff**, **architecture/strategy review**, or **technical due diligence**.\n\n' +
+            'Usually **1–5 days**. Lightweight approach, no **over-process**, no **over-engineering**.',
+          reversed: false,
+          video: {
+            file: '/videos/freelance.mov',
+            playbackRate: 0.5,
+          },
+        },
+      ],
     },
 
     // === ABOUT - Mon parcours ===
@@ -169,98 +246,51 @@ export default {
       variant: 'alternate',
       content: [
         {
-          subtitle: 'Who I am',
-          text: "I'm a **Senior Engineering Manager** with 10+ years of experience building digital products — from early-stage startups to scale-ups. I've led cross-functional teams, shipped products end-to-end, and contributed to company growth through **technical leadership** and **go-to-market execution**.\n\nI believe in pragmatic engineering: choosing the right tool for the job, shipping fast, and iterating based on real feedback.",
+          subtitle: 'Summary',
+          text:
+            'Engineering leader with 10+ years across B2B SaaS, data platforms and growth, combining a strong technical background with a pragmatic business mindset. <br/><br/>' +
+            'At **TheFork** (Tripadvisor), I lead Growth & GTM engineering across B2B web and mobile, billing, Salesforce and internal tooling, scaling squads (0-20 FTEs), shaping the technical vision, and driving delivery with cross-functional partners. ' +
+            'Previously at **Société Générale** (Bank), I built and scaled a **DataViz team** of 0-18 engineers, delivering a reusable data visualization platform and supporting the scale-up of the broader Big Data organization. <br/><br/>' +
+            'I keep building outside of work to maintain technical depth, it gives me credibility with engineers and sharper judgment on trade-offs.',
           fullWidth: true,
           alignment: 'left',
         },
       ],
     },
 
-    // === SERVICES - Focus areas ===
+    // === SERVICES - Projects ===
     services: {
-      icon: 'fa-solid fa-crosshairs',
-      title: 'Focus Areas',
+      icon: 'fa-solid fa-diagram-project',
+      title: 'Projects',
       alignment: 'center',
       variant: 'default',
       content: [
         {
-          serviceIcon: 'fa-solid fa-rocket',
-          color: '#0ea5e9',
-          subtitle: 'Growth & GTM',
-          text: 'From **product-market fit** to **scale**. I help teams define positioning, build MVPs, and iterate quickly based on user feedback.',
+          serviceIcon: 'fa-solid fa-code-branch',
+          color: '#2563eb',
+          subtitle: 'DevKit',
+          text:
+            'An open-source set of **production-minded starter stacks** to bootstrap modern web & mobile products faster. <br /><br />' +
+            'Composable frontend/backend building blocks (Vue / Node / Swift), with a shared mindset around **maintainability, updates, and delivery** (patterns, conventions ..). <br /><br />' +
+            'Built to start clean, ship early, with a common architecture.',
         },
         {
-          serviceIcon: 'fa-solid fa-handshake',
-          color: '#8b5cf6',
-          subtitle: 'Sales Experience',
-          text: 'Building products is one thing, **selling them** is another. I bring a sales-aware engineering mindset.',
+          serviceIcon: 'fa-solid fa-calendar',
+          color: '#f97316',
+          subtitle: 'comes.io',
+          text:
+            'A consumer app that sends **smart alerts** when the right conditions are met for outdoor plans (e.g. surf, ski, weekends). <br /><br />' +
+            'End-to-end product: data acquisition (scraping at scale), condition/scoring rules, automation, and user-facing UI. <br /><br />' +
+            'Designed as a pragmatic playground to validate ideas quickly with real users and iterate on the signal quality.',
         },
         {
-          serviceIcon: 'fa-solid fa-hammer',
-          color: '#10b981',
-          subtitle: 'Building & Craft',
-          text: "I'm a **builder at heart**. Whether it's architecting, coding, or deploying — I enjoy the craft.",
-        },
-      ],
-    },
-
-    // === CAPABILITIES - Tabs interactifs ===
-    capabilities: {
-      icon: 'fa-solid fa-layer-group',
-      title: 'What I Do',
-      alignment: 'center',
-      variant: 'alternate',
-      subBanner: true,
-      defaultActiveId: 'engineering',
-      items: [
-        {
-          id: 'engineering',
-          label: 'Engineering',
-          icon: 'fa-solid fa-code',
-          title: 'Technical Leadership',
-          description:
-            'Building scalable systems with **Node.js**, **Vue.js**, and **Swift**. From architecture design to production deployment, I ensure teams deliver quality software efficiently.',
-          cta: {
-            text: 'View Open Source',
-            link: 'https://github.com/weareopensource',
-          },
-          image: '/images/card01.webp',
-          reversed: false,
-        },
-        {
-          id: 'management',
-          label: 'Management',
-          icon: 'fa-solid fa-users',
-          title: 'Team & Product',
-          description:
-            'Leading **cross-functional teams**, defining roadmaps, and aligning engineering with business goals. I focus on empowering teams to ship faster while maintaining quality.',
-          image: '/images/content01.webp',
-          reversed: true,
-        },
-        {
-          id: 'projects',
-          label: 'Projects',
-          icon: 'fa-solid fa-folder-open',
-          title: 'Side Projects',
-          description:
-            'Building products like **Comes.io** (event platform), **Montaine.me** (AI content), and **L0u.me** (URL shortener). Each project is an opportunity to learn and experiment.',
-          cta: {
-            text: 'Visit Comes.io',
-            link: 'https://comes.io',
-          },
-          image: '/images/card02.webp',
-          reversed: false,
-        },
-        {
-          id: 'consulting',
-          label: 'Consulting',
-          icon: 'fa-solid fa-briefcase',
-          title: 'Occasional Help',
-          description:
-            'While employed full-time, I occasionally take on **consulting engagements**: technical due diligence, architecture reviews, startup advisory, or short-term technical leadership.',
-          image: '/images/content02.webp',
-          reversed: true,
+          serviceIcon: 'fa-solid fa-link',
+          color: '#6b7280',
+          subtitle: 'l0u.me',
+          text:
+            'A lightweight tool to **simplify public-data extraction** when APIs don’t exist or are inconsistent. <br /><br />' +
+            'Focused on reliability: normalize outputs, alert on changes, and make data reusable as a building block for internal automation. <br /><br />' +
+            'Used as a pragmatic component in small pipelines rather than a heavy platform.',
         },
       ],
     },
@@ -273,31 +303,19 @@ export default {
       blur: {
         animationSpeed: 1.5,
         light: {
-          backgroundColors: ['#e0f2fe', '#dbeafe', '#e0e7ff', '#ede9fe', '#fae8ff'],
-          haloColors: ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'],
+          backgroundColors: ['#bfdbfe', '#fed7aa', '#fde68a', '#bae6fd', '#e5e5e5'],
+          haloColors: ['#2563eb', '#f97316', '#eab308', '#0ea5e9', '#6b7280'],
         },
         dark: {
-          backgroundColors: ['#0c0c14', '#0f172a', '#1e1b4b', '#1a1a2e', '#0d0d12'],
-          haloColors: ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'],
+          backgroundColors: ['#050505', '#0a0a12', '#0f0f0f', '#0c0c10', '#060608'],
+          haloColors: ['#3b82f6', '#fb923c', '#facc15', '#38bdf8', '#9ca3af'],
         },
       },
       content: [
-        {
-          value: '10+',
-          title: 'Years Experience',
-        },
-        {
-          value: '50+',
-          title: 'Engineers Led',
-        },
-        {
-          value: '5',
-          title: 'Products Shipped',
-        },
-        {
-          value: '3',
-          title: 'Open Source Stacks',
-        },
+        { value: '10+', title: 'XP Years' },
+        { value: '0→18', title: 'Team built (Data)' },
+        { value: '0→4', title: 'Squads scaled (GTM)' },
+        { value: '20', title: 'years of dev' },
       ],
     },
 
@@ -305,10 +323,11 @@ export default {
     contact: {
       icon: 'fa-solid fa-envelope',
       variant: 'default',
-      title: "Let's Connect",
-      mail: 'mailto:pierre@pierreb.me',
+      title: 'Contact',
+      mail: 'mailto:pierrebrisorgueil@me.com',
     },
   },
+
   pages: {
     style: {
       section: {
@@ -319,61 +338,29 @@ export default {
       },
     },
   },
+
   footer: {
+    variant: 'alternate',
     links: [
       {
         title: 'Connect',
         items: [
-          {
-            label: 'Email',
-            icon: 'fa-solid fa-envelope',
-            url: 'mailto:pierre@pierreb.me',
-          },
-          {
-            label: 'GitHub',
-            icon: 'fa-brands fa-github',
-            url: 'https://github.com/PierreBriworgueil',
-          },
-          {
-            label: 'LinkedIn',
-            icon: 'fa-brands fa-linkedin',
-            url: 'https://linkedin.com/in/pierrebrisorgueil',
-          },
+          { label: 'LinkedIn', icon: 'fa-brands fa-linkedin', url: 'https://www.linkedin.com/in/pierre-brisorgueil/' },
+          { label: 'GitHub', icon: 'fa-brands fa-github', url: 'https://github.com/pierrebrisorgueil' },
         ],
       },
       {
         title: 'Projects',
         items: [
-          {
-            label: 'Comes.io',
-            icon: 'fa-solid fa-calendar',
-            url: 'https://comes.io',
-          },
-          {
-            label: 'Montaine.me',
-            icon: 'fa-solid fa-pen',
-            url: 'https://montaine.me',
-          },
-          {
-            label: 'WeAreOpenSource',
-            icon: 'fa-brands fa-github',
-            url: 'https://github.com/weareopensource',
-          },
+          { label: 'comes.io', icon: 'fa-solid fa-calendar', url: 'https://comes.io' },
+          { label: 'l0u.me', icon: 'fa-solid fa-link', url: 'https://l0u.me' },
         ],
       },
       {
-        title: 'Legal',
+        title: 'Open Source',
         items: [
-          {
-            label: 'Terms',
-            icon: 'fa-solid fa-file-lines',
-            url: '/pages/terms',
-          },
-          {
-            label: '© Pierre Brisorgueil',
-            icon: 'fa-regular fa-copyright',
-            url: '/',
-          },
+          { label: 'DevKit', icon: 'fa-solid fa-code-branch', url: 'https://github.com/pierreb-devkit' },
+          { label: '© Pierre Brisorgueil', icon: 'fa-regular fa-copyright', url: '/' },
         ],
       },
     ],

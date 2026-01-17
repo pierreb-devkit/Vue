@@ -25,6 +25,7 @@
   - responsive (Boolean): Responsive sizing (default: false)
   - aspectRatio (String): Aspect ratio (default: '16:9')
   - preload (String): Preload mode - 'auto', 'metadata', 'none' (default: 'auto')
+  - playbackRate (Number): Initial playback speed (default: 1)
 
   NOTES:
   - Uses Video.js library
@@ -102,6 +103,11 @@ export default {
       type: Array,
       default: () => [0.5, 1, 1.5, 2],
     },
+    playbackRate: {
+      type: Number,
+      default: 1,
+      validator: (value) => value > 0 && value <= 4,
+    },
   },
   emits: [
     'ready',
@@ -174,6 +180,10 @@ export default {
       };
 
       this.player = videojs(this.$refs.videoElement, options, () => {
+        // Set initial playback rate if provided
+        if (this.playbackRate && this.playbackRate !== 1) {
+          this.player.playbackRate(this.playbackRate);
+        }
         this.$emit('ready', this.player);
       });
 

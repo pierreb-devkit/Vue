@@ -1,0 +1,150 @@
+<!-- Leadership - Feedback Loop & Communication -->
+<svg viewBox="0 0 500 350" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Leadership Feedback Loop">
+  <defs>
+    <style>
+      .loopText{ 
+        font: 700 18px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #111827;
+      }
+      .labelText{ 
+        font: 500 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        letter-spacing: .3px;
+        fill: #6b7280;
+      }
+      .centerText{
+        font: 600 16px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #7c3aed;
+      }
+
+      /* Card backgrounds */
+      .card-bg {
+        fill: #ffffff;
+        fill-opacity: 0.92;
+        stroke-width: 4;
+      }
+
+      /* Dark mode */
+      @media (prefers-color-scheme: dark) {
+        .card-bg {
+          fill: #1a1a24;
+          fill-opacity: 0.95;
+        }
+        .loopText {
+          fill: #fafafa;
+        }
+        .labelText {
+          fill: #9ca3af;
+        }
+        .centerText {
+          fill: #a78bfa;
+        }
+        .arrow-path {
+          stroke: #a78bfa;
+        }
+      }
+
+      /* Rotating arrows */
+      .arrow-path {
+        stroke: #8b5cf6;
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        stroke-dasharray: 8 8;
+        animation: dash-rotate 3s linear infinite;
+      }
+      @keyframes dash-rotate {
+        to { stroke-dashoffset: -32; }
+      }
+
+      .reduce-motion .arrow-path { animation: none !important; }
+    </style>
+
+    <!-- Animated rotating gradients - violet/purple theme -->
+    <linearGradient id="gradListen" gradientTransform="rotate(0)">
+      <stop offset="0%" style="stop-color:#6d28d9;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#c084fc;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#6d28d9;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#c084fc;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#6d28d9;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0" to="360" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="gradAct" gradientTransform="rotate(90)">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#d8b4fe;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#d8b4fe;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="90" to="450" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="gradFeedback" gradientTransform="rotate(180)">
+      <stop offset="0%" style="stop-color:#5b21b6;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#a78bfa;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#5b21b6;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#a78bfa;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#5b21b6;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="180" to="540" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <linearGradient id="gradAdjust" gradientTransform="rotate(270)">
+      <stop offset="0%" style="stop-color:#6b21a8;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#e9d5ff;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#6b21a8;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#e9d5ff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#6b21a8;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="270" to="630" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Arrow marker -->
+    <marker id="arrowLeader" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+
+  <!-- Circular feedback loop layout -->
+  
+  <!-- Center circle - Feedback Loop -->
+  <g>
+    <circle cx="250" cy="175" r="50" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.3"/>
+    <text x="250" y="172" text-anchor="middle" class="centerText">Feedback</text>
+    <text x="250" y="192" text-anchor="middle" class="centerText">Loop</text>
+  </g>
+
+  <!-- Top: Listen -->
+  <g>
+    <rect x="180" y="20" width="140" height="60" rx="14" class="card-bg" stroke="url(#gradListen)"/>
+    <text x="250" y="58" text-anchor="middle" class="loopText" fill="#7c3aed">Listen</text>
+  </g>
+
+  <!-- Right: Act -->
+  <g>
+    <rect x="360" y="145" width="120" height="60" rx="14" class="card-bg" stroke="url(#gradAct)"/>
+    <text x="420" y="183" text-anchor="middle" class="loopText" fill="#7c3aed">Act</text>
+  </g>
+
+  <!-- Bottom: Share -->
+  <g>
+    <rect x="180" y="270" width="140" height="60" rx="14" class="card-bg" stroke="url(#gradFeedback)"/>
+    <text x="250" y="308" text-anchor="middle" class="loopText" fill="#7c3aed">Share</text>
+  </g>
+
+  <!-- Left: Adjust -->
+  <g>
+    <rect x="20" y="145" width="120" height="60" rx="14" class="card-bg" stroke="url(#gradAdjust)"/>
+    <text x="80" y="183" text-anchor="middle" class="loopText" fill="#7c3aed">Adjust</text>
+  </g>
+
+  <!-- Circular arrows connecting the loop -->
+  <!-- Adjust top → Listen left -->
+  <path d="M80 135 Q120 80, 170 50" class="arrow-path" marker-end="url(#arrowLeader)"/>
+  
+  <!-- Listen right → Act top -->
+  <path d="M330 50 Q380 90, 420 135" class="arrow-path" marker-end="url(#arrowLeader)"/>
+  
+  <!-- Act bottom → Share right -->
+  <path d="M420 215 Q380 260, 330 300" class="arrow-path" marker-end="url(#arrowLeader)"/>
+  
+  <!-- Share left → Adjust bottom -->
+  <path d="M170 300 Q120 260, 80 215" class="arrow-path" marker-end="url(#arrowLeader)"/>
+</svg>

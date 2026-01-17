@@ -10,8 +10,8 @@
       :banner="config.home.hero.img?.image"
       :ratio="config.home.hero.variant === 'img' ? config.home.hero.img?.ratio : null"
       :animation-speed="config.home.hero.blur?.animationSpeed || 1"
-      :background-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
-      :halo-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
+      :background-colors="theme.name === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
+      :halo-colors="theme.name === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
     ></homeHeroComponent>
     <homeCapabilitiesComponent v-if="config.home.capabilities" :setup="config.home.capabilities"></homeCapabilitiesComponent>
     <homePresentationComponent v-if="config.home.presentation" :setup="config.home.presentation"></homePresentationComponent>
@@ -30,9 +30,9 @@
       :image="config.home.statistics.parallax?.image || '/images/parallax.webp'"
       :animation-speed="config.home.statistics.blur?.animationSpeed || 1.5"
       :background-colors="
-        themeName === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors
+        theme.name === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors
       "
-      :halo-colors="themeName === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
+      :halo-colors="theme.name === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
     ></homeStatisticsComponent>
     <homeContactComponent v-if="config.home.contact"></homeContactComponent>
   </div>
@@ -86,9 +86,6 @@ export default {
     };
   },
   computed: {
-    themeName() {
-      return this.theme.global.name.value;
-    },
     news() {
       const homeStore = useHomeStore();
       return homeStore.news;

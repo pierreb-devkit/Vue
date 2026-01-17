@@ -1,5 +1,5 @@
 <template>
-  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="{ background: theme.current.colors.background }" app>
+  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="footerStyle" app>
     <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row align="center" justify="center">
         <v-col
@@ -41,6 +41,11 @@ export default {
       type: Array,
       default: () => [],
     },
+    variant: {
+      type: String,
+      default: 'default',
+      validator: (value) => ['default', 'alternate'].includes(value),
+    },
     custom: {
       type: Object,
       default: null,
@@ -56,6 +61,12 @@ export default {
   computed: {
     themeName() {
       return this.theme.global.name.value;
+    },
+    footerStyle() {
+      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      return {
+        background: bgColor,
+      };
     },
   },
   watch: {

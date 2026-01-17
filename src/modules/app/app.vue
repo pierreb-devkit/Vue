@@ -22,9 +22,7 @@
     </v-main>
     <waosFooter
       :links="config.footer.links"
-      :custom="{
-        section: { background: theme.current.colors.surface, 'min-width': '100%' },
-      }"
+      :variant="config.footer.variant || 'default'"
     />
   </v-app>
 </template>

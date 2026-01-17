@@ -36,7 +36,7 @@
     <v-container :style="containerStyle">
       <v-row align="center" justify="center" class="px-0 py-8">
         <!-- Title Section -->
-        <v-col cols="12">
+        <v-col v-if="setup.title" cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
 
@@ -67,6 +67,20 @@
 
                 <!-- Image -->
                 <v-col cols="12" md="6" class="pa-8">
+                  <div v-if="item.video" :class="`py-6`">
+                    <video-player
+                      :src="item.video.file"
+                      :controls="false"
+                      :poster="item.video.poster"
+                      :background-color="item.video.background || setup.style?.video?.background || '#101115'"
+                      :rounded="config.vuetify.theme.rounded"
+                      :playback-rate="item.video.playbackRate || 1.0"
+                      loop
+                      muted
+                      autoplay
+                      fluid
+                    />
+                  </div>
                   <v-img
                     v-if="item.image"
                     :src="item.image"
@@ -95,6 +109,7 @@ import { useTheme } from 'vuetify';
 import { style, overlapStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import HomeTabs from './utils/home.tabs.component.vue';
+import VideoPlayer from './utils/home.videoplayer.component.vue';
 
 /**
  * Component definition.
@@ -104,6 +119,7 @@ export default {
   components: {
     homeContentComponent,
     HomeTabs,
+    VideoPlayer,
   },
   props: {
     setup: {

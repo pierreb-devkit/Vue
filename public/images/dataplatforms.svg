@@ -1,0 +1,121 @@
+<!-- Data Platforms - Medallion Architecture (Bronze/Silver/Gold) -->
+<svg viewBox="0 0 500 350" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Data Medallion Architecture">
+  <defs>
+    <style>
+      .layerTitle{ 
+        font: 700 22px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #111827;
+      }
+      .layerSubtitle{ 
+        font: 600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #374151;
+        letter-spacing: .2px;
+      }
+      .layerDesc{ 
+        font: 500 11px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; 
+        fill: #6b7280;
+        letter-spacing: .3px;
+      }
+
+      /* Card backgrounds */
+      .layer-bg {
+        fill: #ffffff;
+        fill-opacity: 0.92;
+        stroke-width: 4;
+      }
+
+      /* Dark mode */
+      @media (prefers-color-scheme: dark) {
+        .layer-bg {
+          fill: #1a1a24;
+          fill-opacity: 0.95;
+        }
+        .layerTitle {
+          fill: #fafafa;
+        }
+        .layerSubtitle {
+          fill: #e5e7eb;
+        }
+        .layerDesc {
+          fill: #9ca3af;
+        }
+      }
+
+      .reduce-motion .layer-bronze,
+      .reduce-motion .layer-silver,
+      .reduce-motion .layer-gold { animation: none !important; }
+    </style>
+
+    <!-- Bronze gradient - copper/amber tones - more pronounced -->
+    <linearGradient id="gradBronze" gradientTransform="rotate(0)">
+      <stop offset="0%" style="stop-color:#92400e;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#f59e0b;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#92400e;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#f59e0b;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#92400e;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0" to="360" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Silver gradient - slate/gray tones - more pronounced -->
+    <linearGradient id="gradSilver" gradientTransform="rotate(45)">
+      <stop offset="0%" style="stop-color:#334155;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#cbd5e1;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#334155;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#cbd5e1;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="45" to="405" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Gold gradient - yellow/amber tones - more pronounced -->
+    <linearGradient id="gradGold" gradientTransform="rotate(90)">
+      <stop offset="0%" style="stop-color:#a16207;stop-opacity:1"/>
+      <stop offset="25%" style="stop-color:#fde047;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#a16207;stop-opacity:1"/>
+      <stop offset="75%" style="stop-color:#fde047;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#a16207;stop-opacity:1"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="90" to="450" dur="10s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- Arrow marker for dataflow -->
+    <marker id="arrowFlow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#ca8a04"/>
+    </marker>
+  </defs>
+
+  <!-- Stacked layers - escalier effect with minimal overlap -->
+  
+  <!-- BRONZE Layer (bottom-left, back) -->
+  <g class="layer-bronze">
+    <rect x="15" y="210" width="170" height="120" rx="16" class="layer-bg" stroke="url(#gradBronze)"/>
+    <text x="100" y="248" text-anchor="middle" class="layerTitle" fill="#b45309">Bronze</text>
+    <text x="100" y="273" text-anchor="middle" class="layerSubtitle">Raw Data</text>
+    <text x="100" y="294" text-anchor="middle" class="layerDesc">Ingestion as-is</text>
+    <text x="100" y="310" text-anchor="middle" class="layerDesc">Sources, APIs, Events</text>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 2,1; 0,0; -1,-1; 0,0" dur="8s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- SILVER Layer (middle, minimal overlap) -->
+  <g class="layer-silver">
+    <rect x="145" y="110" width="170" height="120" rx="16" class="layer-bg" stroke="url(#gradSilver)"/>
+    <text x="230" y="148" text-anchor="middle" class="layerTitle" fill="#64748b">Silver</text>
+    <text x="230" y="173" text-anchor="middle" class="layerSubtitle">Clean Data</text>
+    <text x="230" y="194" text-anchor="middle" class="layerDesc">Quality checks</text>
+    <text x="230" y="210" text-anchor="middle" class="layerDesc">Deduplicated, validated</text>
+    <animateTransform attributeName="transform" type="translate" values="0,0; -1,2; 0,0; 1,-1; 0,0" dur="9s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- GOLD Layer (top-right, front) -->
+  <g class="layer-gold">
+    <rect x="275" y="15" width="170" height="120" rx="16" class="layer-bg" stroke="url(#gradGold)"/>
+    <text x="360" y="53" text-anchor="middle" class="layerTitle" fill="#ca8a04">Gold</text>
+    <text x="360" y="78" text-anchor="middle" class="layerSubtitle">Business Data</text>
+    <text x="360" y="99" text-anchor="middle" class="layerDesc">Data Products</text>
+    <text x="360" y="115" text-anchor="middle" class="layerDesc">Aggregated metrics</text>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 1,-2; 0,0; -2,1; 0,0" dur="10s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Arrow from Gold to Apps (below Gold, bottom-right) -->
+  <path d="M400 135 Q420 160, 420 180" stroke="#ca8a04" stroke-width="2" fill="none" marker-end="url(#arrowFlow)"/>
+  <text x="420" y="205" text-anchor="middle" class="layerSubtitle" fill="#ca8a04">Dataflow to Apps</text>
+  <text x="420" y="222" text-anchor="middle" class="layerDesc">APIs, Dashboards, AI</text>
+</svg>
