@@ -270,7 +270,7 @@ export default {
           color: '#2563eb',
           subtitle: 'DevKit',
           text:
-            'An open-source set of **production-minded starter stacks** to bootstrap modern web & mobile products faster. <br /><br />' +
+            '[DevKit](https://github.com/pierreb-devkit) is an open-source set of **production-minded starter stacks** to bootstrap modern web & mobile products faster. <br /><br />' +
             'Composable frontend/backend building blocks (Vue / Node / Swift), with a shared mindset around **maintainability, updates, and delivery** (patterns, conventions ..). <br /><br />' +
             'Built to start clean, ship early, with a common architecture.',
         },
@@ -279,7 +279,7 @@ export default {
           color: '#f97316',
           subtitle: 'comes.io',
           text:
-            'A consumer app that sends **smart alerts** when the right conditions are met for outdoor plans (e.g. surf, ski, weekends). <br /><br />' +
+            '[Comes.io](https://comes.io) is a consumer app that sends **smart alerts** when the right conditions are met for outdoor plans (e.g. surf, ski, weekends). <br /><br />' +
             'End-to-end product: data acquisition (scraping at scale), condition/scoring rules, automation, and user-facing UI. <br /><br />' +
             'Designed as a pragmatic playground to validate ideas quickly with real users and iterate on the signal quality.',
         },
@@ -288,7 +288,7 @@ export default {
           color: '#6b7280',
           subtitle: 'l0u.me',
           text:
-            'A lightweight tool to **simplify public-data extraction** when APIs don’t exist or are inconsistent. <br /><br />' +
+            '[L0u.me](https://l0u.me) is a lightweight tool to **simplify public-data extraction** when APIs don’t exist or are inconsistent. <br /><br />' +
             'Focused on reliability: normalize outputs, alert on changes, and make data reusable as a building block for internal automation. <br /><br />' +
             'Used as a pragmatic component in small pipelines rather than a heavy platform.',
         },
@@ -313,7 +313,7 @@ export default {
       },
       content: [
         { value: '10+', title: 'XP Years' },
-        { value: '0→18', title: 'Team built (Data)' },
+        { value: '0→18', title: 'Team built (DataViz)' },
         { value: '0→4', title: 'Squads scaled (GTM)' },
         { value: '20', title: 'years of dev' },
       ],
