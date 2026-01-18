@@ -43,7 +43,7 @@ metadata:
   name: pierreb-me
   namespace: pierreb-projects
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
     - hosts: [pierreb.me]
