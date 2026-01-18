@@ -6,6 +6,7 @@ WORKDIR /app
 
 # args
 ARG NODE_ENV='development'
+ENV NODE_ENV=$NODE_ENV
 ARG WAOS_VUE_app_title='WAOS Docker'
 ARG WAOS_VUE_api_protocol='http'
 ARG WAOS_VUE_api_host='localhost'
@@ -17,7 +18,7 @@ ARG WAOS_VUE_cookie='waos'
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN NODE_ENV=$NODE_ENV npm run build
+RUN echo "NODE_ENV=$NODE_ENV" && npm run build
 
 # prod step
 FROM nginx:stable-alpine as production-stage
