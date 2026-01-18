@@ -29,7 +29,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          image: ghcr.io/pierreb-projects/pierreb_vue:master # {"$imagepolicy": "flux-system:pierreb-vue"}
+          images: ghcr.io/pierreb-projects/pierreb_vue
           tags: |
             type=raw,value=master
             type=sha,prefix=sha-
