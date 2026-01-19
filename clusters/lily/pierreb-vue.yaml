@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/pierreb-projects/pierreb_vue:master@sha256:443a01c2971dded032d26ec7dfcea95bf05786262db40901cd5bae0fb67bbd27 # {"$imagepolicy": "flux-system:pierreb-vue"}
+          image: ghcr.io/pierreb-projects/pierreb_vue:master@sha256:ccbd69a9b8425052cb188d7387205e20c32cee9fcd9416d711707dd6b0348fd8 # {"$imagepolicy": "flux-system:pierreb-vue"}
           imagePullPolicy: Always
           env:
             - name: NODE_ENV
