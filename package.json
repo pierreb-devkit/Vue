@@ -43,7 +43,7 @@
     "@tryghost/content-api": "^1.12.2",
     "@unhead/vue": "^2.0.19",
     "aos": "^2.3.4",
-    "unhead": "^2.0.19",
+    "unhead": "^2.1.2",
     "axios": "^1.13.2",
     "dayjs": "^1.11.19",
     "lodash-es": "^4.17.21",
