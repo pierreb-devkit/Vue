@@ -174,7 +174,7 @@ export default {
           label: 'Growth & GTM',
           icon: 'fa-solid fa-rocket',
           color: '#fff',
-          title: 'Growth & GTM Engineering',
+          title: 'Growth & GTM',
           description:
             'I translate go-to-market needs into reliable engineering execution for **operations** and **end users**.\n\n' +
             'Typical scope: **activation & onboarding**, self-serve flows, experimentation setup, segmentation, lifecycle messaging, and the tooling required to run this consistently.\n\n' +
