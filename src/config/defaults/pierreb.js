@@ -325,6 +325,7 @@ export default {
       variant: 'default',
       title: 'Contact',
       mail: 'mailto:pierrebrisorgueil@me.com',
+      alignment: 'center',
     },
   },
 
