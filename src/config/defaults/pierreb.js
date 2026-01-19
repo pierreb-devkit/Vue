@@ -197,7 +197,7 @@ export default {
         },
         {
           id: 'product-engineering',
-          label: 'Product Engineering',
+          label: 'Product-Engineer',
           icon: 'fa-solid fa-mobile-screen',
           color: '#fff',
           title: 'Product Engineering',
