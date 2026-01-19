@@ -54,7 +54,7 @@
       <!-- Level 2: Subtitle (H3) -->
       <h4
         v-if="setup.subtitle"
-        :class="['text-h4 font-weight-bold mb-4', themeColor ? '' : 'text-secondary']"
+        :class="['text-h5 text-sm-h4 font-weight-bold mb-4', themeColor ? '' : 'text-secondary']"
         :style="themeColor ? { color: themeColor } : {}"
       >
         <VMarkdown v-if="setup.subtitle && setup.subtitle.includes('**')" :source="setup.subtitle" class="d-inline" />

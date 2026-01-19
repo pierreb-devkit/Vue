@@ -89,7 +89,6 @@
                     cover
                     eager
                     aspect-ratio="16/9"
-                    :min-height="300"
                   ></v-img>
                 </v-col>
               </v-row>

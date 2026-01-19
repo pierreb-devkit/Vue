@@ -46,6 +46,17 @@
 - Vitest for testing
 - ESLint + Prettier for code quality
 
+## Vuetify 3 Best Practices
+
+- **Always check Vuetify 3 documentation first** before implementing custom solutions
+- Use built-in Vuetify utilities (responsive classes, spacing, typography breakpoints) instead of custom CSS/JS
+- Avoid over-engineering: Vuetify likely has a built-in solution
+
 ## Configuration
 
 - Default config: `src/config/defaults/development.js`
+
+## Important Files
+
+- Read `ERRORS.md` - Documents common mistakes to avoid
+- If a local version exists in your context, prioritize it
