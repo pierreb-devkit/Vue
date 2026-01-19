@@ -82,7 +82,7 @@
     "vite": "^7.2.7",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-vuetify": "^2.1.2",
-    "vitest": "^4.0.15",
+    "vitest": "^4.0.17",
     "vue-eslint-parser": "^10.2.0"
   },
   "config": {
