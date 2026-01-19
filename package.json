@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
-    "@tryghost/content-api": "^1.12.2",
+    "@tryghost/content-api": "^1.12.3",
     "@unhead/vue": "^2.0.19",
     "aos": "^2.3.4",
     "unhead": "^2.0.19",
