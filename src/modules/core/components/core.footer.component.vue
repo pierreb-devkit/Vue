@@ -60,7 +60,13 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
+    },
+    footerStyle() {
+      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      return {
+        background: bgColor,
+      };
     },
     footerStyle() {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;

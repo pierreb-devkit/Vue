@@ -15,7 +15,7 @@
     <!-- Form -->
     <v-row class="pa-2">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
-        <v-card class="pa-6" :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }" :flat="config.vuetify.theme.flat">
+        <v-card class="pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
@@ -67,7 +67,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
     task() {
       const tasksStore = useTasksStore();

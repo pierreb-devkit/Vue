@@ -1,12 +1,7 @@
 <template>
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
-      <v-card
-        class="mt-8 pa-8"
-        width="100%"
-        :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }"
-        :flat="config.vuetify.theme.flat"
-      >
+      <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
         <v-col cols="12">
           <h4>Forgot</h4>
           <v-divider></v-divider>
@@ -71,7 +66,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
     mail() {
       const authStore = useAuthStore();

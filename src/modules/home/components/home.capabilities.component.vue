@@ -33,7 +33,7 @@
 -->
 <template>
   <section id="capabilities" :style="sectionStyle">
-    <v-container :style="containerStyle">
+    <v-container ref="capabilitiesContainer" :style="containerStyle">
       <v-row align="center" justify="center" class="px-0 py-8">
         <!-- Title Section -->
         <v-col v-if="setup.title" cols="12">
@@ -53,7 +53,7 @@
             transition="fade-transition"
             reverse-transition="fade-transition"
           >
-            <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="cardStyle">
+            <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="cardStyle" class="mx-3">
               <v-row :class="item.reversed ? 'flex-row-reverse' : ''" align="center">
                 <!-- Text Content -->
                 <v-col cols="12" md="6" class="pa-8">

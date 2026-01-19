@@ -71,4 +71,62 @@ describe('Core Store', () => {
     coreStore.refreshNav(true);
     expect(coreStore.nav.length).toBeGreaterThan(0);
   });
+
+  it('should initialize theme correctly', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [{ path: '/', name: 'home', meta: { display: true } }];
+
+    coreStore.init(mockRoutes);
+
+    expect(coreStore.theme).toBeDefined();
+    expect(['light', 'dark']).toContain(coreStore.theme);
+  });
+
+  it('should filter out routes with display false', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/hidden', name: 'hidden', meta: { display: false } },
+      { path: '/about', name: 'about', meta: { display: true } },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    const hiddenRoute = coreStore.nav.find((route) => route.name === 'hidden');
+    expect(hiddenRoute).toBeUndefined();
+  });
+
+  it('should show routes without roles when not logged in', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/public', name: 'public', meta: { display: true, roles: false } },
+      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    const publicRoute = coreStore.nav.find((route) => route.name === 'public');
+    const adminRoute = coreStore.nav.find((route) => route.name === 'admin');
+
+    expect(publicRoute).toBeDefined();
+    expect(adminRoute).toBeUndefined();
+  });
+
+  it('should handle routes without meta.roles property', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/public', name: 'public', meta: { display: true } },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    expect(coreStore.nav.length).toBe(2);
+    expect(coreStore.nav.find((route) => route.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((route) => route.name === 'public')).toBeDefined();
+  });
 });

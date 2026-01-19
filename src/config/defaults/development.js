@@ -167,12 +167,34 @@ export default {
     // Available variants help adapt sections to your startup's visual identity.
     // All sections support 'variant' property: 'default' | 'alternate'
     // (alternate adds surface background for visual separation)
+    //
+    // COMMON PROPERTIES (available on most sections):
+    // - icon (String): FontAwesome icon displayed with title (e.g., 'fa-solid fa-star')
+    // - title (String): Section title
+    // - subtitle (String): Section subtitle
+    // - text (String): Description with **markdown** support
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): true | '30vh' | { mobile: '20vh', desktop: '40vh' }
+    // - style.section (Object): { background: 'colorName' | '#hex' }
+    // - style.card (Object): { background, color }
+    // - style.video (Object): { background } - video player frame color
 
     // === HERO SECTION ===
     // Purpose: First impression, value proposition, main CTA
     // Best for: Product launches, key messages, immediate engagement
     // Startup use: Lead generation, brand positioning, conversion focus
-    // Variants: 'blur' (animated gradient bg) | 'img' (static image bg)
+    //
+    // Props:
+    // - variant (String): 'blur' (animated gradient bg) | 'img' (static image bg)
+    // - title (String): Main title, supports HTML/markdown with **bold**
+    // - subtitle (String): Subtitle text, supports markdown
+    // - button (Object): { title, color, link }
+    // - ratio (Number|String): Height ratio (e.g., 3 = 33vh), null for full banner (img variant)
+    // - banner (String): Custom banner image URL (img variant only)
+    // - animationSpeed (Number): Animation speed multiplier (blur variant: 0.5=faster, 2=slower)
+    // - backgroundColors (Array): 5 colors for gradient background (blur variant)
+    // - haloColors (Array): 5 colors for animated halos (blur variant)
     hero: {
       variant: 'blur',
       title: 'Turn your ideas <br /> <b><span style="color:#55efc4">into a reality.</span></b>',
@@ -203,8 +225,15 @@ export default {
     // Purpose: Product demo, feature highlights with video
     // Best for: Complex products, visual storytelling, engagement
     // Startup use: Product demos, explainer videos, feature showcases
-    // Variants: 'default' | 'alternate' - Note: Can be positioned under hero with 'subBanner: true'
-    // Style: Set style.video.background to customize video player frame color
+    //
+    // Props (via setup):
+    // - file (String): Video source URL (required)
+    // - poster (String): Video poster image
+    // - playbackRate (Number): Video playback speed (default: 1.0)
+    // - overlap (Boolean|String|Object): Slides section up into previous section
+    // - variant (String): 'default' | 'alternate'
+    // - style.section (Object): { background }
+    // - style.video (Object): { background } - video player frame color
     presentation: {
       icon: 'fa-solid fa-play-circle',
       title: 'Product Showcase',
@@ -223,7 +252,14 @@ export default {
     // Purpose: Build trust with partner/client logos (infinite scroll)
     // Best for: Credibility, trust signals, brand associations
     // Startup use: Show investors, clients, partners, press mentions
-    // Variants: 'default' | 'alternate' - Tip: Add 4-8 logos for optimal scroll
+    //
+    // Props (via setup):
+    // - title (String): Section title
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.logoHeight (String): Logo height (e.g., '60px')
+    // - style.scrollSpeed (Number): Seconds for one complete scroll (default: 40)
+    // - content (Array): [{ img, name, link }]
     social: {
       icon: 'fa-solid fa-handshake',
       title: 'Trusted Partners',
@@ -260,24 +296,35 @@ export default {
     // Purpose: Company story, mission, vision with content blocks
     // Best for: Brand narrative, value propositions, storytelling
     // Startup use: Founding story, mission statement, problem/solution
-    // Variants: 'default' | 'alternate' - Layout: text, images, videos in flexible grid
-    // Tip: Highly reusable - create multiple instances with different content
-    // Style: Set style.video.background to customize video player frame color
-    // Content structure: { icon?, title?, subtitle?, text?, button?, img?, video?, reversed?, fullWidth?, alignment? }
-    // Video structure: video: { file, poster, background? }
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
+    // - style.video (Object): { background }
+    //
+    // Content items:
+    // - subtitle (String): Item heading
+    // - text (String): Description with **markdown** support
+    // - img (String): Image URL
+    // - video (Object): { file, poster, background, playbackRate }
+    // - reversed (Boolean): Swap text/media position
+    // - fullWidth (Boolean): Full width content
+    // - alignment (String): Override section alignment
+    // - button (Object): { title, link, color }
     about: {
       icon: 'fa-solid fa-lightbulb',
       title: 'Our Vision',
       variant: 'default',
-      style: {
-        video: {
-          background: '#101115', // Video player frame background color
-        },
-      },
+      alignment: 'left',
       content: [
         {
           subtitle: 'We Are Open Source',
           text: 'Is an all-in-one platform tailored for **developers**, **startups**, and **incubators**, streamlining the process of launching digital projects. With our intuitive stack combining **NodeJS**, **VueJS**, and **Swift**, users can swiftly set up **authentication**, showcase **products**, implement **pricing models**, and handle **subscriptions**. Dive into the new era of rapid development and bring your innovative ideas to life with ease.',
+          alignment: 'left',
           button: {
             title: 'Follow Us on Github',
             link: 'https://github.com/weareopensource',
@@ -287,13 +334,12 @@ export default {
     },
 
     // === ABOUT (alternate usage) ===
+    // Same component as 'about', different content instance
     // Purpose: Another content block section for features/benefits
     // Best for: Multi-section storytelling, feature deep-dives
     // Startup use: Technical features, USPs, detailed benefits
-    // Variants: 'default' | 'alternate' - Same component as 'about', different content
-    // Style: Set style.video.background to customize video player frame color
-    // Content structure: { icon?, title?, subtitle?, text?, button?, img?, video?, reversed?, fullWidth?, alignment? }
-    // Video structure: video: { file, poster, background? }
+    //
+    // Props: Same as ABOUT SECTION above
     aboutFeatures: {
       icon: 'fa-solid fa-puzzle-piece',
       title: 'Key Features',
@@ -328,10 +374,30 @@ export default {
     // Purpose: Interactive feature tabs with rich content
     // Best for: Complex products, feature comparison, navigation
     // Startup use: Platform features, product capabilities, differentiators
-    // Variants: 'default' | 'alternate' - Layout: Horizontal tabs + window with images
-    // Tip: Perfect for SaaS products with multiple features
-    // Items structure: { id, label, color, icon, title, description, cta?, image, reversed? }
-    // Overlap: true | '30vh' | { mobile: '20vh', desktop: '40vh' } - Slides container up into previous section
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - subtitle (String): Section subtitle
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - defaultActiveId (String): Pre-selected tab id
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
+    // - style.navCard (Object): { background }
+    // - style.contentCard (Object): { background }
+    // - style.video (Object): { background }
+    //
+    // Items (tabs):
+    // - id (String): Unique identifier (required)
+    // - label (String): Tab label
+    // - icon (String): Tab icon
+    // - title (String): Content title
+    // - description (String): Content description with **markdown**
+    // - cta (Object): { text, link } - Call to action button
+    // - image (String): Content image URL
+    // - video (Object): { file, poster, background, playbackRate }
+    // - reversed (Boolean): Swap image/text position
     capabilities: {
       icon: 'fa-solid fa-layer-group',
       title: 'Core Capabilities',
@@ -402,8 +468,26 @@ export default {
     // Purpose: Card carousel showcasing products/stacks
     // Best for: Portfolio, product suite, technology stack
     // Startup use: Multiple products, tech stack, offerings
-    // Variants: 'default' | 'alternate' - Supports custom card backgrounds/colors per item
-    // Content structure: { icon?, title?, subtitle?, text?, button?, img?, reversed?, alignment?, color?, style? }
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - slide.interval (Number): Auto-slide interval in ms
+    // - style.section (Object): { background }
+    //
+    // Content items:
+    // - subtitle (String): Card title
+    // - text (String): Description with **markdown**
+    // - img (String): Card image URL
+    // - reversed (Boolean): Image position (false = top)
+    // - fullWidth (Boolean): Full width card
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - color (String): 'default' | 'light' | 'dark'
+    // - button (Object): { title, color, link }
+    // - style.card (Object): { background, color }
     features: {
       icon: 'fa-solid fa-cubes',
       title: 'Technology Stack',
@@ -490,9 +574,21 @@ export default {
     // Purpose: Icon grid with services/resources
     // Best for: Features list, resources, quick access points
     // Startup use: Service offerings, resource hub, feature grid
-    // Variants: 'default' | 'alternate' - Layout: Responsive grid (icon + title + text)
-    // Tip: Keep descriptions concise, use markdown for links
-    // Content structure: { serviceIcon, color?, icon?, title?, subtitle?, text?, button? }
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
+    // - style.card (Object): { background }
+    //
+    // Content items:
+    // - serviceIcon (String): FontAwesome icon for the service
+    // - color (String): Icon color (hex)
+    // - subtitle (String): Service title
+    // - text (String): Description with **markdown** and [links](url)
     services: {
       icon: 'fa-solid fa-compass',
       title: 'Some ressources to start',
@@ -524,9 +620,25 @@ export default {
     // Purpose: Vertical timeline for processes/journeys
     // Best for: Getting started, onboarding, roadmap
     // Startup use: User onboarding, implementation guide, journey mapping
-    // Variants: 'default' | 'alternate' - Layout: Timeline with icons, cards, images
-    // Tip: 3-5 steps work best for clarity
-    // Content structure: { stepIcon, stepColor, stepIconColor?, title?, icon?, subtitle?, text?, button?, img?, reversed?, alignment? }
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
+    // - style.card (Object): { background }
+    //
+    // Content items:
+    // - stepIcon (String): FontAwesome icon for timeline dot
+    // - stepColor (String): Timeline dot color (hex)
+    // - stepIconColor (String): Icon color inside dot
+    // - title (String): Opposite side title (alternating)
+    // - subtitle (String): Step title
+    // - text (String): Description with **markdown**
+    // - img (String): Step image URL
+    // - reversed (Boolean): Image position
     steps: {
       icon: 'fa-solid fa-route',
       title: 'Getting Started',
@@ -558,9 +670,30 @@ export default {
     // Purpose: Image carousel/slideshow
     // Best for: Visual portfolio, product screenshots, designs
     // Startup use: Product gallery, case studies, portfolio
-    // Variants: 'default' | 'alternate' - Layout: Full-width carousel with overlays
-    // Tip: Use high-quality images, consistent aspect ratios
-    // Content structure: { img: { src, gradient? }, subtitle?, text?, subimg?, reversed? }
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - slide.height (String): Carousel height (e.g., '600px')
+    // - slide.interval (Number): Auto-slide interval in ms
+    // - slide.showTitle (Boolean): Show slide titles as tabs
+    // - slide.titleColor (String): Tab title color
+    // - style.section (Object): { background }
+    // - style.tabs (Object): Tabs styling
+    // - style.carousel (Object): Carousel styling
+    //
+    // Content items:
+    // - title (String): Tab title (if showTitle enabled)
+    // - subtitle (String): Slide title overlay
+    // - text (String): Slide description
+    // - subimg (String): Sub-image URL
+    // - reversed (Boolean): Sub-image position (left/right)
+    // - img.src (String): Slide image URL (required)
+    // - img.gradient (String): CSS gradient overlay
+    // - img.height (Number): Image height
     gallery: {
       icon: 'fa-solid fa-images',
       title: 'Gallery',
@@ -584,7 +717,23 @@ export default {
     // Purpose: Blog posts carousel from Ghost CMS
     // Best for: Content marketing, blog highlights, news
     // Startup use: Latest updates, content showcase, thought leadership
-    // Variants: 'default' | 'alternate' - Integration: Ghost blog API (requires key)
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - url (String): Ghost blog URL (required)
+    // - key (String): Ghost API key (required)
+    // - slide.interval (Number): Auto-slide interval in ms
+    // - style.section (Object): { background }
+    //
+    // Content items (auto-fetched from Ghost):
+    // - title (String): Article title
+    // - excerpt (String): Short description
+    // - feature_image (String): Article image
+    // - url (String): Article URL
+    // - fullWidth (Boolean): Full width card
     articles: {
       icon: 'fa-solid fa-newspaper',
       variant: 'default',
@@ -600,7 +749,22 @@ export default {
     // Purpose: Key metrics and achievements
     // Best for: Social proof, growth metrics, impact showcase
     // Startup use: Traction metrics, user stats, achievements
-    // Variants: 'parallax' (image bg) | 'blur' (animated gradient bg)
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - variant (String): 'parallax' | 'blur'
+    // - parallax.image (String): Background image path (parallax variant)
+    // - blur.animationSpeed (Number): Animation speed multiplier
+    // - blur.light.backgroundColors (Array): Light mode gradient colors
+    // - blur.light.haloColors (Array): Light mode halo colors
+    // - blur.dark.backgroundColors (Array): Dark mode gradient colors
+    // - blur.dark.haloColors (Array): Dark mode halo colors
+    //
+    // Content items:
+    // - value (String): Number/metric to display (e.g., '100+', '50K')
+    // - title (String): Metric label/description
+    //
     // Tip: Use compelling numbers that build credibility
     statistics: {
       icon: 'fa-solid fa-chart-line',
@@ -644,12 +808,21 @@ export default {
     // Purpose: Contact form for user inquiries
     // Best for: Lead generation, support requests, feedback
     // Startup use: Customer contact, partnership inquiries, support
-    // Variants: 'default' | 'alternate' - Form submits via mailto link
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - variant (String): 'default' | 'alternate'
+    // - mail (String): mailto: link for form submission
+    // - alignment (String): 'left' | 'center' | 'right' - Button alignment
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
     contact: {
       icon: 'fa-solid fa-envelope',
       variant: 'default',
       title: 'Feel free to contact us',
       mail: 'mailto:pierre@weareopensource.me',
+      alignment: 'center',
     },
   },
   pages: {
@@ -663,6 +836,7 @@ export default {
     },
   },
   footer: {
+    variant: 'alternate',
     links: [
       {
         title: 'Useful',

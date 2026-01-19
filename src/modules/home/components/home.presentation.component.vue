@@ -29,6 +29,7 @@
         :controls="false"
         :background-color="setup.style?.video?.background || '#101115'"
         :rounded="config.vuetify.theme.rounded"
+        :playback-rate="setup.playbackRate || 1.0"
         loop
         muted
         autoplay

@@ -86,6 +86,9 @@ export default {
     };
   },
   computed: {
+    themeName() {
+      return this.theme.name;
+    },
     news() {
       const homeStore = useHomeStore();
       return homeStore.news;

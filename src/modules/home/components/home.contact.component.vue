@@ -26,16 +26,18 @@
           <v-form ref="form">
             <v-text-field v-model="subject" :flat="config.vuetify.theme.flat" name="subject" label="Subject*"></v-text-field>
             <v-textarea v-model="body" :flat="config.vuetify.theme.flat" label="Message*"></v-textarea>
-            <v-btn
-              :color="theme.current.colors.secondary"
-              :style="{
-                color: theme.current.colors.onSecondary,
-              }"
-              depressed
-              x-large
-              @click="sendMail()"
-              >Send</v-btn
-            >
+            <div :class="alignmentClass">
+              <v-btn
+                :color="theme.current.colors.secondary"
+                :style="{
+                  color: theme.current.colors.onSecondary,
+                }"
+                depressed
+                x-large
+                @click="sendMail()"
+                >Send</v-btn
+              >
+            </div>
           </v-form>
         </v-col>
       </v-row>
@@ -71,6 +73,17 @@ export default {
   computed: {
     variant() {
       return this.config.home.contact?.variant || 'default';
+    },
+    alignment() {
+      return this.config.home.contact?.alignment || 'left';
+    },
+    alignmentClass() {
+      const alignments = {
+        left: 'text-left',
+        center: 'text-center',
+        right: 'text-right',
+      };
+      return alignments[this.alignment] || 'text-left';
     },
     containerStyle() {
       return {

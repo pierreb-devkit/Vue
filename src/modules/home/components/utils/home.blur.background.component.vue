@@ -105,7 +105,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
     backgroundHeight() {
       if (this.ratio) return `calc(${100 / this.ratio}vh)`;

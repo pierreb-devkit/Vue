@@ -79,7 +79,7 @@
         :height="'120px'"
         :radius="'50%'"
         :border="'5px'"
-        :color="config.vuetify.theme.themes[themeName].colors.surface"
+        :color="theme.current.colors.surface"
         :size="512"
       />
     </v-card>
@@ -116,7 +116,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
   },
 };

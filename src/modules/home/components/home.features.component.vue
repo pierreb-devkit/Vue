@@ -42,7 +42,7 @@
     <v-container ref="cardsContainer" :style="containerStyle">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
-          <homeContentComponent :setup="setup" :alignment="setup.alignment || 'left'"></homeContentComponent>
+          <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
         <v-col cols="12">
           <v-carousel

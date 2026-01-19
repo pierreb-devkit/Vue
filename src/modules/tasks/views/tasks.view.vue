@@ -15,7 +15,7 @@
     </v-row>
     <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
       <v-col cols="12">
-        <v-card class="ma-6 pa-6" :style="{ background: config.vuetify.theme.themes[themeName].colors.surface }" :flat="config.vuetify.theme.flat">
+        <v-card class="ma-6 pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
           <h2 class="text-center">No Tasks found :( !</h2>
         </v-card>
       </v-col>
@@ -56,7 +56,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
     isLoggedIn() {
       const authStore = useAuthStore();

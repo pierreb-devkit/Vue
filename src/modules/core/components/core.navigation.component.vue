@@ -6,8 +6,8 @@
       :flat="config.vuetify.theme.flat"
       icon
       :style="{
-        color: config.vuetify.theme.appbar.color,
-        background: `${config.vuetify.theme.appbar.background}${config.vuetify.theme.appbar.opacity}`,
+        color: config.vuetify.theme.navigation.color,
+        background: `${config.vuetify.theme.navigation.background}99`,
         '-webkit-backdrop-filter': 'blur(8px)',
         'backdrop-filter': 'blur(8px)',
       }"
@@ -20,22 +20,22 @@
     <v-navigation-drawer
       v-model="drawer"
       :floating="config.vuetify.theme.navigation.drawer.floating"
-      :style="{ background: config.vuetify.theme.appbar.background }"
+      :style="{ background: config.vuetify.theme.navigation.background }"
       :expand-on-hover="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.expand"
       :rail="config.vuetify.theme.navigation.drawer.rail"
     >
       <!-- Logo / drawer on mobile-->
-      <v-list :style="{ background: config.vuetify.theme.appbar.background, color: config.vuetify.theme.appbar.color }" nav>
+      <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
         <v-list-item
           :style="{
-            color: config.vuetify.theme.appbar.color,
+            color: config.vuetify.theme.navigation.color,
           }"
         >
           <template #prepend>
             <v-icon
               v-if="config.app.title"
               :style="{
-                color: config.vuetify.theme.appbar.color,
+                color: config.vuetify.theme.navigation.color,
                 opacity: 1,
               }"
               :icon="$vuetify.display.mobile ? 'nothing' : config.app.icon"
@@ -45,15 +45,15 @@
           <v-list-item-title>{{ config.app.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
-      <v-divider :color="config.vuetify.theme.appbar.color" :thickness="3"></v-divider>
+      <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
       <!-- Navigation -->
-      <v-list :style="{ background: config.vuetify.theme.appbar.background, color: config.vuetify.theme.appbar.color }" nav>
+      <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
         <v-list-item v-for="item in nav" :key="item.text" :to="item.path">
           <template #prepend>
             <v-icon
               :icon="item.meta.icon"
               :style="{
-                color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.appbar.color,
+                color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.navigation.color,
               }"
               size="small"
             ></v-icon>
@@ -71,19 +71,19 @@
             <v-list-item-title>{{ label }}</v-list-item-title>
           </v-list-item>
         </v-list>
-        <v-divider :color="config.vuetify.theme.appbar.color" :thickness="3"></v-divider>
+        <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
         <!-- User -->
         <v-list>
           <v-list-item
             :style="{
-              color: config.vuetify.theme.appbar.color,
+              color: config.vuetify.theme.navigation.color,
             }"
             @click="signout"
           >
             <template #prepend>
               <v-icon
                 :style="{
-                  color: config.vuetify.theme.appbar.color,
+                  color: config.vuetify.theme.navigation.color,
                 }"
                 icon="fa-solid fa-arrow-right"
                 size="small"
@@ -103,6 +103,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { useCoreStore } from '../stores/core.store';
 
 /**
  * Component definition.
@@ -118,7 +119,7 @@ export default {
   },
   computed: {
     themeName() {
-      return this.theme.global.name.value;
+      return this.theme.name;
     },
     nav() {
       const coreStore = useCoreStore();
