@@ -1,7 +1,7 @@
 <template>
   <v-footer v-if="enabled" class="footer pa-0 align-end" :style="footerStyle" app>
     <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
-      <v-row align="center" justify="center">
+      <v-row no-gutters align="center" justify="center">
         <v-col
           v-for="({ items, title }, i) in links.filter((section) => section.items)"
           :key="i"
