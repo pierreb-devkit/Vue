@@ -62,7 +62,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.3",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/coverage-v8": "^4.0.17",
     "@vue/test-utils": "^2.4.6",
     "@weareopensource/conventional-changelog": "^1.7.0",
     "autoprefixer": "^10.4.23",
