@@ -68,17 +68,50 @@ export default {
     },
   },
   created() {
-    // Configure head/meta tags
+    const { app } = this.config;
+    const seo = app.seo || {};
+    const og = seo.og || {};
+    const schema = seo.schema || {};
+
+    const meta = [
+      ...(app.description ? [{ name: 'description', content: app.description }] : []),
+      ...(app.keywords ? [{ name: 'keywords', content: app.keywords }] : []),
+      ...(app.author ? [{ name: 'author', content: app.author }] : []),
+      // Open Graph
+      { property: 'og:type', content: og.type || 'website' },
+      ...(app.title ? [{ property: 'og:title', content: app.title }] : []),
+      ...(app.description ? [{ property: 'og:description', content: app.description }] : []),
+      ...(app.url ? [{ property: 'og:url', content: app.url }] : []),
+      ...(og.image ? [{ property: 'og:image', content: og.image }] : []),
+      // Twitter Card
+      { name: 'twitter:card', content: og.twitterCard || 'summary' },
+      ...(app.title ? [{ name: 'twitter:title', content: app.title }] : []),
+      ...(app.description ? [{ name: 'twitter:description', content: app.description }] : []),
+      ...(og.twitterSite ? [{ name: 'twitter:site', content: og.twitterSite }] : []),
+      ...(og.image ? [{ name: 'twitter:image', content: og.image }] : []),
+    ];
+
+    const link = app.url ? [{ rel: 'canonical', href: app.url }] : [];
+
+    const script = schema.enabled && schema.name
+      ? [{
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': schema.type || 'Person',
+            name: schema.name,
+            url: app.url || undefined,
+            sameAs: schema.sameAs?.length ? schema.sameAs : undefined,
+          }),
+        }]
+      : [];
+
     useHead({
-      title: this.config.app.title,
-      htmlAttrs: {
-        lang: 'en',
-      },
-      meta: [
-        { name: 'description', content: this.config.app.description },
-        { name: 'keywords', content: this.config.app.keywords },
-        { name: 'author', content: this.config.app.author },
-      ],
+      title: app.title,
+      htmlAttrs: { lang: app.lang || 'en' },
+      meta,
+      link,
+      script,
     });
 
     // Configure axios interceptors

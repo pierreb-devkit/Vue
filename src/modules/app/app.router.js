@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
 import config from '../../lib/services/config';
 
@@ -18,7 +18,7 @@ const routes = [].concat(home, auth, users, secure, tasks);
  */
 const getRouter = () => {
   const router = createRouter({
-    history: createWebHashHistory(import.meta.env.BASE_URL),
+    history: createWebHistory(import.meta.env.BASE_URL),
     routes,
   });
   router.beforeEach((to, from, next) => {
