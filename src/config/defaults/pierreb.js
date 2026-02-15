@@ -178,7 +178,7 @@ export default {
           description:
             'I translate go-to-market needs into reliable engineering execution for **operations** and **end users**.\n\n' +
             '**Activation & onboarding**, self-serve flows, experimentation, segmentation, lifecycle messaging, and the tooling to run this reliably.\n\n' +
-            'Recent examples: pragmatic AI calls, customer care with MCP, upgrade and setup flows.',
+            'Recent examples: AI calls, customer care with MCP, upgrade and setup flows.',
           reversed: false,
           image: '/images/growthandgtm.svg',
         },
