@@ -1,36 +1,36 @@
 version: '3'
 
 services:
-  weareopensourceVue:
-    container_name: weareopensourceVue
-    image: weareopensource/vue:latest
+  devkitVue:
+    container_name: devkitVue
+    image: pierreb/vue:latest
     restart: always
     ports:
       - 8080:80
     volumes:
-      - weareopensourceVue:/data
+      - devkitVue:/data
     networks:
       - frontend
     depends_on:
-      - weareopensourceNode
+      - devkitNode
     environment:
-      - 'WAOS_VUE_api_host=waosnode'
+      - 'WAOS_VUE_api_host=devkitnode'
 
-  weareopensourceNode:
-    container_name: weareopensourceNode
-    image: weareopensource/node:latest
+  devkitNode:
+    container_name: devkitNode
+    image: pierreb/node:latest
     restart: always
     ports:
       - 3000:3000
     volumes:
-      - weareopensourceNode:/data
+      - devkitNode:/data
     networks:
       - frontend
       - backend
     depends_on:
       - mongo
     environment:
-      - 'WAOS_NODE_db_uri=mongodb://mongo:27017/WaosNodeDev'
+      - 'WAOS_NODE_db_uri=mongodb://mongo:27017/DevkitNodeDev'
       - 'WAOS_NODE_host=0.0.0.0'
 
   mongo:
@@ -49,6 +49,6 @@ networks:
     driver: bridge
 
 volumes:
-  weareopensourceVue:
-  weareopensourceNode:
+  devkitVue:
+  devkitNode:
   mongo:
