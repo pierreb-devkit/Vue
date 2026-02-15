@@ -9,7 +9,7 @@ export default {
     title: 'Pierre Brisorgueil',
     subtitle: 'Senior Engineering Manager Growth & GTM (B2B SaaS)',
     description:
-      'Pierre Brisorgueil Senior Engineering Manager (Growth & GTM). Leading product-facing engineering teams across PLG/PLS, monetization, billing, Salesforce and internal tooling. Based in Paris, open to Switzerland.',
+      'Engineering Manager leading Growth & GTM teams across PLG/PLS, monetization, billing, Salesforce and internal tooling. Based in Paris, open to Switzerland.',
     keywords:
       'pierre brisorgueil, engineering manager, growth, GTM, B2B SaaS, PLG, PLS, monetization, billing, salesforce, internal tools, devkit, weareopensource, comes.io, montaine.me, l0u.me',
     author: 'pierre@pierreb.me',
@@ -177,8 +177,8 @@ export default {
           title: 'Growth & GTM',
           description:
             'I translate go-to-market needs into reliable engineering execution for **operations** and **end users**.\n\n' +
-            'Typical scope: **activation & onboarding**, self-serve flows, experimentation setup, segmentation, lifecycle messaging, and the tooling required to run this consistently.\n\n' +
-            'Recent examples include pragmati AI calls, customer care with MCP, upgrade/setup flows.',
+            '**Activation & onboarding**, self-serve flows, experimentation, segmentation, lifecycle messaging, and the tooling to run this reliably.\n\n' +
+            'Recent examples: pragmatic AI calls, customer care with MCP, upgrade and setup flows.',
           reversed: false,
           image: '/images/growthandgtm.svg',
         },
@@ -191,7 +191,7 @@ export default {
           description:
             'I make data usable and trustworthy for end users.\n\n' +
             'Common topics: stats, metrics, data quality checks, lightweight pipelines/ETL when required, and “one source of truth” practices.\n\n' +
-            'I care a lot about **data visualization**: presenting the right information, at the right time, in the right context — so people can act with confidence.',
+            'I care a lot about **data visualization**: presenting the right information, at the right time, in the right context, so people can act with confidence.',
           reversed: true,
           image: '/images/dataplatforms.svg',
         },
@@ -226,7 +226,7 @@ export default {
           label: 'Freelance',
           icon: 'fa-solid fa-briefcase',
           color: '#fff',
-          title: 'Limited & non-competing',
+          title: 'Freelance & Advisory',
           description:
             'Short, clearly scoped support outside of my full-time role: **project kickoff**, **architecture/strategy review**, or **technical due diligence**.\n\n' +
             'Usually **1–5 days**. Lightweight approach, no **over-process**, no **over-engineering**.',
@@ -248,10 +248,11 @@ export default {
         {
           subtitle: 'Summary',
           text:
-            'Engineering leader with 10+ years across B2B SaaS, data platforms and growth, combining a strong technical background with a pragmatic business mindset. <br/><br/>' +
+            'Engineering leader with 10+ years across B2B SaaS, data platforms and growth. <br/><br/>' +
             'At **TheFork** (Tripadvisor), I lead Growth & GTM engineering across B2B web and mobile, billing, Salesforce and internal tooling, scaling squads (0-20 FTEs), shaping the technical vision, and driving delivery with cross-functional partners. ' +
             'Previously at **Société Générale** (Bank), I built and scaled a **DataViz team** of 0-18 engineers, delivering a reusable data visualization platform and supporting the scale-up of the broader Big Data organization. <br/><br/>' +
-            'I keep building outside of work to maintain technical depth, it gives me credibility with engineers and sharper judgment on trade-offs.',
+            'I keep building outside of work to maintain technical depth, it gives me credibility with engineers and sharper judgment on trade-offs. ' +
+            'I code with **Claude** and have built quite a few automations around it.',
           fullWidth: true,
           alignment: 'left',
         },
@@ -312,10 +313,10 @@ export default {
         },
       },
       content: [
-        { value: '10+', title: 'XP Years' },
+        { value: '20+', title: 'Years coding' },
+        { value: '10+', title: 'Years in teams' },
         { value: '0→18', title: 'Team built (DataViz)' },
         { value: '0→4', title: 'Squads scaled (GTM)' },
-        { value: '20', title: 'years of dev' },
       ],
     },
 
