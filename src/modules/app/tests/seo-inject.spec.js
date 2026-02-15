@@ -148,6 +148,50 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('twitter:image', () => {
+    it('injects twitter:image when og.image is set', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<meta name="twitter:image" content="https://example.com/og.jpg">');
+    });
+
+    it('does not inject twitter:image when og.image is not set', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('twitter:image');
+    });
+  });
+
+  describe('HTML escaping', () => {
+    it('escapes special characters in title', () => {
+      const result = transform({ app: { title: '<script>alert("xss")</script>' } });
+      expect(result).not.toContain('<script>');
+      expect(result).toContain('&lt;script&gt;');
+    });
+
+    it('escapes special characters in description', () => {
+      const result = transform({ app: { description: 'A & B > C' } });
+      expect(result).toContain('A &amp; B &gt; C');
+    });
+
+    it('escapes double quotes in content attributes', () => {
+      const result = transform({ app: { author: 'John "Dev" Doe' } });
+      expect(result).toContain('John &quot;Dev&quot; Doe');
+    });
+  });
+
+  describe('lang attribute — robust replacement', () => {
+    it('updates existing lang attribute to config value', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<html lang="fr">');
+      expect(result).not.toContain('lang="en"');
+    });
+
+    it('adds lang attribute when html tag has none', () => {
+      const noLangHtml = baseHtml.replace('<html lang="en">', '<html>');
+      const result = seoInjectPlugin(testConfig).transformIndexHtml(noLangHtml);
+      expect(result).toContain('lang="fr"');
+    });
+  });
+
   describe('tags are injected before </head>', () => {
     it('injects tags before closing head tag', () => {
       const result = transform(testConfig);

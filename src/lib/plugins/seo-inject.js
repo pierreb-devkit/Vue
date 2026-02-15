@@ -6,6 +6,10 @@
  * @param {object} config - app config object (src/config/index.js)
  * @returns {import('vite').Plugin}
  */
+
+const escapeHtml = (str) =>
+  String(str).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' }[char]));
+
 export function seoInjectPlugin(config) {
   const app = config?.app || {};
   const seo = app.seo || {};
@@ -17,38 +21,54 @@ export function seoInjectPlugin(config) {
       const tags = [];
 
       if (app.description)
-        tags.push(`  <meta name="description" content="${app.description}">`);
+        tags.push(`  <meta name="description" content="${escapeHtml(app.description)}">`);
       if (app.keywords)
-        tags.push(`  <meta name="keywords" content="${app.keywords}">`);
+        tags.push(`  <meta name="keywords" content="${escapeHtml(app.keywords)}">`);
       if (app.author)
-        tags.push(`  <meta name="author" content="${app.author}">`);
+        tags.push(`  <meta name="author" content="${escapeHtml(app.author)}">`);
       if (app.url)
-        tags.push(`  <link rel="canonical" href="${app.url}">`);
+        tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
 
       // Open Graph
       if (app.title)
-        tags.push(`  <meta property="og:title" content="${app.title}">`);
+        tags.push(`  <meta property="og:title" content="${escapeHtml(app.title)}">`);
       if (app.description)
-        tags.push(`  <meta property="og:description" content="${app.description}">`);
-      tags.push(`  <meta property="og:type" content="${og.type || 'website'}">`);
+        tags.push(`  <meta property="og:description" content="${escapeHtml(app.description)}">`);
+      tags.push(`  <meta property="og:type" content="${escapeHtml(og.type || 'website')}">`);
       if (app.url)
-        tags.push(`  <meta property="og:url" content="${app.url}">`);
+        tags.push(`  <meta property="og:url" content="${escapeHtml(app.url)}">`);
       if (og.image)
-        tags.push(`  <meta property="og:image" content="${og.image}">`);
+        tags.push(`  <meta property="og:image" content="${escapeHtml(og.image)}">`);
 
       // Twitter Card
-      tags.push(`  <meta name="twitter:card" content="${og.twitterCard || 'summary'}">`);
+      tags.push(`  <meta name="twitter:card" content="${escapeHtml(og.twitterCard || 'summary')}">`);
       if (app.title)
-        tags.push(`  <meta name="twitter:title" content="${app.title}">`);
+        tags.push(`  <meta name="twitter:title" content="${escapeHtml(app.title)}">`);
       if (app.description)
-        tags.push(`  <meta name="twitter:description" content="${app.description}">`);
+        tags.push(`  <meta name="twitter:description" content="${escapeHtml(app.description)}">`);
       if (og.twitterSite)
-        tags.push(`  <meta name="twitter:site" content="${og.twitterSite}">`);
+        tags.push(`  <meta name="twitter:site" content="${escapeHtml(og.twitterSite)}">`);
+      if (og.image)
+        tags.push(`  <meta name="twitter:image" content="${escapeHtml(og.image)}">`);
 
-      return html
-        .replace('<html lang="en">', `<html lang="${app.lang || 'en'}">`)
-        .replace('<title>DevKit</title>', `<title>${app.title || 'App'}</title>`)
-        .replace('</head>', `${tags.join('\n')}\n  </head>`);
+      // Robustly update lang attribute on <html> tag
+      let result = html.replace(/<html([^>]*)>/i, (match, attrs) => {
+        const updatedAttrs = /lang="/i.test(attrs)
+          ? attrs.replace(/lang="[^"]*"/i, `lang="${app.lang || 'en'}"`)
+          : `${attrs} lang="${app.lang || 'en'}"`;
+        return `<html${updatedAttrs}>`;
+      });
+
+      // Replace any existing <title> or inject one
+      const documentTitle = escapeHtml(app.title || 'App');
+      if (/<title>.*<\/title>/i.test(result)) {
+        result = result.replace(/<title>.*<\/title>/i, `<title>${documentTitle}</title>`);
+      }
+
+      // Inject tags before </head>
+      result = result.replace('</head>', `${tags.join('\n')}\n  </head>`);
+
+      return result;
     },
   };
 }
