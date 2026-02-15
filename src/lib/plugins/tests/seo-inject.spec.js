@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { seoInjectPlugin } from '../../../lib/plugins/seo-inject.js';
+import { seoInjectPlugin } from '../seo-inject.js';
 import testConfig from '../../../config/defaults/test.js';
 
 const baseHtml = `<!doctype html>

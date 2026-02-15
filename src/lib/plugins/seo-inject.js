@@ -53,13 +53,14 @@ export function seoInjectPlugin(config) {
 
       // Robustly update lang attribute on <html> tag
       let result = html.replace(/<html([^>]*)>/i, (match, attrs) => {
+        const lang = escapeHtml(app.lang || 'en');
         const updatedAttrs = /lang="/i.test(attrs)
-          ? attrs.replace(/lang="[^"]*"/i, `lang="${app.lang || 'en'}"`)
-          : `${attrs} lang="${app.lang || 'en'}"`;
+          ? attrs.replace(/lang="[^"]*"/i, `lang="${lang}"`)
+          : `${attrs} lang="${lang}"`;
         return `<html${updatedAttrs}>`;
       });
 
-      // Replace any existing <title> or inject one
+      // Replace existing <title> tag
       const documentTitle = escapeHtml(app.title || 'App');
       if (/<title>.*<\/title>/i.test(result)) {
         result = result.replace(/<title>.*<\/title>/i, `<title>${documentTitle}</title>`);
