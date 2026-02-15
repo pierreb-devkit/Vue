@@ -26,8 +26,6 @@ This stack is designed to be cloned into downstream projects and kept up-to-date
 | Developer          | [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/pierreb-devkit/vue) <br> [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) |
 | Dependencies       | [npm](https://www.npmjs.com)                                                                                                                                                                                                                                                                                                                                                                                |
 | Deliver            | Docker & Docker-compose                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Being released** |
-| Testing            | [Vitest](https://vitest.dev/) WIP                                                                                                                                                                                                                                                                                                                                                                           |
 
 ## :tada: Features Overview
 
@@ -127,9 +125,9 @@ npm run vite:preview      # Vite preview (bypasses config generation)
 
 ### docker
 
-- `docker run --rm -p 8080:80 pierrebrisorgueil/vue`
+- `docker run --rm -p 8080:80 pierreb/vue`
 
-if you want to build yourself : `docker build -t pierrebrisorgueil/vue .` _--build-arg WAOS_VUE_api_port=4000_
+if you want to build yourself : `docker build -t pierreb/vue .` _--build-arg WAOS_VUE_api_port=4000_
 
 ### docker-compose (example with [Node](https://github.com/pierreb-devkit/Node) stack as api)
 
