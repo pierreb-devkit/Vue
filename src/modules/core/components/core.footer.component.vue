@@ -68,12 +68,6 @@ export default {
         background: bgColor,
       };
     },
-    footerStyle() {
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        background: bgColor,
-      };
-    },
   },
   watch: {
     $route(route) {
