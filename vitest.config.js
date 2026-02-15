@@ -13,7 +13,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: ['./src/test-setup.js'],
+    css: false,
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
+
     include: [
       'src/modules/**/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'src/lib/**/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
