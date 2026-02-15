@@ -6,6 +6,22 @@ export default {
     keywords: 'vue, vuetify, axios, jest, cypress',
     author: 'pierre@weareopensource.me',
     icon: 'fa-solid fa-earth-americas',
+    lang: 'en', // html lang attribute, e.g. 'fr', 'en'
+    url: 'http://localhost:8080', // canonical base URL, override in production
+    seo: {
+      og: {
+        type: 'website', // og:type
+        image: '', // absolute URL to social share image (1200x630 recommended)
+        twitterCard: 'summary_large_image', // 'summary' | 'summary_large_image'
+        twitterSite: '', // Twitter @handle of the site, e.g. '@pierreb'
+      },
+      schema: {
+        enabled: false, // set true to inject JSON-LD structured data
+        type: 'Person', // 'Person' | 'Organization'
+        name: '', // e.g. 'Pierre Brisorgueil'
+        sameAs: [], // array of profile URLs: GitHub, LinkedIn, Twitter…
+      },
+    },
   },
   port: 8080, // only available for dev env
   api: {
