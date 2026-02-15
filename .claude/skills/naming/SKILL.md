@@ -1,20 +1,11 @@
+---
+name: naming
+description: Check or apply file and folder naming conventions for this Vue project. Use when creating new files or folders, renaming existing ones, auditing a module for naming consistency, or any time the correct name/path for a file is unclear.
+---
+
 # Naming Skill
 
-Check or apply file and folder naming conventions for this project.
-
-## What it does
-
-Audits existing files or guides new file creation to match the project's naming conventions.
-
-## Usage
-
-Invoke this skill when:
-
-- Creating a new file or folder
-- Renaming an existing file
-- Auditing a module for naming consistency
-
----
+Audit or apply the project's file and folder naming conventions.
 
 ## Conventions
 

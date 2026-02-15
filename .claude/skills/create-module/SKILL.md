@@ -1,14 +1,11 @@
+---
+name: create-module
+description: Create a new feature module by duplicating the canonical `tasks` module template. Use when adding a new module to the application, scaffolding a new domain area from scratch, or generating the boilerplate for a new feature.
+---
+
 # Create Module Skill
 
-Create a new module by duplicating the canonical `tasks` module.
-
-## What it does
-
-Creates a new module with proper naming conventions by copying and renaming the `tasks` module template.
-
-## Usage
-
-Invoke this skill when you need to add a new feature module to the application.
+Create a new module by copying and renaming the `tasks` template module.
 
 ## Prerequisites
 

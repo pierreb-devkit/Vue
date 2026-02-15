@@ -1,17 +1,11 @@
+---
+name: verify
+description: Run the quality loop (lint + test + build) to verify code quality and correctness. Use after making any code changes, before committing, or when asked to check/verify the project works.
+---
+
 # Verify Skill
 
-Run the repository's quality loop to ensure code quality and correctness.
-
-## What it does
-
-1. Runs linting (`npm run lint`)
-2. Runs tests (`npm run test:unit`)
-3. Builds the project (`npm run build`)
-4. Provides a summary of what passed/failed
-
-## Usage
-
-Invoke this skill after making changes to verify everything works correctly.
+Run lint → tests → build and report results.
 
 ## Steps
 

@@ -1,14 +1,11 @@
+---
+name: feature
+description: Implement a new feature or modify existing functionality following the project's modularity rules. Use when adding features, modifying existing ones, or ensuring correct isolation within module boundaries.
+---
+
 # Feature Skill
 
-Implement a new feature following modularity rules.
-
-## What it does
-
-Guides feature implementation with a focus on modularity and isolation.
-
-## Usage
-
-Invoke this skill when implementing a new feature or modifying existing functionality.
+Implement features with strict module isolation and correct layering.
 
 ## Steps
 

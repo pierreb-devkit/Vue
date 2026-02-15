@@ -1,14 +1,11 @@
+---
+name: update-stack
+description: Merge the latest changes from the WeAreOpenSource Vue stack repository into a downstream project. Use when pulling stack updates, syncing with upstream via `git merge vue-stack/master`, or resolving merge conflicts from stack updates.
+---
+
 # Update Stack Skill
 
-Update a downstream project with the latest changes from the Vue stack.
-
-## What it does
-
-Provides pure git steps for merging stack updates into downstream projects while preserving mergeability.
-
-## Usage
-
-Invoke this skill when you need to pull stack updates into a downstream project.
+Pure git workflow for merging stack updates while preserving downstream customizations.
 
 ## Steps
 
