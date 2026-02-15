@@ -27,11 +27,12 @@ describe('app.router', () => {
     expect(typeof router.push).toBe('function');
   });
 
-  it('uses web history (not hash history)', () => {
+  it('uses web history (not hash history)', async () => {
     const router = getRouter();
-    // createWebHistory produces a history object without '#' in base
-    // RouterHistory type is 'html5' for web history, 'hash' for hash history
-    expect(router.options.history.base).not.toContain('#');
+    await router.push('/');
+    await router.isReady();
+    // With createWebHistory, the current URL is a clean path — no hash fragment
+    expect(router.currentRoute.value.fullPath).not.toContain('#');
   });
 
   it('registers routes from all modules', () => {

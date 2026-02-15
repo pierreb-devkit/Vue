@@ -66,8 +66,8 @@ export function seoInjectPlugin(config) {
         result = result.replace(/<title>.*<\/title>/i, `<title>${documentTitle}</title>`);
       }
 
-      // Inject tags before </head>
-      result = result.replace('</head>', `${tags.join('\n')}\n  </head>`);
+      // Inject tags before </head> (replace only the first occurrence)
+      result = result.replace(/<\/head>/i, `${tags.join('\n')}\n  </head>`);
 
       return result;
     },
