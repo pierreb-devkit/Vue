@@ -6,7 +6,7 @@
 
 ## :book: Presentation
 
-A Vue 3 / Vuetify 3 / Vite / JWT stack that can run as a standalone frontend or in a fullstack setup with another repo (ex: [Node](https://github.com/pierreb-devkit/Node), [Swift](https://github.com/pierreb-devkit/Swift)).
+A Vue 3 / Vuetify 3 / Vite / JWT stack that can be run as a standalone frontend or in a fullstack setup with another repo (ex: [Node](https://github.com/pierreb-devkit/Node), [Swift](https://github.com/pierreb-devkit/Swift)).
 
 Designed to be cloned into downstream projects and kept up-to-date via `git merge` from the stack repo.
 
@@ -15,8 +15,8 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 | Subject      | Informations                                                                                                                                                                                                                                                                                               |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Architecture | Layered Architecture : everything is separated in layers, and the upper layers are abstractions of the lower ones, that's why every layer should only reference the immediate lower layer (vertical modules architecture)                                                                                   |
-| Security     | JWT Stateless - have a look on [Node](https://github.com/pierreb-devkit/Node) stack for more informations                                                                                                                                                                                                  |
-| CI           | [Github Action](https://github.com/pierreb-devkit/Vue/actions)                                                                                                                                                                                                                                             |
+| Security     | JWT Stateless - take a look at the [Node](https://github.com/pierreb-devkit/Node) stack for more information                                                                                                                                                                                                  |
+| CI           | [GitHub Actions](https://github.com/pierreb-devkit/Vue/actions)                                                                                                                                                                                                                                             |
 | Linter       | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)                                                                                                                                                                                                                                           |
 | Developer    | [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/pierreb-devkit/vue) <br> [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) |
 | Dependencies | [npm](https://www.npmjs.com)                                                                                                                                                                                                                                                                               |
@@ -51,7 +51,7 @@ npm install
 ### Development
 
 ```bash
-npm start        # or npm run dev
+npm run dev
 ```
 
 Runs dev server with hot-reload at `http://localhost:8080/`
