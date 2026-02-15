@@ -14,6 +14,22 @@ export default {
       'pierre brisorgueil, engineering manager, growth, GTM, B2B SaaS, PLG, PLS, monetization, billing, salesforce, internal tools, devkit, weareopensource, comes.io, montaine.me, l0u.me',
     author: 'pierre@pierreb.me',
     icon: 'fa-solid fa-terminal',
+    lang: 'en',
+    url: 'https://pierreb.me',
+    seo: {
+      og: {
+        type: 'website',
+        image: 'https://pierreb.me/images/logo.webp', // 1200x630 recommended
+        twitterCard: 'summary_large_image',
+        twitterSite: '',
+      },
+      schema: {
+        enabled: true,
+        type: 'Person',
+        name: 'Pierre Brisorgueil',
+        sameAs: ['https://github.com/pierrebrisorgueil', 'https://www.linkedin.com/in/pierre-brisorgueil/'],
+      },
+    },
   },
   port: 8020,
   api: {
