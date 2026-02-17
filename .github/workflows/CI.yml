@@ -27,3 +27,9 @@ jobs:
           UV_USE_IO_URING=0 npm run build
           npm run lint
           npm run test:coverage
+      - name: Upload coverage reports to Codecov
+        if: matrix.node-version == '22.x'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: pierreb-devkit/Vue
