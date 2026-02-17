@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.x, 22.x]
+        node-version: [22.x, 24.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -27,3 +27,9 @@ jobs:
           UV_USE_IO_URING=0 npm run build
           npm run lint
           npm run test:coverage
+      - name: Upload coverage reports to Codecov
+        if: matrix.node-version == 'lts/*'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: pierreb-devkit/Vue
