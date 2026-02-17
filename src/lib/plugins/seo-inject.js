@@ -7,66 +7,42 @@
  * @returns {import('vite').Plugin}
  */
 
+import { buildSeoConfig } from '../helpers/seo.js';
+
 const escapeHtml = (str) =>
   String(str).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' }[char]));
 
 export function seoInjectPlugin(config) {
-  const app = config?.app || {};
-  const seo = app.seo || {};
-  const og = seo.og || {};
-
   return {
     name: 'seo-inject',
     transformIndexHtml(html) {
-      const tags = [];
+      const { title, lang, meta, link } = buildSeoConfig(config);
 
-      if (app.description)
-        tags.push(`  <meta name="description" content="${escapeHtml(app.description)}">`);
-      if (app.keywords)
-        tags.push(`  <meta name="keywords" content="${escapeHtml(app.keywords)}">`);
-      if (app.author)
-        tags.push(`  <meta name="author" content="${escapeHtml(app.author)}">`);
-      if (app.url)
-        tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
-
-      // Open Graph
-      if (app.title)
-        tags.push(`  <meta property="og:title" content="${escapeHtml(app.title)}">`);
-      if (app.description)
-        tags.push(`  <meta property="og:description" content="${escapeHtml(app.description)}">`);
-      tags.push(`  <meta property="og:type" content="${escapeHtml(og.type || 'website')}">`);
-      if (app.url)
-        tags.push(`  <meta property="og:url" content="${escapeHtml(app.url)}">`);
-      if (og.image)
-        tags.push(`  <meta property="og:image" content="${escapeHtml(og.image)}">`);
-
-      // Twitter Card
-      tags.push(`  <meta name="twitter:card" content="${escapeHtml(og.twitterCard || 'summary')}">`);
-      if (app.title)
-        tags.push(`  <meta name="twitter:title" content="${escapeHtml(app.title)}">`);
-      if (app.description)
-        tags.push(`  <meta name="twitter:description" content="${escapeHtml(app.description)}">`);
-      if (og.twitterSite)
-        tags.push(`  <meta name="twitter:site" content="${escapeHtml(og.twitterSite)}">`);
-      if (og.image)
-        tags.push(`  <meta name="twitter:image" content="${escapeHtml(og.image)}">`);
+      const tags = [
+        ...meta.map((m) =>
+          m.property
+            ? `  <meta property="${escapeHtml(m.property)}" content="${escapeHtml(m.content)}">`
+            : `  <meta name="${escapeHtml(m.name)}" content="${escapeHtml(m.content)}">`,
+        ),
+        ...link.map((l) => `  <link rel="${escapeHtml(l.rel)}" href="${escapeHtml(l.href)}">`),
+      ];
 
       // Robustly update lang attribute on <html> tag
       let result = html.replace(/<html([^>]*)>/i, (match, attrs) => {
-        const lang = escapeHtml(app.lang || 'en');
+        const escapedLang = escapeHtml(lang);
         const updatedAttrs = /lang="/i.test(attrs)
-          ? attrs.replace(/lang="[^"]*"/i, `lang="${lang}"`)
-          : `${attrs} lang="${lang}"`;
+          ? attrs.replace(/lang="[^"]*"/i, `lang="${escapedLang}"`)
+          : `${attrs} lang="${escapedLang}"`;
         return `<html${updatedAttrs}>`;
       });
 
       // Replace existing <title> tag
-      const documentTitle = escapeHtml(app.title || 'App');
+      const documentTitle = escapeHtml(title || 'App');
       if (/<title>.*<\/title>/i.test(result)) {
         result = result.replace(/<title>.*<\/title>/i, `<title>${documentTitle}</title>`);
       }
 
-      // Inject tags before </head> (replace only the first occurrence)
+      // Inject tags before </head>
       result = result.replace(/<\/head>/i, `${tags.join('\n')}\n  </head>`);
 
       return result;

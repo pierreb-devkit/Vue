@@ -32,6 +32,7 @@ import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { setupInterceptors } from '../../lib/services/axios';
+import { buildSeoConfig } from '../../lib/helpers/seo.js';
 import waosHeader from '../core/components/core.header.component.vue';
 import waosNav from '../core/components/core.navigation.component.vue';
 import waosFooter from '../core/components/core.footer.component.vue';
@@ -68,49 +69,16 @@ export default {
     },
   },
   created() {
-    const { app } = this.config;
-    const seo = app.seo || {};
-    const og = seo.og || {};
-    const schema = seo.schema || {};
-
-    const meta = [
-      ...(app.description ? [{ name: 'description', content: app.description }] : []),
-      ...(app.keywords ? [{ name: 'keywords', content: app.keywords }] : []),
-      ...(app.author ? [{ name: 'author', content: app.author }] : []),
-      // Open Graph
-      { property: 'og:type', content: og.type || 'website' },
-      ...(app.title ? [{ property: 'og:title', content: app.title }] : []),
-      ...(app.description ? [{ property: 'og:description', content: app.description }] : []),
-      ...(app.url ? [{ property: 'og:url', content: app.url }] : []),
-      ...(og.image ? [{ property: 'og:image', content: og.image }] : []),
-      // Twitter Card
-      { name: 'twitter:card', content: og.twitterCard || 'summary' },
-      ...(app.title ? [{ name: 'twitter:title', content: app.title }] : []),
-      ...(app.description ? [{ name: 'twitter:description', content: app.description }] : []),
-      ...(og.twitterSite ? [{ name: 'twitter:site', content: og.twitterSite }] : []),
-      ...(og.image ? [{ name: 'twitter:image', content: og.image }] : []),
-    ];
-
-    const link = app.url ? [{ rel: 'canonical', href: app.url }] : [];
-
-    const script = schema.enabled && schema.name
-      ? [{
-          type: 'application/ld+json',
-          innerHTML: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': schema.type || 'Person',
-            name: schema.name,
-            url: app.url || undefined,
-            sameAs: schema.sameAs?.length ? schema.sameAs : undefined,
-          }),
-        }]
+    const seoData = buildSeoConfig(this.config);
+    const script = seoData.schema
+      ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(seoData.schema) }]
       : [];
 
     useHead({
-      title: app.title,
-      htmlAttrs: { lang: app.lang || 'en' },
-      meta,
-      link,
+      title: seoData.title,
+      htmlAttrs: { lang: seoData.lang },
+      meta: seoData.meta,
+      link: seoData.link,
       script,
     });
 
