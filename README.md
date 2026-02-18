@@ -1,4 +1,5 @@
 [![CI](https://github.com/pierreb-devkit/Vue/actions/workflows/CI.yml/badge.svg)](https://github.com/pierreb-devkit/Vue/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/pierreb-devkit/Vue/graph/badge.svg?token=52DYZF1BII)](https://codecov.io/gh/pierreb-devkit/Vue)
 [![Dependabot badge](https://img.shields.io/badge/Dependabot-enabled-2768cf.svg?style=flat-square)](https://dependabot.com)
 [![Known Vulnerabilities](https://snyk.io/test/github/pierreb-devkit/vue/badge.svg?style=flat-square)](https://snyk.io/test/github/pierreb-devkit/vue)
 
