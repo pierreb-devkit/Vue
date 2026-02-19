@@ -1,74 +1,82 @@
-# WeAreOpenSource Vue Stack - Claude Code Setup
+# Devkit Vue Stack - Claude Code Setup
 
-This is the **Vue 3 stack** from WeAreOpenSource. It's designed to be cloned into downstream projects and kept up-to-date via `git merge` from the stack repo.
+This repository is the Vue 3 stack from Devkit. It can run as a standalone frontend or as part of a fullstack setup with companion stacks such as Node or Swift.
+
+It is designed to be cloned into downstream projects and kept up-to-date through upstream merges.
 
 ## How to use Claude Code here
 
-Source of truth: **README.md** + **package.json scripts**
+Source of truth: `README.md` + `package.json` scripts.
 
-The `.claude/` folder contains repo-embedded settings and skills that work immediately after cloning.
+The `.claude/` folder contains embedded settings, skills, and agents that are available immediately after cloning.
 
 ## Canonical commands
 
-| Command      | Script                       | Description                               |
-| ------------ | ---------------------------- | ----------------------------------------- |
-| **Dev**      | `npm start` or `npm run dev` | Start dev server (http://localhost:8080/) |
-| **Build**    | `npm run build`              | Build for production                      |
-| **Preview**  | `npm run preview`            | Preview production build                  |
-| **Test**     | `npm test`                   | Run tests in watch mode                   |
-| **Test**     | `npm run test:unit`          | Run unit tests once                       |
-| **Coverage** | `npm run test:coverage`      | Generate test coverage                    |
-| **Lint**     | `npm run lint`               | Check code quality                        |
-| **Lint fix** | `npm run lint:fix`           | Auto-fix linting issues                   |
-| **Format**   | `npm run format`             | Format with Prettier                      |
-| **Config**   | `npm run generateConfig`     | Generate config from env vars             |
-| **Commit**   | `npm run commit`             | Commit with commitizen                    |
-| **Docker**   | `docker-compose up`          | Start with docker-compose                 |
+| Command       | Script                   | Description                                  |
+| ------------- | ------------------------ | -------------------------------------------- |
+| **Dev**       | `npm run dev`            | Start dev server at `http://localhost:8080/` |
+| **Build**     | `npm run build`          | Build for production                         |
+| **Preview**   | `npm run preview`        | Preview production build locally             |
+| **Test**      | `npm test`               | Run tests in watch mode                      |
+| **Unit test** | `npm run test:unit`      | Run unit tests                               |
+| **Coverage**  | `npm run test:coverage`  | Generate test coverage                       |
+| **Lint**      | `npm run lint`           | Check code quality                           |
+| **Lint fix**  | `npm run lint:fix`       | Auto-fix linting issues                      |
+| **Format**    | `npm run format`         | Format with Prettier                         |
+| **Config**    | `npm run generateConfig` | Generate config from env vars                |
+| **Commit**    | `npm run commit`         | Commit with commitizen                       |
+| **Docker**    | `docker-compose up`      | Start with docker-compose                    |
 
-## Modularity rules (important)
+## Preflight
 
-- Each module should be as **independent** as possible
-- Avoid cross-module imports/coupling
-- If shared code is needed, use `src/modules/core` or a small shared layer with **explicit justification**
-- Keep config, routes, data-access, and business logic **inside the module boundary**
-- If a feature touches multiple modules, explain why and minimize surface area
-- Tests are organized per module: `src/modules/*/tests/`
+- Read `ERRORS.md` before proposing changes or code reviews
+- If the AI makes a new recurring mistake, append one line to `ERRORS.md` using `[YYYY-MM-DD] <scope>: <wrong> -> <right>`
 
-## Available Skills
+## Modularity rules
 
-The repo includes these embedded skills (use with `/skill-name`):
+- Keep each module as independent as possible
+- Avoid cross-module imports and coupling
+- Keep config, routes, data-access, and business logic inside the module boundary
+- Put shared code in `src/modules/core` only with explicit justification
+- Keep tests organized per module: `src/modules/*/tests/`
+
+## Always-on guardrails
+
+- Never commit secrets or credentials (`.env*`, `secrets/**`, keys, tokens)
+- Do not introduce cross-module coupling without explicit justification
+- Avoid risky renames or moves of core stack paths used by downstream merges
+- Keep changes minimal and merge-friendly for downstream projects
+- Flag security or mergeability risks explicitly in reviews
+
+## Available embedded skills
+
+Use `.claude/skills/*/SKILL.md` as the primary workflow source for Claude.
 
 | Skill            | Description                                           |
 | ---------------- | ----------------------------------------------------- |
 | `/verify`        | Run quality loop (lint + test + build)                |
-| `/dev`           | Start dev server with hot-reload                      |
-| `/config`        | Generate config from environment variables            |
-| `/docker`        | Start and manage docker-compose services              |
-| `/create-module` | Create new module by duplicating the `tasks` template |
-| `/feature`       | Implement feature following modularity rules          |
-| `/update-stack`  | Merge stack updates into downstream projects          |
-| `/naming`        | Check or apply file and folder naming conventions     |
+| `/create-module` | Create a new module from the `tasks` template         |
+| `/feature`       | Implement a feature while enforcing module isolation  |
+| `/update-stack`  | Merge upstream stack updates into downstream projects |
+| `/naming`        | Apply or audit naming conventions                     |
 
-**Agent:** The repo includes a `stack-maintainer` agent that reviews changes for security and mergeability.
+## Embedded agent
 
-## Popular optional plugins
-
-These plugins are optional and must be installed manually:
-
-```bash
-npx claude-plugins install @anthropics/claude-code-plugins/feature-dev
-npx claude-plugins install @anthropics/claude-code-plugins/code-review
-npx claude-plugins install @anthropics/claude-code-plugins/frontend-design
-```
+- `stack-maintainer` (`.claude/agents/stack-maintainer.md`): quick review guard for mergeability, security, and modularity.
 
 ## Stack merge workflow
 
-Downstream projects merge stack updates via:
-
 ```bash
-git remote add vue-stack https://github.com/weareopensource/Vue.git
-git fetch vue-stack
-git merge vue-stack/master
+git remote add devkit-vue https://github.com/pierreb-devkit/Vue.git
+git fetch devkit-vue
+git merge devkit-vue/master
 ```
 
-Handle conflicts carefully to preserve mergeability. See `/update-stack` skill for details.
+Resolve conflicts carefully to preserve downstream customizations and keep future merges clean.
+
+## Definition of done
+
+- `npm run lint` passes
+- `npm run test:unit` passes
+- `npm run build` passes
+- Cross-module impact is documented and justified when present
