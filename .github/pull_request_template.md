@@ -6,7 +6,7 @@
 
 ## Scope
 
-- Module(s) impacted:
+- Modules impacted:
 - Cross-module impact: `none` / `yes` (if yes, justify)
 - Risk level: `low` / `medium` / `high`
 

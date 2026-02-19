@@ -3,6 +3,7 @@
   "github.copilot.enable": {
     "vue": true,
     "javascript": true,
-    "markdown": true
+    "markdown": true,
+    "json": true
   }
 }

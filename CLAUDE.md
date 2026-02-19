@@ -74,6 +74,8 @@ git merge devkit-vue/master
 
 Resolve conflicts carefully to preserve downstream customizations and keep future merges clean.
 
+> Older changelog entries and some tooling references may still mention `weareopensource/Vue` or "WeAreOpenSource" — treat those as historical upstream references only.
+
 ## Definition of done
 
 - `npm run lint` passes
