@@ -27,7 +27,16 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'tests/', '**/*.config.{js,cjs,mjs,ts}', '**/dist/**'],
+      include: [
+        'src/lib/helpers/**/*.js',
+        'src/lib/services/**/*.js',
+        'src/lib/middlewares/**/*.js',
+        'src/lib/plugins/**/*.js',
+        'src/modules/*/stores/**/*.js',
+        'src/modules/app/app.store.js',
+        'src/modules/app/app.vue',
+      ],
+      exclude: ['node_modules/', '**/tests/**', '**/*.config.{js,cjs,mjs,ts}', '**/dist/**'],
     },
   },
   resolve: {
