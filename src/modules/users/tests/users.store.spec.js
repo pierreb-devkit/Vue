@@ -201,6 +201,36 @@ describe('Users Store', () => {
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
+
+    it('should send only whitelisted fields to the API (not _id, updated, created)', async () => {
+      const usersStore = useUsersStore();
+      usersStore.user = {
+        _id: 'should-not-be-sent',
+        firstName: 'John',
+        lastName: 'Doe',
+        bio: 'Dev',
+        position: 'Engineer',
+        email: 'john@example.com',
+        avatar: '/avatar.jpg',
+        roles: ['user'],
+        updated: '2024-01-01',
+        created: '2023-01-01',
+      };
+
+      axios.put.mockClear();
+      axios.put.mockResolvedValueOnce({ data: { data: usersStore.user } });
+
+      await usersStore.updateUser({ id: 'should-not-be-sent' });
+
+      const sentPayload = axios.put.mock.calls[0][1];
+      expect(sentPayload).not.toHaveProperty('_id');
+      expect(sentPayload).not.toHaveProperty('updated');
+      expect(sentPayload).not.toHaveProperty('created');
+      expect(sentPayload).toHaveProperty('firstName', 'John');
+      expect(sentPayload).toHaveProperty('lastName', 'Doe');
+      expect(sentPayload).toHaveProperty('email', 'john@example.com');
+      expect(sentPayload).toHaveProperty('roles');
+    });
   });
 
   describe('deleteUser', () => {
