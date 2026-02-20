@@ -1,5 +1,14 @@
-# Common Errors to Avoid
+# AI Error Log
 
-## Vuetify 3
+Use this file as a compact memory of recurring AI mistakes.
 
-- **Responsive typography**: Use `text-h5 text-sm-h4` classes, not computed properties or custom CSS media queries
+## Rules
+
+- One error per line
+- Keep each line actionable and specific
+- Use format: `[YYYY-MM-DD] <scope>: <wrong> -> <right>`
+- Add only confirmed/recurrent mistakes and avoid duplicates
+
+## Entries
+
+- [2026-02-19] Vuetify 3 typography: computed/CSS media-query responsive headings -> use Vuetify responsive classes (example: `text-h5 text-sm-h4`)

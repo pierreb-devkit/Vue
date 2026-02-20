@@ -128,11 +128,17 @@ With [Node](https://github.com/pierreb-devkit/Node) stack as API:
 docker-compose up
 ```
 
-## :robot: Claude Code Setup
+## :robot: AI Setup
 
-This stack ships with an embedded [Claude Code](https://claude.ai/claude-code) configuration in the `.claude/` folder — works immediately after cloning, no additional setup needed.
+This stack ships with configurations for Claude Code, GitHub Copilot, and OpenAI Codex — all work immediately after cloning.
 
-### Available Skills
+| Tool              | Config                                                              |
+| ----------------- | ------------------------------------------------------------------- |
+| Claude Code       | `.claude/` — skills embedded, works on clone                        |
+| GitHub Copilot    | `.github/copilot-instructions.md` + `.github/prompts/`              |
+| OpenAI Codex      | `AGENTS.md`                                                         |
+
+### Claude Code — Available Skills
 
 | Skill            | Description                                           |
 | ---------------- | ----------------------------------------------------- |
