@@ -52,7 +52,7 @@ npm install
 ### Development
 
 ```bash
-npm run dev
+npm run dev   # or: npm start
 ```
 
 Runs dev server with hot-reload at `http://localhost:8080/`
@@ -74,7 +74,8 @@ npm run preview    # Preview production build locally
 
 ```bash
 npm test                  # Run tests in watch mode
-npm run test:unit         # Run unit tests
+npm run test:watch        # Run tests in watch mode (explicit alias)
+npm run test:unit         # Run unit tests once (one-shot)
 npm run test:coverage     # Generate coverage report
 ```
 
@@ -92,7 +93,7 @@ npm run format            # Format code with Prettier
 
 ```bash
 npm run commit                                    # Commit with commitizen
-npm run release -- --first-release                # First release
+npm run release -- --first-release                # First release (standard-version)
 npm run release -- --release-as 1.1.1             # Release specific version
 GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 ```
