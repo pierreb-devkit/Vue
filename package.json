@@ -1,23 +1,23 @@
 {
-  "name": "@weareopensource/vue",
+  "name": "@pierreb-devkit/vue",
   "version": "0.1.0",
   "type": "module",
-  "description": "Node - Boilerplate Back : Express, Jwt, Mongo, Sequelize (Beta)  (Based on meanjs and riess.js)",
+  "description": "Vue 3 / Vuetify / Vite / JWT stack — standalone or fullstack with Node/Swift",
   "keywords": [
     "vue",
     "pinia",
     "vuetify",
     "jwt",
-    "jest",
+    "vite",
     "stack",
     "boilerplate"
   ],
   "private": false,
-  "author": "https://github.com/weareopensource/Vue/graphs/contributors",
+  "author": "https://github.com/pierreb-devkit/Vue/graphs/contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/weareopensource/Vue.git"
+    "url": "https://github.com/pierreb-devkit/Vue.git"
   },
   "scripts": {
     "start": "npm run dev",
@@ -37,7 +37,6 @@
     "commit": "npx cz",
     "generateConfig": "node ./scripts/generateConfig.js",
     "check:migration": "node ./scripts/check-vite-migration.js",
-    "release": "npx semantic-release",
     "release:auto": "npx semantic-release",
     "snyk-protect": "snyk protect"
   },
@@ -67,8 +66,8 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
-    "@weareopensource/conventional-changelog": "^1.7.0",
     "autoprefixer": "^10.4.24",
+    "cz-git": "^1.12.0",
     "chalk": "^5.6.2",
     "commitizen": "^4.3.1",
     "eslint": "^9.39.2",
@@ -90,7 +89,7 @@
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/@weareopensource/conventional-changelog"
+      "path": "node_modules/cz-git"
     }
   },
   "release": {
@@ -99,7 +98,7 @@
         "name": "master"
       }
     ],
-    "repositoryUrl": "https://github.com/weareopensource/Vue.git",
+    "repositoryUrl": "https://github.com/pierreb-devkit/Vue.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
