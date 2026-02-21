@@ -38,8 +38,7 @@
     "generateConfig": "node ./scripts/generateConfig.js",
     "check:migration": "node ./scripts/check-vite-migration.js",
     "release:auto": "npx semantic-release",
-    "snyk-protect": "snyk protect",
-    "test": "vitest"
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
