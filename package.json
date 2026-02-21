@@ -20,13 +20,16 @@
     "url": "https://github.com/pierreb-devkit/Vue.git"
   },
   "scripts": {
+    "start": "npm run dev",
     "dev": "npm run generateConfig && npm run vite:dev",
     "build": "npm run generateConfig && npm run vite:build",
     "preview": "npm run generateConfig && npm run vite:preview",
     "vite:dev": "vite",
     "vite:build": "vite build",
     "vite:preview": "vite preview",
-    "test:unit": "vitest",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

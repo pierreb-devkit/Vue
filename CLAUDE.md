@@ -12,20 +12,24 @@ The `.claude/` folder contains embedded settings, skills, and agents that are av
 
 ## Canonical commands
 
-| Command       | Script                   | Description                                  |
-| ------------- | ------------------------ | -------------------------------------------- |
-| **Dev**       | `npm run dev`            | Start dev server at `http://localhost:8080/` |
-| **Build**     | `npm run build`          | Build for production                         |
-| **Preview**   | `npm run preview`        | Preview production build locally             |
-| **Test**      | `npm test`               | Run tests in watch mode                      |
-| **Unit test** | `npm run test:unit`      | Run unit tests                               |
-| **Coverage**  | `npm run test:coverage`  | Generate test coverage                       |
-| **Lint**      | `npm run lint`           | Check code quality                           |
-| **Lint fix**  | `npm run lint:fix`       | Auto-fix linting issues                      |
-| **Format**    | `npm run format`         | Format with Prettier                         |
-| **Config**    | `npm run generateConfig` | Generate config from env vars                |
-| **Commit**    | `npm run commit`         | Commit with commitizen                       |
-| **Docker**    | `docker-compose up`      | Start with docker-compose                    |
+| Command          | Script                   | Description                                  |
+| ---------------- | ------------------------ | -------------------------------------------- |
+| **Dev**          | `npm run dev`            | Start dev server at `http://localhost:8080/` |
+| **Dev (alias)**  | `npm start`              | Alias for `npm run dev`                      |
+| **Build**        | `npm run build`          | Build for production                         |
+| **Preview**      | `npm run preview`        | Preview production build locally             |
+| **Test**         | `npm test`               | Run tests in watch mode                      |
+| **Test watch**   | `npm run test:watch`     | Run tests in watch mode (explicit alias)     |
+| **Unit test**    | `npm run test:unit`      | Run unit tests once (one-shot)               |
+| **Coverage**     | `npm run test:coverage`  | Generate test coverage                       |
+| **Lint**         | `npm run lint`           | Check code quality                           |
+| **Lint fix**     | `npm run lint:fix`       | Auto-fix linting issues                      |
+| **Format**       | `npm run format`         | Format with Prettier                         |
+| **Config**       | `npm run generateConfig` | Generate config from env vars                |
+| **Migration**    | `npm run check:migration`| Check Vite migration compatibility           |
+| **Commit**       | `npm run commit`         | Commit with commitizen                       |
+| **Release (CI)** | `npm run release:auto`   | Semantic release for CI                      |
+| **Docker**       | `docker-compose up`      | Start with docker-compose                    |
 
 ## Preflight
 
