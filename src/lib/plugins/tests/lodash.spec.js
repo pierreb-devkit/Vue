@@ -6,18 +6,18 @@ describe('lodash plugin', () => {
     expect(typeof lodashPlugin.install).toBe('function');
   });
 
-  it('exposes lodash as _ on globalProperties', () => {
+  it('exposes lodash as lodash on globalProperties', () => {
     const app = { config: { globalProperties: {} } };
     lodashPlugin.install(app);
-    expect(app.config.globalProperties._).toBeDefined();
+    expect(app.config.globalProperties.lodash).toBeDefined();
   });
 
-  it('exposed _ is a functional lodash instance', () => {
+  it('exposed lodash is a functional lodash instance', () => {
     const app = { config: { globalProperties: {} } };
     lodashPlugin.install(app);
-    const _ = app.config.globalProperties._;
-    expect(typeof _.isArray).toBe('function');
-    expect(_.isArray([1, 2, 3])).toBe(true);
-    expect(_.pick({ a: 1, b: 2 }, ['a'])).toEqual({ a: 1 });
+    const lodash = app.config.globalProperties.lodash;
+    expect(typeof lodash.isArray).toBe('function');
+    expect(lodash.isArray([1, 2, 3])).toBe(true);
+    expect(lodash.pick({ a: 1, b: 2 }, ['a'])).toEqual({ a: 1 });
   });
 });

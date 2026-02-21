@@ -8,6 +8,6 @@ import _ from 'lodash';
  */
 export default {
   install: (app) => {
-    app.config.globalProperties._ = _;
+    app.config.globalProperties.lodash = _;
   },
 };
