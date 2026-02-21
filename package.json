@@ -98,7 +98,6 @@
         "name": "master"
       }
     ],
-    "ci": false,
     "repositoryUrl": "https://github.com/pierreb-devkit/Vue.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
