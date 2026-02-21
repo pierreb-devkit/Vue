@@ -3,7 +3,7 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import _ from 'lodash';
 import CoreDatatable from '../components/core.datatable.component.vue';
 
@@ -29,13 +29,19 @@ describe('core.datatable.component', () => {
   let vuetify;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     setActivePinia(createPinia());
     vuetify = createVuetify({ components, directives });
   });
 
-  // Regression: template used `lodash.get` but plugin only registers `_` on
-  // globalProperties — causing TypeError when items first loaded.
-  it('renders item values via _.get without throwing (regression: lodash.get → _.get)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // Regression: plugin registered lodash as `_` on globalProperties but `_` is
+  // reserved by Vue 3's template compiler — `_ctx._` resolves to the internal
+  // context, not lodash. Fix: register as `lodash` so `lodash.get(...)` works.
+  it('renders item values via lodash.get without throwing (regression: globalProperties._ → globalProperties.lodash)', () => {
     const headers = [{ text: 'First Name', value: 'firstName' }];
     const items = [{ _id: '1', firstName: 'John' }];
     const wrapper = mount(CoreDatatable, {
