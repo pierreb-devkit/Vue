@@ -20,13 +20,16 @@
     "url": "https://github.com/weareopensource/Vue.git"
   },
   "scripts": {
+    "start": "npm run dev",
     "dev": "npm run generateConfig && npm run vite:dev",
     "build": "npm run generateConfig && npm run vite:build",
     "preview": "npm run generateConfig && npm run vite:preview",
     "vite:dev": "vite",
     "vite:build": "vite build",
     "vite:preview": "vite preview",
-    "test:unit": "vitest",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -35,8 +38,8 @@
     "generateConfig": "node ./scripts/generateConfig.js",
     "check:migration": "node ./scripts/check-vite-migration.js",
     "release": "npx semantic-release",
-    "snyk-protect": "snyk protect",
-    "test": "vitest"
+    "release:auto": "npx semantic-release",
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
