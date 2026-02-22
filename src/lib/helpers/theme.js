@@ -1,7 +1,7 @@
 /**
  * @desc Function to return actual theme
  * @param {String} option in config
- * @return {Boolean} dark value
+ * @returns {Boolean} dark value
  */
 export const isDark = (theme) => {
   if (theme === 'auto') {
@@ -13,7 +13,7 @@ export const isDark = (theme) => {
 /**
  * @desc Function to return custom css object
  * @param {String} String, section, card, video
- * @return {Object} object in config { background: ... }
+ * @returns {Object} object in config { background: ... }
  */
 export const style = (kind, object) => {
   const style = {};
@@ -41,7 +41,7 @@ export const style = (kind, object) => {
 /**
  * @desc Helper to convert hex color to RGB string
  * @param {String} hex - Hex color (e.g. #RRGGBB)
- * @return {String} RGB string (e.g. "255,255,255")
+ * @returns {String} RGB string (e.g. "255,255,255")
  */
 const hexToRgb = (hex) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -53,7 +53,7 @@ const hexToRgb = (hex) => {
  * @param {String} hex - Hex color (e.g. #RRGGBB)
  * @param {Number} amount - Amount to adjust (-1 to 1, or 0-100 for legacy percent mode)
  * @param {String} output - 'rgb' for RGB string, 'hex' for hex string. Default: 'rgb'
- * @return {String} RGB string (e.g. "255,255,255") or hex string (e.g. "#ffffff")
+ * @returns {String} RGB string (e.g. "255,255,255") or hex string (e.g. "#ffffff")
  */
 const adjustColor = (hex, amount, output = 'rgb') => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -97,7 +97,7 @@ const adjustColor = (hex, amount, output = 'rgb') => {
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
  * @param {Boolean|String} options.glowBorder - false, true (static gradient), or 'animated' (rotating). Default: false
  * @param {Object} options.extras - Additional CSS properties to merge
- * @return {Object} CSS style object with liquid glass effect
+ * @returns {Object} CSS style object with liquid glass effect
  */
 export const liquidGlassStyle = ({
   vuetifyTheme,
@@ -208,7 +208,7 @@ export const liquidGlassStyle = ({
  * @desc Generate overlap style for container (slides up into previous section)
  * @param {Boolean|String|Object} overlap - true (defaults), string ('30vh'), or { mobile: '20vh', desktop: '40vh' }
  * @param {Object} display - Vuetify display object ($vuetify.display)
- * @return {Object} Style object with margin-top, position and z-index
+ * @returns {Object} Style object with margin-top, position and z-index
  */
 export const overlapStyle = (overlap, display) => {
   if (!overlap) return {};
@@ -235,7 +235,7 @@ export const overlapStyle = (overlap, display) => {
  * @desc Helper to lighten a hex color
  * @param {String} hex - Hex color (e.g. #RRGGBB)
  * @param {Number} percent - Percentage to lighten (0-100)
- * @return {String} Hex color string
+ * @returns {String} Hex color string
  */
 export const lightenColor = (hex, percent) => adjustColor(hex, percent, 'hex');
 
