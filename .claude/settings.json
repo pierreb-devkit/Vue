@@ -108,9 +108,117 @@
         {
           "command": "docker-compose ps",
           "prompt": "Show docker-compose status"
+        },
+        {
+          "command": "git switch -c *",
+          "prompt": "Create new branch"
+        },
+        {
+          "command": "git switch *",
+          "prompt": "Switch branch"
+        },
+        {
+          "command": "git fetch origin",
+          "prompt": "Fetch from origin"
+        },
+        {
+          "command": "git fetch *",
+          "prompt": "Fetch remote"
+        },
+        {
+          "command": "git rebase origin/main",
+          "prompt": "Rebase on main"
+        },
+        {
+          "command": "git rebase origin/master",
+          "prompt": "Rebase on master"
+        },
+        {
+          "command": "git rebase origin/HEAD",
+          "prompt": "Rebase on default branch"
+        },
+        {
+          "command": "git rebase --continue",
+          "prompt": "Continue rebase after conflict resolution"
+        },
+        {
+          "command": "git add *",
+          "prompt": "Stage files"
+        },
+        {
+          "command": "git push -u origin HEAD",
+          "prompt": "Push current branch to origin"
+        },
+        {
+          "command": "git push --force-with-lease origin HEAD",
+          "prompt": "Force push with lease after rebase"
+        },
+        {
+          "command": "git rev-parse *",
+          "prompt": "Get commit reference"
+        },
+        {
+          "command": "gh pr create *",
+          "prompt": "Create pull request"
+        },
+        {
+          "command": "gh pr ready *",
+          "prompt": "Convert draft PR to ready for review"
+        },
+        {
+          "command": "gh pr view *",
+          "prompt": "View pull request"
+        },
+        {
+          "command": "gh pr checks *",
+          "prompt": "Check PR CI status"
+        },
+        {
+          "command": "gh pr edit *",
+          "prompt": "Edit pull request"
+        },
+        {
+          "command": "gh pr comment *",
+          "prompt": "Comment on pull request"
+        },
+        {
+          "command": "gh issue list *",
+          "prompt": "List issues"
+        },
+        {
+          "command": "gh issue create *",
+          "prompt": "Create issue"
+        },
+        {
+          "command": "gh label list",
+          "prompt": "List repository labels"
+        },
+        {
+          "command": "gh label list *",
+          "prompt": "List repository labels"
+        },
+        {
+          "command": "gh repo view *",
+          "prompt": "View repository info"
+        },
+        {
+          "command": "gh api *",
+          "prompt": "GitHub API call"
+        },
+        {
+          "command": "sleep *",
+          "prompt": "Wait/sleep"
         }
       ],
       "deny": [
+        {
+          "pattern": "git switch main",
+          "reason": "Never work directly on main — create a feature branch"
+        },
+        {
+          "pattern": "git switch master",
+          "reason": "Never work directly on master — create a feature branch"
+        },
         {
           "pattern": "rm -rf *",
           "reason": "Destructive command"
@@ -128,8 +236,20 @@
           "reason": "Arbitrary code execution risk"
         },
         {
-          "pattern": "git push *",
-          "reason": "Automatic push not allowed"
+          "pattern": "git push --force",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
+        },
+        {
+          "pattern": "git push --force *",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
+        },
+        {
+          "pattern": "git push -f",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
+        },
+        {
+          "pattern": "git push -f *",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
         },
         {
           "pattern": "npm publish",
