@@ -12,5 +12,5 @@ Use this file as a compact memory of recurring AI mistakes.
 ## Entries
 
 - [2026-02-19] Vuetify 3 typography: computed/CSS media-query responsive headings -> use Vuetify responsive classes (example: `text-h5 text-sm-h4`)
-- [2026-02-22] functions: new or modified functions without JSDoc header -> always add JSDoc (description + `@param` + `@returns`)
+- [2026-02-22] functions: new or modified functions without JSDoc header -> always add JSDoc (description + `@param` for each arg + `@returns` for non-void return values and all async functions)
 - [2026-02-22] tests: never patch code to pass a test -> if a test is wrong, fix the test; if logic needs refactoring, refactor it
