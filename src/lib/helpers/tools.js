@@ -19,7 +19,7 @@ export const releasesNumber = (release) => {
  * @param {Int} page
  * @param {Int} perPage
  * @param {String} search
- * @returns {String} server-items-length
+ * @returns {String} Pagination request string
  */
 export const pageRequest = (page, perPage, search) => {
   let request = `${page - 1}&${perPage}`;
