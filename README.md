@@ -148,6 +148,7 @@ This stack ships preconfigured instruction and prompt files for Claude Code, Git
 | `/feature`       | Implement feature following modularity rules          |
 | `/update-stack`  | Merge stack updates into downstream projects          |
 | `/naming`        | Check or apply file and folder naming conventions     |
+| `/pr`            | Full PR lifecycle: branch, commit, issue, monitor     |
 
 ### Modularity Rules
 
