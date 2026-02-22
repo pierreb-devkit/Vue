@@ -1,6 +1,6 @@
 /**
  * @desc Function to return actual theme
- * @param {String} option in config
+ * @param {String} theme - Theme option from config ('dark', 'light', or 'auto')
  * @returns {Boolean} dark value
  */
 export const isDark = (theme) => {
@@ -12,7 +12,8 @@ export const isDark = (theme) => {
 
 /**
  * @desc Function to return custom css object
- * @param {String} String, section, card, video
+ * @param {String} kind - Style section key (e.g. 'section', 'card', 'video')
+ * @param {Object} object - Config object containing the style definitions
  * @returns {Object} object in config { background: ... }
  */
 export const style = (kind, object) => {
