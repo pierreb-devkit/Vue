@@ -204,6 +204,10 @@
         {
           "command": "gh api *",
           "prompt": "GitHub API call"
+        },
+        {
+          "command": "sleep *",
+          "prompt": "Wait/sleep"
         }
       ],
       "deny": [
@@ -225,6 +229,14 @@
         },
         {
           "pattern": "git push --force",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
+        },
+        {
+          "pattern": "git push --force *",
+          "reason": "Force push without lease is not allowed — use --force-with-lease"
+        },
+        {
+          "pattern": "git push -f *",
           "reason": "Force push without lease is not allowed — use --force-with-lease"
         },
         {
