@@ -1,13 +1,13 @@
 /**
  * @desc Function to return actual theme
  * @param {String} theme - Theme option from config ('dark', 'light', or 'auto')
- * @returns {Boolean} dark value
+ * @returns {Boolean} true if dark mode is active, false otherwise
  */
 export const isDark = (theme) => {
   if (theme === 'auto') {
     return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
-  return !!theme;
+  return theme === 'dark';
 };
 
 /**
