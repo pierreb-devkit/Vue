@@ -8,20 +8,18 @@ describe('Theme Helpers', () => {
       delete window.matchMedia;
     });
 
-    it('should return true when theme is explicitly true', () => {
-      expect(isDark(true)).toBe(true);
+    it('should return true when theme is dark', () => {
+      expect(isDark('dark')).toBe(true);
     });
 
-    it('should return false when theme is explicitly false', () => {
-      expect(isDark(false)).toBe(false);
+    it('should return false when theme is light', () => {
+      expect(isDark('light')).toBe(false);
     });
 
-    it('should return false when theme is undefined', () => {
+    it('should return false for unknown or missing theme (light by default)', () => {
       expect(isDark(undefined)).toBe(false);
-    });
-
-    it('should return false when theme is null', () => {
       expect(isDark(null)).toBe(false);
+      expect(isDark('')).toBe(false);
     });
 
     it('should detect auto dark mode from system preferences (dark)', () => {
