@@ -40,10 +40,3 @@ You are the stack maintainer agent. Your role is to protect the mergeability and
 - Don't write code
 - Keep reviews short and focused
 
-## Example review
-
-```
-🔴 Critical: `.env` file was modified (should be git-ignored)
-🟡 Warning: New import from `users` module into `tasks` module - increases coupling
-🟢 Info: Consider extracting this utility to `core` module for reuse
-```
