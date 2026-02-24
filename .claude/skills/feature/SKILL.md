@@ -53,7 +53,11 @@ Follow the stack's architecture:
 
 ### 5. Run verify (dedicated skill)
 
-### 6. Provide summary
+### 6. Open pull request
+
+Once verify passes, invoke `/pull-request` to open the PR and run the full monitoring loop (draft → CI → review iteration → stop condition).
+
+### 7. Provide summary
 
 - ✅ Feature implemented in module: `{module-name}`
 - 🔍 Cross-module coupling: `{none | explain if any}`
