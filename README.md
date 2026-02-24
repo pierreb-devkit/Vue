@@ -141,22 +141,7 @@ This stack ships preconfigured instruction and prompt files for Claude Code, Git
 
 ### Claude Code — Available Skills
 
-| Skill            | Description                                           |
-| ---------------- | ----------------------------------------------------- |
-| `/verify`        | Run quality loop (lint + test + build)                |
-| `/create-module` | Create new module by duplicating the `tasks` template |
-| `/feature`       | Implement feature following modularity rules          |
-| `/update-stack`  | Merge stack updates into downstream projects          |
-| `/naming`        | Check or apply file and folder naming conventions     |
-| `/pull-request`  | Full PR lifecycle: branch, commit, issue, monitor     |
-
-### Modularity Rules
-
-- Each module should be as **independent** as possible
-- Avoid cross-module imports/coupling
-- Shared code goes in `src/modules/core` with explicit justification
-- Keep config, routes, data-access, and business logic **inside the module boundary**
-- Tests are organized per module: `src/modules/*/tests/`
+Skills available via `/verify`, `/feature`, `/create-module`, `/update-stack`, `/naming`, `/pull-request` — see `.claude/skills/` for details.
 
 ### Stack Merge Workflow
 

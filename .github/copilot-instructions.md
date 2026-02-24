@@ -7,30 +7,20 @@
 
 ## Canonical commands
 
-- Dev: `npm run dev` (alias: `npm start`)
-- Build: `npm run build`
-- Preview: `npm run preview`
-- Tests: `npm test` / `npm run test:watch` (watch) or `npm run test:unit` (one-shot)
-- Coverage: `npm run test:coverage`
-- Lint: `npm run lint`
-- Lint fix: `npm run lint:fix`
-- Format: `npm run format`
-- Generate config: `npm run generateConfig`
-- Commit: `npm run commit`
-- Release (CI): `npm run release:auto`
+Scripts: see `package.json` → `scripts` section.
 
 ## Available prompts
 
 Use `.github/prompts/*.prompt.md` for guided workflows:
 
-| Task | Prompt file |
-| ---- | ----------- |
-| Verify | `.github/prompts/verify.prompt.md` |
-| Feature | `.github/prompts/feature.prompt.md` |
+| Task          | Prompt file                               |
+| ------------- | ----------------------------------------- |
+| Verify        | `.github/prompts/verify.prompt.md`        |
+| Feature       | `.github/prompts/feature.prompt.md`       |
 | Create module | `.github/prompts/create-module.prompt.md` |
-| Update stack | `.github/prompts/update-stack.prompt.md` |
-| Naming | `.github/prompts/naming.prompt.md` |
-| PR | `.github/prompts/pull-request.prompt.md` |
+| Update stack  | `.github/prompts/update-stack.prompt.md`  |
+| Naming        | `.github/prompts/naming.prompt.md`        |
+| PR            | `.github/prompts/pull-request.prompt.md`  |
 
 ## Always-on guardrails
 
