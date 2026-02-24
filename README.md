@@ -151,6 +151,8 @@ git fetch devkit-vue
 git merge devkit-vue/master
 ```
 
+> Caution: resolve conflicts manually to preserve downstream customizations before pushing.
+
 ## :pencil2: Contribute
 
 Open issues and pull requests on [GitHub](https://github.com/pierreb-devkit/Vue).
