@@ -66,7 +66,7 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
-    "autoprefixer": "^10.4.24",
+    "autoprefixer": "^10.4.27",
     "cz-git": "^1.12.0",
     "chalk": "^5.6.2",
     "commitizen": "^4.3.1",
