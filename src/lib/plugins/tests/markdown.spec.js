@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+/** @returns {import('vitest').Mock} Hoisted mock for marked.parse, wraps source in a paragraph tag. */
 const parseMock = vi.hoisted(() => vi.fn().mockImplementation((src) => `<p>${src}</p>`));
+/** @returns {import('vitest').Mock} Hoisted mock for marked.parseInline, wraps source in a strong tag. */
 const parseInlineMock = vi.hoisted(() => vi.fn().mockImplementation((src) => `<strong>${src}</strong>`));
 
 vi.mock('marked', () => ({
@@ -12,12 +14,16 @@ vi.mock('marked', () => ({
 }));
 
 vi.mock('dompurify', () => ({
+  /** @param {string} html - Raw HTML string to sanitize. @returns {string} The sanitized HTML string (passthrough in tests). */
   default: { sanitize: vi.fn((html) => html) },
 }));
 
 import markdownPlugin from '../markdown';
 
-// Extract the VMarkdown component definition via install()
+/**
+ * Extract the VMarkdown component definition via install().
+ * @returns {object} The VMarkdown component options object registered on the mock app.
+ */
 const getComponent = () => {
   const registered = {};
   const app = { component: (name, def) => (registered[name] = def) };
