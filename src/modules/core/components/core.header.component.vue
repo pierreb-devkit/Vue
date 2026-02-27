@@ -16,12 +16,12 @@
       </router-link>
       <!-- Menu -->
       <span v-for="({ title, url, sublinks }, i) in config.header.links" :key="i" class="hidden-sm-and-down">
-        <v-btn v-if="!sublinks" class="text-none text-body-2" @click="navigate(url)">
+        <v-btn v-if="!sublinks" class="text-none text-body-medium" @click="navigate(url)">
           {{ title }}
         </v-btn>
         <v-menu v-if="sublinks" location="bottom" max-width="400px">
           <template #activator="{ props }">
-            <v-btn v-bind="props" class="text-none text-body-1">
+            <v-btn v-bind="props" class="text-none text-body-large">
               {{ title }}
               <v-icon class="mt-1 ml-2" size="x-small">fa-solid fa-angle-down</v-icon>
             </v-btn>
@@ -36,8 +36,8 @@
               <template #prepend>
                 <v-icon :color="color" size="small">{{ icon }}</v-icon>
               </template>
-              <v-list-item-title class="text-body-2 font-weight-medium">{{ linkTitle }}</v-list-item-title>
-              <v-list-item-subtitle v-if="subtitle" class="text-caption">{{ subtitle }}</v-list-item-subtitle>
+              <v-list-item-title class="text-body-medium font-weight-medium">{{ linkTitle }}</v-list-item-title>
+              <v-list-item-subtitle v-if="subtitle" class="text-label-small">{{ subtitle }}</v-list-item-subtitle>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -50,7 +50,7 @@
       <v-btn
         v-for="({ title, url, variant }, i) in config.header.shortcuts"
         :key="i"
-        class="hidden-sm-and-down text-none text-body-2 mr-2"
+        class="hidden-sm-and-down text-none text-body-medium mr-2"
         :class="`${config.vuetify.theme.rounded}`"
         :variant="variant"
         :style="{ color: theme.current.colors.onBackground }"
@@ -69,14 +69,14 @@
           <!-- Menu -->
           <v-list density="compact">
             <v-list-item v-for="({ title, sublinks }, i) in config.header.links.filter((v) => v.sublinks)" :key="i">
-              <v-list-item-title class="text-subtitle-2 font-weight-bold text-medium-emphasis">{{ title }}</v-list-item-title>
+              <v-list-item-title class="text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-list-item-title>
               <v-list lines="one" density="compact">
                 <v-list-item v-for="({ icon, title: linkTitle, url: linkUrl, color, subtitle }, j) in sublinks" :key="j" @click="navigate(linkUrl)">
                   <template #prepend>
                     <v-icon :color="color" size="small">{{ icon }}</v-icon>
                   </template>
-                  <v-list-item-title class="text-body-2 font-weight-medium">{{ linkTitle }}</v-list-item-title>
-                  <v-list-item-subtitle v-if="subtitle" class="text-caption">{{ subtitle }}</v-list-item-subtitle>
+                  <v-list-item-title class="text-body-medium font-weight-medium">{{ linkTitle }}</v-list-item-title>
+                  <v-list-item-subtitle v-if="subtitle" class="text-label-small">{{ subtitle }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-list-item>
@@ -85,7 +85,7 @@
           <!-- Menu 2 -->
           <v-list class="mx-2" density="compact">
             <v-list-item v-for="({ title, url }, i) in config.header.links.filter((v) => !v.sublinks)" :key="i" @click="navigate(url)">
-              <v-list-item-title class="text-body-2 font-weight-medium">{{ title }}</v-list-item-title>
+              <v-list-item-title class="text-body-medium font-weight-medium">{{ title }}</v-list-item-title>
             </v-list-item>
           </v-list>
           <v-divider></v-divider>
@@ -97,7 +97,7 @@
                 background: config.vuetify.theme.header.background,
                 color: config.vuetify.theme.header.color,
               }"
-              class="text-none text-body-2"
+              class="text-none text-body-medium"
               width="100%"
               @click="navigate(url)"
             >

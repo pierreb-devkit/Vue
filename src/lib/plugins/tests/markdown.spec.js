@@ -56,7 +56,7 @@ describe('markdown plugin', () => {
       const component = getComponent();
       const vnode = component.render.call({ source: '# Hello' });
       expect(vnode).not.toBeNull();
-      expect(vnode.type).toBe('span');
+      expect(vnode.type).toBe('div');
       expect(vnode.props.innerHTML).toBe('<h1>Hello</h1>');
     });
 
@@ -74,7 +74,7 @@ describe('markdown plugin', () => {
       const component = getComponent();
       const vnode = component.render.call({ source: 'raw text' });
       expect(vnode).not.toBeNull();
-      expect(vnode.type).toBe('span');
+      expect(vnode.type).toBe('div');
       expect(consoleErrorSpy).toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });

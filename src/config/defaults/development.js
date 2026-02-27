@@ -213,6 +213,7 @@ export default {
     // - haloColors (Array): 5 colors for animated halos (blur variant)
     hero: {
       variant: 'blur',
+      overlap: true,
       title: 'Turn your ideas <br /> <b><span style="color:#55efc4">into a reality.</span></b>',
       subtitle: 'WeAreOpenSource allow you to start projects faster with scalable stacks.',
       button: {

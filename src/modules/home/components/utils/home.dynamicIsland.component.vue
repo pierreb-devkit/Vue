@@ -30,7 +30,7 @@
     <div :class="['dynamicIsland', { fixed: isFixed, expand: animate, minimize: hasAnimated && !animate }]" class="mt-10" :style="dynamicIslandStyle">
       <div :class="['content', { fadeIn: animate, fadeOut: !animate }]">
         <div class="text-center font-weight-bold text-white">
-          <span v-if="text && !steps" class="ml-4 mt-1 text-h6 text-truncate">{{ text }}</span>
+          <span v-if="text && !steps" class="ml-4 mt-1 text-headline-small text-truncate">{{ text }}</span>
           <span v-if="step !== null && steps !== null">
             <span
               v-for="index in stepsArray"

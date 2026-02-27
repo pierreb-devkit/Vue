@@ -51,7 +51,7 @@
               hide-slider
               mobile-breakpoint=""
             >
-              <span class="text-capitalize text-h6 text-md-h5 font-weight-bold"> {{ title }}</span>
+              <span class="text-capitalize text-headline-small text-md-headline-medium font-weight-bold"> {{ title }}</span>
             </v-tab>
           </v-tabs>
           <v-carousel
@@ -79,8 +79,8 @@
                     ></homeImgComponent>
                   </v-col>
                   <v-col class="text-left px-10" cols="12" sm="12" md="6">
-                    <h4 v-if="subtitle" class="text-h5 text-md-h3 font-weight-bold mb-8">{{ subtitle }}</h4>
-                    <VMarkdown v-if="text" :source="text" class="text-h6 text-md-h4" />
+                    <h4 v-if="subtitle" class="text-headline-medium text-md-display-small font-weight-bold mb-8">{{ subtitle }}</h4>
+                    <VMarkdown v-if="text" :source="text" class="text-headline-small text-md-headline-large" />
                   </v-col>
                   <v-col v-if="subimg && !reversed" class="px-10" cols="12" sm="12" md="6">
                     <homeImgComponent
