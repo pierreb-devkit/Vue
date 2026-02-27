@@ -61,10 +61,10 @@
         <v-row class="fill-height" align="center" justify="center">
           <v-col class="text-white text-center">
             <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium blur-title">
-              <VMarkdown v-if="title" :source="title" class="d-inline" />
+              <VMarkdown v-if="title" :source="title" inline />
             </h2>
             <p class="mb-10 font-weight-medium text-body-large text-md-headline-small blur-subtitle">
-              <VMarkdown v-if="subtitle" :source="subtitle" class="d-inline" />
+              <VMarkdown v-if="subtitle" :source="subtitle" inline />
             </p>
             <v-btn
               v-if="button && button.title"
@@ -95,8 +95,8 @@
       <v-container class="fill-height" :style="containerStyle">
         <v-row class="fill-height" align="center" justify="center">
           <v-col class="text-white text-center">
-            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium"><VMarkdown v-if="title" :source="title" class="d-inline" /></h2>
-            <p class="mb-10 font-weight-medium text-body-large text-md-headline-small"><VMarkdown v-if="subtitle" :source="subtitle" class="d-inline" /></p>
+            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium"><VMarkdown v-if="title" :source="title" inline /></h2>
+            <p class="mb-10 font-weight-medium text-body-large text-md-headline-small"><VMarkdown v-if="subtitle" :source="subtitle" inline /></p>
             <v-btn
               v-if="button && button.title"
               :href="button.link"
@@ -182,6 +182,11 @@ export default {
     themeName() {
       return this.theme.name;
     },
+    /**
+     * Compute container padding to vertically center content in the visible hero area.
+     * Accounts for the 65px navbar overlap at the top and the optional overlap prop at the bottom.
+     * @returns {{ 'padding-top': string, 'padding-bottom': string }} Style object with top and bottom padding.
+     */
     containerStyle() {
       const isSmAndDown = this.$vuetify?.display?.smAndDown;
       let paddingBottom = '0px';

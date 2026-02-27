@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const parseMock = vi.hoisted(() => vi.fn().mockImplementation((src) => `<p>${src}</p>`));
+const parseInlineMock = vi.hoisted(() => vi.fn().mockImplementation((src) => `<strong>${src}</strong>`));
 
 vi.mock('marked', () => ({
   marked: {
     parse: parseMock,
+    parseInline: parseInlineMock,
     setOptions: vi.fn(),
   },
+}));
+
+vi.mock('dompurify', () => ({
+  default: { sanitize: vi.fn((html) => html) },
 }));
 
 import markdownPlugin from '../markdown';
@@ -22,6 +28,7 @@ const getComponent = () => {
 describe('markdown plugin', () => {
   beforeEach(() => {
     parseMock.mockImplementation((src) => `<p>${src}</p>`);
+    parseInlineMock.mockImplementation((src) => `<strong>${src}</strong>`);
     vi.clearAllMocks();
   });
 
@@ -41,40 +48,73 @@ describe('markdown plugin', () => {
       expect(component.props.source.default).toBe('');
     });
 
+    it('has an inline prop defaulting to false', () => {
+      const component = getComponent();
+      expect(component.props.inline.default).toBe(false);
+    });
+
     it('render() returns null when source is empty string', () => {
       const component = getComponent();
-      expect(component.render.call({ source: '' })).toBeNull();
+      expect(component.render.call({ source: '', inline: false })).toBeNull();
     });
 
     it('render() returns null when source is falsy', () => {
       const component = getComponent();
-      expect(component.render.call({ source: null })).toBeNull();
+      expect(component.render.call({ source: null, inline: false })).toBeNull();
     });
 
-    it('render() returns a vnode wrapping parsed HTML', () => {
+    it('render() returns a div vnode wrapping parsed HTML in block mode', () => {
       parseMock.mockReturnValueOnce('<h1>Hello</h1>');
       const component = getComponent();
-      const vnode = component.render.call({ source: '# Hello' });
+      const vnode = component.render.call({ source: '# Hello', inline: false });
       expect(vnode).not.toBeNull();
       expect(vnode.type).toBe('div');
       expect(vnode.props.innerHTML).toBe('<h1>Hello</h1>');
     });
 
-    it('render() calls marked.parse with the source', () => {
+    it('render() returns a span vnode wrapping parsed HTML in inline mode', () => {
+      parseInlineMock.mockReturnValueOnce('<strong>Hello</strong>');
       const component = getComponent();
-      component.render.call({ source: 'some text' });
+      const vnode = component.render.call({ source: '**Hello**', inline: true });
+      expect(vnode).not.toBeNull();
+      expect(vnode.type).toBe('span');
+      expect(vnode.props.innerHTML).toBe('<strong>Hello</strong>');
+    });
+
+    it('render() calls marked.parse in block mode', () => {
+      const component = getComponent();
+      component.render.call({ source: 'some text', inline: false });
       expect(parseMock).toHaveBeenCalledWith('some text');
     });
 
-    it('render() falls back to raw source span when marked.parse throws', () => {
+    it('render() calls marked.parseInline in inline mode', () => {
+      const component = getComponent();
+      component.render.call({ source: 'some text', inline: true });
+      expect(parseInlineMock).toHaveBeenCalledWith('some text');
+    });
+
+    it('render() falls back to raw source div when marked.parse throws', () => {
       parseMock.mockImplementationOnce(() => {
         throw new Error('parse error');
       });
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const component = getComponent();
-      const vnode = component.render.call({ source: 'raw text' });
+      const vnode = component.render.call({ source: 'raw text', inline: false });
       expect(vnode).not.toBeNull();
       expect(vnode.type).toBe('div');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('render() falls back to raw source span when marked.parseInline throws in inline mode', () => {
+      parseInlineMock.mockImplementationOnce(() => {
+        throw new Error('parse error');
+      });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const component = getComponent();
+      const vnode = component.render.call({ source: 'raw text', inline: true });
+      expect(vnode).not.toBeNull();
+      expect(vnode.type).toBe('span');
       expect(consoleErrorSpy).toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
