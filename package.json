@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
-    "@tryghost/content-api": "^1.12.2",
+    "@tryghost/content-api": "^1.12.5",
     "@unhead/vue": "^2.1.9",
     "aos": "^2.3.4",
     "unhead": "^2.1.9",
