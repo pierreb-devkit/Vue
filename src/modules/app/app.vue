@@ -136,19 +136,18 @@ export default {
   border: none !important;
 }
 
-.v-application .text-overline,
-.v-application .text-caption,
-.v-application .text-button,
-.v-application .text-body-2,
-.v-application .text-body-1,
-.v-application .text-subtitle-2,
-.v-application .text-subtitle-1,
-.v-application .text-h6,
-.v-application .text-h5,
-.v-application .text-h4,
-.v-application .text-h3,
-.v-application .text-h2,
-.v-application .text-h1 {
+.v-application .text-label-medium,
+.v-application .text-label-small,
+.v-application .text-body-medium,
+.v-application .text-body-large,
+.v-application .text-title-medium,
+.v-application .text-title-large,
+.v-application .text-headline-small,
+.v-application .text-headline-medium,
+.v-application .text-headline-large,
+.v-application .text-display-small,
+.v-application .text-display-medium,
+.v-application .text-display-large {
   font-family: 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 </style>

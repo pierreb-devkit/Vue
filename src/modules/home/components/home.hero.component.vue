@@ -25,6 +25,7 @@
   - animationSpeed (Number): Animation speed multiplier (only for blur variant, 1 = default)
   - backgroundColors (Array): 5 colors for gradient background (only for blur variant)
   - haloColors (Array): 5 colors for animated halos (only for blur variant)
+  - overlap (Boolean|String|Object): Slides section up into previous section. true = default (-40vh desktop / -20vh mobile), String = custom value (e.g. '10vh'), Object = { desktop: '40vh', mobile: '20vh' }
 
   CONFIG EXAMPLE (config.home.hero):
   {
@@ -56,20 +57,15 @@
       :background-colors="backgroundColors"
       :halo-colors="haloColors"
     >
-      <v-container class="fill-height">
-        <v-row align="center" justify="center">
-          <v-col
-            class="text-white text-center"
-            :style="{
-              'margin-top': ratio ? '5vh' : $vuetify.display.smAndDown ? '-5vh' : '-15vh',
-            }"
-          >
-            <div class="mb-5">
-              <VMarkdown v-if="title" class="font-weight-bold text-h4 text-md-h2 blur-title" :source="title" />
-            </div>
-            <div class="mb-10">
-              <VMarkdown v-if="subtitle" class="font-weight-medium text-body-1 text-md-h6 blur-subtitle" :source="subtitle" />
-            </div>
+      <v-container class="fill-height" :style="containerStyle">
+        <v-row class="fill-height" align="center" justify="center">
+          <v-col class="text-white text-center">
+            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium blur-title">
+              <VMarkdown v-if="title" :source="title" inline />
+            </h2>
+            <p class="mb-10 font-weight-medium text-body-large text-md-headline-small blur-subtitle">
+              <VMarkdown v-if="subtitle" :source="subtitle" inline />
+            </p>
             <v-btn
               v-if="button && button.title"
               :href="button.link"
@@ -96,16 +92,11 @@
       cover
       alt="banner"
     >
-      <v-container class="fill-height">
-        <v-row align="center" justify="center">
-          <v-col
-            class="text-white text-center"
-            :style="{
-              'margin-top': ratio ? '5vh' : $vuetify.display.smAndDown ? '-5vh' : '-25vh',
-            }"
-          >
-            <div class="mb-5"><VMarkdown v-if="title" class="font-weight-bold text-h4 text-md-h2" :source="title" /></div>
-            <div class="mb-10"><VMarkdown v-if="subtitle" class="font-weight-medium text-body-1 text-md-h6" :source="subtitle" /></div>
+      <v-container class="fill-height" :style="containerStyle">
+        <v-row class="fill-height" align="center" justify="center">
+          <v-col class="text-white text-center">
+            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium"><VMarkdown v-if="title" :source="title" inline /></h2>
+            <p class="mb-10 font-weight-medium text-body-large text-md-headline-small"><VMarkdown v-if="subtitle" :source="subtitle" inline /></p>
             <v-btn
               v-if="button && button.title"
               :href="button.link"
@@ -175,6 +166,11 @@ export default {
       type: Array,
       default: null,
     },
+    // Overlap: slides section up into previous section
+    overlap: {
+      type: [Boolean, String, Object],
+      default: false,
+    },
   },
   data() {
     const theme = useTheme();
@@ -185,6 +181,23 @@ export default {
   computed: {
     themeName() {
       return this.theme.name;
+    },
+    /**
+     * Compute container padding to vertically center content in the visible hero area.
+     * Accounts for the 65px navbar overlap at the top and the optional overlap prop at the bottom.
+     * @returns {{ 'padding-top': string, 'padding-bottom': string }} Style object with top and bottom padding.
+     */
+    containerStyle() {
+      const isSmAndDown = this.$vuetify?.display?.smAndDown;
+      let paddingBottom = '0px';
+      if (this.overlap === true) {
+        paddingBottom = isSmAndDown ? '20vh' : '40vh';
+      } else if (typeof this.overlap === 'string') {
+        paddingBottom = this.overlap;
+      } else if (typeof this.overlap === 'object' && this.overlap) {
+        paddingBottom = isSmAndDown ? this.overlap.mobile || '20vh' : this.overlap.desktop || '40vh';
+      }
+      return { 'padding-top': '65px', 'padding-bottom': paddingBottom };
     },
     buttonStyle() {
       return {

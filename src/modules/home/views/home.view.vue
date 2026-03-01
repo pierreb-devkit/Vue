@@ -12,6 +12,7 @@
       :animation-speed="config.home.hero.blur?.animationSpeed || 1"
       :background-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
       :halo-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
+      :overlap="config.home.hero.overlap"
     ></homeHeroComponent>
     <homePresentationComponent v-if="config.home.presentation" :setup="config.home.presentation"></homePresentationComponent>
     <homeSocialComponent v-if="config.home.social" :setup="config.home.social"></homeSocialComponent>

@@ -10,12 +10,12 @@
           class="text-center"
         >
           <v-card :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
-            <v-card-title class="text-center text-subtitle-2 font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
+            <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list :style="custom && custom.section ? custom.section : null" density="compact">
               <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
                 <v-list-item-title>
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
-                  <span class="text-secondary text-center text-caption"> {{ item.label }} </span>
+                  <span class="text-secondary text-center text-label-small"> {{ item.label }} </span>
                 </v-list-item-title>
               </v-list-item>
             </v-list>

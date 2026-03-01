@@ -55,11 +55,11 @@
       no-margin
     >
       <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
-        <v-row v-if="setup && setup.length > 0" align="center" justify="center">
+        <v-row v-if="setup && setup.length > 0" class="fill-height" align="center" justify="center">
           <v-col v-for="({ value, title }, i) in setup" :key="i" cols="6" md="3">
             <div class="text-center text-white" data-aos="fade">
-              <div class="font-weight-black text-h3 text-md-h2 mb-4 stats-value" v-text="value"></div>
-              <div class="text-uppercase text-body-1 stats-title" v-text="title"></div>
+              <div class="font-weight-black text-display-small text-md-display-medium mb-4 stats-value" v-text="value"></div>
+              <div class="text-uppercase text-body-large stats-title" v-text="title"></div>
             </div>
           </v-col>
         </v-row>
@@ -69,11 +69,11 @@
     <!-- Parallax variant -->
     <v-parallax v-else-if="variant === 'parallax'" :height="$vuetify.display.smAndDown ? 700 : 500" :src="image">
       <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
-        <v-row v-if="setup && setup.length > 0" align="center" justify="center">
+        <v-row v-if="setup && setup.length > 0" class="fill-height" align="center" justify="center">
           <v-col v-for="({ value, title }, i) in setup" :key="i" cols="6" md="3">
             <div class="text-center text-white" data-aos="fade">
-              <div class="font-weight-black text-h3 text-md-h2 mb-4" v-text="value"></div>
-              <div class="text-uppercase text-body-1" v-text="title"></div>
+              <div class="font-weight-black text-display-small text-md-display-medium mb-4" v-text="value"></div>
+              <div class="text-uppercase text-body-large" v-text="title"></div>
             </div>
           </v-col>
         </v-row>
