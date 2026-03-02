@@ -109,7 +109,7 @@ export default {
     if (this.id) {
       tasksStore.resetTask();
       try {
-        await tasksStore.getTask(this, { id: this.id });
+        await tasksStore.getTask({ id: this.id });
         this.save = false;
       } catch (err) {
         console.log(err);
@@ -124,7 +124,7 @@ export default {
       if (form.valid) {
         const tasksStore = useTasksStore();
         try {
-          await tasksStore.createTask(this, this.task);
+          await tasksStore.createTask(this.task);
           this.save = false;
           this.$router.push('/tasks');
         } catch (err) {
@@ -137,7 +137,7 @@ export default {
       if (form.valid) {
         const tasksStore = useTasksStore();
         try {
-          await tasksStore.updateTask(this, { id: this.id });
+          await tasksStore.updateTask({ id: this.id });
           this.save = false;
           this.$router.push('/tasks');
         } catch (err) {
@@ -150,7 +150,7 @@ export default {
       if (form.valid) {
         const tasksStore = useTasksStore();
         try {
-          await tasksStore.deleteTask(this, { id: this.id });
+          await tasksStore.deleteTask({ id: this.id });
           this.$router.push('/tasks');
         } catch (err) {
           console.log(err);

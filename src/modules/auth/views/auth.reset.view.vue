@@ -76,7 +76,7 @@ export default {
         const { password } = this;
         const authStore = useAuthStore();
         try {
-          await authStore.reset(this, { newPassword: password, token: this.$route.query.token });
+          await authStore.reset({ newPassword: password, token: this.$route.query.token });
           this.$router.push(this.config.sign.route);
         } catch (err) {
           console.log(err);

@@ -55,7 +55,7 @@ export default {
     if (!this.$route.query.message) {
       const authStore = useAuthStore();
       try {
-        await authStore.token(this);
+        await authStore.token();
         this.$router.push(this.config.sign.route);
       } catch (err) {
         console.log(err);

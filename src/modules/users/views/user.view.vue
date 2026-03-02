@@ -204,7 +204,7 @@ export default {
     if (this.id) {
       usersStore.resetUser();
       try {
-        await usersStore.getUser(this, { id: this.id });
+        await usersStore.getUser({ id: this.id });
         this.userRoles = cloneDeep(this.user.roles);
         this.save = false;
       } catch (err) {
@@ -222,7 +222,7 @@ export default {
         usersStore.user.roles = this.roles;
 
         try {
-          await usersStore.updateUser(this, { id: this.id });
+          await usersStore.updateUser({ id: this.id });
           this.save = false;
         } catch (err) {
           console.log(err);
@@ -234,7 +234,7 @@ export default {
       if (form.valid) {
         const usersStore = useUsersStore();
         try {
-          await usersStore.deleteUser(this, { id: this.id });
+          await usersStore.deleteUser({ id: this.id });
           this.$router.push('/users');
         } catch (err) {
           console.log(err);
