@@ -33,6 +33,15 @@ You are the stack maintainer agent. Your role is to protect the mergeability and
   - 🟢 **Info**: Good to know (suggestions)
 - Be concise - this is a quick sanity check, not a full audit
 
+## Post-stack-merge review
+
+When invoked after a stack merge, additionally check:
+
+1. **ISO purity**: Stack-owned modules must not contain new downstream logic
+2. **Downstream isolation**: No new cross-module imports introduced
+3. **Pattern drift**: Downstream modules still match stack patterns (async style, JSDoc, theme access)
+4. **No regressions**: Downstream-specific deps, routes, and config files are still present
+
 ## What NOT to do
 
 - Don't run workflows or execute commands

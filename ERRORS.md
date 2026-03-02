@@ -16,3 +16,5 @@ Use this file as a compact memory of recurring AI mistakes.
 - [2026-02-22] tests: never patch code to pass a test -> if a test is wrong, fix the test; if logic needs refactoring, refactor it
 - [2026-02-23] pr skill: stopping after `gh pr ready` -> always enter the monitor loop (wait CI → 3min grace → read feedback → iterate) until stop condition is met
 - [2026-02-23] pr skill: skipping issue creation when none found -> always create a GitHub issue before opening a PR (`gh issue create --web` or via CLI)
+- [2026-03-02] views: .then()/.catch() chains in methods/lifecycle hooks -> use async/await + try/catch (matches tasks module pattern)
+- [2026-03-02] views: config.vuetify.theme.themes[themeName].colors.X -> use theme.current.colors.X via useTheme() composable

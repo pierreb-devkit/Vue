@@ -9,57 +9,83 @@ Pure git workflow for merging stack updates while preserving downstream customiz
 
 ## Steps
 
-### 1. Add the stack remote (if not already added)
+### 0. Commit downstream changes first
+
+```bash
+git status
+# Commit any modified downstream files before merging to avoid confusion
+```
+
+### 1. Identify the stack remote
+
+```bash
+git remote -v
+```
+
+- If `origin` points to the stack repo → use `origin/master` everywhere below, skip adding a remote
+- Otherwise:
 
 ```bash
 git remote add devkit-vue https://github.com/pierreb-devkit/Vue.git
+git fetch devkit-vue
 ```
 
 ### 2. Fetch the latest stack changes
 
 ```bash
-git fetch devkit-vue
+git fetch <stack-remote>
 ```
 
-### 3. Merge the stack updates
+### 3. Merge
 
 ```bash
-git merge devkit-vue/master
+git merge <stack-remote>/master
 ```
 
 ### 4. Handle conflicts
 
-If conflicts occur:
-
-- **Config files** (`.env.*`, `src/config/*`): Keep your downstream customizations
-- **Core stack files** (modules, components, routes): Prefer stack changes unless you have specific customizations
-- **Documentation** (`README.md`, `CLAUDE.md`): Merge both, but prefer upstream version
-- **Package files** (`package.json`): Merge dependencies carefully, keep your project-specific needs and scripts
-
-Common conflict patterns:
-
 ```bash
-# View conflicts
-git status
-
-# For each conflicted file, edit and resolve
-# Then mark as resolved
-git add <file>
-
-# Complete the merge
-git commit
+git status  # list conflicted files
 ```
 
-### 5. Run verify (dedicated skill)
+**`package-lock.json`** — never resolve manually:
+
+```bash
+git checkout --theirs package-lock.json && git add package-lock.json
+# After resolving package.json: npm install --package-lock-only && git add package-lock.json
+```
+
+**`ERRORS.md`** — always manually merge (union of stack entries + downstream entries, no line dropped).
+
+**`MIGRATION.md`** (if present) — read the last entries to identify breaking changes requiring downstream module updates (see Step 6).
+
+**Downstream-specific files** — keep both the stack fix and your customizations:
+- `src/modules/app/app.router.js` (downstream routes)
+- `src/config/defaults/<project>.js` (downstream-only)
+- `vite.config.js`, `package.json` (merge deps, keep project specifics)
+
+### 5. Run `/verify`
+
+Use the `/verify` skill (lint + test + build).
+
+### 6. Align downstream-only modules
+
+If `MIGRATION.md` exists, read its latest entries first — they specify required changes for downstream modules.
+
+Then diff downstream modules against the stack reference module (`src/modules/tasks`) and align any pattern drift:
+- JSDoc section headers in all JS/Vue files
+- `async/await + try/catch` in methods/lifecycle hooks (not `.then()/.catch()`)
+- Theme via `useTheme()` composable (not `config.vuetify.theme...`)
+- `console.log(err)` — no prefix strings
+
+Run `/verify` again if changes were made.
+
+### 7. Invoke stack-maintainer
+
+> Ask Claude: "Run the stack-maintainer agent on the changes since the last stack merge"
 
 ## Key principles
 
-- **Preserve mergeability**: Avoid renaming core stack files or moving them to custom locations
-- **Keep stable paths**: Stack files should stay in their original locations
-- **Isolate customizations**: Put project-specific code in separate files/folders when possible
-- **Test thoroughly**: Always verify after merging
-
-## Notes
-
-- Does not invent tooling or automation
-- Focuses on standard git merge workflow
+- Preserve mergeability: keep core stack file paths stable
+- Isolate customizations in separate files when possible
+- Never drop downstream entries from `ERRORS.md` or `MIGRATION.md`
