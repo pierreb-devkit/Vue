@@ -33,6 +33,7 @@ git merge devkit-vue/master
 | `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
 | `vite.config.js` | `git checkout --ours vite.config.js` then merge upstream changes manually |
 | `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
+| Downstream-only new files (new modules, helpers, composables, lib additions) | Never delete — these do not exist in the stack, `git checkout --ours <file>` if flagged |
 
 After resolving `package.json`:
 
