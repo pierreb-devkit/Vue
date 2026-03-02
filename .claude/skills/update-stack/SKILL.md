@@ -45,7 +45,7 @@ git add package-lock.json
 Stage all resolved files and complete the merge:
 
 ```bash
-git add .
+git add -u
 git merge --continue
 ```
 
