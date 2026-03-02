@@ -22,24 +22,29 @@ git status
 git remote -v
 ```
 
-- If `origin` points to the stack repo → use `origin/master` everywhere below, skip adding a remote
+- If `origin` points to the stack repo:
+
+```bash
+STACK_REMOTE=origin
+```
+
 - Otherwise:
 
 ```bash
-git remote add devkit-vue https://github.com/pierreb-devkit/Vue.git
-git fetch devkit-vue
+git remote get-url devkit-vue >/dev/null 2>&1 || git remote add devkit-vue https://github.com/pierreb-devkit/Vue.git
+STACK_REMOTE=devkit-vue
 ```
 
 ### 2. Fetch the latest stack changes
 
 ```bash
-git fetch <stack-remote>
+git fetch "$STACK_REMOTE"
 ```
 
 ### 3. Merge
 
 ```bash
-git merge <stack-remote>/master
+git merge "$STACK_REMOTE"/master
 ```
 
 ### 4. Handle conflicts

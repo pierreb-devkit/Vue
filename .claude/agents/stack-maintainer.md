@@ -35,11 +35,11 @@ You are the stack maintainer agent. Your role is to protect the mergeability and
 
 ## Post-stack-merge review
 
-When invoked after a stack merge, additionally check:
+When invoked after a stack merge, read `ERRORS.md` first before proposing any change or raising any concern. Then check:
 
-1. **ISO purity**: Stack-owned modules must not contain new downstream logic
-2. **Downstream isolation**: No new cross-module imports introduced
-3. **Pattern drift**: Downstream modules still match stack patterns (async style, JSDoc, theme access)
+1. **ISO purity**: Stack-owned modules must not contain new downstream logic (ref: ERRORS.md entries)
+2. **Downstream isolation**: No new cross-module imports introduced (ref: ERRORS.md coupling entries)
+3. **Pattern drift**: Downstream modules still match stack patterns (async style, JSDoc, theme access — ref: ERRORS.md views entries)
 4. **No regressions**: Downstream-specific deps, routes, and config files are still present
 
 ## What NOT to do
