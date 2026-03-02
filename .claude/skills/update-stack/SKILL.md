@@ -11,7 +11,7 @@ Two-phase workflow. Phase 1 brings the stack down ISO. Phase 2 aligns the projec
 
 **Goal: stack modules exit this phase identical to upstream. Zero downstream logic in them.**
 
-Stack modules: `home`, `auth`, `users`, `tasks`, `core`, `app`
+Stack modules: `home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`
 
 ### 1. Setup remote + merge
 
@@ -25,19 +25,27 @@ git merge devkit-vue/master
 
 | File | Rule |
 |------|------|
-| Stack module (`src/modules/home\|auth\|users\|tasks\|core\|app`) | `git checkout --theirs <file>` |
+| `src/modules/app/app.router.js` | `git checkout --ours src/modules/app/app.router.js` then merge stack route changes manually — this file always contains downstream routes |
+| Other stack module files (`src/modules/home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`) | `git checkout --theirs <file>` |
 | `package-lock.json` | `git checkout --theirs package-lock.json` — regenerate after `package.json` is resolved |
 | `ERRORS.md` | Union merge — keep every line from both sides, never drop |
-| `MIGRATION.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs` |
-| `src/modules/app/app.router.js` | `--ours` then merge stack changes manually |
-| `src/config/defaults/<project>.js` | `--ours` (downstream-only file) |
-| `vite.config.js`, `package.json` | `--ours` then merge upstream version bumps |
+| `MIGRATION.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATION.md` |
+| `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
+| `vite.config.js` | `git checkout --ours vite.config.js` then merge upstream changes manually |
+| `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
 
 After resolving `package.json`:
 
 ```bash
 npm install --package-lock-only
 git add package-lock.json
+```
+
+Stage all resolved files and complete the merge:
+
+```bash
+git add .
+git merge --continue
 ```
 
 ### 3. `/verify`
