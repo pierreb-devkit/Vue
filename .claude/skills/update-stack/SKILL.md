@@ -28,7 +28,7 @@ git merge devkit-vue/master
 | `src/modules/app/app.router.js` | `git checkout --ours src/modules/app/app.router.js` then merge stack route changes manually — this file always contains downstream routes |
 | Other stack module files (`src/modules/home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`) | `git checkout --theirs <file>` |
 | `package-lock.json` | `git checkout --theirs package-lock.json` — regenerate after `package.json` is resolved |
-| `ERRORS.md` | Union merge — keep every line from both sides, never drop |
+| `ERRORS.md` | Merge stack entries + project entries — never drop lines |
 | `MIGRATION.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATION.md` |
 | `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
 | `vite.config.js` | `git checkout --ours vite.config.js` then merge upstream changes manually |
