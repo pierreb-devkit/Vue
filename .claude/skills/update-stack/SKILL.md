@@ -65,10 +65,6 @@ Read the last entries — they list breaking changes requiring updates in projec
 
 ### 5. Align project modules
 
-Diff project modules against `src/modules/tasks` (stack reference). Fix pattern drift per `ERRORS.md`:
-
-- `async/await + try/catch` in methods and lifecycle hooks
-- `useTheme()` composable for theme access
-- JSDoc on all functions
+Diff project modules against `src/modules/tasks` (stack reference). Fix any pattern drift flagged by `ERRORS.md`.
 
 ### 6. `/verify`
