@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const forgotMock = vi.fn();
+const forgotMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ mail: { status: false, message: '' }, forgot: forgotMock }),
 }));

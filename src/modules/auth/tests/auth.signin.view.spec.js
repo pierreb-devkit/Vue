@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const signinMock = vi.fn();
+const signinMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ auth: false, signin: signinMock }),
 }));

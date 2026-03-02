@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const tokenMock = vi.fn();
+const tokenMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ token: tokenMock }),
 }));

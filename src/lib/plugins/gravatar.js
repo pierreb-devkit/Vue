@@ -48,10 +48,19 @@ export default {
         },
       },
       watch: {
+        /**
+         * Recomputes the SHA-256 hash whenever the email prop changes.
+         * @param {string} newEmail - The updated email address.
+         * @returns {Promise<void>} Resolves once the hash is updated.
+         */
         async email(newEmail) {
           this.hash = await sha256(newEmail.trim().toLowerCase());
         },
       },
+      /**
+       * Computes the initial SHA-256 hash of the email prop on mount.
+       * @returns {Promise<void>} Resolves once the hash is set.
+       */
       async mounted() {
         this.hash = await sha256(this.email.trim().toLowerCase());
       },
