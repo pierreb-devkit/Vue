@@ -13,7 +13,10 @@ Pure git workflow for merging stack updates while preserving downstream customiz
 
 ```bash
 git status
-# Commit any modified downstream files before merging to avoid confusion
+# If modified downstream files exist, commit them before merging:
+git add <downstream-specific-files>
+git commit -m "chore: prepare for Devkit Vue stack update"
+# Alternative if not ready to commit: git stash push -m "wip before stack update"
 ```
 
 ### 1. Identify the stack remote
