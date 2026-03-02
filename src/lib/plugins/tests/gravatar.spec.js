@@ -127,12 +127,12 @@ describe('gravatar plugin', () => {
       });
     });
 
-    describe('mounted() — calls md5 with email', () => {
+    describe('mounted() — calls sha256 with email', () => {
       it('sets hash after mount using crypto.subtle', async () => {
         const component = getComponent();
         const instance = { email: 'user@example.com', hash: '', finalSize: 80 };
         await component.mounted.call(instance);
-        expect(crypto.subtle.digest).toHaveBeenCalledWith('MD5', expect.any(Uint8Array));
+        expect(crypto.subtle.digest).toHaveBeenCalledWith('SHA-256', expect.any(Uint8Array));
         expect(instance.hash).toBeTruthy();
       });
 

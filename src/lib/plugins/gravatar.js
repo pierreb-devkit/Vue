@@ -4,11 +4,13 @@
 import { h } from 'vue';
 
 /**
- * MD5 hash function using Web Crypto API
+ * SHA-256 hash function using Web Crypto API (Gravatar supports SHA-256 since 2024).
+ * @param {string} message - The string to hash.
+ * @returns {Promise<string>} Lowercase hex digest.
  */
-async function md5(message) {
+async function sha256(message) {
   const msgBuffer = new TextEncoder().encode(message);
-  const hashBuffer = await crypto.subtle.digest('MD5', msgBuffer);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -47,11 +49,11 @@ export default {
       },
       watch: {
         async email(newEmail) {
-          this.hash = await md5(newEmail.trim().toLowerCase());
+          this.hash = await sha256(newEmail.trim().toLowerCase());
         },
       },
       async mounted() {
-        this.hash = await md5(this.email.trim().toLowerCase());
+        this.hash = await sha256(this.email.trim().toLowerCase());
       },
       created() {
         this.finalSize = Number(this.size);

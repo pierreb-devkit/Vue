@@ -21,7 +21,7 @@ const getRouter = () => {
     history: createWebHistory(import.meta.env.BASE_URL),
     routes,
   });
-  router.beforeEach((to, from, next) => {
+  router.beforeEach((to) => {
     // meta
     document.title = to.name ? `${to.name} - ${config.app.title}` : config.app.title;
     const userRoles = localStorage.getItem(`${config.cookie.prefix}UserRoles`)
@@ -31,12 +31,9 @@ const getRouter = () => {
     if (to.matched.some((record) => record.meta.roles)) {
       const authStore = useAuthStore();
       if (authStore.isLoggedIn && to.meta.roles.some((r) => userRoles.includes(r))) {
-        next();
-        return;
+        return true;
       }
-      next('/signin');
-    } else {
-      next();
+      return '/signin';
     }
   });
   return router;

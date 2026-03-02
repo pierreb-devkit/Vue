@@ -3,8 +3,7 @@
     <v-snackbar
       v-if="config.vuetify.theme.snackbar.status"
       v-model="snackbar.status"
-      :top="true"
-      :right="true"
+      location="top right"
       :timeout="snackbar.timeout"
       :color="snackbar.color"
     >

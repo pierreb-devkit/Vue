@@ -50,7 +50,7 @@ export default {
   },
   created() {
     const homeStore = useHomeStore();
-    homeStore.getTeam(this);
+    homeStore.getTeam();
   },
 };
 </script>
