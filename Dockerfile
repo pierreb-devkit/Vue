@@ -6,7 +6,7 @@ WORKDIR /app
 
 # args
 ARG NODE_ENV='development'
-ARG DEVKIT_VUE_app_title='Devkit Docker'
+ARG DEVKIT_VUE_app_title='Devkit-Docker'
 ARG DEVKIT_VUE_api_protocol='http'
 ARG DEVKIT_VUE_api_host='localhost'
 ARG DEVKIT_VUE_api_port='3000'
