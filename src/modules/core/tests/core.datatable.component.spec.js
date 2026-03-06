@@ -7,10 +7,6 @@ import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import _ from 'lodash';
 import CoreDatatable from '../components/core.datatable.component.vue';
 
-vi.mock('../../users/stores/users.store', () => ({
-  useUsersStore: () => ({ getUsers: vi.fn().mockResolvedValue([]) }),
-}));
-
 vi.mock('../../users/components/user.avatar.component.vue', () => ({
   default: { name: 'UserAvatarComponent', template: '<span />' },
 }));
@@ -45,7 +41,7 @@ describe('core.datatable.component', () => {
     const headers = [{ text: 'First Name', value: 'firstName' }];
     const items = [{ _id: '1', firstName: 'John' }];
     const wrapper = mount(CoreDatatable, {
-      props: { headers, items, request: 'getUsers' },
+      props: { headers, items, fetchAction: vi.fn().mockResolvedValue() },
       global: globalOpts(vuetify),
     });
     expect(wrapper.text()).toContain('John');
@@ -55,7 +51,7 @@ describe('core.datatable.component', () => {
     const headers = [{ text: 'Role', value: 'role', kind: 'capitalize' }];
     const items = [{ _id: '1', role: 'admin' }];
     const wrapper = mount(CoreDatatable, {
-      props: { headers, items, request: 'getUsers' },
+      props: { headers, items, fetchAction: vi.fn().mockResolvedValue() },
       global: globalOpts(vuetify),
     });
     expect(wrapper.text()).toContain('admin');
@@ -65,7 +61,7 @@ describe('core.datatable.component', () => {
     const headers = [{ text: 'Roles', value: 'roles', kind: 'tags' }];
     const items = [{ _id: '1', roles: ['admin', 'user'] }];
     const wrapper = mount(CoreDatatable, {
-      props: { headers, items, request: 'getUsers' },
+      props: { headers, items, fetchAction: vi.fn().mockResolvedValue() },
       global: globalOpts(vuetify),
     });
     expect(wrapper.text()).toContain('admin');
@@ -74,9 +70,28 @@ describe('core.datatable.component', () => {
 
   it('shows empty state when items is empty', () => {
     const wrapper = mount(CoreDatatable, {
-      props: { headers: [{ text: 'Name', value: 'name' }], items: [], request: 'getUsers' },
+      props: { headers: [{ text: 'Name', value: 'name' }], items: [], fetchAction: vi.fn().mockResolvedValue() },
       global: globalOpts(vuetify),
     });
     expect(wrapper.text()).toContain('No Items found');
+  });
+
+  it('calls fetchAction on mount with pagination params', async () => {
+    const fetchAction = vi.fn().mockResolvedValue();
+    mount(CoreDatatable, {
+      props: { headers: [{ text: 'Name', value: 'name' }], items: [], fetchAction },
+      global: globalOpts(vuetify),
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchAction).toHaveBeenCalled();
+  });
+
+  it('does not throw when fetchAction is not provided', () => {
+    expect(() => {
+      mount(CoreDatatable, {
+        props: { headers: [{ text: 'Name', value: 'name' }], items: [] },
+        global: globalOpts(vuetify),
+      });
+    }).not.toThrow();
   });
 });
