@@ -215,29 +215,37 @@ gh api repos/$OWNER/$REPO/issues/$PR/comments --paginate | jq 'map({id, user: .u
 
 When running on a **downstream project** (not the stack repo itself), classify each actionable comment before fixing:
 
-1. **Check if the comment targets a stack-level file** — a file that exists in the upstream stack repo (e.g. `src/modules/core/`, `src/lib/`, config files, skill files). Use the `devkit-vue` remote to verify:
+1. **Check if the comment targets a stack-level file** — a file that exists in the upstream stack repo. Ensure the remote is available, then check:
    ```bash
+   # Ensure the devkit-vue remote exists and is fetched (update-stack skill sets this up)
+   git remote get-url devkit-vue >/dev/null 2>&1 || git remote add devkit-vue git@github.com:<stack-owner>/<stack-repo>.git
+   git fetch devkit-vue master --quiet 2>/dev/null
+
+   # Check if the file exists in the upstream
    git ls-tree --name-only -r devkit-vue/master -- <file-path>
    ```
    If the file exists in the upstream, it is **stack-level**.
 
 2. **Stack-level comment** → do NOT fix locally. Instead:
-   - Create an issue on the stack repo with the review feedback:
+   - Create an issue on the stack repo with the review feedback (use a heredoc to avoid shell escaping issues):
      ```bash
-     gh issue create --repo <stack-owner>/<stack-repo> \
+     ISSUE_URL=$(gh issue create --repo <stack-owner>/<stack-repo> \
        --title "fix(<scope>): <summary from review comment>" \
-       --body "Reported by CodeRabbit on <downstream-owner>/<downstream-repo>#<PR>.
+       --body "$(cat <<'BODY'
+     Reported by CodeRabbit on <downstream-owner>/<downstream-repo>#<PR>.
 
      ## Review comment
      <full comment body>
 
      ## File
-     \`<file-path>\`" \
-       --label "Fix"
+     `<file-path>`
+     BODY
+     )" \
+       --label "Fix")
      ```
-   - Reply to the review thread explaining the comment has been escalated:
+   - Reply to the review thread with the created issue link:
      ```
-     This comment targets stack-level code from the upstream Devkit Vue repo. Created <stack-repo>#<issue-number> to track the fix upstream.
+     This comment targets stack-level code from the upstream Devkit Vue repo. Created $ISSUE_URL to track the fix upstream.
      ```
    - Resolve the thread
 
