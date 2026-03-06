@@ -101,7 +101,7 @@ export default {
   methods: {
     /**
      * Fetch users from the store with pagination params.
-     * @param {object} params - Pagination/search parameters
+     * @param {string} params - Pagination query string from tools.pageRequest (e.g. "0&5&search")
      * @returns {Promise<void>} Resolves when users are fetched
      */
     async fetchUsers(params) {

@@ -128,10 +128,6 @@ export default {
       type: Array,
       required: true,
     },
-    request: {
-      type: String,
-      default: '',
-    },
     fetchAction: {
       type: Function,
       default: null,
@@ -223,12 +219,16 @@ export default {
   methods: {
     /**
      * Call the parent-provided fetch action with pagination params.
-     * @param {object} params - Pagination/search parameters from tools.pageRequest
+     * @param {string} params - Pagination query string from tools.pageRequest (e.g. "0&5&search")
      * @returns {Promise<void>} Resolves when the fetch action completes
      */
     async callStoreAction(params) {
       if (this.fetchAction) {
-        await this.fetchAction(params);
+        try {
+          await this.fetchAction(params);
+        } catch (err) {
+          console.error('fetchAction failed:', err);
+        }
       }
     },
     async gettextSearch() {
@@ -251,18 +251,25 @@ export default {
      * @param {*} value - The parameter value
      * @param {boolean} refresh - Whether to refresh the datatable after the action
      */
-    async dispatch(action, key, value, refresh) {
+    dispatch(action, key, value, refresh) {
       if (key && value) {
         const option = { [key]: value };
         this.loading = true;
-        this.$emit('dispatch', { action, option });
-        if (refresh) {
-          await this.callStoreAction(tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch));
-        }
-        this.loading = false;
+        this.$emit('dispatch', { action, option, done: () => this.onDispatchDone(refresh) });
       } else {
         this.$emit('dispatch', { action });
       }
+    },
+    /**
+     * Handle post-dispatch cleanup: optionally refresh data, then reset loading.
+     * @param {boolean} refresh - Whether to refresh the datatable
+     * @returns {Promise<void>} Resolves when refresh completes
+     */
+    async onDispatchDone(refresh) {
+      if (refresh) {
+        await this.callStoreAction(tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch));
+      }
+      this.loading = false;
     },
   },
 };
