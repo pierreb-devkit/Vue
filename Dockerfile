@@ -11,7 +11,7 @@ ARG DEVKIT_VUE_api_protocol='http'
 ARG DEVKIT_VUE_api_host='localhost'
 ARG DEVKIT_VUE_api_port='3000'
 ARG DEVKIT_VUE_api_base='api'
-ARG DEVKIT_VUE_cookie='waos'
+ARG DEVKIT_VUE_cookie_prefix='waos'
 
 # Install app dependencies & build
 COPY package*.json ./

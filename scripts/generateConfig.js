@@ -25,7 +25,7 @@ const getBaseConfiguration = async () => {
 const getConfiguration = async () => {
   let defaultConfig = await getBaseConfiguration();
 
-  // Get the config from  process.env.DEVKIT_VUE_*
+  // Get the config from process.env.DEVKIT_VUE_*
   const environmentVars = _.mapKeys(
     _.pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),
