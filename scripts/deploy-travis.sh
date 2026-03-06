@@ -14,7 +14,7 @@ ssh -p $sshPort $sshUser@$sshHost -o StrictHostKeyChecking=no "$( cat <<EOT
   git stash
   git pull
   npm i
-  NODE_ENV=production WAOS_VUE_api_protocol='${depApiProtocol}' WAOS_VUE_api_host='${depApiHost}' WAOS_VUE_api_port='${depApiPort}' npm run build
+  NODE_ENV=production DEVKIT_VUE_api_protocol='${depApiProtocol}' DEVKIT_VUE_api_host='${depApiHost}' DEVKIT_VUE_api_port='${depApiPort}' npm run build
   echo "$(date -u) Deploy ${depProject} on node $(node -v) with npm $(npm -v)"  >> ./deploy.log
   exit
 EOT

@@ -14,7 +14,7 @@ services:
     depends_on:
       - devkitNode
     environment:
-      - 'WAOS_VUE_api_host=devkitnode'
+      - 'DEVKIT_VUE_api_host=devkitnode'
 
   devkitNode:
     container_name: devkitNode
@@ -30,8 +30,8 @@ services:
     depends_on:
       - mongo
     environment:
-      - 'WAOS_NODE_db_uri=mongodb://mongo:27017/DevkitNodeDev'
-      - 'WAOS_NODE_host=0.0.0.0'
+      - 'DEVKIT_NODE_db_uri=mongodb://mongo:27017/DevkitNodeDev'
+      - 'DEVKIT_NODE_host=0.0.0.0'
 
   mongo:
     container_name: mongo

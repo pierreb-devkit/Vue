@@ -102,11 +102,11 @@ GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 
 Configuration files live in `src/config/defaults/`. The `development.js` file is the base; other files in that folder override it.
 
-At build time, environment variables prefixed with `WAOS_VUE_` are merged on top (`WAOS` is a legacy prefix kept for compatibility). The variable path maps directly to the config object key:
+At build time, environment variables prefixed with `DEVKIT_VUE_` are merged on top. The variable path maps directly to the config object key:
 
 ```bash
-WAOS_VUE_app_title='my app'        # sets config.app.title
-WAOS_VUE_api_port=4000             # sets config.api.port
+DEVKIT_VUE_app_title='my app'        # sets config.app.title
+DEVKIT_VUE_api_port=4000             # sets config.api.port
 ```
 
 The merged result is written to `src/config/index.js` via `npm run generateConfig`.
@@ -120,7 +120,7 @@ docker run --rm -p 8080:80 pierreb/vue
 Build yourself:
 
 ```bash
-docker build -t pierreb/vue . --build-arg WAOS_VUE_api_port=4000
+docker build -t pierreb/vue . --build-arg DEVKIT_VUE_api_port=4000
 ```
 
 With [Node](https://github.com/pierreb-devkit/Node) stack as API:
