@@ -88,6 +88,11 @@ export default {
     colorMode: {
       type: String,
       default: null,
+      /**
+       * Validates the colorMode prop value.
+       * @param {string|null} value - The color mode to validate.
+       * @returns {boolean} True if the value is null, 'light', or 'dark'.
+       */
       validator: (value) => value === null || ['light', 'dark'].includes(value),
     },
   },
@@ -179,6 +184,11 @@ export default {
     window.removeEventListener('resize', this.updateIndicator);
   },
   methods: {
+    /**
+     * Computes the inline style for a tab at the given index.
+     * @param {number} index - The tab index.
+     * @returns {Object} Style object with color, opacity, and transition.
+     */
     tabStyle(index) {
       const item = this.items[index];
       const isSelected = this.modelValue === index;
