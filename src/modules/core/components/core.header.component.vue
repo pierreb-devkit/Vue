@@ -4,15 +4,15 @@
     :style="headerStyle"
     :flat="config.vuetify.theme.flat"
     :scroll-behavior="config.vuetify.theme.header?.scrollBehavior"
-    class="waos-app-bar"
+    class="devkit-app-bar"
   >
     <v-container :style="{ maxWidth: config.vuetify.theme.maxWidth }" class="d-flex align-center pa-0">
       <!-- Logo/Title -->
-      <router-link v-if="config.header.logo.file" to="/">
+      <router-link v-if="config.header.logo && config.header.logo.file" to="/">
         <v-img :src="config.header.logo.file" height="100px" width="100px" class="ml-0 mt-2" inline alt="logo"> </v-img>
       </router-link>
-      <router-link v-if="config.header.title" to="/">
-        <h2 class="mr-2">{{ config.app.title }}</h2>
+      <router-link v-else-if="config.header.title" to="/" class="text-decoration-none" :style="{ color: 'inherit' }">
+        <h1 class="text-h5 font-weight-bold mr-4">{{ config.app.title }}</h1>
       </router-link>
       <!-- Menu -->
       <span v-for="({ title, url, sublinks }, i) in config.header.links" :key="i" class="hidden-sm-and-down">
@@ -115,13 +115,13 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { liquidGlassStyle } from '../../../lib/helpers/theme';
+import { liquidGlassStyle, colorModeStyle } from '../../../lib/helpers/theme';
 
 /**
  * Component definition.
  */
 export default {
-  name: 'WaosAppBar',
+  name: 'DevkitAppBar',
   data() {
     const theme = useTheme();
     return {
@@ -137,27 +137,33 @@ export default {
       return authStore.isLoggedIn;
     },
     headerStyle() {
-      return liquidGlassStyle({
-        vuetifyTheme: this.theme,
-        intensity: 1,
-        variant: 'header',
-        border: 'none',
-        extras: {
-          color: this.theme.current.colors.onSurface,
-          width: '100%',
-        },
-      });
+      return {
+        ...liquidGlassStyle({
+          vuetifyTheme: this.theme,
+          intensity: 1,
+          variant: 'header',
+          border: 'none',
+          extras: {
+            color: this.theme.current.colors.onSurface,
+            width: '100%',
+          },
+        }),
+        ...colorModeStyle(this.config.vuetify.theme.header?.colorMode),
+      };
     },
     menuStyle() {
-      return liquidGlassStyle({
-        vuetifyTheme: this.theme,
-        intensity: 0.6,
-        variant: 'card',
-        border: 'none',
-        extras: {
-          color: this.theme.current.colors.onSurface,
-        },
-      });
+      return {
+        ...liquidGlassStyle({
+          vuetifyTheme: this.theme,
+          intensity: 0.6,
+          variant: 'card',
+          border: 'none',
+          extras: {
+            color: this.theme.current.colors.onSurface,
+          },
+        }),
+        ...colorModeStyle(this.config.vuetify.theme.header?.colorMode),
+      };
     },
   },
   methods: {
@@ -179,7 +185,7 @@ export default {
 </script>
 
 <style scoped>
-.waos-app-bar :deep(.v-toolbar__content)::after {
+.devkit-app-bar :deep(.v-toolbar__content)::after {
   content: '';
   position: absolute;
   bottom: 0;

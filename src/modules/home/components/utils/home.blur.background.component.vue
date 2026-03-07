@@ -109,7 +109,7 @@ export default {
     },
     backgroundHeight() {
       if (this.ratio) return `calc(${100 / this.ratio}vh)`;
-      return this.$vuetify?.display?.smAndDown ? '70vh' : '90vh';
+      return this.$vuetify?.display?.smAndDown ? '65vh' : '85vh';
     },
     // Default colors based on theme
     defaultBackgroundColors() {

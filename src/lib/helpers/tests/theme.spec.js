@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { isDark, style, liquidGlassStyle, overlapStyle, lightenColor } from '../theme.js';
+import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor } from '../theme.js';
 
 describe('Theme Helpers', () => {
   describe('isDark', () => {
@@ -337,7 +337,7 @@ describe('Theme Helpers', () => {
     it('should return default overlap for desktop when overlap is true', () => {
       const result = overlapStyle(true, mockDisplay);
       expect(result).toEqual({
-        'margin-top': '-40vh',
+        'margin-top': '-35vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -347,7 +347,7 @@ describe('Theme Helpers', () => {
       const mobileDisplay = { smAndDown: true };
       const result = overlapStyle(true, mobileDisplay);
       expect(result).toEqual({
-        'margin-top': '-20vh',
+        'margin-top': '-18vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -387,7 +387,7 @@ describe('Theme Helpers', () => {
       const overlap = {};
       const result = overlapStyle(overlap, mockDisplay);
       expect(result).toEqual({
-        'margin-top': '-40vh',
+        'margin-top': '-35vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -398,7 +398,7 @@ describe('Theme Helpers', () => {
       const mobileDisplay = { smAndDown: true };
       const result = overlapStyle(overlap, mobileDisplay);
       expect(result).toEqual({
-        'margin-top': '-20vh',
+        'margin-top': '-18vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -410,7 +410,25 @@ describe('Theme Helpers', () => {
 
     it('should handle display without smAndDown property', () => {
       const result = overlapStyle(true, {});
-      expect(result['margin-top']).toBe('-40vh');
+      expect(result['margin-top']).toBe('-35vh');
+    });
+  });
+
+  describe('colorModeStyle', () => {
+    it('should return white text for light mode', () => {
+      expect(colorModeStyle('light')).toEqual({ color: '#ffffff' });
+    });
+
+    it('should return dark text for dark mode', () => {
+      expect(colorModeStyle('dark')).toEqual({ color: 'rgba(0, 0, 0, 0.87)' });
+    });
+
+    it('should return empty object for null', () => {
+      expect(colorModeStyle(null)).toEqual({});
+    });
+
+    it('should return empty object for undefined', () => {
+      expect(colorModeStyle(undefined)).toEqual({});
     });
   });
 

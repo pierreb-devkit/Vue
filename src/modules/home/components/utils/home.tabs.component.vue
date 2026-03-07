@@ -213,7 +213,7 @@ export default {
 <style scoped>
 .tabs-container {
   position: relative;
-  padding: 16px;
+  padding: 8px;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;

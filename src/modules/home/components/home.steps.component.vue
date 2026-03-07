@@ -63,7 +63,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style, overlapStyle } from '../../../lib/helpers/theme';
+import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 /**
@@ -101,6 +101,7 @@ export default {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.setup),
+        ...colorModeStyle(this.setup.colorMode),
         background: bgColor,
       };
     },

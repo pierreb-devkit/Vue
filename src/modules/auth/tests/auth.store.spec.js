@@ -39,7 +39,7 @@ describe('Auth Store', () => {
 
   it('should initialize from localStorage', () => {
     const expireTime = Date.now() + 3600000;
-    localStorage.setItem('waosCookieExpire', expireTime.toString());
+    localStorage.setItem('devkitCookieExpire', expireTime.toString());
 
     const authStore = useAuthStore();
     authStore.initFromStorage();
@@ -54,16 +54,16 @@ describe('Auth Store', () => {
     authStore.auth = true;
     authStore.cookieExpire = Date.now() + 1000;
     authStore.user = { id: '123', email: 'test@example.com' };
-    localStorage.setItem('waosUserRoles', 'user,admin');
-    localStorage.setItem('waosCookieExpire', '12345');
+    localStorage.setItem('devkitUserRoles', 'user,admin');
+    localStorage.setItem('devkitCookieExpire', '12345');
 
     await authStore.signout();
 
     expect(authStore.auth).toBe(false);
     expect(authStore.cookieExpire).toBe(0);
     expect(authStore.user).toBe(null);
-    expect(localStorage.getItem('waosUserRoles')).toBe(null);
-    expect(localStorage.getItem('waosCookieExpire')).toBe(null);
+    expect(localStorage.getItem('devkitUserRoles')).toBe(null);
+    expect(localStorage.getItem('devkitCookieExpire')).toBe(null);
   });
 
   it('should have mail state initialized', () => {
@@ -91,7 +91,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('waosUserRoles')).toBe('user');
+      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
     });
 
     it('should handle signin error', async () => {
@@ -128,7 +128,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('waosUserRoles')).toBe('user');
+      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
     });
 
     it('should handle signup error', async () => {
@@ -165,7 +165,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('waosUserRoles')).toBe('user,admin');
+      expect(localStorage.getItem('devkitUserRoles')).toBe('user,admin');
     });
 
     it('should handle token refresh error', async () => {
@@ -233,7 +233,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('waosUserRoles')).toBe('user');
+      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
     });
 
     it('should handle reset password error', async () => {
