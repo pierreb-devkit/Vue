@@ -109,7 +109,6 @@
  */
 import { debounce } from 'lodash-es';
 import { useTheme } from 'vuetify';
-import { useUsersStore } from '../../users/stores/users.store';
 import * as tools from '../../../lib/helpers/tools';
 import userAvatarComponent from '../../users/components/user.avatar.component.vue';
 /**
@@ -129,9 +128,9 @@ export default {
       type: Array,
       required: true,
     },
-    request: {
-      type: String,
-      required: true,
+    fetchAction: {
+      type: Function,
+      default: null,
     },
     title: {
       type: String,
@@ -154,6 +153,7 @@ export default {
       default: '',
     },
   },
+  emits: ['dispatch'],
   data() {
     const theme = useTheme();
     return {
@@ -217,10 +217,18 @@ export default {
     this.watchtextSearch();
   },
   methods: {
+    /**
+     * Call the parent-provided fetch action with pagination params.
+     * @param {string} params - Pagination query string from tools.pageRequest (e.g. "0&5&search")
+     * @returns {Promise<void>} Resolves when the fetch action completes
+     */
     async callStoreAction(params) {
-      const usersStore = useUsersStore();
-      if (this.request === 'getUsers') {
-        await usersStore.getUsers(params);
+      if (this.fetchAction) {
+        try {
+          await this.fetchAction(params);
+        } catch (err) {
+          console.error('fetchAction failed:', err);
+        }
       }
     },
     async gettextSearch() {
@@ -236,24 +244,32 @@ export default {
         this.options.page += 1;
       }
     },
-    dispatch(dispatch, key, value, refresh) {
+    /**
+     * Emit a dispatch event for parent-handled actions (replaces legacy Vuex $store.dispatch).
+     * @param {string} action - The action name to dispatch
+     * @param {string} key - The parameter key
+     * @param {*} value - The parameter value
+     * @param {boolean} refresh - Whether to refresh the datatable after the action
+     */
+    dispatch(action, key, value, refresh) {
       if (key && value) {
-        const option = {};
-        option[key] = value;
+        const option = { [key]: value };
         this.loading = true;
-        this.$store
-          .dispatch(dispatch, option)
-          .catch((err) => console.log(err))
-          .then(() => {
-            if (refresh) {
-              this.$store.dispatch(this.request, tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch)).then(() => {
-                this.loading = false;
-              });
-            } else {
-              this.loading = false;
-            }
-          });
-      } else this.$store.dispatch(dispatch).catch((err) => console.log(err));
+        this.$emit('dispatch', { action, option, done: () => this.onDispatchDone(refresh) });
+      } else {
+        this.$emit('dispatch', { action });
+      }
+    },
+    /**
+     * Handle post-dispatch cleanup: optionally refresh data, then reset loading.
+     * @param {boolean} refresh - Whether to refresh the datatable
+     * @returns {Promise<void>} Resolves when refresh completes
+     */
+    async onDispatchDone(refresh) {
+      if (refresh) {
+        await this.callStoreAction(tools.pageRequest(this.options.page, this.options.itemsPerPage, this.textSearch));
+      }
+      this.loading = false;
     },
   },
 };
