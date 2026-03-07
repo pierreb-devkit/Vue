@@ -14,12 +14,12 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <waosNav v-if="isLoggedIn" />
-    <waosHeader v-if="config.header.display" />
+    <devkitNav v-if="isLoggedIn" />
+    <devkitHeader v-if="config.header.display" />
     <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
     </v-main>
-    <waosFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
+    <devkitFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
   </v-app>
 </template>
 
@@ -31,9 +31,9 @@ import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { setupInterceptors } from '../../lib/services/axios';
-import waosHeader from '../core/components/core.header.component.vue';
-import waosNav from '../core/components/core.navigation.component.vue';
-import waosFooter from '../core/components/core.footer.component.vue';
+import devkitHeader from '../core/components/core.header.component.vue';
+import devkitNav from '../core/components/core.navigation.component.vue';
+import devkitFooter from '../core/components/core.footer.component.vue';
 
 /**
  * Component definition.
@@ -41,9 +41,9 @@ import waosFooter from '../core/components/core.footer.component.vue';
 export default {
   name: 'App',
   components: {
-    waosHeader,
-    waosNav,
-    waosFooter,
+    devkitHeader,
+    devkitNav,
+    devkitFooter,
   },
   data() {
     const theme = useTheme();

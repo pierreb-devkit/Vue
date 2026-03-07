@@ -85,7 +85,7 @@
     <!-- Img variant -->
     <v-img
       v-else-if="variant === 'img'"
-      :height="ratio ? `calc(${100 / ratio}vh)` : $vuetify.display.smAndDown ? '70vh' : '90vh'"
+      :height="ratio ? `calc(${100 / ratio}vh)` : $vuetify.display.smAndDown ? '65vh' : '85vh'"
       :src="banner ? banner : generateBackground()"
       style="margin-top: -65px"
       max-width="100%"
@@ -191,13 +191,13 @@ export default {
       const isSmAndDown = this.$vuetify?.display?.smAndDown;
       let paddingBottom = '0px';
       if (this.overlap === true) {
-        paddingBottom = isSmAndDown ? '20vh' : '40vh';
+        paddingBottom = isSmAndDown ? '18vh' : '35vh';
       } else if (typeof this.overlap === 'string') {
         paddingBottom = this.overlap;
       } else if (typeof this.overlap === 'object' && this.overlap) {
-        paddingBottom = isSmAndDown ? this.overlap.mobile || '20vh' : this.overlap.desktop || '40vh';
+        paddingBottom = isSmAndDown ? this.overlap.mobile || '18vh' : this.overlap.desktop || '35vh';
       }
-      return { 'padding-top': '65px', 'padding-bottom': paddingBottom };
+      return { 'padding-top': '15vh', 'padding-bottom': paddingBottom };
     },
     buttonStyle() {
       return {

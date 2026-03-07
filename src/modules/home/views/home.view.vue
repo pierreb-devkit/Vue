@@ -26,14 +26,13 @@
     <homeArticlesComponent v-if="config.home.articles && news.length > 0" :setup="{ content: news, ...config.home.articles }"></homeArticlesComponent>
     <homeStatisticsComponent
       v-if="config.home.statistics"
-      :variant="config.home.statistics.variant || 'blur'"
       :setup="statistics"
-      :image="config.home.statistics.parallax?.image || '/images/parallax.webp'"
       :animation-speed="config.home.statistics.blur?.animationSpeed || 1.5"
       :background-colors="
         themeName === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors
       "
       :halo-colors="themeName === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
+      :color-mode="config.home.statistics.colorMode"
     ></homeStatisticsComponent>
     <homeContactComponent v-if="config.home.contact"></homeContactComponent>
   </div>

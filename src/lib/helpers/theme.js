@@ -216,11 +216,11 @@ export const overlapStyle = (overlap, display) => {
 
   let marginTop;
   if (overlap === true) {
-    marginTop = display?.smAndDown ? '-20vh' : '-40vh';
+    marginTop = display?.smAndDown ? '-18vh' : '-35vh';
   } else if (typeof overlap === 'string') {
     marginTop = `-${overlap}`;
   } else if (typeof overlap === 'object') {
-    marginTop = display?.smAndDown ? `-${overlap.mobile || '20vh'}` : `-${overlap.desktop || '40vh'}`;
+    marginTop = display?.smAndDown ? `-${overlap.mobile || '18vh'}` : `-${overlap.desktop || '35vh'}`;
   } else {
     return {};
   }
@@ -230,6 +230,17 @@ export const overlapStyle = (overlap, display) => {
     position: 'relative',
     'z-index': '10',
   };
+};
+
+/**
+ * @desc Force text color mode regardless of current theme.
+ * @param {String|null} colorMode - 'light' (white text), 'dark' (dark text), or null/undefined (no override)
+ * @returns {Object} Style object with color override, or empty object.
+ */
+export const colorModeStyle = (colorMode) => {
+  if (colorMode === 'light') return { color: '#ffffff' };
+  if (colorMode === 'dark') return { color: 'rgba(0, 0, 0, 0.87)' };
+  return {};
 };
 
 /**
@@ -243,4 +254,4 @@ export const lightenColor = (hex, percent) => adjustColor(hex, percent, 'hex');
 /**
  * Exports.
  */
-export default { isDark, style, liquidGlassStyle, overlapStyle, lightenColor };
+export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor };

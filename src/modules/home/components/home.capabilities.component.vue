@@ -44,7 +44,7 @@
         <home-tabs v-model="activeIndex" :items="setup.items" @update:model-value="onTabChange" />
 
         <!-- Feature Content -->
-        <v-window v-model="activeIndex" class="mt-4">
+        <v-window v-model="activeIndex" class="mt-1">
           <v-window-item
             v-for="(item, index) in setup.items"
             :key="item.id"
@@ -105,7 +105,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style, overlapStyle } from '../../../lib/helpers/theme';
+import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import HomeTabs from './utils/home.tabs.component.vue';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
@@ -147,6 +147,7 @@ export default {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.setup),
+        ...colorModeStyle(this.setup.colorMode),
         background: bgColor,
       };
     },

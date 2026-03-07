@@ -109,7 +109,7 @@ import { useCoreStore } from '../stores/core.store';
  * Component definition.
  */
 export default {
-  name: 'WaosNavigation',
+  name: 'DevkitNavigation',
   data() {
     const theme = useTheme();
     return {

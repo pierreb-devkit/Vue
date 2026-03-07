@@ -28,5 +28,5 @@ export default {
   },
   header: { display: false },
   footer: { links: [], variant: 'default' },
-  cookie: { prefix: 'waos' },
+  cookie: { prefix: 'devkit' },
 };
