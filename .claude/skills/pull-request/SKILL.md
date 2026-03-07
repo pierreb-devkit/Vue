@@ -211,9 +211,51 @@ gh api repos/$OWNER/$REPO/issues/$PR/comments --paginate | jq 'map({id, user: .u
 - If the comment is an unresolved **review thread**: reply briefly explaining why no action is needed, then resolve via GraphQL (see `references/monitoring.md`)
 - If the comment is a **PR-level or issue comment** (e.g. codecov report, approval message): reply if useful, but these cannot be resolved via GitHub's thread API — they do not count as unresolved threads
 
+### 6b-bis. Classify stack-level vs downstream comments (downstream projects only)
+
+When running on a **downstream project** (not the stack repo itself), classify each actionable comment before fixing:
+
+1. **Check if the comment targets a stack-level file** — a file that exists in the upstream stack repo. Ensure the remote is available, then check:
+   ```bash
+   # Ensure the devkit-vue remote exists and is fetched (update-stack skill sets this up)
+   git remote get-url devkit-vue >/dev/null 2>&1 || git remote add devkit-vue git@github.com:<stack-owner>/<stack-repo>.git
+   git fetch devkit-vue master --quiet 2>/dev/null
+
+   # Check if the file exists in the upstream
+   git ls-tree --name-only -r devkit-vue/master -- <file-path>
+   ```
+   If the file exists in the upstream, it is **stack-level**.
+
+2. **Stack-level comment** → do NOT fix locally. Instead:
+   - Create an issue on the stack repo with the review feedback (use a heredoc to avoid shell escaping issues):
+     ```bash
+     ISSUE_URL=$(gh issue create --repo <stack-owner>/<stack-repo> \
+       --title "fix(<scope>): <summary from review comment>" \
+       --body "$(cat <<'BODY'
+     Reported by CodeRabbit on <downstream-owner>/<downstream-repo>#<PR>.
+
+     ## Review comment
+     <full comment body>
+
+     ## File
+     `<file-path>`
+     BODY
+     )" \
+       --label "Fix")
+     ```
+   - Reply to the review thread with the created issue link:
+     ```
+     This comment targets stack-level code from the upstream Devkit Vue repo. Created $ISSUE_URL to track the fix upstream.
+     ```
+   - Resolve the thread
+
+3. **Downstream-only comment** → fix locally as usual (section 6c)
+
+> Skip this classification when running directly on the stack repo — all comments are actionable there.
+
 ### 6c. Fix all actionable comments from this pass
 
-Fix all actionable comments in one batch, then:
+Fix all actionable comments (downstream-only, or all if on the stack repo) in one batch, then:
 
 1. Run `/verify` — never commit fixes without verifying first
 2. Commit all fixes in one commit using a conventional message:
