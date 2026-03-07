@@ -41,7 +41,7 @@
         </v-col>
 
         <!-- Navigation Tabs with Sliding Indicator -->
-        <home-tabs v-model="activeIndex" :items="setup.items" @update:model-value="onTabChange" />
+        <home-tabs v-model="activeIndex" :items="setup.items" :color-mode="setup.colorMode" @update:model-value="onTabChange" />
 
         <!-- Feature Content -->
         <v-window v-model="activeIndex" class="mt-1">
