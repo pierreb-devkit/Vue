@@ -6,12 +6,12 @@ WORKDIR /app
 
 # args
 ARG NODE_ENV='development'
-ARG WAOS_VUE_app_title='WAOS Docker'
-ARG WAOS_VUE_api_protocol='http'
-ARG WAOS_VUE_api_host='localhost'
-ARG WAOS_VUE_api_port='3000'
-ARG WAOS_VUE_api_base='api'
-ARG WAOS_VUE_cookie='waos'
+ARG DEVKIT_VUE_app_title='Devkit-Docker'
+ARG DEVKIT_VUE_api_protocol='http'
+ARG DEVKIT_VUE_api_host='localhost'
+ARG DEVKIT_VUE_api_port='3000'
+ARG DEVKIT_VUE_api_base='api'
+ARG DEVKIT_VUE_cookie_prefix='waos'
 
 # Install app dependencies & build
 COPY package*.json ./
