@@ -216,7 +216,7 @@ export default {
       variant: 'blur',
       overlap: true,
       title: 'Turn your ideas <br /> <b><span style="color:#55efc4">into a reality.</span></b>',
-      subtitle: 'DevKit allow you to start projects faster with scalable stacks.',
+      subtitle: 'DevKit allows you to start projects faster with scalable stacks.',
       button: {
         title: 'Just launched: 2.0',
         color: '#55efc4',
@@ -866,8 +866,8 @@ export default {
             url: 'https://blog.devkit.me',
           },
           {
-            label: 'Twitter',
-            icon: 'fa-brands fa-twitter',
+            label: 'X',
+            icon: 'fa-brands fa-x-twitter',
             url: 'https://devkit.me',
           },
         ],
@@ -887,7 +887,7 @@ export default {
             url: '/changelogs',
           },
           {
-            label: 'DevKit 2025',
+            label: `DevKit ${new Date().getFullYear()}`,
             icon: 'fa-regular fa-copyright',
             url: 'https://devkit.me',
           },

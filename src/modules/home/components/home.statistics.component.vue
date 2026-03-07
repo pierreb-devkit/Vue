@@ -49,7 +49,7 @@
       <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
         <v-row v-if="setup && setup.length > 0" class="fill-height" align="center" justify="center">
           <v-col v-for="({ value, title }, i) in setup" :key="i" cols="6" md="3">
-            <div class="text-center text-white" data-aos="fade">
+            <div class="text-center" :class="colorMode ? '' : 'text-white'" data-aos="fade">
               <div class="font-weight-black text-display-small text-md-display-medium mb-4 stats-value" v-text="value"></div>
               <div class="text-uppercase text-body-large stats-title" v-text="title"></div>
             </div>
@@ -98,6 +98,7 @@ export default {
     colorMode: {
       type: String,
       default: null,
+      validator: (value) => value === null || ['light', 'dark'].includes(value),
     },
   },
   computed: {
@@ -105,6 +106,10 @@ export default {
       // Smaller ratio for stats section (taller)
       return this.$vuetify?.display?.smAndDown ? 1.5 : 2.5;
     },
+    /**
+     * Builds the inline styles for the statistics section.
+     * @returns {Object} The merged overlap and color-mode styles.
+     */
     sectionStyle() {
       return {
         ...overlapStyle(this.overlap, this.$vuetify?.display),
