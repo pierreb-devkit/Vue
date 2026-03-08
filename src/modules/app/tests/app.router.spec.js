@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import testConfig from '../../../config/defaults/test.js';
+import testConfig from '../../../config/defaults/config.test.js';
 
 // Mock dependencies used by the router
 vi.mock('../../auth/stores/auth.store', () => ({
