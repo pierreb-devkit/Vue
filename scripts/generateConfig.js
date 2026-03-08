@@ -20,7 +20,7 @@ const deepMerge = (target, source) => {
     if (srcVal === undefined) continue;
     const tgtVal = result[key];
     if (Array.isArray(srcVal)) {
-      result[key] = srcVal;
+      result[key] = [...srcVal];
     } else if (srcVal && typeof srcVal === 'object' && !Array.isArray(srcVal) && tgtVal && typeof tgtVal === 'object' && !Array.isArray(tgtVal)) {
       result[key] = deepMerge(tgtVal, srcVal);
     } else {

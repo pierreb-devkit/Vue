@@ -100,9 +100,40 @@ GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 
 ## :wrench: Configuration
 
-Configuration files live in `src/config/defaults/`. The `development.js` file is the base; other files in that folder override it.
+Configuration is split between a **global** file and **per-module** files, then merged at build time into a single `src/config/index.js`.
 
-At build time, environment variables prefixed with `DEVKIT_VUE_` are merged on top. The variable path maps directly to the config object key:
+### File layout
+
+```text
+src/config/defaults/
+  config.development.js          ← global defaults (app, api, port, cookie, analytics, whitelists)
+  config.production.js           ← production overrides
+  config.test.js                 ← test overrides
+
+src/modules/<name>/config/
+  config.development.js          ← module defaults (e.g. vuetify, header, footer, sign, oAuth, home)
+  config.<env>.js                ← module env overrides (optional)
+```
+
+### Merge order (priority ascending)
+
+| Layer | Source | Example |
+|-------|--------|---------|
+| 1 | Module development defaults | `modules/*/config/config.development.js` |
+| 2 | Global development defaults | `config/defaults/config.development.js` |
+| 3 | Module env overrides | `modules/*/config/config.production.js` |
+| 4 | Global env overrides | `config/defaults/config.production.js` |
+| 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
+
+Layers 3–4 are only applied when `NODE_ENV` is not `development`.
+
+### Merge semantics
+
+- **Objects** are merged recursively — keys from higher layers override lower layers, unmentioned keys are preserved.
+- **Arrays are replaced entirely** — a higher-priority layer defining a 2-item array replaces a 4-item array from a lower layer. Items are never merged by index.
+- **`undefined` values** are skipped — they do not overwrite existing keys.
+
+### Environment variables
 
 ```bash
 DEVKIT_VUE_app_title='my app'        # sets config.app.title
