@@ -1,10 +1,10 @@
 export default {
   app: {
-    title: 'WAOS dev',
+    title: 'DevKit',
     subtitle: 'welcome to demo.',
     description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) ',
     keywords: 'vue, vuetify, axios, jest, cypress',
-    author: 'pierre@weareopensource.me',
+    author: 'pierre@devkit.me',
     icon: 'fa-solid fa-earth-americas',
     lang: 'en', // html lang attribute, e.g. 'fr', 'en'
     url: 'http://localhost:8080', // canonical base URL, override in production
@@ -23,7 +23,7 @@ export default {
       },
     },
   },
-  port: 8080, // only available for dev env
+  port: 8080,
   api: {
     protocol: 'http',
     host: 'localhost',
@@ -37,7 +37,7 @@ export default {
     },
   },
   cookie: {
-    prefix: 'waos',
+    prefix: 'devkit',
   },
   whitelists: {
     users: {

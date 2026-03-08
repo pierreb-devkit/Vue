@@ -35,7 +35,7 @@ import { useTheme } from 'vuetify';
  * Component definition.
  */
 export default {
-  name: 'WaosFooter',
+  name: 'DevkitFooter',
   props: {
     links: {
       type: Array,

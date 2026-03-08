@@ -67,7 +67,7 @@ describe('Core Store', () => {
     expect(coreStore.nav.length).toBeGreaterThan(0);
 
     // Logged in with roles
-    localStorage.setItem('waosUserRoles', 'admin,user');
+    localStorage.setItem('devkitUserRoles', 'admin,user');
     coreStore.refreshNav(true);
     expect(coreStore.nav.length).toBeGreaterThan(0);
   });
@@ -156,7 +156,7 @@ describe('Core Store', () => {
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('waosUserRoles', 'admin,user');
+    localStorage.setItem('devkitUserRoles', 'admin,user');
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
@@ -172,7 +172,7 @@ describe('Core Store', () => {
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('waosUserRoles', 'user');
+    localStorage.setItem('devkitUserRoles', 'user');
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
@@ -188,7 +188,7 @@ describe('Core Store', () => {
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('waosUserRoles', 'admin');
+    localStorage.setItem('devkitUserRoles', 'admin');
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'signin')).toBeUndefined();

@@ -37,6 +37,12 @@ export default defineConfig({
         'src/modules/app/app.vue',
       ],
       exclude: ['node_modules/', '**/tests/**', '**/*.config.{js,cjs,mjs,ts}', '**/dist/**'],
+      thresholds: {
+        statements: 85,
+        branches: 75,
+        functions: 85,
+        lines: 85,
+      },
     },
   },
   resolve: {

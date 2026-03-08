@@ -39,11 +39,11 @@ export default {
       variant: 'blur',
       overlap: true,
       title: 'Turn your ideas <br /> <b><span style="color:#55efc4">into a reality.</span></b>',
-      subtitle: 'WeAreOpenSource allow you to start projects faster with scalable stacks.',
+      subtitle: 'DevKit allows you to start projects faster with scalable stacks.',
       button: {
         title: 'Just launched: 2.0',
         color: '#55efc4',
-        link: 'https://github.com/weareopensource',
+        link: 'https://github.com/devkit',
       },
       img: {
         image: '/images/light.webp',
@@ -168,7 +168,7 @@ export default {
           alignment: 'left',
           button: {
             title: 'Follow Us on Github',
-            link: 'https://github.com/weareopensource',
+            link: 'https://github.com/devkit',
           },
         },
       ],
@@ -346,7 +346,7 @@ export default {
           button: {
             title: 'Just launched: 1.2.1',
             color: '#EA3F7D',
-            link: 'https://github.com/weareopensource/Node',
+            link: 'https://github.com/devkit/Node',
           },
           style: {
             card: {
@@ -364,7 +364,7 @@ export default {
           button: {
             title: 'Just launched: 1.2.0',
             color: '#DAFE56',
-            link: 'https://github.com/weareopensource/Vue',
+            link: 'https://github.com/devkit/Vue',
           },
           style: {
             card: {
@@ -381,7 +381,7 @@ export default {
           button: {
             title: 'Just launched: 1.3.0',
             color: '#f1c40f',
-            link: 'https://github.com/weareopensource/Swift',
+            link: 'https://github.com/devkit/Swift',
           },
           style: {
             card: {
@@ -399,7 +399,7 @@ export default {
           button: {
             title: 'Just launched: 1.7.0',
             color: '#365571',
-            link: 'https://github.com/weareopensource/conventional-changelog',
+            link: 'https://github.com/devkit/conventional-changelog',
           },
           style: {
             card: {
@@ -446,13 +446,13 @@ export default {
           serviceIcon: 'fa-solid fa-file-lines',
           color: '#2980b9',
           subtitle: 'Ressources',
-          text: '[Start a project and keep it updated ?](https://blog.weareopensource.me/start-a-project-and-maintain-updates/)<br /><br /> - Deployment: [Rancher](https://blog.weareopensource.me/tag/rancher-2/) - [CapRover](https://blog.weareopensource.me/node/) <br /> - Code: [JS](https://blog.weareopensource.me/js-knwoledges/) - [Swift](https://blog.weareopensource.me/js-knwoledges-2/)  <br /> - Other: [Commits](https://github.com/weareopensource/conventional-changelog) - [Server](https://blog.weareopensource.me/setup-debian-server/) - [Tools](https://blog.weareopensource.me/us/) <br />',
+          text: '[Start a project and keep it updated ?](https://blog.devkit.me/start-a-project-and-maintain-updates/)<br /><br /> - Deployment: [Rancher](https://blog.devkit.me/tag/rancher-2/) - [CapRover](https://blog.devkit.me/node/) <br /> - Code: [JS](https://blog.devkit.me/js-knwoledges/) - [Swift](https://blog.devkit.me/js-knwoledges-2/)  <br /> - Other: [Commits](https://github.com/devkit/conventional-changelog) - [Server](https://blog.devkit.me/setup-debian-server/) - [Tools](https://blog.devkit.me/us/) <br />',
         },
         {
           serviceIcon: 'fa-solid fa-binoculars',
           color: '#f39c12',
           subtitle: 'Vision',
-          text: 'We dream of creating stacks in multiple languages, [Vue](https://github.com/weareopensource/Vue), [Node](https://github.com/weareopensource/Node), [Swift](https://github.com/weareopensource/Swift) ..., aligned on features & architecture. We want to allow anyone to create a full-stack on-demand and keep it updated easily.',
+          text: 'We dream of creating stacks in multiple languages, [Vue](https://github.com/devkit/Vue), [Node](https://github.com/devkit/Node), [Swift](https://github.com/devkit/Swift) ..., aligned on features & architecture. We want to allow anyone to create a full-stack on-demand and keep it updated easily.',
         },
       ],
     },
@@ -490,7 +490,7 @@ export default {
           stepIcon: 'fa-solid fa-comment',
           stepColor: '#1abc9c',
           subtitle: 'Clone our stacks',
-          text: 'Start by [cloning your preferred stacks](https://blog.weareopensource.me/start-a-project-and-maintain-updates/) while keeping our repository as a git remote to seamlessly follow updates. Just manage the merges and minimally edit the stack for ease of use.',
+          text: 'Start by [cloning your preferred stacks](https://blog.devkit.me/start-a-project-and-maintain-updates/) while keeping our repository as a git remote to seamlessly follow updates. Just manage the merges and minimally edit the stack for ease of use.',
         },
         {
           stepIcon: 'fa-solid fa-user',
@@ -582,7 +582,7 @@ export default {
         interval: 15000,
       },
       title: 'Some contents to read',
-      url: 'https://blog.weareopensource.me',
+      url: 'https://blog.devkit.me',
       key: '0415f48774e7c49c713204f787',
     },
 
@@ -662,7 +662,7 @@ export default {
       icon: 'fa-solid fa-envelope',
       variant: 'default',
       title: 'Feel free to contact us',
-      mail: 'mailto:pierre@weareopensource.me',
+      mail: 'mailto:pierre@devkit.me',
       alignment: 'center',
     },
   },
