@@ -1,13 +1,8 @@
-/* eslint-disable */
-
 import fs from 'fs';
 import { merge, mapKeys, pickBy, forEach } from 'lodash-es';
 import objectPath from 'object-path';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { pathToFileURL } from 'url';
 
 // Get the current config
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
@@ -117,7 +112,7 @@ const getConfiguration = async () => {
   // Generate ESM file
   const esmConfigFile = `/**
  * don't edit this file /!\\
- * it' a generated one
+ * it's a generated one
  * edit in defaults/*, cf readme
  */
 /* eslint-disable */
