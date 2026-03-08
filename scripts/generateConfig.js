@@ -10,10 +10,14 @@ import { pathToFileURL } from 'url';
  * @param {Object} source - Override object
  * @returns {Object} Merged result (new object, inputs are not mutated)
  */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 const deepMerge = (target, source) => {
   const result = { ...target };
   for (const key of Object.keys(source)) {
+    if (UNSAFE_KEYS.has(key)) continue;
     const srcVal = source[key];
+    if (srcVal === undefined) continue;
     const tgtVal = result[key];
     if (Array.isArray(srcVal)) {
       result[key] = srcVal;
