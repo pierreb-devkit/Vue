@@ -15,7 +15,13 @@ scrollBehavior: 'float',
 colorMode: null,
 ```
 
-No action required to keep the previous `'hide'` behavior.
+The development defaults now ship with `'float'` enabled. To restore the previous behavior, set:
+
+```js
+scrollBehavior: 'hide',
+colorMode: 'light',
+opacity: undefined,
+```
 
 ---
 

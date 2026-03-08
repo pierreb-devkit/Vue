@@ -212,7 +212,7 @@ export default {
             color: this.theme.current.colors.onSurface,
           },
         }),
-        ...colorModeStyle(this.config.vuetify.theme.header?.colorMode),
+        ...(variant === 'header' ? colorModeStyle(this.config.vuetify.theme.header?.colorMode) : {}),
       };
     },
     navigate(link) {
@@ -272,6 +272,16 @@ export default {
 .devkit-app-bar--float :deep(.v-toolbar__content) .v-btn,
 .devkit-app-bar--float :deep(.v-toolbar__content) a {
   color: inherit !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devkit-app-bar--float {
+    transition: none !important;
+  }
+
+  .devkit-app-bar :deep(.v-toolbar__content)::after {
+    transition: none !important;
+  }
 }
 </style>
 
