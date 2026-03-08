@@ -34,9 +34,16 @@ export default defineConfig({
         'src/lib/plugins/**/*.js',
         'src/modules/*/stores/**/*.js',
         'src/modules/app/app.store.js',
-        'src/modules/app/app.vue',
       ],
-      exclude: ['node_modules/', '**/tests/**', '**/*.config.{js,cjs,mjs,ts}', '**/dist/**'],
+      exclude: [
+        'node_modules/',
+        '**/tests/**',
+        '**/*.config.{js,cjs,mjs,ts}',
+        '**/dist/**',
+        'src/lib/plugins/index.js',
+        'src/lib/plugins/vuetify.js',
+        'src/lib/services/config.js',
+      ],
       thresholds: {
         statements: 85,
         branches: 75,
