@@ -1,34 +1,34 @@
 export default {
   vuetify: {
     theme: {
-      dark: 'auto', // dark theme true / false / auto (based on prefers-color-scheme)
-      flat: true, // flat by default
-      rounded: 'rounded-lg',
-      maxWidth: '1200px',
+      dark: 'auto', // true | false | 'auto' (follows system prefers-color-scheme)
+      flat: true, // true removes elevation/shadow from app-bar and cards globally
+      rounded: 'rounded-lg', // 'rounded-0' | 'rounded-sm' | 'rounded' | 'rounded-lg' | 'rounded-xl' | 'rounded-pill'
+      maxWidth: '1200px', // max content width for header and page containers (CSS value)
       snackbar: {
-        // kind of notifications on requests
-        status: true, // activate for error
-        methods: ['post', 'put'], // show on sucess depends of methods
-        sucessColor: 'success',
-        errorColor: 'error',
+        status: true, // true to show error notifications on failed API requests
+        methods: ['post', 'put'], // HTTP methods that also trigger success notifications
+        sucessColor: 'success', // Vuetify color name for success toasts
+        errorColor: 'error', // Vuetify color name for error toasts
       },
       header: {
-        background: '#2c3e50',
-        color: '#FFFFFF',
-        colorMode: 'light',
-        opacity: 99,
-        scrollBehavior: 'hide',
+        background: '#2c3e50', // header background color (hex) — used for mobile menu shortcut buttons
+        color: '#FFFFFF', // header text color (hex) — used for mobile hamburger icon
+        colorMode: null, // 'light' (white text) | 'dark' (dark text) | null (theme's onSurface, recommended for 'float')
+        opacity: 0.5, // liquid glass background opacity (0 = transparent glass, 0.5 = balanced, 1 = solid opaque)
+        scrollBehavior: 'float', // 'float' (shrink to pill on scroll) | 'hide' (hide/show on scroll) | undefined (static)
+        scrollThreshold: 50, // pixels before float transition triggers (only with 'float')
       },
       navigation: {
-        background: '#2c3e50',
-        color: '#FFFFFF',
+        background: '#2c3e50', // drawer background color (hex)
+        color: '#FFFFFF', // drawer text/icon color (hex)
         drawer: {
-          floating: true,
-          expand: true,
-          rail: true,
+          floating: true, // true for floating drawer with margin
+          expand: true, // true to expand rail on hover (show labels)
+          rail: true, // true for compact icon-only rail mode
         },
       },
-      themes: {
+      themes: { // Vuetify color palettes — 'on' prefixed = text color on that background
         light: {
           colors: {
             primary: '#1abc9c',
@@ -63,22 +63,21 @@ export default {
         },
       },
       options: {
-        customProperties: true,
+        customProperties: true, // true to generate CSS custom properties for each theme color
       },
     },
     icons: {
-      defaultSet: 'fa',
+      defaultSet: 'fa', // icon set — 'fa' (Font Awesome) | 'mdi' (Material Design Icons)
     },
   },
   header: {
-    display: true, // display header or not
+    display: true, // true to show header on public (non-authenticated) pages
     logo: {
-      file: null, // image path or null to use text title
-      width: '120px',
+      file: null, // logo image path (e.g. '/images/logo.png') or null for text title
+      width: '120px', // logo width (CSS value)
     },
-    title: true, // display text title when logo.file is null
-    links: [
-      // top left
+    title: true, // true to show app.title as text when logo.file is null
+    links: [ // nav menu items — simple: { title, url } | dropdown: { title, sublinks: [{ icon, title, subtitle, url, color }] }
       {
         title: 'Product',
         sublinks: [
@@ -108,7 +107,7 @@ export default {
         ],
       },
     ],
-    shortcuts: [
+    shortcuts: [ // CTA buttons (right side) — { title, url, variant: 'flat'|'outlined'|'elevated'|'tonal'|'text'|'plain' }
       {
         title: 'Get Started - free',
         url: 'https://blog.devkit.me',
@@ -117,7 +116,7 @@ export default {
     ],
   },
   pages: {
-    style: {
+    style: { // default page styling — background: '#hex' | 'colorName' (Vuetify theme) | 'linear-gradient(...)'
       section: {
         background: 'background',
       },
@@ -127,13 +126,12 @@ export default {
     },
   },
   footer: {
-    variant: 'alternate',
-    links: [
+    variant: 'alternate', // 'default' | 'alternate' (surface background)
+    links: [ // footer columns — { title, items: [{ label, icon, url }] } — set label: null to hide an item
       {
         title: 'Useful',
         items: [
           {
-            // set null to hide
             label: 'Blog',
             icon: 'fa-solid fa-rss',
             url: 'https://blog.devkit.me',
@@ -149,7 +147,6 @@ export default {
         title: 'About',
         items: [
           {
-            // set null to hide
             label: 'Us ?',
             icon: 'fa-solid fa-users',
             url: '/team',
@@ -170,7 +167,6 @@ export default {
         title: 'Others',
         items: [
           {
-            // set null to hide
             label: 'T&C / CGU',
             icon: 'fa-solid fa-file-lines',
             url: '/pages/terms',
