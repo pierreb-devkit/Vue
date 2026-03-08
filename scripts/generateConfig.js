@@ -5,6 +5,7 @@ import _ from 'lodash';
 import objectPath from 'object-path';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import glob from 'glob';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,28 +13,83 @@ const __dirname = path.dirname(__filename);
 // Get the current config
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
-const getBaseConfiguration = async () => {
-  const _path = path.join(process.cwd(), './src/config', 'defaults', `${process.env.NODE_ENV}.js`);
-  if (fs.existsSync(`${_path}`)) {
-    console.log(`+ Configuration based on : "${process.env.NODE_ENV}"`);
-    return await import(path.join('file://', _path));
+/**
+ * Load and merge all module config files matching the given environment.
+ * Globs `src/modules/&ast;/config/config.<env>.js` and deep-merges them.
+ * @param {string} env - Environment name (e.g. 'development', 'production')
+ * @returns {Promise<Object>} Merged config object from all matching module files
+ */
+const loadModuleConfigs = async (env) => {
+  const pattern = path.join(process.cwd(), 'src', 'modules', '*', 'config', `config.${env}.js`);
+  const files = glob.sync(pattern).sort();
+  let merged = {};
+  for (const file of files) {
+    console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
+    const mod = await import(`file://${file}`);
+    merged = _.merge(merged, mod.default);
   }
-  console.error(`+ Error: No configuration file found for "${process.env.NODE_ENV}" environment using development instead`);
-  return await import(path.join(process.cwd(), './src/config', 'defaults', 'development.js'));
+  return merged;
 };
 
-const getConfiguration = async () => {
-  let defaultConfig = await getBaseConfiguration();
+/**
+ * Load a global config file for the given environment.
+ * @param {string} env - Environment name (e.g. 'development', 'production')
+ * @returns {Promise<Object|null>} The default export object, or null if file does not exist
+ */
+const loadGlobalConfig = async (env) => {
+  const filePath = path.join(process.cwd(), 'src', 'config', 'defaults', `config.${env}.js`);
+  if (fs.existsSync(filePath)) {
+    console.log(`  + Global config: config.${env}.js`);
+    const mod = await import(`file://${filePath}`);
+    return mod.default;
+  }
+  return null;
+};
 
-  // Get the config from process.env.DEVKIT_VUE_*
+/**
+ * Build the full application configuration by merging module defaults, global
+ * defaults, environment overrides, and DEVKIT_VUE_* env vars, then write the
+ * generated ESM config file.
+ * @returns {Promise<void>} Resolves when the config file has been written
+ */
+const getConfiguration = async () => {
+  const env = process.env.NODE_ENV;
+  console.log(`+ Configuration based on: "${env}"`);
+
+  // 1. Module development defaults (base layer)
+  console.log('+ Loading module development defaults...');
+  let config = await loadModuleConfigs('development');
+
+  // 2. Global development defaults
+  console.log('+ Loading global development defaults...');
+  const globalDev = await loadGlobalConfig('development');
+  if (globalDev) {
+    config = _.merge(config, globalDev);
+  }
+
+  // 3. If not development, overlay env-specific configs
+  if (env !== 'development') {
+    // Module env overrides
+    console.log(`+ Loading module ${env} overrides...`);
+    const moduleEnv = await loadModuleConfigs(env);
+    config = _.merge(config, moduleEnv);
+
+    // Global env overrides
+    console.log(`+ Loading global ${env} overrides...`);
+    const globalEnv = await loadGlobalConfig(env);
+    if (globalEnv) {
+      config = _.merge(config, globalEnv);
+    }
+  }
+
+  // 4. DEVKIT_VUE_* env var overrides (final layer)
   const environmentVars = _.mapKeys(
     _.pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),
   );
   const environmentConfigVars = {};
   _.forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
-  // Merge config files
-  const config = _.merge(await defaultConfig.default, environmentConfigVars);
+  config = _.merge(config, environmentConfigVars);
 
   // Generate ESM version
   const configJSON = JSON.stringify(config, undefined, 2)
