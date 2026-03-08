@@ -107,8 +107,8 @@ Configuration is split between a **global** file and **per-module** files, then 
 ```text
 src/config/defaults/
   config.development.js          ← global defaults (app, api, port, cookie, analytics, whitelists)
-  config.production.js           ← production overrides
-  config.test.js                 ← test overrides
+  config.production.js           ← production overrides (optional)
+  config.test.js                 ← test overrides (optional)
 
 src/modules/<name>/config/
   config.development.js          ← module defaults (e.g. vuetify, header, footer, sign, oAuth, home)
