@@ -3,10 +3,11 @@
     v-if="!isLoggedIn"
     :style="headerStyle"
     :flat="config.vuetify.theme.flat"
-    :scroll-behavior="config.vuetify.theme.header?.scrollBehavior"
+    :scroll-behavior="isFloatMode ? undefined : config.vuetify.theme.header?.scrollBehavior"
     class="devkit-app-bar"
+    :class="{ 'devkit-app-bar--float': isFloatMode, 'devkit-app-bar--scrolled': isFloatMode && isScrolled }"
   >
-    <v-container :style="{ maxWidth: config.vuetify.theme.maxWidth }" class="d-flex align-center pa-0">
+    <v-container :style="{ maxWidth: config.vuetify.theme.maxWidth }" class="d-flex align-center px-4 py-0">
       <!-- Logo/Title -->
       <router-link v-if="config.header.logo && config.header.logo.file" to="/">
         <v-img :src="config.header.logo.file" height="100px" width="100px" class="ml-0 mt-2" inline alt="logo"> </v-img>
@@ -26,7 +27,7 @@
               <v-icon class="mt-1 ml-2" size="x-small">fa-solid fa-angle-down</v-icon>
             </v-btn>
           </template>
-          <v-list lines="two" class="px-0 py-0 mt-6 gradient-border-menu" :class="config.vuetify.theme.rounded" :style="menuStyle" density="compact">
+          <v-list lines="two" class="px-0 py-0 mt-6 gradient-border-menu" :class="config.vuetify.theme.rounded" :style="glassStyle()" density="compact">
             <v-list-item
               v-for="({ icon, title: linkTitle, url: linkUrl, color, subtitle }, j) in sublinks"
               :key="j"
@@ -36,8 +37,8 @@
               <template #prepend>
                 <v-icon :color="color" size="small">{{ icon }}</v-icon>
               </template>
-              <v-list-item-title class="text-body-medium font-weight-medium">{{ linkTitle }}</v-list-item-title>
-              <v-list-item-subtitle v-if="subtitle" class="text-label-small">{{ subtitle }}</v-list-item-subtitle>
+              <v-list-item-title class="text-body-large font-weight-medium">{{ linkTitle }}</v-list-item-title>
+              <v-list-item-subtitle v-if="subtitle" class="text-body-small">{{ subtitle }}</v-list-item-subtitle>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -65,7 +66,7 @@
             <v-icon :style="{ color: config.vuetify.theme.header?.color }">fa-solid fa-bars</v-icon>
           </v-btn>
         </template>
-        <v-card min-width="300px" class="gradient-border-menu" :class="config.vuetify.theme.rounded" :style="menuStyle">
+        <v-card min-width="300px" class="gradient-border-menu" :class="config.vuetify.theme.rounded" :style="glassStyle()">
           <!-- Menu -->
           <v-list density="compact">
             <v-list-item v-for="({ title, sublinks }, i) in config.header.links.filter((v) => v.sublinks)" :key="i">
@@ -126,6 +127,8 @@ export default {
     const theme = useTheme();
     return {
       theme,
+      isScrolled: false,
+      handleScroll: null,
     };
   },
   computed: {
@@ -136,37 +139,82 @@ export default {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
     },
+    /**
+     * @desc Whether the header uses the 'float' scroll behavior mode.
+     * @returns {Boolean} true if scrollBehavior is 'float'
+     */
+    isFloatMode() {
+      return this.config.vuetify.theme.header?.scrollBehavior === 'float';
+    },
+    /**
+     * @desc Computed header inline styles. In float mode, switches between full-width
+     *       and a centered floating pill when scrolled past the threshold.
+     * @returns {Object} CSS style object
+     */
     headerStyle() {
+      const scrolled = this.isFloatMode && this.isScrolled;
+      const maxW = this.config.vuetify.theme.maxWidth || '1200px';
+      return {
+        ...this.glassStyle(scrolled ? 'card' : 'header'),
+        // Float mode: center via left/right auto margins, only animate width + border-radius
+        ...(this.isFloatMode
+          ? {
+              left: '0',
+              right: '0',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              width: scrolled ? `min(${maxW}, calc(100% - 24px))` : '100%',
+              borderRadius: scrolled ? '12px' : '0',
+            }
+          : { width: '100%' }),
+        // When scrolled in float mode, drop colorMode override so text uses theme's onSurface
+        ...(scrolled ? { color: this.theme.current.colors.onSurface } : {}),
+      };
+    },
+  },
+  mounted() {
+    if (this.isFloatMode) {
+      const threshold = this.config.vuetify.theme.header?.scrollThreshold ?? 50;
+      let ticking = false;
+      this.handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            this.isScrolled = window.scrollY > threshold;
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+      window.addEventListener('scroll', this.handleScroll, { passive: true });
+      this.handleScroll();
+    }
+  },
+  beforeUnmount() {
+    if (this.handleScroll) {
+      window.removeEventListener('scroll', this.handleScroll);
+    }
+  },
+  methods: {
+    /**
+     * @desc Build liquid glass style for header and dropdown menus.
+     * @param {String} variant - liquidGlass variant ('header', 'card')
+     * @returns {Object} CSS style object
+     */
+    glassStyle(variant = 'card') {
       return {
         ...liquidGlassStyle({
           vuetifyTheme: this.theme,
           intensity: 1,
-          variant: 'header',
-          border: 'none',
-          extras: {
-            color: this.theme.current.colors.onSurface,
-            width: '100%',
-          },
-        }),
-        ...colorModeStyle(this.config.vuetify.theme.header?.colorMode),
-      };
-    },
-    menuStyle() {
-      return {
-        ...liquidGlassStyle({
-          vuetifyTheme: this.theme,
-          intensity: 0.6,
-          variant: 'card',
+          opacity: this.config.vuetify.theme.header?.opacity,
+          variant,
           border: 'none',
           extras: {
             color: this.theme.current.colors.onSurface,
           },
         }),
-        ...colorModeStyle(this.config.vuetify.theme.header?.colorMode),
+        ...(variant === 'header' ? colorModeStyle(this.config.vuetify.theme.header?.colorMode) : {}),
       };
     },
-  },
-  methods: {
     navigate(link) {
       if (link.startsWith('http')) {
         window.open(link, '_blank');
@@ -201,6 +249,39 @@ export default {
     rgba(255, 255, 255, 0.8) 100%
   );
   pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+/* Float mode: smooth transitions on the app-bar — width animates progressively from both sides */
+.devkit-app-bar--float {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), top 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* When scrolled in float mode: nudge down and hide the bottom gradient line */
+.devkit-app-bar--scrolled {
+  top: 12px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+.devkit-app-bar--scrolled :deep(.v-toolbar__content)::after {
+  opacity: 0;
+}
+
+/* Force text color inheritance through Vuetify toolbar internals */
+.devkit-app-bar--float :deep(.v-toolbar__content),
+.devkit-app-bar--float :deep(.v-toolbar__content) .v-btn,
+.devkit-app-bar--float :deep(.v-toolbar__content) a {
+  color: inherit !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devkit-app-bar--float {
+    transition: none !important;
+  }
+
+  .devkit-app-bar :deep(.v-toolbar__content)::after {
+    transition: none !important;
+  }
 }
 </style>
 

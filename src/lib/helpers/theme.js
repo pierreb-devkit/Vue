@@ -94,6 +94,9 @@ const adjustColor = (hex, amount, output = 'rgb') => {
  * @param {Object} options.vuetifyTheme - Vuetify theme object (from useTheme()). Auto-extracts colors.
  * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 0.8
  * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
+ * @param {Number} options.opacity - Override background opacity (0-1). When set, uses a solid surface-color
+ *   background at this opacity instead of the default computed value. Useful for elements like headers
+ *   where text readability matters more than glass transparency. Default: undefined (auto-computed)
  * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'card'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
  * @param {Boolean|String} options.glowBorder - false, true (static gradient), or 'animated' (rotating). Default: false
@@ -104,6 +107,7 @@ export const liquidGlassStyle = ({
   vuetifyTheme,
   intensity = 0.8,
   tint = 'auto',
+  opacity,
   variant = 'card',
   border: borderStyle = 'all',
   glowBorder = false,
@@ -136,7 +140,10 @@ export const liquidGlassStyle = ({
   const highlightOpacity = i * (dark ? 0.16 : 0.25);
 
   // Build simple layered background
-  const background = `
+  const effectiveOpacity = opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : baseOpacity;
+  const background = opacity !== undefined
+    ? `rgba(${surfaceRgb}, ${effectiveOpacity.toFixed(2)})`
+    : `
     linear-gradient(
       to bottom,
       rgba(${surfaceRgb}, ${highlightOpacity.toFixed(3)}) 0%,

@@ -4,6 +4,27 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Header "float" scroll mode (2026-03-08)
+
+New header scroll mode: the navbar shrinks to a floating pill on scroll.
+
+To activate, set in `src/modules/app/config/config.development.js` → `vuetify.theme.header`:
+
+```js
+scrollBehavior: 'float',
+colorMode: null,
+```
+
+The development defaults now ship with `'float'` enabled. To restore the previous behavior, set:
+
+```js
+scrollBehavior: 'hide',
+colorMode: 'light',
+opacity: undefined,
+```
+
+---
+
 ## Configuration split by module (2026-03-07)
 
 The monolithic `src/config/defaults/development.js` has been split into per-module config files with a homogeneous naming convention.

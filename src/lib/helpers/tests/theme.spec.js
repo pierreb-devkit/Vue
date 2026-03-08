@@ -308,6 +308,16 @@ describe('Theme Helpers', () => {
       expect(result2['-webkit-backdrop-filter']).toContain('blur(18px)');
     });
 
+    it('should use solid surface-color background when opacity is provided', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, opacity: 0.5 });
+      expect(result.background).toBe('rgba(255,255,255, 0.50)');
+    });
+
+    it('should clamp opacity between 0 and 1', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, opacity: 1.5 });
+      expect(result.background).toBe('rgba(255,255,255, 1.00)');
+    });
+
     it('should clamp tint between -1 and 1', () => {
       const result1 = liquidGlassStyle({ vuetifyTheme: mockTheme, tint: -2 });
       const result2 = liquidGlassStyle({ vuetifyTheme: mockTheme, tint: 2 });
