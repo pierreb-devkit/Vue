@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 /**
  * Plugin setup.
