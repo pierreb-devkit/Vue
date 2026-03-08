@@ -67,7 +67,7 @@ describe('Core Store', () => {
     expect(coreStore.nav.length).toBeGreaterThan(0);
 
     // Logged in with roles
-    localStorage.setItem('waosUserRoles', 'admin,user');
+    localStorage.setItem('devkitUserRoles', 'admin,user');
     coreStore.refreshNav(true);
     expect(coreStore.nav.length).toBeGreaterThan(0);
   });
@@ -128,5 +128,86 @@ describe('Core Store', () => {
     expect(coreStore.nav.length).toBe(2);
     expect(coreStore.nav.find((route) => route.name === 'home')).toBeDefined();
     expect(coreStore.nav.find((route) => route.name === 'public')).toBeDefined();
+  });
+
+  it('should show only public routes when not logged in', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+      { path: '/user', name: 'user', meta: { display: true, roles: ['user'] } },
+    ];
+
+    coreStore.init(mockRoutes);
+    localStorage.clear();
+    coreStore.refreshNav(false);
+
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
+    expect(coreStore.nav.find((r) => r.name === 'user')).toBeUndefined();
+  });
+
+  it('should show role-protected routes when logged in with matching roles', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+      { path: '/user', name: 'user', meta: { display: true, roles: ['user'] } },
+    ];
+
+    coreStore.init(mockRoutes);
+    localStorage.setItem('devkitUserRoles', 'admin,user');
+    coreStore.refreshNav(true);
+
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'user')).toBeDefined();
+  });
+
+  it('should hide role-protected routes when logged in but roles do not match', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+    ];
+
+    coreStore.init(mockRoutes);
+    localStorage.setItem('devkitUserRoles', 'user');
+    coreStore.refreshNav(true);
+
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
+  });
+
+  it('should always hide routes with display: false even when logged in with matching roles', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/signin', name: 'signin', meta: { display: false } },
+      { path: '/admin-hidden', name: 'admin-hidden', meta: { display: false, roles: ['admin'] } },
+      { path: '/', name: 'home', meta: { display: true } },
+    ];
+
+    coreStore.init(mockRoutes);
+    localStorage.setItem('devkitUserRoles', 'admin');
+    coreStore.refreshNav(true);
+
+    expect(coreStore.nav.find((r) => r.name === 'signin')).toBeUndefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin-hidden')).toBeUndefined();
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+  });
+
+  it('should not show role routes when logged in but no roles in localStorage', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+    ];
+
+    coreStore.init(mockRoutes);
+    localStorage.clear();
+    coreStore.refreshNav(true);
+
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
   });
 });

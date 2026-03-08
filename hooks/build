@@ -3,21 +3,21 @@
 : "${IMAGE_NAME:=waosdocker}"
 
 : "${NODE_ENV:=development}"
-: "${WAOS_VUE_app_title:=WAOS-Docker}"
-: "${WAOS_VUE_api_protocol:=http}"
-: "${WAOS_VUE_api_host:=localhost}"
-: "${WAOS_VUE_api_port:=3000}"
-: "${WAOS_VUE_api_base:=api}"
-: "${WAOS_VUE_cookie:=waos}"
+: "${DEVKIT_VUE_app_title:=Devkit-Docker}"
+: "${DEVKIT_VUE_api_protocol:=http}"
+: "${DEVKIT_VUE_api_host:=localhost}"
+: "${DEVKIT_VUE_api_port:=3000}"
+: "${DEVKIT_VUE_api_base:=api}"
+: "${DEVKIT_VUE_cookie_prefix:=waos}"
 
 ARGS=(
  --build-arg NODE_ENV=$NODE_ENV
- --build-arg WAOS_VUE_app_title=$WAOS_VUE_app_title
- --build-arg WAOS_VUE_api_protocol=$WAOS_VUE_api_protocol
- --build-arg WAOS_VUE_api_host=$WAOS_VUE_api_host
- --build-arg WAOS_VUE_api_port=$WAOS_VUE_api_port
- --build-arg WAOS_VUE_api_base=$WAOS_VUE_api_base
- --build-arg WAOS_VUE_cookie=$WAOS_VUE_cookie
+ --build-arg DEVKIT_VUE_app_title=$DEVKIT_VUE_app_title
+ --build-arg DEVKIT_VUE_api_protocol=$DEVKIT_VUE_api_protocol
+ --build-arg DEVKIT_VUE_api_host=$DEVKIT_VUE_api_host
+ --build-arg DEVKIT_VUE_api_port=$DEVKIT_VUE_api_port
+ --build-arg DEVKIT_VUE_api_base=$DEVKIT_VUE_api_base
+ --build-arg DEVKIT_VUE_cookie_prefix=$DEVKIT_VUE_cookie_prefix
 )
 
 docker build ${ARGS[@]} -t $IMAGE_NAME .

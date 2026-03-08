@@ -9,10 +9,11 @@ Run lint → tests → build and report results.
 
 ## Steps
 
-1. Run `npm run lint` to check code quality
-2. Run `npm run test:unit` to run all unit tests
-3. Run `npm run build` to verify the build succeeds
-4. Summarize results:
+1. Read `ERRORS.md` — scan changed files for any pattern listed as wrong. Flag violations before running tooling.
+2. Run `npm run lint` to check code quality
+3. Run `npm run test:unit` to run all unit tests
+4. Run `npm run build` to verify the build succeeds
+5. Summarize results:
    - ✅ All checks passed → ready to commit
    - ❌ Some checks failed → show what failed and suggest next action
 

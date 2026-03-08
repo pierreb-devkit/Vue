@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-row class="ma-2">
-      <coreDataTableComponent :headers="headers" :items="users" :request="'getUsers'">deadead</coreDataTableComponent>
+      <coreDataTableComponent :headers="headers" :items="users" :fetch-action="fetchUsers" />
     </v-row>
   </v-container>
 </template>
@@ -96,6 +96,17 @@ export default {
     users() {
       const usersStore = useUsersStore();
       return usersStore.users;
+    },
+  },
+  methods: {
+    /**
+     * Fetch users from the store with pagination params.
+     * @param {string} params - Pagination query string from tools.pageRequest (e.g. "0&5&search")
+     * @returns {Promise<void>} Resolves when users are fetched
+     */
+    async fetchUsers(params) {
+      const usersStore = useUsersStore();
+      await usersStore.getUsers(params);
     },
   },
 };

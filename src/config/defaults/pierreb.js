@@ -82,8 +82,10 @@ export default {
       header: {
         background: '#0b0b0d',
         color: '#FFFFFF',
-        opacity: 95,
-        scrollBehavior: 'hide',
+        colorMode: null,
+        opacity: 0.5,
+        scrollBehavior: 'float',
+        scrollThreshold: 50,
       },
       navigation: {
         background: '#0b0b0d',

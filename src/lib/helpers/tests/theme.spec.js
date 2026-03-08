@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { isDark, style, liquidGlassStyle, overlapStyle, lightenColor } from '../theme.js';
+import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor } from '../theme.js';
 
 describe('Theme Helpers', () => {
   describe('isDark', () => {
@@ -8,20 +8,18 @@ describe('Theme Helpers', () => {
       delete window.matchMedia;
     });
 
-    it('should return true when theme is explicitly true', () => {
-      expect(isDark(true)).toBe(true);
+    it('should return true when theme is dark', () => {
+      expect(isDark('dark')).toBe(true);
     });
 
-    it('should return false when theme is explicitly false', () => {
-      expect(isDark(false)).toBe(false);
+    it('should return false when theme is light', () => {
+      expect(isDark('light')).toBe(false);
     });
 
-    it('should return false when theme is undefined', () => {
+    it('should return false for unknown or missing theme (light by default)', () => {
       expect(isDark(undefined)).toBe(false);
-    });
-
-    it('should return false when theme is null', () => {
       expect(isDark(null)).toBe(false);
+      expect(isDark('')).toBe(false);
     });
 
     it('should detect auto dark mode from system preferences (dark)', () => {
@@ -310,6 +308,16 @@ describe('Theme Helpers', () => {
       expect(result2['-webkit-backdrop-filter']).toContain('blur(18px)');
     });
 
+    it('should use solid surface-color background when opacity is provided', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, opacity: 0.5 });
+      expect(result.background).toBe('rgba(255,255,255, 0.50)');
+    });
+
+    it('should clamp opacity between 0 and 1', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, opacity: 1.5 });
+      expect(result.background).toBe('rgba(255,255,255, 1.00)');
+    });
+
     it('should clamp tint between -1 and 1', () => {
       const result1 = liquidGlassStyle({ vuetifyTheme: mockTheme, tint: -2 });
       const result2 = liquidGlassStyle({ vuetifyTheme: mockTheme, tint: 2 });
@@ -339,7 +347,7 @@ describe('Theme Helpers', () => {
     it('should return default overlap for desktop when overlap is true', () => {
       const result = overlapStyle(true, mockDisplay);
       expect(result).toEqual({
-        'margin-top': '-40vh',
+        'margin-top': '-35vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -349,7 +357,7 @@ describe('Theme Helpers', () => {
       const mobileDisplay = { smAndDown: true };
       const result = overlapStyle(true, mobileDisplay);
       expect(result).toEqual({
-        'margin-top': '-20vh',
+        'margin-top': '-18vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -389,7 +397,7 @@ describe('Theme Helpers', () => {
       const overlap = {};
       const result = overlapStyle(overlap, mockDisplay);
       expect(result).toEqual({
-        'margin-top': '-40vh',
+        'margin-top': '-35vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -400,7 +408,7 @@ describe('Theme Helpers', () => {
       const mobileDisplay = { smAndDown: true };
       const result = overlapStyle(overlap, mobileDisplay);
       expect(result).toEqual({
-        'margin-top': '-20vh',
+        'margin-top': '-18vh',
         position: 'relative',
         'z-index': '10',
       });
@@ -412,7 +420,25 @@ describe('Theme Helpers', () => {
 
     it('should handle display without smAndDown property', () => {
       const result = overlapStyle(true, {});
-      expect(result['margin-top']).toBe('-40vh');
+      expect(result['margin-top']).toBe('-35vh');
+    });
+  });
+
+  describe('colorModeStyle', () => {
+    it('should return white text for light mode', () => {
+      expect(colorModeStyle('light')).toEqual({ color: '#ffffff' });
+    });
+
+    it('should return dark text for dark mode', () => {
+      expect(colorModeStyle('dark')).toEqual({ color: 'rgba(0, 0, 0, 0.87)' });
+    });
+
+    it('should return empty object for null', () => {
+      expect(colorModeStyle(null)).toEqual({});
+    });
+
+    it('should return empty object for undefined', () => {
+      expect(colorModeStyle(undefined)).toEqual({});
     });
   });
 

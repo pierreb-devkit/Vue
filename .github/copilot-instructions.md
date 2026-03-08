@@ -1,62 +1,56 @@
-# Repo guidelines
+# Devkit Vue - Copilot Instructions
 
-## Commands
+## Preflight
 
-- Dev: npm start or npm run dev
-- Build: npm run build
-- Preview: npm run preview
-- Tests: npm test (watch mode) or npm run test:unit
-- Coverage: npm run test:coverage
-- Lint: npm run lint
-- Lint Fix: npm run lint:fix
-- Format: npm run format
-- Commit: npm run commit
-- Generate Config: npm run generateConfig
+- Read `ERRORS.md` before proposing changes or code reviews
+- If a new recurring mistake occurs, append one line to `ERRORS.md` using `[YYYY-MM-DD] <scope>: <wrong> -> <right>`
 
-## PR rules
+## Canonical commands
 
-- Small diffs preferred
-- Must include tests for bugfix/features
-- Tests are organized per module in `src/modules/*/tests/`
-- No secret files touched (.env, secrets/\*\*)
-- Code must pass lint and format checks
+Scripts: see `package.json` → `scripts` section.
 
-## Commit style
+## Available prompts
 
-- Conventional commits required (use `npm run commit` with commitizen)
-- Configured with @weareopensource/conventional-changelog
-- Enforced by commitlint and husky
+Use `.github/prompts/*.prompt.md` for guided workflows:
 
-## Architecture
+| Task          | Prompt file                               |
+| ------------- | ----------------------------------------- |
+| Verify        | `.github/prompts/verify.prompt.md`        |
+| Feature       | `.github/prompts/feature.prompt.md`       |
+| Create module | `.github/prompts/create-module.prompt.md` |
+| Update stack  | `.github/prompts/update-stack.prompt.md`  |
+| Naming        | `.github/prompts/naming.prompt.md`        |
+| PR            | `.github/prompts/pull-request.prompt.md`  |
 
-- Layered Architecture: everything is separated in layers
-- Upper layers are abstractions of the lower ones
-- Every layer should only reference the immediate lower layer
-- Vertical modules architecture
-- Every module should be independent
+## Always-on guardrails
 
-## Technology Stack
+- Never commit secrets or credentials (`.env*`, `secrets/**`, keys, tokens)
+- Do not introduce cross-module coupling without explicit justification
+- Avoid risky renames or moves of core stack paths used by downstream merges
+- Keep changes minimal and merge-friendly for downstream projects
+- Flag security or mergeability risks explicitly in reviews
+- Every new or modified function must have a JSDoc header: one-line description, `@param` for each argument, `@returns` for any non-void return value (always include `@returns` for async functions to document the resolved value)
 
-- Vue 3 with Composition API
-- Vuetify 3 for UI components
-- Vite for build tooling
-- Pinia for state management
-- Vue Router for navigation
-- JWT authentication (stateless)
-- Vitest for testing
-- ESLint + Prettier for code quality
+## Architecture and modularity
 
-## Vuetify 3 Best Practices
+- Keep features inside one module by default: `src/modules/<module>/`
+- Respect layered direction: UI -> Store -> Services -> API
+- Keep config, routes, store, and business logic inside module boundaries
+- Place justified shared code in `src/modules/core`
+- Keep tests in `src/modules/*/tests/`
 
-- **Always check Vuetify 3 documentation first** before implementing custom solutions
-- Use built-in Vuetify utilities (responsive classes, spacing, typography breakpoints) instead of custom CSS/JS
-- Avoid over-engineering: Vuetify likely has a built-in solution
+## Naming conventions
 
-## Configuration
+- Folders: kebab-case
+- Components: `{module}.{name}.component.vue`
+- Views: `{module}.{name}.view.vue`
+- Stores: `{module}.store.js`
+- Routers: `{module}.router.js`
+- Tests: `{target}.spec.js`
 
-- Default config: `src/config/defaults/development.js`
+## Definition of done
 
-## Important Files
-
-- Read `ERRORS.md` - Documents common mistakes to avoid
-- If a local version exists in your context, prioritize it
+- `npm run lint` passes
+- `npm run test:unit` passes
+- `npm run build` passes
+- Cross-module impact is documented and justified when present

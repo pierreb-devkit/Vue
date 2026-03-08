@@ -10,8 +10,9 @@
       :banner="config.home.hero.img?.image"
       :ratio="config.home.hero.variant === 'img' ? config.home.hero.img?.ratio : null"
       :animation-speed="config.home.hero.blur?.animationSpeed || 1"
-      :background-colors="theme.name === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
-      :halo-colors="theme.name === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
+      :background-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.backgroundColors : config.home.hero.blur?.light?.backgroundColors"
+      :halo-colors="themeName === 'dark' ? config.home.hero.blur?.dark?.haloColors : config.home.hero.blur?.light?.haloColors"
+      :overlap="config.home.hero.overlap"
     ></homeHeroComponent>
     <homeCapabilitiesComponent v-if="config.home.capabilities" :setup="config.home.capabilities"></homeCapabilitiesComponent>
     <homePresentationComponent v-if="config.home.presentation" :setup="config.home.presentation"></homePresentationComponent>
@@ -25,14 +26,13 @@
     <homeArticlesComponent v-if="config.home.articles && news.length > 0" :setup="{ content: news, ...config.home.articles }"></homeArticlesComponent>
     <homeStatisticsComponent
       v-if="config.home.statistics"
-      :variant="config.home.statistics.variant || 'blur'"
       :setup="statistics"
-      :image="config.home.statistics.parallax?.image || '/images/parallax.webp'"
       :animation-speed="config.home.statistics.blur?.animationSpeed || 1.5"
       :background-colors="
-        theme.name === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors
+        themeName === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors
       "
-      :halo-colors="theme.name === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
+      :halo-colors="themeName === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
+      :color-mode="config.home.statistics.colorMode"
     ></homeStatisticsComponent>
     <homeContactComponent v-if="config.home.contact"></homeContactComponent>
   </div>

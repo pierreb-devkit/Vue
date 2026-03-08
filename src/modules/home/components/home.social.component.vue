@@ -35,7 +35,7 @@
         <v-col cols="12" md="9" lg="8">
           <v-row align="center" class="flex-column flex-sm-row">
             <v-col cols="12" sm="auto" class="text-center text-sm-start pb-0 pb-sm-3 mr-sm-8">
-              <span class="text-body-1">{{ setup.title }}</span>
+              <span class="text-body-large">{{ setup.title }}</span>
             </v-col>
             <v-col class="overflow-hidden scroll-wrapper">
               <div class="scroll-content d-flex ga-12" :style="scrollStyle">
@@ -50,7 +50,7 @@
                 >
                   <v-sheet class="d-flex align-center ga-3" color="transparent">
                     <v-img :src="item.img" :height="logoSize" :width="logoSize" cover :alt="item.name"></v-img>
-                    <h3 class="text-h6 text-medium-emphasis font-weight-bold">{{ item.name }}</h3>
+                    <h3 class="text-headline-small text-medium-emphasis font-weight-bold">{{ item.name }}</h3>
                   </v-sheet>
                 </a>
 
@@ -65,7 +65,7 @@
                 >
                   <v-sheet class="d-flex align-center ga-3" color="transparent">
                     <v-img :src="item.img" :height="logoSize" :width="logoSize" cover :alt="item.name"></v-img>
-                    <h3 class="text-h6 text-medium-emphasis font-weight-bold">{{ item.name }}</h3>
+                    <h3 class="text-headline-small text-medium-emphasis font-weight-bold">{{ item.name }}</h3>
                   </v-sheet>
                 </a>
               </div>
@@ -82,7 +82,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style, overlapStyle } from '../../../lib/helpers/theme';
+import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 
 /**
  * Export default
@@ -115,6 +115,7 @@ export default {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.setup),
+        ...colorModeStyle(this.setup.colorMode),
         background: bgColor,
         overflow: 'hidden',
         '--gradient-bg-color': bgColor,

@@ -44,7 +44,7 @@
         <v-icon v-if="setup.icon" size="x-small" :color="themeColor || 'primary'">{{ setup.icon }}</v-icon>
         <span
           v-if="setup.title"
-          class="text-body-1 font-weight-regular"
+          class="text-body-large font-weight-regular"
           :class="themeColor ? '' : 'text-on-background'"
           :style="themeColor ? { color: themeColor } : {}"
           >{{ setup.title }}</span
@@ -54,7 +54,7 @@
       <!-- Level 2: Subtitle (H3) -->
       <h4
         v-if="setup.subtitle"
-        :class="['text-h5 text-sm-h4 font-weight-bold mb-4', themeColor ? '' : 'text-secondary']"
+        :class="['text-headline-medium text-sm-headline-large font-weight-bold mt-0 mb-4', themeColor ? '' : 'text-secondary']"
         :style="themeColor ? { color: themeColor } : {}"
       >
         <VMarkdown v-if="setup.subtitle && setup.subtitle.includes('**')" :source="setup.subtitle" class="d-inline" />
@@ -64,7 +64,7 @@
 
     <v-card-text v-if="setup.text" :class="[computedAlignment === 'center' ? 'text-center' : 'text-left', variant === 'default' ? 'pa-0' : '']">
       <VMarkdown
-        :class="['text-body-1', 'font-weight-regular my-4', themeColor ? '' : 'text-medium-emphasis']"
+        :class="['text-body-large', 'font-weight-regular my-4', themeColor ? '' : 'text-medium-emphasis']"
         :style="themeColor ? { color: themeColor } : ''"
         :source="setup.text"
       />
@@ -77,7 +77,7 @@
       <v-btn
         :href="setup.button.link"
         variant="text"
-        class="my-4 text-none text-body-1"
+        class="my-4 text-none text-body-large"
         :style="themeColor ? { color: setup.button.color || themeColor } : {}"
         size="large"
       >

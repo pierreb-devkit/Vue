@@ -1,32 +1,35 @@
 {
-  "name": "@weareopensource/vue",
+  "name": "@pierreb-devkit/vue",
   "version": "0.1.0",
   "type": "module",
-  "description": "Node - Boilerplate Back : Express, Jwt, Mongo, Sequelize (Beta)  (Based on meanjs and riess.js)",
+  "description": "Vue 3 / Vuetify / Vite / JWT stack — standalone or fullstack with Node/Swift",
   "keywords": [
     "vue",
     "pinia",
     "vuetify",
     "jwt",
-    "jest",
+    "vite",
     "stack",
     "boilerplate"
   ],
   "private": false,
-  "author": "https://github.com/weareopensource/Vue/graphs/contributors",
+  "author": "https://github.com/pierreb-devkit/Vue/graphs/contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/weareopensource/Vue.git"
+    "url": "https://github.com/pierreb-devkit/Vue.git"
   },
   "scripts": {
+    "start": "npm run dev",
     "dev": "npm run generateConfig && npm run vite:dev",
     "build": "npm run generateConfig && npm run vite:build",
     "preview": "npm run generateConfig && npm run vite:preview",
     "vite:dev": "vite",
     "vite:build": "vite build",
     "vite:preview": "vite preview",
-    "test:unit": "vitest",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -34,60 +37,60 @@
     "commit": "npx cz",
     "generateConfig": "node ./scripts/generateConfig.js",
     "check:migration": "node ./scripts/check-vite-migration.js",
-    "release": "npx semantic-release",
-    "snyk-protect": "snyk protect",
-    "test": "vitest"
+    "release:auto": "npx semantic-release",
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^7.1.0",
-    "@tryghost/content-api": "^1.12.2",
-    "@unhead/vue": "^2.0.19",
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "@tryghost/content-api": "^1.12.5",
+    "@unhead/vue": "^2.1.10",
     "aos": "^2.3.4",
-    "unhead": "^2.0.19",
-    "axios": "^1.13.5",
+    "unhead": "^2.1.10",
+    "axios": "^1.13.6",
     "dayjs": "^1.11.19",
+    "dompurify": "^3.3.2",
     "lodash-es": "^4.17.23",
-    "marked": "^17.0.1",
+    "marked": "^17.0.4",
     "pinia": "^3.0.4",
-    "posthog-js": "^1.331.0",
-    "video.js": "^8.23.4",
-    "vue": "^3.5.28",
-    "vue-router": "^4.6.3",
-    "vuetify": "^3.11.8"
+    "posthog-js": "^1.359.0",
+    "video.js": "^8.23.7",
+    "vue": "^3.5.29",
+    "vue-router": "^5.0.3",
+    "vuetify": "^4.0.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.2.0",
-    "@commitlint/config-conventional": "^20.0.0",
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
     "@eslint/js": "^9.39.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
-    "@weareopensource/conventional-changelog": "^1.7.0",
-    "autoprefixer": "^10.4.23",
+    "autoprefixer": "^10.4.27",
     "chalk": "^5.6.2",
     "commitizen": "^4.3.1",
+    "cz-git": "^1.12.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vue": "^10.6.2",
-    "globals": "^17.3.0",
-    "happy-dom": "^20.6.1",
+    "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.4.0",
+    "happy-dom": "^20.8.3",
     "husky": "^9.1.7",
     "object-path": "^0.11.8",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
     "sass": "^1.97",
-    "semantic-release": "^25.0.2",
+    "semantic-release": "^25.0.3",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-vuetify": "^2.1.3",
     "vitest": "^4.0.15",
-    "vue-eslint-parser": "^10.2.0"
+    "vue-eslint-parser": "^10.4.0"
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/@weareopensource/conventional-changelog"
+      "path": "node_modules/cz-git"
     }
   },
   "release": {
@@ -96,7 +99,7 @@
         "name": "master"
       }
     ],
-    "repositoryUrl": "https://github.com/weareopensource/Vue.git",
+    "repositoryUrl": "https://github.com/pierreb-devkit/Vue.git",
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",

@@ -107,7 +107,7 @@ export default {
       if (form.valid) {
         const authStore = useAuthStore();
         try {
-          await authStore.signin(this, {
+          await authStore.signin({
             email: this.email,
             password: this.password,
           });

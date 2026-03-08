@@ -27,7 +27,29 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'tests/', '**/*.config.{js,cjs,mjs,ts}', '**/dist/**'],
+      include: [
+        'src/lib/helpers/**/*.js',
+        'src/lib/services/**/*.js',
+        'src/lib/middlewares/**/*.js',
+        'src/lib/plugins/**/*.js',
+        'src/modules/*/stores/**/*.js',
+        'src/modules/app/app.store.js',
+      ],
+      exclude: [
+        'node_modules/',
+        '**/tests/**',
+        '**/*.config.{js,cjs,mjs,ts}',
+        '**/dist/**',
+        'src/lib/plugins/index.js',
+        'src/lib/plugins/vuetify.js',
+        'src/lib/services/config.js',
+      ],
+      thresholds: {
+        statements: 85,
+        branches: 75,
+        functions: 85,
+        lines: 85,
+      },
     },
   },
   resolve: {

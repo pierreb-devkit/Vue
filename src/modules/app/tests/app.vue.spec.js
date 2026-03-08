@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import testConfig from '../../../config/defaults/test.js';
+import testConfig from '../../../config/defaults/config.test.js';
 
 // Mock @unhead/vue to capture useHead calls
 const useHeadMock = vi.hoisted(() => vi.fn());

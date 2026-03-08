@@ -1,3 +1,49 @@
+# [1.4.0](https://github.com/pierreb-devkit/Vue/compare/v1.3.1...v1.4.0) (2026-03-01)
+
+
+### Bug Fixes
+
+* apply Copilot feedback from rebrand PR ([6450969](https://github.com/pierreb-devkit/Vue/commit/6450969fa3de7383ceb58cdfd49fdc9980a2a63f))
+* **claude:** add CHECKS_FOUND guard to monitoring.md retry loop ([437fdee](https://github.com/pierreb-devkit/Vue/commit/437fdeef8d2752184fada1f6346212e341b2ed28))
+* **claude:** add YAML frontmatter to all skills for proper triggering ([#3512](https://github.com/pierreb-devkit/Vue/issues/3512)) ([05432c0](https://github.com/pierreb-devkit/Vue/commit/05432c0b654902601982fac55ed2a2412397af9c))
+* **claude:** address pass-2 review feedback - watch guard, $PR placeholder, jq line field ([348c7a3](https://github.com/pierreb-devkit/Vue/commit/348c7a3f20687a611a47f6810e3fcd4b9184bcff))
+* **claude:** address review feedback - stale refs, retry loop, jq pagination, variables ([56fab55](https://github.com/pierreb-devkit/Vue/commit/56fab5535d5049ba35e4e9bfff41d506ca7883c3))
+* **datatable:** register lodash as 'lodash' on globalProperties, not '_' ([24b68d2](https://github.com/pierreb-devkit/Vue/commit/24b68d2d860b93181317413db60cd4766ed83588))
+* **errors:** align ERRORS.md JSDoc rule with guardrail nuance (non-void + async) ([568f2b3](https://github.com/pierreb-devkit/Vue/commit/568f2b3cb8430bb029297ad44df0d01fde3a28ec))
+* **guardrails:** add backticks to [@param](https://github.com/param) and [@return](https://github.com/return) in ERRORS.md for consistent Markdown rendering ([f92224a](https://github.com/pierreb-devkit/Vue/commit/f92224a786a9c70be8fd25a17131bcdbb56ae42c))
+* **guardrails:** apply Copilot feedback — use [@return](https://github.com/return), clarify async rule, sync copilot-instructions ([26cc510](https://github.com/pierreb-devkit/Vue/commit/26cc510bebf458d8c4f2adb26e82fc059e98dbfb))
+* **home:** featuretabs image 🐛 ([#3498](https://github.com/pierreb-devkit/Vue/issues/3498)) ([67bbde3](https://github.com/pierreb-devkit/Vue/commit/67bbde34b5b96ec7853004440f679b751e9437eb))
+* **jsdoc:** align ERRORS.md wording with guardrail (new or modified functions) ([5db5e65](https://github.com/pierreb-devkit/Vue/commit/5db5e656cec3fd96e8859b70c446dfcf4ecc4b8b))
+* **jsdoc:** fix JSDoc accuracy and remove stray /pr reference ([22f8f48](https://github.com/pierreb-devkit/Vue/commit/22f8f483fb1627758591e33d42837a5a2cef64bf))
+* **jsdoc:** fix pageRequest [@returns](https://github.com/returns) description to match actual return value ([ed8bc1d](https://github.com/pierreb-devkit/Vue/commit/ed8bc1d3cc5e02c36041a0add07b92286df9f6e7))
+* **jsdoc:** standardize on [@returns](https://github.com/returns) (canonical JSDoc tag) across docs and src ([1876e49](https://github.com/pierreb-devkit/Vue/commit/1876e498a416bdab09a9c8ede43df992921dac60))
+* **pr-skill:** add git push -f deny pattern and fix bug report placeholder ([8dffffa](https://github.com/pierreb-devkit/Vue/commit/8dffffa10e5435dc54e67250a568b2dda75e5640))
+* **pr-skill:** add text language tag to pseudocode fence (MD040) ([77e06ba](https://github.com/pierreb-devkit/Vue/commit/77e06badb13b1d5f2d49cfb418ae2c31a70950a8))
+* **pr-skill:** address bot review feedback on pr skill ([8e03358](https://github.com/pierreb-devkit/Vue/commit/8e03358dd8d6eaf1dc3c9d79f199a7b089118b5f))
+* **pr-skill:** address Copilot review pass 2 ([57a5941](https://github.com/pierreb-devkit/Vue/commit/57a5941c2e40736966edabb1f515562ef241c6a6))
+* **pr-skill:** clarify draft PR scope — bots trigger only after gh pr ready ([a7cbb3c](https://github.com/pierreb-devkit/Vue/commit/a7cbb3c26b508d5571dd85ef0f0f809ee31f7b63))
+* **release:** move ci flag to release-it config, add .release-it.json ([2895d7d](https://github.com/pierreb-devkit/Vue/commit/2895d7d8df3e7297f5f169a43ac9a35c3a7a639b))
+* remove duplicate test script, delete orphaned .release-it.json ([ec7d0ab](https://github.com/pierreb-devkit/Vue/commit/ec7d0ab67a4bbfeca847eae996c31cdcb3eceb21))
+* **seo:** address Copilot review feedback on seoInjectPlugin ([ad71ae2](https://github.com/pierreb-devkit/Vue/commit/ad71ae250e7c4871df6492d9fe55b89907ab42b3))
+* **seo:** address second round of Copilot feedback ([c676a14](https://github.com/pierreb-devkit/Vue/commit/c676a14661b1f3ce9bcdde80f5b3cb615bf94508))
+* **seo:** make meta tags conditional and harden head injection ([5ac2518](https://github.com/pierreb-devkit/Vue/commit/5ac251828e2e3212d20202f6a603f880a15ac8c3))
+* **settings:** deny git switch to main/master branches ([03ab597](https://github.com/pierreb-devkit/Vue/commit/03ab597e70e5f7c0bd82330951ca9ec80543cf73))
+* **theme:** isDark accepts boolean and string, fix regression for isDark(true) ([8fb05f8](https://github.com/pierreb-devkit/Vue/commit/8fb05f8b3157406a4e55a1dcc907972ef3228eee))
+* **theme:** isDark accepts only string, light by default, remove boolean legacy ([6599c76](https://github.com/pierreb-devkit/Vue/commit/6599c76ffda2cc7eabf5811ca3c02153e4bf67b8))
+* **theme:** isDark now returns false for 'light', aligns logic with JSDoc ([df69430](https://github.com/pierreb-devkit/Vue/commit/df694306247f73392c7321ab2bed328ff8800c46))
+
+
+### Features
+
+* **app,core,config:** header option and design adjustments ✨ ([#3485](https://github.com/pierreb-devkit/Vue/issues/3485)) ([819aa1d](https://github.com/pierreb-devkit/Vue/commit/819aa1d5244e9759700037d6106af59d195850d2))
+* **core,home,helpers,config:** refresh style and homegeise strucutres ✨ ([2974ff3](https://github.com/pierreb-devkit/Vue/commit/2974ff3a59bac46906985d0d9b9c3388fc755512))
+* **core,home,helpers,config:** refresh style and homegeise strucutres ✨ ([#3486](https://github.com/pierreb-devkit/Vue/issues/3486)) ([925ad88](https://github.com/pierreb-devkit/Vue/commit/925ad88ce79bb9f1d8dbaf94828cfc2aca62266c))
+* **home,config:** handle overloap of hereo with every component ✨ ([#3488](https://github.com/pierreb-devkit/Vue/issues/3488)) ([c38e2f6](https://github.com/pierreb-devkit/Vue/commit/c38e2f673087d39aadc5457e75cd8bf30107561d))
+* **home:** rework components ✨ ([a452f02](https://github.com/pierreb-devkit/Vue/commit/a452f0293725a16315825c1176bd067624966cbe))
+* **pr-skill:** make monitoring loop explicitly autonomous with polling ([b9b8373](https://github.com/pierreb-devkit/Vue/commit/b9b8373fcef2208ad3d859c4cb82e485b3eb7e15))
+* **seo:** add full SEO support configurable per project ([2bc7796](https://github.com/pierreb-devkit/Vue/commit/2bc77965cfe6daab7524130267f6b7e718d8f275))
+* **tooling:** add /pr skill with full PR lifecycle ([d5fefde](https://github.com/pierreb-devkit/Vue/commit/d5fefde786f791f805209429381669fef96f16d3))
+
 ## [1.3.1](https://github.com/weareopensource/Vue/compare/v1.3.0...v1.3.1) (2026-01-01)
 
 

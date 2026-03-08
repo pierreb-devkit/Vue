@@ -1,19 +1,20 @@
 /**
  * @desc Function to return actual theme
- * @param {String} option in config
- * @return {Boolean} dark value
+ * @param {String} theme - Theme option from config ('dark', 'light', or 'auto')
+ * @returns {Boolean} true if dark mode is active, false otherwise
  */
 export const isDark = (theme) => {
   if (theme === 'auto') {
     return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
-  return !!theme;
+  return theme === 'dark';
 };
 
 /**
  * @desc Function to return custom css object
- * @param {String} String, section, card, video
- * @return {Object} object in config { background: ... }
+ * @param {String} kind - Style section key (e.g. 'section', 'card', 'video')
+ * @param {Object} object - Config object containing the style definitions
+ * @returns {Object} object in config { background: ... }
  */
 export const style = (kind, object) => {
   const style = {};
@@ -41,7 +42,7 @@ export const style = (kind, object) => {
 /**
  * @desc Helper to convert hex color to RGB string
  * @param {String} hex - Hex color (e.g. #RRGGBB)
- * @return {String} RGB string (e.g. "255,255,255")
+ * @returns {String} RGB string (e.g. "255,255,255")
  */
 const hexToRgb = (hex) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -53,7 +54,7 @@ const hexToRgb = (hex) => {
  * @param {String} hex - Hex color (e.g. #RRGGBB)
  * @param {Number} amount - Amount to adjust (-1 to 1, or 0-100 for legacy percent mode)
  * @param {String} output - 'rgb' for RGB string, 'hex' for hex string. Default: 'rgb'
- * @return {String} RGB string (e.g. "255,255,255") or hex string (e.g. "#ffffff")
+ * @returns {String} RGB string (e.g. "255,255,255") or hex string (e.g. "#ffffff")
  */
 const adjustColor = (hex, amount, output = 'rgb') => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -93,16 +94,20 @@ const adjustColor = (hex, amount, output = 'rgb') => {
  * @param {Object} options.vuetifyTheme - Vuetify theme object (from useTheme()). Auto-extracts colors.
  * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 0.8
  * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
+ * @param {Number} options.opacity - Override background opacity (0-1). When set, uses a solid surface-color
+ *   background at this opacity instead of the default computed value. Useful for elements like headers
+ *   where text readability matters more than glass transparency. Default: undefined (auto-computed)
  * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'card'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
  * @param {Boolean|String} options.glowBorder - false, true (static gradient), or 'animated' (rotating). Default: false
  * @param {Object} options.extras - Additional CSS properties to merge
- * @return {Object} CSS style object with liquid glass effect
+ * @returns {Object} CSS style object with liquid glass effect
  */
 export const liquidGlassStyle = ({
   vuetifyTheme,
   intensity = 0.8,
   tint = 'auto',
+  opacity,
   variant = 'card',
   border: borderStyle = 'all',
   glowBorder = false,
@@ -135,7 +140,10 @@ export const liquidGlassStyle = ({
   const highlightOpacity = i * (dark ? 0.16 : 0.25);
 
   // Build simple layered background
-  const background = `
+  const effectiveOpacity = opacity !== undefined ? Math.max(0, Math.min(1, opacity)) : baseOpacity;
+  const background = opacity !== undefined
+    ? `rgba(${surfaceRgb}, ${effectiveOpacity.toFixed(2)})`
+    : `
     linear-gradient(
       to bottom,
       rgba(${surfaceRgb}, ${highlightOpacity.toFixed(3)}) 0%,
@@ -208,18 +216,18 @@ export const liquidGlassStyle = ({
  * @desc Generate overlap style for container (slides up into previous section)
  * @param {Boolean|String|Object} overlap - true (defaults), string ('30vh'), or { mobile: '20vh', desktop: '40vh' }
  * @param {Object} display - Vuetify display object ($vuetify.display)
- * @return {Object} Style object with margin-top, position and z-index
+ * @returns {Object} Style object with margin-top, position and z-index
  */
 export const overlapStyle = (overlap, display) => {
   if (!overlap) return {};
 
   let marginTop;
   if (overlap === true) {
-    marginTop = display?.smAndDown ? '-20vh' : '-40vh';
+    marginTop = display?.smAndDown ? '-18vh' : '-35vh';
   } else if (typeof overlap === 'string') {
     marginTop = `-${overlap}`;
   } else if (typeof overlap === 'object') {
-    marginTop = display?.smAndDown ? `-${overlap.mobile || '20vh'}` : `-${overlap.desktop || '40vh'}`;
+    marginTop = display?.smAndDown ? `-${overlap.mobile || '18vh'}` : `-${overlap.desktop || '35vh'}`;
   } else {
     return {};
   }
@@ -232,14 +240,25 @@ export const overlapStyle = (overlap, display) => {
 };
 
 /**
+ * @desc Force text color mode regardless of current theme.
+ * @param {String|null} colorMode - 'light' (white text), 'dark' (dark text), or null/undefined (no override)
+ * @returns {Object} Style object with color override, or empty object.
+ */
+export const colorModeStyle = (colorMode) => {
+  if (colorMode === 'light') return { color: '#ffffff' };
+  if (colorMode === 'dark') return { color: 'rgba(0, 0, 0, 0.87)' };
+  return {};
+};
+
+/**
  * @desc Helper to lighten a hex color
  * @param {String} hex - Hex color (e.g. #RRGGBB)
  * @param {Number} percent - Percentage to lighten (0-100)
- * @return {String} Hex color string
+ * @returns {String} Hex color string
  */
 export const lightenColor = (hex, percent) => adjustColor(hex, percent, 'hex');
 
 /**
  * Exports.
  */
-export default { isDark, style, liquidGlassStyle, overlapStyle, lightenColor };
+export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor };

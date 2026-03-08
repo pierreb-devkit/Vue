@@ -1,4 +1,5 @@
 [![CI](https://github.com/pierreb-devkit/Vue/actions/workflows/CI.yml/badge.svg)](https://github.com/pierreb-devkit/Vue/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/pierreb-devkit/Vue/graph/badge.svg?token=52DYZF1BII)](https://codecov.io/gh/pierreb-devkit/Vue)
 [![Dependabot badge](https://img.shields.io/badge/Dependabot-enabled-2768cf.svg?style=flat-square)](https://dependabot.com)
 [![Known Vulnerabilities](https://snyk.io/test/github/pierreb-devkit/vue/badge.svg?style=flat-square)](https://snyk.io/test/github/pierreb-devkit/vue)
 
@@ -51,7 +52,7 @@ npm install
 ### Development
 
 ```bash
-npm run dev
+npm run dev   # or: npm start
 ```
 
 Runs dev server with hot-reload at `http://localhost:8080/`
@@ -73,7 +74,8 @@ npm run preview    # Preview production build locally
 
 ```bash
 npm test                  # Run tests in watch mode
-npm run test:unit         # Run unit tests
+npm run test:watch        # Run tests in watch mode (explicit alias)
+npm run test:unit         # Run unit tests once (one-shot)
 npm run test:coverage     # Generate coverage report
 ```
 
@@ -91,7 +93,7 @@ npm run format            # Format code with Prettier
 
 ```bash
 npm run commit                                    # Commit with commitizen
-npm run release -- --first-release                # First release
+npm run release -- --first-release                # First release (standard-version)
 npm run release -- --release-as 1.1.1             # Release specific version
 GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 ```
@@ -100,11 +102,11 @@ GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 
 Configuration files live in `src/config/defaults/`. The `development.js` file is the base; other files in that folder override it.
 
-At build time, environment variables prefixed with `WAOS_VUE_` are merged on top (`WAOS` is a legacy prefix kept for compatibility). The variable path maps directly to the config object key:
+At build time, environment variables prefixed with `DEVKIT_VUE_` are merged on top. The variable path maps directly to the config object key:
 
 ```bash
-WAOS_VUE_app_title='my app'        # sets config.app.title
-WAOS_VUE_api_port=4000             # sets config.api.port
+DEVKIT_VUE_app_title='my app'        # sets config.app.title
+DEVKIT_VUE_api_port=4000             # sets config.api.port
 ```
 
 The merged result is written to `src/config/index.js` via `npm run generateConfig`.
@@ -118,7 +120,7 @@ docker run --rm -p 8080:80 pierreb/vue
 Build yourself:
 
 ```bash
-docker build -t pierreb/vue . --build-arg WAOS_VUE_api_port=4000
+docker build -t pierreb/vue . --build-arg DEVKIT_VUE_api_port=4000
 ```
 
 With [Node](https://github.com/pierreb-devkit/Node) stack as API:
@@ -127,27 +129,19 @@ With [Node](https://github.com/pierreb-devkit/Node) stack as API:
 docker-compose up
 ```
 
-## :robot: Claude Code Setup
+## :robot: AI Setup
 
-This stack ships with an embedded [Claude Code](https://claude.ai/claude-code) configuration in the `.claude/` folder — works immediately after cloning, no additional setup needed.
+This stack ships preconfigured instruction and prompt files for Claude Code, GitHub Copilot, and OpenAI Codex. Each tool requires its own client installation and authentication — the repository provides the configuration so it works out-of-the-box once the tool is set up.
 
-### Available Skills
+| Tool              | Config                                                              |
+| ----------------- | ------------------------------------------------------------------- |
+| Claude Code       | `.claude/` — skills embedded, works on clone                        |
+| GitHub Copilot    | `.github/copilot-instructions.md` + `.github/prompts/`              |
+| OpenAI Codex      | `AGENTS.md`                                                         |
 
-| Skill            | Description                                           |
-| ---------------- | ----------------------------------------------------- |
-| `/verify`        | Run quality loop (lint + test + build)                |
-| `/create-module` | Create new module by duplicating the `tasks` template |
-| `/feature`       | Implement feature following modularity rules          |
-| `/update-stack`  | Merge stack updates into downstream projects          |
-| `/naming`        | Check or apply file and folder naming conventions     |
+### Claude Code — Available Skills
 
-### Modularity Rules
-
-- Each module should be as **independent** as possible
-- Avoid cross-module imports/coupling
-- Shared code goes in `src/modules/core` with explicit justification
-- Keep config, routes, data-access, and business logic **inside the module boundary**
-- Tests are organized per module: `src/modules/*/tests/`
+Skills available via `/verify`, `/feature`, `/create-module`, `/update-stack`, `/naming`, `/pull-request` — see `.claude/skills/` for details.
 
 ### Stack Merge Workflow
 
@@ -156,6 +150,8 @@ git remote add devkit-vue https://github.com/pierreb-devkit/Vue.git
 git fetch devkit-vue
 git merge devkit-vue/master
 ```
+
+> Caution: resolve conflicts manually to preserve downstream customizations before pushing.
 
 ## :pencil2: Contribute
 

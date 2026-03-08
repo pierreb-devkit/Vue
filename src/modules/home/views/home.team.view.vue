@@ -48,9 +48,12 @@ export default {
       return homeStore.team;
     },
   },
+  /**
+   * Fetch team data when the view is created.
+   */
   created() {
     const homeStore = useHomeStore();
-    homeStore.getTeam(this);
+    homeStore.getTeam();
   },
 };
 </script>

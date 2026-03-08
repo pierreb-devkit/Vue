@@ -18,6 +18,7 @@
   - intensity (Number): Liquid glass intensity (default: 1)
   - tint (String|Number): Liquid glass tint, 'auto' or -1 to 1 (default: 'auto')
   - color (String): Default text color for all buttons (default: theme onSurface)
+  - colorMode (String): 'light' | 'dark' | null — force text color mode
   - All v-tabs props (show-arrows, align-tabs, etc.)
 
   EVENTS:
@@ -54,7 +55,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { liquidGlassStyle } from '../../../../lib/helpers/theme';
+import { liquidGlassStyle, colorModeStyle } from '../../../../lib/helpers/theme';
 
 /**
  * Component definition.
@@ -82,6 +83,17 @@ export default {
     color: {
       type: String,
       default: null,
+    },
+    // Force text color mode: 'light' (white text), 'dark' (dark text), or null (auto)
+    colorMode: {
+      type: String,
+      default: null,
+      /**
+       * Validates the colorMode prop value.
+       * @param {string|null} value - The color mode to validate.
+       * @returns {boolean} True if the value is null, 'light', or 'dark'.
+       */
+      validator: (value) => value === null || ['light', 'dark'].includes(value),
     },
   },
   emits: ['update:modelValue'],
@@ -172,11 +184,17 @@ export default {
     window.removeEventListener('resize', this.updateIndicator);
   },
   methods: {
+    /**
+     * Computes the inline style for a tab at the given index.
+     * @param {number} index - The tab index.
+     * @returns {Object} Style object with color, opacity, and transition.
+     */
     tabStyle(index) {
       const item = this.items[index];
       const isSelected = this.modelValue === index;
+      const colorModeColor = colorModeStyle(this.colorMode)?.color;
       return {
-        color: item.color || this.color || this.theme.current.colors.onSurface,
+        color: item.color || this.color || colorModeColor || this.theme.current.colors.onSurface,
         opacity: isSelected ? 1 : 0.7,
         transition: 'opacity 0.3s ease',
       };
@@ -213,7 +231,7 @@ export default {
 <style scoped>
 .tabs-container {
   position: relative;
-  padding: 16px;
+  padding: 8px;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;

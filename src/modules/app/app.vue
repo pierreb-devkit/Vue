@@ -3,8 +3,7 @@
     <v-snackbar
       v-if="config.vuetify.theme.snackbar.status"
       v-model="snackbar.status"
-      :top="true"
-      :right="true"
+      location="top right"
       :timeout="snackbar.timeout"
       :color="snackbar.color"
     >
@@ -15,12 +14,12 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <waosNav v-if="isLoggedIn" />
-    <waosHeader v-if="config.header.display" />
+    <devkitNav v-if="isLoggedIn" />
+    <devkitHeader v-if="config.header.display" />
     <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
     </v-main>
-    <waosFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
+    <devkitFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
   </v-app>
 </template>
 
@@ -32,9 +31,9 @@ import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { setupInterceptors } from '../../lib/services/axios';
-import waosHeader from '../core/components/core.header.component.vue';
-import waosNav from '../core/components/core.navigation.component.vue';
-import waosFooter from '../core/components/core.footer.component.vue';
+import devkitHeader from '../core/components/core.header.component.vue';
+import devkitNav from '../core/components/core.navigation.component.vue';
+import devkitFooter from '../core/components/core.footer.component.vue';
 
 /**
  * Component definition.
@@ -42,9 +41,9 @@ import waosFooter from '../core/components/core.footer.component.vue';
 export default {
   name: 'App',
   components: {
-    waosHeader,
-    waosNav,
-    waosFooter,
+    devkitHeader,
+    devkitNav,
+    devkitFooter,
   },
   data() {
     const theme = useTheme();
@@ -136,19 +135,18 @@ export default {
   border: none !important;
 }
 
-.v-application .text-overline,
-.v-application .text-caption,
-.v-application .text-button,
-.v-application .text-body-2,
-.v-application .text-body-1,
-.v-application .text-subtitle-2,
-.v-application .text-subtitle-1,
-.v-application .text-h6,
-.v-application .text-h5,
-.v-application .text-h4,
-.v-application .text-h3,
-.v-application .text-h2,
-.v-application .text-h1 {
+.v-application .text-label-medium,
+.v-application .text-label-small,
+.v-application .text-body-medium,
+.v-application .text-body-large,
+.v-application .text-title-medium,
+.v-application .text-title-large,
+.v-application .text-headline-small,
+.v-application .text-headline-medium,
+.v-application .text-headline-large,
+.v-application .text-display-small,
+.v-application .text-display-medium,
+.v-application .text-display-large {
   font-family: 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
 }
 </style>

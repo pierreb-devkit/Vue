@@ -44,7 +44,7 @@
             size="x-large"
           >
             <template v-if="item.title" #opposite>
-              <h5 class="text-h6 text-md-h5 text-secondary font-weight-bold" v-text="item.title"></h5>
+              <h5 class="text-headline-small text-md-headline-medium text-secondary font-weight-bold" v-text="item.title"></h5>
             </template>
             <v-card :class="`${config.vuetify.theme.rounded} my-8 pb-2`" :flat="config.vuetify.theme.flat" :style="cardStyle">
               <homeImgComponent v-if="item.img && !item.reversed" :img="item.img"></homeImgComponent>
@@ -63,7 +63,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { style, overlapStyle } from '../../../lib/helpers/theme';
+import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 /**
@@ -101,6 +101,7 @@ export default {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.setup),
+        ...colorModeStyle(this.setup.colorMode),
         background: bgColor,
       };
     },

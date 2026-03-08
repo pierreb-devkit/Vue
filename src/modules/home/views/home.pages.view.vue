@@ -68,9 +68,9 @@ export default {
         const homeStore = useHomeStore();
         const action = this.$route.meta.data;
         if (action === 'getPages') {
-          homeStore.getPages(this, this.$route.params.name);
+          homeStore.getPages(this.$route.params.name);
         } else if (action === 'getChangelogs') {
-          homeStore.getChangelogs(this);
+          homeStore.getChangelogs();
         }
         this.page = this.$route.params.name;
       }
@@ -81,11 +81,11 @@ export default {
     const action = this.$route.meta.data;
     if (this.$route.params.name) {
       if (action === 'getPages') {
-        homeStore.getPages(this, this.$route.params.name);
+        homeStore.getPages(this.$route.params.name);
       }
       this.page = this.$route.params.name;
     } else if (action === 'getChangelogs') {
-      homeStore.getChangelogs(this);
+      homeStore.getChangelogs();
     }
   },
   methods: {

@@ -80,7 +80,7 @@ export default {
         const { email } = this;
         const authStore = useAuthStore();
         try {
-          await authStore.forgot(this, { email });
+          await authStore.forgot({ email });
         } catch (err) {
           console.log(err);
         }

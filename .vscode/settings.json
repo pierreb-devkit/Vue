@@ -1,0 +1,9 @@
+{
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.enable": {
+    "vue": true,
+    "javascript": true,
+    "markdown": true,
+    "json": true
+  }
+}
