@@ -119,10 +119,10 @@ src/modules/<name>/config/
 
 | Layer | Source | Example |
 |-------|--------|---------|
-| 1 | Module development defaults | `modules/*/config/config.development.js` |
-| 2 | Global development defaults | `config/defaults/config.development.js` |
-| 3 | Module env overrides | `modules/*/config/config.production.js` |
-| 4 | Global env overrides | `config/defaults/config.production.js` |
+| 1 | Module development defaults | `src/modules/*/config/config.development.js` |
+| 2 | Global development defaults | `src/config/defaults/config.development.js` |
+| 3 | Module env overrides | `src/modules/*/config/config.<env>.js` |
+| 4 | Global env overrides | `src/config/defaults/config.<env>.js` |
 | 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
 
 Layers 3–4 are only applied when `NODE_ENV` is not `development`.
