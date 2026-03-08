@@ -5,7 +5,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 
 /**
- * @desc Deep merge two objects, replacing arrays instead of merging by index.
+ * Deep merge two objects, replacing arrays instead of merging by index.
  * @param {Object} target - Base object
  * @param {Object} source - Override object
  * @returns {Object} Merged result (new object, inputs are not mutated)
