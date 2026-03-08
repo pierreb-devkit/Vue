@@ -43,4 +43,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NODE_ENV=pierreb
-            WAOS_VUE_app_title=PierreBrisorgueil
+            DEVKIT_VUE_app_title=PierreBrisorgueil
