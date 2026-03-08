@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 /**
  * @desc Function to clean object (pick from model, remove null values)

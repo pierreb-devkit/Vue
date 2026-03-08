@@ -4,7 +4,7 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
-import _ from 'lodash';
+import _ from 'lodash-es';
 import CoreDatatable from '../components/core.datatable.component.vue';
 
 vi.mock('../../users/components/user.avatar.component.vue', () => ({
