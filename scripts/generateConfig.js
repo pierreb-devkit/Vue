@@ -1,8 +1,34 @@
 import fs from 'fs';
-import { merge, mapKeys, pickBy, forEach } from 'lodash-es';
+import { mapKeys, pickBy, forEach } from 'lodash-es';
 import objectPath from 'object-path';
 import path from 'path';
 import { pathToFileURL } from 'url';
+
+/**
+ * Deep merge two objects, replacing arrays instead of merging by index.
+ * @param {Object} target - Base object
+ * @param {Object} source - Override object
+ * @returns {Object} Merged result (new object, inputs are not mutated)
+ */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+const deepMerge = (target, source) => {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (UNSAFE_KEYS.has(key)) continue;
+    const srcVal = source[key];
+    if (srcVal === undefined) continue;
+    const tgtVal = result[key];
+    if (Array.isArray(srcVal)) {
+      result[key] = srcVal;
+    } else if (srcVal && typeof srcVal === 'object' && !Array.isArray(srcVal) && tgtVal && typeof tgtVal === 'object' && !Array.isArray(tgtVal)) {
+      result[key] = deepMerge(tgtVal, srcVal);
+    } else {
+      result[key] = srcVal;
+    }
+  }
+  return result;
+};
 
 // Get the current config
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
@@ -34,7 +60,7 @@ const loadModuleConfigs = async (env) => {
   for (const file of files) {
     console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
     const mod = await import(pathToFileURL(file).href);
-    merged = merge(merged, mod.default);
+    merged = deepMerge(merged, mod.default);
   }
   return merged;
 };
@@ -72,7 +98,7 @@ const getConfiguration = async () => {
   console.log('+ Loading global development defaults...');
   const globalDev = await loadGlobalConfig('development');
   if (globalDev) {
-    config = merge(config, globalDev);
+    config = deepMerge(config, globalDev);
   }
 
   // 3. If not development, overlay env-specific configs
@@ -80,13 +106,13 @@ const getConfiguration = async () => {
     // Module env overrides
     console.log(`+ Loading module ${env} overrides...`);
     const moduleEnv = await loadModuleConfigs(env);
-    config = merge(config, moduleEnv);
+    config = deepMerge(config, moduleEnv);
 
     // Global env overrides
     console.log(`+ Loading global ${env} overrides...`);
     const globalEnv = await loadGlobalConfig(env);
     if (globalEnv) {
-      config = merge(config, globalEnv);
+      config = deepMerge(config, globalEnv);
     } else if (Object.keys(moduleEnv).length === 0) {
       console.warn(`+ Warning: No configuration overrides found for "${env}" environment — using development defaults`);
     }
@@ -99,7 +125,7 @@ const getConfiguration = async () => {
   );
   const environmentConfigVars = {};
   forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
-  config = merge(config, environmentConfigVars);
+  config = deepMerge(config, environmentConfigVars);
 
   // Generate ESM version
   const configJSON = JSON.stringify(config, undefined, 2)
