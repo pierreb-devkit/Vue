@@ -17,7 +17,7 @@ The monolithic `src/config/defaults/development.js` has been split into per-modu
 
 ### New file layout
 
-```
+```text
 src/config/defaults/
   config.development.js          ← core only (app, api, port, cookie, analytics, whitelists)
   config.production.js           ← production overrides (standalone)

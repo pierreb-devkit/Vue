@@ -1,11 +1,10 @@
 /* eslint-disable */
 
 import fs from 'fs';
-import _ from 'lodash';
+import { merge, mapKeys, pickBy, forEach } from 'lodash-es';
 import objectPath from 'object-path';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import glob from 'glob';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,19 +13,33 @@ const __dirname = path.dirname(__filename);
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
 /**
+ * Discover module config files for a given environment by scanning src/modules.
+ * @param {string} env - Environment name (e.g. 'development', 'production')
+ * @returns {string[]} Sorted list of absolute paths to matching config files
+ */
+const discoverModuleConfigs = (env) => {
+  const modulesDir = path.join(process.cwd(), 'src', 'modules');
+  if (!fs.existsSync(modulesDir)) return [];
+  return fs
+    .readdirSync(modulesDir, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => path.join(modulesDir, d.name, 'config', `config.${env}.js`))
+    .filter((f) => fs.existsSync(f))
+    .sort();
+};
+
+/**
  * Load and merge all module config files matching the given environment.
- * Globs `src/modules/&ast;/config/config.<env>.js` and deep-merges them.
  * @param {string} env - Environment name (e.g. 'development', 'production')
  * @returns {Promise<Object>} Merged config object from all matching module files
  */
 const loadModuleConfigs = async (env) => {
-  const pattern = `src/modules/*/config/config.${env}.js`;
-  const files = glob.sync(pattern, { cwd: process.cwd(), absolute: true }).sort();
+  const files = discoverModuleConfigs(env);
   let merged = {};
   for (const file of files) {
     console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
     const mod = await import(pathToFileURL(file).href);
-    merged = _.merge(merged, mod.default);
+    merged = merge(merged, mod.default);
   }
   return merged;
 };
@@ -64,7 +77,7 @@ const getConfiguration = async () => {
   console.log('+ Loading global development defaults...');
   const globalDev = await loadGlobalConfig('development');
   if (globalDev) {
-    config = _.merge(config, globalDev);
+    config = merge(config, globalDev);
   }
 
   // 3. If not development, overlay env-specific configs
@@ -72,24 +85,26 @@ const getConfiguration = async () => {
     // Module env overrides
     console.log(`+ Loading module ${env} overrides...`);
     const moduleEnv = await loadModuleConfigs(env);
-    config = _.merge(config, moduleEnv);
+    config = merge(config, moduleEnv);
 
     // Global env overrides
     console.log(`+ Loading global ${env} overrides...`);
     const globalEnv = await loadGlobalConfig(env);
     if (globalEnv) {
-      config = _.merge(config, globalEnv);
+      config = merge(config, globalEnv);
+    } else if (Object.keys(moduleEnv).length === 0) {
+      console.warn(`+ Warning: No configuration overrides found for "${env}" environment — using development defaults`);
     }
   }
 
   // 4. DEVKIT_VUE_* env var overrides (final layer)
-  const environmentVars = _.mapKeys(
-    _.pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
+  const environmentVars = mapKeys(
+    pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),
   );
   const environmentConfigVars = {};
-  _.forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
-  config = _.merge(config, environmentConfigVars);
+  forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
+  config = merge(config, environmentConfigVars);
 
   // Generate ESM version
   const configJSON = JSON.stringify(config, undefined, 2)
