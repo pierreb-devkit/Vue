@@ -4,7 +4,7 @@ import fs from 'fs';
 import _ from 'lodash';
 import objectPath from 'object-path';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import glob from 'glob';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,12 +20,12 @@ if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
  * @returns {Promise<Object>} Merged config object from all matching module files
  */
 const loadModuleConfigs = async (env) => {
-  const pattern = path.join(process.cwd(), 'src', 'modules', '*', 'config', `config.${env}.js`);
-  const files = glob.sync(pattern).sort();
+  const pattern = `src/modules/*/config/config.${env}.js`;
+  const files = glob.sync(pattern, { cwd: process.cwd(), absolute: true }).sort();
   let merged = {};
   for (const file of files) {
     console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
-    const mod = await import(`file://${file}`);
+    const mod = await import(pathToFileURL(file).href);
     merged = _.merge(merged, mod.default);
   }
   return merged;
@@ -40,7 +40,7 @@ const loadGlobalConfig = async (env) => {
   const filePath = path.join(process.cwd(), 'src', 'config', 'defaults', `config.${env}.js`);
   if (fs.existsSync(filePath)) {
     console.log(`  + Global config: config.${env}.js`);
-    const mod = await import(`file://${filePath}`);
+    const mod = await import(pathToFileURL(filePath).href);
     return mod.default;
   }
   return null;
