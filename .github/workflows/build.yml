@@ -44,3 +44,7 @@ jobs:
           build-args: |
             NODE_ENV=pierreb
             DEVKIT_VUE_app_title=PierreBrisorgueil
+            DEVKIT_VUE_api_host=api.pierreb.me
+            DEVKIT_VUE_api_protocol=https
+            DEVKIT_VUE_api_port=
+            DEVKIT_VUE_cookie_prefix=pierreb
