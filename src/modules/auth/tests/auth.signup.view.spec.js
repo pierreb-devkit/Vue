@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const signupMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: vi.fn().mockResolvedValue(null) }),
 }));
 
 import AuthSignupView from '../views/auth.signup.view.vue';
@@ -50,10 +50,32 @@ describe('auth.signup.view', () => {
     signupMock.mockReset();
   });
 
+  describe('serverConfig rendering', () => {
+    it('hides form and shows alert when sign.up is false', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: true, up: false } };
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Registration is currently disabled');
+      expect(wrapper.findComponent({ ref: 'form' }).exists()).toBe(false);
+    });
+
+    it('shows form when sign.up is true', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: true, up: true } };
+      await flushPromises();
+
+      expect(wrapper.text()).not.toContain('Registration is currently disabled');
+    });
+  });
+
   describe('validate()', () => {
     it('calls signup with exactly { email, password, firstName, lastName } — no extra arguments', async () => {
       signupMock.mockResolvedValueOnce(undefined);
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.firstName = 'John';
       wrapper.vm.lastName = 'Doe';
@@ -73,6 +95,7 @@ describe('auth.signup.view', () => {
 
     it('does not call signup when form is invalid', async () => {
       const wrapper = mountView(makeFormStub(false));
+      await flushPromises();
 
       await wrapper.vm.validate();
 
@@ -83,6 +106,7 @@ describe('auth.signup.view', () => {
       signupMock.mockRejectedValueOnce(new Error('network error'));
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.firstName = 'John';
       wrapper.vm.lastName = 'Doe';

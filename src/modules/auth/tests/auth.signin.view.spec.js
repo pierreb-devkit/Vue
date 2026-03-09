@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const signinMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signin: signinMock }),
+  useAuthStore: () => ({ auth: false, signin: signinMock, serverConfig: null, fetchServerConfig: vi.fn().mockResolvedValue(null) }),
 }));
 
 import AuthSigninView from '../views/auth.signin.view.vue';
@@ -50,10 +50,32 @@ describe('auth.signin.view', () => {
     signinMock.mockReset();
   });
 
+  describe('serverConfig rendering', () => {
+    it('hides form and shows alert when sign.in is false', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: false, up: true } };
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Sign in is currently disabled');
+      expect(wrapper.findComponent({ ref: 'form' }).exists()).toBe(false);
+    });
+
+    it('shows form when sign.in is true', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: true, up: true } };
+      await flushPromises();
+
+      expect(wrapper.text()).not.toContain('Sign in is currently disabled');
+    });
+  });
+
   describe('validate()', () => {
     it('calls signin with exactly { email, password } — no extra arguments', async () => {
       signinMock.mockResolvedValueOnce(undefined);
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.email = 'test@example.com';
       wrapper.vm.password = 'password123';
@@ -66,6 +88,7 @@ describe('auth.signin.view', () => {
 
     it('does not call signin when form is invalid', async () => {
       const wrapper = mountView(makeFormStub(false));
+      await flushPromises();
 
       await wrapper.vm.validate();
 
@@ -76,6 +99,7 @@ describe('auth.signin.view', () => {
       signinMock.mockRejectedValueOnce(new Error('network error'));
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.email = 'test@example.com';
       wrapper.vm.password = 'password123';
