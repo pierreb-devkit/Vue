@@ -7,7 +7,8 @@
           <v-divider></v-divider>
         </v-col>
         <v-container>
-          <v-form ref="form" v-model="valid">
+          <v-alert v-if="serverConfig && !serverConfig.sign.in" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
+          <v-form v-if="!serverConfig || serverConfig.sign.in" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
                 <v-text-field
@@ -75,6 +76,7 @@ export default {
     return {
       theme,
       valid: true, // TODO: switch to false when forms will be reactive
+      serverConfig: null,
       email: '',
       password: '',
       oAuth: `${this.config.api.protocol}://
@@ -95,6 +97,11 @@ export default {
     themeName() {
       return this.theme.name;
     },
+  },
+  async created() {
+    const authStore = useAuthStore();
+    await authStore.fetchServerConfig();
+    this.serverConfig = authStore.serverConfig;
   },
   watch: {
     auth(auth) {

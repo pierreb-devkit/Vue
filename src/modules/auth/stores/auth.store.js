@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', {
       status: false,
       message: '',
     },
+    serverConfig: null,
   }),
 
   getters: {
@@ -29,6 +30,22 @@ export const useAuthStore = defineStore('auth', {
     // Initialize from localStorage
     initFromStorage() {
       this.cookieExpire = localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0;
+    },
+
+    /**
+     * @desc Fetch public auth config flags from the API
+     * @returns {Object|null} Server auth config or null on failure
+     */
+    async fetchServerConfig() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      try {
+        const res = await axios.get(`${api}/${config.api.endPoints.auth}/config`);
+        this.serverConfig = res.data.data;
+        return this.serverConfig;
+      } catch (err) {
+        this.serverConfig = null;
+        return null;
+      }
     },
 
     async signin(params) {
