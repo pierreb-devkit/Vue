@@ -7,6 +7,12 @@
  * @returns {import('vite').Plugin}
  */
 
+/**
+ * Escape HTML special characters to prevent XSS in injected markup.
+ *
+ * @param {string} str - raw string to escape
+ * @returns {string} escaped string safe for HTML attribute and text content
+ */
 const escapeHtml = (str) =>
   String(str).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' }[char]));
 
