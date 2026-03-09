@@ -201,6 +201,101 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('noscript fallback', () => {
+    it('injects noscript tag with title and description before </body>', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<noscript><h1>Test App</h1><p>Test description</p></noscript>');
+    });
+
+    it('injects noscript with only title when description is missing', () => {
+      const result = transform({ app: { title: 'Only Title' } });
+      expect(result).toContain('<noscript><h1>Only Title</h1></noscript>');
+    });
+
+    it('injects noscript with only description when title is missing', () => {
+      const result = transform({ app: { description: 'Only desc' } });
+      expect(result).toContain('<noscript><p>Only desc</p></noscript>');
+    });
+
+    it('does not inject noscript when both title and description are missing', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('<noscript>');
+    });
+
+    it('escapes HTML in noscript content', () => {
+      const result = transform({ app: { title: '<img onerror="alert(1)">' } });
+      expect(result).toContain('&lt;img onerror=&quot;alert(1)&quot;&gt;');
+      expect(result).not.toContain('<img onerror');
+    });
+
+    it('injects noscript before closing body tag', () => {
+      const result = transform(testConfig);
+      const noscriptIndex = result.indexOf('<noscript>');
+      const bodyCloseIndex = result.indexOf('</body>');
+      expect(noscriptIndex).toBeGreaterThan(-1);
+      expect(noscriptIndex).toBeLessThan(bodyCloseIndex);
+    });
+  });
+
+  describe('preconnect hints', () => {
+    it('injects preconnect and dns-prefetch links for each URL', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<link rel="preconnect" href="https://fonts.googleapis.com">');
+      expect(result).toContain('<link rel="dns-prefetch" href="https://fonts.googleapis.com">');
+      expect(result).toContain('<link rel="preconnect" href="https://api.example.com">');
+      expect(result).toContain('<link rel="dns-prefetch" href="https://api.example.com">');
+    });
+
+    it('does not inject preconnect links when array is empty', () => {
+      const result = transform({ app: { seo: { preconnect: [] } } });
+      expect(result).not.toContain('rel="preconnect"');
+      expect(result).not.toContain('rel="dns-prefetch"');
+    });
+
+    it('does not inject preconnect links when not configured', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('rel="preconnect"');
+    });
+
+    it('injects preconnect links in the head section', () => {
+      const result = transform(testConfig);
+      const headCloseIndex = result.indexOf('</head>');
+      const preconnectIndex = result.indexOf('rel="preconnect"');
+      expect(preconnectIndex).toBeGreaterThan(-1);
+      expect(preconnectIndex).toBeLessThan(headCloseIndex);
+    });
+
+    it('escapes URLs in preconnect hints', () => {
+      const result = transform({ app: { seo: { preconnect: ['https://example.com/path?a=1&b=2'] } } });
+      expect(result).toContain('href="https://example.com/path?a=1&amp;b=2"');
+    });
+  });
+
+  describe('theme-color meta tag', () => {
+    it('injects theme-color from vuetify primary color', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<meta name="theme-color" content="#1867C0">');
+    });
+
+    it('does not inject theme-color when vuetify config is missing', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('theme-color');
+    });
+
+    it('does not inject theme-color when primary color is not set', () => {
+      const result = transform({ app: {}, vuetify: { theme: { themes: { light: { colors: {} } } } } });
+      expect(result).not.toContain('theme-color');
+    });
+
+    it('injects theme-color in the head section', () => {
+      const result = transform(testConfig);
+      const headCloseIndex = result.indexOf('</head>');
+      const themeColorIndex = result.indexOf('theme-color');
+      expect(themeColorIndex).toBeGreaterThan(-1);
+      expect(themeColorIndex).toBeLessThan(headCloseIndex);
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();

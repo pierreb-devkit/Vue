@@ -10,10 +10,21 @@
 const escapeHtml = (str) =>
   String(str).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' }[char]));
 
+/**
+ * Resolve the primary theme color from the Vuetify config.
+ *
+ * @param {object} config - full app config object
+ * @returns {string|undefined} hex color string or undefined when not configured
+ */
+function resolvePrimaryColor(config) {
+  return config?.vuetify?.theme?.themes?.light?.colors?.primary;
+}
+
 export function seoInjectPlugin(config) {
   const app = config?.app || {};
   const seo = app.seo || {};
   const og = seo.og || {};
+  const preconnect = seo.preconnect || [];
 
   return {
     name: 'seo-inject',
@@ -28,6 +39,17 @@ export function seoInjectPlugin(config) {
         tags.push(`  <meta name="author" content="${escapeHtml(app.author)}">`);
       if (app.url)
         tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
+
+      // Theme color
+      const primaryColor = resolvePrimaryColor(config);
+      if (primaryColor)
+        tags.push(`  <meta name="theme-color" content="${escapeHtml(primaryColor)}">`);
+
+      // Preconnect hints
+      for (const url of preconnect) {
+        tags.push(`  <link rel="preconnect" href="${escapeHtml(url)}">`);
+        tags.push(`  <link rel="dns-prefetch" href="${escapeHtml(url)}">`);
+      }
 
       // Open Graph
       if (app.title)
@@ -68,6 +90,14 @@ export function seoInjectPlugin(config) {
 
       // Inject tags before </head> (replace only the first occurrence)
       result = result.replace(/<\/head>/i, `${tags.join('\n')}\n  </head>`);
+
+      // Noscript fallback before </body>
+      if (app.title || app.description) {
+        const noscriptParts = [];
+        if (app.title) noscriptParts.push(`<h1>${escapeHtml(app.title)}</h1>`);
+        if (app.description) noscriptParts.push(`<p>${escapeHtml(app.description)}</p>`);
+        result = result.replace(/<\/body>/i, `  <noscript>${noscriptParts.join('')}</noscript>\n  </body>`);
+      }
 
       return result;
     },
