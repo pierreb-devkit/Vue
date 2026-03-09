@@ -157,6 +157,15 @@ export default {
   // HOME SECTIONS - Minimaliste
   // ============================================================
   home: {
+    // Sections désactivées pour site portfolio minimaliste
+    presentation: null,
+    social: null,
+    aboutFeatures: null,
+    features: null,
+    steps: null,
+    gallery: null,
+    articles: null,
+
     // === HERO - Identité principale ===
     hero: {
       variant: 'blur',
