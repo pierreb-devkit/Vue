@@ -21,6 +21,18 @@ export default {
         name: '', // entity name (e.g. 'Pierre Brisorgueil')
         sameAs: [], // profile URLs for cross-linking: GitHub, LinkedIn, Twitter…
       },
+      robots: {
+        enabled: true, // true to generate robots.txt at build time
+        rules: [{ userAgent: '*', allow: '/' }], // array of { userAgent, allow?, disallow? }
+      },
+      sitemap: {
+        enabled: true, // true to generate sitemap.xml at build time
+        routes: [{ path: '/', priority: 1.0, changefreq: 'weekly' }], // array of { path, priority?, changefreq? }
+      },
+      manifest: {
+        enabled: false, // true to generate manifest.json at build time
+        display: 'standalone', // 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser'
+      },
     },
   },
   port: 8080, // dev server port (used by vite.config.js)
