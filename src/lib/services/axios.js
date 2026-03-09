@@ -21,7 +21,7 @@ export function setupInterceptors(config, snackbar, onSignout) {
     (response) => {
       if (config.vuetify.theme.snackbar.status && response.config && config.vuetify.theme.snackbar.methods.indexOf(response.config.method) > -1) {
         snackbar.text = `${response.data.type}: ${response.data.message}`;
-        snackbar.color = config.vuetify.theme.snackbar.successColor;
+        snackbar.color = config.vuetify.theme.snackbar.successColor ?? config.vuetify.theme.snackbar.sucessColor;
         snackbar.status = true;
       }
       return response;

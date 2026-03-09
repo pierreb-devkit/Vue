@@ -116,7 +116,8 @@ const getConfiguration = async () => {
     }
 
     const STANDARD_ENVS = new Set(['development', 'production', 'test']);
-    if (!STANDARD_ENVS.has(env) && Object.keys(moduleEnv).length === 0 && !globalEnv) {
+    const hasEnvVarOverrides = Object.keys(process.env).some((key) => key.startsWith('DEVKIT_VUE_'));
+    if (!STANDARD_ENVS.has(env) && discoverModuleConfigs(env).length === 0 && !globalEnv && !hasEnvVarOverrides) {
       console.warn(`+ Warning: NODE_ENV="${env}" but no config.${env}.js files found — using development defaults. Downstream projects should create config.${env}.js files (see README).`);
     }
   }
