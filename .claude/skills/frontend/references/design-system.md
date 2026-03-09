@@ -1,0 +1,188 @@
+# Design System Reference
+
+Source of truth: `src/config/index.js` → `vuetify.theme` section + Vuetify 4 defaults.
+
+## Colors
+
+Theme colors are defined in config and exposed as CSS variables by Vuetify.
+
+### Base colors (8)
+
+| Token | CSS variable | Usage |
+|-------|-------------|-------|
+| `background` | `--v-theme-background` | Page background, alternating sections |
+| `surface` | `--v-theme-surface` | Cards, dialogs, elevated elements |
+| `primary` | `--v-theme-primary` | CTAs, links, active states |
+| `secondary` | `--v-theme-secondary` | Accents, secondary actions |
+| `success` | `--v-theme-success` | Success feedback |
+| `warning` | `--v-theme-warning` | Warning feedback |
+| `error` | `--v-theme-error` | Error feedback |
+| `info` | `--v-theme-info` | Informational feedback |
+
+### On-colors (8)
+
+Text colors for content on top of base colors: `on-background`, `on-surface`, `on-primary`, `on-secondary`, `on-success`, `on-warning`, `on-error`, `on-info`.
+
+### Usage in templates
+
+```html
+<!-- Vuetify color prop -->
+<v-btn color="primary">Action</v-btn>
+<v-card color="surface">Content</v-card>
+
+<!-- CSS variable (in style blocks) -->
+color: rgb(var(--v-theme-primary));
+background: rgb(var(--v-theme-surface));
+
+<!-- Theme helper (in script) -->
+import { style } from '@/lib/helpers/theme.js';
+const sectionStyle = style('section', config.pages);
+```
+
+**Important**: Vuetify stores RGB components separately. Always wrap with `rgb()` or `rgba()`:
+```css
+/* Correct */
+color: rgb(var(--v-theme-primary));
+background: rgba(var(--v-theme-primary), 0.5);
+
+/* Wrong - will not work */
+color: var(--v-theme-primary);
+```
+
+### Actual colors
+
+Read `src/config/index.js` → `vuetify.theme.themes.light.colors` and `dark.colors` to see current values. Downstream projects override these in `config.<env>.js`.
+
+## Typography (Vuetify 4 — Material Design 3)
+
+**CRITICAL**: Vuetify 4 uses MD3 typography classes. Do NOT use old `text-h1`..`text-h6` classes.
+
+### Display (large headings)
+
+| Class | Size | Weight | Use for |
+|-------|------|--------|---------|
+| `text-display-large` | 3.5625rem (57px) | 400 | Hero titles |
+| `text-display-medium` | 2.8125rem (45px) | 400 | Page titles |
+| `text-display-small` | 2.25rem (36px) | 400 | Section titles |
+
+### Headline (section headings)
+
+| Class | Size | Weight | Use for |
+|-------|------|--------|---------|
+| `text-headline-large` | 2rem (32px) | 400 | Card titles, major headings |
+| `text-headline-medium` | 1.75rem (28px) | 400 | Subtitles |
+| `text-headline-small` | 1.5rem (24px) | 400 | Subsection headings |
+
+### Title (UI elements)
+
+| Class | Size | Weight | Use for |
+|-------|------|--------|---------|
+| `text-title-large` | 1.375rem (22px) | 400 | Dialog titles, nav items |
+| `text-title-medium` | 1rem (16px) | 500 | List titles, toolbar text |
+| `text-title-small` | 0.875rem (14px) | 500 | Tab labels, chips |
+
+### Body (content)
+
+| Class | Size | Weight | Use for |
+|-------|------|--------|---------|
+| `text-body-large` | 1rem (16px) | 400 | Primary content |
+| `text-body-medium` | 0.875rem (14px) | 400 | Secondary content |
+| `text-body-small` | 0.75rem (12px) | 400 | Captions, helper text |
+
+### Label (buttons, tags)
+
+| Class | Size | Weight | Use for |
+|-------|------|--------|---------|
+| `text-label-large` | 0.875rem (14px) | 500 | Buttons, prominent labels |
+| `text-label-medium` | 0.75rem (12px) | 500 | Tags, badges |
+| `text-label-small` | 0.6875rem (11px) | 500 | Overlines, tiny labels |
+
+### Responsive typography
+
+Mobile-first, override at breakpoints:
+```html
+<h1 class="text-display-small text-sm-display-medium text-md-display-large">Title</h1>
+<p class="text-body-medium text-sm-body-large">Content</p>
+```
+
+### Font weights
+
+Classes: `font-weight-thin` (100), `font-weight-light` (300), `font-weight-regular` (400), `font-weight-medium` (500), `font-weight-semibold` (600), `font-weight-bold` (700), `font-weight-black` (900).
+
+## Spacing
+
+Base unit: `4px`. Classes: `{property}{direction}-{size}`.
+
+- Properties: `m` (margin), `p` (padding)
+- Directions: `a` (all), `t/b/l/r` (top/bottom/left/right), `x/y` (horizontal/vertical), `s/e` (start/end)
+- Sizes: `0` (0px) to `16` (64px)
+
+Examples: `pa-4` (16px padding all), `mt-8` (32px margin top), `mx-auto` (center horizontally).
+
+## Breakpoints (Vuetify 4)
+
+| Name | Min width | Typical device |
+|------|-----------|----------------|
+| `xs` | 0 | Small phones |
+| `sm` | 600px | Large phones, small tablets |
+| `md` | 840px | Tablets |
+| `lg` | 1145px | Laptops |
+| `xl` | 1545px | Desktops |
+| `xxl` | 2138px | Large screens |
+
+Display helpers: `d-none d-sm-flex`, `d-md-none`, etc.
+
+## Border radius
+
+| Class | Value |
+|-------|-------|
+| `rounded-0` | 0 |
+| `rounded-sm` | 2px |
+| `rounded` | 4px (default) |
+| `rounded-lg` | 8px |
+| `rounded-xl` | 24px |
+| `rounded-pill` | 9999px |
+| `rounded-circle` | 50% |
+| `rounded-shaped` | 24px 0 |
+
+Stack config default: `rounded-lg`. Check `config.vuetify.theme.rounded`.
+
+## Elevation / Shadows
+
+Classes: `elevation-0` to `elevation-24`. Prefer `elevation-0` with glass effects or subtle borders for modern look.
+
+## Transitions (easings)
+
+| Name | Curve | Use |
+|------|-------|-----|
+| Standard | `cubic-bezier(0.4, 0, 0.2, 1)` | General transitions |
+| Decelerated | `cubic-bezier(0.0, 0, 0.2, 1)` | Elements entering |
+| Accelerated | `cubic-bezier(0.4, 0, 1, 1)` | Elements leaving |
+
+Default duration: `0.3s`.
+
+## Icons
+
+Stack uses **FontAwesome 6** (`defaultSet: 'fa'`).
+
+```html
+<v-icon>fa-solid fa-user</v-icon>
+<v-icon>fa-brands fa-github</v-icon>
+```
+
+## Config-driven theming
+
+The stack's theme is fully config-driven. Key config paths:
+
+```javascript
+config.vuetify.theme.dark        // 'auto', 'dark', 'light'
+config.vuetify.theme.flat        // true = flat design
+config.vuetify.theme.rounded     // 'rounded-lg', 'rounded-xl', etc.
+config.vuetify.theme.maxWidth    // '1200px' default
+config.vuetify.theme.header      // { background, color, colorMode, opacity, scrollBehavior }
+config.vuetify.theme.navigation  // { background, color, drawer: { floating, expand, rail } }
+config.vuetify.theme.themes.light.colors  // { primary, secondary, background, surface, ... }
+config.vuetify.theme.themes.dark.colors   // { primary, secondary, background, surface, ... }
+config.pages.style.section       // { background: 'background' }
+config.pages.style.card          // { background: 'surface' }
+```

@@ -46,6 +46,7 @@ Use `.claude/skills/*/SKILL.md` as the primary workflow source for Claude.
 | `/verify`        | Run quality loop (lint + test + build)                |
 | `/create-module` | Create a new module from the `tasks` template         |
 | `/feature`       | Implement a feature while enforcing module isolation  |
+| `/frontend`      | Design system, Vuetify 4 patterns, visual verification |
 | `/update-stack`  | Merge upstream stack updates into downstream projects |
 | `/naming`        | Apply or audit naming conventions                     |
 | `/pull-request`  | Full PR lifecycle: draft, CI, monitor loop, iterate   |
