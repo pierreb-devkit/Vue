@@ -101,7 +101,7 @@ export default {
           colors: {
             primary: '#2563eb',
             secondary: '#f97316',
-            background: '#fafafa',
+            background: '#f3f3f6',
             surface: '#ffffff',
             error: '#ef4444',
             success: '#10b981',
@@ -117,8 +117,8 @@ export default {
           colors: {
             primary: '#3b82f6',
             secondary: '#fb923c',
-            background: '#0b0b0d',
-            surface: '#141418',
+            background: '#1F1F1F',
+            surface: '#282A2E',
             error: '#f87171',
             success: '#34d399',
             onPrimary: '#0b0b0d',
