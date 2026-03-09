@@ -8,6 +8,11 @@ export default {
     icon: 'fa-solid fa-earth-americas', // FontAwesome icon class for app icon
     lang: 'en', // html lang attribute — 'en' | 'fr' | 'de' | 'es' | etc.
     url: 'http://localhost:8080', // canonical base URL — override in production
+    notFound: {
+      title: 'Page Not Found', // heading shown on the 404 page
+      message: 'The page you are looking for does not exist.', // body text below the heading
+      buttonText: 'Go Home', // label on the back-to-home button
+    },
     seo: {
       og: {
         type: 'website', // og:type — 'website' | 'article' | 'product' | 'profile'
