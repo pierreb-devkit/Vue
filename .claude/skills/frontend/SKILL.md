@@ -1,0 +1,46 @@
+---
+name: frontend
+description: >
+  Design system reference for the Devkit Vue stack (Vuetify 4 + custom theme helpers).
+  Covers design thinking, Vuetify tokens, stack components, and visual verification.
+  This skill is automatically consumed by /feature when the task has a visual component.
+  Can also be invoked directly for design-only tasks (styling, theming, layout fixes).
+---
+
+# Frontend
+
+Design system reference and visual quality guidelines for the Devkit Vue stack.
+
+**This is not a standalone workflow.** For full feature implementation, use `/feature` which automatically applies these guidelines when visual work is involved.
+
+Invoke `/frontend` directly only for pure design tasks (restyle, theme change, layout fix) that don't need the full `/feature` workflow.
+
+## Design thinking
+
+Before any visual work, read the [Anthropic frontend-design guidelines](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) for design thinking, typography, color, motion, spatial composition, and anti-patterns. Apply those principles, then constrain with the stack's design system below.
+
+## References
+
+| What | File | Content |
+|------|------|---------|
+| Tokens, typography, spacing, breakpoints | `references/design-system.md` | Vuetify 4 MD3 classes, theme CSS variables, config paths |
+| Component catalog | `references/components.md` | Home sections, core layout, module pattern, key Vuetify components |
+| Theme helpers & code patterns | `references/patterns.md` | `liquidGlassStyle()`, `style()`, `overlapStyle()`, AOS, responsive |
+| Visual verification | `references/verification.md` | Puppeteer screenshot flow, review checklist |
+
+## Key rules (quick reminder)
+
+- **Typography**: MD3 classes only (`text-display-large`, NOT `text-h1`). Responsive: `text-display-small text-sm-display-medium`
+- **Colors**: Theme tokens via config or CSS variables (`rgb(var(--v-theme-primary))`), never hardcoded hex in templates
+- **Dark/light**: Everything must work in both modes
+- **Config-driven**: Prefer config options over hardcoded values
+- **Reuse**: Check existing components before creating new ones
+- **Verify**: Screenshot desktop+mobile, light+dark after visual changes
+
+## Anti-patterns
+
+- `text-h1`..`text-h6` → use MD3: `text-display-large`, `text-headline-medium`
+- Hardcoded colors in templates → use theme variables
+- New components for things existing ones already handle
+- Ignoring dark mode
+- Skipping visual verification
