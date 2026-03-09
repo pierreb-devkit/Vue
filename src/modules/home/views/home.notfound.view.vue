@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+  <v-container class="fill-height" :style="`max-width: ${config.vuetify?.theme?.maxWidth || '100%'}`">
     <v-row align="center" justify="center">
       <v-col cols="12" class="text-center">
         <h1 class="text-h2 font-weight-bold mb-4">404</h1>
