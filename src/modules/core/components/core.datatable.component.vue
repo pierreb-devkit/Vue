@@ -3,7 +3,7 @@
     <v-card-title>
       {{ title }}
       <v-spacer></v-spacer>
-      <v-text-field v-if="search != null ? search : true" v-model="textSearch" label="Search" single-line hide-details></v-text-field>
+      <v-text-field v-if="search != null ? search : true" v-model="textSearch" label="Search" hide-details></v-text-field>
     </v-card-title>
     <v-progress-linear :active="loading" indeterminate color="secondary"></v-progress-linear>
     <v-table v-if="items && items.length > 0" fixed-header>

@@ -13,7 +13,7 @@
         <v-img :src="config.header.logo.file" height="100px" width="100px" class="ml-0 mt-2" inline alt="logo"> </v-img>
       </router-link>
       <router-link v-else-if="config.header.title" to="/" class="text-decoration-none" :style="{ color: 'inherit' }">
-        <h1 class="text-h5 font-weight-bold mr-4">{{ config.app.title }}</h1>
+        <h1 class="text-headline-small font-weight-bold mr-4">{{ config.app.title }}</h1>
       </router-link>
       <!-- Menu -->
       <span v-for="({ title, url, sublinks }, i) in config.header.links" :key="i" class="hidden-sm-and-down">

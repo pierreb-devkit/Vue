@@ -14,8 +14,8 @@
           <v-card-text> Are you sure you want to delete this item ? we will not be able to recover it. </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green darken-1" text @click="removeConfirm = false"> Close </v-btn>
-            <v-btn color="red darken-1" text @click="remove"> Delete </v-btn>
+            <v-btn color="green darken-1" variant="text" @click="removeConfirm = false"> Close </v-btn>
+            <v-btn color="red darken-1" variant="text" @click="remove"> Delete </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -42,7 +42,7 @@
               <v-col cols="12">
                 <v-textarea v-model="bio" :rules="rules.bio" label="Bio" auto-grow clearable counter></v-textarea>
                 <v-text-field v-model="position" label="Position" required></v-text-field>
-                <v-select v-model="roles" :items="rolesItems" attach chips label="Users" multiple required></v-select>
+                <v-select v-model="roles" :items="rolesItems" chips label="Users" multiple required></v-select>
               </v-col>
             </v-row>
           </v-form>
