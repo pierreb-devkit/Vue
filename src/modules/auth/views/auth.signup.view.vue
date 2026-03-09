@@ -98,15 +98,15 @@ export default {
       return this.theme.name;
     },
   },
-  async created() {
-    const authStore = useAuthStore();
-    await authStore.fetchServerConfig();
-    this.serverConfig = authStore.serverConfig;
-  },
   watch: {
     auth(auth) {
       if (auth) this.$router.push(this.config.sign.route);
     },
+  },
+  async created() {
+    const authStore = useAuthStore();
+    await authStore.fetchServerConfig();
+    this.serverConfig = authStore.serverConfig;
   },
   methods: {
     async validate() {

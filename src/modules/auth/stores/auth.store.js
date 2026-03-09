@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/config`);
         this.serverConfig = res.data.data;
         return this.serverConfig;
-      } catch (err) {
+      } catch {
         this.serverConfig = null;
         return null;
       }

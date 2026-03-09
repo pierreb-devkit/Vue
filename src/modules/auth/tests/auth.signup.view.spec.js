@@ -5,7 +5,7 @@ import { createVuetify } from 'vuetify';
 
 const signupMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: vi.fn().mockResolvedValue(null) }),
 }));
 
 import AuthSignupView from '../views/auth.signup.view.vue';
