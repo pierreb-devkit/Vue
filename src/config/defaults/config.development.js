@@ -21,6 +21,17 @@ export default {
         name: '', // entity name (e.g. 'Pierre Brisorgueil')
         sameAs: [], // profile URLs for cross-linking: GitHub, LinkedIn, Twitter…
       },
+      // Pre-rendering: generates static HTML at build time so crawlers receive
+      // real content instead of an empty <div id="app"></div>.
+      // Only '/' is pre-rendered by default — downstream projects can add more
+      // routes but should keep the list minimal (each route spawns a headless
+      // browser page during build).
+      // The '/' route should map to whatever page the project wants indexed
+      // (home by default).
+      prerender: {
+        enabled: false, // true to pre-render routes during production build
+        routes: ['/'], // list of routes to pre-render
+      },
     },
   },
   port: 8080, // dev server port (used by vite.config.js)
