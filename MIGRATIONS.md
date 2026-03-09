@@ -4,6 +4,37 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Downstream config naming convention & typo fixes (2026-03-09)
+
+### Config naming convention
+
+Downstream projects must name their config files `config.{projectname}.js` (not just `{projectname}.js`). The generator only discovers files matching `config.${NODE_ENV}.js` — files without the `config.` prefix are silently ignored.
+
+A template file `src/config/defaults/config.myproject.js` is now included in the stack. Copy and rename it for your project.
+
+The generator now warns when `NODE_ENV` is set to a non-standard value and no matching config files are found.
+
+### Typo fixes (breaking for downstream)
+
+- `sucessColor` → `successColor` in `src/modules/app/config/config.development.js`
+- `Ressources` → `Resources` in `src/modules/home/config/config.development.js`
+
+The `axios` service includes a backward-compatible fallback (`config.vuetify.theme.snackbar.successColor ?? config.vuetify.theme.snackbar.sucessColor`), but downstream projects should update their config files to use the corrected key names.
+
+### Migration note
+
+If your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
+
+### Steps for downstream projects
+
+1. Rename any `{projectname}.js` config files to `config.{projectname}.js` (both in `src/config/defaults/` and `src/modules/*/config/`)
+2. Update `sucessColor` → `successColor` in your config files
+3. Update `Ressources` → `Resources` in your config files
+4. Rename `WAOS_VUE_*` → `DEVKIT_VUE_*` in CI workflows
+5. Run `npm run dev` to verify the generated config is correct
+
+---
+
 ## Header "float" scroll mode (2026-03-08)
 
 New header scroll mode: the navbar shrinks to a floating pill on scroll.
