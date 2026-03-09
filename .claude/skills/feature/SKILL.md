@@ -42,8 +42,16 @@ Follow the stack's architecture:
 - **Upper layers** are abstractions of lower ones
 - **Each layer** references only the immediate lower layer
 - Use Vue 3 Composition API
-- Use Vuetify 3 components (check docs first)
+- Use Vuetify 4 components
 - Follow existing patterns in the module
+
+**If the feature has a visual/UI component**, read and apply `/frontend` skill guidelines:
+- Read `.claude/skills/frontend/references/design-system.md` for tokens, typography (MD3 classes), spacing
+- Read `.claude/skills/frontend/references/components.md` to reuse existing components
+- Read `.claude/skills/frontend/references/patterns.md` for theme helpers (`liquidGlassStyle`, `style()`, etc.)
+- Use config-driven approach — theme colors from config, not hardcoded
+- Verify both dark and light mode
+- Take screenshots after implementation (see `.claude/skills/frontend/references/verification.md`)
 
 ### 4. Add tests
 

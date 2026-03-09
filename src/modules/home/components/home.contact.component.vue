@@ -32,8 +32,8 @@
                 :style="{
                   color: theme.current.colors.onSecondary,
                 }"
-                depressed
-                x-large
+                variant="flat"
+                size="x-large"
                 @click="sendMail()"
                 >Send</v-btn
               >
