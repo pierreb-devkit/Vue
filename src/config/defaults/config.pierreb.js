@@ -46,8 +46,8 @@ export default {
   },
   sign: {
     route: '/tasks',
-    in: false, // Désactivé pour site portfolio
-    up: false, // Désactivé pour site portfolio
+    in: true,
+    up: true,
   },
   cookie: {
     prefix: 'pierreb',
