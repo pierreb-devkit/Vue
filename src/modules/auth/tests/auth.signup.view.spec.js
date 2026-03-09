@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
@@ -48,6 +48,27 @@ describe('auth.signup.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     signupMock.mockReset();
+  });
+
+  describe('serverConfig rendering', () => {
+    it('hides form and shows alert when sign.up is false', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: true, up: false } };
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Registration is currently disabled');
+      expect(wrapper.findComponent({ ref: 'form' }).exists()).toBe(false);
+    });
+
+    it('shows form when sign.up is true', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.serverConfig = { sign: { in: true, up: true } };
+      await flushPromises();
+
+      expect(wrapper.text()).not.toContain('Registration is currently disabled');
+    });
   });
 
   describe('validate()', () => {

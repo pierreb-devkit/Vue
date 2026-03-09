@@ -7,8 +7,8 @@
           <v-divider></v-divider>
         </v-col>
         <v-container>
-          <v-alert v-if="serverConfig && !serverConfig.sign.in" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
-          <v-form v-if="!serverConfig || serverConfig.sign.in" ref="form" v-model="valid">
+          <v-alert v-if="serverConfig && serverConfig.sign && !serverConfig.sign.in" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
+          <v-form v-if="!serverConfig || !serverConfig.sign || serverConfig.sign.in" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
                 <v-text-field

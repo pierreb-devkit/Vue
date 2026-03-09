@@ -7,8 +7,8 @@
           <v-divider></v-divider>
         </v-col>
         <v-container>
-          <v-alert v-if="serverConfig && !serverConfig.sign.up" type="warning" class="mb-4">Registration is currently disabled.</v-alert>
-          <v-form v-if="!serverConfig || serverConfig.sign.up" ref="form" v-model="valid">
+          <v-alert v-if="serverConfig && serverConfig.sign && !serverConfig.sign.up" type="warning" class="mb-4">Registration is currently disabled.</v-alert>
+          <v-form v-if="!serverConfig || !serverConfig.sign || serverConfig.sign.up" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" md="6" sm="6" class="py-0 my-0">
                 <v-text-field v-model="firstName" :rules="[rules.firstName]" label="Firstname" prepend-icon="fa fa-user" required></v-text-field>

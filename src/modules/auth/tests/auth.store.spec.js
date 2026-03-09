@@ -271,6 +271,18 @@ describe('Auth Store', () => {
       expect(authStore.serverConfig).toEqual({ sign: { in: true, up: false } });
     });
 
+    it('should return null when response shape is invalid', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = { data: { data: {} } };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+
+      const result = await authStore.fetchServerConfig();
+
+      expect(result).toBe(null);
+      expect(authStore.serverConfig).toBe(null);
+    });
+
     it('should return null and reset state on error', async () => {
       const authStore = useAuthStore();
 

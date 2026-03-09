@@ -40,7 +40,12 @@ export const useAuthStore = defineStore('auth', {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/config`);
-        this.serverConfig = res.data.data;
+        const data = res.data.data;
+        if (data && typeof data.sign === 'object' && typeof data.sign.in === 'boolean' && typeof data.sign.up === 'boolean') {
+          this.serverConfig = data;
+        } else {
+          this.serverConfig = null;
+        }
         return this.serverConfig;
       } catch {
         this.serverConfig = null;
