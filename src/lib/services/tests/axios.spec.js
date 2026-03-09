@@ -36,7 +36,7 @@ describe('Axios Service', () => {
           snackbar: {
             status: true,
             methods: ['post', 'put', 'delete'],
-            sucessColor: 'success',
+            successColor: 'success',
             errorColor: 'error',
           },
         },
