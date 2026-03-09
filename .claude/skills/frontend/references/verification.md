@@ -59,6 +59,7 @@ If `scripts/screenshot.js` doesn't exist, create it:
 ```javascript
 import puppeteer from 'puppeteer';
 import path from 'path';
+import { mkdir } from 'node:fs/promises';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
 const OUTPUT_DIR = './screenshots';
@@ -86,6 +87,7 @@ const takeScreenshot = async (page, urlPath, viewport, theme) => {
 
 const main = async () => {
   const urlPath = process.argv[2] || '/';
+  await mkdir(OUTPUT_DIR, { recursive: true });
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
 
@@ -102,7 +104,10 @@ const main = async () => {
   console.log(`\n${screenshots.length} screenshots saved to ${OUTPUT_DIR}/`);
 };
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 ```
 
 **Note**: Add `puppeteer` as a devDependency: `npm install -D puppeteer`

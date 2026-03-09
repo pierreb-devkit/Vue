@@ -163,7 +163,7 @@ Default duration: `0.3s`.
 
 ## Icons
 
-Stack uses **FontAwesome 6** (`defaultSet: 'fa'`).
+Stack uses **FontAwesome** (`defaultSet: 'fa'`).
 
 ```html
 <v-icon>fa-solid fa-user</v-icon>

@@ -15,14 +15,17 @@ find src/modules/*/views -name "*.vue" | sort
 
 Home sections render based on the `config.home.*` object. Set a section to `null` to hide it.
 
-To discover available sections and their variants, read `src/modules/home/views/home.view.vue` — it imports and renders all sections conditionally based on config.
+To discover available sections, read `src/modules/home/views/home.view.vue` — it imports and renders all sections conditionally based on config. To discover a component's supported variants, check the component's props definition or validator.
 
 ### Section variant system
 
-Sections support a `variant` prop that controls background alternation:
+**Hero component** supports these variants:
+- `blur` — animated gradient background (config: `blur.light/dark.backgroundColors`, `haloColors`)
+- `img` — static image background
+
+**Section components** (about, services, features, steps, etc.) support these variants:
 - `default` — uses `config.pages.style.section.background` (typically `background` token)
 - `alternate` — uses `config.pages.style.card.background` (typically `surface` token)
-- `blur` — animated gradient background (config: `blur.light/dark.backgroundColors`, `haloColors`)
 
 ### Adding content to existing sections
 
