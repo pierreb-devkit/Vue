@@ -8,7 +8,7 @@ export default {
       snackbar: {
         status: true, // true to show error notifications on failed API requests
         methods: ['post', 'put'], // HTTP methods that also trigger success notifications
-        sucessColor: 'success', // Vuetify color name for success toasts
+        successColor: 'success', // Vuetify color name for success toasts
         errorColor: 'error', // Vuetify color name for error toasts
       },
       header: {
@@ -96,7 +96,7 @@ export default {
         ],
       },
       {
-        title: 'Ressources',
+        title: 'Resources',
         sublinks: [
           {
             icon: 'fa-regular fa-newspaper',

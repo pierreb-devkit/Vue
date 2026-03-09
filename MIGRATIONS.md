@@ -35,6 +35,10 @@ The monolithic `src/config/defaults/development.js` has been split into per-modu
 - **Extracted**: module-specific config into `src/modules/<name>/config/config.development.js`
 - **Updated**: `scripts/generateConfig.js` now globs module configs and merges them in layers
 - **Standalone env files**: `config.production.js` and `config.test.js` no longer import `development.js` — they export only their overrides
+- **Template**: `src/config/defaults/config.myproject.js` added as a starting point for downstream projects
+- **Startup warning**: the generator now warns when `NODE_ENV` is non-standard and no matching config files are found
+- **Typo fixes**: `sucessColor` → `successColor` (app config), `Ressources` → `Resources` (home config) — a backward-compatible fallback is provided in `axios.js`
+- **Env var prefix**: `WAOS_VUE_*` → `DEVKIT_VUE_*`
 
 ### New file layout
 
@@ -70,6 +74,10 @@ Create `NODE_ENV=staging` by adding any of:
 
 No file is required — only modules that define a `config.<env>.js` will be overridden.
 
+### Downstream project config files
+
+Files must be named `config.{projectname}.js` — files without the `config.` prefix are silently ignored. A template is provided at `src/config/defaults/config.myproject.js`.
+
 ### Steps for downstream projects
 
 1. If you have **customized** `src/config/defaults/development.js`:
@@ -81,6 +89,9 @@ No file is required — only modules that define a `config.<env>.js` will be ove
 2. If you have **customized** `production.js` or `test.js`:
    - Rename to `config.production.js` / `config.test.js`
    - Remove the `import ... from './development.js'` and `merge()` wrapper — just export the override object directly
-3. If you have **not customized** any config files, the merge will apply cleanly.
-4. Run `npm run dev` to verify the generated `src/config/index.js` is correct.
-5. Run `npm run lint && npm run test:unit && npm run build` to confirm everything works.
+3. Rename any `{projectname}.js` config files to `config.{projectname}.js` (both in `src/config/defaults/` and `src/modules/*/config/`)
+4. Update `sucessColor` → `successColor` and `Ressources` → `Resources` in your config files
+5. Rename `WAOS_VUE_*` → `DEVKIT_VUE_*` in CI workflows
+6. If you have **not customized** any config files, the merge will apply cleanly.
+7. Run `npm run dev` to verify the generated `src/config/index.js` is correct.
+8. Run `npm run lint && npm run test:unit && npm run build` to confirm everything works.

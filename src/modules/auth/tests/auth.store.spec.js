@@ -24,6 +24,7 @@ describe('Auth Store', () => {
     expect(authStore.auth).toBe(false);
     expect(authStore.user).toBe(null);
     expect(authStore.cookieExpire).toBe(0);
+    expect(authStore.serverConfig).toBe(null);
   });
 
   it('should have isLoggedIn getter returning false by default', () => {
@@ -250,6 +251,47 @@ describe('Auth Store', () => {
       expect(consoleLogSpy).toHaveBeenCalled();
 
       consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('fetchServerConfig', () => {
+    it('should fetch server config and update state', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          data: { sign: { in: true, up: false } },
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+
+      const result = await authStore.fetchServerConfig();
+
+      expect(result).toEqual({ sign: { in: true, up: false } });
+      expect(authStore.serverConfig).toEqual({ sign: { in: true, up: false } });
+    });
+
+    it('should return null when response shape is invalid', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = { data: { data: {} } };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+
+      const result = await authStore.fetchServerConfig();
+
+      expect(result).toBe(null);
+      expect(authStore.serverConfig).toBe(null);
+    });
+
+    it('should return null and reset state on error', async () => {
+      const authStore = useAuthStore();
+
+      axios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await authStore.fetchServerConfig();
+
+      expect(result).toBe(null);
+      expect(authStore.serverConfig).toBe(null);
     });
   });
 

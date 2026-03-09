@@ -100,9 +100,40 @@ GITHUB_TOKEN=xxx npm run release:auto             # Semantic release (CI)
 
 ## :wrench: Configuration
 
-Configuration files live in `src/config/defaults/`. The `development.js` file is the base; other files in that folder override it.
+Configuration is split between a **global** file and **per-module** files, then merged at build time into a single `src/config/index.js`.
 
-At build time, environment variables prefixed with `DEVKIT_VUE_` are merged on top. The variable path maps directly to the config object key:
+### File layout
+
+```text
+src/config/defaults/
+  config.development.js          ← global defaults (app, api, port, cookie, analytics, whitelists)
+  config.production.js           ← production overrides (optional)
+  config.test.js                 ← test overrides (optional)
+
+src/modules/<name>/config/
+  config.development.js          ← module defaults (e.g. vuetify, header, footer, sign, oAuth, home)
+  config.<env>.js                ← module env overrides (optional)
+```
+
+### Merge order (priority ascending)
+
+| Layer | Source | Example |
+|-------|--------|---------|
+| 1 | Module development defaults | `src/modules/*/config/config.development.js` |
+| 2 | Global development defaults | `src/config/defaults/config.development.js` |
+| 3 | Module env overrides | `src/modules/*/config/config.<env>.js` |
+| 4 | Global env overrides | `src/config/defaults/config.<env>.js` |
+| 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
+
+Layers 3–4 are only applied when `NODE_ENV` is not `development`.
+
+### Merge semantics
+
+- **Objects** are merged recursively — keys from higher layers override lower layers, unmentioned keys are preserved.
+- **Arrays are replaced entirely** — a higher-priority layer defining a 2-item array replaces a 4-item array from a lower layer. Items are never merged by index.
+- **`undefined` values** are skipped — they do not overwrite existing keys.
+
+### Environment variables
 
 ```bash
 DEVKIT_VUE_app_title='my app'        # sets config.app.title
@@ -110,6 +141,22 @@ DEVKIT_VUE_api_port=4000             # sets config.api.port
 ```
 
 The merged result is written to `src/config/index.js` via `npm run generateConfig`.
+
+### Downstream projects
+
+When running a downstream project that clones this stack, set `NODE_ENV` to the project name and create matching config files:
+
+```text
+src/config/defaults/
+  config.myproject.js            ← global project overrides (optional)
+
+src/modules/<name>/config/
+  config.myproject.js            ← module project overrides (optional)
+```
+
+The generator discovers files named `config.${NODE_ENV}.js` — files without the `config.` prefix are ignored.
+
+> **Migration note:** if your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
 
 ## :whale: Docker
 
