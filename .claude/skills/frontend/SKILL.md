@@ -30,7 +30,7 @@ Before any visual work, read the [Anthropic frontend-design guidelines](https://
 
 ## Key rules (quick reminder)
 
-- **Typography**: MD3 classes only (`text-display-large`, NOT `text-h1`). Responsive: `text-body-large text-sm-display-small`
+- **Typography**: MD3 classes only (`text-display-large`, NOT `text-h1`). Responsive: `text-display-small text-sm-display-medium`
 - **Colors**: Theme tokens via config or CSS variables (`rgb(var(--v-theme-primary))`), never hardcoded hex in templates
 - **Dark/light**: Everything must work in both modes
 - **Config-driven**: Prefer config options over hardcoded values

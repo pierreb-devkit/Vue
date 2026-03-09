@@ -46,12 +46,12 @@ Follow the stack's architecture:
 - Follow existing patterns in the module
 
 **If the feature has a visual/UI component**, read and apply `/frontend` skill guidelines:
-- Read `frontend/references/design-system.md` for tokens, typography (MD3 classes), spacing
-- Read `frontend/references/components.md` to reuse existing components
-- Read `frontend/references/patterns.md` for theme helpers (`liquidGlassStyle`, `style()`, etc.)
+- Read `.claude/skills/frontend/references/design-system.md` for tokens, typography (MD3 classes), spacing
+- Read `.claude/skills/frontend/references/components.md` to reuse existing components
+- Read `.claude/skills/frontend/references/patterns.md` for theme helpers (`liquidGlassStyle`, `style()`, etc.)
 - Use config-driven approach — theme colors from config, not hardcoded
 - Verify both dark and light mode
-- Take screenshots after implementation (see `frontend/references/verification.md`)
+- Take screenshots after implementation (see `.claude/skills/frontend/references/verification.md`)
 
 ### 4. Add tests
 
