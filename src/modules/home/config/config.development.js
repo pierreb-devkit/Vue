@@ -432,7 +432,7 @@ export default {
     // - text (String): Description with **markdown** and [links](url)
     services: {
       icon: 'fa-solid fa-compass',
-      title: 'Some ressources to start',
+      title: 'Some resources to start',
       alignment: 'center',
       variant: 'default',
       content: [
@@ -445,7 +445,7 @@ export default {
         {
           serviceIcon: 'fa-solid fa-file-lines',
           color: '#2980b9',
-          subtitle: 'Ressources',
+          subtitle: 'Resources',
           text: '[Start a project and keep it updated ?](https://blog.devkit.me/start-a-project-and-maintain-updates/)<br /><br /> - Deployment: [Rancher](https://blog.devkit.me/tag/rancher-2/) - [CapRover](https://blog.devkit.me/node/) <br /> - Code: [JS](https://blog.devkit.me/js-knwoledges/) - [Swift](https://blog.devkit.me/js-knwoledges-2/)  <br /> - Other: [Commits](https://github.com/devkit/conventional-changelog) - [Server](https://blog.devkit.me/setup-debian-server/) - [Tools](https://blog.devkit.me/us/) <br />',
         },
         {

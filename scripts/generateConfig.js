@@ -113,8 +113,12 @@ const getConfiguration = async () => {
     const globalEnv = await loadGlobalConfig(env);
     if (globalEnv) {
       config = deepMerge(config, globalEnv);
-    } else if (Object.keys(moduleEnv).length === 0) {
-      console.warn(`+ Warning: No configuration overrides found for "${env}" environment — using development defaults`);
+    }
+
+    const STANDARD_ENVS = new Set(['development', 'production', 'test']);
+    const hasEnvVarOverrides = Object.keys(process.env).some((key) => key.startsWith('DEVKIT_VUE_'));
+    if (!STANDARD_ENVS.has(env) && discoverModuleConfigs(env).length === 0 && !globalEnv && !hasEnvVarOverrides) {
+      console.warn(`+ Warning: NODE_ENV="${env}" but no config.${env}.js files found — using development defaults. Downstream projects should create config.${env}.js files (see README).`);
     }
   }
 

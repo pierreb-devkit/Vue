@@ -142,6 +142,22 @@ DEVKIT_VUE_api_port=4000             # sets config.api.port
 
 The merged result is written to `src/config/index.js` via `npm run generateConfig`.
 
+### Downstream projects
+
+When running a downstream project that clones this stack, set `NODE_ENV` to the project name and create matching config files:
+
+```text
+src/config/defaults/
+  config.myproject.js            ← global project overrides (optional)
+
+src/modules/<name>/config/
+  config.myproject.js            ← module project overrides (optional)
+```
+
+The generator discovers files named `config.${NODE_ENV}.js` — files without the `config.` prefix are ignored.
+
+> **Migration note:** if your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
+
 ## :whale: Docker
 
 ```bash

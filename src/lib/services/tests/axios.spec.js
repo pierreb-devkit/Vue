@@ -36,7 +36,7 @@ describe('Axios Service', () => {
           snackbar: {
             status: true,
             methods: ['post', 'put', 'delete'],
-            sucessColor: 'success',
+            successColor: 'success',
             errorColor: 'error',
           },
         },
@@ -87,6 +87,26 @@ describe('Axios Service', () => {
       expect(mockSnackbar.color).toBe('success');
       expect(mockSnackbar.status).toBe(true);
       expect(result).toEqual(response);
+    });
+
+    it('should fall back to legacy sucessColor when successColor is undefined', () => {
+      // Simulate downstream config still using the old misspelled key
+      delete mockConfig.vuetify.theme.snackbar.successColor;
+      mockConfig.vuetify.theme.snackbar.sucessColor = 'green';
+      setupInterceptors(mockConfig, mockSnackbar, mockOnSignout);
+
+      const mockInstance = axios.create();
+      const interceptorCall = mockInstance.interceptors.response.use.mock.calls[1];
+      const legacyResponseInterceptor = interceptorCall[0];
+
+      const response = {
+        config: { method: 'post' },
+        data: { type: 'success', message: 'Done' },
+      };
+
+      legacyResponseInterceptor(response);
+
+      expect(mockSnackbar.color).toBe('green');
     });
 
     it('should not show snackbar on successful response with disallowed method', () => {
