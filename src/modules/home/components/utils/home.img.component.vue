@@ -32,7 +32,7 @@
     :height="height || ($vuetify.display.xsAndDown ? '225px' : $vuetify.display.smAndDown ? '300px' : '350px')"
     :gradient="gradient"
     cover
-    :alt="title || 'image'"
+    :alt="alt || title || 'Decorative image'"
   >
     <template #placeholder>
       <div class="d-flex align-center justify-center fill-height">
@@ -67,6 +67,14 @@ export default {
       default: '',
     },
     height: {
+      type: String,
+      default: '',
+    },
+    /**
+     * Alt text for the image. Falls back to title, then 'Decorative image'.
+     * @type {String}
+     */
+    alt: {
       type: String,
       default: '',
     },

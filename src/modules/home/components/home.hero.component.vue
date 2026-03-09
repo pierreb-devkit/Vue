@@ -60,9 +60,9 @@
       <v-container class="fill-height" :style="containerStyle">
         <v-row class="fill-height" align="center" justify="center">
           <v-col class="text-white text-center">
-            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium blur-title">
+            <h1 class="mb-5 font-weight-bold text-headline-large text-md-display-medium blur-title">
               <VMarkdown v-if="title" :source="title" inline />
-            </h2>
+            </h1>
             <p class="mb-10 font-weight-medium text-body-large text-md-headline-small blur-subtitle">
               <VMarkdown v-if="subtitle" :source="subtitle" inline />
             </p>
@@ -90,12 +90,12 @@
       style="margin-top: -65px"
       max-width="100%"
       cover
-      alt="banner"
+      :alt="title ? title + ' hero' : 'Hero banner'"
     >
       <v-container class="fill-height" :style="containerStyle">
         <v-row class="fill-height" align="center" justify="center">
           <v-col class="text-white text-center">
-            <h2 class="mb-5 font-weight-bold text-headline-large text-md-display-medium"><VMarkdown v-if="title" :source="title" inline /></h2>
+            <h1 class="mb-5 font-weight-bold text-headline-large text-md-display-medium"><VMarkdown v-if="title" :source="title" inline /></h1>
             <p class="mb-10 font-weight-medium text-body-large text-md-headline-small"><VMarkdown v-if="subtitle" :source="subtitle" inline /></p>
             <v-btn
               v-if="button && button.title"

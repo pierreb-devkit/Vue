@@ -47,7 +47,7 @@
       </v-img>
       <v-card-actions class="pt-6">
         <v-card-title class="text-capitalize"
-          ><h4>{{ item.firstName }} {{ item.lastName }}</h4>
+          ><h3>{{ item.firstName }} {{ item.lastName }}</h3>
         </v-card-title>
         <span v-if="item.position && item.position !== ''" class="pl-4 text-secondary"> {{ item.position }}</span>
         <v-spacer></v-spacer>

@@ -65,7 +65,7 @@
             :interval="setup.slide.interval || 6000"
             :class="`${config.vuetify.theme.rounded}`"
           >
-            <v-carousel-item v-for="({ img, subtitle, subimg, text, reversed }, i) in setup.content" :key="i" :src="img.src" cover>
+            <v-carousel-item v-for="({ img, subtitle, subimg, text, reversed }, i) in setup.content" :key="i" :src="img.src" cover :alt="subtitle ? subtitle + ' slide ' + (i + 1) : 'Gallery slide ' + (i + 1)">
               <v-container
                 class="fill-height"
                 :style="{ 'max-width': config.vuetify.theme.maxWidth, ...style('carousel', setup), background: img.gradient }"
@@ -79,7 +79,7 @@
                     ></homeImgComponent>
                   </v-col>
                   <v-col class="text-left px-10" cols="12" sm="12" md="6">
-                    <h4 v-if="subtitle" class="text-headline-medium text-md-display-small font-weight-bold mb-8">{{ subtitle }}</h4>
+                    <h3 v-if="subtitle" class="text-headline-medium text-md-display-small font-weight-bold mb-8">{{ subtitle }}</h3>
                     <VMarkdown v-if="text" :source="text" class="text-headline-small text-md-headline-large" />
                   </v-col>
                   <v-col v-if="subimg && !reversed" class="px-10" cols="12" sm="12" md="6">
