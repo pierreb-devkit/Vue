@@ -75,6 +75,7 @@ describe('auth.signin.view', () => {
     it('calls signin with exactly { email, password } — no extra arguments', async () => {
       signinMock.mockResolvedValueOnce(undefined);
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.email = 'test@example.com';
       wrapper.vm.password = 'password123';
@@ -87,6 +88,7 @@ describe('auth.signin.view', () => {
 
     it('does not call signin when form is invalid', async () => {
       const wrapper = mountView(makeFormStub(false));
+      await flushPromises();
 
       await wrapper.vm.validate();
 
@@ -97,6 +99,7 @@ describe('auth.signin.view', () => {
       signinMock.mockRejectedValueOnce(new Error('network error'));
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.email = 'test@example.com';
       wrapper.vm.password = 'password123';

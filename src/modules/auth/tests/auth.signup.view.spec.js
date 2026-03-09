@@ -75,6 +75,7 @@ describe('auth.signup.view', () => {
     it('calls signup with exactly { email, password, firstName, lastName } — no extra arguments', async () => {
       signupMock.mockResolvedValueOnce(undefined);
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.firstName = 'John';
       wrapper.vm.lastName = 'Doe';
@@ -94,6 +95,7 @@ describe('auth.signup.view', () => {
 
     it('does not call signup when form is invalid', async () => {
       const wrapper = mountView(makeFormStub(false));
+      await flushPromises();
 
       await wrapper.vm.validate();
 
@@ -104,6 +106,7 @@ describe('auth.signup.view', () => {
       signupMock.mockRejectedValueOnce(new Error('network error'));
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const wrapper = mountView();
+      await flushPromises();
 
       wrapper.vm.firstName = 'John';
       wrapper.vm.lastName = 'Doe';

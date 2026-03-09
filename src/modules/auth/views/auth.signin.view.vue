@@ -7,8 +7,8 @@
           <v-divider></v-divider>
         </v-col>
         <v-container>
-          <v-alert v-if="serverConfig && serverConfig.sign && !serverConfig.sign.in" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
-          <v-form v-if="!serverConfig || !serverConfig.sign || serverConfig.sign.in" ref="form" v-model="valid">
+          <v-alert v-if="serverConfig?.sign?.in === false" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
+          <v-form v-else-if="serverConfig === null || serverConfig?.sign?.in === true" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
                 <v-text-field
@@ -76,7 +76,7 @@ export default {
     return {
       theme,
       valid: true, // TODO: switch to false when forms will be reactive
-      serverConfig: null,
+      serverConfig: undefined,
       email: '',
       password: '',
       oAuth: `${this.config.api.protocol}://
@@ -103,10 +103,13 @@ export default {
       if (auth) this.$router.push(this.config.sign.route);
     },
   },
+  /**
+   * Fetch server auth config on component creation.
+   * @returns {Promise<void>}
+   */
   async created() {
     const authStore = useAuthStore();
-    await authStore.fetchServerConfig();
-    this.serverConfig = authStore.serverConfig;
+    this.serverConfig = await authStore.fetchServerConfig();
   },
   methods: {
     async validate() {
