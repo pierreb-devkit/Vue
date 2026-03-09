@@ -47,7 +47,7 @@ export default {
   sign: {
     route: '/tasks',
     in: true,
-    up: true,
+    up: false,
   },
   cookie: {
     prefix: 'pierreb',
