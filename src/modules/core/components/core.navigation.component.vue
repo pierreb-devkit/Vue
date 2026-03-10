@@ -46,6 +46,8 @@
         </v-list-item>
       </v-list>
       <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
+      <!-- Organization Switcher -->
+      <organizationsSwitcherComponent />
       <!-- Navigation -->
       <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
         <v-list-item v-for="item in nav" :key="item.text" :to="item.path">
@@ -104,12 +106,16 @@
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
+import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
+  components: {
+    organizationsSwitcherComponent,
+  },
   data() {
     const theme = useTheme();
     return {
