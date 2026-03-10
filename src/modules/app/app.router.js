@@ -23,7 +23,8 @@ const getRouter = () => {
   });
   router.beforeEach((to) => {
     // meta
-    document.title = to.name ? `${to.name} - ${config.app.title}` : config.app.title;
+    const pageTitle = to.meta.title || to.name;
+    document.title = pageTitle ? `${pageTitle} - ${config.app.title}` : config.app.title;
     const userRoles = localStorage.getItem(`${config.cookie.prefix}UserRoles`)
       ? localStorage.getItem(`${config.cookie.prefix}UserRoles`).split(',')
       : [];
