@@ -4,8 +4,17 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const signinMock = vi.hoisted(() => vi.fn());
+const clearLockoutMock = vi.hoisted(() => vi.fn());
+const lockoutState = vi.hoisted(() => ({ locked: false, retryAfter: 0 }));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signin: signinMock, serverConfig: null, fetchServerConfig: vi.fn().mockResolvedValue(null) }),
+  useAuthStore: () => ({
+    auth: false,
+    signin: signinMock,
+    clearLockout: clearLockoutMock,
+    lockout: lockoutState,
+    serverConfig: null,
+    fetchServerConfig: vi.fn().mockResolvedValue(null),
+  }),
 }));
 
 import AuthSigninView from '../views/auth.signin.view.vue';
@@ -48,6 +57,9 @@ describe('auth.signin.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     signinMock.mockReset();
+    clearLockoutMock.mockReset();
+    lockoutState.locked = false;
+    lockoutState.retryAfter = 0;
   });
 
   describe('serverConfig rendering', () => {
@@ -106,6 +118,39 @@ describe('auth.signin.view', () => {
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('lockout UI', () => {
+    it('computes lockoutMinutes rounded up from retryAfter seconds', async () => {
+      lockoutState.locked = true;
+      lockoutState.retryAfter = 150;
+
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.lockoutMinutes).toBe(3);
+    });
+
+    it('computes lockoutMinutes as 1 for values under 60', async () => {
+      lockoutState.locked = true;
+      lockoutState.retryAfter = 30;
+
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.lockoutMinutes).toBe(1);
+    });
+
+    it('shows lockout alert when locked', async () => {
+      lockoutState.locked = true;
+      lockoutState.retryAfter = 300;
+
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('Account locked');
+      expect(wrapper.text()).toContain('5 minute');
     });
   });
 });

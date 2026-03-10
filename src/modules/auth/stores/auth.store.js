@@ -20,6 +20,10 @@ export const useAuthStore = defineStore('auth', {
       message: '',
     },
     serverConfig: null,
+    lockout: {
+      locked: false,
+      retryAfter: 0,
+    },
   }),
 
   getters: {
@@ -54,6 +58,11 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    /**
+     * @desc Sign in with email/password; handles 423 lockout separately.
+     * @param {Object} params - Credentials ({ email, password }).
+     * @returns {Promise<void>}
+     */
     async signin(params) {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
@@ -66,14 +75,32 @@ export const useAuthStore = defineStore('auth', {
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
+        this.lockout = { locked: false, retryAfter: 0 };
+
+        if (res.data.user.lastLoginAt) {
+          localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, res.data.user.lastLoginAt);
+        }
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
+        if (err.response && err.response.status === 423) {
+          const retryAfter = err.response.data?.retryAfter || 0;
+          this.lockout = { locked: true, retryAfter };
+          return;
+        }
         localStorage.removeItem('token');
         console.log(err);
       }
+    },
+
+    /**
+     * @desc Clear the lockout state after the countdown expires.
+     * @returns {void}
+     */
+    clearLockout() {
+      this.lockout = { locked: false, retryAfter: 0 };
     },
 
     async signup(params) {
@@ -105,6 +132,7 @@ export const useAuthStore = defineStore('auth', {
 
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
+      localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
     },
 
     async token() {
@@ -121,6 +149,9 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
+        if (res.data.user.lastLoginAt) {
+          localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, res.data.user.lastLoginAt);
+        }
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {

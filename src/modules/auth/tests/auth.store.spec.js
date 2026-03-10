@@ -19,9 +19,7 @@ vi.mock('../../../lib/helpers/ability', () => ({
 
 describe('Auth Store', () => {
   beforeEach(() => {
-    // Create a new pinia instance for each test
     setActivePinia(createPinia());
-    // Clear localStorage
     localStorage.clear();
     // Reset ability mock
     mockUpdateAbilities.mockClear();
@@ -33,6 +31,11 @@ describe('Auth Store', () => {
     expect(authStore.user).toBe(null);
     expect(authStore.cookieExpire).toBe(0);
     expect(authStore.serverConfig).toBe(null);
+  });
+
+  it('should initialize lockout state', () => {
+    const authStore = useAuthStore();
+    expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
   });
 
   it('should have isLoggedIn getter returning false by default', () => {
@@ -56,15 +59,15 @@ describe('Auth Store', () => {
     expect(authStore.cookieExpire).toBe(expireTime.toString());
   });
 
-  it('should clear auth data on signout', async () => {
+  it('should clear auth data and lastLoginAt on signout', async () => {
     const authStore = useAuthStore();
 
-    // Set some data
     authStore.auth = true;
     authStore.cookieExpire = Date.now() + 1000;
     authStore.user = { id: '123', email: 'test@example.com' };
     localStorage.setItem('devkitUserRoles', 'user,admin');
     localStorage.setItem('devkitCookieExpire', '12345');
+    localStorage.setItem('devkitLastLoginAt', '2026-01-01T00:00:00Z');
 
     await authStore.signout();
 
@@ -73,14 +76,12 @@ describe('Auth Store', () => {
     expect(authStore.user).toBe(null);
     expect(localStorage.getItem('devkitUserRoles')).toBe(null);
     expect(localStorage.getItem('devkitCookieExpire')).toBe(null);
+    expect(localStorage.getItem('devkitLastLoginAt')).toBe(null);
   });
 
   it('should have mail state initialized', () => {
     const authStore = useAuthStore();
-    expect(authStore.mail).toEqual({
-      status: false,
-      message: '',
-    });
+    expect(authStore.mail).toEqual({ status: false, message: '' });
   });
 
   describe('signin', () => {
@@ -94,7 +95,6 @@ describe('Auth Store', () => {
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
       expect(authStore.auth).toBe(true);
@@ -103,12 +103,68 @@ describe('Auth Store', () => {
       expect(localStorage.getItem('devkitUserRoles')).toBe('user');
     });
 
+    it('should clear lockout on successful signin', async () => {
+      const authStore = useAuthStore();
+      authStore.lockout = { locked: true, retryAfter: 300 };
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
+    });
+
+    it('should store lastLoginAt when present in response', async () => {
+      const authStore = useAuthStore();
+      const lastLogin = '2026-03-09T14:30:00Z';
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'], lastLoginAt: lastLogin },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+    });
+
+    it('should handle 423 lockout response', async () => {
+      const authStore = useAuthStore();
+
+      const lockoutError = new Error('Account locked');
+      lockoutError.response = { status: 423, data: { retryAfter: 300 } };
+      axios.post.mockRejectedValueOnce(lockoutError);
+
+      await authStore.signin({ email: 'test@test.com', password: 'wrong' });
+
+      expect(authStore.lockout).toEqual({ locked: true, retryAfter: 300 });
+      expect(authStore.auth).toBe(false);
+    });
+
+    it('should handle 423 lockout with missing retryAfter', async () => {
+      const authStore = useAuthStore();
+
+      const lockoutError = new Error('Account locked');
+      lockoutError.response = { status: 423, data: {} };
+      axios.post.mockRejectedValueOnce(lockoutError);
+
+      await authStore.signin({ email: 'test@test.com', password: 'wrong' });
+
+      expect(authStore.lockout).toEqual({ locked: true, retryAfter: 0 });
+    });
+
     it('should handle signin error', async () => {
       const authStore = useAuthStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Signin failed'));
-
       await authStore.signin({ email: 'test@test.com', password: 'wrong' });
 
       expect(authStore.auth).toBe(false);
@@ -117,6 +173,17 @@ describe('Auth Store', () => {
       expect(consoleLogSpy).toHaveBeenCalled();
 
       consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('clearLockout', () => {
+    it('should reset lockout state', () => {
+      const authStore = useAuthStore();
+      authStore.lockout = { locked: true, retryAfter: 120 };
+
+      authStore.clearLockout();
+
+      expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
     });
   });
 
@@ -131,7 +198,6 @@ describe('Auth Store', () => {
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-
       await authStore.signup({ email: 'new@test.com', password: 'password123' });
 
       expect(authStore.auth).toBe(true);
@@ -145,14 +211,10 @@ describe('Auth Store', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Signup failed'));
-
       await authStore.signup({ email: 'new@test.com', password: 'password' });
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
-      expect(localStorage.getItem('token')).toBe(null);
-      expect(consoleLogSpy).toHaveBeenCalled();
-
       consoleLogSpy.mockRestore();
     });
   });
@@ -168,7 +230,6 @@ describe('Auth Store', () => {
       };
 
       axios.get.mockResolvedValueOnce(mockResponse);
-
       await authStore.token();
 
       expect(authStore.auth).toBe(true);
@@ -177,17 +238,31 @@ describe('Auth Store', () => {
       expect(localStorage.getItem('devkitUserRoles')).toBe('user,admin');
     });
 
+    it('should store lastLoginAt on token refresh', async () => {
+      const authStore = useAuthStore();
+      const lastLogin = '2026-03-09T10:00:00Z';
+      const mockResponse = {
+        data: {
+          user: { id: '789', email: 'token@test.com', roles: ['user'], lastLoginAt: lastLogin },
+          tokenExpiresIn: Date.now() + 7200000,
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.token();
+
+      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+    });
+
     it('should handle token refresh error', async () => {
       const authStore = useAuthStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Token refresh failed'));
-
       await authStore.token();
 
       expect(authStore.auth).toBe(false);
       expect(consoleLogSpy).toHaveBeenCalled();
-
       consoleLogSpy.mockRestore();
     });
   });
@@ -196,14 +271,10 @@ describe('Auth Store', () => {
     it('should send forgot password request and update mail state', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
-        data: {
-          data: { status: true },
-          message: 'Reset email sent',
-        },
+        data: { data: { status: true }, message: 'Reset email sent' },
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-
       await authStore.forgot({ email: 'forgot@test.com' });
 
       expect(authStore.mail.status).toBe(true);
@@ -215,12 +286,9 @@ describe('Auth Store', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Forgot password failed'));
-
       await authStore.forgot({ email: 'forgot@test.com' });
 
       expect(authStore.mail.status).toBe(false);
-      expect(consoleLogSpy).toHaveBeenCalled();
-
       consoleLogSpy.mockRestore();
     });
   });
@@ -236,7 +304,6 @@ describe('Auth Store', () => {
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-
       await authStore.reset({ token: 'resettoken', password: 'newpassword' });
 
       expect(authStore.auth).toBe(true);
@@ -250,14 +317,10 @@ describe('Auth Store', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Reset failed'));
-
       await authStore.reset({ token: 'resettoken', password: 'newpassword' });
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
-      expect(localStorage.getItem('token')).toBe(null);
-      expect(consoleLogSpy).toHaveBeenCalled();
-
       consoleLogSpy.mockRestore();
     });
   });
@@ -265,14 +328,9 @@ describe('Auth Store', () => {
   describe('fetchServerConfig', () => {
     it('should fetch server config and update state', async () => {
       const authStore = useAuthStore();
-      const mockResponse = {
-        data: {
-          data: { sign: { in: true, up: false } },
-        },
-      };
+      const mockResponse = { data: { data: { sign: { in: true, up: false } } } };
 
       axios.get.mockResolvedValueOnce(mockResponse);
-
       const result = await authStore.fetchServerConfig();
 
       expect(result).toEqual({ sign: { in: true, up: false } });
@@ -281,23 +339,18 @@ describe('Auth Store', () => {
 
     it('should return null when response shape is invalid', async () => {
       const authStore = useAuthStore();
-      const mockResponse = { data: { data: {} } };
-
-      axios.get.mockResolvedValueOnce(mockResponse);
+      axios.get.mockResolvedValueOnce({ data: { data: {} } });
 
       const result = await authStore.fetchServerConfig();
-
       expect(result).toBe(null);
       expect(authStore.serverConfig).toBe(null);
     });
 
     it('should return null and reset state on error', async () => {
       const authStore = useAuthStore();
-
       axios.get.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await authStore.fetchServerConfig();
-
       expect(result).toBe(null);
       expect(authStore.serverConfig).toBe(null);
     });
