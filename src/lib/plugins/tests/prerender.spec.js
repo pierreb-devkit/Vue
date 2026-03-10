@@ -36,6 +36,7 @@ vi.mock('puppeteer', () => ({
 }));
 
 vi.mock('node:http', () => ({
+  default: { createServer: mockCreateServer },
   createServer: mockCreateServer,
 }));
 
