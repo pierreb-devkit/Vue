@@ -90,7 +90,7 @@
       style="margin-top: -65px"
       max-width="100%"
       cover
-      :alt="title ? title + ' hero' : 'Hero banner'"
+      alt="Hero banner"
     >
       <v-container class="fill-height" :style="containerStyle">
         <v-row class="fill-height" align="center" justify="center">

@@ -18,7 +18,7 @@
   - gradient (String): CSS gradient overlay
   - title (String): Title text displayed on image
   - text (String): Description text displayed on image
-  - alt (String): Alt text for accessibility (falls back to title, then 'Decorative image')
+  - alt (String): Alt text for accessibility (falls back to title, then empty string for decorative images)
 
   NOTES:
   - Uses lazy-src for placeholder during loading
@@ -33,7 +33,7 @@
     :height="height || ($vuetify.display.xsAndDown ? '225px' : $vuetify.display.smAndDown ? '300px' : '350px')"
     :gradient="gradient"
     cover
-    :alt="alt || title || 'Decorative image'"
+    :alt="alt || title || ''"
   >
     <template #placeholder>
       <div class="d-flex align-center justify-center fill-height">
