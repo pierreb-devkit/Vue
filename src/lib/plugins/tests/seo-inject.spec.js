@@ -217,7 +217,14 @@ describe('seoInjectPlugin', () => {
 
     it('injects noscript with only title when description is missing', () => {
       const result = transform({ app: { title: 'Only Title' } });
-      expect(result).toContain('<noscript><h1>Only Title</h1><p></p></noscript>');
+      expect(result).toContain('<noscript><h1>Only Title</h1></noscript>');
+      expect(result).not.toContain('<p></p>');
+    });
+
+    it('injects noscript with only description when title is missing', () => {
+      const result = transform({ app: { description: 'Only Desc' } });
+      expect(result).toContain('<noscript><p>Only Desc</p></noscript>');
+      expect(result).not.toContain('<h1></h1>');
     });
 
     it('escapes HTML in noscript content', () => {
@@ -252,6 +259,21 @@ describe('seoInjectPlugin', () => {
     it('does not inject preconnect when not configured', () => {
       const result = transform({ app: {} });
       expect(result).not.toContain('rel="preconnect"');
+    });
+
+    it('does not inject unsafe preconnect protocols', () => {
+      const result = transform({ app: { seo: { preconnect: ['javascript:alert(1)'] } } });
+      expect(result).not.toContain('javascript:alert(1)');
+      expect(result).not.toContain('rel="preconnect"');
+    });
+
+    it('filters out unsafe URLs while keeping safe ones', () => {
+      const result = transform({
+        app: { seo: { preconnect: ['https://safe.example.com', 'data:text/html,bad', 'http://also-safe.com'] } },
+      });
+      expect(result).toContain('href="https://safe.example.com"');
+      expect(result).toContain('href="http://also-safe.com"');
+      expect(result).not.toContain('data:text/html');
     });
   });
 

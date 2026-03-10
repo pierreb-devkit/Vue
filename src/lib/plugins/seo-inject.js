@@ -21,7 +21,19 @@ function getPrimaryColor(config) {
 }
 
 /**
+ * Check whether a URL uses a safe protocol (http or https only).
+ *
+ * @param {string} url - URL string to validate
+ * @returns {boolean} true when the URL starts with http:// or https://
+ */
+function isSafeUrl(url) {
+  return /^https?:\/\//i.test(url);
+}
+
+/**
  * Build preconnect and dns-prefetch link tags for the supplied URLs.
+ * Only URLs with http or https protocols are accepted; unsafe schemes
+ * (e.g. javascript:) are silently skipped.
  *
  * @param {string[]} urls - origins to preconnect to
  * @returns {string[]} array of HTML tag strings
@@ -29,6 +41,7 @@ function getPrimaryColor(config) {
 function buildPreconnectTags(urls) {
   const tags = [];
   for (const url of urls) {
+    if (!isSafeUrl(url)) continue;
     tags.push(`  <link rel="preconnect" href="${escapeHtml(url)}">`);
     tags.push(`  <link rel="dns-prefetch" href="${escapeHtml(url)}">`);
   }
@@ -37,13 +50,19 @@ function buildPreconnectTags(urls) {
 
 /**
  * Build a noscript fallback block with the app title and description.
+ * Tags are only emitted when their value is non-empty to avoid
+ * semantically incorrect empty elements (e.g. empty h1).
  *
  * @param {string} title - page title (will be escaped)
  * @param {string} description - page description (will be escaped)
- * @returns {string} noscript HTML string
+ * @returns {string} noscript HTML string, or an empty string when both values are empty
  */
 function buildNoscriptBlock(title, description) {
-  return `<noscript><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p></noscript>`;
+  let innerHtml = '';
+  if (title) innerHtml += `<h1>${escapeHtml(title)}</h1>`;
+  if (description) innerHtml += `<p>${escapeHtml(description)}</p>`;
+  if (!innerHtml) return '';
+  return `<noscript>${innerHtml}</noscript>`;
 }
 
 export function seoInjectPlugin(config) {
