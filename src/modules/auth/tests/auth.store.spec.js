@@ -375,6 +375,71 @@ describe('Auth Store', () => {
       expect(mockUpdateAbilities).not.toHaveBeenCalled();
     });
 
+    it('should refresh abilities and update user on refreshAbilities', async () => {
+      const authStore = useAuthStore();
+      const mockAbilities = [{ action: 'read', subject: 'Post' }];
+      const mockUser = { id: '123', email: 'test@test.com' };
+      const mockResponse = {
+        data: {
+          user: mockUser,
+          abilities: mockAbilities,
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.refreshAbilities();
+
+      expect(mockUpdateAbilities).toHaveBeenCalledWith(mockAbilities);
+      expect(authStore.user).toEqual(mockUser);
+    });
+
+    it('should not call updateAbilities on refreshAbilities when abilities are absent', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com' },
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.refreshAbilities();
+
+      expect(mockUpdateAbilities).not.toHaveBeenCalled();
+      expect(authStore.user).toEqual(mockResponse.data.user);
+    });
+
+    it('should not update user on refreshAbilities when user is absent', async () => {
+      const authStore = useAuthStore();
+      authStore.user = { id: 'original' };
+      const mockAbilities = [{ action: 'read', subject: 'Post' }];
+      const mockResponse = {
+        data: {
+          abilities: mockAbilities,
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.refreshAbilities();
+
+      expect(mockUpdateAbilities).toHaveBeenCalledWith(mockAbilities);
+      expect(authStore.user).toEqual({ id: 'original' });
+    });
+
+    it('should signout when refreshAbilities fails', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: '123' };
+      authStore.cookieExpire = Date.now() + 1000;
+
+      axios.get.mockRejectedValueOnce(new Error('Token refresh failed'));
+      await authStore.refreshAbilities();
+
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+      expect(authStore.cookieExpire).toBe(0);
+      expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
+    });
+
     it('should clear abilities on signout', async () => {
       const authStore = useAuthStore();
       authStore.auth = true;
