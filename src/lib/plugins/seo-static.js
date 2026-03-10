@@ -13,8 +13,22 @@ export function seoStaticPlugin(config) {
 
   return {
     name: 'seo-static',
-    apply: 'build',
+    /**
+     * Restricts this plugin to production build commands.
+     *
+     * @param {import('vite').UserConfig} _config - Vite user config (unused)
+     * @param {{ command: string, mode: string }} env - Vite command/mode context
+     * @returns {boolean} true when the plugin should apply for the current command/mode
+     */
+    apply(_config, { command, mode }) {
+      return command === 'build' && mode === 'production';
+    },
 
+    /**
+     * Emits robots.txt, sitemap.xml, and manifest.json as build assets.
+     *
+     * @returns {void}
+     */
     generateBundle() {
       const robotsTxt = buildRobotsTxt(seo.robots, baseUrl);
       if (robotsTxt !== null) {

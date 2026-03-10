@@ -9,9 +9,12 @@ describe('seoStaticPlugin', () => {
     expect(typeof plugin.generateBundle).toBe('function');
   });
 
-  it('applies only to build', () => {
+  it('applies only to production builds', () => {
     const plugin = seoStaticPlugin({});
-    expect(plugin.apply).toBe('build');
+    expect(typeof plugin.apply).toBe('function');
+    expect(plugin.apply({}, { command: 'build', mode: 'production' })).toBe(true);
+    expect(plugin.apply({}, { command: 'build', mode: 'development' })).toBe(false);
+    expect(plugin.apply({}, { command: 'serve', mode: 'production' })).toBe(false);
   });
 
   it('emits all three files when all are enabled', () => {

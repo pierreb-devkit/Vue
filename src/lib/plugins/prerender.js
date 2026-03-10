@@ -167,17 +167,20 @@ function startStaticServer(distDir) {
  */
 async function renderRoute(browser, port, route, distDir) {
   const page = await browser.newPage();
-  const url = `http://127.0.0.1:${port}${route}`;
+  try {
+    const url = `http://127.0.0.1:${port}${route}`;
 
-  await page.goto(url, { waitUntil: 'networkidle0', timeout: 30_000 });
-  const html = await page.content();
-  await page.close();
+    await page.goto(url, { waitUntil: 'networkidle0', timeout: 30_000 });
+    const html = await page.content();
 
-  const outputPath = routeToOutputPath(distDir, route);
+    const outputPath = routeToOutputPath(distDir, route);
 
-  mkdirSync(dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, html, 'utf-8');
-  console.log(`[prerender] Rendered: ${route} → ${outputPath}`);
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, html, 'utf-8');
+    console.log(`[prerender] Rendered: ${route} → ${outputPath}`);
+  } finally {
+    await page.close();
+  }
 }
 
 /**
