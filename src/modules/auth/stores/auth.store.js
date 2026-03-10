@@ -5,6 +5,7 @@ import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
+import { updateAbilities } from '../../../lib/helpers/ability';
 
 /**
  * Store definition.
@@ -66,6 +67,8 @@ export const useAuthStore = defineStore('auth', {
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
 
+        if (res.data.abilities) updateAbilities(res.data.abilities);
+
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
         localStorage.removeItem('token');
@@ -98,6 +101,8 @@ export const useAuthStore = defineStore('auth', {
       this.cookieExpire = 0;
       this.user = null;
 
+      updateAbilities([]);
+
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
     },
@@ -114,6 +119,8 @@ export const useAuthStore = defineStore('auth', {
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
+
+        if (res.data.abilities) updateAbilities(res.data.abilities);
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {

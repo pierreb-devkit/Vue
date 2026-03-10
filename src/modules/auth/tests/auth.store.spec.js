@@ -11,12 +11,20 @@ vi.mock('../../../lib/services/axios', () => ({
   },
 }));
 
+// Mock ability helper
+const mockUpdateAbilities = vi.fn();
+vi.mock('../../../lib/helpers/ability', () => ({
+  updateAbilities: (...args) => mockUpdateAbilities(...args),
+}));
+
 describe('Auth Store', () => {
   beforeEach(() => {
     // Create a new pinia instance for each test
     setActivePinia(createPinia());
     // Clear localStorage
     localStorage.clear();
+    // Reset ability mock
+    mockUpdateAbilities.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -299,6 +307,82 @@ describe('Auth Store', () => {
     it('should return the status', () => {
       const authStore = useAuthStore();
       expect(authStore.authStatus).toBeUndefined();
+    });
+  });
+
+  describe('CASL abilities', () => {
+    it('should call updateAbilities on signin when abilities are present', async () => {
+      const authStore = useAuthStore();
+      const mockAbilities = [{ action: 'read', subject: 'Article' }];
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+          abilities: mockAbilities,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(mockUpdateAbilities).toHaveBeenCalledWith(mockAbilities);
+    });
+
+    it('should not call updateAbilities on signin when abilities are absent', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(mockUpdateAbilities).not.toHaveBeenCalled();
+    });
+
+    it('should call updateAbilities on token refresh when abilities are present', async () => {
+      const authStore = useAuthStore();
+      const mockAbilities = [{ action: 'manage', subject: 'all' }];
+      const mockResponse = {
+        data: {
+          user: { id: '789', email: 'token@test.com', roles: ['admin'] },
+          tokenExpiresIn: Date.now() + 7200000,
+          abilities: mockAbilities,
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.token();
+
+      expect(mockUpdateAbilities).toHaveBeenCalledWith(mockAbilities);
+    });
+
+    it('should not call updateAbilities on token refresh when abilities are absent', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '789', email: 'token@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 7200000,
+        },
+      };
+
+      axios.get.mockResolvedValueOnce(mockResponse);
+      await authStore.token();
+
+      expect(mockUpdateAbilities).not.toHaveBeenCalled();
+    });
+
+    it('should clear abilities on signout', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: '123' };
+
+      await authStore.signout();
+
+      expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
     });
   });
 });
