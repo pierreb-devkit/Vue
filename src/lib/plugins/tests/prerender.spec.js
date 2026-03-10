@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
 describe('prerenderPlugin', () => {
@@ -38,6 +38,22 @@ describe('prerenderPlugin', () => {
       'production',
     );
     await plugin.closeBundle();
+  });
+
+  it('logs warning and continues when puppeteer import fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
+      'production',
+    );
+    await plugin.closeBundle();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[prerender] Pre-rendering failed'),
+      expect.any(String),
+    );
+    warnSpy.mockRestore();
   });
 });
 
@@ -95,7 +111,7 @@ describe('routeToOutputPath', () => {
   it('prevents path traversal with ".."', () => {
     const result = routeToOutputPath(distDir, '/../etc');
     expect(result).toBe(join(distDir, 'etc', 'index.html'));
-    expect(result.startsWith(distDir)).toBe(true);
+    expect(result.startsWith(join(distDir))).toBe(true);
   });
 
   it('handles empty route as root', () => {
