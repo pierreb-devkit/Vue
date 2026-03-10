@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import axios from 'axios';
-import { setupInterceptors } from '../axios.js';
+import { setupInterceptors, resetRefreshingAbilitiesFlag } from '../axios.js';
 
 // Mock axios
 vi.mock('axios', () => {
@@ -22,12 +22,16 @@ describe('Axios Service', () => {
   let mockConfig;
   let mockSnackbar;
   let mockOnSignout;
+  let mockOnRefreshAbilities;
   let responseInterceptor;
   let errorInterceptor;
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
+
+    // Reset the refreshing abilities flag between tests
+    resetRefreshingAbilitiesFlag();
 
     // Mock config
     mockConfig = {
@@ -53,8 +57,11 @@ describe('Axios Service', () => {
     // Mock onSignout callback
     mockOnSignout = vi.fn();
 
+    // Mock onRefreshAbilities callback
+    mockOnRefreshAbilities = vi.fn().mockResolvedValue();
+
     // Setup interceptors
-    setupInterceptors(mockConfig, mockSnackbar, mockOnSignout);
+    setupInterceptors(mockConfig, mockSnackbar, mockOnSignout, mockOnRefreshAbilities);
 
     // Get the interceptors that were registered
     const mockInstance = axios.create();
@@ -343,6 +350,152 @@ describe('Axios Service', () => {
       }
 
       expect(mockSnackbar.status).toBe(false);
+    });
+
+    it('should call onRefreshAbilities on 403 error', async () => {
+      const error = {
+        response: {
+          status: 403,
+        },
+        config: {},
+      };
+
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        expect(err).toEqual(error);
+      }
+
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onRefreshAbilities twice concurrently (infinite loop prevention)', async () => {
+      // Make refreshAbilities hang so we can test the flag
+      let resolveRefresh;
+      mockOnRefreshAbilities.mockImplementation(() => new Promise((resolve) => { resolveRefresh = resolve; }));
+
+      const error = {
+        response: {
+          status: 403,
+        },
+        config: {},
+      };
+
+      // First 403 triggers refresh
+      const firstCall = errorInterceptor(error).catch(() => {});
+
+      // Second 403 while refresh is in progress should NOT trigger another refresh
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        expect(err).toEqual(error);
+      }
+
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
+
+      // Resolve the first refresh
+      resolveRefresh();
+      await firstCall;
+    });
+
+    it('should reset flag after refreshAbilities completes', async () => {
+      const error = {
+        response: {
+          status: 403,
+        },
+        config: {},
+      };
+
+      // First call
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        // expected
+      }
+
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
+
+      // Second call after first completed should trigger again
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        // expected
+      }
+
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(2);
+    });
+
+    it('should reset flag even if refreshAbilities throws', async () => {
+      mockOnRefreshAbilities.mockRejectedValueOnce(new Error('refresh failed'));
+
+      const error = {
+        response: {
+          status: 403,
+        },
+        config: {},
+      };
+
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        // expected
+      }
+
+      // Flag should be reset, so next 403 triggers refresh again
+      mockOnRefreshAbilities.mockResolvedValueOnce();
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        // expected
+      }
+
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not call onRefreshAbilities when callback is not provided', async () => {
+      // Setup interceptors without onRefreshAbilities
+      resetRefreshingAbilitiesFlag();
+      setupInterceptors(mockConfig, mockSnackbar, mockOnSignout);
+
+      const mockInstance = axios.create();
+      const calls = mockInstance.interceptors.response.use.mock.calls;
+      const noRefreshErrorInterceptor = calls[calls.length - 1][1];
+
+      const error = {
+        response: {
+          status: 403,
+        },
+        config: {},
+      };
+
+      try {
+        await noRefreshErrorInterceptor(error);
+      } catch (err) {
+        expect(err).toEqual(error);
+      }
+
+      // Should not throw and should not call anything
+      expect(mockOnRefreshAbilities).not.toHaveBeenCalled();
+    });
+
+    it('should propagate the original 403 error after refreshing abilities', async () => {
+      const error = {
+        response: {
+          status: 403,
+          data: { description: 'Forbidden' },
+        },
+        config: {},
+      };
+
+      let thrownError;
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        thrownError = err;
+      }
+
+      expect(thrownError).toEqual(error);
+      expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
     });
   });
 });

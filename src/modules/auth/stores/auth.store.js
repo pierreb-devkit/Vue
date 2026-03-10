@@ -103,6 +103,11 @@ export const useAuthStore = defineStore('auth', {
       this.lockout = { locked: false, retryAfter: 0 };
     },
 
+    /**
+     * @desc Sign up a new user and update auth state.
+     * @param {Object} params - Signup payload (email, password, firstName, lastName)
+     * @returns {Promise<Object|undefined>} Signup response data containing user, and optionally organization or organizationSetupRequired
+     */
     async signup(params) {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
@@ -117,6 +122,7 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         coreStore.refreshNav(this.isLoggedIn);
+        return res.data;
       } catch (err) {
         localStorage.removeItem('token');
         console.log(err);
@@ -133,6 +139,22 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
       localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
+    },
+
+    async refreshAbilities() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      try {
+        const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
+        if (res.data.abilities) {
+          updateAbilities(res.data.abilities);
+        }
+        if (res.data.user) {
+          this.user = res.data.user;
+        }
+      } catch {
+        // If token refresh fails, sign out
+        this.signout();
+      }
     },
 
     async token() {
