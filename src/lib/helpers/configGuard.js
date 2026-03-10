@@ -16,7 +16,9 @@ const CONFIG_PLACEHOLDER = { port: 8080 };
  * @throws {Error} When mode is 'production' and config is still the placeholder.
  */
 export const assertConfigLoaded = (config, mode) => {
-  const isPlaceholder = config === CONFIG_PLACEHOLDER || (Object.keys(config).length === 1 && config.port === 8080 && !config.host);
+  const safeConfig = config || CONFIG_PLACEHOLDER;
+  const isPlaceholder =
+    safeConfig === CONFIG_PLACEHOLDER || (Object.keys(safeConfig).length === 1 && safeConfig.port === 8080 && !safeConfig.host);
   if (mode === 'production' && isPlaceholder) {
     throw new Error(
       'Production build requires a valid config. Run `npm run config` to generate src/config/index.js before building.',

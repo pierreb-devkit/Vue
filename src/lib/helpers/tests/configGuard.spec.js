@@ -28,4 +28,16 @@ describe('configGuard – assertConfigLoaded', () => {
     const realConfig = { port: 3000, host: 'http://localhost' };
     expect(() => assertConfigLoaded(realConfig, 'development')).not.toThrow();
   });
+
+  it('should throw when mode is production and config is null', () => {
+    expect(() => assertConfigLoaded(null, 'production')).toThrow(
+      'Production build requires a valid config',
+    );
+  });
+
+  it('should throw when mode is production and config is undefined', () => {
+    expect(() => assertConfigLoaded(undefined, 'production')).toThrow(
+      'Production build requires a valid config',
+    );
+  });
 });
