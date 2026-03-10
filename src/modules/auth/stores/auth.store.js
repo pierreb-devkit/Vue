@@ -152,6 +152,29 @@ export const useAuthStore = defineStore('auth', {
         console.log(err);
       }
     },
+
+    /**
+     * @desc Verify an email address using the token from the verification link.
+     * @param {string} token - Email verification token from URL params.
+     * @returns {Promise<Object>} Resolved API response data on success.
+     */
+    async verifyEmail(token) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
+      const res = await axios.post(`${api}/${config.api.endPoints.auth}/verify-email/${token}`);
+      return res.data;
+    },
+
+    /**
+     * @desc Resend the verification email for the currently authenticated user.
+     * @returns {Promise<Object>} Resolved API response data on success.
+     */
+    async resendVerification() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+
+      const res = await axios.post(`${api}/${config.api.endPoints.auth}/resend-verification`);
+      return res.data;
+    },
   },
 });
 

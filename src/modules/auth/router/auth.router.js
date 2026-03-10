@@ -6,6 +6,7 @@ import signup from '../views/auth.signup.view.vue';
 import forgot from '../views/auth.forgot.view.vue';
 import reset from '../views/auth.reset.view.vue';
 import token from '../views/auth.token.view.vue';
+import verifyEmail from '../views/auth.verifyEmail.view.vue';
 
 /**
  * Router configuration.
@@ -48,6 +49,14 @@ export default [
     path: '/token',
     name: 'Token',
     component: token,
+    meta: {
+      display: false, // hide from drawer any time
+    },
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'VerifyEmail',
+    component: verifyEmail,
     meta: {
       display: false, // hide from drawer any time
     },
