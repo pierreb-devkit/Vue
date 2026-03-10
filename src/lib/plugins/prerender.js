@@ -4,6 +4,36 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
 /**
+ * Strips leading slashes and removes '..' segments from a path to prevent traversal.
+ *
+ * @param {string} raw - raw pathname (e.g. '/../etc/passwd' or '/assets/app.js')
+ * @returns {string} sanitised relative path safe for joining with a base directory
+ */
+export function sanitizePath(raw) {
+  return raw
+    .replace(/^\/+/, '')
+    .split('/')
+    .filter((s) => s && s !== '..')
+    .join('/');
+}
+
+/**
+ * Computes the output file path for a given route inside the dist directory.
+ * Routes are normalised so they always resolve under distDir.
+ *
+ * @param {string} distDir - absolute path to the dist/ directory
+ * @param {string} route - route path to render (e.g. '/' or '/about')
+ * @returns {string} absolute file path for the pre-rendered HTML
+ */
+export function routeToOutputPath(distDir, route) {
+  const clean = sanitizePath(route);
+  if (!clean || clean === 'index.html') {
+    return join(distDir, 'index.html');
+  }
+  return join(distDir, clean, 'index.html');
+}
+
+/**
  * Vite plugin — pre-renders configured routes at build time using Puppeteer.
  * Captures fully rendered HTML so crawlers receive meaningful content
  * without waiting for JavaScript execution.
@@ -52,13 +82,21 @@ export function prerenderPlugin(config, mode) {
         });
 
         for (const route of routes) {
-          await renderRoute(browser, port, route, distDir);
+          try {
+            await renderRoute(browser, port, route, distDir);
+          } catch (routeError) {
+            console.warn(
+              `[prerender] Failed to pre-render route "${route}":`,
+              routeError instanceof Error ? routeError.message : String(routeError),
+            );
+          }
         }
 
         console.log(`[prerender] Successfully pre-rendered ${routes.length} route(s).`);
       } catch (err) {
         // Gracefully fail without breaking the build
-        console.warn('[prerender] Pre-rendering failed, build continues without it:', err.message);
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn('[prerender] Pre-rendering failed, build continues without it:', message);
       } finally {
         if (browser) await browser.close().catch(() => {});
         if (server) await closeServer(server);
@@ -77,8 +115,10 @@ export function prerenderPlugin(config, mode) {
 function startStaticServer(distDir) {
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
-      const url = req.url === '/' ? '/index.html' : req.url;
-      const filePath = join(distDir, url);
+      const requestUrl = new URL(req.url || '/', 'http://localhost');
+      let pathname = requestUrl.pathname === '/' ? '/index.html' : requestUrl.pathname;
+      pathname = sanitizePath(pathname);
+      const filePath = join(distDir, pathname);
 
       try {
         const content = readFileSync(filePath);
@@ -133,9 +173,7 @@ async function renderRoute(browser, port, route, distDir) {
   const html = await page.content();
   await page.close();
 
-  // Determine output file path — e.g. '/' → 'dist/index.html', '/about' → 'dist/about/index.html'
-  const outputPath =
-    route === '/' ? join(distDir, 'index.html') : join(distDir, route, 'index.html');
+  const outputPath = routeToOutputPath(distDir, route);
 
   mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, html, 'utf-8');
