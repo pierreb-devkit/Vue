@@ -1,8 +1,62 @@
 import { join } from 'node:path';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
+// --- Mocks for closeBundle integration tests ---
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    readFileSync: vi.fn(() => '<html></html>'),
+  };
+});
+
+const mockPage = {
+  goto: vi.fn().mockResolvedValue(undefined),
+  content: vi.fn().mockResolvedValue('<html><body>rendered</body></html>'),
+  close: vi.fn().mockResolvedValue(undefined),
+};
+
+const mockBrowser = {
+  newPage: vi.fn().mockResolvedValue(mockPage),
+  close: vi.fn().mockResolvedValue(undefined),
+};
+
+vi.mock('puppeteer', () => ({
+  default: {
+    launch: vi.fn().mockResolvedValue(mockBrowser),
+  },
+}));
+
+// Mock createServer to avoid real HTTP server
+vi.mock('node:http', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    createServer: vi.fn(() => {
+      const server = {
+        listen: vi.fn((_port, _host, cb) => cb()),
+        address: vi.fn(() => ({ port: 54321 })),
+        close: vi.fn((cb) => cb()),
+        on: vi.fn(),
+      };
+      return server;
+    }),
+  };
+});
+
 describe('prerenderPlugin', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPage.goto.mockResolvedValue(undefined);
+    mockPage.content.mockResolvedValue('<html><body>rendered</body></html>');
+    mockPage.close.mockResolvedValue(undefined);
+    mockBrowser.newPage.mockResolvedValue(mockPage);
+    mockBrowser.close.mockResolvedValue(undefined);
+  });
+
   it('returns a vite plugin with correct name', () => {
     const plugin = prerenderPlugin({}, 'development');
     expect(plugin.name).toBe('prerender');
@@ -15,7 +69,6 @@ describe('prerenderPlugin', () => {
       { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
       'development',
     );
-    // Should return immediately without error
     await plugin.closeBundle();
   });
 
@@ -40,18 +93,63 @@ describe('prerenderPlugin', () => {
     await plugin.closeBundle();
   });
 
-  it('logs warning and continues when puppeteer import fails', async () => {
+  it('renders routes and closes browser/server on success', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/', '/about'] } } } },
+      'production',
+    );
+
+    await plugin.closeBundle();
+
+    expect(mockBrowser.newPage).toHaveBeenCalledTimes(2);
+    expect(mockPage.goto).toHaveBeenCalledTimes(2);
+    expect(mockPage.content).toHaveBeenCalledTimes(2);
+    expect(mockPage.close).toHaveBeenCalledTimes(2);
+    expect(mockBrowser.close).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[prerender] Successfully pre-rendered 2 route(s)'),
+    );
+    logSpy.mockRestore();
+  });
+
+  it('closes page in finally block even when goto throws', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockPage.goto.mockRejectedValue(new Error('Navigation timeout'));
 
     const plugin = prerenderPlugin(
       { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
       'production',
     );
+
+    await plugin.closeBundle();
+
+    // page.close is called via finally block despite goto failure
+    expect(mockPage.close).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[prerender] Failed to pre-render route "/"'),
+      'Navigation timeout',
+    );
+    warnSpy.mockRestore();
+    logSpy.mockRestore();
+  });
+
+  it('logs warning when puppeteer launch fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const puppeteer = await import('puppeteer');
+    puppeteer.default.launch.mockRejectedValueOnce(new Error('No chromium'));
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
+      'production',
+    );
+
     await plugin.closeBundle();
 
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('[prerender] Pre-rendering failed'),
-      expect.any(String),
+      'No chromium',
     );
     warnSpy.mockRestore();
   });
