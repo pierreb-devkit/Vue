@@ -48,4 +48,19 @@ describe('app.router', () => {
     await router.isReady();
     expect(document.title).toBeTruthy();
   });
+
+  it('prefers meta.title over route name for document title', async () => {
+    const router = getRouter();
+    await router.push('/does-not-exist');
+    await router.isReady();
+    expect(document.title).toContain('Page Not Found');
+    expect(document.title).not.toContain('NotFound');
+  });
+
+  it('renders the NotFound route for unknown paths', async () => {
+    const router = getRouter();
+    await router.push('/some/unknown/path');
+    await router.isReady();
+    expect(router.currentRoute.value.name).toBe('NotFound');
+  });
 });
