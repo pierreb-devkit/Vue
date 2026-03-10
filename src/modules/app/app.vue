@@ -16,6 +16,7 @@
     </v-snackbar>
     <devkitNav v-if="isLoggedIn" />
     <devkitHeader v-if="config.header.display" />
+    <authEmailBanner />
     <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
     </v-main>
@@ -34,6 +35,7 @@ import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
 import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
+import authEmailBanner from '../auth/components/auth.emailBanner.component.vue';
 
 /**
  * Component definition.
@@ -44,6 +46,7 @@ export default {
     devkitHeader,
     devkitNav,
     devkitFooter,
+    authEmailBanner,
   },
   data() {
     const theme = useTheme();
