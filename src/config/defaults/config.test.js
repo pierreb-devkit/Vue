@@ -13,6 +13,7 @@ export default {
         twitterCard: 'summary_large_image',
         twitterSite: '@testhandle',
       },
+      preconnect: ['https://fonts.googleapis.com', 'https://cdn.example.com'],
       schema: {
         enabled: false,
         type: 'Person',
@@ -24,6 +25,13 @@ export default {
   vuetify: {
     theme: {
       snackbar: { status: false },
+      themes: {
+        light: {
+          colors: {
+            primary: '#1abc9c',
+          },
+        },
+      },
     },
   },
   header: { display: false },

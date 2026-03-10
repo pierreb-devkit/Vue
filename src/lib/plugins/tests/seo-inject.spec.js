@@ -201,6 +201,84 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('noscript fallback', () => {
+    it('injects noscript block before </body> with title and description', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<noscript><h1>Test App</h1><p>Test description</p></noscript>');
+      const noscriptIndex = result.indexOf('<noscript>');
+      const bodyCloseIndex = result.indexOf('</body>');
+      expect(noscriptIndex).toBeLessThan(bodyCloseIndex);
+    });
+
+    it('does not inject noscript when title and description are both missing', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('<noscript>');
+    });
+
+    it('injects noscript with only title when description is missing', () => {
+      const result = transform({ app: { title: 'Only Title' } });
+      expect(result).toContain('<noscript><h1>Only Title</h1><p></p></noscript>');
+    });
+
+    it('escapes HTML in noscript content', () => {
+      const result = transform({ app: { title: '<script>xss</script>', description: 'A & B' } });
+      expect(result).toContain('&lt;script&gt;xss&lt;/script&gt;');
+      expect(result).toContain('A &amp; B');
+    });
+  });
+
+  describe('preconnect hints', () => {
+    it('injects preconnect and dns-prefetch links from config', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<link rel="preconnect" href="https://fonts.googleapis.com">');
+      expect(result).toContain('<link rel="dns-prefetch" href="https://fonts.googleapis.com">');
+      expect(result).toContain('<link rel="preconnect" href="https://cdn.example.com">');
+      expect(result).toContain('<link rel="dns-prefetch" href="https://cdn.example.com">');
+    });
+
+    it('injects preconnect tags before </head>', () => {
+      const result = transform(testConfig);
+      const headCloseIndex = result.indexOf('</head>');
+      const preconnectIndex = result.indexOf('rel="preconnect"');
+      expect(preconnectIndex).toBeLessThan(headCloseIndex);
+    });
+
+    it('does not inject preconnect when array is empty', () => {
+      const result = transform({ app: { seo: { preconnect: [] } } });
+      expect(result).not.toContain('rel="preconnect"');
+      expect(result).not.toContain('rel="dns-prefetch"');
+    });
+
+    it('does not inject preconnect when not configured', () => {
+      const result = transform({ app: {} });
+      expect(result).not.toContain('rel="preconnect"');
+    });
+  });
+
+  describe('theme-color meta tag', () => {
+    it('injects theme-color from vuetify light theme primary', () => {
+      const result = transform(testConfig);
+      expect(result).toContain('<meta name="theme-color" content="#1abc9c">');
+    });
+
+    it('injects theme-color before </head>', () => {
+      const result = transform(testConfig);
+      const headCloseIndex = result.indexOf('</head>');
+      const themeColorIndex = result.indexOf('name="theme-color"');
+      expect(themeColorIndex).toBeLessThan(headCloseIndex);
+    });
+
+    it('does not inject theme-color when vuetify config is missing', () => {
+      const result = transform({ app: { title: 'Test' } });
+      expect(result).not.toContain('theme-color');
+    });
+
+    it('does not inject theme-color when primary color is not set', () => {
+      const result = transform({ app: {}, vuetify: { theme: { themes: { light: { colors: {} } } } } });
+      expect(result).not.toContain('theme-color');
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();
