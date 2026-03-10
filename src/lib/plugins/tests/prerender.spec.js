@@ -1,8 +1,26 @@
 import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
-// --- Mocks for closeBundle integration tests ---
+// vi.hoisted runs before vi.mock hoisting — safe to reference in factories
+const { mockPage, mockBrowser, mockCreateServer } = vi.hoisted(() => {
+  const mockPage = {
+    goto: vi.fn().mockResolvedValue(undefined),
+    content: vi.fn().mockResolvedValue('<html><body>rendered</body></html>'),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockBrowser = {
+    newPage: vi.fn().mockResolvedValue(mockPage),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockCreateServer = vi.fn(() => ({
+    listen: vi.fn((_port, _host, cb) => cb()),
+    address: vi.fn(() => ({ port: 54321 })),
+    close: vi.fn((cb) => cb()),
+    on: vi.fn(),
+  }));
+  return { mockPage, mockBrowser, mockCreateServer };
+});
+
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -13,34 +31,15 @@ vi.mock('node:fs', async (importOriginal) => {
   };
 });
 
-const mockPage = {
-  goto: vi.fn().mockResolvedValue(undefined),
-  content: vi.fn().mockResolvedValue('<html><body>rendered</body></html>'),
-  close: vi.fn().mockResolvedValue(undefined),
-};
-
-const mockBrowser = {
-  newPage: vi.fn().mockResolvedValue(mockPage),
-  close: vi.fn().mockResolvedValue(undefined),
-};
-
 vi.mock('puppeteer', () => ({
-  default: {
-    launch: vi.fn().mockResolvedValue(mockBrowser),
-  },
-}));
-
-// Mock createServer to avoid real HTTP server
-const mockCreateServer = vi.fn(() => ({
-  listen: vi.fn((_port, _host, cb) => cb()),
-  address: vi.fn(() => ({ port: 54321 })),
-  close: vi.fn((cb) => cb()),
-  on: vi.fn(),
+  default: { launch: vi.fn().mockResolvedValue(mockBrowser) },
 }));
 
 vi.mock('node:http', () => ({
   createServer: mockCreateServer,
 }));
+
+import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
 describe('prerenderPlugin', () => {
   beforeEach(() => {
