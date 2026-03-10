@@ -129,7 +129,8 @@ export function seoInjectPlugin(config) {
           ...(schema.sameAs?.length && { sameAs: schema.sameAs }),
           ...(og.image && { image: og.image }),
         };
-        tags.push(`  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`);
+        const safeJson = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+        tags.push(`  <script type="application/ld+json">${safeJson}</script>`);
       }
 
       // Robustly update lang attribute on <html> tag

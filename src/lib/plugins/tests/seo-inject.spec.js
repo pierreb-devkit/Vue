@@ -382,6 +382,30 @@ describe('seoInjectPlugin', () => {
       expect(jsonLd.sameAs).toBeUndefined();
       expect(jsonLd.image).toBeUndefined();
     });
+
+    it('escapes "</script>" in schema values to prevent tag injection', () => {
+      const config = {
+        app: {
+          title: 'App',
+          description: '</script><script>alert("xss")</script>',
+          url: 'https://example.com',
+          seo: {
+            schema: { enabled: true, type: 'Person', name: 'Test' },
+          },
+        },
+      };
+      const result = transform(config);
+      // The raw "</script>" must not appear inside the JSON-LD block
+      const scriptBlocks = result.match(/<script[^>]*>/g) || [];
+      const ldBlocks = scriptBlocks.filter((s) => s.includes('application/ld+json'));
+      expect(ldBlocks).toHaveLength(1);
+      // Extract everything between the JSON-LD opening tag and the next </script>
+      const ldMatch = result.match(/<script type="application\/ld\+json">(.*?)<\/script>/);
+      expect(ldMatch).not.toBeNull();
+      // The escaped JSON should parse correctly and contain the original value
+      const jsonLd = JSON.parse(ldMatch[1]);
+      expect(jsonLd.description).toBe('</script><script>alert("xss")</script>');
+    });
   });
 
   describe('handles missing config gracefully', () => {
