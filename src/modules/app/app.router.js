@@ -10,8 +10,9 @@ import auth from '../auth/router/auth.router';
 import users from '../users/router/users.router';
 import secure from '../secure/router/secure.router';
 import tasks from '../tasks/router/tasks.router';
+import organizations from '../organizations/router/organizations.router';
 
-const routes = [].concat(home, auth, users, secure, tasks);
+const routes = [].concat(home, auth, users, secure, tasks, organizations);
 
 /**
  * Router configuration.
