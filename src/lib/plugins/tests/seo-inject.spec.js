@@ -301,6 +301,89 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('JSON-LD structured data', () => {
+    it('injects JSON-LD when schema.enabled is true', () => {
+      const config = {
+        app: {
+          title: 'Test App',
+          description: 'Test description',
+          url: 'https://example.com',
+          seo: {
+            schema: { enabled: true, type: 'Person', name: 'Test User' },
+          },
+        },
+      };
+      const result = transform(config);
+      expect(result).toContain('<script type="application/ld+json">');
+      const match = result.match(/<script type="application\/ld\+json">(.*?)<\/script>/);
+      expect(match).not.toBeNull();
+      const jsonLd = JSON.parse(match[1]);
+      expect(jsonLd['@context']).toBe('https://schema.org');
+      expect(jsonLd['@type']).toBe('Person');
+      expect(jsonLd.name).toBe('Test User');
+      expect(jsonLd.url).toBe('https://example.com');
+      expect(jsonLd.description).toBe('Test description');
+    });
+
+    it('does not inject JSON-LD when schema.enabled is false', () => {
+      const result = transform(testConfig);
+      expect(result).not.toContain('application/ld+json');
+    });
+
+    it('does not inject JSON-LD when schema.type is missing', () => {
+      const config = {
+        app: { title: 'Test', seo: { schema: { enabled: true } } },
+      };
+      const result = transform(config);
+      expect(result).not.toContain('application/ld+json');
+    });
+
+    it('includes optional fields (jobTitle, sameAs, image) when present', () => {
+      const config = {
+        app: {
+          title: 'Test App',
+          description: 'Desc',
+          url: 'https://example.com',
+          seo: {
+            og: { image: 'https://example.com/photo.jpg' },
+            schema: {
+              enabled: true,
+              type: 'Person',
+              name: 'Test User',
+              jobTitle: 'Developer',
+              sameAs: ['https://github.com/test', 'https://twitter.com/test'],
+            },
+          },
+        },
+      };
+      const result = transform(config);
+      const match = result.match(/<script type="application\/ld\+json">(.*?)<\/script>/);
+      const jsonLd = JSON.parse(match[1]);
+      expect(jsonLd.jobTitle).toBe('Developer');
+      expect(jsonLd.sameAs).toEqual(['https://github.com/test', 'https://twitter.com/test']);
+      expect(jsonLd.image).toBe('https://example.com/photo.jpg');
+    });
+
+    it('omits optional fields when absent', () => {
+      const config = {
+        app: {
+          title: 'Test App',
+          description: 'Desc',
+          url: 'https://example.com',
+          seo: {
+            schema: { enabled: true, type: 'Organization', name: 'Org' },
+          },
+        },
+      };
+      const result = transform(config);
+      const match = result.match(/<script type="application\/ld\+json">(.*?)<\/script>/);
+      const jsonLd = JSON.parse(match[1]);
+      expect(jsonLd.jobTitle).toBeUndefined();
+      expect(jsonLd.sameAs).toBeUndefined();
+      expect(jsonLd.image).toBeUndefined();
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();

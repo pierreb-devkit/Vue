@@ -116,6 +116,22 @@ export function seoInjectPlugin(config) {
       if (og.image)
         tags.push(`  <meta name="twitter:image" content="${escapeHtml(og.image)}">`);
 
+      // JSON-LD structured data
+      const schema = seo.schema || {};
+      if (schema.enabled && schema.type) {
+        const jsonLd = {
+          '@context': 'https://schema.org',
+          '@type': schema.type,
+          name: schema.name || app.title,
+          url: app.url,
+          description: app.description,
+          ...(schema.jobTitle && { jobTitle: schema.jobTitle }),
+          ...(schema.sameAs?.length && { sameAs: schema.sameAs }),
+          ...(og.image && { image: og.image }),
+        };
+        tags.push(`  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`);
+      }
+
       // Robustly update lang attribute on <html> tag
       let result = html.replace(/<html([^>]*)>/i, (match, attrs) => {
         const lang = escapeHtml(app.lang || 'en');
