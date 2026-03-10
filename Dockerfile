@@ -4,6 +4,11 @@ FROM node:lts-alpine as build-stage
 # Create app directory
 WORKDIR /app
 
+# Chromium for Puppeteer pre-rendering at build time
+RUN apk add --no-cache chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
 # args
 ARG NODE_ENV='development'
 ARG DEVKIT_VUE_app_title='Devkit-Docker'

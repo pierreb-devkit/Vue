@@ -13,8 +13,15 @@ export function seoStaticPlugin(config) {
 
   return {
     name: 'seo-static',
-    apply: 'build',
+    apply(config, { command, mode }) {
+      return command === 'build' && mode === 'production';
+    },
 
+    /**
+     * Emits robots.txt, sitemap.xml, and manifest.json as build assets.
+     *
+     * @returns {void}
+     */
     generateBundle() {
       const robotsTxt = buildRobotsTxt(seo.robots, baseUrl);
       if (robotsTxt !== null) {

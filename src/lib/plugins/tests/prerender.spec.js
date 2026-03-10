@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
@@ -78,26 +79,26 @@ describe('routeToOutputPath', () => {
   const distDir = '/project/dist';
 
   it('maps "/" to dist/index.html', () => {
-    expect(routeToOutputPath(distDir, '/')).toBe('/project/dist/index.html');
+    expect(routeToOutputPath(distDir, '/')).toBe(join(distDir, 'index.html'));
   });
 
   it('maps "/about" to dist/about/index.html', () => {
-    expect(routeToOutputPath(distDir, '/about')).toBe('/project/dist/about/index.html');
+    expect(routeToOutputPath(distDir, '/about')).toBe(join(distDir, 'about', 'index.html'));
   });
 
   it('maps "/docs/intro" to dist/docs/intro/index.html', () => {
     expect(routeToOutputPath(distDir, '/docs/intro')).toBe(
-      '/project/dist/docs/intro/index.html',
+      join(distDir, 'docs', 'intro', 'index.html'),
     );
   });
 
   it('prevents path traversal with ".."', () => {
     const result = routeToOutputPath(distDir, '/../etc');
-    expect(result).toBe('/project/dist/etc/index.html');
+    expect(result).toBe(join(distDir, 'etc', 'index.html'));
     expect(result.startsWith(distDir)).toBe(true);
   });
 
   it('handles empty route as root', () => {
-    expect(routeToOutputPath(distDir, '')).toBe('/project/dist/index.html');
+    expect(routeToOutputPath(distDir, '')).toBe(join(distDir, 'index.html'));
   });
 });
