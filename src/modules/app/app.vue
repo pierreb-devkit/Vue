@@ -70,7 +70,6 @@ export default {
     const { app } = this.config;
     const seo = app.seo || {};
     const og = seo.og || {};
-    const schema = seo.schema || {};
 
     const meta = [
       ...(app.description ? [{ name: 'description', content: app.description }] : []),
@@ -92,25 +91,15 @@ export default {
 
     const link = app.url ? [{ rel: 'canonical', href: app.url }] : [];
 
-    const script = schema.enabled && schema.name
-      ? [{
-          type: 'application/ld+json',
-          innerHTML: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': schema.type || 'Person',
-            name: schema.name,
-            url: app.url || undefined,
-            sameAs: schema.sameAs?.length ? schema.sameAs : undefined,
-          }),
-        }]
-      : [];
+    // JSON-LD structured data is handled at build time by seo-inject when
+    // schema.enabled is true, so the runtime useHead call must not inject a
+    // second block.  See #3677.
 
     useHead({
       title: app.title,
       htmlAttrs: { lang: app.lang || 'en' },
       meta,
       link,
-      script,
     });
 
     // Configure axios interceptors

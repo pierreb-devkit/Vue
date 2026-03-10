@@ -132,30 +132,11 @@ describe('App.vue — SEO (useHead)', () => {
   });
 
   describe('Schema.org JSON-LD', () => {
-    it('does not inject script when schema.enabled is false', () => {
-      mountApp(makeConfig());
-      const { script } = useHeadMock.mock.calls[0][0];
-      expect(script).toHaveLength(0);
-    });
-
-    it('injects JSON-LD script when schema.enabled is true', () => {
+    it('does not inject runtime JSON-LD (handled by seo-inject at build time)', () => {
       const config = makeConfig({ seo: { schema: { enabled: true, type: 'Person', name: 'Test App', sameAs: ['https://github.com/test-user'] } } });
       mountApp(config);
-      const { script } = useHeadMock.mock.calls[0][0];
-      expect(script).toHaveLength(1);
-      expect(script[0].type).toBe('application/ld+json');
-
-      const ld = JSON.parse(script[0].innerHTML);
-      expect(ld['@type']).toBe('Person');
-      expect(ld.name).toBe('Test App');
-      expect(ld.sameAs).toContain('https://github.com/test-user');
-    });
-
-    it('does not inject JSON-LD when schema.enabled is true but name is empty', () => {
-      const config = makeConfig({ seo: { schema: { enabled: true, type: 'Person', name: '', sameAs: [] } } });
-      mountApp(config);
-      const { script } = useHeadMock.mock.calls[0][0];
-      expect(script).toHaveLength(0);
+      const call = useHeadMock.mock.calls[0][0];
+      expect(call.script).toBeUndefined();
     });
   });
 });
