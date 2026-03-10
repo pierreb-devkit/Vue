@@ -26,6 +26,10 @@ export default {
         name: '', // entity name (e.g. 'Pierre Brisorgueil')
         sameAs: [], // profile URLs for cross-linking: GitHub, LinkedIn, Twitter…
       },
+      prerender: {
+        enabled: false, // true to pre-render routes at build time for SEO
+        routes: ['/'], // routes to pre-render (e.g. ['/', '/about'])
+      },
     },
   },
   port: 8080, // dev server port (used by vite.config.js)
