@@ -409,7 +409,7 @@ describe('Axios Service', () => {
       // First call
       try {
         await errorInterceptor(error);
-      } catch (err) {
+      } catch {
         // expected
       }
 
@@ -418,7 +418,7 @@ describe('Axios Service', () => {
       // Second call after first completed should trigger again
       try {
         await errorInterceptor(error);
-      } catch (err) {
+      } catch {
         // expected
       }
 
@@ -437,7 +437,7 @@ describe('Axios Service', () => {
 
       try {
         await errorInterceptor(error);
-      } catch (err) {
+      } catch {
         // expected
       }
 
@@ -445,7 +445,7 @@ describe('Axios Service', () => {
       mockOnRefreshAbilities.mockResolvedValueOnce();
       try {
         await errorInterceptor(error);
-      } catch (err) {
+      } catch {
         // expected
       }
 
