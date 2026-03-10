@@ -109,6 +109,16 @@ describe('buildSitemapXml', () => {
     expect(buildSitemapXml(undefined, '')).toBeNull();
   });
 
+  it('returns null when enabled but baseUrl is empty', () => {
+    const sitemapConfig = { enabled: true, routes: [{ path: '/' }] };
+    expect(buildSitemapXml(sitemapConfig, '')).toBeNull();
+  });
+
+  it('returns null when enabled but baseUrl is undefined', () => {
+    const sitemapConfig = { enabled: true, routes: [{ path: '/' }] };
+    expect(buildSitemapXml(sitemapConfig, undefined)).toBeNull();
+  });
+
   it('generates valid XML structure', () => {
     const result = buildSitemapXml(testConfig.app.seo.sitemap, 'https://example.com');
     expect(result).toContain('<?xml version="1.0" encoding="UTF-8"?>');
@@ -135,9 +145,16 @@ describe('buildSitemapXml', () => {
   });
 
   it('includes lastmod with today date', () => {
-    const today = new Date().toISOString().split('T')[0];
-    const result = buildSitemapXml(testConfig.app.seo.sitemap, 'https://example.com');
-    expect(result).toContain(`<lastmod>${today}</lastmod>`);
+    vi.useFakeTimers();
+    try {
+      const fixedDate = new Date('2023-01-01T12:00:00Z');
+      vi.setSystemTime(fixedDate);
+      const today = fixedDate.toISOString().split('T')[0];
+      const result = buildSitemapXml(testConfig.app.seo.sitemap, 'https://example.com');
+      expect(result).toContain(`<lastmod>${today}</lastmod>`);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('handles routes without optional fields', () => {
@@ -152,6 +169,13 @@ describe('buildSitemapXml', () => {
     const result = buildSitemapXml({ enabled: true, routes: [] }, 'https://example.com');
     expect(result).toContain('<urlset');
     expect(result).toContain('</urlset>');
+  });
+
+  it('XML-escapes special characters in URLs', () => {
+    const sitemapConfig = { enabled: true, routes: [{ path: '/search?q=a&b=c' }] };
+    const result = buildSitemapXml(sitemapConfig, 'https://example.com');
+    expect(result).toContain('&amp;');
+    expect(result).not.toMatch(/<loc>[^<]*&[^a][^<]*<\/loc>/);
   });
 });
 

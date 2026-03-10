@@ -17,22 +17,36 @@ export function seoStaticPlugin(config) {
 
     generateBundle() {
       const robotsTxt = buildRobotsTxt(seo.robots, baseUrl);
-      if (robotsTxt) {
+      if (robotsTxt !== null) {
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt });
       }
 
       const sitemapXml = buildSitemapXml(seo.sitemap, baseUrl);
-      if (sitemapXml) {
+      if (sitemapXml !== null) {
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml });
       }
 
       const manifestJson = buildManifestJson(seo.manifest, app);
-      if (manifestJson) {
+      if (manifestJson !== null) {
         this.emitFile({ type: 'asset', fileName: 'manifest.json', source: manifestJson });
       }
     },
   };
 }
+
+/**
+ * Escape special XML characters in a string.
+ *
+ * @param {string} str - input string to escape
+ * @returns {string} XML-safe string
+ */
+const escapeXml = (str) =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 
 /**
  * Build robots.txt content from config.
@@ -63,23 +77,25 @@ export function buildRobotsTxt(robotsConfig, baseUrl) {
 
 /**
  * Build sitemap.xml content from config.
+ * Returns null when disabled or when baseUrl is missing (sitemap spec requires absolute URLs).
  *
  * @param {object|undefined} sitemapConfig - sitemap configuration object
- * @param {string} baseUrl - canonical base URL for route URLs
- * @returns {string|null} sitemap.xml content or null if disabled
+ * @param {string} baseUrl - canonical base URL for route URLs (required for valid sitemap)
+ * @returns {string|null} sitemap.xml content or null if disabled/missing baseUrl
  */
 export function buildSitemapXml(sitemapConfig, baseUrl) {
   if (!sitemapConfig?.enabled) return null;
+  if (!baseUrl) return null;
 
   const routes = sitemapConfig.routes || [];
   const today = new Date().toISOString().split('T')[0];
 
   const urls = routes
     .map((route) => {
-      const loc = `${baseUrl}${route.path || '/'}`;
+      const loc = escapeXml(`${baseUrl}${route.path || '/'}`);
       const parts = [`    <loc>${loc}</loc>`];
-      if (route.changefreq) parts.push(`    <changefreq>${route.changefreq}</changefreq>`);
-      if (route.priority != null) parts.push(`    <priority>${route.priority}</priority>`);
+      if (route.changefreq) parts.push(`    <changefreq>${escapeXml(route.changefreq)}</changefreq>`);
+      if (route.priority != null) parts.push(`    <priority>${escapeXml(String(route.priority))}</priority>`);
       parts.push(`    <lastmod>${today}</lastmod>`);
       return `  <url>\n${parts.join('\n')}\n  </url>`;
     })
