@@ -4,10 +4,12 @@
 import { createApp } from 'vue';
 import { createHead } from '@unhead/vue/client';
 import { createPinia } from 'pinia';
+import { abilitiesPlugin } from '@casl/vue';
 import initializeStores from './modules/app/app.store';
 import router from './modules/app/app.router';
 import plugins from './lib/plugins';
 import config from './config/index.js';
+import { ability } from './lib/helpers/ability';
 import App from './modules/app/app.vue';
 
 const app = createApp(App);
@@ -23,6 +25,7 @@ app
   .use(head)
   .use(pinia)
   .use(appRouter)
+  .use(abilitiesPlugin, ability)
   .use(plugins.aos)
   .use(plugins.images)
   .use(plugins.lodash)
