@@ -4,6 +4,7 @@
     <v-row class="mx-2 my-1">
       <v-icon class="ma-2" icon="fa-solid fa-user"></v-icon>
       <h2 class="my-1 text-capitalize">{{ firstName }} {{ lastName }}</h2>
+      <span v-if="lastLoginAt" class="ml-4 my-auto text-caption text-medium-emphasis">Last login: {{ lastLoginFormatted }}</span>
       <v-spacer></v-spacer>
       <v-btn v-if="id" class="mx-1" color="error" :flat="config.vuetify.theme.flat" icon @click.stop="removeConfirm = true">
         <v-icon icon="fa-solid fa-trash"></v-icon>
@@ -124,6 +125,22 @@ export default {
     isLoggedIn() {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
+    },
+    /**
+     * @desc Last login timestamp from auth store user or localStorage fallback.
+     * @returns {string|null} ISO date string or null when unavailable.
+     */
+    lastLoginAt() {
+      const authStore = useAuthStore();
+      return authStore.user?.lastLoginAt || localStorage.getItem(`${this.config.cookie.prefix}LastLoginAt`) || null;
+    },
+    /**
+     * @desc Human-readable relative time since the last login.
+     * @returns {string} Formatted string such as "2 hours ago".
+     */
+    lastLoginFormatted() {
+      if (!this.lastLoginAt) return '';
+      return this.dayjs(this.lastLoginAt).fromNow();
     },
     firstName: {
       get() {
