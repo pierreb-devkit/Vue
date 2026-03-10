@@ -31,6 +31,18 @@ export default {
         enabled: false, // true to pre-render routes at build time for SEO
         routes: ['/'], // routes to pre-render (e.g. ['/', '/about'])
       },
+      robots: {
+        enabled: true, // true to generate robots.txt at build time
+        rules: [{ userAgent: '*', allow: '/' }], // crawl directives
+      },
+      sitemap: {
+        enabled: true, // true to generate sitemap.xml at build time
+        routes: [{ path: '/', priority: 1.0, changefreq: 'weekly' }], // pages to include
+      },
+      manifest: {
+        enabled: false, // true to generate manifest.json at build time
+        display: 'standalone', // 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser'
+      },
     },
   },
   port: 8080, // dev server port (used by vite.config.js)

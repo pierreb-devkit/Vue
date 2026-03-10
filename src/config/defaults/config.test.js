@@ -20,6 +20,21 @@ export default {
         name: 'Test User',
         sameAs: ['https://github.com/test-user'],
       },
+      robots: {
+        enabled: true,
+        rules: [{ userAgent: '*', allow: '/' }],
+      },
+      sitemap: {
+        enabled: true,
+        routes: [
+          { path: '/', priority: 1.0, changefreq: 'weekly' },
+          { path: '/about', priority: 0.8, changefreq: 'monthly' },
+        ],
+      },
+      manifest: {
+        enabled: true,
+        display: 'standalone',
+      },
     },
   },
   vuetify: {
