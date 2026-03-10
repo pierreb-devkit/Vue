@@ -1,21 +1,23 @@
 <template>
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
-      <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
+      <v-card class="mt-8 pa-8" width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
         <v-col cols="12">
-          <h4>Sign Up</h4>
-          <v-divider></v-divider>
+          <h4 class="text-headline-small font-weight-bold">Sign Up</h4>
+          <v-divider class="mt-3"></v-divider>
         </v-col>
         <v-container>
           <!-- Registration disabled -->
-          <v-alert v-if="serverConfig?.sign?.up === false" type="warning" class="mb-4">Registration is currently disabled.</v-alert>
+          <v-alert v-if="serverConfig?.sign?.up === false" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+            <span class="text-body-medium">Registration is currently disabled.</span>
+          </v-alert>
 
           <!-- Organization welcome message (auto-created/joined) -->
           <template v-else-if="signupStep === 'organizationWelcome'">
-            <v-alert type="success" variant="tonal" class="mb-6" prominent>
-              <div class="text-body-large font-weight-medium">
+            <v-alert type="success" variant="tonal" class="mb-6" prominent :class="config.vuetify.theme.rounded">
+              <span class="text-body-large font-weight-medium">
                 {{ organizationWelcomeMessage }}
-              </div>
+              </span>
             </v-alert>
             <v-row justify="center">
               <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="proceedToApp">
@@ -33,17 +35,19 @@
           <v-form v-else-if="serverConfig === null || serverConfig?.sign?.up === true" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" md="6" sm="6" class="py-0 my-0">
-                <v-text-field v-model="firstName" :rules="[rules.firstName]" label="Firstname" prepend-icon="fa fa-user" required></v-text-field>
+                <v-text-field v-model="firstName" :rules="[rules.firstName]" label="Firstname" prepend-icon="fa-solid fa-user" variant="outlined" density="comfortable" required></v-text-field>
               </v-col>
               <v-col cols="12" md="6" sm="6" class="py-0 my-0">
-                <v-text-field v-model="lastName" :rules="[rules.lastName]" label="Lastname" required></v-text-field>
+                <v-text-field v-model="lastName" :rules="[rules.lastName]" label="Lastname" variant="outlined" density="comfortable" required></v-text-field>
               </v-col>
-              <v-col cols="12" md="12" sm="12">
+              <v-col cols="12">
                 <v-text-field
                   v-model="email"
                   :rules="[rules.required, rules.mail]"
                   label="E-mail"
-                  prepend-icon="fa fa-envelope"
+                  prepend-icon="fa-solid fa-envelope"
+                  variant="outlined"
+                  density="comfortable"
                   required
                 ></v-text-field>
                 <v-text-field
@@ -51,28 +55,64 @@
                   :type="'password'"
                   :rules="[rules.password]"
                   label="Password"
-                  prepend-icon="fa fa-key"
+                  prepend-icon="fa-solid fa-key"
+                  variant="outlined"
+                  density="comfortable"
                   required
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row>
-              <v-col cols="6">
-                <v-btn :flat="config.vuetify.theme.flat" :disabled="!valid" color="success" class="mr-4" @click="validate">Validate</v-btn>
-                <v-btn v-if="config.oAuth.google" variant="outlined" color="secondary" :href="`${oAuth}/google`" class="text-white mr-4 blue"
-                  ><v-icon>fab fa-google</v-icon>
+            <v-row align="center">
+              <v-col cols="12" sm="6" class="d-flex align-center flex-wrap ga-2">
+                <v-btn
+                  :flat="config.vuetify.theme.flat"
+                  :disabled="!valid"
+                  color="primary"
+                  variant="flat"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none text-body-medium"
+                  @click="validate"
+                >
+                  Sign Up
                 </v-btn>
-                <v-btn v-if="config.oAuth.apple" variant="outlined" color="secondary" :href="`${oAuth}/apple`" class="text-white mr-4 grey darken-2"
-                  ><v-icon>fab fa-apple</v-icon>
+                <v-btn
+                  v-if="config.oAuth.google"
+                  variant="outlined"
+                  color="secondary"
+                  :href="`${oAuth}/google`"
+                  :class="config.vuetify.theme.rounded"
+                  icon
+                  size="small"
+                >
+                  <v-icon icon="fab fa-google"></v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="config.oAuth.apple"
+                  variant="outlined"
+                  color="secondary"
+                  :href="`${oAuth}/apple`"
+                  :class="config.vuetify.theme.rounded"
+                  icon
+                  size="small"
+                >
+                  <v-icon icon="fab fa-apple"></v-icon>
                 </v-btn>
               </v-col>
-              <v-col cols="6" class="text-right">
-                <v-btn :flat="config.vuetify.theme.flat" color="error" class="mr-4" @click="reset">Reset Form</v-btn>
+              <v-col cols="12" sm="6" class="text-sm-right">
+                <v-btn
+                  variant="text"
+                  class="text-none text-body-medium"
+                  @click="reset"
+                >
+                  Reset Form
+                </v-btn>
               </v-col>
             </v-row>
           </v-form>
-          <br />
-          <p><router-link to="/signin">Sign In</router-link> if you already have an account :) !</p>
+          <p class="text-body-medium mt-6">
+            <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Sign In</router-link>
+            if you already have an account.
+          </p>
         </v-container>
       </v-card>
     </v-row>

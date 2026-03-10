@@ -6,9 +6,11 @@
     closable
     class="mb-0"
   >
-    <v-row align="center" density="compact">
+    <v-row align="center" no-gutters>
       <v-col>
-        Your email address has not been verified. Please check your inbox or click the button to resend the verification email.
+        <span class="text-body-medium">
+          Your email address has not been verified. Please check your inbox or click the button to resend the verification email.
+        </span>
       </v-col>
       <v-col cols="auto">
         <v-btn
@@ -18,15 +20,16 @@
           color="warning"
           variant="outlined"
           size="small"
-          class="ml-4"
+          :class="config.vuetify.theme.rounded"
+          class="text-none text-body-medium ml-4"
           @click="resend"
         >
           {{ sent ? 'Email Sent' : 'Resend Verification Email' }}
         </v-btn>
       </v-col>
     </v-row>
-    <v-alert v-if="errorMessage" type="error" density="compact" class="mt-2">
-      {{ errorMessage }}
+    <v-alert v-if="errorMessage" type="error" variant="tonal" density="compact" class="mt-3">
+      <span class="text-body-small">{{ errorMessage }}</span>
     </v-alert>
   </v-alert>
 </template>

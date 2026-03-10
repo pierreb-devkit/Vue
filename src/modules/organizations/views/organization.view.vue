@@ -12,7 +12,7 @@
         <v-icon icon="fa-solid fa-arrow-left" size="small"></v-icon>
       </v-btn>
       <v-avatar v-if="currentOrganization" color="primary" size="36" class="mr-3">
-        <span class="text-body-large font-weight-bold" style="color: white;">
+        <span class="text-body-large font-weight-bold">
           {{ (currentOrganization.name || '?').charAt(0).toUpperCase() }}
         </span>
       </v-avatar>
@@ -20,7 +20,7 @@
         <h2 class="text-headline-small font-weight-bold">
           {{ currentOrganization ? currentOrganization.name : 'Organization' }}
         </h2>
-        <p v-if="currentOrganization && currentOrganization.description" class="text-body-small" style="opacity: 0.7; margin: 0;">
+        <p v-if="currentOrganization && currentOrganization.description" class="text-body-small text-medium-emphasis" style="margin: 0;">
           {{ currentOrganization.description }}
         </p>
       </div>
@@ -43,7 +43,7 @@
       <!-- Organization details -->
       <v-col cols="12" md="4">
         <v-card
-          :style="{ background: theme.current.colors.surface }"
+          color="surface"
           :flat="config.vuetify.theme.flat"
           :class="config.vuetify.theme.rounded"
           class="pa-6"

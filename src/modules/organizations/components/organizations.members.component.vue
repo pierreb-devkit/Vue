@@ -9,7 +9,7 @@
 
     <!-- Members table -->
     <v-card
-      :style="{ background: theme.current.colors.surface }"
+      color="surface"
       :flat="config.vuetify.theme.flat"
       :class="config.vuetify.theme.rounded"
     >
@@ -40,7 +40,7 @@
               <div class="d-flex align-center py-2">
                 <v-avatar size="32" color="primary" class="mr-3">
                   <v-img v-if="member.avatar || (member.user && member.user.avatar)" :src="member.avatar || member.user.avatar"></v-img>
-                  <span v-else class="text-label-small font-weight-bold" style="color: white;">
+                  <span v-else class="text-label-small font-weight-bold">
                     {{ memberInitial(member) }}
                   </span>
                 </v-avatar>
@@ -50,7 +50,7 @@
               </div>
             </td>
             <!-- Email -->
-            <td class="text-body-medium" style="opacity: 0.8;">
+            <td class="text-body-medium text-medium-emphasis">
               {{ memberEmail(member) }}
             </td>
             <!-- Role -->
@@ -65,7 +65,7 @@
               </v-chip>
             </td>
             <!-- Joined -->
-            <td class="text-body-small" style="opacity: 0.7;">
+            <td class="text-body-small text-medium-emphasis">
               {{ formatDate(member.createdAt || member.joinedAt) }}
             </td>
             <!-- Actions -->
@@ -111,8 +111,8 @@
 
       <!-- Empty state -->
       <v-card-text v-if="!loading && members.length === 0" class="text-center py-8">
-        <v-icon icon="fa-solid fa-users" size="large" class="mb-3" style="opacity: 0.4;"></v-icon>
-        <p class="text-body-medium" style="opacity: 0.7;">No members yet. Invite someone to get started.</p>
+        <v-icon icon="fa-solid fa-users" size="large" class="mb-3 text-disabled"></v-icon>
+        <p class="text-body-medium text-medium-emphasis">No members yet. Invite someone to get started.</p>
       </v-card-text>
     </v-card>
 

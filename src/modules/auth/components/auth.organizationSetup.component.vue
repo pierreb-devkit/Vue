@@ -18,7 +18,7 @@
             variant="outlined"
             density="comfortable"
             placeholder="e.g. Acme Inc."
-            prepend-icon="fa fa-building"
+            prepend-icon="fa-solid fa-building"
             class="mb-4"
           ></v-text-field>
 

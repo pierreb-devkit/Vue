@@ -1,15 +1,19 @@
 <template>
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
-      <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
+      <v-card class="mt-8 pa-8" width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
         <v-col cols="12">
-          <h4>Sign In</h4>
-          <v-divider></v-divider>
+          <h4 class="text-headline-small font-weight-bold">Sign In</h4>
+          <v-divider class="mt-3"></v-divider>
         </v-col>
         <v-container>
-          <v-alert v-if="serverConfig?.sign?.in === false" type="warning" class="mb-4">Sign in is currently disabled.</v-alert>
-          <v-alert v-if="lockout.locked" type="error" class="mb-4">
-            Account locked. Try again in {{ lockoutMinutes }} minute{{ lockoutMinutes !== 1 ? 's' : '' }}.
+          <v-alert v-if="serverConfig?.sign?.in === false" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+            <span class="text-body-medium">Sign in is currently disabled.</span>
+          </v-alert>
+          <v-alert v-if="lockout.locked" type="error" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+            <span class="text-body-medium">
+              Account locked. Try again in {{ lockoutMinutes }} minute{{ lockoutMinutes !== 1 ? 's' : '' }}.
+            </span>
           </v-alert>
           <v-form v-else-if="serverConfig === null || serverConfig?.sign?.in === true" ref="form" v-model="valid">
             <v-row>
@@ -18,7 +22,9 @@
                   v-model="email"
                   :rules="[rules.required, rules.mail]"
                   label="E-mail"
-                  prepend-icon="fa fa-envelope"
+                  prepend-icon="fa-solid fa-envelope"
+                  variant="outlined"
+                  density="comfortable"
                   required
                 ></v-text-field>
                 <v-text-field
@@ -26,37 +32,66 @@
                   :type="'password'"
                   :rules="[rules.password]"
                   label="Password"
-                  prepend-icon="fa fa-key"
+                  prepend-icon="fa-solid fa-key"
+                  variant="outlined"
+                  density="comfortable"
                   required
                 ></v-text-field>
               </v-col>
             </v-row>
-            <v-row>
-              <v-col cols="6">
+            <v-row align="center">
+              <v-col cols="12" sm="6" class="d-flex align-center flex-wrap ga-2">
                 <!-- TODO fix diabled <v-btn :disabled="!valid" color="success" class="mr-4" @click="validate">Validate</v-btn> -->
-                <v-btn :flat="config.vuetify.theme.flat" :disabled="lockout.locked" color="success" class="mr-4" @click="validate">Validate</v-btn>
-                <v-btn v-if="config.oAuth.google" variant="outlined" color="secondary" :href="`${oAuth}/google`" class="text-white mr-4 blue"
-                  ><v-icon icon="fab fa-google"></v-icon>
+                <v-btn
+                  :flat="config.vuetify.theme.flat"
+                  :disabled="lockout.locked"
+                  color="primary"
+                  variant="flat"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none text-body-medium"
+                  @click="validate"
+                >
+                  Sign In
                 </v-btn>
-                <v-btn v-if="config.oAuth.apple" variant="outlined" color="secondary" :href="`${oAuth}/apple`" class="text-white mr-4 grey darken-2"
-                  ><v-icon icon="fab fa-apple"></v-icon>
+                <v-btn
+                  v-if="config.oAuth.google"
+                  variant="outlined"
+                  color="secondary"
+                  :href="`${oAuth}/google`"
+                  :class="config.vuetify.theme.rounded"
+                  icon
+                  size="small"
+                >
+                  <v-icon icon="fab fa-google"></v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="config.oAuth.apple"
+                  variant="outlined"
+                  color="secondary"
+                  :href="`${oAuth}/apple`"
+                  :class="config.vuetify.theme.rounded"
+                  icon
+                  size="small"
+                >
+                  <v-icon icon="fab fa-apple"></v-icon>
                 </v-btn>
               </v-col>
-              <v-col cols="6" class="text-right">
-                <v-btn :flat="config.vuetify.theme.flat" color="error" class="mr-4" @click="reset">Reset Form</v-btn>
+              <v-col cols="12" sm="6" class="text-sm-right">
+                <v-btn
+                  variant="text"
+                  class="text-none text-body-medium"
+                  @click="reset"
+                >
+                  Reset Form
+                </v-btn>
               </v-col>
             </v-row>
           </v-form>
-          <br />
-          <p v-if="config.sign.up">
-            <b>
-              <router-link to="/signup">Sign Up</router-link>
-            </b>
-            if you don't have an account yet :) ! or maybe
-            <b>
-              <router-link to="/forgot">reset</router-link>
-            </b>
-            your password ?
+          <p v-if="config.sign.up" class="text-body-medium mt-6">
+            <router-link to="/signup" class="text-primary font-weight-bold text-decoration-none">Sign Up</router-link>
+            if you don't have an account yet, or maybe
+            <router-link to="/forgot" class="text-primary font-weight-bold text-decoration-none">reset</router-link>
+            your password?
           </p>
         </v-container>
       </v-card>

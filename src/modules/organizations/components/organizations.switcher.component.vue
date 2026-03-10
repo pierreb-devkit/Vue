@@ -10,7 +10,7 @@
           size="small"
         >
           <v-avatar color="primary" size="24" class="mr-2">
-            <span class="text-label-small font-weight-bold" style="color: white;">
+            <span class="text-label-small font-weight-bold">
               {{ activeInitial }}
             </span>
           </v-avatar>
@@ -37,7 +37,7 @@
               size="28"
               class="mr-3"
             >
-              <span class="text-label-small font-weight-bold" style="color: white;">
+              <span class="text-label-small font-weight-bold">
                 {{ (org.name || '?').charAt(0).toUpperCase() }}
               </span>
             </v-avatar>

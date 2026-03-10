@@ -1,6 +1,6 @@
 <template>
   <v-card
-    :style="{ background: theme.current.colors.surface }"
+    color="surface"
     :flat="config.vuetify.theme.flat"
     :class="config.vuetify.theme.rounded"
     class="pa-6"

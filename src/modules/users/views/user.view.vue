@@ -1,73 +1,73 @@
 <template>
   <v-container fluid>
     <!-- Header -->
-    <v-row class="mx-2 my-1">
-      <v-icon class="ma-2" icon="fa-solid fa-user"></v-icon>
-      <h2 class="my-1 text-capitalize">{{ firstName }} {{ lastName }}</h2>
-      <span v-if="lastLoginAt" class="ml-4 my-auto text-caption text-medium-emphasis">Last login: {{ lastLoginFormatted }}</span>
+    <v-row class="mx-2 my-4" align="center">
+      <v-icon class="ma-2" icon="fa-solid fa-user" size="small"></v-icon>
+      <div>
+        <h2 class="text-headline-small font-weight-bold text-capitalize">{{ firstName }} {{ lastName }}</h2>
+        <span v-if="lastLoginAt" class="text-body-small text-medium-emphasis">Last login: {{ lastLoginFormatted }}</span>
+      </div>
       <v-spacer></v-spacer>
-      <v-btn v-if="id" class="mx-1" color="error" :flat="config.vuetify.theme.flat" icon @click.stop="removeConfirm = true">
-        <v-icon icon="fa-solid fa-trash"></v-icon>
+      <v-btn
+        v-if="id"
+        color="error"
+        variant="tonal"
+        :class="config.vuetify.theme.rounded"
+        class="text-none text-body-medium mr-2"
+        @click.stop="removeConfirm = true"
+      >
+        <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
+        Delete
       </v-btn>
-      <v-dialog v-model="removeConfirm" max-width="500">
-        <v-card>
-          <v-card-title class="headline">Delete this item ?</v-card-title>
-          <v-card-text> Are you sure you want to delete this item ? we will not be able to recover it. </v-card-text>
+      <v-dialog v-model="removeConfirm" max-width="440">
+        <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+          <v-card-title class="text-title-large font-weight-medium">Delete this item?</v-card-title>
+          <v-card-text class="text-body-medium">
+            Are you sure you want to delete this item? This action cannot be undone.
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="green-darken-1" variant="text" @click="removeConfirm = false"> Close </v-btn>
-            <v-btn color="red-darken-1" variant="text" @click="remove"> Delete </v-btn>
+            <v-btn variant="text" class="text-none text-body-medium" @click="removeConfirm = false">Cancel</v-btn>
+            <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="remove">Delete</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-btn v-if="id" class="mx-1" color="success" :flat="config.vuetify.theme.flat" :disabled="!save" icon @click="update()">
-        <v-icon icon="fa-solid fa-save"></v-icon>
+      <v-btn
+        v-if="id"
+        color="primary"
+        variant="flat"
+        :class="config.vuetify.theme.rounded"
+        class="text-none text-body-medium"
+        :disabled="!save"
+        @click="update()"
+      >
+        <v-icon icon="fa-solid fa-save" size="small" class="mr-2"></v-icon>
+        Save
       </v-btn>
     </v-row>
     <!-- Form -->
     <v-row class="pa-2">
-      <v-col cols="12" sm="12" md="12" lg="12" xl="12">
-        <v-card width="100%" class="px-10 pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
+      <v-col cols="12">
+        <v-card width="100%" class="pa-6" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <v-form ref="form" v-model="valid">
             <v-row>
-              <v-col cols="12" xs="12" sm="12" md="8" lg="9" xl="10">
-                <v-text-field v-model="firstName" label="FirstName" required></v-text-field>
-                <v-text-field v-model="lastName" label="LastName" required></v-text-field>
-                <v-text-field v-model="email" label="Email" required></v-text-field>
+              <v-col cols="12" md="8" lg="9" xl="10">
+                <v-text-field v-model="firstName" label="First Name" variant="outlined" density="comfortable" required></v-text-field>
+                <v-text-field v-model="lastName" label="Last Name" variant="outlined" density="comfortable" required></v-text-field>
+                <v-text-field v-model="email" label="Email" variant="outlined" density="comfortable" required></v-text-field>
               </v-col>
-              <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2" align="center">
+              <v-col cols="12" md="4" lg="3" xl="2" class="d-flex justify-center align-start">
                 <userAvatarComponent :user="user" :width="'200px'" :height="'200px'" :radius="'50%'" :border="'0px'" :color="'#000'" :size="512" />
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12">
-                <v-textarea v-model="bio" :rules="rules.bio" label="Bio" auto-grow clearable counter></v-textarea>
-                <v-text-field v-model="position" label="Position" required></v-text-field>
-                <v-select v-model="roles" :items="rolesItems" chips label="Users" multiple required></v-select>
+                <v-textarea v-model="bio" :rules="rules.bio" label="Bio" variant="outlined" density="comfortable" auto-grow clearable counter></v-textarea>
+                <v-text-field v-model="position" label="Position" variant="outlined" density="comfortable" required></v-text-field>
+                <v-select v-model="roles" :items="rolesItems" chips label="Roles" variant="outlined" density="comfortable" multiple required></v-select>
               </v-col>
             </v-row>
           </v-form>
-          <!-- <v-row >
-              <v-col cols="12">
-                <h4 color="gray">Images</h4>
-                <v-divider></v-divider>
-              </v-col>
-              <v-col cols="12" sm="10" md="10" lg="10">
-                <v-file-input
-                  v-model="file.avatar"
-                  accept="image/jpeg"
-                  chips
-                  show-size
-                  prepend-icon="fa-camera"
-                  label="Set New Banner"
-                ></v-file-input>
-              </v-col>
-              <v-col cols="12" sm="2" md="2" lg="2">
-                <v-btn color="primary" @click="uploadAvatar" :disabled="file.avatar ? false : true"
-                  >Upload</v-btn
-                >
-              </v-col>
-            </v-row> -->
         </v-card>
       </v-col>
     </v-row>
@@ -258,17 +258,6 @@ export default {
         }
       }
     },
-    // uploadAvatar() {
-    //   if (this.file.avatar) {
-    //     const usersStore = useUsersStore();
-    //     try {
-    //       await usersStore.uploadAvatar(this, { id: this.user.id, file: this.file.avatar });
-    //       this.$router.push(`/users/${this.user.id}`);
-    //     } catch (err) {
-    //       console.log(err);
-    //     }
-    //   }
-    // },
   },
 };
 </script>

@@ -29,14 +29,14 @@
       >
         <v-card
           class="pa-0"
-          :style="{ background: theme.current.colors.surface }"
+          color="surface"
           :flat="config.vuetify.theme.flat"
           :class="config.vuetify.theme.rounded"
         >
           <v-card-item>
             <template #prepend>
               <v-avatar color="primary" size="40">
-                <span class="text-title-medium font-weight-bold" style="color: white;">
+                <span class="text-title-medium font-weight-bold">
                   {{ (org.name || '?').charAt(0).toUpperCase() }}
                 </span>
               </v-avatar>
@@ -55,7 +55,7 @@
               size="small"
               :color="org.role === 'admin' ? 'primary' : 'secondary'"
               variant="tonal"
-              class="mr-2"
+              class="mr-2 text-capitalize"
             >
               {{ org.role }}
             </v-chip>
@@ -72,7 +72,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
-              color="secondary"
+              color="primary"
               variant="text"
               class="text-none text-body-medium"
               :to="`/organizations/${org.id || org._id}`"
@@ -90,13 +90,13 @@
       <v-col cols="12" sm="8" md="6">
         <v-card
           class="ma-6 pa-8 text-center"
-          :style="{ background: theme.current.colors.surface }"
+          color="surface"
           :flat="config.vuetify.theme.flat"
           :class="config.vuetify.theme.rounded"
         >
-          <v-icon icon="fa-solid fa-building" size="x-large" color="primary" class="mb-4" style="opacity: 0.5;"></v-icon>
+          <v-icon icon="fa-solid fa-building" size="x-large" color="primary" class="mb-4 text-medium-emphasis"></v-icon>
           <h2 class="text-title-large font-weight-medium mb-2">No organizations yet</h2>
-          <p class="text-body-medium mb-4" style="opacity: 0.7;">
+          <p class="text-body-medium text-medium-emphasis mb-4">
             Create your first organization to collaborate with your team.
           </p>
           <v-btn
