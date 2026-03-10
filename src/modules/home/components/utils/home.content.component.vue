@@ -51,15 +51,16 @@
         >
       </div>
 
-      <!-- Level 2: Subtitle (H3) -->
-      <h4
+      <!-- Level 2: Subtitle (dynamic heading level) -->
+      <component
+        :is="'h' + headingLevel"
         v-if="setup.subtitle"
         :class="['text-headline-medium text-sm-headline-large font-weight-bold mt-0 mb-4', themeColor ? '' : 'text-secondary']"
         :style="themeColor ? { color: themeColor } : {}"
       >
         <VMarkdown v-if="setup.subtitle && setup.subtitle.includes('**')" :source="setup.subtitle" class="d-inline" />
         <template v-else>{{ setup.subtitle }}</template>
-      </h4>
+      </component>
     </v-card-title>
 
     <v-card-text v-if="setup.text" :class="[computedAlignment === 'center' ? 'text-center' : 'text-left', variant === 'default' ? 'pa-0' : '']">
@@ -116,6 +117,15 @@ export default {
       type: String,
       default: 'default',
       validator: (value) => ['default', 'light', 'dark'].includes(value),
+    },
+    /**
+     * HTML heading level for the subtitle element.
+     * @type {number}
+     */
+    headingLevel: {
+      type: Number,
+      default: 2,
+      validator: (value) => [1, 2, 3, 4, 5, 6].includes(value),
     },
   },
   data() {
