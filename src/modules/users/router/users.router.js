@@ -17,7 +17,7 @@ export default [
       color: {
         border: '#000', // color icon // todo: get from config config.vuetify.theme.themes[store.state.theme].error
       },
-      roles: ['admin'], // proteced, require one of this roles
+      action: 'manage', subject: 'User', // protected, require ability
     },
   },
   {
@@ -26,7 +26,7 @@ export default [
     component: user,
     meta: {
       display: false, // hide from drawer any time
-      roles: ['admin'], // proteced, require one of this roles
+      action: 'manage', subject: 'User', // protected, require ability
     },
   },
 ];

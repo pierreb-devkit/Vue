@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia';
 import { pickBy, orderBy } from 'lodash-es';
 import { isDark } from '../../../lib/helpers/theme';
+import { ability } from '../../../lib/helpers/ability';
 import config from '../../../lib/services/config';
 
 // Variable globale pour stocker les routes
@@ -36,24 +37,34 @@ export const useCoreStore = defineStore('core', {
       this.mini = value;
     },
 
+    /**
+     * @desc Rebuild the navigation list based on current login state and CASL
+     *       abilities.  Falls back to a simple `isLoggedIn` check when no
+     *       ability rules are available (backward compatibility).
+     * @param {boolean} isLoggedIn - Whether the current user is authenticated.
+     * @returns {void}
+     */
     refreshNav(isLoggedIn) {
-      const userRoles = localStorage.getItem(`${config.cookie.prefix}UserRoles`)
-        ? localStorage.getItem(`${config.cookie.prefix}UserRoles`).split(',')
-        : [];
+      const hasAbilities = ability && ability.rules && ability.rules.length > 0;
 
       const nav = orderBy(
         pickBy(this.routes, (i) => {
           if (i.meta.display !== false) {
             // hidden item
-            if (!('roles' in i.meta)) return i; // auth undefined, always displayed
-            if (!i.meta.roles && !isLoggedIn) return i; // auth false, not logged
-            if (i.meta.roles && isLoggedIn && i.meta.roles.some((r) => userRoles.includes(r))) {
-              return i; // auth true and logged
+            if (!('action' in i.meta)) return i; // no guard, always displayed
+            if (isLoggedIn) {
+              if (hasAbilities) {
+                // Use CASL abilities when available
+                if (ability.can(i.meta.action, i.meta.subject)) return i;
+              } else {
+                // Fallback: no abilities yet (backend not updated), allow if logged in
+                return i;
+              }
             }
           }
           return null;
         }),
-        ['meta.roles'],
+        ['meta.action'],
         ['desc'],
       );
 
