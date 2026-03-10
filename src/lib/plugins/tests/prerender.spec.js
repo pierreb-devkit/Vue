@@ -31,21 +31,16 @@ vi.mock('puppeteer', () => ({
 }));
 
 // Mock createServer to avoid real HTTP server
-vi.mock('node:http', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    createServer: vi.fn(() => {
-      const server = {
-        listen: vi.fn((_port, _host, cb) => cb()),
-        address: vi.fn(() => ({ port: 54321 })),
-        close: vi.fn((cb) => cb()),
-        on: vi.fn(),
-      };
-      return server;
-    }),
-  };
-});
+const mockCreateServer = vi.fn(() => ({
+  listen: vi.fn((_port, _host, cb) => cb()),
+  address: vi.fn(() => ({ port: 54321 })),
+  close: vi.fn((cb) => cb()),
+  on: vi.fn(),
+}));
+
+vi.mock('node:http', () => ({
+  createServer: mockCreateServer,
+}));
 
 describe('prerenderPlugin', () => {
   beforeEach(() => {
