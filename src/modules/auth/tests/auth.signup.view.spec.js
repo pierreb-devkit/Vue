@@ -4,8 +4,14 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const signupMock = vi.hoisted(() => vi.fn());
+const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: vi.fn().mockResolvedValue(null) }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock }),
+}));
+
+const createOrganizationMock = vi.hoisted(() => vi.fn());
+vi.mock('../../organizations/stores/organizations.store', () => ({
+  useOrganizationsStore: () => ({ createOrganization: createOrganizationMock }),
 }));
 
 import AuthSignupView from '../views/auth.signup.view.vue';
@@ -14,7 +20,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
   oAuth: { google: false, apple: false },
-  vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  vuetify: { theme: { flat: true, maxWidth: '1200px', rounded: 'rounded-lg' } },
 };
 
 /**
@@ -40,7 +46,7 @@ const mountView = (formStub = makeFormStub()) =>
     global: {
       plugins: [createVuetify()],
       mocks: { config: mockConfig, $route: { query: {} }, $router: { push: vi.fn() } },
-      stubs: { RouterLink: true, VForm: formStub },
+      stubs: { RouterLink: true, VForm: formStub, AuthOrganizationSetupComponent: true },
     },
   });
 
@@ -48,6 +54,8 @@ describe('auth.signup.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     signupMock.mockReset();
+    fetchServerConfigMock.mockReset().mockResolvedValue(null);
+    createOrganizationMock.mockReset();
   });
 
   describe('serverConfig rendering', () => {
@@ -73,7 +81,7 @@ describe('auth.signup.view', () => {
 
   describe('validate()', () => {
     it('calls signup with exactly { email, password, firstName, lastName } — no extra arguments', async () => {
-      signupMock.mockResolvedValueOnce(undefined);
+      signupMock.mockResolvedValueOnce({ user: { roles: ['user'] }, tokenExpiresIn: 123 });
       const wrapper = mountView();
       await flushPromises();
 
@@ -115,6 +123,118 @@ describe('auth.signup.view', () => {
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('organization signup flow', () => {
+    it('does not show org step when organizations are disabled', async () => {
+      signupMock.mockResolvedValueOnce({ user: { roles: ['user'] }, tokenExpiresIn: 123 });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true } };
+      wrapper.vm.firstName = 'John';
+      wrapper.vm.lastName = 'Doe';
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('form');
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('shows success message when backend auto-created an organization', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        organization: { name: 'Acme Inc', slug: 'acme-inc' },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+      wrapper.vm.firstName = 'John';
+      wrapper.vm.lastName = 'Doe';
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('organizationWelcome');
+      expect(wrapper.vm.organizationWelcomeMessage).toContain('Acme Inc');
+      expect(wrapper.text()).toContain('Acme Inc');
+    });
+
+    it('shows joined message when backend auto-joined an organization', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        organization: { name: 'Acme Inc', slug: 'acme-inc', joined: true },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+      wrapper.vm.firstName = 'John';
+      wrapper.vm.lastName = 'Doe';
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('organizationWelcome');
+      expect(wrapper.vm.organizationWelcomeMessage).toContain("You've joined Acme Inc");
+    });
+
+    it('shows organization setup form when organizationSetupRequired is true', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        organizationSetupRequired: true,
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+      wrapper.vm.firstName = 'John';
+      wrapper.vm.lastName = 'Doe';
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('organizationSetup');
+    });
+
+    it('proceeds to app after clicking Get Started on welcome step', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'organizationWelcome';
+      wrapper.vm.organizationWelcomeMessage = 'Welcome!';
+
+      wrapper.vm.proceedToApp();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('transitions to welcome step after organization is created in setup', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'organizationSetup';
+      await flushPromises();
+
+      wrapper.vm.onOrganizationCreated({ name: 'New Org', _id: '123' });
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('organizationWelcome');
+      expect(wrapper.vm.organizationWelcomeMessage).toContain('New Org');
     });
   });
 });
