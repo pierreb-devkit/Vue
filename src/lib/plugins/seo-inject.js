@@ -10,6 +10,61 @@
 const escapeHtml = (str) =>
   String(str).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' }[char]));
 
+/**
+ * Derive the primary theme color from config's Vuetify theme definition.
+ *
+ * @param {object} config - full app config object
+ * @returns {string|null} hex color string or null when unavailable
+ */
+function getPrimaryColor(config) {
+  return config?.vuetify?.theme?.themes?.light?.colors?.primary || null;
+}
+
+/**
+ * Check whether a URL uses a safe protocol (http or https only).
+ *
+ * @param {string} url - URL string to validate
+ * @returns {boolean} true when the URL starts with http:// or https://
+ */
+function isSafeUrl(url) {
+  return /^https?:\/\//i.test(url);
+}
+
+/**
+ * Build preconnect and dns-prefetch link tags for the supplied URLs.
+ * Only URLs with http or https protocols are accepted; unsafe schemes
+ * (e.g. javascript:) are silently skipped.
+ *
+ * @param {string[]} urls - origins to preconnect to
+ * @returns {string[]} array of HTML tag strings
+ */
+function buildPreconnectTags(urls) {
+  const tags = [];
+  for (const url of urls) {
+    if (!isSafeUrl(url)) continue;
+    tags.push(`  <link rel="preconnect" href="${escapeHtml(url)}">`);
+    tags.push(`  <link rel="dns-prefetch" href="${escapeHtml(url)}">`);
+  }
+  return tags;
+}
+
+/**
+ * Build a noscript fallback block with the app title and description.
+ * Tags are only emitted when their value is non-empty to avoid
+ * semantically incorrect empty elements (e.g. empty h1).
+ *
+ * @param {string} title - page title (will be escaped)
+ * @param {string} description - page description (will be escaped)
+ * @returns {string} noscript HTML string, or an empty string when both values are empty
+ */
+function buildNoscriptBlock(title, description) {
+  let innerHtml = '';
+  if (title) innerHtml += `<h1>${escapeHtml(title)}</h1>`;
+  if (description) innerHtml += `<p>${escapeHtml(description)}</p>`;
+  if (!innerHtml) return '';
+  return `<noscript>${innerHtml}</noscript>`;
+}
+
 export function seoInjectPlugin(config) {
   const app = config?.app || {};
   const seo = app.seo || {};
@@ -28,6 +83,16 @@ export function seoInjectPlugin(config) {
         tags.push(`  <meta name="author" content="${escapeHtml(app.author)}">`);
       if (app.url)
         tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
+
+      // Theme color
+      const primaryColor = getPrimaryColor(config);
+      if (primaryColor)
+        tags.push(`  <meta name="theme-color" content="${escapeHtml(primaryColor)}">`);
+
+      // Preconnect hints
+      const preconnectUrls = seo.preconnect || [];
+      if (preconnectUrls.length)
+        tags.push(...buildPreconnectTags(preconnectUrls));
 
       // Open Graph
       if (app.title)
@@ -68,6 +133,12 @@ export function seoInjectPlugin(config) {
 
       // Inject tags before </head> (replace only the first occurrence)
       result = result.replace(/<\/head>/i, `${tags.join('\n')}\n  </head>`);
+
+      // Noscript fallback before </body>
+      if (app.title || app.description) {
+        const noscript = buildNoscriptBlock(app.title || '', app.description || '');
+        result = result.replace(/<\/body>/i, `${noscript}\n</body>`);
+      }
 
       return result;
     },

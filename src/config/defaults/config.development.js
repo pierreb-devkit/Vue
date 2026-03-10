@@ -20,6 +20,7 @@ export default {
         twitterCard: 'summary_large_image', // 'summary' | 'summary_large_image'
         twitterSite: '', // Twitter @handle (e.g. '@pierreb'), empty = omitted
       },
+      preconnect: [], // URLs to preconnect (e.g. ['https://fonts.googleapis.com'])
       schema: {
         enabled: false, // true to inject JSON-LD structured data in <head>
         type: 'Person', // Schema.org type — 'Person' | 'Organization'
