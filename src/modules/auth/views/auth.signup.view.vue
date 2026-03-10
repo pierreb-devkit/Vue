@@ -7,7 +7,29 @@
           <v-divider></v-divider>
         </v-col>
         <v-container>
+          <!-- Registration disabled -->
           <v-alert v-if="serverConfig?.sign?.up === false" type="warning" class="mb-4">Registration is currently disabled.</v-alert>
+
+          <!-- Organization welcome message (auto-created/joined) -->
+          <template v-else-if="signupStep === 'organizationWelcome'">
+            <v-alert type="success" variant="tonal" class="mb-6" prominent>
+              <div class="text-body-large font-weight-medium">
+                {{ organizationWelcomeMessage }}
+              </div>
+            </v-alert>
+            <v-row justify="center">
+              <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="proceedToApp">
+                Get Started
+              </v-btn>
+            </v-row>
+          </template>
+
+          <!-- Organization setup step (manual creation required) -->
+          <template v-else-if="signupStep === 'organizationSetup'">
+            <AuthOrganizationSetupComponent @created="onOrganizationCreated" />
+          </template>
+
+          <!-- Standard signup form -->
           <v-form v-else-if="serverConfig === null || serverConfig?.sign?.up === true" ref="form" v-model="valid">
             <v-row>
               <v-col cols="12" md="6" sm="6" class="py-0 my-0">
@@ -63,16 +85,22 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import AuthOrganizationSetupComponent from '../components/auth.organizationSetup.component.vue';
 /**
  * Component definition.
  */
 export default {
+  components: {
+    AuthOrganizationSetupComponent,
+  },
   data() {
     const theme = useTheme();
     return {
       theme,
       valid: true, // TODO: switch to false when forms will be reactive
       serverConfig: undefined,
+      signupStep: 'form',
+      organizationWelcomeMessage: '',
       firstName: '',
       lastName: '',
       email: '',
@@ -100,7 +128,12 @@ export default {
   },
   watch: {
     auth(auth) {
-      if (auth) this.$router.push(this.config.sign.route);
+      if (auth && this.signupStep === 'form') {
+        // Only auto-redirect if no org step is pending
+        if (!this.serverConfig?.organizations?.enabled) {
+          this.$router.push(this.config.sign.route);
+        }
+      }
     },
   },
   /**
@@ -112,21 +145,64 @@ export default {
     this.serverConfig = await authStore.fetchServerConfig();
   },
   methods: {
+    /**
+     * @desc Validate and submit the signup form, then handle organization flow.
+     * @returns {Promise<void>}
+     */
     async validate() {
       const form = await this.$refs.form.validate();
       if (form.valid) {
         const authStore = useAuthStore();
         try {
-          await authStore.signup({
+          const result = await authStore.signup({
             email: this.email,
             password: this.password,
             firstName: this.firstName,
             lastName: this.lastName,
           });
+
+          if (!result) return;
+
+          // Check if organizations are enabled in server config
+          if (this.serverConfig?.organizations?.enabled) {
+            if (result.organization) {
+              // Backend auto-created or auto-joined an organization
+              const organizationName = result.organization.name || result.organization.slug || 'your organization';
+              this.organizationWelcomeMessage = result.organization.joined
+                ? `Welcome! You've joined ${organizationName}.`
+                : `Welcome! Your organization "${organizationName}" has been created.`;
+              this.signupStep = 'organizationWelcome';
+            } else if (result.organizationSetupRequired) {
+              // Manual organization setup needed
+              this.signupStep = 'organizationSetup';
+            } else {
+              // Organizations enabled but no setup needed — proceed normally
+              this.$router.push(this.config.sign.route);
+            }
+          } else {
+            // Organizations not enabled — proceed as usual
+            this.$router.push(this.config.sign.route);
+          }
         } catch (err) {
           console.log(err);
         }
       }
+    },
+    /**
+     * @desc Handle successful organization creation from the setup component.
+     * @param {Object} organization - The created organization object
+     * @returns {void}
+     */
+    onOrganizationCreated(organization) {
+      this.organizationWelcomeMessage = `Welcome! Your organization "${organization.name}" has been created.`;
+      this.signupStep = 'organizationWelcome';
+    },
+    /**
+     * @desc Navigate to the main application after signup and org setup.
+     * @returns {void}
+     */
+    proceedToApp() {
+      this.$router.push(this.config.sign.route);
     },
     reset() {
       this.$refs.form.reset();
