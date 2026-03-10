@@ -51,5 +51,17 @@ export default {
   },
   header: { display: false },
   footer: { links: [], variant: 'default' },
+  api: {
+    protocol: 'http',
+    host: 'localhost',
+    port: '3000',
+    base: 'api',
+    endPoints: {
+      home: 'home',
+      auth: 'auth',
+      users: 'users',
+      tasks: 'tasks',
+    },
+  },
   cookie: { prefix: 'devkit' },
 };
