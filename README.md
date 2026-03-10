@@ -16,7 +16,7 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 | Subject      | Informations                                                                                                                                                                                                                                                                                               |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Architecture | Layered Architecture : everything is separated in layers, and the upper layers are abstractions of the lower ones, that's why every layer should only reference the immediate lower layer (vertical modules architecture)                                                                                   |
-| Security     | JWT Stateless - take a look at the [Node](https://github.com/pierreb-devkit/Node) stack for more information                                                                                                                                                                                                  |
+| Security     | JWT Stateless + CASL abilities (`@casl/ability`, `@casl/vue`) - take a look at the [Node](https://github.com/pierreb-devkit/Node) stack for more information                                                                                                                                                    |
 | CI           | [GitHub Actions](https://github.com/pierreb-devkit/Vue/actions)                                                                                                                                                                                                                                             |
 | Linter       | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)                                                                                                                                                                                                                                           |
 | Developer    | [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/pierreb-devkit/vue) <br> [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) |
@@ -28,6 +28,8 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 ### Core
 
 - **User** : classic register / auth
+- **Organizations** : create, manage members, invite, switch context (optional — controlled by backend config)
+- **CASL Abilities** : route guards + navigation + template helpers powered by `@casl/ability` and `@casl/vue`
 
 ### Examples
 
@@ -199,6 +201,10 @@ git merge devkit-vue/master
 ```
 
 > Caution: resolve conflicts manually to preserve downstream customizations before pushing.
+
+### Migration Guides
+
+- **Organizations & CASL** — see [`MIGRATION.md`](./MIGRATION.md) for step-by-step instructions on migrating downstream projects to the ability-based auth system and optional organizations module.
 
 ## :pencil2: Contribute
 

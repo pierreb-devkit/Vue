@@ -27,6 +27,18 @@ Scripts: see `package.json` → `scripts` section.
 - Put shared code in `src/modules/core` only with explicit justification
 - Keep tests organized per module: `src/modules/*/tests/`
 
+## CASL abilities & organizations conventions
+
+- **Ability helper**: `src/lib/helpers/ability.js` exports a reactive `ability` instance and `updateAbilities(rules)`.
+- **Plugin registration**: `@casl/vue`'s `abilitiesPlugin` is registered in `main.js` with the shared `ability` instance, making `$can()` and `$cannot()` available in all templates.
+- **Route guards**: Use `meta.action` + `meta.subject` (never `meta.roles`). The `beforeEach` guard in `app.router.js` checks `ability.can(action, subject)` with a fallback to `isLoggedIn` when no rules are loaded.
+- **Navigation filtering**: `core.store.js` `refreshNav()` uses the same ability check with the same fallback.
+- **Auth flow**: `updateAbilities(res.data.abilities)` is called in `signin` and `token` actions. `updateAbilities([])` is called in `signout`.
+- **Organizations module**: `src/modules/organizations/` -- full CRUD + member management + org switching. The switcher component auto-hides when disabled or single-org.
+- **Signup org step**: Controlled by `serverConfig.organizations.enabled`. Three-step flow: form -> welcome or setup -> app.
+- **Subject naming**: Use PascalCase singular nouns matching backend models (e.g. `Task`, `User`, `Organization`, `Secure`).
+- **Common actions**: `read`, `create`, `update`, `delete`, `manage` (manage = all actions).
+
 ## Always-on guardrails
 
 - Never commit secrets or credentials (`.env*`, `secrets/**`, keys, tokens)
