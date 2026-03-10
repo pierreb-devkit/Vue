@@ -4,6 +4,7 @@
 import home from '../views/home.view.vue';
 import pages from '../views/home.pages.view.vue';
 import team from '../views/home.team.view.vue';
+import notFound from '../views/home.notfound.view.vue';
 
 /**
  * Router configuration.
@@ -51,9 +52,11 @@ export default [
   },
   {
     path: '/:catchAll(.*)',
-    redirect: { name: 'Home' },
+    name: 'NotFound',
+    component: notFound,
     meta: {
       display: false, // hide from drawer any time
+      title: 'Page Not Found',
     },
   },
 ];
