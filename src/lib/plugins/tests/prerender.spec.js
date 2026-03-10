@@ -24,6 +24,7 @@ const { mockPage, mockBrowser, mockCreateServer } = vi.hoisted(() => {
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal();
   return {
+    default: { ...actual, writeFileSync: vi.fn(), mkdirSync: vi.fn(), readFileSync: vi.fn(() => '<html></html>') },
     ...actual,
     writeFileSync: vi.fn(),
     mkdirSync: vi.fn(),
@@ -35,10 +36,14 @@ vi.mock('puppeteer', () => ({
   default: { launch: vi.fn().mockResolvedValue(mockBrowser) },
 }));
 
-vi.mock('node:http', () => ({
-  default: { createServer: mockCreateServer },
-  createServer: mockCreateServer,
-}));
+vi.mock('node:http', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    default: { ...actual, createServer: mockCreateServer },
+    ...actual,
+    createServer: mockCreateServer,
+  };
+});
 
 import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
