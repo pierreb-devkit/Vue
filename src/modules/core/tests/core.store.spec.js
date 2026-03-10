@@ -1,5 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+
+// Mock the ability module — vi.hoisted ensures the variable exists before vi.mock runs
+const mockAbility = vi.hoisted(() => ({ rules: [], can: vi.fn(() => false) }));
+vi.mock('../../../lib/helpers/ability', () => ({
+  ability: mockAbility,
+}));
+
 import { useCoreStore } from '../stores/core.store';
 
 describe('Core Store', () => {
@@ -8,6 +15,10 @@ describe('Core Store', () => {
     setActivePinia(createPinia());
     // Clear localStorage
     localStorage.clear();
+    // Reset ability mock
+    mockAbility.rules = [];
+    mockAbility.can.mockReset();
+    mockAbility.can.mockReturnValue(false);
   });
 
   it('should initialize with default state', () => {
@@ -56,18 +67,19 @@ describe('Core Store', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
-      { path: '/user', name: 'user', meta: { display: true, roles: ['user'] } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
 
-    // Not logged in
+    // Not logged in — only public routes
     coreStore.refreshNav(false);
     expect(coreStore.nav.length).toBeGreaterThan(0);
 
-    // Logged in with roles
-    localStorage.setItem('devkitUserRoles', 'admin,user');
+    // Logged in with abilities
+    mockAbility.rules = [{ action: 'manage', subject: 'User' }];
+    mockAbility.can.mockReturnValue(true);
     coreStore.refreshNav(true);
     expect(coreStore.nav.length).toBeGreaterThan(0);
   });
@@ -97,12 +109,12 @@ describe('Core Store', () => {
     expect(hiddenRoute).toBeUndefined();
   });
 
-  it('should show routes without roles when not logged in', () => {
+  it('should show routes without action when not logged in', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/public', name: 'public', meta: { display: true, roles: false } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+      { path: '/public', name: 'public', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -115,7 +127,7 @@ describe('Core Store', () => {
     expect(adminRoute).toBeUndefined();
   });
 
-  it('should handle routes without meta.roles property', () => {
+  it('should handle routes without meta.action property', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
@@ -134,12 +146,11 @@ describe('Core Store', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
-      { path: '/user', name: 'user', meta: { display: true, roles: ['user'] } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.clear();
     coreStore.refreshNav(false);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
@@ -147,16 +158,17 @@ describe('Core Store', () => {
     expect(coreStore.nav.find((r) => r.name === 'user')).toBeUndefined();
   });
 
-  it('should show role-protected routes when logged in with matching roles', () => {
+  it('should show guarded routes when logged in with matching abilities', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
-      { path: '/user', name: 'user', meta: { display: true, roles: ['user'] } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('devkitUserRoles', 'admin,user');
+    mockAbility.rules = [{ action: 'manage', subject: 'all' }];
+    mockAbility.can.mockReturnValue(true);
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
@@ -164,31 +176,33 @@ describe('Core Store', () => {
     expect(coreStore.nav.find((r) => r.name === 'user')).toBeDefined();
   });
 
-  it('should hide role-protected routes when logged in but roles do not match', () => {
+  it('should hide guarded routes when logged in but abilities do not match', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('devkitUserRoles', 'user');
+    mockAbility.rules = [{ action: 'read', subject: 'Task' }];
+    mockAbility.can.mockReturnValue(false);
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
     expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
   });
 
-  it('should always hide routes with display: false even when logged in with matching roles', () => {
+  it('should always hide routes with display: false even when logged in with matching abilities', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/signin', name: 'signin', meta: { display: false } },
-      { path: '/admin-hidden', name: 'admin-hidden', meta: { display: false, roles: ['admin'] } },
+      { path: '/admin-hidden', name: 'admin-hidden', meta: { display: false, action: 'manage', subject: 'User' } },
       { path: '/', name: 'home', meta: { display: true } },
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.setItem('devkitUserRoles', 'admin');
+    mockAbility.rules = [{ action: 'manage', subject: 'all' }];
+    mockAbility.can.mockReturnValue(true);
     coreStore.refreshNav(true);
 
     expect(coreStore.nav.find((r) => r.name === 'signin')).toBeUndefined();
@@ -196,16 +210,33 @@ describe('Core Store', () => {
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
   });
 
-  it('should not show role routes when logged in but no roles in localStorage', () => {
+  it('should fallback to isLoggedIn when no ability rules are loaded', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
       { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, roles: ['admin'] } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
-    localStorage.clear();
+    // No ability rules — empty
+    mockAbility.rules = [];
     coreStore.refreshNav(true);
+
+    // Should show admin via fallback since user is logged in
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'admin')).toBeDefined();
+  });
+
+  it('should not show guarded routes when not logged in even without ability rules', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+    ];
+
+    coreStore.init(mockRoutes);
+    mockAbility.rules = [];
+    coreStore.refreshNav(false);
 
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
     expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();

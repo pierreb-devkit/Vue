@@ -22,7 +22,7 @@ export default [
     component: task,
     meta: {
       display: false, // hide from drawer any time
-      roles: ['user'], // proteced, require one of this roles
+      action: 'read', subject: 'Task', // protected, require ability
     },
   },
   {
@@ -31,7 +31,7 @@ export default [
     component: task,
     meta: {
       display: false, // hide from drawer any time
-      roles: ['user'], // proteced, require one of this roles
+      action: 'read', subject: 'Task', // protected, require ability
     },
   },
 ];
