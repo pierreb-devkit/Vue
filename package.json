@@ -45,7 +45,7 @@
     "@tryghost/content-api": "^1.12.5",
     "@unhead/vue": "^2.1.11",
     "aos": "^2.3.4",
-    "unhead": "^2.1.10",
+    "unhead": "^2.1.12",
     "axios": "^1.13.6",
     "dayjs": "^1.11.19",
     "dompurify": "^3.3.2",
