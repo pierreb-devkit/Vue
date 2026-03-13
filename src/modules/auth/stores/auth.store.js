@@ -8,6 +8,35 @@ import { useCoreStore } from '../../core/stores/core.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 
 /**
+ * @desc Deduce firstName and lastName from an email address.
+ * - "firstname.lastname@domain" → capitalize both parts
+ * - "firstname@domain" (no dot) → use as firstName, leave lastName empty
+ * @param {string} email - The user's email address.
+ * @returns {{ firstName: string, lastName: string }}
+ */
+function deduceNamesFromEmail(email) {
+  const local = (email || '').split('@')[0] || '';
+  if (!local) return { firstName: '', lastName: '' };
+
+  const parts = local.split(/[._-]/).filter((p) => /^[a-zA-Z]+$/.test(p));
+  const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+  if (parts.length >= 2) {
+    return {
+      firstName: capitalize(parts[0]),
+      lastName: capitalize(parts[1]),
+    };
+  }
+
+  if (parts.length === 1) {
+    return { firstName: capitalize(parts[0]), lastName: '' };
+  }
+
+  // No valid name parts found
+  return { firstName: '', lastName: '' };
+}
+
+/**
  * Store definition.
  */
 export const useAuthStore = defineStore('auth', {
@@ -15,6 +44,7 @@ export const useAuthStore = defineStore('auth', {
     cookieExpire: 0,
     auth: false,
     user: null,
+    pendingRequests: [],
     mail: {
       status: false,
       message: '',
@@ -82,6 +112,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
+        if (res.data.pendingRequests) this.pendingRequests = res.data.pendingRequests;
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
@@ -112,6 +143,13 @@ export const useAuthStore = defineStore('auth', {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
 
+      // Deduce firstName/lastName from email if not explicitly provided
+      if (!params.firstName && !params.lastName) {
+        const deduced = deduceNamesFromEmail(params.email);
+        if (deduced.firstName) params.firstName = deduced.firstName;
+        if (deduced.lastName) params.lastName = deduced.lastName;
+      }
+
       try {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/signup`, params);
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
@@ -133,6 +171,7 @@ export const useAuthStore = defineStore('auth', {
       this.auth = false;
       this.cookieExpire = 0;
       this.user = null;
+      this.pendingRequests = [];
 
       updateAbilities([]);
 
@@ -143,6 +182,7 @@ export const useAuthStore = defineStore('auth', {
 
     async refreshAbilities() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const coreStore = useCoreStore();
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
         if (res.data.abilities) {
@@ -151,6 +191,8 @@ export const useAuthStore = defineStore('auth', {
         if (res.data.user) {
           this.user = res.data.user;
         }
+        this.pendingRequests = res.data.pendingRequests || [];
+        coreStore.refreshNav(this.isLoggedIn);
       } catch {
         // If token refresh fails, sign out
         this.signout();
@@ -241,4 +283,5 @@ export const useAuthStore = defineStore('auth', {
 /**
  * Exports.
  */
+export { deduceNamesFromEmail };
 export default useAuthStore;

@@ -96,7 +96,7 @@ export const useHomeStore = defineStore('home', {
       try {
         const tasks = await axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
         const releases = await axios.get(`${api}/${config.api.endPoints.home}/releases`);
-        const users = await axios.get(`${api}/${config.api.endPoints.users}/stats`);
+        const users = await axios.get(`${api}/${config.api.endPoints.account}/stats`);
 
         if (this.statistics) {
           this.statistics[0].value = tasks.data.data;

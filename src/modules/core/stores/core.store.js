@@ -19,6 +19,7 @@ export const useCoreStore = defineStore('core', {
     theme: 'light',
     mini: false,
     nav: [],
+    navBottom: [],
     routes: [],
   }),
 
@@ -38,37 +39,29 @@ export const useCoreStore = defineStore('core', {
     },
 
     /**
-     * @desc Rebuild the navigation list based on current login state and CASL
-     *       abilities.  Falls back to a simple `isLoggedIn` check when no
-     *       ability rules are available (backward compatibility).
+     * @desc Rebuild the navigation list based on current login state and CASL abilities.
      * @param {boolean} isLoggedIn - Whether the current user is authenticated.
      * @returns {void}
      */
     refreshNav(isLoggedIn) {
-      const hasAbilities = ability && ability.rules && ability.rules.length > 0;
+      const visible = pickBy(this.routes, (i) => {
+        if (i.meta.display !== false) {
+          if (!('action' in i.meta)) return i; // no guard, always displayed
+          if (isLoggedIn && ability.can(i.meta.action, i.meta.subject)) return i;
+        }
+        return null;
+      });
 
-      const nav = orderBy(
-        pickBy(this.routes, (i) => {
-          if (i.meta.display !== false) {
-            // hidden item
-            if (!('action' in i.meta)) return i; // no guard, always displayed
-            if (isLoggedIn) {
-              if (hasAbilities) {
-                // Use CASL abilities when available
-                if (ability.can(i.meta.action, i.meta.subject)) return i;
-              } else {
-                // Fallback: no abilities yet (backend not updated), allow if logged in
-                return i;
-              }
-            }
-          }
-          return null;
-        }),
+      this.nav = orderBy(
+        pickBy(visible, (i) => i.meta.position !== 'bottom'),
         ['meta.action'],
         ['desc'],
       );
-
-      this.nav = nav;
+      this.navBottom = orderBy(
+        pickBy(visible, (i) => i.meta.position === 'bottom'),
+        ['meta.action'],
+        ['desc'],
+      );
     },
   },
 });

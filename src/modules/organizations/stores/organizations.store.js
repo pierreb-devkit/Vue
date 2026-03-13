@@ -21,6 +21,7 @@ export const useOrganizationsStore = defineStore('organizations', {
     currentOrganization: null,
     organizations: [],
     members: [],
+    adminPendingRequests: [],
   }),
 
   actions: {
@@ -30,13 +31,9 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async fetchOrganizations() {
       const api = apiBase();
-      try {
-        const res = await axios.get(`${api}/organizations`);
-        this.organizations = res.data.data;
-        return this.organizations;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.get(`${api}/organizations`);
+      this.organizations = res.data.data;
+      return this.organizations;
     },
 
     /**
@@ -46,13 +43,9 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async fetchOrganization(organizationId) {
       const api = apiBase();
-      try {
-        const res = await axios.get(`${api}/organizations/${organizationId}`);
-        this.currentOrganization = res.data.data;
-        return this.currentOrganization;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.get(`${api}/organizations/${organizationId}`);
+      this.currentOrganization = res.data.data;
+      return this.currentOrganization;
     },
 
     /**
@@ -62,13 +55,9 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async createOrganization(data) {
       const api = apiBase();
-      try {
-        const res = await axios.post(`${api}/organizations`, data);
-        this.currentOrganization = res.data.data;
-        return this.currentOrganization;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.post(`${api}/organizations`, data);
+      this.currentOrganization = res.data.data;
+      return this.currentOrganization;
     },
 
     /**
@@ -79,13 +68,9 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async updateOrganization(organizationId, data) {
       const api = apiBase();
-      try {
-        const res = await axios.put(`${api}/organizations/${organizationId}`, data);
-        this.currentOrganization = res.data.data;
-        return this.currentOrganization;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.put(`${api}/organizations/${organizationId}`, data);
+      this.currentOrganization = res.data.data;
+      return this.currentOrganization;
     },
 
     /**
@@ -95,13 +80,9 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async deleteOrganization(organizationId) {
       const api = apiBase();
-      try {
-        await axios.delete(`${api}/organizations/${organizationId}`);
-        this.currentOrganization = null;
-        this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
-      } catch (err) {
-        console.log(err);
-      }
+      await axios.delete(`${api}/organizations/${organizationId}`);
+      this.currentOrganization = null;
+      this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
     },
 
     /**
@@ -111,57 +92,43 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async switchOrganization(organizationId) {
       const api = apiBase();
-      try {
-        const res = await axios.post(`${api}/organizations/${organizationId}/switch`);
-        this.currentOrganization = this.organizations.find((org) => org.id === organizationId || org._id === organizationId) || null;
-        // Update JWT abilities if returned
-        if (res.data.abilities) {
-          updateAbilities(res.data.abilities);
-        }
-        // Refresh user data in auth store
-        const authStore = useAuthStore();
-        if (res.data.user) {
-          authStore.user = res.data.user;
-        }
-        if (res.data.tokenExpiresIn) {
-          authStore.cookieExpire = res.data.tokenExpiresIn;
-          localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-        }
-      } catch (err) {
-        console.log(err);
+      const res = await axios.post(`${api}/organizations/${organizationId}/switch`);
+      this.currentOrganization = this.organizations.find((org) => org.id === organizationId || org._id === organizationId) || null;
+      // Update JWT abilities if returned
+      if (res.data.abilities) {
+        updateAbilities(res.data.abilities);
+      }
+      // Refresh user data in auth store
+      const authStore = useAuthStore();
+      if (res.data.user) {
+        authStore.user = res.data.user;
+      }
+      if (res.data.tokenExpiresIn) {
+        authStore.cookieExpire = res.data.tokenExpiresIn;
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
       }
     },
 
     /**
      * @desc Fetch members of an organization.
      * @param {string} organizationId - The organization ID
+     * @param {string} params - Pagination params (page&perPage&search)
      * @returns {Promise<Array>} Resolved list of members
      */
-    async fetchMembers(organizationId) {
+    async fetchMembers(organizationId, params) {
       const api = apiBase();
-      try {
-        const res = await axios.get(`${api}/organizations/${organizationId}/members`);
-        this.members = res.data.data;
-        return this.members;
-      } catch (err) {
-        console.log(err);
+      let url = `${api}/organizations/${organizationId}/members`;
+      if (params) {
+        const parts = params.split('&');
+        const query = new URLSearchParams();
+        if (parts[0]) query.set('page', parts[0]);
+        if (parts[1]) query.set('perPage', parts[1]);
+        if (parts[2]) query.set('search', parts[2]);
+        url += `?${query.toString()}`;
       }
-    },
-
-    /**
-     * @desc Invite a new member to an organization.
-     * @param {string} organizationId - The organization ID
-     * @param {Object} data - Invite data (email, role)
-     * @returns {Promise<Object>} Resolved invite result
-     */
-    async inviteMember(organizationId, data) {
-      const api = apiBase();
-      try {
-        const res = await axios.post(`${api}/organizations/${organizationId}/members/invite`, data);
-        return res.data.data;
-      } catch (err) {
-        console.log(err);
-      }
+      const res = await axios.get(url);
+      this.members = res.data.data;
+      return this.members;
     },
 
     /**
@@ -173,17 +140,13 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async changeMemberRole(organizationId, memberId, role) {
       const api = apiBase();
-      try {
-        const res = await axios.put(`${api}/organizations/${organizationId}/members/${memberId}`, { role });
-        // Update member in local state
-        const index = this.members.findIndex((m) => m.id === memberId || m._id === memberId);
-        if (index !== -1) {
-          this.members[index] = res.data.data;
-        }
-        return res.data.data;
-      } catch (err) {
-        console.log(err);
+      const res = await axios.put(`${api}/organizations/${organizationId}/members/${memberId}`, { role });
+      // Update member in local state
+      const index = this.members.findIndex((m) => m.id === memberId || m._id === memberId);
+      if (index !== -1) {
+        this.members[index] = res.data.data;
       }
+      return res.data.data;
     },
 
     /**
@@ -194,11 +157,21 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async removeMember(organizationId, memberId) {
       const api = apiBase();
-      try {
-        await axios.delete(`${api}/organizations/${organizationId}/members/${memberId}`);
-        this.members = this.members.filter((m) => m.id !== memberId && m._id !== memberId);
-      } catch (err) {
-        console.log(err);
+      await axios.delete(`${api}/organizations/${organizationId}/members/${memberId}`);
+      this.members = this.members.filter((m) => m.id !== memberId && m._id !== memberId);
+    },
+
+    /**
+     * @desc Leave an organization
+     * @param {string} organizationId
+     * @returns {Promise<void>}
+     */
+    async leaveOrganization(organizationId) {
+      const api = apiBase();
+      await axios.post(`${api}/organizations/${organizationId}/leave`);
+      this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
+      if (this.currentOrganization && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)) {
+        this.currentOrganization = null;
       }
     },
 
@@ -209,6 +182,127 @@ export const useOrganizationsStore = defineStore('organizations', {
     resetOrganization() {
       this.currentOrganization = null;
       this.members = [];
+    },
+
+    /**
+     * @desc Create a membership request to join an organization.
+     * @param {string} organizationId - The organization ID to request joining
+     * @returns {Promise<Object>} The created request
+     */
+    async createJoinRequest(organizationId) {
+      const api = apiBase();
+      const res = await axios.post(`${api}/organizations/${organizationId}/requests`);
+      return res.data.data;
+    },
+
+    /**
+     * @desc Fetch pending membership requests for an organization (owner/admin only).
+     * @param {string} organizationId - The organization ID
+     * @returns {Promise<Array>} List of pending requests
+     */
+    async fetchPendingRequests(organizationId) {
+      const api = apiBase();
+      const res = await axios.get(`${api}/organizations/${organizationId}/requests`);
+      return res.data.data || [];
+    },
+
+    /**
+     * @desc Approve a membership request.
+     * @param {string} organizationId - The organization ID
+     * @param {string} requestId - The request ID to approve
+     * @returns {Promise<Object>} The approved request
+     */
+    async approveRequest(organizationId, requestId) {
+      const api = apiBase();
+      const res = await axios.put(`${api}/organizations/${organizationId}/requests/${requestId}/approve`);
+      this.fetchAdminPendingRequests().catch(() => {});
+      return res.data.data;
+    },
+
+    /**
+     * @desc Reject a membership request.
+     * @param {string} organizationId - The organization ID
+     * @param {string} requestId - The request ID to reject
+     * @returns {Promise<Object>} The rejected request
+     */
+    async rejectRequest(organizationId, requestId) {
+      const api = apiBase();
+      const res = await axios.put(`${api}/organizations/${organizationId}/requests/${requestId}/reject`);
+      this.fetchAdminPendingRequests().catch(() => {});
+      return res.data.data;
+    },
+
+    /**
+     * @desc Fetch the authenticated user's own membership requests.
+     * @returns {Promise<Array>} List of user's requests
+     */
+    async fetchMyRequests() {
+      const api = apiBase();
+      const res = await axios.get(`${api}/membership-requests/mine`);
+      return res.data.data || [];
+    },
+
+    /**
+     * @desc Search organizations matching the current user's email domain.
+     * @return {Promise<Array>}
+     */
+    async searchOrganizationsByDomain() {
+      const api = apiBase();
+      const res = await axios.get(`${api}/organizations/search`);
+      return res.data.data || [];
+    },
+
+    /**
+     * @desc Invite a member to an organization by email
+     * @param {string} organizationId
+     * @param {string} email
+     * @returns {Promise<Object>} Resolved invite data
+     */
+    async inviteMember(organizationId, email) {
+      const api = apiBase();
+      const res = await axios.post(`${api}/organizations/${organizationId}/invites`, { email });
+      return res.data.data;
+    },
+
+    /**
+     * @desc Get invite details by token
+     * @param {string} token
+     * @returns {Promise<Object>} Resolved invite data
+     */
+    async getInvite(token) {
+      const api = apiBase();
+      const res = await axios.get(`${api}/invites/${token}`);
+      return res.data.data;
+    },
+
+    /**
+     * @desc Fetch pending request counts for all orgs where user is owner/admin.
+     * @returns {Promise<void>}
+     */
+    async fetchAdminPendingRequests() {
+      const orgs = await this.fetchOrganizations();
+      const results = await Promise.allSettled(
+        (orgs || []).map(async (org) => {
+          const requests = await this.fetchPendingRequests(org._id || org.id);
+          return requests.length > 0
+            ? { organizationId: org._id || org.id, organizationName: org.name, count: requests.length }
+            : null;
+        }),
+      );
+      this.adminPendingRequests = results
+        .filter((r) => r.status === 'fulfilled' && r.value)
+        .map((r) => r.value);
+    },
+
+    /**
+     * @desc Accept an organization invite
+     * @param {string} token
+     * @returns {Promise<Object>} Resolved acceptance data
+     */
+    async acceptInvite(token) {
+      const api = apiBase();
+      const res = await axios.post(`${api}/invites/${token}/accept`);
+      return res.data.data;
     },
   },
 });

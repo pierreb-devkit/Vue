@@ -59,7 +59,7 @@ src/modules/{name}/
 ├── components/       # {module}.{name}.component.vue
 ├── views/            # {module}.{name}.view.vue (route targets)
 ├── stores/           # Pinia stores
-├── config/           # config.development.js, config.<env>.js
+├── config/           # config.<name>.js (module defaults)
 ├── router/           # Route definitions
 └── tests/            # Vitest tests
 ```

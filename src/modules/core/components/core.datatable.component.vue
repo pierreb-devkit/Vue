@@ -1,73 +1,85 @@
 <template>
-  <v-card width="100%" class="datatable" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
-    <v-card-title>
-      {{ title }}
+  <v-card width="100%" class="datatable" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+    <v-card-title class="d-flex align-center">
+      <span class="text-title-medium">{{ title }}</span>
       <v-spacer></v-spacer>
-      <v-text-field v-if="search != null ? search : true" v-model="textSearch" label="Search" hide-details></v-text-field>
+      <v-text-field
+        v-if="search"
+        v-model="textSearch"
+        placeholder="Search"
+        hide-details
+        density="compact"
+        variant="outlined"
+        prepend-inner-icon="fa-solid fa-magnifying-glass"
+        style="max-width: 280px"
+        :class="config.vuetify.theme.rounded"
+      ></v-text-field>
     </v-card-title>
     <v-progress-linear :active="loading" indeterminate color="secondary"></v-progress-linear>
     <v-table v-if="items && items.length > 0" fixed-header>
       <thead>
         <tr>
-          <th v-for="header in headers" :key="header.text" class="text-left">{{ header.text }}</th>
+          <th v-for="header in headers" :key="header.text" class="text-left text-label-medium">{{ header.text }}</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item._id">
-          <td v-for="header in headers" :key="header.text">
+        <tr v-for="item in items" :key="item._id || item.id">
+          <td v-for="header in headers" :key="header.text" class="text-body-medium">
             <span v-if="header.value">
               <span v-if="header.kind === 'date' && header.format">
-                {{ dayjs(new Date(lodash.get(item, header.value))).format(header.format) }}
+                {{ lodash.get(item, header.value) && new Date(lodash.get(item, header.value)).getTime() > 0 ? dayjs(new Date(lodash.get(item, header.value))).format(header.format) : '—' }}
               </span>
               <span v-else-if="header.kind === 'icon'">
-                <v-btn v-if="header.path && header.pathValue" :to="`${header.path}${lodash.get(item, header.pathValue)}`" variant="flat" icon>
-                  <v-icon :color="header.color" :icon="header.icon"></v-icon>
+                <v-btn v-if="header.path && header.pathValue" :to="`${header.path}${lodash.get(item, header.pathValue)}`" variant="text" icon size="small">
+                  <v-icon :color="header.color" :icon="header.icon" size="small"></v-icon>
                 </v-btn>
                 <v-btn
                   v-else-if="header.dispatch && header.param"
-                  variant="flat"
+                  variant="text"
                   icon
+                  size="small"
                   @click="dispatch(header.dispatch, header.param, lodash.get(item, header.param), header.refresh)"
                 >
-                  <v-icon :color="header.color" :icon="header.icon"></v-icon>
+                  <v-icon :color="header.color" :icon="header.icon" size="small"></v-icon>
                 </v-btn>
-                <v-btn v-else variant="flat" icon>
-                  <v-icon :color="header.color" :icon="header.icon"></v-icon>
+                <v-btn v-else variant="text" icon size="small">
+                  <v-icon :color="header.color" :icon="header.icon" size="small"></v-icon>
                 </v-btn>
               </span>
               <span v-else-if="header.kind === 'email'">
-                <a :href="`mailto:${lodash.get(item, header.value)}`">{{ lodash.get(item, header.value) }}</a>
+                <a :href="`mailto:${lodash.get(item, header.value)}`" class="text-primary">{{ lodash.get(item, header.value) }}</a>
               </span>
               <span v-else-if="header.kind === 'avatar'">
                 <userAvatarComponent :user="item" :width="'37px'" :height="'37px'" :radius="'50%'" :border="'0px'" :color="'#000'" />
               </span>
               <span v-else-if="header.kind === 'capitalize'" class="text-capitalize"> {{ lodash.get(item, header.value) }}</span>
               <span v-else-if="header.kind === 'link' && header.path && header.pathValue">
-                <v-btn :to="`${header.path}${lodash.get(item, header.pathValue)}`" :class="`text-${header.color} text-capitalize`" variant="flat">
+                <v-btn :to="`${header.path}${lodash.get(item, header.pathValue)}`" :class="`text-${header.color} text-capitalize`" variant="text">
                   {{ lodash.get(item, header.value) }}
                 </v-btn>
               </span>
               <span v-else-if="header.kind === 'tags'">
-                <v-chip v-for="(role, index) in lodash.get(item, header.value)" :key="index" class="mr-2" :index="index">{{ role }}</v-chip>
+                <v-chip v-for="(role, index) in lodash.get(item, header.value)" :key="index" class="mr-1" size="small" :index="index">{{ role }}</v-chip>
               </span>
               <span v-else-if="header.kind === 'status'">
-                <v-btn variant="flat" icon>
-                  <v-icon v-if="lodash.get(item, header.value) === true" color="green" icon="fa-solid fa-check" />
-                  <v-icon v-else-if="lodash.get(item, header.value) === false" color="red" icon="fa-solid fa-times" />
-                  <v-icon v-else class="rotating" color="orange" icon="fa-solid fa-spinner" />
-                </v-btn>
+                <v-icon v-if="lodash.get(item, header.value) === true" color="success" icon="fa-solid fa-check" size="small" />
+                <v-icon v-else-if="lodash.get(item, header.value) === false" color="error" icon="fa-solid fa-times" size="small" />
+                <v-icon v-else class="rotating" color="warning" icon="fa-solid fa-spinner" size="small" />
               </span>
               <span v-else-if="header.kind === 'superior'">
-                <span v-if="lodash.get(item, header.value) > header.condition" class="text-green">
+                <span v-if="lodash.get(item, header.value) > header.condition" class="text-success">
                   {{ lodash.get(item, header.value) }}
                 </span>
-                <span v-else class="text-red">{{ lodash.get(item, header.value) || header.condition }}</span>
+                <span v-else class="text-error">{{ lodash.get(item, header.value) || header.condition }}</span>
               </span>
               <span v-else-if="header.kind === 'inferior'">
-                <span v-if="lodash.get(item, header.value) < header.condition" color="green">
+                <span v-if="lodash.get(item, header.value) < header.condition" class="text-success">
                   {{ lodash.get(item, header.value) }}
                 </span>
-                <span v-else color="red">{{ lodash.get(item, header.value) || header.condition }}</span>
+                <span v-else class="text-error">{{ lodash.get(item, header.value) || header.condition }}</span>
+              </span>
+              <span v-else-if="header.kind === 'slot'">
+                <slot :name="header.slotName || header.value" :item="item" :header="header"></slot>
               </span>
               <span v-else>{{ lodash.get(item, header.value) }}</span>
             </span>
@@ -75,29 +87,40 @@
         </tr>
       </tbody>
     </v-table>
-    <v-row v-if="!items.length || items.length === 0">
-      <v-col cols="12">
-        <h2 class="text-center pa-12">No Items found :( !</h2>
-      </v-col>
-    </v-row>
-    <v-card-actions>
+    <v-empty-state
+      v-if="!items.length"
+      icon="fa-solid fa-inbox"
+      text="No items found"
+      class="py-8"
+    ></v-empty-state>
+    <v-divider></v-divider>
+    <v-card-actions class="px-4 py-4">
       <v-switch
-        v-if="auto != null ? auto : true"
+        v-if="auto"
         v-model="refresh"
         class="ml-2"
         label="Auto Refresh"
-        :color="theme.current.colors.secondary"
+        density="compact"
+        color="secondary"
+        hide-details
       ></v-switch>
       <v-spacer></v-spacer>
-      <v-select v-model="options.itemsPerPage" :items="perPage" label="Items per page" style="max-width: 150px; width: 150px"></v-select>
-      <v-btn :disabled="options.page <= 1" variant="flat" class="mb-8" icon @click="switchPage('-')">
-        <v-icon icon="fa-solid fa-angle-left"></v-icon>
+      <span class="text-body-small text-medium-emphasis mr-2">Per page</span>
+      <v-select
+        v-model="options.itemsPerPage"
+        :items="perPage"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 80px"
+        :class="config.vuetify.theme.rounded"
+      ></v-select>
+      <v-btn :disabled="options.page <= 1" variant="text" icon size="small" class="ml-2" @click="switchPage('-')">
+        <v-icon icon="fa-solid fa-angle-left" size="small"></v-icon>
       </v-btn>
-      <v-btn variant="flat" disabled class="mb-8">
-        {{ options.page }}
-      </v-btn>
-      <v-btn :disabled="items.length < options.itemsPerPage" variant="flat" class="mb-8 mr-2" icon @click="switchPage('+')">
-        <v-icon icon="fa-solid fa-angle-right"></v-icon>
+      <span class="text-body-medium mx-1">{{ options.page }}</span>
+      <v-btn :disabled="items.length < options.itemsPerPage" variant="text" icon size="small" class="mr-1" @click="switchPage('+')">
+        <v-icon icon="fa-solid fa-angle-right" size="small"></v-icon>
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -108,9 +131,8 @@
  * Module dependencies.
  */
 import { debounce } from 'lodash-es';
-import { useTheme } from 'vuetify';
 import * as tools from '../../../lib/helpers/tools';
-import userAvatarComponent from '../../users/components/user.avatar.component.vue';
+import userAvatarComponent from './user.avatar.component.vue';
 /**
  * Component definition.
  */
@@ -142,7 +164,7 @@ export default {
     },
     auto: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     search: {
       type: Boolean,
@@ -155,9 +177,7 @@ export default {
   },
   emits: ['dispatch'],
   data() {
-    const theme = useTheme();
     return {
-      theme,
       refresh: false,
       textSearch: '',
       loading: true,
@@ -168,11 +188,7 @@ export default {
       },
     };
   },
-  computed: {
-    themeName() {
-      return this.theme.name;
-    },
-  },
+  computed: {},
   watch: {
     options: {
       async handler(options) {
@@ -201,20 +217,20 @@ export default {
     );
   },
   mounted() {
-    window.setInterval(() => {
-      if (this.refresh) {
-        this.loading = true;
-        this.callStoreAction(tools.pageRequest(1, this.options.itemsPerPage, this.textSearch)).then(() => {
-          this.loading = false;
-        });
-        setTimeout(() => {
-          this.loading = false;
-        }, 30000);
-      }
-    }, 5000);
+    if (this.auto) {
+      this.refreshInterval = window.setInterval(() => {
+        if (this.refresh) {
+          this.loading = true;
+          this.callStoreAction(tools.pageRequest(1, this.options.itemsPerPage, this.textSearch)).then(() => {
+            this.loading = false;
+          });
+        }
+      }, 5000);
+    }
   },
   beforeUnmount() {
     this.watchtextSearch();
+    if (this.refreshInterval) clearInterval(this.refreshInterval);
   },
   methods: {
     /**

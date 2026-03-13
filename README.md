@@ -106,28 +106,28 @@ Configuration is split between a **global** file and **per-module** files, then 
 
 ### File layout
 
+Config files follow the `module.env.kind.js` naming convention.
+
 ```text
 src/config/defaults/
-  config.development.js          ← global defaults (app, api, port, cookie, analytics, whitelists)
-  config.production.js           ← production overrides (optional)
-  config.test.js                 ← test overrides (optional)
+  development.config.js          ← infra only (app, port, api, cookie, analytics)
+  production.config.js           ← production overrides (optional)
+  test.config.js                 ← test overrides (optional)
 
 src/modules/<name>/config/
-  config.development.js          ← module defaults (e.g. vuetify, header, footer, sign, oAuth, home)
-  config.<env>.js                ← module env overrides (optional)
+  <name>.development.config.js   ← module defaults (e.g. auth.development.config.js)
 ```
 
 ### Merge order (priority ascending)
 
 | Layer | Source | Example |
 |-------|--------|---------|
-| 1 | Module development defaults | `src/modules/*/config/config.development.js` |
-| 2 | Global development defaults | `src/config/defaults/config.development.js` |
-| 3 | Module env overrides | `src/modules/*/config/config.<env>.js` |
-| 4 | Global env overrides | `src/config/defaults/config.<env>.js` |
-| 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
+| 1 | Module defaults | `src/modules/*/config/*.development.config.js` |
+| 2 | Global development defaults | `src/config/defaults/development.config.js` |
+| 3 | Global env overrides | `src/config/defaults/<env>.config.js` |
+| 4 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
 
-Layers 3–4 are only applied when `NODE_ENV` is not `development`.
+Layer 3 is only applied when `NODE_ENV` is not `development`.
 
 ### Merge semantics
 
@@ -150,13 +150,10 @@ When running a downstream project that clones this stack, set `NODE_ENV` to the 
 
 ```text
 src/config/defaults/
-  config.myproject.js            ← global project overrides (optional)
-
-src/modules/<name>/config/
-  config.myproject.js            ← module project overrides (optional)
+  myproject.config.js            ← global project overrides
 ```
 
-The generator discovers files named `config.${NODE_ENV}.js` — files without the `config.` prefix are ignored.
+The generator discovers files named `${NODE_ENV}.config.js` in `src/config/defaults/` — module config files are always loaded regardless of environment.
 
 > **Migration note:** if your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
 
@@ -204,7 +201,7 @@ git merge devkit-vue/master
 
 ### Migration Guides
 
-- **Organizations & CASL** — see [`MIGRATION.md`](./MIGRATION.md) for step-by-step instructions on migrating downstream projects to the ability-based auth system and optional organizations module.
+- **Organizations & CASL** — see [`MIGRATIONS.md`](./MIGRATIONS.md) for step-by-step instructions on migrating downstream projects to the ability-based auth system and optional organizations module.
 
 ## :pencil2: Contribute
 

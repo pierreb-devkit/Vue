@@ -38,7 +38,7 @@ npm run commit
 
 ## 3. Verify before PR
 
-Run `/verify` and fix all failures before opening the PR.
+Run `/verify` and fix all failures before opening the PR. **Never lower coverage thresholds** — add tests instead.
 
 ## 4. Issue
 
@@ -138,182 +138,81 @@ REPEAT:
 
 ### 6a. Wait for CI
 
-After any push (including force-push after rebase), wait before watching to let CI register the new run:
+After any push, wait 30s then watch:
 
 ```bash
 sleep 30
 gh pr checks "$PR" --watch
 ```
 
-If `--watch` returns `no checks reported`, the run hasn't started yet — retry:
+If `no checks reported`, retry up to 5 times (30s apart). If still no checks after 5 retries, report to user and stop.
 
-```bash
-# Retry until checks appear (max 5 attempts, 30s apart)
-CHECKS_FOUND=0
-for i in 1 2 3 4 5; do
-  if output=$(gh pr checks "$PR" 2>&1); then
-    if echo "$output" | grep -q "no checks reported"; then
-      sleep 30  # checks not started yet
-    else
-      echo "$output" && CHECKS_FOUND=1 && break  # checks detected
-    fi
-  else
-    echo "$output" >&2 && sleep 30  # gh command failed, retry
-  fi
-done
-```
-
-**If all 5 retries fail and no checks appear** (`CHECKS_FOUND=0`), CI may be disabled or misconfigured — report to the user and stop. Do not proceed to `--watch`.
-
-```bash
-[ "$CHECKS_FOUND" -eq 1 ] && gh pr checks "$PR" --watch
-```
-
-**If any check fails** → treat as actionable. Fix the issue, run `/verify`, commit, push, and restart from the top of the loop. Do not read review feedback until all CI checks pass.
+**If any check fails** → fix, `/verify`, commit, push, restart loop. Do not read review feedback until CI passes.
 
 ### 6b. Read all feedback — unresolved threads only
 
-After CI passes, apply the grace period:
+Grace period: `sleep 180`. If 0 bot comments after 3 min, wait 2 more min.
+
+Read **only unresolved threads** (resolved = ignored). See `references/monitoring.md` for exact commands.
 
 ```bash
-sleep 180
-```
-
-If after 3 min the total bot comment count is 0, wait an extra 2 min and re-check (slow bots on large PRs):
-
-```bash
-TOTAL=$(gh api repos/$OWNER/$REPO/issues/$PR/comments --paginate | jq -s 'add | length')
-[ "$TOTAL" -eq 0 ] && sleep 120
-```
-
-Then read **only unresolved threads** — already-resolved threads from previous passes must be ignored:
-
-```bash
-# Reviews and PR-level comments
 gh pr view $PR --json reviews,comments
-
-# Inline review comments — all, then filter unresolved via GraphQL (see references/monitoring.md)
 gh api repos/$OWNER/$REPO/pulls/$PR/comments --paginate | jq 'map({id, user: .user.login, body})'
-
-# Bot / issue comments
 gh api repos/$OWNER/$REPO/issues/$PR/comments --paginate | jq 'map({id, user: .user.login, body})'
-
-# Unresolved threads only (source of truth for what still needs fixing)
-# → see references/monitoring.md "List unresolved threads"
+# Unresolved threads → see references/monitoring.md
 ```
-
-**New actionable** = unresolved review threads not yet replied to in this pass.
 
 **Actionable** (must fix): change requests, bug reports, missing tests, security issues, code suggestions.
 
-**Informational** (no code change needed, but must still be addressed):
-- Examples: "LGTM", approvals, "coverage up from X% to Y%", "no issues found", style preferences without a change request, false positives (e.g. bot references a file that doesn't exist)
-- If the comment is an unresolved **review thread**: reply briefly explaining why no action is needed, then resolve via GraphQL (see `references/monitoring.md`)
-- If the comment is a **PR-level or issue comment** (e.g. codecov report, approval message): reply if useful, but these cannot be resolved via GitHub's thread API — they do not count as unresolved threads
+**Informational** (reply + resolve, no code change): approvals, coverage reports, style preferences without change request, false positives. PR-level comments (codecov, approvals) cannot be resolved via thread API — don't count as unresolved.
 
 ### 6b-bis. Classify stack-level vs downstream comments (downstream projects only)
 
-When running on a **downstream project** (not the stack repo itself), classify each actionable comment before fixing:
+Skip when running directly on the stack repo. Requires `devkit-vue` remote (set up by `/update-stack`) — if missing, stop and report.
 
-1. **Check if the comment targets a stack-level file** — a file that exists in the upstream stack repo. Ensure the remote is available, then check:
-   ```bash
-   # Ensure the devkit-vue remote exists and is fetched (update-stack skill sets this up)
-   git remote get-url devkit-vue >/dev/null 2>&1 || git remote add devkit-vue git@github.com:<stack-owner>/<stack-repo>.git
-   git fetch devkit-vue master --quiet 2>/dev/null
+For each actionable comment, check if the file exists in upstream:
 
-   # Check if the file exists in the upstream
-   git ls-tree --name-only -r devkit-vue/master -- <file-path>
-   ```
-   If the file exists in the upstream, it is **stack-level**.
+```bash
+git remote get-url devkit-vue >/dev/null 2>&1 || git remote add devkit-vue git@github.com:<stack-owner>/<stack-repo>.git
+git fetch devkit-vue master --quiet 2>/dev/null
+git ls-tree --name-only -r devkit-vue/master -- <file-path>
+```
 
-2. **Stack-level comment** → do NOT fix locally. Instead:
-   - Create an issue on the stack repo with the review feedback (use a heredoc to avoid shell escaping issues):
-     ```bash
-     ISSUE_URL=$(gh issue create --repo <stack-owner>/<stack-repo> \
-       --title "fix(<scope>): <summary from review comment>" \
-       --body "$(cat <<'BODY'
-     Reported by CodeRabbit on <downstream-owner>/<downstream-repo>#<PR>.
-
-     ## Review comment
-     <full comment body>
-
-     ## File
-     `<file-path>`
-     BODY
-     )" \
-       --label "Fix")
-     ```
-   - Reply to the review thread with the created issue link:
-     ```
-     This comment targets stack-level code from the upstream Devkit Vue repo. Created $ISSUE_URL to track the fix upstream.
-     ```
-   - Resolve the thread
-
-3. **Downstream-only comment** → fix locally as usual (section 6c)
-
-> Skip this classification when running directly on the stack repo — all comments are actionable there.
+- **Stack-level** → create issue on stack repo with review comment details, reply with issue link, resolve thread.
+- **Downstream** → fix locally (section 6c).
 
 ### 6c. Fix all actionable comments from this pass
 
-Fix all actionable comments (downstream-only, or all if on the stack repo) in one batch, then:
-
-1. Run `/verify` — never commit fixes without verifying first
-2. Commit all fixes in one commit using a conventional message:
-   ```bash
-   git commit -m "fix(scope): address review feedback from pass N"
-   ```
-3. Push first — the commit must be visible to reviewers before replying:
-   ```bash
-   git push -u origin HEAD
-   ```
-4. For each fixed comment: reply citing the commit SHA (now visible to reviewers)
-5. For each fixed comment: resolve the thread via GraphQL (see `references/monitoring.md`)
-
-One commit per pass keeps the history clean while keeping each fix traceable to a SHA.
-
-See `references/monitoring.md` for the exact gh API / GraphQL commands.
+Fix all actionable comments in one batch: `/verify` → commit → push → reply with SHA → resolve threads via GraphQL (see `references/monitoring.md`). One commit per pass.
 
 ### 6d. Coverage gaps
 
-When codecov or codeclimate reports missing coverage: add the missing tests, run `/verify`, include in the same commit batch.
+Add missing tests — **never lower thresholds**. Include in the same commit batch.
 
 ### 6e. After pushing fixes
 
-After a regular push, wait 30s before watching CI (new run takes time to register).
-After a force-push (post-rebase), wait 30s before watching — the old run is being cancelled and replaced.
-
-Loop back to step 6a. Do not attempt to trigger reviewers — reviews arrive on their own if the repo has auto-review configured.
-
-> **Never post `@copilot review` as a PR comment.** That invokes the Copilot coding agent (which can open PRs and issues), not the code reviewer.
+Wait 30s before watching CI (regular or force-push). Loop back to 6a. Never post `@copilot review` — it invokes the coding agent, not the reviewer.
 
 ### 6f. Stop condition
 
-All CI checks pass **and** 2 consecutive polling passes (each after a full grace period) both produce **zero unresolved threads** — this double-pass ensures slow review bots have had time to post before the loop exits.
-
-Before declaring done, check branch protection:
+CI green **and** 2 consecutive passes with zero unresolved threads. Then check branch protection:
 
 ```bash
-gh pr view "$PR" --json reviewDecision,mergeable \
-  | jq '{reviewDecision, mergeable}'
+gh pr view "$PR" --json reviewDecision,mergeable | jq '{reviewDecision, mergeable}'
 ```
 
-- `reviewDecision: "APPROVED"` and `mergeable: "MERGEABLE"` → **STOP ✓**
-- `reviewDecision: "REVIEW_REQUIRED"` → human review is required by branch protection rules — report this to the user and stop the loop
-- `mergeable: "BLOCKED"` → something else is blocking merge (status check, conversation resolution) — report details to the user
+- `APPROVED` + `MERGEABLE` → **STOP ✓**
+- `REVIEW_REQUIRED` → report to user, stop
+- `BLOCKED` → report details to user
 
-**Safety limit:** stop after **10 iterations** of the main loop (the preliminary pass after `gh pr ready` is not counted) even if comments remain — report the situation to the user to avoid infinite loops from unsatisfiable reviewers.
+**Safety limit:** 10 iterations max — report to user if still unresolved.
 
 ## 7. Conflict resolution
 
-If the branch has conflicts with the default branch (GitHub shows "This branch has conflicts" or `git status` shows conflicts):
-
 ```bash
-git fetch origin
-git rebase origin/HEAD
-# Resolve conflicts in each file, then:
-git add <resolved-files>
-git rebase --continue
+git fetch origin && git rebase origin/HEAD
+# Resolve conflicts, then: git add <files> && git rebase --continue
 git push --force-with-lease origin HEAD
 ```
 
-After force-push, restart the monitor loop from step 6a — wait 30s before watching CI.
+After force-push, restart from 6a.

@@ -1,6 +1,6 @@
 <template>
   <v-app-bar
-    v-if="!isLoggedIn"
+    v-if="!isLoggedIn || $route.path === '/organization-required'"
     :style="headerStyle"
     :flat="config.vuetify.theme.flat"
     :scroll-behavior="isFloatMode ? undefined : config.vuetify.theme.header?.scrollBehavior"

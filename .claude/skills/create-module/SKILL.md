@@ -53,47 +53,12 @@ Files to check:
 - Config keys
 - Test file names and test descriptions
 
-### 5. Show rename plan (if broad changes)
+### 5. Apply renames carefully
 
-If renaming affects many files, show a brief plan before applying changes.
-
-### 6. Apply renames carefully
-
-Use safe search+replace to avoid false positives:
-
-- Be case-sensitive
-- Match whole words where possible
+- Case-sensitive, whole-word matches where possible
+- Show plan before applying if many files affected
 - Don't rename unrelated code (e.g., "tasks" in comments about other features)
 
-### 7. Run verify (dedicated skill)
+### 6. Verify & report
 
-```bash
-npm run lint
-npm run test:unit
-```
-
-### 8. Report results
-
-Provide a summary:
-
-- ✅ Module created at: `src/modules/{new-module-name}`
-- ✅ Renamed tokens: `tasks` → `{new-module-name}`, etc.
-- ✅ Verification: lint passed, tests passed
-- 📝 Next steps: Customize the module logic, update routes in `src/router`, register in app if needed
-
-## Example
-
-Input: `user-profiles`
-
-Output:
-
-- Creates `src/modules/user-profiles/`
-- Renames: `Tasks` → `UserProfiles`, `tasks` → `user-profiles`, `TASKS` → `USER_PROFILES`
-- Component: `TasksList.vue` → `UserProfilesList.vue`
-- Store: `tasksStore.js` → `userProfilesStore.js`
-- Routes: `/tasks` → `/user-profiles`
-
-## Notes
-
-- Preserves the module structure from the `tasks` template
-- Follows modularity rules: keeps the module independent
+Run `/verify`, then report: module path, renamed tokens, lint/test results, next steps (customize logic, update routes in `src/router`).

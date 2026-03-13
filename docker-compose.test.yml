@@ -1,0 +1,26 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    tmpfs:
+      - /data/db
+
+  node-api:
+    build:
+      context: ../Node
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3001"
+    environment:
+      NODE_ENV: test
+      DEVKIT_NODE_db_uri: mongodb://mongo:27017/NodeTest
+      DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
+      DEVKIT_NODE_cors_credentials: "true"
+    depends_on:
+      - mongo
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/home').then(r => { if (!r.ok) throw 1 })"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

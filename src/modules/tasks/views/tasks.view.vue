@@ -1,22 +1,29 @@
 <template>
   <v-container fluid>
-    <v-btn
-      v-if="isLoggedIn"
-      :flat="config.vuetify.theme.flat"
-      icon
-      to="/task"
-      color="success"
-      style="position: fixed; bottom: 10px; right: 10px; z-index: 9999"
-    >
-      <v-icon icon="fa-solid fa-plus"></v-icon>
-    </v-btn>
+    <PageHeader icon="fa-solid fa-list-check" title="Tasks">
+      <template #actions>
+        <v-btn
+          v-if="isLoggedIn"
+          color="primary"
+          variant="flat"
+          :class="config.vuetify.theme.rounded"
+          class="text-none text-body-medium"
+          to="/task"
+        >
+          <v-icon icon="fa-solid fa-plus" size="small" class="mr-2"></v-icon>
+          New Task
+        </v-btn>
+      </template>
+    </PageHeader>
     <v-row class="pa-2">
       <taskComponent v-for="(item, index) in tasks" :key="item.id" :item="item" :index="index"></taskComponent>
     </v-row>
     <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
       <v-col cols="12">
-        <v-card class="ma-6 pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
-          <h2 class="text-center">No Tasks found :( !</h2>
+        <v-card class="ma-6 pa-8 text-center" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+          <v-icon icon="fa-solid fa-list-check" size="x-large" color="primary" class="mb-4 text-medium-emphasis"></v-icon>
+          <h2 class="text-title-large font-weight-medium mb-2">No tasks yet</h2>
+          <p class="text-body-medium text-medium-emphasis mb-4">Create your first task to get started.</p>
         </v-card>
       </v-col>
     </v-row>
@@ -31,27 +38,19 @@ import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
+import PageHeader from '../../core/components/core.pageHeader.component.vue';
 /**
  * Component definition.
  */
 export default {
   components: {
     taskComponent,
+    PageHeader,
   },
   data() {
     const theme = useTheme();
     return {
       theme,
-      direction: 'bottom',
-      fab: false,
-      fling: false,
-      hover: false,
-      tabs: null,
-      top: true,
-      right: true,
-      bottom: false,
-      left: false,
-      transition: 'slide-y',
     };
   },
   computed: {

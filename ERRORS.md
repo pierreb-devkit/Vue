@@ -17,3 +17,5 @@ Use this file as a compact memory of recurring AI mistakes.
 - [2026-02-23] pr skill: stopping after `gh pr ready` -> always enter the monitor loop (wait CI → 3min grace → read feedback → iterate) until stop condition is met
 - [2026-02-23] pr skill: skipping issue creation when none found -> always create a GitHub issue before opening a PR (`gh issue create --web` or via CLI)
 - [2026-03-09] Vuetify 4 v-timeline: unconditional `density="compact"` hides `#opposite` slot -> if original was conditional (`:dense="$vuetify.display.xs"`), migrate to `:density="$vuetify.display.xs ? 'compact' : 'default'"` to preserve alternating layout on desktop
+- [2026-03-13] cleanup: test helpers/config outside src/ in a standalone folder -> place in src/lib/helpers/ alongside other helpers
+- [2026-03-13] docs: duplicate doc files covering the same topic (e.g. MIGRATION.md + MIGRATIONS.md) -> single file, no duplication

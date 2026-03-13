@@ -1,21 +1,22 @@
 <template>
   <v-container fluid>
     <!-- Header -->
-    <v-row class="mx-2 my-1">
-      <v-icon class="ma-2" icon="fa-solid fa-check"></v-icon>
-      <h2 class="my-1 text-capitalize">1. Description</h2>
-      <v-spacer></v-spacer>
-      <v-btn v-if="task.id" color="error" icon class="mx-1" @click="remove">
-        <v-icon icon="fa-solid fa-trash"></v-icon>
-      </v-btn>
-      <v-btn v-if="task.id" :disabled="!save" color="success" icon class="mx-1" @click="update()">
-        <v-icon icon="fa-solid fa-save"></v-icon>
-      </v-btn>
-    </v-row>
+    <PageHeader icon="fa-solid fa-check" :title="task.title || 'New Task'" title-class="text-capitalize">
+      <template #actions>
+        <v-btn v-if="task.id" color="error" variant="tonal" :class="config.vuetify.theme.rounded" class="text-none text-body-medium mr-2" @click="remove">
+          <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
+          Delete
+        </v-btn>
+        <v-btn v-if="task.id" :disabled="!save" color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="update()">
+          <v-icon icon="fa-solid fa-save" size="small" class="mr-2"></v-icon>
+          Save
+        </v-btn>
+      </template>
+    </PageHeader>
     <!-- Form -->
     <v-row class="pa-2">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
-        <v-card class="pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
+        <v-card class="pa-6" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <v-form ref="form" v-model="valid">
             <v-row>
               <v-col cols="12">
@@ -41,6 +42,7 @@
 import { useTheme } from 'vuetify';
 import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
+import PageHeader from '../../core/components/core.pageHeader.component.vue';
 
 /**
  * Component definition.
@@ -48,6 +50,7 @@ import taskComponent from '../components/task.component.vue';
 export default {
   components: {
     taskComponent,
+    PageHeader,
   },
   data() {
     const theme = useTheme();

@@ -14,6 +14,7 @@ export default [
     component: tasks,
     meta: {
       icon: 'fa-solid fa-list-check',
+      action: 'read', subject: 'Task',
     },
   },
   {

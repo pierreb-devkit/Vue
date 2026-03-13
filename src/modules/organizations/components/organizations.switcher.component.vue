@@ -6,16 +6,18 @@
           v-bind="props"
           variant="text"
           class="text-none text-body-medium px-3"
-          :style="{ color: navigationColor }"
+          color="default"
           size="small"
+          :disabled="switching || organizations.length <= 1"
+          :loading="switching"
         >
-          <v-avatar color="primary" size="24" class="mr-2">
+          <v-avatar :color="orgColor(currentOrganization)" size="24" class="mr-2">
             <span class="text-label-small font-weight-bold">
               {{ activeInitial }}
             </span>
           </v-avatar>
           {{ activeName }}
-          <v-icon icon="fa-solid fa-chevron-down" size="x-small" class="ml-2"></v-icon>
+          <v-icon v-if="organizations.length > 1" icon="fa-solid fa-chevron-down" size="x-small" class="ml-2"></v-icon>
         </v-btn>
       </template>
       <v-list
@@ -33,7 +35,7 @@
         >
           <template #prepend>
             <v-avatar
-              :color="isActive(org) ? 'primary' : 'grey'"
+              :color="orgColor(org)"
               size="28"
               class="mr-3"
             >
@@ -60,12 +62,18 @@
  */
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
+import orgColor from '../../../lib/helpers/orgColor';
 
 /**
  * Component definition.
  */
 export default {
   name: 'OrganizationsSwitcherComponent',
+  data() {
+    return {
+      switching: false,
+    };
+  },
   computed: {
     /**
      * @desc Whether the organizations feature is enabled in server config.
@@ -88,7 +96,7 @@ export default {
      * @returns {boolean}
      */
     isVisible() {
-      return this.organizationsEnabled && this.organizations.length > 1;
+      return this.organizationsEnabled && this.organizations.length > 0;
     },
     /**
      * @desc The display name for the active organization.
@@ -104,19 +112,21 @@ export default {
     activeInitial() {
       return (this.activeName || '?').charAt(0).toUpperCase();
     },
-    navigationColor() {
-      return this.config.vuetify.theme.navigation.color;
-    },
   },
   created() {
     if (this.organizationsEnabled) {
       const organizationsStore = useOrganizationsStore();
       if (!organizationsStore.organizations.length) {
-        organizationsStore.fetchOrganizations();
+        organizationsStore.fetchOrganizations().then(() => {
+          this.syncCurrentOrganization();
+        });
+      } else if (!organizationsStore.currentOrganization) {
+        this.syncCurrentOrganization();
       }
     }
   },
   methods: {
+    orgColor,
     /**
      * @desc Check whether a given organization is the active one.
      * @param {Object} org - Organization object
@@ -131,11 +141,25 @@ export default {
      * @param {Object} org - Organization object to switch to
      * @returns {Promise<void>}
      */
+    syncCurrentOrganization() {
+      const authStore = useAuthStore();
+      const organizationsStore = useOrganizationsStore();
+      if (!organizationsStore.currentOrganization && authStore.user?.currentOrganization) {
+        const currentOrgId = authStore.user.currentOrganization._id || authStore.user.currentOrganization.id || authStore.user.currentOrganization;
+        const match = organizationsStore.organizations.find((o) => (o.id || o._id) === currentOrgId);
+        if (match) organizationsStore.currentOrganization = match;
+      }
+    },
     async switchTo(org) {
       const organizationId = org.id || org._id;
       if (this.currentOrganization && (this.currentOrganization.id || this.currentOrganization._id) === organizationId) return;
       const organizationsStore = useOrganizationsStore();
-      await organizationsStore.switchOrganization(organizationId);
+      this.switching = true;
+      try {
+        await organizationsStore.switchOrganization(organizationId);
+      } finally {
+        this.switching = false;
+      }
     },
   },
 };

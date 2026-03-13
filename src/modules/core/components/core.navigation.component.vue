@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isLoggedIn">
+  <div v-if="isLoggedIn && hasOrganization">
     <!-- Mobile drawer acces -->
     <v-btn
       v-if="$vuetify.display.mobile"
@@ -46,8 +46,6 @@
         </v-list-item>
       </v-list>
       <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
-      <!-- Organization Switcher -->
-      <organizationsSwitcherComponent />
       <!-- Navigation -->
       <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
         <v-list-item v-for="item in nav" :key="item.text" :to="item.path">
@@ -63,19 +61,36 @@
           <v-list-item-title>{{ item.name }}</v-list-item-title>
         </v-list-item>
       </v-list>
-      <!-- End -->
-      <template v-if="!config.vuetify.theme.footer" #append>
-        <v-list>
-          <v-list-item v-for="({ icon, label, url }, i) in config.header.socials" :key="i" :href="url">
+      <!-- Bottom section -->
+      <template #append>
+        <!-- Bottom nav items -->
+        <v-list v-if="navBottom.length" :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
+          <v-list-item v-for="item in navBottom" :key="item.text" :to="item.path">
             <template #prepend>
-              <v-icon>{{ icon }}</v-icon>
+              <v-icon
+                :icon="item.meta.icon"
+                :style="{
+                  color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.navigation.color,
+                }"
+                size="small"
+              ></v-icon>
             </template>
-            <v-list-item-title>{{ label }}</v-list-item-title>
+            <v-list-item-title>{{ item.name }}</v-list-item-title>
           </v-list-item>
         </v-list>
+        <template v-if="!config.vuetify.theme.footer">
+          <v-list>
+            <v-list-item v-for="({ icon, label, url }, i) in config.header.socials" :key="i" :href="url">
+              <template #prepend>
+                <v-icon>{{ icon }}</v-icon>
+              </template>
+              <v-list-item-title>{{ label }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </template>
         <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
-        <!-- User -->
-        <v-list>
+        <!-- Sign out -->
+        <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
           <v-list-item
             :style="{
               color: config.vuetify.theme.navigation.color,
@@ -103,37 +118,34 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
-import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
-
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
-  components: {
-    organizationsSwitcherComponent,
-  },
   data() {
-    const theme = useTheme();
     return {
-      theme,
       drawer: true,
     };
   },
   computed: {
-    themeName() {
-      return this.theme.name;
-    },
     nav() {
       const coreStore = useCoreStore();
       return coreStore.nav;
     },
+    navBottom() {
+      const coreStore = useCoreStore();
+      return coreStore.navBottom;
+    },
     isLoggedIn() {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
+    },
+    hasOrganization() {
+      const authStore = useAuthStore();
+      return !!authStore.user?.currentOrganization;
     },
   },
   created() {

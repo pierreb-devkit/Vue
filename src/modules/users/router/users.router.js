@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-import users from '../views/users.view.vue';
 import user from '../views/user.view.vue';
 
 /**
@@ -10,23 +9,11 @@ import user from '../views/user.view.vue';
 export default [
   {
     path: '/users',
-    name: 'Users',
-    component: users,
-    meta: {
-      icon: 'fa-solid fa-user-tie',
-      color: {
-        border: '#000', // color icon // todo: get from config config.vuetify.theme.themes[store.state.theme].error
-      },
-      action: 'manage', subject: 'User', // protected, require ability
-    },
-  },
-  {
-    path: '/users/:id',
-    name: 'user',
+    name: 'Account',
     component: user,
     meta: {
-      display: false, // hide from drawer any time
-      action: 'manage', subject: 'User', // protected, require ability
+      icon: 'fa-solid fa-circle-user',
+      position: 'bottom',
     },
   },
 ];

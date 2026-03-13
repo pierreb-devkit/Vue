@@ -173,3 +173,110 @@ const theme = useTheme();
 const isDark = computed(() => theme.global.name.value === 'dark');
 </script>
 ```
+
+## Application UI Patterns
+
+### Confirm dialog (standard)
+
+```vue
+<v-dialog v-model="dialog" max-width="440">
+  <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+    <v-card-title class="text-title-large font-weight-medium">Title</v-card-title>
+    <v-card-text class="text-body-medium">Message</v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn variant="text" class="text-none text-body-medium" @click="dialog = false">Cancel</v-btn>
+      <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirm">Confirm</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+```
+
+### Confirm dialog (type-to-confirm, high-impact)
+
+```vue
+<v-dialog v-model="dialog" max-width="440">
+  <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+    <v-card-title class="text-title-large font-weight-medium">Delete {{ name }}</v-card-title>
+    <v-card-text class="text-body-medium">
+      <p class="mb-4">This action <strong>cannot be undone</strong>.</p>
+      <p class="mb-2 text-body-small text-medium-emphasis">Type <strong>{{ name }}</strong> to confirm:</p>
+      <v-text-field v-model="confirmInput" variant="outlined" density="comfortable" :placeholder="name" autofocus />
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn variant="text" class="text-none text-body-medium" @click="dialog = false">Cancel</v-btn>
+      <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" :disabled="confirmInput !== name" @click="confirm">Delete</v-btn>
+    </v-card-actions>
+  </v-card>
+</v-dialog>
+```
+
+### Copy-to-clipboard
+
+```vue
+<div class="d-flex align-center ga-2">
+  <code class="text-body-small flex-grow-1 text-truncate">{{ link }}</code>
+  <v-btn size="x-small" variant="tonal" :icon="copied ? 'fa-solid fa-check' : 'fa-solid fa-copy'" :color="copied ? 'success' : 'default'" @click="copyLink" />
+</div>
+```
+
+```js
+data: () => ({ copied: false }),
+methods: {
+  async copyLink() {
+    await navigator.clipboard.writeText(this.link);
+    this.copied = true;
+    setTimeout(() => { this.copied = false; }, 2000);
+  },
+},
+```
+
+### Responsive form (input + button side-by-side)
+
+```vue
+<div class="d-flex ga-2 flex-column flex-sm-row">
+  <v-text-field ... class="flex-grow-1" />
+  <v-btn ... :block="$vuetify.display.xs" style="min-height: 48px;">Action</v-btn>
+</div>
+```
+
+### Relative time
+
+```js
+formatTimeAgo(date) {
+  if (!date) return '';
+  const mins = Math.floor((Date.now() - new Date(date)) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return days < 30 ? `${days}d ago` : `${Math.floor(days / 30)}mo ago`;
+},
+```
+
+### Unsaved changes guard
+
+```js
+// In the VIEW wrapping the component (not in the component itself)
+beforeRouteLeave(to, from, next) {
+  if (this.$refs.detail?.dirty) {
+    return next(window.confirm('You have unsaved changes. Leave anyway?') ? undefined : false);
+  }
+  next();
+},
+```
+
+### Dismissible banner (persistent)
+
+```js
+data: () => ({ dismissed: sessionStorage.getItem('bannerKey') === 'true' }),
+methods: {
+  dismiss() {
+    this.dismissed = true;
+    sessionStorage.setItem('bannerKey', 'true');
+  },
+},
+// Do NOT use a $route watcher that resets dismissed
+```
