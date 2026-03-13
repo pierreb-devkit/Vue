@@ -3,6 +3,7 @@
  * @param {import('@playwright/test').Page} page
  * @param {string} email
  * @param {string} password
+ * @returns {Promise<void>}
  */
 export async function signin(page, email, password) {
   await page.goto('/signin');

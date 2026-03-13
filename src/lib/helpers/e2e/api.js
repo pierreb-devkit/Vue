@@ -2,7 +2,7 @@ const API = 'http://localhost:3000/api';
 
 /**
  * @desc Create an authenticated API request context
- * @param {import('@playwright/test').APIRequestContext} request
+ * @param {import('@playwright/test').Playwright} playwright - Playwright instance
  * @param {string} email
  * @param {string} password
  * @returns {Promise<import('@playwright/test').APIRequestContext>}

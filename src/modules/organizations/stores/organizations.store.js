@@ -81,7 +81,12 @@ export const useOrganizationsStore = defineStore('organizations', {
     async deleteOrganization(organizationId) {
       const api = apiBase();
       await axios.delete(`${api}/organizations/${organizationId}`);
-      this.currentOrganization = null;
+      if (
+        this.currentOrganization
+        && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)
+      ) {
+        this.currentOrganization = null;
+      }
       this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
     },
 
@@ -93,7 +98,10 @@ export const useOrganizationsStore = defineStore('organizations', {
     async switchOrganization(organizationId) {
       const api = apiBase();
       const res = await axios.post(`${api}/organizations/${organizationId}/switch`);
-      this.currentOrganization = this.organizations.find((org) => org.id === organizationId || org._id === organizationId) || null;
+      this.currentOrganization =
+        res.data?.data
+        || this.organizations.find((org) => org.id === organizationId || org._id === organizationId)
+        || null;
       // Update JWT abilities if returned
       if (res.data.abilities) {
         updateAbilities(res.data.abilities);
