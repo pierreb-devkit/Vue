@@ -1,7 +1,7 @@
 /**
  * @desc Generate a deterministic color for an organization based on its name.
  * @param {Object|string} org - Organization object (with name) or string
- * @return {string} A hex color from the palette
+ * @returns {string} A hex color from the palette
  */
 const palette = [
   '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e67e22',

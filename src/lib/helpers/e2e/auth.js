@@ -17,7 +17,7 @@ export async function signin(page, email, password) {
  * @desc Sign up a user via the API directly (faster than UI)
  * @param {import('@playwright/test').APIRequestContext} request
  * @param {Object} user - { email, password, firstName, lastName }
- * @return {Promise<Object>} signup response data
+ * @returns {Promise<Object>} signup response data
  */
 export async function signupViaAPI(request, { email, password, firstName, lastName }) {
   const res = await request.post('http://localhost:3000/api/auth/signup', {
@@ -35,7 +35,7 @@ export async function signupViaAPI(request, { email, password, firstName, lastNa
  * @param {import('@playwright/test').APIRequestContext} request
  * @param {string} email
  * @param {string} password
- * @return {Promise<Object>}
+ * @returns {Promise<Object>}
  */
 export async function signinViaAPI(request, email, password) {
   const res = await request.post('http://localhost:3000/api/auth/signin', {

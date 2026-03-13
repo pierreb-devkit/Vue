@@ -3,7 +3,7 @@ import config from '../../config/index.js';
 /**
  * @desc Get the Vuetify color token for a given role.
  * @param {string} role
- * @return {string} Vuetify color name
+ * @returns {string} Vuetify color name
  */
 const roleColor = (role) => {
   const colors = config.vuetify?.theme?.roles || { owner: 'error', admin: 'warning' };

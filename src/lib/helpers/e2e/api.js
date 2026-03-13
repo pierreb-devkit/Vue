@@ -5,7 +5,7 @@ const API = 'http://localhost:3000/api';
  * @param {import('@playwright/test').APIRequestContext} request
  * @param {string} email
  * @param {string} password
- * @return {Promise<import('@playwright/test').APIRequestContext>}
+ * @returns {Promise<import('@playwright/test').APIRequestContext>}
  */
 export async function authenticatedContext(playwright, email, password) {
   const context = await playwright.request.newContext();

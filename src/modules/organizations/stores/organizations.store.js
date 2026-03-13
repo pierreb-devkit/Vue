@@ -244,7 +244,7 @@ export const useOrganizationsStore = defineStore('organizations', {
 
     /**
      * @desc Search organizations matching the current user's email domain.
-     * @return {Promise<Array>}
+     * @returns {Promise<Array>}
      */
     async searchOrganizationsByDomain() {
       const api = apiBase();

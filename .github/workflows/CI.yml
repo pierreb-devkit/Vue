@@ -82,7 +82,7 @@ jobs:
       # Run E2E tests
       - name: Run Playwright tests
         working-directory: Vue
-        run: npx playwright test --config e2e/playwright.config.js
+        run: npx playwright test --config playwright.config.js
 
       - uses: actions/upload-artifact@v4
         if: failure()
