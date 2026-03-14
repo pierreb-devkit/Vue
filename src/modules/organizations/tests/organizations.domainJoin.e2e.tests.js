@@ -88,7 +88,12 @@ test.describe('Organization Domain Join E2E', () => {
 
   test('approved member — no Manage button on account page', async ({ page }) => {
     await signin(page, memberEmail, password);
-    await page.goto('/users/organizations');
+    await page.goto('/users');
+    await page.waitForTimeout(2000);
+
+    // Click the Organizations tab
+    const orgTab = page.getByRole('tab', { name: /organizations/i });
+    await orgTab.click({ timeout: 10000 });
     await page.waitForTimeout(2000);
 
     // Members should NOT see the chevron (manage) icon on their org item

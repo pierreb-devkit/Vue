@@ -43,7 +43,12 @@ test.describe('Organization Join Request E2E', () => {
 
   test('owner can navigate to org detail', async ({ page }) => {
     await signin(page, ownerEmail, password);
-    await page.goto('/users/organizations');
+    await page.goto('/users');
+    await page.waitForTimeout(2000);
+
+    // Click the Organizations tab
+    const orgTab = page.getByRole('tab', { name: /organizations/i });
+    await orgTab.click({ timeout: 10000 });
     await page.waitForTimeout(2000);
 
     // Click the org list item in the main content (owners see a clickable link)

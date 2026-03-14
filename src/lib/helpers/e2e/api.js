@@ -29,7 +29,7 @@ export async function createOrgViaAPI(context, name) {
   if (!res.ok()) {
     throw new Error(`Create org failed (${res.status()}): ${JSON.stringify(body)}`);
   }
-  return body;
+  return body.data || body;
 }
 
 export { API };
