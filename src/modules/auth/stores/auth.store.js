@@ -173,6 +173,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async signout() {
+      const coreStore = useCoreStore();
       this.auth = false;
       this.cookieExpire = 0;
       this.user = null;
@@ -183,6 +184,8 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
       localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
+
+      coreStore.refreshNav(false);
     },
 
     async refreshAbilities() {

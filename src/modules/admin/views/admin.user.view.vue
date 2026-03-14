@@ -30,7 +30,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn variant="text" class="text-none text-body-medium" @click="removeConfirm = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="remove">Delete</v-btn>
+          <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" :disabled="removing" :loading="removing" @click="remove">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -59,6 +59,7 @@ export default {
   data() {
     return {
       removeConfirm: false,
+      removing: false,
     };
   },
   computed: {
@@ -103,12 +104,16 @@ export default {
       if (this.id) await adminStore.getUser({ id: this.id });
     },
     async remove() {
+      if (this.removing) return;
+      this.removing = true;
       const adminStore = useAdminStore();
       try {
         await adminStore.deleteUser({ id: this.id });
         this.$router.push('/admin');
       } catch (err) {
         console.log(err);
+      } finally {
+        this.removing = false;
       }
     },
   },

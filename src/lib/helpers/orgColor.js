@@ -10,7 +10,7 @@ const palette = [
 ];
 
 const orgColor = (org) => {
-  const name = typeof org === 'string' ? org : (org?.name || org?.slug || org?._id || org?.id || '');
+  const name = String(typeof org === 'string' ? org : (org?.name || org?.slug || org?._id || org?.id || ''));
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);

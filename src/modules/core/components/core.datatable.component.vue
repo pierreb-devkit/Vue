@@ -88,7 +88,7 @@
       </tbody>
     </v-table>
     <v-empty-state
-      v-if="!items.length"
+      v-if="!items || !items.length"
       icon="fa-solid fa-inbox"
       text="No items found"
       class="py-8"
@@ -218,12 +218,17 @@ export default {
   },
   mounted() {
     if (this.auto) {
-      this.refreshInterval = window.setInterval(() => {
-        if (this.refresh) {
+      let refreshing = false;
+      this.refreshInterval = window.setInterval(async () => {
+        if (this.refresh && !refreshing) {
+          refreshing = true;
           this.loading = true;
-          this.callStoreAction(tools.pageRequest(1, this.options.itemsPerPage, this.textSearch)).then(() => {
+          try {
+            await this.callStoreAction(tools.pageRequest(1, this.options.itemsPerPage, this.textSearch));
+          } finally {
             this.loading = false;
-          });
+            refreshing = false;
+          }
         }
       }, 5000);
     }

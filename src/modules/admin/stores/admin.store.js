@@ -52,6 +52,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(`${apiBase()}/admin/users/${params.id}`);
         this.user = res.data.data;
       } catch (err) {
+        this.resetUser();
         console.log(err);
       }
     },
