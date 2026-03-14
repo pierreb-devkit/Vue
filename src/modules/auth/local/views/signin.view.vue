@@ -150,7 +150,10 @@ export default {
   },
   watch: {
     auth(auth) {
-      if (auth) this.$router.push(this.config.sign.route);
+      if (auth) {
+        const redirect = this.$route.query.redirect;
+        this.$router.push(redirect && redirect.startsWith('/') ? redirect : this.config.sign.route);
+      }
     },
     /**
      * @desc Start a countdown timer when the account becomes locked.
