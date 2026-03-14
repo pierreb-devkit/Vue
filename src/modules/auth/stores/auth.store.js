@@ -201,9 +201,10 @@ export const useAuthStore = defineStore('auth', {
         }
         this.pendingRequests = res.data.pendingRequests || [];
         coreStore.refreshNav(this.isLoggedIn);
-      } catch {
-        // If token refresh fails, sign out
-        this.signout();
+      } catch (err) {
+        // If token refresh fails, sign out and propagate to caller
+        await this.signout();
+        throw err;
       }
     },
 
@@ -271,7 +272,8 @@ export const useAuthStore = defineStore('auth', {
     async verifyEmail(token) {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
-      const res = await axios.post(`${api}/${config.api.endPoints.auth}/verify-email/${token}`);
+      const encodedToken = encodeURIComponent(token);
+      const res = await axios.post(`${api}/${config.api.endPoints.auth}/verify-email/${encodedToken}`);
       return res.data;
     },
 

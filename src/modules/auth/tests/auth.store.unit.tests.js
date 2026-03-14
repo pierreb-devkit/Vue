@@ -476,14 +476,14 @@ describe('Auth Store', () => {
       expect(authStore.user).toEqual({ id: 'original' });
     });
 
-    it('should signout when refreshAbilities fails', async () => {
+    it('should signout and rethrow when refreshAbilities fails', async () => {
       const authStore = useAuthStore();
       authStore.auth = true;
       authStore.user = { id: '123' };
       authStore.cookieExpire = Date.now() + 1000;
 
       axios.get.mockRejectedValueOnce(new Error('Token refresh failed'));
-      await authStore.refreshAbilities();
+      await expect(authStore.refreshAbilities()).rejects.toThrow('Token refresh failed');
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);

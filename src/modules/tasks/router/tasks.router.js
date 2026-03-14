@@ -23,7 +23,7 @@ export default [
     component: task,
     meta: {
       display: false, // hide from drawer any time
-      action: 'read', subject: 'Task', // protected, require ability
+      action: 'create', subject: 'Task', // protected, require ability
     },
   },
   {

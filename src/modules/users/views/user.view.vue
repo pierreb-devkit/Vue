@@ -208,9 +208,17 @@ export default {
       return id?._id || id?.id || id;
     },
   },
-  created() {
+  /**
+   * Fetch organizations on component creation.
+   * @returns {Promise<void>}
+   */
+  async created() {
     const organizationsStore = useOrganizationsStore();
-    organizationsStore.fetchOrganizations();
+    try {
+      await organizationsStore.fetchOrganizations();
+    } catch {
+      // interceptor handles snackbar
+    }
   },
   methods: {
     roleColor,
@@ -268,7 +276,7 @@ export default {
         const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
         await axios.delete(`${api}/users`);
         const authStore = useAuthStore();
-        authStore.signout();
+        await authStore.signout();
         this.$router.push('/signin');
       } catch {
         this.confirmDeleteAccount = false;

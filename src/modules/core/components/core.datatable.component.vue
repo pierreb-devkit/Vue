@@ -119,7 +119,7 @@
         <v-icon icon="fa-solid fa-angle-left" size="small"></v-icon>
       </v-btn>
       <span class="text-body-medium mx-1">{{ options.page }}</span>
-      <v-btn :disabled="items.length < options.itemsPerPage" variant="text" icon size="small" class="mr-1" @click="switchPage('+')">
+      <v-btn :disabled="!items || items.length < options.itemsPerPage" variant="text" icon size="small" class="mr-1" @click="switchPage('+')">
         <v-icon icon="fa-solid fa-angle-right" size="small"></v-icon>
       </v-btn>
     </v-card-actions>
