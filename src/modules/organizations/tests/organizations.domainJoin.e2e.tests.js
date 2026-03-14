@@ -38,7 +38,7 @@ test.describe('Organization Domain Join E2E', () => {
 
     await page.getByPlaceholder('name@example.com').first().fill(memberEmail);
     await page.getByPlaceholder('Create a password').first().fill(password);
-    await page.getByRole('button', { name: /continue/i }).click();
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
 
     // Wait for the pending join message
     const pendingText = page.locator('text=request to join').first();

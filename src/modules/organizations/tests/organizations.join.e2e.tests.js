@@ -50,7 +50,7 @@ test.describe('Organization Join Request E2E', () => {
     await page.goto(`/users/organizations/${orgId}`);
 
     // Should see the org detail page
-    await expect(page.locator(`text=JoinOrg`)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text=JoinOrg`).first()).toBeVisible({ timeout: 10000 });
     expect(page.url()).toContain('/users/organizations/');
   });
 });

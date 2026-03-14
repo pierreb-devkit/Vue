@@ -11,7 +11,7 @@ test.describe('Signup E2E', () => {
 
     await page.getByPlaceholder('name@example.com').fill(testEmail);
     await page.getByPlaceholder('Create a password').fill(testPassword);
-    await page.getByRole('main').getByRole('button', { name: 'Continue' }).click();
+    await page.getByRole('main').getByRole('button', { name: 'Continue', exact: true }).click();
 
     // Wait for the signup to complete — either redirects or shows org setup step
     // With organizations enabled, the flow stays on /signup and shows the next step
