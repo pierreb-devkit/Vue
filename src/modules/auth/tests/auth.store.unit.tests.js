@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useAuthStore } from '../stores/auth.store';
+import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
 
 // Mock axios
@@ -499,6 +499,75 @@ describe('Auth Store', () => {
       await authStore.signout();
 
       expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
+    });
+  });
+
+  describe('deduceNamesFromEmail', () => {
+    it('should deduce firstName and lastName from dotted email', () => {
+      const result = deduceNamesFromEmail('john.doe@example.com');
+      expect(result).toEqual({ firstName: 'John', lastName: 'Doe' });
+    });
+
+    it('should return empty strings when local part has no alpha characters', () => {
+      const result = deduceNamesFromEmail('123456@example.com');
+      expect(result).toEqual({ firstName: '', lastName: '' });
+    });
+  });
+
+  describe('signup name deduction', () => {
+    it('should deduce names from dotted email when firstName and lastName are not provided', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'jane.smith@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      const params = { email: 'jane.smith@test.com', password: 'password123' };
+      await authStore.signup(params);
+
+      expect(params.firstName).toBe('Jane');
+      expect(params.lastName).toBe('Smith');
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('should call verify-email endpoint and return response data', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = { data: { message: 'Email verified successfully' } };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      const result = await authStore.verifyEmail('some-verification-token');
+
+      expect(result).toEqual({ message: 'Email verified successfully' });
+    });
+
+    it('should propagate error when verify-email fails', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockRejectedValueOnce(new Error('Invalid token'));
+      await expect(authStore.verifyEmail('bad-token')).rejects.toThrow('Invalid token');
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('should call resend-verification endpoint and return response data', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = { data: { message: 'Verification email sent' } };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      const result = await authStore.resendVerification();
+
+      expect(result).toEqual({ message: 'Verification email sent' });
+    });
+
+    it('should propagate error when resend-verification fails', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockRejectedValueOnce(new Error('Not authenticated'));
+      await expect(authStore.resendVerification()).rejects.toThrow('Not authenticated');
     });
   });
 });
