@@ -8,7 +8,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ mail: { status: false, message: '' }, reset: resetMock }),
 }));
 
-import AuthResetView from '../local/views/reset.view.vue';
+import AuthResetView from '../views/reset.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },

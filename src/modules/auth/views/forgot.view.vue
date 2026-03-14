@@ -46,7 +46,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { useAuthStore } from '../../stores/auth.store';
+import { useAuthStore } from '../stores/auth.store';
 /**
  * Component definition.
  */

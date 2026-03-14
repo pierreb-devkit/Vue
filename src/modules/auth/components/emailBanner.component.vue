@@ -34,7 +34,7 @@
 /**
  * Module dependencies.
  */
-import { useAuthStore } from '../../stores/auth.store';
+import { useAuthStore } from '../stores/auth.store';
 /**
  * Component definition.
  */

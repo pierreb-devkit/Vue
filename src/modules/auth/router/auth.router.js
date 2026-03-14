@@ -1,12 +1,12 @@
 /**
  * Module dependencies.
  */
-import signin from '../local/views/signin.view.vue';
-import signup from '../local/views/signup.view.vue';
-import forgot from '../local/views/forgot.view.vue';
-import reset from '../local/views/reset.view.vue';
-import token from '../local/views/token.view.vue';
-import verifyEmail from '../local/views/verifyEmail.view.vue';
+import signin from '../views/signin.view.vue';
+import signup from '../views/signup.view.vue';
+import forgot from '../views/forgot.view.vue';
+import reset from '../views/reset.view.vue';
+import token from '../views/token.view.vue';
+import verifyEmail from '../views/verifyEmail.view.vue';
 
 /**
  * Router configuration.

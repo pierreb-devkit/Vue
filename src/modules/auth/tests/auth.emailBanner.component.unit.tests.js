@@ -20,7 +20,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => storeMock,
 }));
 
-import AuthEmailBanner from '../local/components/emailBanner.component.vue';
+import AuthEmailBanner from '../components/emailBanner.component.vue';
 
 /**
  * Mount the email banner component with Vuetify installed.

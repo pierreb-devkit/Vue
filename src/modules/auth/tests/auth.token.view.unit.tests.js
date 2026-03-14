@@ -8,7 +8,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ token: tokenMock }),
 }));
 
-import AuthTokenView from '../local/views/token.view.vue';
+import AuthTokenView from '../views/token.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },

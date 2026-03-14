@@ -8,7 +8,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ mail: { status: false, message: '' }, forgot: forgotMock }),
 }));
 
-import AuthForgotView from '../local/views/forgot.view.vue';
+import AuthForgotView from '../views/forgot.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },

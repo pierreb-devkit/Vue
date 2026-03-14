@@ -23,7 +23,7 @@ vi.mock('../../organizations/stores/organizations.store', () => ({
   useOrganizationsStore: () => ({ createOrganization: createOrganizationMock }),
 }));
 
-import AuthSignupView from '../local/views/signup.view.vue';
+import AuthSignupView from '../views/signup.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },

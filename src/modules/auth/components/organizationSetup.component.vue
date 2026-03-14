@@ -93,7 +93,7 @@
 /**
  * Module dependencies.
  */
-import { useOrganizationsStore } from '../../../organizations/stores/organizations.store';
+import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 
 /**
  * Organization setup component shown after signup (step 2).

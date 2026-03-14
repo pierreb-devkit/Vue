@@ -130,7 +130,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { useAuthStore, deduceNamesFromEmail } from '../../stores/auth.store';
+import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
 /**
  * Component definition.

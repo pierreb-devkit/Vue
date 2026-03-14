@@ -8,7 +8,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ verifyEmail: verifyEmailMock }),
 }));
 
-import AuthVerifyEmailView from '../local/views/verifyEmail.view.vue';
+import AuthVerifyEmailView from '../views/verifyEmail.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },

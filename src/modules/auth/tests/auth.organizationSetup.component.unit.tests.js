@@ -8,7 +8,7 @@ vi.mock('../../organizations/stores/organizations.store', () => ({
   useOrganizationsStore: () => ({ createOrganization: createOrganizationMock }),
 }));
 
-import AuthOrganizationSetupComponent from '../local/components/organizationSetup.component.vue';
+import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
 
 const mockConfig = {
   vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },

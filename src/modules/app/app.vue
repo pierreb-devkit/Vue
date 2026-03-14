@@ -37,8 +37,8 @@ import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
 import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
-import authEmailBanner from '../auth/local/components/emailBanner.component.vue';
-import authPendingRequestBanner from '../auth/local/components/pendingRequestBanner.component.vue';
+import authEmailBanner from '../auth/components/emailBanner.component.vue';
+import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
 
 /**

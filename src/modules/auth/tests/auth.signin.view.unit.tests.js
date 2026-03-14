@@ -17,7 +17,7 @@ vi.mock('../stores/auth.store', () => ({
   }),
 }));
 
-import AuthSigninView from '../local/views/signin.view.vue';
+import AuthSigninView from '../views/signin.view.vue';
 
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
