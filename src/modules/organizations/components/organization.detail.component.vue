@@ -400,10 +400,6 @@ export default {
       }
     },
     /**
-     * @desc Copy the invite link to clipboard.
-     * @returns {Promise<void>}
-     */
-    /**
      * @desc Format a date as a relative time string.
      * @param {string|Date} date - The date to format
      * @returns {string} Relative time string (e.g. "5m ago", "2d ago")
@@ -422,6 +418,10 @@ export default {
       if (diffDays < 30) return `${diffDays}d ago`;
       return `${Math.floor(diffDays / 30)}mo ago`;
     },
+    /**
+     * @desc Copy the invite link to clipboard.
+     * @returns {Promise<void>}
+     */
     async copyInviteLink() {
       try {
         await navigator.clipboard.writeText(this.inviteLink);

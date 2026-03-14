@@ -36,11 +36,12 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         snackbar.color = config.vuetify.theme.snackbar.errorColor;
         snackbar.status = true;
       }
-      if (err?.response?.status === 403 && !isRefreshingAbilities && onRefreshAbilities) {
+      if (err?.response?.status === 403 && !isRefreshingAbilities && !err.config?.__isAbilityRetry && onRefreshAbilities) {
         isRefreshingAbilities = true;
         try {
           await onRefreshAbilities();
           isRefreshingAbilities = false;
+          err.config.__isAbilityRetry = true;
           return instance.request(err.config);
         } catch {
           isRefreshingAbilities = false;

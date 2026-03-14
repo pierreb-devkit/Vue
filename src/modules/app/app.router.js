@@ -3,6 +3,7 @@
  */
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
+import { ability } from '../../lib/helpers/ability';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
@@ -55,7 +56,6 @@ const getRouter = () => {
     // secu
     if (to.matched.some((record) => record.meta.action)) {
       if (authStore.isLoggedIn) {
-        const { ability } = await import('../../lib/helpers/ability.js');
         // If abilities not loaded yet, fetch them before checking
         if (!ability || !ability.rules || ability.rules.length === 0) {
           await authStore.refreshAbilities();

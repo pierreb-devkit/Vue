@@ -145,6 +145,7 @@ export default {
     },
     hasOrganization() {
       const authStore = useAuthStore();
+      if (!authStore.serverConfig?.organizations?.enabled) return true;
       return !!authStore.user?.currentOrganization;
     },
   },

@@ -398,25 +398,24 @@ describe('Axios Service', () => {
     });
 
     it('should reset flag after refreshAbilities completes', async () => {
-      const error = {
-        response: {
-          status: 403,
-        },
-        config: {},
-      };
-
       // First call
       try {
-        await errorInterceptor(error);
+        await errorInterceptor({
+          response: { status: 403 },
+          config: {},
+        });
       } catch {
         // expected
       }
 
       expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
 
-      // Second call after first completed should trigger again
+      // Second call with a fresh config after first completed should trigger again
       try {
-        await errorInterceptor(error);
+        await errorInterceptor({
+          response: { status: 403 },
+          config: {},
+        });
       } catch {
         // expected
       }
