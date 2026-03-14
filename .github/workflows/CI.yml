@@ -42,6 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: pierreb-devkit/Node
+          ref: feat/phase-2-orgs
           path: Node
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -60,6 +61,8 @@ jobs:
           NODE_ENV: test
           DEVKIT_NODE_db_uri: mongodb://127.0.0.1:27017/NodeTest
           DEVKIT_NODE_api_port: "3000"
+          DEVKIT_NODE_organizations_enabled: "true"
+          DEVKIT_NODE_organizations_domainMatching: "true"
           DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
           DEVKIT_NODE_cors_credentials: "true"
       - name: Wait for Node backend
