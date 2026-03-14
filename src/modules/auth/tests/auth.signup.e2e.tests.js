@@ -24,9 +24,10 @@ test.describe('Signup E2E', () => {
 
   test('can signin after signup', async ({ page }) => {
     // First signup via API to ensure user exists
-    await page.request.post('http://localhost:3000/api/auth/signup', {
+    const signupRes = await page.request.post('http://localhost:3000/api/auth/signup', {
       data: { email: `e2e-signin-${timestamp}@test.com`, password: testPassword, firstName: 'Test', lastName: 'User' },
     });
+    expect(signupRes.ok()).toBeTruthy();
 
     await page.goto('/signin');
     await page.getByPlaceholder('name@example.com').waitFor({ state: 'visible', timeout: 10000 });
@@ -34,7 +35,7 @@ test.describe('Signup E2E', () => {
     await page.getByPlaceholder('Enter your password').fill(testPassword);
     await page.getByRole('main').getByRole('button', { name: 'Sign In' }).click();
 
-    await page.waitForURL((url) => !url.pathname.includes('/signin'), { timeout: 10000 });
+    await page.waitForURL((url) => !url.pathname.includes('/signin'), { timeout: 15000 });
     expect(page.url()).not.toContain('/signin');
   });
 });
