@@ -44,6 +44,7 @@ export default defineConfig({
         'src/lib/plugins/index.js',
         'src/lib/plugins/vuetify.js',
         'src/lib/services/config.js',
+        'src/lib/helpers/e2e/**',
       ],
       thresholds: {
         statements: 85,

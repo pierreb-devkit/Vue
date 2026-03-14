@@ -116,6 +116,32 @@ describe('Organizations Store', () => {
       expect(store.organizations[0]).toEqual(updatedOrg);
       expect(result).toEqual(updatedOrg);
     });
+
+    it('should also update currentOrganization when it matches', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: '1', name: 'Old' }];
+      store.currentOrganization = { id: '1', name: 'Old' };
+      const updatedOrg = { id: '1', name: 'Updated Org' };
+
+      axios.put.mockResolvedValueOnce({ data: { data: updatedOrg } });
+
+      await store.updateOrganization('1', { name: 'Updated Org' });
+
+      expect(store.currentOrganization).toEqual(updatedOrg);
+    });
+
+    it('should update currentOrganization when matching by _id', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ _id: 'a', name: 'Old' }];
+      store.currentOrganization = { _id: 'a', name: 'Old' };
+      const updatedOrg = { _id: 'a', name: 'Updated' };
+
+      axios.put.mockResolvedValueOnce({ data: { data: updatedOrg } });
+
+      await store.updateOrganization('a', { name: 'Updated' });
+
+      expect(store.currentOrganization).toEqual(updatedOrg);
+    });
   });
 
   describe('deleteOrganization', () => {
@@ -144,6 +170,23 @@ describe('Organizations Store', () => {
 
       expect(store.currentOrganization).toBeNull();
       expect(store.organizations).toEqual([]);
+    });
+
+    it('should filter adminPendingRequests when deleting an org', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: '1', name: 'Org1' }];
+      store.adminPendingRequests = [
+        { organizationId: '1', organizationName: 'Org1', count: 2 },
+        { organizationId: '2', organizationName: 'Org2', count: 1 },
+      ];
+
+      axios.delete.mockResolvedValueOnce({});
+
+      await store.deleteOrganization('1');
+
+      expect(store.adminPendingRequests).toEqual([
+        { organizationId: '2', organizationName: 'Org2', count: 1 },
+      ]);
     });
 
     it('should not clear current if different org deleted', async () => {
@@ -313,6 +356,36 @@ describe('Organizations Store', () => {
 
       expect(store.organizations).toEqual([{ id: '2', name: 'Org2' }]);
       expect(store.currentOrganization).toEqual({ id: '2', name: 'Org2' });
+    });
+
+    it('should filter adminPendingRequests when leaving an org', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: '1', name: 'Org1' }];
+      store.adminPendingRequests = [
+        { organizationId: '1', organizationName: 'Org1', count: 3 },
+        { organizationId: '2', organizationName: 'Org2', count: 1 },
+      ];
+
+      axios.post.mockResolvedValueOnce({ data: { success: true } });
+
+      await store.leaveOrganization('1');
+
+      expect(store.adminPendingRequests).toEqual([
+        { organizationId: '2', organizationName: 'Org2', count: 1 },
+      ]);
+    });
+
+    it('should clear current when matching by _id', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ _id: 'a', name: 'OrgA' }];
+      store.currentOrganization = { _id: 'a', name: 'OrgA' };
+
+      axios.post.mockResolvedValueOnce({ data: { success: true } });
+
+      await store.leaveOrganization('a');
+
+      expect(store.currentOrganization).toBeNull();
+      expect(store.organizations).toEqual([]);
     });
   });
 
