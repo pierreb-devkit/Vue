@@ -273,7 +273,7 @@ export default {
 
 Copy the entire `src/modules/organizations/` directory from the stack. The module includes:
 
-```
+```text
 src/modules/organizations/
   router/organizations.router.js       # Routes: /organizations, /organizations/create, /organizations/:id
   stores/organizations.store.js        # Pinia store: CRUD + switchOrganization + members
@@ -310,7 +310,7 @@ The switcher auto-hides when organizations are disabled or the user belongs to o
 
 #### Step 10: Update the signup flow
 
-The signup view (`src/modules/auth/views/auth.signup.view.vue`) now supports a multi-step flow:
+The signup view (`src/modules/auth/local/views/signup.view.vue`) now supports a multi-step flow:
 
 1. **Form step** -- standard email/password registration.
 2. **Organization welcome** -- shown when the backend auto-created or auto-joined an organization (the response contains `result.organization`).
@@ -318,8 +318,8 @@ The signup view (`src/modules/auth/views/auth.signup.view.vue`) now supports a m
 
 Add the `AuthOrganizationSetupComponent`:
 
-```
-src/modules/auth/components/auth.organizationSetup.component.vue
+```text
+src/modules/auth/local/components/organizationSetup.component.vue
 ```
 
 In the signup `validate()` method, handle the organization flow:

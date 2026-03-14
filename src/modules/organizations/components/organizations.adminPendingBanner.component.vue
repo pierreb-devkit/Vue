@@ -56,6 +56,7 @@ export default {
      * @returns {string}
      */
     reviewLink() {
+      if (!this.orgs.length) return '/users';
       return `/users/organizations/${this.orgs[0].organizationId}`;
     },
     /**

@@ -377,33 +377,33 @@ describe('Axios Service', () => {
      * @desc Verify the flag prevents concurrent ability refresh calls.
      * @returns {Promise<void>}
      */
-    it('should not call onRefreshAbilities twice concurrently (infinite loop prevention)', async () => {
-      // Make refreshAbilities hang so we can test the flag
+    it('should not call onRefreshAbilities twice concurrently (shared promise)', async () => {
+      // Make refreshAbilities hang so we can test concurrency
       let resolveRefresh;
       mockOnRefreshAbilities.mockImplementation(() => new Promise((resolve) => { resolveRefresh = resolve; }));
 
-      const error = {
-        response: {
-          status: 403,
-        },
+      const error1 = {
+        response: { status: 403 },
+        config: {},
+      };
+      const error2 = {
+        response: { status: 403 },
         config: {},
       };
 
       // First 403 triggers refresh
-      const firstCall = errorInterceptor(error).catch(() => {});
+      const firstCall = errorInterceptor(error1).catch(() => {});
 
-      // Second 403 while refresh is in progress should NOT trigger another refresh
-      try {
-        await errorInterceptor(error);
-      } catch (err) {
-        expect(err).toEqual(error);
-      }
+      // Second 403 while refresh is in progress should share the same promise
+      const secondCall = errorInterceptor(error2).catch(() => {});
 
+      // Only one call to onRefreshAbilities
       expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
 
-      // Resolve the first refresh
+      // Resolve the shared refresh
       resolveRefresh();
       await firstCall;
+      await secondCall;
     });
 
     /**

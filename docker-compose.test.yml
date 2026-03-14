@@ -5,6 +5,11 @@ services:
       - "27017:27017"
     tmpfs:
       - /data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   node-api:
     build:
@@ -18,7 +23,8 @@ services:
       DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
       DEVKIT_NODE_cors_credentials: "true"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/home').then(r => { if (!r.ok) throw 1 })"]
       interval: 5s

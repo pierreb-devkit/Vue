@@ -24,6 +24,8 @@ export default [
     component: organizationCreate,
     meta: {
       display: false,
+      action: 'create',
+      subject: 'Organization',
     },
   },
   {
@@ -32,6 +34,8 @@ export default [
     component: organization,
     meta: {
       display: false,
+      action: 'read',
+      subject: 'Organization',
     },
   },
   {

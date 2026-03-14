@@ -18,6 +18,7 @@ const instance = axios.create({
  * @param {Function} onRefreshAbilities - Callback to call on 403 error to refresh abilities
  */
 let isRefreshingAbilities = false;
+let refreshAbilitiesPromise = null;
 
 export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilities) {
   instance.interceptors.response.use(
@@ -37,17 +38,22 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         snackbar.color = config.vuetify.theme.snackbar.errorColor;
         snackbar.status = true;
       }
-      if (err?.response?.status === 403 && !isRefreshingAbilities && !err.config?.__isAbilityRetry && onRefreshAbilities) {
-        isRefreshingAbilities = true;
+      if (err?.response?.status === 403 && !err.config?.__isAbilityRetry && onRefreshAbilities) {
         try {
-          await onRefreshAbilities();
+          if (!isRefreshingAbilities) {
+            isRefreshingAbilities = true;
+            refreshAbilitiesPromise = onRefreshAbilities();
+          }
+          await refreshAbilitiesPromise;
           isRefreshingAbilities = false;
+          refreshAbilitiesPromise = null;
           if (err.config) {
             const retryConfig = { ...err.config, __isAbilityRetry: true };
             return instance.request(retryConfig);
           }
         } catch {
           isRefreshingAbilities = false;
+          refreshAbilitiesPromise = null;
         }
       }
       if (config.vuetify.theme.snackbar.status && err.response && err.response.data && err.response.data.description) {
@@ -65,6 +71,7 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
  */
 export function resetRefreshingAbilitiesFlag() {
   isRefreshingAbilities = false;
+  refreshAbilitiesPromise = null;
 }
 
 /**

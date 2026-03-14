@@ -119,6 +119,8 @@ export default {
       if (!organizationsStore.organizations.length) {
         organizationsStore.fetchOrganizations().then(() => {
           this.syncCurrentOrganization();
+        }).catch(() => {
+          // best-effort — silently ignore fetch failures
         });
       } else if (!organizationsStore.currentOrganization) {
         this.syncCurrentOrganization();

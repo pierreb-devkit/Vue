@@ -63,6 +63,7 @@ export const useAdminStore = defineStore('admin', {
         assign(this.user, res.data.data);
       } catch (err) {
         console.log(err);
+        throw err;
       }
     },
 
@@ -72,6 +73,7 @@ export const useAdminStore = defineStore('admin', {
         this.resetUser();
       } catch (err) {
         console.log(err);
+        throw err;
       }
     },
 

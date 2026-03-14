@@ -140,7 +140,7 @@ describe('Admin Store', () => {
 
       axios.put.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.updateUser({ id: '123' });
+      await expect(store.updateUser({ id: '123' })).rejects.toThrow('Failed');
 
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
@@ -176,7 +176,7 @@ describe('Admin Store', () => {
 
       axios.delete.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.deleteUser({ id: '999' });
+      await expect(store.deleteUser({ id: '999' })).rejects.toThrow('Failed');
 
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();

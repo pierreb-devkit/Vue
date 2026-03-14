@@ -28,7 +28,8 @@
               <v-spacer></v-spacer>
               <v-btn variant="text" class="text-none text-body-medium mr-2" to="/users">Cancel</v-btn>
               <v-btn
-                :disabled="!valid"
+                :disabled="!valid || loading"
+                :loading="loading"
                 color="primary"
                 variant="flat"
                 :class="config.vuetify.theme.rounded"
@@ -56,15 +57,18 @@ export default {
   data() {
     return {
       valid: false,
+      loading: false,
       name: '',
       description: '',
-      rules: { required: (v) => !!v || 'Required' },
+      rules: { required: (v) => (!!v && !!v.trim()) || 'Required' },
     };
   },
   methods: {
     async create() {
+      if (this.loading) return;
       const form = await this.$refs.form.validate();
       if (form.valid) {
+        this.loading = true;
         const organizationsStore = useOrganizationsStore();
         try {
           const org = await organizationsStore.createOrganization({
@@ -78,6 +82,8 @@ export default {
           }
         } catch (err) {
           console.log(err);
+        } finally {
+          this.loading = false;
         }
       }
     },

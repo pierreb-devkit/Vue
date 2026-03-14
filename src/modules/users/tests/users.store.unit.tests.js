@@ -206,7 +206,7 @@ describe('Users Store', () => {
 
       axios.put.mockRejectedValueOnce(new Error('Failed to update user'));
 
-      await usersStore.updateUser({ id: '789' });
+      await expect(usersStore.updateUser({ id: '789' })).rejects.toThrow('Failed to update user');
 
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
@@ -283,7 +283,7 @@ describe('Users Store', () => {
 
       axios.delete.mockRejectedValueOnce(new Error('Failed to delete user'));
 
-      await usersStore.deleteUser({ id: '999' });
+      await expect(usersStore.deleteUser({ id: '999' })).rejects.toThrow('Failed to delete user');
 
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();

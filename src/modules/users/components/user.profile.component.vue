@@ -169,11 +169,16 @@ export default {
       const formData = new FormData();
       formData.append('avatar', file);
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-      await axios.post(`${api}/users/avatar`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      this.$emit('avatar-uploaded');
-      event.target.value = '';
+      try {
+        await axios.post(`${api}/users/avatar`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        this.$emit('avatar-uploaded');
+      } catch (err) {
+        console.log(err);
+      } finally {
+        event.target.value = '';
+      }
     },
   },
 };

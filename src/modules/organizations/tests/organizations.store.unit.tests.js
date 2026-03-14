@@ -22,12 +22,10 @@ vi.mock('../../../lib/services/config', () => ({
   },
 }));
 
-// Mock auth store
+// Mock auth store — return one shared object so mutations are observable
+const mockAuthStore = { user: null, cookieExpire: null };
 vi.mock('../../auth/stores/auth.store', () => ({
-  useAuthStore: vi.fn(() => ({
-    user: null,
-    cookieExpire: null,
-  })),
+  useAuthStore: vi.fn(() => mockAuthStore),
 }));
 
 // Mock ability helper
@@ -41,6 +39,8 @@ describe('Organizations Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mockAuthStore.user = null;
+    mockAuthStore.cookieExpire = null;
   });
 
   it('should initialize with default state', () => {
@@ -444,32 +444,46 @@ describe('Organizations Store', () => {
   describe('approveRequest', () => {
     it('should approve a request and refresh admin pending', async () => {
       const store = useOrganizationsStore();
+      store.adminPendingRequests = [{ organizationId: 'org1', organizationName: 'Org1', count: 2 }];
       const mockApproved = { id: 'req1', status: 'approved' };
 
       axios.put.mockResolvedValueOnce({ data: { data: mockApproved } });
-      // Mock fetchAdminPendingRequests (called internally)
-      axios.get.mockResolvedValueOnce({ data: { data: [] } });
+      // Mock fetchAdminPendingRequests (fire-and-forget): fetchOrganizations + per-org requests
+      axios.get.mockResolvedValueOnce({ data: { data: [{ _id: 'org1', name: 'Org1' }] } });
+      axios.get.mockResolvedValueOnce({ data: { data: [{ id: 'req2' }] } });
 
       const result = await store.approveRequest('org1', 'req1');
 
       expect(axios.put).toHaveBeenCalledWith(`${API}/organizations/org1/requests/req1/approve`);
       expect(result).toEqual(mockApproved);
+      // Wait for the fire-and-forget fetchAdminPendingRequests to settle
+      await vi.waitFor(() => {
+        expect(store.adminPendingRequests).toEqual([
+          { organizationId: 'org1', organizationName: 'Org1', count: 1 },
+        ]);
+      });
     });
   });
 
   describe('rejectRequest', () => {
     it('should reject a request and refresh admin pending', async () => {
       const store = useOrganizationsStore();
+      store.adminPendingRequests = [{ organizationId: 'org1', organizationName: 'Org1', count: 1 }];
       const mockRejected = { id: 'req1', status: 'rejected' };
 
       axios.put.mockResolvedValueOnce({ data: { data: mockRejected } });
-      // Mock fetchAdminPendingRequests (called internally)
+      // Mock fetchAdminPendingRequests (fire-and-forget): fetchOrganizations + per-org requests
+      axios.get.mockResolvedValueOnce({ data: { data: [{ _id: 'org1', name: 'Org1' }] } });
       axios.get.mockResolvedValueOnce({ data: { data: [] } });
 
       const result = await store.rejectRequest('org1', 'req1');
 
       expect(axios.put).toHaveBeenCalledWith(`${API}/organizations/org1/requests/req1/reject`);
       expect(result).toEqual(mockRejected);
+      // Wait for the fire-and-forget fetchAdminPendingRequests to settle
+      await vi.waitFor(() => {
+        expect(store.adminPendingRequests).toEqual([]);
+      });
     });
   });
 

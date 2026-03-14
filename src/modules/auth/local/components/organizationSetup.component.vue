@@ -123,7 +123,7 @@ export default {
       requestSent: false,
       organizationName: this.defaultName ? `${this.defaultName}'s organization` : '',
       rules: {
-        required: (v) => !!v || 'Organization name is required',
+        required: (v) => (!!v && !!v.trim()) || 'Organization name is required',
       },
     };
   },
