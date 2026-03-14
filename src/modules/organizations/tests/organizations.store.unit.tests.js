@@ -207,9 +207,10 @@ describe('Organizations Store', () => {
     it('should switch organization and update abilities', async () => {
       const store = useOrganizationsStore();
       const switchedOrg = { id: '1', name: 'Org1' };
+      store.organizations = [switchedOrg];
 
       axios.post.mockResolvedValueOnce({
-        data: { data: switchedOrg, abilities: ['read', 'write'], user: { name: 'User1' }, tokenExpiresIn: 3600 },
+        data: { data: { abilities: ['read', 'write'], user: { name: 'User1' }, tokenExpiresIn: 3600 } },
       });
 
       await store.switchOrganization('1');

@@ -252,6 +252,7 @@
 </template>
 
 <script>
+import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
@@ -300,7 +301,7 @@ export default {
     },
     canManage() {
       if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('update', 'Organization');
+        return ability.can('update', subject('Organization', { _id: this.organizationId }));
       }
       return false;
     },

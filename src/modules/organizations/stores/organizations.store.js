@@ -112,22 +112,22 @@ export const useOrganizationsStore = defineStore('organizations', {
     async switchOrganization(organizationId) {
       const api = apiBase();
       const res = await axios.post(`${api}/organizations/${organizationId}/switch`);
+      const result = res.data.data || {};
       this.currentOrganization =
-        res.data?.data
-        || this.organizations.find((org) => org.id === organizationId || org._id === organizationId)
+        this.organizations.find((org) => org.id === organizationId || org._id === organizationId)
         || null;
       // Update JWT abilities if returned
-      if (res.data.abilities) {
-        updateAbilities(res.data.abilities);
+      if (result.abilities) {
+        updateAbilities(result.abilities);
       }
       // Refresh user data in auth store
       const authStore = useAuthStore();
-      if (res.data.user) {
-        authStore.user = res.data.user;
+      if (result.user) {
+        authStore.user = result.user;
       }
-      if (res.data.tokenExpiresIn) {
-        authStore.cookieExpire = res.data.tokenExpiresIn;
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+      if (result.tokenExpiresIn) {
+        authStore.cookieExpire = result.tokenExpiresIn;
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, result.tokenExpiresIn);
       }
     },
 
