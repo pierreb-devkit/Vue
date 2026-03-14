@@ -8,10 +8,9 @@ const password = 'E2eTestPass99xyz';
 
 let orgId;
 
-// Skip: requires Node organizations module (not yet available on master)
 test.describe('Organization Domain Join E2E', () => {
   test.describe.configure({ mode: 'serial' });
-  test.beforeEach(async () => { test.skip(true, 'Requires Node organizations module'); });
+
   // ── Phase 1: Signup & pending join ────────────────────────────────
 
   test('owner signs up via API and creates org', async ({ request }) => {
