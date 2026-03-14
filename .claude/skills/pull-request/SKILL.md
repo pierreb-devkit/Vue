@@ -209,21 +209,21 @@ gh pr view "$PR" --json reviewDecision,mergeable | jq '{reviewDecision, mergeabl
 
 ## 7. Perfect mode (`--perfect`)
 
-When invoked with `--perfect`, run an outer convergence loop after the PR is ready and the standard monitor loop (section 6) completes its first pass:
+When invoked with `--perfect`, run an outer convergence loop after the standard monitor loop (section 6) completes:
 
 ```text
 REPEAT:
-  1. Trigger CodeRabbit review   → post "@coderabbitai full review" as PR comment
-  2. Wait for review              → poll issue comments until coderabbitai posts summary
-                                    (contains "actionable" or "walkthrough"), max 10min
-  3. Run monitor loop (section 6) → fix all comments, resolve all threads, CI green
-  4. Run diff audit               → audit `git diff master...HEAD` for security, logic bugs,
+  1. Wait for CodeRabbit          → CodeRabbit auto-triggers on every push. Poll for up to 5 min.
+                                    ONLY if no review appears after 5 min, post:
+                                    `@coderabbitai full review` as PR comment, then wait (see monitoring.md)
+  2. Run monitor loop (section 6) → fix all comments, resolve all threads, CI green
+  3. Run diff audit               → audit `git diff master...HEAD` for security, logic bugs,
                                     data integrity, API design, performance issues
-  5. If audit has findings        → fix all, commit, push, GOTO 1
-  6. If 0 CodeRabbit comments AND 0 audit findings → STOP ✓
+  4. If audit has findings        → fix all, commit, push, GOTO 1
+  5. If 0 CodeRabbit comments AND 0 audit findings → STOP ✓
 ```
 
-**Safety limit:** 10 outer iterations max — report to user if still not converged.
+**Safety limit:** 5 outer iterations max — report to user if still not converged.
 
 ## 8. Conflict resolution
 
