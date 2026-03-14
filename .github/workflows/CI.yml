@@ -63,7 +63,7 @@ jobs:
           DEVKIT_NODE_api_port: "3000"
           DEVKIT_NODE_organizations_enabled: "true"
           DEVKIT_NODE_organizations_domainMatching: "true"
-          DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
+          DEVKIT_NODE_cors_origin: '[http://localhost:8080]'
           DEVKIT_NODE_cors_credentials: "true"
       - name: Wait for Node backend
         run: npx wait-on http://127.0.0.1:3000/api/home --timeout 60000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; exit 1)
