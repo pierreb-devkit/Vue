@@ -59,11 +59,11 @@ jobs:
         env:
           NODE_ENV: test
           DEVKIT_NODE_db_uri: mongodb://127.0.0.1:27017/NodeTest
-          DEVKIT_NODE_port: "3000"
+          DEVKIT_NODE_port: "3001"
           DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
           DEVKIT_NODE_cors_credentials: "true"
       - name: Wait for Node backend
-        run: npx wait-on http://127.0.0.1:3000/api/home --timeout 60000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; exit 1)
+        run: npx wait-on http://127.0.0.1:3001/api/home --timeout 60000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; exit 1)
 
       # Install & start Vue dev server
       - name: Install Vue

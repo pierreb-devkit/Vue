@@ -54,12 +54,12 @@ export default {
   api: {
     protocol: 'http',
     host: 'localhost',
-    port: '3000',
+    port: '3001',
     base: 'api',
     endPoints: {
       home: 'home',
       auth: 'auth',
-      account: 'account',
+      users: 'users',
       tasks: 'tasks',
     },
   },
