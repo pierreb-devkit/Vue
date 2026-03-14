@@ -19,6 +19,7 @@ const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.
 export const useOrganizationsStore = defineStore('organizations', {
   state: () => ({
     currentOrganization: null,
+    viewedOrganization: null,
     organizations: [],
     members: [],
     adminPendingRequests: [],
@@ -44,8 +45,8 @@ export const useOrganizationsStore = defineStore('organizations', {
     async fetchOrganization(organizationId) {
       const api = apiBase();
       const res = await axios.get(`${api}/organizations/${organizationId}`);
-      this.currentOrganization = res.data.data;
-      return this.currentOrganization;
+      this.viewedOrganization = res.data.data;
+      return this.viewedOrganization;
     },
 
     /**
@@ -56,8 +57,10 @@ export const useOrganizationsStore = defineStore('organizations', {
     async createOrganization(data) {
       const api = apiBase();
       const res = await axios.post(`${api}/organizations`, data);
-      this.currentOrganization = res.data.data;
-      return this.currentOrganization;
+      const created = res.data.data;
+      this.currentOrganization = created;
+      this.organizations = [created, ...this.organizations];
+      return created;
     },
 
     /**
@@ -69,8 +72,13 @@ export const useOrganizationsStore = defineStore('organizations', {
     async updateOrganization(organizationId, data) {
       const api = apiBase();
       const res = await axios.put(`${api}/organizations/${organizationId}`, data);
-      this.currentOrganization = res.data.data;
-      return this.currentOrganization;
+      const updated = res.data.data;
+      this.viewedOrganization = updated;
+      this.organizations = this.organizations.map((org) => ((org.id === organizationId || org._id === organizationId) ? updated : org));
+      if (this.currentOrganization && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)) {
+        this.currentOrganization = updated;
+      }
+      return updated;
     },
 
     /**
@@ -81,11 +89,15 @@ export const useOrganizationsStore = defineStore('organizations', {
     async deleteOrganization(organizationId) {
       const api = apiBase();
       await axios.delete(`${api}/organizations/${organizationId}`);
+      this.adminPendingRequests = this.adminPendingRequests.filter(
+        (request) => request.organizationId !== organizationId,
+      );
       if (
         this.currentOrganization
         && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)
       ) {
         this.currentOrganization = null;
+        this.resetOrganization();
       }
       this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
     },
@@ -178,8 +190,12 @@ export const useOrganizationsStore = defineStore('organizations', {
       const api = apiBase();
       await axios.post(`${api}/organizations/${organizationId}/leave`);
       this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
+      this.adminPendingRequests = this.adminPendingRequests.filter(
+        (request) => request.organizationId !== organizationId,
+      );
       if (this.currentOrganization && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)) {
         this.currentOrganization = null;
+        this.resetOrganization();
       }
     },
 
@@ -188,7 +204,7 @@ export const useOrganizationsStore = defineStore('organizations', {
      * @returns {void}
      */
     resetOrganization() {
-      this.currentOrganization = null;
+      this.viewedOrganization = null;
       this.members = [];
     },
 

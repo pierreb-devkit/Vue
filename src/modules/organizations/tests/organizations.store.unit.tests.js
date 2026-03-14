@@ -46,6 +46,7 @@ describe('Organizations Store', () => {
   it('should initialize with default state', () => {
     const store = useOrganizationsStore();
     expect(store.currentOrganization).toBeNull();
+    expect(store.viewedOrganization).toBeNull();
     expect(store.organizations).toEqual([]);
     expect(store.members).toEqual([]);
     expect(store.adminPendingRequests).toEqual([]);
@@ -79,13 +80,13 @@ describe('Organizations Store', () => {
       const result = await store.fetchOrganization('1');
 
       expect(axios.get).toHaveBeenCalledWith(`${API}/organizations/1`);
-      expect(store.currentOrganization).toEqual(mockOrg);
+      expect(store.viewedOrganization).toEqual(mockOrg);
       expect(result).toEqual(mockOrg);
     });
   });
 
   describe('createOrganization', () => {
-    it('should create and set current organization', async () => {
+    it('should create, set current organization, and add to list', async () => {
       const store = useOrganizationsStore();
       const newOrg = { id: '1', name: 'New Org' };
 
@@ -95,13 +96,15 @@ describe('Organizations Store', () => {
 
       expect(axios.post).toHaveBeenCalledWith(`${API}/organizations`, { name: 'New Org' });
       expect(store.currentOrganization).toEqual(newOrg);
+      expect(store.organizations).toContainEqual(newOrg);
       expect(result).toEqual(newOrg);
     });
   });
 
   describe('updateOrganization', () => {
-    it('should update and set current organization', async () => {
+    it('should update viewedOrganization and sync organizations list', async () => {
       const store = useOrganizationsStore();
+      store.organizations = [{ id: '1', name: 'Old' }];
       const updatedOrg = { id: '1', name: 'Updated Org' };
 
       axios.put.mockResolvedValueOnce({ data: { data: updatedOrg } });
@@ -109,7 +112,8 @@ describe('Organizations Store', () => {
       const result = await store.updateOrganization('1', { name: 'Updated Org' });
 
       expect(axios.put).toHaveBeenCalledWith(`${API}/organizations/1`, { name: 'Updated Org' });
-      expect(store.currentOrganization).toEqual(updatedOrg);
+      expect(store.viewedOrganization).toEqual(updatedOrg);
+      expect(store.organizations[0]).toEqual(updatedOrg);
       expect(result).toEqual(updatedOrg);
     });
   });
@@ -313,14 +317,14 @@ describe('Organizations Store', () => {
   });
 
   describe('resetOrganization', () => {
-    it('should reset current organization and members', () => {
+    it('should reset viewed organization and members', () => {
       const store = useOrganizationsStore();
-      store.currentOrganization = { id: '1', name: 'Org1' };
+      store.viewedOrganization = { id: '1', name: 'Org1' };
       store.members = [{ id: 'm1' }];
 
       store.resetOrganization();
 
-      expect(store.currentOrganization).toBeNull();
+      expect(store.viewedOrganization).toBeNull();
       expect(store.members).toEqual([]);
     });
   });

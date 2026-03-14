@@ -2,18 +2,18 @@
   <v-container fluid>
     <!-- Header -->
     <PageHeader
-      :title="currentOrganization ? currentOrganization.name : 'Organization'"
+      :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
     >
       <template #avatar>
-        <v-avatar v-if="currentOrganization" :color="orgColor(currentOrganization)" size="40" class="mr-3">
+        <v-avatar v-if="viewedOrganization" :color="orgColor(viewedOrganization)" size="40" class="mr-3">
           <span class="text-body-large font-weight-bold" style="color: white;">
-            {{ (currentOrganization.name || '?').charAt(0).toUpperCase() }}
+            {{ (viewedOrganization.name || '?').charAt(0).toUpperCase() }}
           </span>
         </v-avatar>
       </template>
       <template #actions>
         <v-btn
-          v-if="currentOrganization && canManage"
+          v-if="viewedOrganization && canManage"
           color="error"
           variant="tonal"
           class="text-none text-body-medium mr-2"
@@ -95,7 +95,7 @@
       <!-- Members section -->
       <v-col cols="12" md="8">
         <organizationsMembersComponent
-          v-if="currentOrganization"
+          v-if="viewedOrganization"
           :organization-id="organizationId"
         />
 
@@ -222,13 +222,13 @@
             This action <strong>cannot be undone</strong>. All members will lose access.
           </p>
           <p class="mb-2 text-body-small text-medium-emphasis">
-            Type <strong>{{ currentOrganization?.name }}</strong> to confirm:
+            Type <strong>{{ viewedOrganization?.name }}</strong> to confirm:
           </p>
           <v-text-field
             v-model="deleteConfirmName"
             variant="outlined"
             density="comfortable"
-            :placeholder="currentOrganization?.name"
+            :placeholder="viewedOrganization?.name"
             autofocus
           ></v-text-field>
         </v-card-text>
@@ -240,7 +240,7 @@
             variant="flat"
             :class="config.vuetify.theme.rounded"
             class="text-none text-body-medium"
-            :disabled="deleteConfirmName !== currentOrganization?.name"
+            :disabled="deleteConfirmName !== viewedOrganization?.name"
             @click="remove"
           >
             Delete
@@ -290,9 +290,9 @@ export default {
     };
   },
   computed: {
-    currentOrganization() {
+    viewedOrganization() {
       const organizationsStore = useOrganizationsStore();
-      return organizationsStore.currentOrganization;
+      return organizationsStore.viewedOrganization;
     },
     roleDescriptions() {
       const authStore = useAuthStore();
@@ -305,21 +305,21 @@ export default {
       return false;
     },
     name: {
-      get() { return this.currentOrganization ? this.currentOrganization.name : ''; },
+      get() { return this.viewedOrganization ? this.viewedOrganization.name : ''; },
       set(value) {
         const organizationsStore = useOrganizationsStore();
-        if (organizationsStore.currentOrganization) {
-          organizationsStore.currentOrganization.name = value;
+        if (organizationsStore.viewedOrganization) {
+          organizationsStore.viewedOrganization.name = value;
           this.dirty = true;
         }
       },
     },
     description: {
-      get() { return this.currentOrganization ? this.currentOrganization.description : ''; },
+      get() { return this.viewedOrganization ? this.viewedOrganization.description : ''; },
       set(value) {
         const organizationsStore = useOrganizationsStore();
-        if (organizationsStore.currentOrganization) {
-          organizationsStore.currentOrganization.description = value;
+        if (organizationsStore.viewedOrganization) {
+          organizationsStore.viewedOrganization.description = value;
           this.dirty = true;
         }
       },
