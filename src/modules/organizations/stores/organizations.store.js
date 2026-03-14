@@ -98,6 +98,8 @@ export const useOrganizationsStore = defineStore('organizations', {
       ) {
         this.currentOrganization = null;
         this.resetOrganization();
+        const authStore = useAuthStore();
+        if (authStore.user) authStore.user.currentOrganization = null;
       }
       this.organizations = this.organizations.filter((org) => org.id !== organizationId && org._id !== organizationId);
     },
@@ -135,17 +137,14 @@ export const useOrganizationsStore = defineStore('organizations', {
      * @param {string} params - Pagination params (page&perPage&search)
      * @returns {Promise<Array>} Resolved list of members
      */
-    async fetchMembers(organizationId, params) {
+    async fetchMembers(organizationId, { page, perPage, search } = {}) {
       const api = apiBase();
-      let url = `${api}/organizations/${organizationId}/members`;
-      if (params) {
-        const parts = params.split('&');
-        const query = new URLSearchParams();
-        if (parts[0]) query.set('page', parts[0]);
-        if (parts[1]) query.set('perPage', parts[1]);
-        if (parts[2]) query.set('search', parts[2]);
-        url += `?${query.toString()}`;
-      }
+      const query = new URLSearchParams();
+      if (page) query.set('page', page);
+      if (perPage) query.set('perPage', perPage);
+      if (search) query.set('search', search);
+      const qs = query.toString();
+      const url = `${api}/organizations/${organizationId}/members${qs ? `?${qs}` : ''}`;
       const res = await axios.get(url);
       this.members = res.data.data;
       return this.members;

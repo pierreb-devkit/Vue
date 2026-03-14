@@ -208,14 +208,12 @@ describe('Auth Store', () => {
 
     it('should handle signup error', async () => {
       const authStore = useAuthStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Signup failed'));
-      await authStore.signup({ email: 'new@test.com', password: 'password' });
+      await expect(authStore.signup({ email: 'new@test.com', password: 'password' })).rejects.toThrow('Signup failed');
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
-      consoleLogSpy.mockRestore();
     });
   });
 

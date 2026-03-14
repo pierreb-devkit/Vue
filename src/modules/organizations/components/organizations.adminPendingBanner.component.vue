@@ -56,9 +56,7 @@ export default {
      * @returns {string}
      */
     reviewLink() {
-      return this.orgs.length === 1
-        ? `/users/organizations/${this.orgs[0].organizationId}`
-        : '/users/organizations';
+      return `/users/organizations/${this.orgs[0].organizationId}`;
     },
     /**
      * @desc Controls snackbar visibility.

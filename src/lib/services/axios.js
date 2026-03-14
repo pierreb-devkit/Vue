@@ -40,7 +40,9 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         isRefreshingAbilities = true;
         try {
           await onRefreshAbilities();
-        } finally {
+          isRefreshingAbilities = false;
+          return instance.request(err.config);
+        } catch {
           isRefreshingAbilities = false;
         }
       }

@@ -128,15 +128,15 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/');
   });
 
-  it('allows guarded routes via fallback when logged in but no abilities loaded', async () => {
+  it('denies guarded routes via fallback when logged in but no abilities loaded', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: null };
     mockAbility.rules = [];
-    // refreshAbilities doesn't populate rules in the mock, so fallback applies
+    // refreshAbilities doesn't populate rules in the mock, so fallback denies access
     const router = getRouter();
     await router.push('/tasks');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/tasks');
+    expect(router.currentRoute.value.path).toBe('/');
   });
 
   it('allows public routes without auth', async () => {

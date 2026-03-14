@@ -163,7 +163,7 @@ export const useAuthStore = defineStore('auth', {
         return res.data;
       } catch (err) {
         localStorage.removeItem('token');
-        console.log(err);
+        throw err;
       }
     },
 

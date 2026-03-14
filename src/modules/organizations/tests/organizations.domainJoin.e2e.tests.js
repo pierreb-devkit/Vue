@@ -41,7 +41,7 @@ test.describe('Organization Domain Join E2E', () => {
     await page.getByRole('button', { name: /continue/i }).click();
 
     // Wait for the pending join message
-    const pendingText = page.locator('text=request to join');
+    const pendingText = page.locator('text=request to join').first();
     await expect(pendingText).toBeVisible({ timeout: 10000 });
 
     // CRITICAL: Sidenav must NOT be visible during signup
@@ -51,7 +51,7 @@ test.describe('Organization Domain Join E2E', () => {
 
   test('member signs in — lands on organization-required', async ({ page }) => {
     await signin(page, memberEmail, password);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Should land on organization-required page (pending member has no active org)
     expect(page.url()).toContain('/organization-required');
@@ -62,11 +62,12 @@ test.describe('Organization Domain Join E2E', () => {
 
   test('member refresh on signup — redirects to organization-required', async ({ page }) => {
     await signin(page, memberEmail, password);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to signup (simulating refresh — user is already logged in)
     await page.goto('/signup');
-    await page.waitForTimeout(2000);
+    // Wait for Vue app to detect logged-in user and redirect to organization-required
+    await page.waitForURL((url) => url.pathname.includes('/organization-required'), { timeout: 15000 });
 
     // Should redirect to organization-required (not show signup form again)
     expect(page.url()).toContain('/organization-required');
@@ -77,24 +78,24 @@ test.describe('Organization Domain Join E2E', () => {
   test('owner approves member join request', async ({ page }) => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Should see pending join request
     const approveButton = page.getByRole('button', { name: /approve/i });
     await expect(approveButton).toBeVisible({ timeout: 10000 });
     await approveButton.click();
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('approved member — no Manage button on account page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto('/users');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Click the Organizations tab
     const orgTab = page.getByRole('tab', { name: /organizations/i });
     await orgTab.click({ timeout: 10000 });
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Members should NOT see the chevron (manage) icon on their org item
     const chevron = page.locator('.v-list-item .fa-chevron-right');
@@ -104,7 +105,7 @@ test.describe('Organization Domain Join E2E', () => {
   test('approved member — no management controls on org page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Delete button NOT visible
     const deleteButton = page.locator('button', { hasText: 'Delete' });
@@ -126,7 +127,7 @@ test.describe('Organization Domain Join E2E', () => {
   test('owner sees full management controls', async ({ page }) => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Delete button IS visible
     const deleteButton = page.locator('button', { hasText: 'Delete' });

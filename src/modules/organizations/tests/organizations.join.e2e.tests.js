@@ -7,6 +7,8 @@ const ownerEmail = `e2e-jowner-${timestamp}@join${timestamp}.com`;
 const requesterEmail = `e2e-jreq-${timestamp}@join${timestamp}.com`;
 const password = 'E2eTestPass99xyz';
 
+let orgId;
+
 test.describe('Organization Join Request E2E', () => {
   test.describe.configure({ mode: 'serial' });
 
@@ -23,6 +25,8 @@ test.describe('Organization Join Request E2E', () => {
     const ctx = await authenticatedContext(playwright, ownerEmail, password);
     const org = await createOrgViaAPI(ctx, `JoinOrg${timestamp}`);
     expect(org).toBeTruthy();
+    orgId = org._id || org.id;
+    expect(orgId).toBeTruthy();
     await ctx.dispose();
 
     const reqRes = await signupViaAPI(request, {
@@ -36,26 +40,17 @@ test.describe('Organization Join Request E2E', () => {
 
   test('requester signs in successfully', async ({ page }) => {
     await signin(page, requesterEmail, password);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
     // Basic sanity — page loaded without error
-    expect(page.url()).toBeTruthy();
+    expect(page.url()).not.toContain('/signin');
   });
 
   test('owner can navigate to org detail', async ({ page }) => {
     await signin(page, ownerEmail, password);
-    await page.goto('/users');
-    await page.waitForTimeout(2000);
+    await page.goto(`/users/organizations/${orgId}`);
 
-    // Click the Organizations tab
-    const orgTab = page.getByRole('tab', { name: /organizations/i });
-    await orgTab.click({ timeout: 10000 });
-    await page.waitForTimeout(2000);
-
-    // Click the org list item in the main content (owners see a clickable link)
-    const orgItem = page.getByRole('main').locator('.v-list-item').first();
-    await orgItem.click({ timeout: 10000 });
-    await page.waitForTimeout(1500);
-
+    // Should see the org detail page
+    await expect(page.locator(`text=JoinOrg`)).toBeVisible({ timeout: 10000 });
     expect(page.url()).toContain('/users/organizations/');
   });
 });

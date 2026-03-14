@@ -182,7 +182,15 @@ export default {
   methods: {
     async fetchMembers(params) {
       const organizationsStore = useOrganizationsStore();
-      await organizationsStore.fetchMembers(this.organizationId, params);
+      let opts;
+      if (params) {
+        const parts = params.split('&');
+        opts = {};
+        if (parts[0]) opts.page = parts[0];
+        if (parts[1]) opts.perPage = parts[1];
+        if (parts[2]) opts.search = parts[2];
+      }
+      await organizationsStore.fetchMembers(this.organizationId, opts);
     },
     memberName(member) {
       const user = member.userId || member;

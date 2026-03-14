@@ -262,7 +262,7 @@ describe('Organizations Store', () => {
 
       axios.get.mockResolvedValueOnce({ data: { data: mockMembers } });
 
-      await store.fetchMembers('org1', '1&10&john');
+      await store.fetchMembers('org1', { page: '1', perPage: '10', search: 'john' });
 
       expect(axios.get).toHaveBeenCalledWith(
         expect.stringContaining(`${API}/organizations/org1/members?`),
@@ -274,7 +274,7 @@ describe('Organizations Store', () => {
 
       axios.get.mockResolvedValueOnce({ data: { data: [] } });
 
-      await store.fetchMembers('org1', '1');
+      await store.fetchMembers('org1', { page: '1' });
 
       expect(axios.get).toHaveBeenCalledWith(
         expect.stringContaining('page=1'),

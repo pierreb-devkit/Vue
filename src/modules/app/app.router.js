@@ -23,7 +23,8 @@ const getRouter = () => {
     routes,
   });
   // Routes that don't require an organization
-  const orgExemptPaths = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/users', '/admin', '/invite'];
+  const orgExemptPrefixes = ['/users', '/admin'];
+  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite'];
 
   router.beforeEach(async (to) => {
     // meta
@@ -45,7 +46,8 @@ const getRouter = () => {
       authStore.isLoggedIn
       && authStore.serverConfig?.organizations?.enabled
       && !authStore.user?.currentOrganization
-      && !orgExemptPaths.some((p) => to.path.startsWith(p))
+      && !orgExemptPrefixes.some((p) => to.path.startsWith(p))
+      && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))
     ) {
       return '/organization-required';
     }
@@ -62,8 +64,8 @@ const getRouter = () => {
           if (ability.can(to.meta.action, to.meta.subject)) return true;
           return '/'; // forbidden — redirect home
         }
-        // Fallback: abilities still empty after refresh, allow if logged in
-        return true;
+        // Fallback: abilities still empty after refresh, deny access
+        return '/';
       }
       return '/signin';
     }
