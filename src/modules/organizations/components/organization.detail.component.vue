@@ -385,6 +385,8 @@ export default {
       }
     },
     async sendInvite() {
+      const form = await this.$refs.inviteForm.validate();
+      if (!form.valid) return;
       this.inviteLoading = true;
       const organizationsStore = useOrganizationsStore();
       try {

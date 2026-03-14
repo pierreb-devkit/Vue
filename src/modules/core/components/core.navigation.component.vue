@@ -48,7 +48,7 @@
       <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
       <!-- Navigation -->
       <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
-        <v-list-item v-for="item in nav" :key="item.text" :to="item.path">
+        <v-list-item v-for="item in nav" :key="item.path" :to="item.path">
           <template #prepend>
             <v-icon
               :icon="item.meta.icon"
@@ -65,7 +65,7 @@
       <template #append>
         <!-- Bottom nav items -->
         <v-list v-if="navBottom.length" :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
-          <v-list-item v-for="item in navBottom" :key="item.text" :to="item.path">
+          <v-list-item v-for="item in navBottom" :key="item.path" :to="item.path">
             <template #prepend>
               <v-icon
                 :icon="item.meta.icon"

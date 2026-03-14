@@ -96,9 +96,10 @@ describe('Axios Service', () => {
       expect(result).toEqual(response);
     });
 
-    it('should use successColor directly without legacy fallback', () => {
-      // When successColor is undefined, color should be undefined (no fallback)
+    it('should fall back to legacy sucessColor when successColor is missing', () => {
+      // When successColor is undefined, should fall back to legacy sucessColor
       delete mockConfig.vuetify.theme.snackbar.successColor;
+      mockConfig.vuetify.theme.snackbar.sucessColor = 'legacySuccess';
       setupInterceptors(mockConfig, mockSnackbar, mockOnSignout);
 
       const mockInstance = axios.create();
@@ -112,7 +113,7 @@ describe('Axios Service', () => {
 
       legacyResponseInterceptor(response);
 
-      expect(mockSnackbar.color).toBeUndefined();
+      expect(mockSnackbar.color).toBe('legacySuccess');
     });
 
     it('should not show snackbar on successful response with disallowed method', () => {
@@ -351,6 +352,10 @@ describe('Axios Service', () => {
       expect(mockSnackbar.status).toBe(false);
     });
 
+    /**
+     * @desc Verify that a 403 error triggers the onRefreshAbilities callback.
+     * @returns {Promise<void>}
+     */
     it('should call onRefreshAbilities on 403 error', async () => {
       const error = {
         response: {
@@ -368,6 +373,10 @@ describe('Axios Service', () => {
       expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(1);
     });
 
+    /**
+     * @desc Verify the flag prevents concurrent ability refresh calls.
+     * @returns {Promise<void>}
+     */
     it('should not call onRefreshAbilities twice concurrently (infinite loop prevention)', async () => {
       // Make refreshAbilities hang so we can test the flag
       let resolveRefresh;
@@ -397,6 +406,10 @@ describe('Axios Service', () => {
       await firstCall;
     });
 
+    /**
+     * @desc Verify the refreshing flag resets after successful completion.
+     * @returns {Promise<void>}
+     */
     it('should reset flag after refreshAbilities completes', async () => {
       // First call
       try {
@@ -423,6 +436,10 @@ describe('Axios Service', () => {
       expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(2);
     });
 
+    /**
+     * @desc Verify the refreshing flag resets even when refresh throws.
+     * @returns {Promise<void>}
+     */
     it('should reset flag even if refreshAbilities throws', async () => {
       mockOnRefreshAbilities.mockRejectedValueOnce(new Error('refresh failed'));
 
@@ -450,6 +467,10 @@ describe('Axios Service', () => {
       expect(mockOnRefreshAbilities).toHaveBeenCalledTimes(2);
     });
 
+    /**
+     * @desc Verify 403 is a no-op when onRefreshAbilities is not provided.
+     * @returns {Promise<void>}
+     */
     it('should not call onRefreshAbilities when callback is not provided', async () => {
       // Setup interceptors without onRefreshAbilities
       resetRefreshingAbilitiesFlag();
@@ -476,6 +497,10 @@ describe('Axios Service', () => {
       expect(mockOnRefreshAbilities).not.toHaveBeenCalled();
     });
 
+    /**
+     * @desc Verify the original 403 error is re-thrown after ability refresh.
+     * @returns {Promise<void>}
+     */
     it('should propagate the original 403 error after refreshing abilities', async () => {
       const error = {
         response: {

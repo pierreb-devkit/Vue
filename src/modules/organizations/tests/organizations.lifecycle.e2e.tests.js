@@ -11,6 +11,11 @@ let orgId;
 test.describe('Organization Lifecycle E2E', () => {
   test.describe.configure({ mode: 'serial' });
 
+  /**
+   * @desc Sign up the owner user via API helper.
+   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
   test('owner signs up via API', async ({ request }) => {
     const res = await signupViaAPI(request, {
       email: ownerEmail,
@@ -21,6 +26,11 @@ test.describe('Organization Lifecycle E2E', () => {
     expect(res.user).toBeTruthy();
   });
 
+  /**
+   * @desc Create a new organization via API as the authenticated owner.
+   * @param {{ playwright: import('playwright').Playwright }} fixtures
+   * @returns {Promise<void>}
+   */
   test('owner creates a new org', async ({ playwright }) => {
     const ctx = await authenticatedContext(playwright, ownerEmail, password);
     const org = await createOrgViaAPI(ctx, `LifecycleOrg${timestamp}`);
@@ -30,6 +40,11 @@ test.describe('Organization Lifecycle E2E', () => {
     await ctx.dispose();
   });
 
+  /**
+   * @desc Verify the owner can view the org detail page after signing in.
+   * @param {{ page: import('playwright').Page }} fixtures
+   * @returns {Promise<void>}
+   */
   test('owner can view org detail via manage', async ({ page }) => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);

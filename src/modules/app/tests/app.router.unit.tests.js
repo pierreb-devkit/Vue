@@ -65,8 +65,8 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/');
     await router.isReady();
-    // With createWebHistory, the current URL is a clean path — no hash fragment
-    expect(router.currentRoute.value.fullPath).not.toContain('#');
+    // With createWebHistory, window.location.hash is empty
+    expect(window.location.hash).toBe('');
   });
 
   it('registers routes from all modules', () => {

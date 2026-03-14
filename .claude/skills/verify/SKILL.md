@@ -26,7 +26,7 @@ description: Run quality loop (audit + lint + tests + build) to verify code qual
 
 3. **Tests** — check if Node API is reachable (`curl -s http://localhost:3000/api/home`):
    - **Infra up** → `npm run test:all` (unit + E2E)
-   - **Infra down** → `npm test` (unit only) + warn: "E2E skipped — run `docker compose -f docker-compose.test.yml up -d` for full coverage"
+   - **Infra down** → `npm run test:unit` (unit only) + warn: "E2E skipped — run `docker compose -f docker-compose.test.yml up -d` for full coverage"
 
 4. **Build** — `npm run build`
 

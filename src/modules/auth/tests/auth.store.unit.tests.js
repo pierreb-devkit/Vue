@@ -148,7 +148,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(false);
     });
 
-    it('should handle 423 lockout with missing retryAfter', async () => {
+    it('should clear lockout on 423 with missing retryAfter', async () => {
       const authStore = useAuthStore();
 
       const lockoutError = new Error('Account locked');
@@ -157,7 +157,7 @@ describe('Auth Store', () => {
 
       await authStore.signin({ email: 'test@test.com', password: 'wrong' });
 
-      expect(authStore.lockout).toEqual({ locked: true, retryAfter: 0 });
+      expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
     });
 
     it('should handle signin error', async () => {
@@ -357,7 +357,7 @@ describe('Auth Store', () => {
   describe('authStatus getter', () => {
     it('should return the status', () => {
       const authStore = useAuthStore();
-      expect(authStore.authStatus).toBeUndefined();
+      expect(authStore.authStatus).toBe(null);
     });
   });
 

@@ -50,6 +50,7 @@ export const useAuthStore = defineStore('auth', {
       message: '',
     },
     serverConfig: null,
+    status: null,
     lockout: {
       locked: false,
       retryAfter: 0,
@@ -117,8 +118,12 @@ export const useAuthStore = defineStore('auth', {
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
         if (err.response && err.response.status === 423) {
-          const retryAfter = err.response.data?.retryAfter || 0;
-          this.lockout = { locked: true, retryAfter };
+          const retryAfter = Number(err.response.data?.retryAfter) || 0;
+          if (retryAfter > 0) {
+            this.lockout = { locked: true, retryAfter };
+            return;
+          }
+          this.clearLockout();
           return;
         }
         localStorage.removeItem('token');

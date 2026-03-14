@@ -134,7 +134,10 @@ export const useOrganizationsStore = defineStore('organizations', {
     /**
      * @desc Fetch members of an organization.
      * @param {string} organizationId - The organization ID
-     * @param {string} params - Pagination params (page&perPage&search)
+     * @param {Object} [params={}] - Pagination and filter params
+     * @param {number|string} [params.page] - Page number
+     * @param {number|string} [params.perPage] - Page size
+     * @param {string} [params.search] - Member search term
      * @returns {Promise<Array>} Resolved list of members
      */
     async fetchMembers(organizationId, { page, perPage, search } = {}) {
@@ -195,6 +198,8 @@ export const useOrganizationsStore = defineStore('organizations', {
       if (this.currentOrganization && (this.currentOrganization.id === organizationId || this.currentOrganization._id === organizationId)) {
         this.currentOrganization = null;
         this.resetOrganization();
+        const authStore = useAuthStore();
+        if (authStore.user) authStore.user.currentOrganization = null;
       }
     },
 
