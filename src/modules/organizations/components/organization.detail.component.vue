@@ -331,7 +331,7 @@ export default {
     organizationsStore.resetOrganization();
     if (this.organizationId) {
       await organizationsStore.fetchOrganization(this.organizationId);
-      this.loadPendingRequests();
+      await this.loadPendingRequests();
     }
   },
   methods: {

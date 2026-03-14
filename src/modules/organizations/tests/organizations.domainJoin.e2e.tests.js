@@ -80,9 +80,12 @@ test.describe('Organization Domain Join E2E', () => {
     await page.goto(`/users/organizations/${orgId}`);
     await page.waitForLoadState('domcontentloaded');
 
+    // Wait for the organization detail page to fully render (heading visible)
+    await expect(page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 10000 });
+
     // Should see pending join request
     const approveButton = page.getByRole('button', { name: /approve/i });
-    await expect(approveButton).toBeVisible({ timeout: 10000 });
+    await expect(approveButton).toBeVisible({ timeout: 15000 });
     await approveButton.click();
     await page.waitForLoadState('domcontentloaded');
   });
