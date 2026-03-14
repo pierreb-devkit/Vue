@@ -8,11 +8,11 @@
       </p>
 
       <!-- OAuth providers -->
-      <div v-if="(config.oAuth.google || config.oAuth.apple) && serverConfig?.sign?.in !== false" class="d-flex flex-column ga-3 mb-6">
+      <div v-if="serverConfig?.sign?.in !== false" class="d-flex flex-column ga-3 mb-6">
         <v-btn
-          v-if="config.oAuth.google"
           variant="flat"
-          :href="`${oAuth}/google`"
+          :href="serverConfig?.oAuth?.google ? `${oAuth}/google` : undefined"
+          :disabled="!serverConfig?.oAuth?.google"
           :class="config.vuetify.theme.rounded"
           class="text-none text-body-medium text-white"
           style="background-color: #4285F4"
@@ -23,9 +23,9 @@
           Continue with Google
         </v-btn>
         <v-btn
-          v-if="config.oAuth.apple"
           variant="flat"
-          :href="`${oAuth}/apple`"
+          :href="serverConfig?.oAuth?.apple ? `${oAuth}/apple` : undefined"
+          :disabled="!serverConfig?.oAuth?.apple"
           :class="config.vuetify.theme.rounded"
           class="text-none text-body-medium text-white"
           style="background-color: #000000"
@@ -38,7 +38,7 @@
       </div>
 
       <!-- Divider -->
-      <div v-if="(config.oAuth.google || config.oAuth.apple) && serverConfig?.sign?.in !== false" class="d-flex align-center ga-4 mb-6">
+      <div v-if="serverConfig?.sign?.in !== false" class="d-flex align-center ga-4 mb-6">
         <v-divider></v-divider>
         <span class="text-label-medium text-medium-emphasis text-no-wrap">or continue with email</span>
         <v-divider></v-divider>

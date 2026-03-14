@@ -22,7 +22,6 @@ import AuthSigninView from '../local/views/signin.view.vue';
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
-  oAuth: { google: false, apple: false },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
 };
 

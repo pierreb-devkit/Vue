@@ -254,6 +254,11 @@ export default {
         this.orgToLeave = null;
         const authStore = useAuthStore();
         await authStore.refreshAbilities();
+        if (organizationsStore.organizations.length === 0) {
+          this.$router.push('/organization-required');
+        } else if (!organizationsStore.currentOrganization) {
+          await organizationsStore.switchOrganization(organizationsStore.organizations[0].id || organizationsStore.organizations[0]._id);
+        }
       } catch {
         this.leaveDialog = false;
       }
