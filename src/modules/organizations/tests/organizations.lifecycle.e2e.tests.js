@@ -33,10 +33,8 @@ test.describe('Organization Lifecycle E2E', () => {
 
   test('owner can view org detail via manage', async ({ page }) => {
     await signin(page, ownerEmail, password);
-    await page.goto('/users');
-    await page.waitForTimeout(1000);
-    await page.locator('text=Organizations').first().click();
-    await page.waitForTimeout(1000);
+    await page.goto('/users/organizations');
+    await page.waitForTimeout(2000);
 
     // Click the org list item in the main content (owners see a clickable link)
     const orgItem = page.getByRole('main').locator('.v-list-item').first();

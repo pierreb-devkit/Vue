@@ -15,4 +15,21 @@ export async function authenticatedContext(playwright, email, password) {
   return context;
 }
 
+/**
+ * @desc Create an organization via the API (requires authenticated context)
+ * @param {import('@playwright/test').APIRequestContext} context - Authenticated request context
+ * @param {string} name - Organization name
+ * @returns {Promise<Object>} created organization
+ */
+export async function createOrgViaAPI(context, name) {
+  const res = await context.post(`${API}/organizations`, {
+    data: { name },
+  });
+  const body = await res.json();
+  if (!res.ok()) {
+    throw new Error(`Create org failed (${res.status()}): ${JSON.stringify(body)}`);
+  }
+  return body;
+}
+
 export { API };

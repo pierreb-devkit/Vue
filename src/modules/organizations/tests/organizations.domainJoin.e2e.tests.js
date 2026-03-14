@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
+import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
 
 const timestamp = Date.now();
 const ownerEmail = `e2e-djowner-${timestamp}@domain${timestamp}.com`;
@@ -13,7 +14,7 @@ test.describe('Organization Domain Join E2E', () => {
 
   // ── Phase 1: Signup & pending join ────────────────────────────────
 
-  test('owner signs up via API and creates org', async ({ request }) => {
+  test('owner signs up via API and creates org', async ({ playwright, request }) => {
     const res = await signupViaAPI(request, {
       email: ownerEmail,
       password,
@@ -21,9 +22,14 @@ test.describe('Organization Domain Join E2E', () => {
       lastName: 'Test',
     });
     expect(res.user).toBeTruthy();
-    expect(res.organization).toBeTruthy();
-    orgId = res.organization._id || res.organization.id;
+
+    // Create org via authenticated API (domain matching uses the email domain)
+    const ctx = await authenticatedContext(playwright, ownerEmail, password);
+    const org = await createOrgViaAPI(ctx, `DomainOrg${timestamp}`);
+    expect(org).toBeTruthy();
+    orgId = org._id || org.id;
     expect(orgId).toBeTruthy();
+    await ctx.dispose();
   });
 
   test('member signs up via UI — sees pending message, no sidenav', async ({ page }) => {
@@ -82,11 +88,8 @@ test.describe('Organization Domain Join E2E', () => {
 
   test('approved member — no Manage button on account page', async ({ page }) => {
     await signin(page, memberEmail, password);
-    await page.goto('/users');
-    await page.waitForTimeout(1000);
-
-    await page.locator('text=Organizations').first().click();
-    await page.waitForTimeout(1000);
+    await page.goto('/users/organizations');
+    await page.waitForTimeout(2000);
 
     // Members should NOT see the chevron (manage) icon on their org item
     const chevron = page.locator('.v-list-item .fa-chevron-right');
