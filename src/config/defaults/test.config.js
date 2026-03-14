@@ -54,7 +54,7 @@ export default {
   api: {
     protocol: 'http',
     host: 'localhost',
-    port: '3001',
+    port: '3000',
     base: 'api',
     endPoints: {
       home: 'home',
