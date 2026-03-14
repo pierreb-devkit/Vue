@@ -78,7 +78,7 @@ jobs:
         env:
           NODE_ENV: test
       - name: Wait for Vue dev server
-        run: npx wait-on http://127.0.0.1:8080 --timeout 30000
+        run: npx wait-on http://localhost:8080 --timeout 60000
 
       # Run E2E tests
       - name: Run Playwright tests
