@@ -62,6 +62,7 @@ jobs:
           DEVKIT_NODE_db_uri: mongodb://127.0.0.1:27017/NodeTest
           DEVKIT_NODE_api_port: "3000"
           DEVKIT_NODE_organizations_enabled: "true"
+          DEVKIT_NODE_organizations_autoCreate: "true"
           DEVKIT_NODE_organizations_domainMatching: "true"
           DEVKIT_NODE_cors_origin: '[http://localhost:8080]'
           DEVKIT_NODE_cors_credentials: "true"
