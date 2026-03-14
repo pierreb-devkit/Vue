@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: pierreb-devkit/Node
-          ref: feat/phase-2-orgs
+          ref: ${{ vars.E2E_NODE_REF || 'master' }}
           path: Node
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -91,6 +91,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-test-results
           path: Vue/test-results/
           retention-days: 7
