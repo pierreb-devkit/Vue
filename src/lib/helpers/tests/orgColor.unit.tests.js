@@ -27,9 +27,9 @@ describe('orgColor Helper', () => {
   it('should return different colors for different names', () => {
     const color1 = orgColor('Alpha');
     const color2 = orgColor('Zeta');
-    // While collisions are theoretically possible, these two names should differ
     expect(typeof color1).toBe('string');
     expect(typeof color2).toBe('string');
+    expect(color1).not.toBe(color2);
   });
 
   it('should use slug when name is not available', () => {
@@ -53,8 +53,10 @@ describe('orgColor Helper', () => {
   });
 
   it('should handle null/undefined org gracefully', () => {
-    const color = orgColor(null);
-    expect(palette).toContain(color);
+    const nullColor = orgColor(null);
+    const undefinedColor = orgColor(undefined);
+    expect(palette).toContain(nullColor);
+    expect(palette).toContain(undefinedColor);
   });
 
   it('should handle an empty object', () => {
