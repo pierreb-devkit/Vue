@@ -57,6 +57,11 @@ const getRouter = () => {
       return '/organization-required';
     }
 
+    // Auth-only routes (no CASL check, just require login)
+    if (to.matched.some((record) => record.meta.requiresAuth && !record.meta.action)) {
+      if (!authStore.isLoggedIn) return '/signin';
+    }
+
     // secu
     if (to.matched.some((record) => record.meta.action)) {
       if (authStore.isLoggedIn) {

@@ -14,8 +14,7 @@ export default [
     meta: {
       icon: 'fa-solid fa-circle-user',
       position: 'bottom',
-      action: 'read',
-      subject: 'User',
+      requiresAuth: true,
     },
   },
 ];
