@@ -8,7 +8,7 @@
       </p>
 
       <!-- OAuth providers -->
-      <div v-if="config.oAuth.google || config.oAuth.apple" class="d-flex flex-column ga-3 mb-6">
+      <div v-if="(config.oAuth.google || config.oAuth.apple) && serverConfig?.sign?.in !== false" class="d-flex flex-column ga-3 mb-6">
         <v-btn
           v-if="config.oAuth.google"
           variant="flat"
@@ -38,7 +38,7 @@
       </div>
 
       <!-- Divider -->
-      <div v-if="config.oAuth.google || config.oAuth.apple" class="d-flex align-center ga-4 mb-6">
+      <div v-if="(config.oAuth.google || config.oAuth.apple) && serverConfig?.sign?.in !== false" class="d-flex align-center ga-4 mb-6">
         <v-divider></v-divider>
         <span class="text-label-medium text-medium-emphasis text-no-wrap">or continue with email</span>
         <v-divider></v-divider>

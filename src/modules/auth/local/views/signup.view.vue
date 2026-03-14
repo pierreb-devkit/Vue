@@ -24,7 +24,7 @@
       ></v-progress-linear>
 
       <!-- OAuth providers (only on step 1) -->
-      <div v-if="(config.oAuth.google || config.oAuth.apple) && signupStep === 'form'" class="d-flex flex-column ga-3 mb-6">
+      <div v-if="(config.oAuth.google || config.oAuth.apple) && signupStep === 'form' && serverConfig?.sign?.up !== false" class="d-flex flex-column ga-3 mb-6">
         <v-btn
           v-if="config.oAuth.google"
           variant="flat"
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Divider (only on step 1) -->
-      <div v-if="(config.oAuth.google || config.oAuth.apple) && signupStep === 'form'" class="d-flex align-center ga-4 mb-6">
+      <div v-if="(config.oAuth.google || config.oAuth.apple) && signupStep === 'form' && serverConfig?.sign?.up !== false" class="d-flex align-center ga-4 mb-6">
         <v-divider></v-divider>
         <span class="text-label-medium text-medium-emphasis text-no-wrap">or continue with email</span>
         <v-divider></v-divider>

@@ -137,9 +137,8 @@ export default {
       return (org.id || org._id) === (this.currentOrganization.id || this.currentOrganization._id);
     },
     /**
-     * @desc Switch to the selected organization.
-     * @param {Object} org - Organization object to switch to
-     * @returns {Promise<void>}
+     * @desc Sync the current organization from the user's profile into the store.
+     * @returns {void}
      */
     syncCurrentOrganization() {
       const authStore = useAuthStore();
