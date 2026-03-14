@@ -35,11 +35,15 @@ const getRouter = () => {
     const authStore = useAuthStore();
 
     // Ensure server config and user are loaded (needed for org-required check)
-    if (authStore.isLoggedIn && authStore.serverConfig === null) {
-      await authStore.fetchServerConfig();
-    }
-    if (authStore.isLoggedIn && !authStore.user) {
-      await authStore.refreshAbilities();
+    try {
+      if (authStore.isLoggedIn && authStore.serverConfig === null) {
+        await authStore.fetchServerConfig();
+      }
+      if (authStore.isLoggedIn && !authStore.user) {
+        await authStore.refreshAbilities();
+      }
+    } catch (err) {
+      console.error('Router guard: failed to load server config or abilities, proceeding anyway', err);
     }
 
     // Organization membership required: if orgs enabled, user logged in, no org, and not on an exempt page → block
@@ -58,7 +62,11 @@ const getRouter = () => {
       if (authStore.isLoggedIn) {
         // If abilities not loaded yet, fetch them before checking
         if (!ability || !ability.rules || ability.rules.length === 0) {
-          await authStore.refreshAbilities();
+          try {
+            await authStore.refreshAbilities();
+          } catch (err) {
+            console.error('Router guard: failed to refresh abilities, proceeding anyway', err);
+          }
         }
         if (ability && ability.rules && ability.rules.length > 0) {
           if (ability.can(to.meta.action, to.meta.subject)) return true;

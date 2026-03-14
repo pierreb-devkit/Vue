@@ -137,13 +137,26 @@
         <v-card-title class="text-title-large font-weight-medium text-error">Delete Account</v-card-title>
         <v-card-text class="text-body-medium">
           This action is irreversible. Your account, all your data, and any organization you are the sole owner of will be permanently deleted.
+          <v-text-field
+            v-model="deleteConfirmInput"
+            label="Type DELETE to confirm"
+            variant="outlined"
+            density="compact"
+            class="mt-4"
+            autocomplete="off"
+          ></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none text-body-medium" @click="confirmDeleteAccount = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="deleteAccount"
-            >Delete my account</v-btn
-          >
+          <v-btn variant="text" class="text-none text-body-medium" @click="confirmDeleteAccount = false; deleteConfirmInput = ''">Cancel</v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            :disabled="deleteConfirmInput !== 'DELETE'"
+            @click="deleteAccount"
+          >Delete my account</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -173,6 +186,7 @@ export default {
       leaveDialog: false,
       orgToLeave: null,
       confirmDeleteAccount: false,
+      deleteConfirmInput: '',
     };
   },
   computed: {

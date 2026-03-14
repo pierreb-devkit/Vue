@@ -45,13 +45,14 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
             refreshAbilitiesPromise = onRefreshAbilities();
           }
           await refreshAbilitiesPromise;
-          isRefreshingAbilities = false;
-          refreshAbilitiesPromise = null;
           if (err.config) {
             const retryConfig = { ...err.config, __isAbilityRetry: true };
             return instance.request(retryConfig);
           }
-        } catch {
+        } catch (refreshErr) {
+          // Queued requests may await an already-rejected promise; swallow gracefully
+          console.error('Axios 403 interceptor: ability refresh failed', refreshErr);
+        } finally {
           isRefreshingAbilities = false;
           refreshAbilitiesPromise = null;
         }
