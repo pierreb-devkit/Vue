@@ -78,14 +78,19 @@ test.describe('Organization Domain Join E2E', () => {
   test('owner approves member join request', async ({ page }) => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
-    // Wait for the organization detail page to fully render (heading visible)
+    // Wait for the organization detail page to fully render
     await expect(page.getByRole('heading', { level: 2 })).toBeVisible({ timeout: 10000 });
 
-    // Should see pending join request
-    const approveButton = page.getByRole('button', { name: /approve/i });
-    await expect(approveButton).toBeVisible({ timeout: 15000 });
+    // The pending requests section loads asynchronously; reload once if not visible
+    let approveButton = page.getByRole('button', { name: /approve/i });
+    if (!(await approveButton.isVisible({ timeout: 5000 }).catch(() => false))) {
+      await page.reload({ waitUntil: 'networkidle' });
+      approveButton = page.getByRole('button', { name: /approve/i });
+    }
+
+    await expect(approveButton).toBeVisible({ timeout: 10000 });
     await approveButton.click();
     await page.waitForLoadState('domcontentloaded');
   });
