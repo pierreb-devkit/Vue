@@ -3,8 +3,9 @@ import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
 import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
 
 const timestamp = Date.now();
-const ownerEmail = `e2e-djowner-${timestamp}@domain${timestamp}.com`;
-const memberEmail = `e2e-djmember-${timestamp}@domain${timestamp}.com`;
+const domain = `domain${timestamp}.com`;
+const ownerEmail = `e2e-djowner-${timestamp}@${domain}`;
+const memberEmail = `e2e-djmember-${timestamp}@${domain}`;
 const password = 'E2eTestPass99xyz';
 
 let orgId;
@@ -25,7 +26,7 @@ test.describe('Organization Domain Join E2E', () => {
 
     // Create org via authenticated API (domain matching uses the email domain)
     const ctx = await authenticatedContext(playwright, ownerEmail, password);
-    const org = await createOrgViaAPI(ctx, `DomainOrg${timestamp}`);
+    const org = await createOrgViaAPI(ctx, `DomainOrg${timestamp}`, { domain });
     expect(org).toBeTruthy();
     orgId = org._id || org.id;
     expect(orgId).toBeTruthy();
