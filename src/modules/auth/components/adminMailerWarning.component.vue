@@ -83,7 +83,7 @@ export default {
         return this.shouldShow && !this.dismissed;
       },
       set(val) {
-        if (!val) this.dismissed = true;
+        if (!val) this.dismiss();
       },
     },
   },
