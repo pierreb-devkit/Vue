@@ -59,7 +59,7 @@ gh api graphql -f query='{
 
 ```bash
 gh api repos/$OWNER/$REPO/pulls/$PR/comments --paginate \
-  | jq '[.[] | select(.user.login == "coderabbitai")] | group_by(.path) | map({path: .[0].path, count: length, latest: (sort_by(.created_at) | last | {id, body: .body[0:120], created_at})})'
+  | jq '[.[] | select(.user.login | test("^coderabbitai(\\[bot\\])?$"))] | group_by(.path) | map({path: .[0].path, count: length, latest: (sort_by(.created_at) | last | {id, body: .body[0:120], created_at})})'
 ```
 
 Cross-check: if REST shows recent CodeRabbit comments on paths not covered by GraphQL unresolved threads, those still need fixing and resolving.
