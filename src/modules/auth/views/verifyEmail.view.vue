@@ -10,8 +10,11 @@
           <v-row>
             <v-col cols="12">
               <v-progress-linear v-if="loading" indeterminate color="primary"></v-progress-linear>
-              <v-alert v-if="success" type="success" variant="tonal" class="mt-4" :class="config.vuetify.theme.rounded">
+              <v-alert v-if="success && !redirecting" type="success" variant="tonal" class="mt-4" :class="config.vuetify.theme.rounded">
                 <span class="text-body-medium">{{ successMessage }}</span>
+              </v-alert>
+              <v-alert v-if="redirecting" type="info" variant="tonal" class="mt-4" :class="config.vuetify.theme.rounded">
+                <span class="text-body-medium">Redirecting...</span>
               </v-alert>
               <v-alert v-if="error" type="error" variant="tonal" class="mt-4" :class="config.vuetify.theme.rounded">
                 <span class="text-body-medium">{{ errorMessage }}</span>
@@ -46,6 +49,7 @@ export default {
       loading: true,
       success: false,
       error: false,
+      redirecting: false,
       successMessage: 'Your email has been verified successfully. You can now sign in.',
       errorMessage: '',
     };
@@ -61,7 +65,7 @@ export default {
    */
   async created() {
     const authStore = useAuthStore();
-    const { token } = this.$route.params;
+    const token = this.$route.params.token || this.$route.query.token;
 
     if (!token) {
       this.loading = false;
@@ -79,6 +83,43 @@ export default {
     } finally {
       this.loading = false;
     }
+
+    if (this.success) {
+      try {
+        await this.handlePostVerificationRedirect(authStore);
+      } catch {
+        // Redirect errors should not affect the verified state — stay on page
+      }
+    }
+  },
+  methods: {
+    /**
+     * @desc Redirect the user after successful email verification based on auth state.
+     * - Logged in + no org + orgs enabled → /organization-required
+     * - Logged in + has org → home route
+     * - Not logged in → stay on page with sign-in link
+     * @param {Object} authStore - The auth store instance.
+     * @returns {Promise<void>}
+     */
+    async handlePostVerificationRedirect(authStore) {
+      if (authStore.isLoggedIn) {
+        // Refresh user data to pick up emailVerified = true
+        try {
+          await authStore.refreshAbilities();
+        } catch {
+          // If refresh fails (e.g. expired token), stay on page
+          return;
+        }
+        this.redirecting = true;
+        const serverConfig = authStore.serverConfig || (await authStore.fetchServerConfig());
+        if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {
+          this.$router.push('/organization-required');
+        } else {
+          this.$router.push(this.config.sign.route);
+        }
+      }
+      // Not logged in — keep default message with sign-in link
+    },
   },
 };
 </script>

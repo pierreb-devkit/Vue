@@ -54,7 +54,7 @@ export default [
     },
   },
   {
-    path: '/verify-email/:token',
+    path: '/verify-email/:token?',
     name: 'VerifyEmail',
     component: verifyEmail,
     meta: {

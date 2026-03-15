@@ -6,6 +6,29 @@
         You need to belong to an organization to access the application.
       </p>
 
+      <!-- Email verification gate -->
+      <template v-if="emailVerificationRequired">
+        <v-card variant="tonal" color="warning" class="pa-6 mb-6" :class="config.vuetify.theme.rounded">
+          <div class="d-flex flex-column align-center ga-3">
+            <v-icon icon="fa-solid fa-envelope" size="large" color="warning"></v-icon>
+            <h4 class="text-title-medium font-weight-bold text-center">Verify your email to continue</h4>
+            <p class="text-body-medium text-center">We sent a verification link to <strong>{{ userEmail }}</strong></p>
+            <v-btn
+              variant="flat"
+              color="warning"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              :loading="resending"
+              :disabled="resent"
+              @click="resendVerification"
+            >
+              {{ resent ? 'Sent' : 'Resend' }}
+            </v-btn>
+          </div>
+        </v-card>
+      </template>
+
+      <template v-else>
       <!-- Pending request banner -->
       <v-alert
         v-if="pendingRequests.length > 0"
@@ -78,6 +101,8 @@
         Create an organization
       </v-btn>
 
+      </template>
+
       <p class="text-body-medium text-medium-emphasis text-center mt-6">
         <a href="#" class="text-primary font-weight-bold text-decoration-none" @click.prevent="signout">Sign out</a>
         to use a different account.
@@ -98,12 +123,30 @@ export default {
     return {
       domainOrgs: [],
       requestingOrgId: null,
+      resending: false,
+      resent: false,
     };
   },
   computed: {
     pendingRequests() {
       const authStore = useAuthStore();
       return authStore.pendingRequests || [];
+    },
+    /**
+     * @desc Whether the user must verify their email before proceeding.
+     * @returns {boolean}
+     */
+    emailVerificationRequired() {
+      const authStore = useAuthStore();
+      return !!(authStore.user?.emailVerified === false && authStore.serverConfig?.mail?.configured);
+    },
+    /**
+     * @desc The current user's email address.
+     * @returns {string}
+     */
+    userEmail() {
+      const authStore = useAuthStore();
+      return authStore.user?.email || '';
     },
   },
   async created() {
@@ -136,6 +179,22 @@ export default {
         // interceptor handles snackbar
       } finally {
         this.requestingOrgId = null;
+      }
+    },
+    /**
+     * @desc Resend the email verification link.
+     * @returns {Promise<void>}
+     */
+    async resendVerification() {
+      this.resending = true;
+      const authStore = useAuthStore();
+      try {
+        await authStore.resendVerification();
+        this.resent = true;
+      } catch {
+        // silently handle — button stays enabled for retry
+      } finally {
+        this.resending = false;
       }
     },
     async signout() {

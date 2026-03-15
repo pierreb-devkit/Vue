@@ -33,7 +33,9 @@ done
 
 ## List unresolved review threads (source of truth)
 
-Use this — not the raw comments list — to determine what still needs fixing:
+Use **both** methods below — GraphQL can miss single-line comments that the UI still shows as open.
+
+### Method 1: GraphQL threads
 
 ```bash
 gh api graphql -f query='{
@@ -52,6 +54,15 @@ gh api graphql -f query='{
   }
 }' | jq '.data.repository.pullRequest.reviewThreads.nodes | map(select(.isResolved == false)) | map({id, author: .comments.nodes[0].author.login, body: .comments.nodes[0].body[0:120]})'
 ```
+
+### Method 2: REST review comments (catches what GraphQL misses)
+
+```bash
+gh api repos/$OWNER/$REPO/pulls/$PR/comments --paginate \
+  | jq '[.[] | select(.user.login | test("^coderabbitai(\\[bot\\])?$"))] | group_by(.path) | map({path: .[0].path, count: length, latest: (sort_by(.created_at) | last | {id, body: .body[0:120], created_at})})'
+```
+
+Cross-check: if REST shows recent CodeRabbit comments on paths not covered by GraphQL unresolved threads, those still need fixing and resolving.
 
 ## List all review comments (with IDs)
 
