@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
-import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
+import { authenticatedContext, createOrgViaAPI, API } from '../../../lib/helpers/e2e/api.js';
 
 const timestamp = Date.now();
 const domain = `domain${timestamp}.com`;
@@ -113,7 +113,7 @@ test.describe('Organization Domain Join E2E', () => {
     let requests = [];
     const deadline = Date.now() + 15000;
     while (Date.now() < deadline && requests.length === 0) {
-      const reqRes = await ctx.get(`http://localhost:3000/api/organizations/${orgId}/requests`);
+      const reqRes = await ctx.get(`${API}/organizations/${orgId}/requests`);
       const reqBody = await reqRes.json();
       requests = reqBody.data || [];
       if (requests.length === 0) {
@@ -123,7 +123,7 @@ test.describe('Organization Domain Join E2E', () => {
     expect(requests.length).toBeGreaterThan(0);
 
     const requestId = requests[0]._id || requests[0].id;
-    const approveRes = await ctx.put(`http://localhost:3000/api/organizations/${orgId}/requests/${requestId}/approve`);
+    const approveRes = await ctx.put(`${API}/organizations/${orgId}/requests/${requestId}/approve`);
     expect(approveRes.ok()).toBeTruthy();
     await ctx.dispose();
   });
