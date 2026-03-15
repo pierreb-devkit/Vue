@@ -126,6 +126,8 @@ consecutive_zero = 0
 REPEAT:
   1. Wait for CI                        → sleep 30 then gh pr checks <number> --watch
   2. If CI fails                        → fix, /verify, commit, push, consecutive_zero=0, GOTO 1
+  2b. Check mergeable status            → gh pr view $PR --json mergeable --jq .mergeable
+                                           if "CONFLICTING" → report to user and STOP
   3. Grace period                       → sleep 180 + adaptive check (see 6b)
   4. Re-check pending review checks     → gh pr checks <number> — if any still pending, GOTO 3
   5. Read all feedback                  → unresolved threads only (see 6b)
@@ -203,6 +205,7 @@ gh pr view "$PR" --json reviewDecision,mergeable | jq '{reviewDecision, mergeabl
 
 - `APPROVED` + `MERGEABLE` → **STOP ✓**
 - `REVIEW_REQUIRED` → report to user, stop
+- `CONFLICTING` → report to user, stop (also caught early by step 2b in the loop)
 - `BLOCKED` → report details to user
 
 **Safety limit:** 10 iterations max — report to user if still unresolved.
