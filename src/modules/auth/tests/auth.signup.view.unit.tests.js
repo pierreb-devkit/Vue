@@ -6,8 +6,9 @@ import { createVuetify } from 'vuetify';
 const signupMock = vi.hoisted(() => vi.fn());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const resendVerificationMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock, resendVerification: resendVerificationMock }),
   deduceNamesFromEmail: (email) => {
     const local = email ? email.split('@')[0] : '';
     const parts = local.split(/[._-]/);
@@ -64,6 +65,7 @@ describe('auth.signup.view', () => {
     signupMock.mockReset();
     fetchServerConfigMock.mockReset().mockResolvedValue(null);
     refreshAbilitiesMock.mockReset().mockResolvedValue();
+    resendVerificationMock.mockReset().mockResolvedValue();
     createOrganizationMock.mockReset();
   });
 
@@ -243,6 +245,95 @@ describe('auth.signup.view', () => {
 
       expect(wrapper.vm.signupStep).toBe('organizationWelcome');
       expect(wrapper.vm.organizationWelcomeMessage).toContain('New Org');
+    });
+  });
+
+  describe('email verification flow', () => {
+    it('shows email verification step when emailVerificationRequired is returned', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        emailVerificationRequired: true,
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('emailVerification');
+      expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
+    });
+
+    it('shows the email address in the verification step', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'emailVerification';
+      wrapper.vm.email = 'jane@example.com';
+      await flushPromises();
+
+      expect(wrapper.text()).toContain('jane@example.com');
+    });
+
+    it('calls resendVerification when resend button is clicked', async () => {
+      resendVerificationMock.mockResolvedValueOnce({});
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'emailVerification';
+      await flushPromises();
+
+      await wrapper.vm.resendVerification();
+
+      expect(resendVerificationMock).toHaveBeenCalledTimes(1);
+      expect(wrapper.vm.resent).toBe(true);
+    });
+
+    it('keeps resent false when resend fails', async () => {
+      resendVerificationMock.mockRejectedValueOnce(new Error('fail'));
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'emailVerification';
+      await flushPromises();
+
+      await wrapper.vm.resendVerification();
+
+      expect(wrapper.vm.resent).toBe(false);
+    });
+
+    it('prioritizes emailVerificationRequired over org setup', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        emailVerificationRequired: true,
+        organizationSetupRequired: true,
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('emailVerification');
+    });
+
+    it('sets progress bar to 50 during email verification step', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.signupStep = 'emailVerification';
+      await flushPromises();
+
+      expect(wrapper.vm.signupProgressValue).toBe(50);
     });
   });
 });

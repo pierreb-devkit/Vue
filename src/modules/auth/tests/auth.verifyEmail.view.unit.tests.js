@@ -4,8 +4,18 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const verifyEmailMock = vi.hoisted(() => vi.fn());
+const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
+const storeMock = vi.hoisted(() => ({
+  verifyEmail: verifyEmailMock,
+  refreshAbilities: refreshAbilitiesMock,
+  fetchServerConfig: fetchServerConfigMock,
+  isLoggedIn: false,
+  user: null,
+  serverConfig: null,
+}));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ verifyEmail: verifyEmailMock }),
+  useAuthStore: () => storeMock,
 }));
 
 import AuthVerifyEmailView from '../views/verifyEmail.view.vue';
@@ -38,6 +48,11 @@ describe('auth.verifyEmail.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     verifyEmailMock.mockReset();
+    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    fetchServerConfigMock.mockReset().mockResolvedValue(null);
+    storeMock.isLoggedIn = false;
+    storeMock.user = null;
+    storeMock.serverConfig = null;
   });
 
   it('calls verifyEmail with the token from route params on creation', async () => {
@@ -110,5 +125,46 @@ describe('auth.verifyEmail.view', () => {
     expect(wrapper.vm.error).toBe(true);
     expect(wrapper.vm.errorMessage).toBe('No verification token provided.');
     expect(verifyEmailMock).not.toHaveBeenCalled();
+  });
+
+  describe('post-verification redirect', () => {
+    it('redirects to /organization-required when logged in with no org and orgs enabled', async () => {
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.success).toBe(true);
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/organization-required');
+    });
+
+    it('redirects to home route when logged in with an org', async () => {
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true, currentOrganization: { _id: '123' } };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('does not redirect when not logged in', async () => {
+      storeMock.isLoggedIn = false;
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.success).toBe(true);
+      expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
+    });
   });
 });

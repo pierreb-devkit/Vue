@@ -2,21 +2,22 @@
   <v-container style="max-width: 520px">
     <v-card class="mt-10 pa-8 pa-sm-10" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
       <h4 class="text-headline-small font-weight-bold text-center">
-        {{ signupStep === 'organizationSetup' ? 'Set up your organization' : signupStep === 'organizationWelcome' ? 'You\'re all set!' : 'Create your account' }}
+        {{ signupStepTitle }}
       </h4>
       <p class="text-body-medium text-medium-emphasis text-center mt-1" :class="signupStep === 'form' ? 'mb-8' : 'mb-4'">
         <template v-if="signupStep === 'form'">
           Already have an account?
           <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Sign in</router-link>
         </template>
+        <template v-else-if="signupStep === 'emailVerification'">We sent a verification link to <strong>{{ email }}</strong></template>
         <template v-else-if="signupStep === 'organizationSetup'">Almost there — join or create your workspace.</template>
         <template v-else-if="signupStep === 'organizationWelcome'">{{ organizationWelcomeMessage }}</template>
       </p>
 
       <!-- Discrete progress bar (step 2+ only) -->
       <v-progress-linear
-        v-if="serverConfig?.organizations?.enabled && signupStep !== 'form'"
-        :model-value="signupStep === 'organizationSetup' ? 66 : 100"
+        v-if="signupStep !== 'form'"
+        :model-value="signupProgressValue"
         color="primary"
         height="3"
         :class="config.vuetify.theme.rounded"
@@ -64,6 +65,25 @@
       <v-alert v-if="serverConfig?.sign?.up === false" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
         <span class="text-body-medium">Registration is currently disabled.</span>
       </v-alert>
+
+      <!-- Email verification step -->
+      <template v-else-if="signupStep === 'emailVerification'">
+        <div class="d-flex flex-column align-center ga-4 my-4">
+          <v-icon icon="fa-solid fa-envelope" size="x-large" color="primary"></v-icon>
+          <p class="text-body-medium text-center">Check your inbox and click the verification link to continue.</p>
+          <v-btn
+            variant="tonal"
+            color="primary"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            :loading="resending"
+            :disabled="resent"
+            @click="resendVerification"
+          >
+            {{ resent ? 'Sent' : 'Resend' }}
+          </v-btn>
+        </div>
+      </template>
 
       <!-- Organization welcome -->
       <template v-else-if="signupStep === 'organizationWelcome'">
@@ -148,6 +168,8 @@ export default {
       signupStep: 'form',
       organizationWelcomeMessage: '',
       suggestedOrganization: null,
+      resending: false,
+      resent: false,
       email: '',
       password: '',
       oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
@@ -162,6 +184,38 @@ export default {
     auth() {
       const authStore = useAuthStore();
       return authStore.auth;
+    },
+    /**
+     * @desc Compute the signup step title based on the current step.
+     * @returns {string} Title for the current signup step.
+     */
+    signupStepTitle() {
+      switch (this.signupStep) {
+        case 'emailVerification':
+          return 'Check your inbox';
+        case 'organizationSetup':
+          return 'Set up your organization';
+        case 'organizationWelcome':
+          return "You're all set!";
+        default:
+          return 'Create your account';
+      }
+    },
+    /**
+     * @desc Compute the progress bar value based on the current step.
+     * @returns {number} Progress percentage.
+     */
+    signupProgressValue() {
+      switch (this.signupStep) {
+        case 'emailVerification':
+          return 50;
+        case 'organizationSetup':
+          return 66;
+        case 'organizationWelcome':
+          return 100;
+        default:
+          return 33;
+      }
     },
     /**
      * @desc Deduce first name from the email for org name pre-fill.
@@ -218,6 +272,12 @@ export default {
           });
 
           if (!result) return;
+
+          // Email verification required — pause before org setup
+          if (result.emailVerificationRequired) {
+            this.signupStep = 'emailVerification';
+            return;
+          }
 
           // Check if organizations are enabled in server config
           if (this.serverConfig?.organizations?.enabled) {
@@ -279,6 +339,22 @@ export default {
         this.$router.push('/organization-required');
       } else {
         this.$router.push(this.config.sign.route);
+      }
+    },
+    /**
+     * @desc Resend the verification email to the user.
+     * @returns {Promise<void>}
+     */
+    async resendVerification() {
+      this.resending = true;
+      const authStore = useAuthStore();
+      try {
+        await authStore.resendVerification();
+        this.resent = true;
+      } catch {
+        // silently handle — button stays enabled for retry
+      } finally {
+        this.resending = false;
       }
     },
     reset() {

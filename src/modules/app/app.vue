@@ -18,6 +18,7 @@
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
     <authPendingRequestBanner />
+    <authAdminMailerWarning />
     <organizationsAdminPendingBanner />
     <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
@@ -39,6 +40,7 @@ import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
 import authEmailBanner from '../auth/components/emailBanner.component.vue';
 import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
+import authAdminMailerWarning from '../auth/components/adminMailerWarning.component.vue';
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
 
 /**
@@ -52,6 +54,7 @@ export default {
     devkitFooter,
     authEmailBanner,
     authPendingRequestBanner,
+    authAdminMailerWarning,
     organizationsAdminPendingBanner,
   },
   data() {
