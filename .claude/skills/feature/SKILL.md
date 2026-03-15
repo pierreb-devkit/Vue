@@ -49,7 +49,7 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 
 ### 6. UI rules
 
-**If the feature has visual components**, apply `/frontend` skill guidelines (design-system, components, patterns references).
+**If the feature has visual components**, apply `/ui` skill guidelines (design-system, components, patterns references).
 
 **Feedback:**
 - No `console.log(err)` in catch blocks — the axios interceptor handles snackbar display
@@ -59,7 +59,7 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 - Low impact (remove member): simple confirm dialog
 - High impact (delete org/account): type-to-confirm with entity name
 
-**Consistency** (see `/frontend` patterns):
+**Consistency** (see `/ui` patterns):
 - Dialogs: `max-width="440"`
 - Destructive buttons: `color="error"` + `variant="tonal"` (inline) or `variant="flat"` (in dialog)
 - Primary buttons: `color="primary"` + `variant="flat"` + `class="text-none text-body-medium"`
@@ -101,6 +101,10 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 - [ ] No cross-module Store imports except `useAuthStore`/`useCoreStore`
 - [ ] Tests added
 - [ ] Tests: unit tests (`*.unit.tests.js`) for all changes. E2E (`*.e2e.tests.js`) only if the change affects a critical user flow (auth, org onboarding, invite/join).
+
+### 7b. Elegance check
+
+For non-trivial changes: pause and ask yourself "is there a simpler or more elegant approach?" If the current implementation feels hacky, refactor before proceeding.
 
 ### 8. Run `/verify`
 

@@ -50,6 +50,7 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - Keep changes minimal and merge-friendly for downstream
 - Every function: JSDoc header (`@param`, `@returns`)
 - PRs: always use `/pull-request` — never open manually
+- After user correction, evaluate if the pattern belongs in ERRORS.md
 
 ## Skills
 
@@ -57,7 +58,7 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 | ---------------- | ---------------------------------------------------------------------- |
 | `/feature`       | Scope analysis → implement → DOD (includes `/create-module` if needed) |
 | `/verify`        | Lint + tests + build + UX audit                                        |
-| `/frontend`      | Design system, Vuetify 4 patterns, visual verification                 |
+| `/ui`            | Design system, Vuetify 4 patterns, visual verification                 |
 | `/naming`        | File and folder naming conventions                                     |
 | `/pull-request`  | Full PR lifecycle: draft → CI → monitor → iterate                      |
 | `/update-stack`  | Merge upstream stack updates                                           |
