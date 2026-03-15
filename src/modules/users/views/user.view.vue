@@ -1,257 +1,288 @@
 <template>
   <v-container fluid>
-    <!-- Header -->
-    <v-row class="mx-2 my-1">
-      <v-icon class="ma-2" icon="fa-solid fa-user"></v-icon>
-      <h2 class="my-1 text-capitalize">{{ firstName }} {{ lastName }}</h2>
-      <v-spacer></v-spacer>
-      <v-btn v-if="id" class="mx-1" color="error" :flat="config.vuetify.theme.flat" icon @click.stop="removeConfirm = true">
-        <v-icon icon="fa-solid fa-trash"></v-icon>
-      </v-btn>
-      <v-dialog v-model="removeConfirm" max-width="500">
-        <v-card>
-          <v-card-title class="headline">Delete this item ?</v-card-title>
-          <v-card-text> Are you sure you want to delete this item ? we will not be able to recover it. </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="green-darken-1" variant="text" @click="removeConfirm = false"> Close </v-btn>
-            <v-btn color="red-darken-1" variant="text" @click="remove"> Delete </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-      <v-btn v-if="id" class="mx-1" color="success" :flat="config.vuetify.theme.flat" :disabled="!save" icon @click="update()">
-        <v-icon icon="fa-solid fa-save"></v-icon>
-      </v-btn>
-    </v-row>
-    <!-- Form -->
+    <PageHeader icon="fa-solid fa-user" title="Account">
+      <template #actions>
+        <organizationsSwitcherComponent />
+      </template>
+    </PageHeader>
     <v-row class="pa-2">
-      <v-col cols="12" sm="12" md="12" lg="12" xl="12">
-        <v-card width="100%" class="px-10 pa-6" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
-          <v-form ref="form" v-model="valid">
-            <v-row>
-              <v-col cols="12" xs="12" sm="12" md="8" lg="9" xl="10">
-                <v-text-field v-model="firstName" label="FirstName" required></v-text-field>
-                <v-text-field v-model="lastName" label="LastName" required></v-text-field>
-                <v-text-field v-model="email" label="Email" required></v-text-field>
-              </v-col>
-              <v-col cols="12" xs="12" sm="12" md="4" lg="3" xl="2" align="center">
-                <userAvatarComponent :user="user" :width="'200px'" :height="'200px'" :radius="'50%'" :border="'0px'" :color="'#000'" :size="512" />
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12">
-                <v-textarea v-model="bio" :rules="rules.bio" label="Bio" auto-grow clearable counter></v-textarea>
-                <v-text-field v-model="position" label="Position" required></v-text-field>
-                <v-select v-model="roles" :items="rolesItems" chips label="Users" multiple required></v-select>
-              </v-col>
-            </v-row>
-          </v-form>
-          <!-- <v-row >
-              <v-col cols="12">
-                <h4 color="gray">Images</h4>
-                <v-divider></v-divider>
-              </v-col>
-              <v-col cols="12" sm="10" md="10" lg="10">
-                <v-file-input
-                  v-model="file.avatar"
-                  accept="image/jpeg"
-                  chips
-                  show-size
-                  prepend-icon="fa-camera"
-                  label="Set New Banner"
-                ></v-file-input>
-              </v-col>
-              <v-col cols="12" sm="2" md="2" lg="2">
-                <v-btn color="primary" @click="uploadAvatar" :disabled="file.avatar ? false : true"
-                  >Upload</v-btn
+      <v-col cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+          <v-tabs v-model="tab" color="primary">
+            <v-tab value="profile" class="text-none text-body-medium">
+              <v-icon icon="fa-solid fa-id-card" size="small" class="mr-2"></v-icon>
+              Profile
+            </v-tab>
+            <v-tab value="organizations" class="text-none text-body-medium">
+              <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
+              Organizations
+            </v-tab>
+          </v-tabs>
+          <v-divider></v-divider>
+          <v-window v-model="tab">
+            <!-- Profile tab -->
+            <v-window-item value="profile">
+              <div class="pa-6">
+                <userProfileComponent :user="user" :organizations="organizations" @save="updateProfile" @avatar-uploaded="onAvatarUploaded" />
+              </div>
+            </v-window-item>
+            <!-- Organizations tab -->
+            <v-window-item value="organizations">
+              <div class="pa-6">
+                <v-list v-if="organizations && organizations.length" lines="two" class="pa-0 bg-transparent">
+                  <template v-for="(org, i) in organizations" :key="org.id || org._id">
+                    <v-list-item
+                      :to="org.role === 'owner' || org.role === 'admin' ? `/users/organizations/${org.id || org._id}` : undefined"
+                      :class="config.vuetify.theme.rounded"
+                      class="pa-4"
+                    >
+                      <template #prepend>
+                        <v-avatar :color="orgColor(org)" size="40" class="mr-4">
+                          <span class="text-title-medium font-weight-bold">
+                            {{ (org.name || '?').charAt(0).toUpperCase() }}
+                          </span>
+                        </v-avatar>
+                      </template>
+                      <v-list-item-title class="text-body-large font-weight-medium">{{ org.name }}</v-list-item-title>
+                      <v-list-item-subtitle v-if="org.description" class="text-body-small">{{ org.description }}</v-list-item-subtitle>
+                      <template #append>
+                        <div class="d-flex align-center ga-2">
+                          <v-chip v-if="org.role" size="small" :color="roleColor(org.role)" variant="tonal" class="text-capitalize">{{
+                            org.role
+                          }}</v-chip>
+                          <v-chip v-if="isActiveOrg(org)" size="small" color="success" variant="flat">Active</v-chip>
+                          <v-btn
+                            v-if="org.role !== 'owner'"
+                            color="error"
+                            variant="text"
+                            size="small"
+                            class="text-none"
+                            @click.stop.prevent="confirmLeave(org)"
+                          >
+                            Leave
+                          </v-btn>
+                          <v-icon
+                            v-if="org.role === 'owner' || org.role === 'admin'"
+                            icon="fa-solid fa-chevron-right"
+                            size="small"
+                            color="medium-emphasis"
+                          ></v-icon>
+                        </div>
+                      </template>
+                    </v-list-item>
+                    <v-divider v-if="i < organizations.length - 1"></v-divider>
+                  </template>
+                </v-list>
+                <v-btn
+                  color="primary"
+                  variant="tonal"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none text-body-medium mt-4"
+                  to="/users/organizations/create"
+                  block
                 >
-              </v-col>
-            </v-row> -->
+                  <v-icon icon="fa-solid fa-plus" size="small" class="mr-2"></v-icon>
+                  New Organization
+                </v-btn>
+                <div v-if="!organizations || !organizations.length" class="text-center text-medium-emphasis pa-8">
+                  <v-icon icon="fa-solid fa-building" size="x-large" class="mb-4 text-medium-emphasis"></v-icon>
+                  <p class="text-body-medium">No organizations yet.</p>
+                </div>
+              </div>
+            </v-window-item>
+          </v-window>
+        </v-card>
+
+        <!-- Danger zone -->
+        <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
+          <div class="d-flex align-center flex-wrap ga-4">
+            <div class="flex-grow-1">
+              <h3 class="text-title-medium font-weight-medium mb-1">Delete Account</h3>
+              <p class="text-body-small text-medium-emphasis mb-0">
+                Permanently delete your account, data, and organization ownership. This cannot be undone.
+              </p>
+            </div>
+            <v-btn
+              color="error"
+              variant="tonal"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              @click="confirmDeleteAccount = true"
+            >
+              Delete Account
+            </v-btn>
+          </div>
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Leave organization dialog -->
+    <v-dialog v-model="leaveDialog" max-width="440">
+      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+        <v-card-title class="text-title-large font-weight-medium">Leave Organization</v-card-title>
+        <v-card-text class="text-body-medium">
+          Are you sure you want to leave {{ orgToLeave?.name }}? You will lose access to all resources in this organization.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" class="text-none text-body-medium" @click="leaveDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="leaveOrg">Leave</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Delete account dialog -->
+    <v-dialog v-model="confirmDeleteAccount" max-width="440">
+      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+        <v-card-title class="text-title-large font-weight-medium text-error">Delete Account</v-card-title>
+        <v-card-text class="text-body-medium">
+          This action is irreversible. Your account, all your data, and any organization you are the sole owner of will be permanently deleted.
+          <v-text-field
+            v-model="deleteConfirmInput"
+            label="Type DELETE to confirm"
+            variant="outlined"
+            density="compact"
+            class="mt-4"
+            autocomplete="off"
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" class="text-none text-body-medium" @click="confirmDeleteAccount = false; deleteConfirmInput = ''">Cancel</v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            :disabled="deleteConfirmInput !== 'DELETE'"
+            @click="deleteAccount"
+          >Delete my account</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script>
-/**
- * Module dependencies.
- */
-import { cloneDeep } from 'lodash-es';
-import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { useUsersStore } from '../stores/users.store';
-import userAvatarComponent from '../components/user.avatar.component.vue';
+import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import axios from '../../../lib/services/axios';
+import roleColor from '../../../lib/helpers/roleColor';
+import orgColor from '../../../lib/helpers/orgColor';
+import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import userProfileComponent from '../components/user.profile.component.vue';
+import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 
-/**
- * Component definition.
- */
 export default {
+  name: 'UserView',
   components: {
-    userAvatarComponent,
+    PageHeader,
+    userProfileComponent,
+    organizationsSwitcherComponent,
   },
   data() {
-    const theme = useTheme();
     return {
-      theme,
-      // vue
-      id: this.$route.params.id ? this.$route.params.id : null,
-      save: false,
-      valid: false,
-      // file: {
-      //   avatar: null,
-      // },
-      rules: {
-        bio: [(v) => !v || (v && v.length <= 200) || 'Max 200 characters'],
-      },
-      userRoles: [],
-      rolesItems: this.config.whitelists.users.roles,
-      removeConfirm: false,
+      tab: 'profile',
+      leaveDialog: false,
+      orgToLeave: null,
+      confirmDeleteAccount: false,
+      deleteConfirmInput: '',
     };
   },
   computed: {
-    themeName() {
-      return this.theme.name;
-    },
     user() {
-      const usersStore = useUsersStore();
-      return usersStore.user;
-    },
-    result() {
-      const usersStore = useUsersStore();
-      return usersStore.result;
-    },
-    isLoggedIn() {
       const authStore = useAuthStore();
-      return authStore.isLoggedIn;
+      return authStore.user || {};
     },
-    firstName: {
-      get() {
-        return this.user.firstName;
-      },
-      set(firstName) {
-        const usersStore = useUsersStore();
-        usersStore.user.firstName = firstName;
-      },
+    organizations() {
+      const organizationsStore = useOrganizationsStore();
+      return organizationsStore.organizations;
     },
-    lastName: {
-      get() {
-        return this.user.lastName;
-      },
-      set(lastName) {
-        const usersStore = useUsersStore();
-        usersStore.user.lastName = lastName;
-      },
-    },
-    email: {
-      get() {
-        return this.user.email;
-      },
-      set(email) {
-        const usersStore = useUsersStore();
-        usersStore.user.email = email;
-      },
-    },
-    bio: {
-      get() {
-        return this.user.bio;
-      },
-      set(bio) {
-        const usersStore = useUsersStore();
-        usersStore.user.bio = bio;
-      },
-    },
-    position: {
-      get() {
-        return this.user.position;
-      },
-      set(position) {
-        const usersStore = useUsersStore();
-        usersStore.user.position = position;
-      },
-    },
-    roles: {
-      get() {
-        return this.userRoles;
-      },
-      set(roles) {
-        this.userRoles = roles;
-        this.save = true;
-        const usersStore = useUsersStore();
-        usersStore.user.roles = cloneDeep(this.userRoles);
-      },
-    },
-    avatar: {
-      get() {
-        return this.user.avatar;
-      },
-      set(avatar) {
-        const usersStore = useUsersStore();
-        usersStore.user.avatar = avatar;
-      },
+    /**
+     * @desc The ID of the user's current active organization.
+     * @returns {string|undefined}
+     */
+    currentOrganizationId() {
+      const authStore = useAuthStore();
+      const id = authStore.user?.currentOrganization;
+      return id?._id || id?.id || id;
     },
   },
-  watch: {
-    user: {
-      handler() {
-        this.save = true;
-      },
-      deep: true,
-    },
-  },
+  /**
+   * Fetch organizations on component creation.
+   * @returns {Promise<void>}
+   */
   async created() {
-    const usersStore = useUsersStore();
-    if (this.id) {
-      usersStore.resetUser();
-      try {
-        await usersStore.getUser({ id: this.id });
-        this.userRoles = cloneDeep(this.user.roles);
-        this.save = false;
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      usersStore.resetUser();
+    const organizationsStore = useOrganizationsStore();
+    try {
+      await organizationsStore.fetchOrganizations();
+    } catch {
+      // interceptor handles snackbar
     }
   },
   methods: {
-    async update() {
-      const form = await this.$refs.form.validate();
-      if (form.valid) {
-        const usersStore = useUsersStore();
-        usersStore.user.roles = this.roles;
-
-        try {
-          await usersStore.updateUser({ id: this.id });
-          this.save = false;
-        } catch (err) {
-          console.log(err);
-        }
+    roleColor,
+    orgColor,
+    /**
+     * @desc Check whether the given org is the user's active organization.
+     * @param {Object} org - Organization object
+     * @returns {boolean}
+     */
+    isActiveOrg(org) {
+      return (org.id || org._id) === this.currentOrganizationId;
+    },
+    async updateProfile(formData) {
+      try {
+        const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
+        await axios.put(`${api}/users`, {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          bio: formData.bio,
+          position: formData.position,
+        });
+        const authStore = useAuthStore();
+        await authStore.refreshAbilities();
+      } catch {
+        // interceptor handles snackbar
       }
     },
-    async remove() {
-      const form = await this.$refs.form.validate();
-      if (form.valid) {
-        const usersStore = useUsersStore();
-        try {
-          await usersStore.deleteUser({ id: this.id });
-          this.$router.push('/users');
-        } catch (err) {
-          console.log(err);
+    async onAvatarUploaded() {
+      const authStore = useAuthStore();
+      await authStore.refreshAbilities();
+    },
+    confirmLeave(org) {
+      this.orgToLeave = org;
+      this.leaveDialog = true;
+    },
+    async leaveOrg() {
+      const organizationsStore = useOrganizationsStore();
+      try {
+        await organizationsStore.leaveOrganization(this.orgToLeave.id || this.orgToLeave._id);
+        this.leaveDialog = false;
+        this.orgToLeave = null;
+        const authStore = useAuthStore();
+        await authStore.refreshAbilities();
+        if (organizationsStore.organizations.length === 0) {
+          this.$router.push('/organization-required');
+        } else if (!organizationsStore.currentOrganization) {
+          await organizationsStore.switchOrganization(organizationsStore.organizations[0].id || organizationsStore.organizations[0]._id);
         }
+      } catch {
+        this.leaveDialog = false;
       }
     },
-    // uploadAvatar() {
-    //   if (this.file.avatar) {
-    //     const usersStore = useUsersStore();
-    //     try {
-    //       await usersStore.uploadAvatar(this, { id: this.user.id, file: this.file.avatar });
-    //       this.$router.push(`/users/${this.user.id}`);
-    //     } catch (err) {
-    //       console.log(err);
-    //     }
-    //   }
-    // },
+    async deleteAccount() {
+      try {
+        const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
+        await axios.delete(`${api}/users`);
+        const authStore = useAuthStore();
+        await authStore.signout();
+        this.$router.push('/signin');
+      } catch {
+        this.confirmDeleteAccount = false;
+        this.deleteConfirmInput = '';
+      }
+    },
   },
 };
 </script>

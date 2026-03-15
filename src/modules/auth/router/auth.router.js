@@ -1,11 +1,12 @@
 /**
  * Module dependencies.
  */
-import signin from '../views/auth.signin.view.vue';
-import signup from '../views/auth.signup.view.vue';
-import forgot from '../views/auth.forgot.view.vue';
-import reset from '../views/auth.reset.view.vue';
-import token from '../views/auth.token.view.vue';
+import signin from '../views/signin.view.vue';
+import signup from '../views/signup.view.vue';
+import forgot from '../views/forgot.view.vue';
+import reset from '../views/reset.view.vue';
+import token from '../views/token.view.vue';
+import verifyEmail from '../views/verifyEmail.view.vue';
 
 /**
  * Router configuration.
@@ -17,7 +18,7 @@ export default [
     component: signin,
     meta: {
       icon: 'fa-solid fa-user',
-      display: false, // hide from drawer any time
+      display: false,
     },
   },
   {
@@ -25,7 +26,7 @@ export default [
     name: 'Signup',
     component: signup,
     meta: {
-      display: false, // hide from drawer any time
+      display: false,
     },
   },
   {
@@ -33,7 +34,7 @@ export default [
     name: 'Forgot',
     component: forgot,
     meta: {
-      display: false, // hide from drawer any time
+      display: false,
     },
   },
   {
@@ -41,7 +42,7 @@ export default [
     name: 'Reset',
     component: reset,
     meta: {
-      display: false, // hide from drawer any time
+      display: false,
     },
   },
   {
@@ -49,7 +50,15 @@ export default [
     name: 'Token',
     component: token,
     meta: {
-      display: false, // hide from drawer any time
+      display: false,
+    },
+  },
+  {
+    path: '/verify-email/:token',
+    name: 'VerifyEmail',
+    component: verifyEmail,
+    meta: {
+      display: false,
     },
   },
 ];

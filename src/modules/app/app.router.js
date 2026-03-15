@@ -3,15 +3,17 @@
  */
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
+import { ability } from '../../lib/helpers/ability';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
+import organizations from '../organizations/router/organizations.router';
+import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
-import secure from '../secure/router/secure.router';
 import tasks from '../tasks/router/tasks.router';
 
-const routes = [].concat(home, auth, users, secure, tasks);
+const routes = [].concat(home, auth, organizations, admin, users, tasks);
 
 /**
  * Router configuration.
@@ -21,18 +23,76 @@ const getRouter = () => {
     history: createWebHistory(import.meta.env.BASE_URL),
     routes,
   });
-  router.beforeEach((to) => {
+  // Routes that don't require an organization
+  const orgExemptPrefixes = ['/users', '/admin'];
+  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite'];
+
+  /**
+   * Handle global navigation checks (title, auth, org requirement, CASL access).
+   * @param {import('vue-router').RouteLocationNormalized} to Target route.
+   * @returns {Promise<boolean|string|void>} Navigation resolution.
+   */
+  router.beforeEach(async (to) => {
     // meta
     const pageTitle = to.meta.title || to.name;
     document.title = pageTitle ? `${pageTitle} - ${config.app.title}` : config.app.title;
-    const userRoles = localStorage.getItem(`${config.cookie.prefix}UserRoles`)
-      ? localStorage.getItem(`${config.cookie.prefix}UserRoles`).split(',')
-      : [];
+
+    const authStore = useAuthStore();
+
+    // Ensure server config and user are loaded (needed for org-required check)
+    try {
+      if (authStore.isLoggedIn && authStore.serverConfig === null) {
+        await authStore.fetchServerConfig();
+      }
+      if (authStore.isLoggedIn && !authStore.user) {
+        await authStore.refreshAbilities();
+      }
+    } catch (err) {
+      console.error('Router guard: failed to load server config or abilities, proceeding anyway', err);
+    }
+
+    // Redirect authenticated users away from auth pages (signin, signup, etc.)
+    const authPages = ['/signin', '/signup', '/forgot', '/reset', '/token'];
+    if (authStore.isLoggedIn && authPages.some((p) => to.path === p || to.path.startsWith(`${p}/`))) {
+      if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
+        return '/organization-required';
+      }
+      return '/';
+    }
+
+    // Organization membership required: if orgs enabled, user logged in, no org, and not on an exempt page → block
+    if (
+      authStore.isLoggedIn
+      && authStore.serverConfig?.organizations?.enabled
+      && !authStore.user?.currentOrganization
+      && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
+      && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))
+    ) {
+      return '/organization-required';
+    }
+
+    // Auth-only routes (no CASL check, just require login)
+    if (to.matched.some((record) => record.meta.requiresAuth && !record.meta.action)) {
+      if (!authStore.isLoggedIn) return '/signin';
+    }
+
     // secu
-    if (to.matched.some((record) => record.meta.roles)) {
-      const authStore = useAuthStore();
-      if (authStore.isLoggedIn && to.meta.roles.some((r) => userRoles.includes(r))) {
-        return true;
+    if (to.matched.some((record) => record.meta.action)) {
+      if (authStore.isLoggedIn) {
+        // If abilities not loaded yet, fetch them before checking
+        if (!ability || !ability.rules || ability.rules.length === 0) {
+          try {
+            await authStore.refreshAbilities();
+          } catch (err) {
+            console.error('Router guard: failed to refresh abilities, proceeding anyway', err);
+          }
+        }
+        if (ability && ability.rules && ability.rules.length > 0) {
+          if (ability.can(to.meta.action, to.meta.subject)) return true;
+          return '/'; // forbidden — redirect home
+        }
+        // Fallback: abilities still empty after refresh, deny access
+        return '/';
       }
       return '/signin';
     }

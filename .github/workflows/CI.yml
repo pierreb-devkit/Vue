@@ -7,24 +7,91 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  lint-unit-build:
+    name: Lint, Unit Tests & Build
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js LTS
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm'
-      - name: Run tests
-        run: |
-          npm install
-          UV_USE_IO_URING=0 npm run build
-          npm run lint
-          npm run test:coverage
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+          cache: npm
+      - run: npm ci
+      - run: npm run generateConfig
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: UV_USE_IO_URING=0 npm run build
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: pierreb-devkit/Vue
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: Vue
+
+      - uses: actions/checkout@v4
+        with:
+          repository: pierreb-devkit/Node
+          ref: ${{ vars.E2E_NODE_REF || 'master' }}
+          path: Node
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # Install & start Node backend
+      - name: Install Node backend
+        working-directory: Node
+        run: npm ci
+      - name: Start Node backend
+        working-directory: Node
+        run: node server.js > /tmp/node-backend.log 2>&1 &
+        env:
+          NODE_ENV: test
+          DEVKIT_NODE_db_uri: mongodb://127.0.0.1:27017/NodeTest
+          DEVKIT_NODE_api_port: "3000"
+          DEVKIT_NODE_organizations_enabled: "true"
+          DEVKIT_NODE_organizations_autoCreate: "true"
+          DEVKIT_NODE_organizations_domainMatching: "true"
+          DEVKIT_NODE_cors_origin: '[http://localhost:8080]'
+          DEVKIT_NODE_cors_credentials: "true"
+      - name: Wait for Node backend
+        run: npx wait-on http://127.0.0.1:3000/api/home --timeout 60000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; exit 1)
+
+      # Install & start Vue dev server
+      - name: Install Vue
+        working-directory: Vue
+        run: npm ci
+      - name: Install Playwright browsers
+        working-directory: Vue
+        run: npx playwright install --with-deps chromium
+      - name: Start Vue dev server
+        working-directory: Vue
+        run: npm run dev &
+        env:
+          NODE_ENV: test
+      - name: Wait for Vue dev server
+        run: npx wait-on http://localhost:8080 --timeout 60000
+
+      # Run E2E tests
+      - name: Run Playwright tests
+        working-directory: Vue
+        run: npx playwright test --config playwright.config.js
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: Vue/test-results/
+          retention-days: 7

@@ -91,7 +91,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import userAvatarComponent from '../../users/components/user.avatar.component.vue';
+import userAvatarComponent from '../../core/components/user.avatar.component.vue';
 
 /**
  * Component definition.

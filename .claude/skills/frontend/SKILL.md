@@ -2,9 +2,9 @@
 name: frontend
 description: >
   Design system reference for the Devkit Vue stack (Vuetify 4 + custom theme helpers).
-  Covers design thinking, Vuetify tokens, stack components, and visual verification.
-  This skill is automatically consumed by /feature when the task has a visual component.
-  Can also be invoked directly for design-only tasks (styling, theming, layout fixes).
+  Use when asked about styling, theming, layout, design system, Vuetify components, visual verification, or UI patterns.
+  Automatically consumed by /feature when the task has a visual component.
+  Can also be invoked directly for design-only tasks (restyle, theme change, layout fix).
 ---
 
 # Frontend

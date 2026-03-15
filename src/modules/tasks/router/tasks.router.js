@@ -14,6 +14,7 @@ export default [
     component: tasks,
     meta: {
       icon: 'fa-solid fa-list-check',
+      action: 'read', subject: 'Task',
     },
   },
   {
@@ -22,7 +23,7 @@ export default [
     component: task,
     meta: {
       display: false, // hide from drawer any time
-      roles: ['user'], // proteced, require one of this roles
+      action: 'create', subject: 'Task', // protected, require ability
     },
   },
   {
@@ -31,7 +32,7 @@ export default [
     component: task,
     meta: {
       display: false, // hide from drawer any time
-      roles: ['user'], // proteced, require one of this roles
+      action: 'read', subject: 'Task', // protected, require ability
     },
   },
 ];

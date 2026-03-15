@@ -16,7 +16,7 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 | Subject      | Informations                                                                                                                                                                                                                                                                                               |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Architecture | Layered Architecture : everything is separated in layers, and the upper layers are abstractions of the lower ones, that's why every layer should only reference the immediate lower layer (vertical modules architecture)                                                                                   |
-| Security     | JWT Stateless - take a look at the [Node](https://github.com/pierreb-devkit/Node) stack for more information                                                                                                                                                                                                  |
+| Security     | JWT Stateless + CASL abilities (`@casl/ability`, `@casl/vue`) - take a look at the [Node](https://github.com/pierreb-devkit/Node) stack for more information                                                                                                                                                    |
 | CI           | [GitHub Actions](https://github.com/pierreb-devkit/Vue/actions)                                                                                                                                                                                                                                             |
 | Linter       | [ESLint](https://github.com/eslint/eslint) ecmaVersion 10 (2019)                                                                                                                                                                                                                                           |
 | Developer    | [Dependabot](https://dependabot.com/) - [Snyk](https://snyk.io/test/github/pierreb-devkit/vue) <br> [semantic-release](https://github.com/semantic-release/semantic-release) - [commitlint](https://github.com/conventional-changelog/commitlint) - [commitizen](https://github.com/commitizen/cz-cli) |
@@ -28,6 +28,8 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 ### Core
 
 - **User** : classic register / auth
+- **Organizations** : create, manage members, invite, switch context (optional — controlled by backend config)
+- **CASL Abilities** : route guards + navigation + template helpers powered by `@casl/ability` and `@casl/vue`
 
 ### Examples
 
@@ -104,28 +106,28 @@ Configuration is split between a **global** file and **per-module** files, then 
 
 ### File layout
 
+Config files follow the `module.env.kind.js` naming convention.
+
 ```text
 src/config/defaults/
-  config.development.js          ← global defaults (app, api, port, cookie, analytics, whitelists)
-  config.production.js           ← production overrides (optional)
-  config.test.js                 ← test overrides (optional)
+  development.config.js          ← infra only (app, port, api, cookie, analytics)
+  production.config.js           ← production overrides (optional)
+  test.config.js                 ← test overrides (optional)
 
 src/modules/<name>/config/
-  config.development.js          ← module defaults (e.g. vuetify, header, footer, sign, oAuth, home)
-  config.<env>.js                ← module env overrides (optional)
+  <name>.development.config.js   ← module defaults (e.g. auth.development.config.js)
 ```
 
 ### Merge order (priority ascending)
 
 | Layer | Source | Example |
 |-------|--------|---------|
-| 1 | Module development defaults | `src/modules/*/config/config.development.js` |
-| 2 | Global development defaults | `src/config/defaults/config.development.js` |
-| 3 | Module env overrides | `src/modules/*/config/config.<env>.js` |
-| 4 | Global env overrides | `src/config/defaults/config.<env>.js` |
-| 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
+| 1 | Module defaults | `src/modules/*/config/*.development.config.js` |
+| 2 | Global development defaults | `src/config/defaults/development.config.js` |
+| 3 | Global env overrides | `src/config/defaults/<env>.config.js` |
+| 4 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
 
-Layers 3–4 are only applied when `NODE_ENV` is not `development`.
+Layer 3 is only applied when `NODE_ENV` is not `development`.
 
 ### Merge semantics
 
@@ -148,13 +150,10 @@ When running a downstream project that clones this stack, set `NODE_ENV` to the 
 
 ```text
 src/config/defaults/
-  config.myproject.js            ← global project overrides (optional)
-
-src/modules/<name>/config/
-  config.myproject.js            ← module project overrides (optional)
+  myproject.config.js            ← global project overrides
 ```
 
-The generator discovers files named `config.${NODE_ENV}.js` — files without the `config.` prefix are ignored.
+The generator discovers files named `${NODE_ENV}.config.js` in `src/config/defaults/` — module config files are always loaded regardless of environment.
 
 > **Migration note:** if your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
 
@@ -199,6 +198,10 @@ git merge devkit-vue/master
 ```
 
 > Caution: resolve conflicts manually to preserve downstream customizations before pushing.
+
+### Migration Guides
+
+- **Organizations & CASL** — see [`MIGRATIONS.md`](./MIGRATIONS.md) for step-by-step instructions on migrating downstream projects to the ability-based auth system and optional organizations module.
 
 ## :pencil2: Contribute
 

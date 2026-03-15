@@ -26,7 +26,8 @@ Audit or apply the project's file and folder naming conventions.
 | View      | `{module}.{name}.view.vue`      | `auth.signin.view.vue`    |
 | Store     | `{module}.store.js`             | `tasks.store.js`          |
 | Router    | `{module}.router.js`            | `users.router.js`         |
-| Test      | `{target}.spec.js`              | `home.store.spec.js`      |
+| Unit Test | `{target}.unit.tests.js`        | `home.store.unit.tests.js`  |
+| E2E Test  | `{target}.e2e.tests.js`         | `auth.signup.e2e.tests.js`  |
 | Service   | `{name}.js`                     | `axios.js`                |
 | Helper    | `{name}.js`                     | `tools.js`                |
 | Plugin    | `{name}.js`                     | `vuetify.js`              |
@@ -54,7 +55,7 @@ Audit or apply the project's file and folder naming conventions.
    - `.view.vue` for page-level views
    - `.store.js` for Pinia stores
    - `.router.js` for route definitions
-   - `.spec.js` for tests
+   - `.unit.tests.js` for unit tests, `.e2e.tests.js` for E2E tests
 
 3. **Singular vs plural**: follow the module's data semantics
    - List of items → plural: `tasks.view.vue`, `users.view.vue`
@@ -68,41 +69,6 @@ Audit or apply the project's file and folder naming conventions.
 
 ---
 
-## Steps
+## Applying names
 
-### When creating a new file
-
-1. Identify the module it belongs to (e.g., `users`)
-2. Identify the file type (component, view, store, router, test, helper, plugin)
-3. Derive the name:
-   - module prefix (kebab-case) + dot + semantic name (kebab-case) + dot + type suffix
-   - Example: module=`users`, name=`profile`, type=component → `users.profile.component.vue`
-4. Place it in the correct sub-directory:
-   - `.vue` components → `src/modules/{module}/components/`
-   - `.vue` views → `src/modules/{module}/views/`
-   - stores → `src/modules/{module}/stores/`
-   - routers → `src/modules/{module}/router/`
-   - tests → `src/modules/{module}/tests/`
-5. Confirm the name follows the table above before writing the file
-
-### When auditing a module
-
-1. List all files in `src/modules/{module}/`
-2. Check each file against the conventions table
-3. Report any violations with the expected name
-4. Apply renames if requested (use `/feature` or direct edits)
-5. Run `/verify` after renaming
-
----
-
-## Examples
-
-| Situation                | Correct name                               | Wrong name                           |
-| ------------------------ | ------------------------------------------ | ------------------------------------ |
-| Hero component in `home` | `home.hero.component.vue`                  | `HeroComponent.vue`, `hero.vue`      |
-| Sign-in page in `auth`   | `auth.signin.view.vue`                     | `SignIn.vue`, `signin.vue`           |
-| Pinia store in `tasks`   | `tasks.store.js`                           | `tasksStore.js`, `store.js`          |
-| Router in `users`        | `users.router.js`                          | `router.js`, `usersRouter.js`        |
-| Test for home store      | `home.store.spec.js`                       | `homeStore.test.js`, `store.spec.js` |
-| Utility helper           | `src/lib/helpers/tools.js`                 | `src/lib/helpers/tools.helper.js`    |
-| Utility sub-component    | `components/utils/home.tabs.component.vue` | `components/utils/Tabs.vue`          |
+Derive name as: module prefix (kebab-case) + `.` + semantic name + `.` + type suffix. Place in the correct sub-directory (`components/`, `views/`, `stores/`, `router/`, `tests/`). When auditing, check each file against the tables above and report violations.

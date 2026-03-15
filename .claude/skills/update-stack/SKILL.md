@@ -29,7 +29,7 @@ git merge devkit-vue/master
 | Other stack module files (`src/modules/home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`) | `git checkout --theirs <file>` |
 | `package-lock.json` | `git checkout --theirs package-lock.json` — regenerate after `package.json` is resolved |
 | `ERRORS.md` | Merge stack entries + project entries — never drop lines |
-| `MIGRATION.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATION.md` |
+| `MIGRATIONS.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATIONS.md` |
 | `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
 | `vite.config.js` | `git checkout --ours vite.config.js` then merge upstream changes manually |
 | `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
@@ -89,7 +89,7 @@ Proceed to Phase 2 and track the upstream fix separately — do not block downst
 
 **Goal: project-specific modules work and match stack patterns.**
 
-### 4. Apply MIGRATION.md (if present)
+### 4. Apply MIGRATIONS.md (if present)
 
 Read the last entries — they list breaking changes requiring updates in project modules. Apply each one to non-stack modules.
 

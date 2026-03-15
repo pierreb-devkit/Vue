@@ -1,65 +1,66 @@
 # Devkit Vue Stack - Claude Code Setup
 
-This repository is the Vue 3 stack from Devkit. It can run as a standalone frontend or as part of a fullstack setup with companion stacks such as Node or Swift.
+Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/Swift. Cloned into downstream projects, kept up-to-date via upstream merges.
 
-It is designed to be cloned into downstream projects and kept up-to-date through upstream merges.
+## Quick start
 
-## How to use Claude Code here
+- Source of truth: `README.md` + `package.json` scripts
+- `.claude/` contains embedded settings and skills
+- Read `ERRORS.md` before proposing changes — append new mistakes as `[YYYY-MM-DD] <scope>: <wrong> -> <right>`
 
-Source of truth: `README.md` + `package.json` scripts.
+## Architecture
 
-The `.claude/` folder contains embedded settings and skills that are available immediately after cloning.
+- Layered: **UI → Store → API**. Each layer references only the one below.
+- Modules are independent — no cross-module imports without justification.
+- Shared code in `src/modules/core` only with justification.
+- Modularity, UI rules, and definition of done → see `/feature`
 
-## Canonical commands
+## CASL abilities & organizations
 
-Scripts: see `package.json` → `scripts` section.
+- **Ability helper**: `src/lib/helpers/ability.js` exports reactive `ability` + `updateAbilities(rules)`.
+- **Plugin**: `@casl/vue` `abilitiesPlugin` registered in `main.js` — `$can()` / `$cannot()` in templates.
+- **Route guards**: `meta.action` + `meta.subject` (never `meta.roles`). Guard checks `ability.can()` with `isLoggedIn` fallback.
+- **Navigation**: `core.store.js` `refreshNav()` uses same ability check.
+- **Auth flow**: `updateAbilities(res.data.abilities)` on signin/token, `updateAbilities([])` on signout.
+- **Organizations**: `src/modules/organizations/` — CRUD + members + switching. Switcher auto-hides when disabled or single-org.
+- **Signup org step**: Controlled by `serverConfig.organizations.enabled`. Three-step: form → setup → app.
+- **Subjects**: PascalCase singular nouns matching backend models (`Task`, `Organization`).
+- **Actions**: `read`, `create`, `update`, `delete`, `manage` (= all).
 
-## Preflight
+## Testing conventions
 
-- Read `ERRORS.md` before proposing changes or code reviews
-- If the AI makes a new recurring mistake, append one line to `ERRORS.md` using `[YYYY-MM-DD] <scope>: <wrong> -> <right>`
+| Script               | Command                   | Description                                  |
+| -------------------- | ------------------------- | -------------------------------------------- |
+| `npm run dev`        | `vite`                    | Start dev server with HMR                    |
+| `npm start`          | `npm run dev`             | Alias for dev                                |
+| `npm test`           | `vitest run`              | Unit tests only (no infra needed)            |
+| `npm run test:all`   | `vitest run` + Playwright | All tests (unit + E2E, needs Node + MongoDB) |
+| `npm run test:unit`  | `vitest run`              | Same as `npm test`                           |
+| `npm run test:watch` | `vitest`                  | Unit tests in watch mode                     |
+| `npm run test:e2e`   | `npx playwright test`     | E2E tests only (needs Node + MongoDB)        |
 
-## Modularity rules
+- Every new feature needs unit tests (store + component if applicable)
+- E2E only for critical product flows (auth, org onboarding, invite/join); requires Node + Vue + MongoDB running
+- Docker (mongo + node-api): `docker compose -f docker-compose.test.yml up -d`
 
-- Keep each module as independent as possible
-- Avoid cross-module imports and coupling
-- Keep config, routes, data-access, and business logic inside the module boundary
-- Put shared code in `src/modules/core` only with explicit justification
-- Keep tests organized per module: `src/modules/*/tests/`
+## Guardrails
 
-## Always-on guardrails
+- Never commit secrets (`.env*`, keys, tokens)
+- No cross-module coupling without justification
+- Keep changes minimal and merge-friendly for downstream
+- Every function: JSDoc header (`@param`, `@returns`)
+- PRs: always use `/pull-request` — never open manually
 
-- Never commit secrets or credentials (`.env*`, `secrets/**`, keys, tokens)
-- Do not introduce cross-module coupling without explicit justification
-- Avoid risky renames or moves of core stack paths used by downstream merges
-- Keep changes minimal and merge-friendly for downstream projects
-- Flag security or mergeability risks explicitly in reviews
-- Every new or modified function must have a JSDoc header: one-line description, `@param` for each argument, `@returns` for any non-void return value (always include `@returns` for async functions to document the resolved value)
-- When shipping work to a pull request, always invoke `/pull-request` — never open a PR manually. The skill drives the full lifecycle: draft → CI → monitor loop → stop condition (CI green + zero actionable comments)
+## Skills
 
-## Available embedded skills
+| Skill            | Description                                                            |
+| ---------------- | ---------------------------------------------------------------------- |
+| `/feature`       | Scope analysis → implement → DOD (includes `/create-module` if needed) |
+| `/verify`        | Lint + tests + build + UX audit                                        |
+| `/frontend`      | Design system, Vuetify 4 patterns, visual verification                 |
+| `/naming`        | File and folder naming conventions                                     |
+| `/pull-request`  | Full PR lifecycle: draft → CI → monitor → iterate                      |
+| `/update-stack`  | Merge upstream stack updates                                           |
+| `/create-module` | Scaffold new module from `tasks` template                              |
 
-Use `.claude/skills/*/SKILL.md` as the primary workflow source for Claude.
-
-| Skill            | Description                                           |
-| ---------------- | ----------------------------------------------------- |
-| `/verify`        | Run quality loop (lint + test + build)                |
-| `/create-module` | Create a new module from the `tasks` template         |
-| `/feature`       | Implement a feature while enforcing module isolation  |
-| `/frontend`      | Design system, Vuetify 4 patterns, visual verification |
-| `/update-stack`  | Merge upstream stack updates into downstream projects |
-| `/naming`        | Apply or audit naming conventions                     |
-| `/pull-request`  | Full PR lifecycle: draft, CI, monitor loop, iterate   |
-
-## Stack merge workflow
-
-Stack merge: see README — stack merge workflow section.
-
-> Older changelog entries and some tooling references may still mention `weareopensource/Vue` or "WeAreOpenSource" — treat those as historical upstream references only.
-
-## Definition of done
-
-- `npm run lint` passes
-- `npm run test:unit` passes
-- `npm run build` passes
-- Cross-module impact is documented and justified when present
+> Historical: older references to `weareopensource/Vue` or "WeAreOpenSource" are upstream legacy — ignore.

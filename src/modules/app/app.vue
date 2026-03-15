@@ -16,6 +16,9 @@
     </v-snackbar>
     <devkitNav v-if="isLoggedIn" />
     <devkitHeader v-if="config.header.display" />
+    <authEmailBanner />
+    <authPendingRequestBanner />
+    <organizationsAdminPendingBanner />
     <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
       <router-view />
     </v-main>
@@ -34,6 +37,9 @@ import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
 import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
+import authEmailBanner from '../auth/components/emailBanner.component.vue';
+import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
+import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
 
 /**
  * Component definition.
@@ -44,6 +50,9 @@ export default {
     devkitHeader,
     devkitNav,
     devkitFooter,
+    authEmailBanner,
+    authPendingRequestBanner,
+    organizationsAdminPendingBanner,
   },
   data() {
     const theme = useTheme();
@@ -104,7 +113,7 @@ export default {
 
     // Configure axios interceptors
     const authStore = useAuthStore();
-    setupInterceptors(this.config, this.snackbar, () => authStore.signout());
+    setupInterceptors(this.config, this.snackbar, () => authStore.signout(), () => authStore.refreshAbilities());
   },
 };
 </script>

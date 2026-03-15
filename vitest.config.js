@@ -21,9 +21,10 @@ export default defineConfig({
     },
 
     include: [
-      'src/modules/**/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'src/lib/**/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/modules/**/tests/**/*.unit.tests.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/lib/**/tests/**/*.unit.tests.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
+    exclude: ['node_modules/**', '**/*.e2e.tests.js'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -43,6 +44,7 @@ export default defineConfig({
         'src/lib/plugins/index.js',
         'src/lib/plugins/vuetify.js',
         'src/lib/services/config.js',
+        'src/lib/helpers/e2e/**',
       ],
       thresholds: {
         statements: 85,

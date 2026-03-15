@@ -1,24 +1,33 @@
 ---
 name: verify
-description: Run the quality loop (lint + test + build) to verify code quality and correctness. Use after making any code changes, before committing, or when asked to check/verify the project works.
+description: Run quality loop (audit + lint + tests + build) to verify code quality, correctness, and UI completeness. Use after making changes and before committing.
 ---
 
 # Verify Skill
 
-Run lint → tests → build and report results.
-
 ## Steps
 
-1. Read `ERRORS.md` — scan changed files for any pattern listed as wrong. Flag violations before running tooling.
-2. Run `npm run lint` to check code quality
-3. Run `npm run test:unit` to run all unit tests
-4. Run `npm run build` to verify the build succeeds
-5. Summarize results:
-   - ✅ All checks passed → ready to commit
-   - ❌ Some checks failed → show what failed and suggest next action
+1. **Diff audit** — review all changes (`git diff master...HEAD` or staged changes) using your knowledge of the stack:
+   - Read `CLAUDE.md` and `ERRORS.md` for conventions, architecture, and known pitfalls
+   - Read the `tasks` reference module structure for layer/naming conventions
+   - Check `/frontend` skill for design system and Vuetify conventions
+   - Analyze the diff: architecture, security, UX, logic, consistency, error handling
+   - No hardcoded checklist — reason from context. Examples of what to catch:
+     - Router guards with permissive matching (startsWith vs exact)
+     - Silent error swallowing (catch without user feedback)
+     - Store mutations from outside the store
+     - Cross-module store imports (only `useAuthStore`/`useCoreStore` allowed)
+     - Missing form validation or confirmation dialogs on destructive actions
+     - Inconsistent selectors in E2E tests (prefer getByRole/getByPlaceholder)
+     - Broken or nonexistent route references
+   - Fix all issues found before proceeding
 
-## Notes
+2. **Lint** — `npm run lint`
 
-- Does not run tests in watch mode (use `npm test` manually for that)
-- Does not run coverage (use `npm run test:coverage` manually for that)
-- Does not commit or push changes
+3. **Tests** — check if Node API is reachable (`curl -sf http://localhost:3000/api/home`):
+   - **Infra up** → `npm run test:all` (unit + E2E)
+   - **Infra down** → `npm run test:unit` (unit only) + warn: "E2E skipped — run `docker compose -f docker-compose.test.yml up -d` for full coverage"
+
+4. **Build** — `npm run build`
+
+5. **Summary:** ✅ All passed → ready to commit | ❌ Failed → show failures, fix, re-run

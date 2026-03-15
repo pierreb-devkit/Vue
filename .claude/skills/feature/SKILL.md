@@ -1,105 +1,107 @@
 ---
 name: feature
-description: Implement a new feature or modify existing functionality following the project's modularity rules. Use when adding features, modifying existing ones, or ensuring correct isolation within module boundaries.
+description: Implement a new feature or modify existing functionality. Use when asked to implement, add, build, create, or modify a feature, page, component, or module. Includes scope analysis, edge case detection, module scaffolding, implementation with UI quality, and verification.
 ---
 
 # Feature Skill
 
-Implement features with strict module isolation and correct layering.
+## Phase 0 — Scope Analysis (interactive, before coding)
 
-## Steps
+### 1. Identify target module
 
-### 1. Identify target module(s)
+- Which module? Default to **ONE** unless justified.
+- **If the module doesn't exist** → run `/create-module` to scaffold it first, then continue.
 
-Before coding, determine:
+### 2. Analyze flows & edge cases
 
-- Which module(s) does this feature belong to?
-- Default to **ONE module** unless strictly necessary
-- If it spans multiple modules, explain why and minimize coupling
+For each user-facing flow this feature creates or modifies, identify:
 
-### 2. Apply modularity rules
+- **Happy path** — standard success scenario
+- **Error path** — what fails, what does the user see?
+- **"Last one" edge** — last owner, last org, last member
+- **Retry edge** — can the user retry after failure/rejection?
+- **Multi-user impact** — who else is affected?
 
-- **Isolate feature logic** inside the module boundary
-- **Avoid cross-module imports** unless absolutely required
-- If shared code is needed:
-  - Place it in `helpers` or a shared layer
-  - Provide **explicit justification** for why it must be shared
-- Keep these inside the module (`src/modules/{module}/**`):
-  - Components `src/modules/{module}/components/**`
-  - Routes `src/modules/{module}/router/**`
-  - Store/Pinia state `src/modules/{module}/stores/**`
-  - API calls `src/modules/{module}/stores/**`
-  - Types/interfaces `src/modules/{module}/stores/**`
-  - Tests `src/modules/{module}/tests/**`
-  - Views `src/modules/{module}/views/**`
-- Follow `/naming` for all file and folder naming conventions
+### 3. Check completeness
 
-### 3. Implement the feature
+- Every backend API endpoint has a corresponding UI
+- Every UI action has visible feedback (success + error)
+- Feature works without mailer / without organizations enabled
 
-Follow the stack's architecture:
+### 4. Present plan & ask questions
 
-- **Layered approach**: UI → Store → Services → API
-- **Upper layers** are abstractions of lower ones
-- **Each layer** references only the immediate lower layer
-- Use Vue 3 Composition API
-- Use Vuetify 4 components
-- Follow existing patterns in the module
+**STOP and present to the user:**
+- Flows identified (happy + error + edge cases)
+- UI elements needed
+- Open questions or scope decisions
 
-**If the feature has a visual/UI component**, read and apply `/frontend` skill guidelines:
-- Read `.claude/skills/frontend/references/design-system.md` for tokens, typography (MD3 classes), spacing
-- Read `.claude/skills/frontend/references/components.md` to reuse existing components
-- Read `.claude/skills/frontend/references/patterns.md` for theme helpers (`liquidGlassStyle`, `style()`, etc.)
-- Use config-driven approach — theme colors from config, not hardcoded
-- Verify both dark and light mode
-- Take screenshots after implementation (see `.claude/skills/frontend/references/verification.md`)
+**Wait for user validation before coding.**
 
-### 4. Add tests
+## Phase 1 — Implementation
 
-- Tests go in `src/modules/{module}/tests/`
-- Cover new components, services, and store logic
-- Use Vitest and Vue Test Utils
+### 5. Module structure
 
-### 5. Run verify (dedicated skill)
+Follow layered approach: **UI → Store → API**. Each layer references only the one below.
 
-### 6. Open pull request
+- Use Vue 3 Composition API + Vuetify 4
+- Follow `/naming` conventions
+- Follow existing module patterns
 
-Once verify passes, invoke `/pull-request` to open the PR and run the full monitoring loop (draft → CI → review iteration → stop condition).
+### 6. UI rules
 
-### 7. Provide summary
+**If the feature has visual components**, apply `/frontend` skill guidelines (design-system, components, patterns references).
 
-- ✅ Feature implemented in module: `{module-name}`
-- 🔍 Cross-module coupling: `{none | explain if any}`
-- ⚠️ Risks: `{any potential issues or trade-offs}`
-- 📝 Next steps: `{manual testing, deployment considerations, etc.}`
+**Feedback:**
+- No `console.log(err)` in catch blocks — the axios interceptor handles snackbar display
+- Use `catch { /* interceptor handles */ }` or re-throw
 
-## Modularity checklist
+**Destructive actions — confirmation proportional to impact:**
+- Low impact (remove member): simple confirm dialog
+- High impact (delete org/account): type-to-confirm with entity name
 
-Before finishing, verify:
+**Consistency** (see `/frontend` patterns):
+- Dialogs: `max-width="440"`
+- Destructive buttons: `color="error"` + `variant="tonal"` (inline) or `variant="flat"` (in dialog)
+- Primary buttons: `color="primary"` + `variant="flat"` + `class="text-none text-body-medium"`
+- All buttons: `:class="config.vuetify.theme.rounded"`
+- Role chips: `roleColor()` + `variant="tonal"` + `size="small"` + `class="text-capitalize"`
 
-- [ ] Feature is isolated in ONE module (or justified if multiple)
-- [ ] No new cross-module imports (or justified if required)
-- [ ] Shared code (if any) is in `core` with clear justification
-- [ ] Routes, components, store, services are in module folder
-- [ ] Tests are in `src/modules/{module}/tests/`
-- [ ] Linting passes
-- [ ] Tests pass
-- [ ] Build succeeds
+**Responsive:**
+- Side-by-side layouts: `flex-column flex-sm-row`
+- Data tables: hide non-essential columns on `smAndDown`
+- Form buttons: `:block="$vuetify.display.xs"` or flex-wrap
 
-## Example
+**State & UX guards:**
+- Forms with dirty flag → `beforeRouteLeave` guard
+- Dismissible banners → persist in `sessionStorage`, not component data
+- Active context → visually indicate (badge, border, chip)
+- Generated links/tokens → copy button with clipboard API
+- Dates: relative for recent ("2d ago"), absolute for historical ("DD/MM/YY")
 
-Feature: "Add user avatar upload"
+## Phase 2 — Definition of Done
 
-1. Target module: `users`
-2. Changes:
-   - Add `user.avatar.upload.component.vue` component in `src/modules/users/components/`
-   - in the view in edit mode add `src/modules/users/views/`
-   - Update user store in `src/modules/users/store/users.store.js`
-   - Add tests in `src/modules/users/tests/`
-3. No cross-module coupling
-4. Run verify
-5. Summary: Feature ready, isolated in `users` module
+### 7. Self-review checklist
 
-## Notes
+**Flow completeness:**
+- [ ] Every API has a UI, every action shows feedback
+- [ ] Destructive actions have appropriate confirmation
+- [ ] Edge cases handled (last-one, retry, no mailer)
 
-- Follows existing code patterns
-- Prioritizes simplicity over complexity
+**Consistency:**
+- [ ] Dialog widths, button styles, chips follow rules above
+- [ ] Responsive layout verified at mobile breakpoint
+
+**State:**
+- [ ] Unsaved changes guarded
+- [ ] Dismissible UI persisted correctly
+- [ ] Active context visually marked
+
+**Modularity:**
+- [ ] Isolated in ONE module (or justified)
+- [ ] No cross-module Store imports except `useAuthStore`/`useCoreStore`
+- [ ] Tests added
+- [ ] Tests: unit tests (`*.unit.tests.js`) for all changes. E2E (`*.e2e.tests.js`) only if the change affects a critical user flow (auth, org onboarding, invite/join).
+
+### 8. Run `/verify`
+
+### 9. Run `/pull-request`
