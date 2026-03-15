@@ -18,16 +18,14 @@ export default {
    * @desc Guard against navigating away with unsaved changes.
    * @param {Object} to - Target route
    * @param {Object} from - Current route
-   * @param {Function} next - Navigation resolver
-   * @returns {void}
+   * @returns {boolean} false to cancel navigation, or undefined to allow
    */
-  beforeRouteLeave(to, from, next) {
+  beforeRouteLeave() {
     const detailComponent = this.$refs.detail;
     if (detailComponent && detailComponent.dirty) {
       const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-      if (!answer) return next(false);
+      if (!answer) return false;
     }
-    next();
   },
 };
 </script>

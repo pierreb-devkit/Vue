@@ -10,11 +10,20 @@ const password = 'E2eTestPass99xyz';
 
 let orgId;
 
+/**
+ * End-to-end suite for organization domain-based join flow.
+ * @returns {void}
+ */
 test.describe('Organization Domain Join E2E', () => {
   test.describe.configure({ mode: 'serial' });
 
   // ── Phase 1: Signup & pending join ────────────────────────────────
 
+  /**
+   * Creates owner account and organization with domain matching.
+   * @param {{ playwright: import('@playwright/test').Playwright, request: import('@playwright/test').APIRequestContext }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('owner signs up via API and creates org', async ({ playwright, request }) => {
     const res = await signupViaAPI(request, {
       email: ownerEmail,
@@ -33,6 +42,11 @@ test.describe('Organization Domain Join E2E', () => {
     await ctx.dispose();
   });
 
+  /**
+   * Signs up a member with matching domain and verifies pending join message.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('member signs up via UI — sees pending message, no sidenav', async ({ page }) => {
     await page.goto('/signup');
     await page.getByPlaceholder('name@example.com').first().waitFor({ state: 'visible', timeout: 10000 });
@@ -50,9 +64,14 @@ test.describe('Organization Domain Join E2E', () => {
     await expect(sidenav).toHaveCount(0, { timeout: 3000 });
   });
 
+  /**
+   * Verifies pending members are redirected to organization-required on sign-in.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('member signs in — lands on organization-required', async ({ page }) => {
     await signin(page, memberEmail, password);
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForURL((url) => url.pathname.includes('/organization-required'), { timeout: 15000 });
 
     // Should land on organization-required page (pending member has no active org)
     expect(page.url()).toContain('/organization-required');
@@ -61,6 +80,11 @@ test.describe('Organization Domain Join E2E', () => {
     await expect(page.getByRole('alert').getByText('pending approval')).toBeVisible({ timeout: 10000 });
   });
 
+  /**
+   * Verifies logged-in member visiting signup is redirected to organization-required.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('member refresh on signup — redirects to organization-required', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.waitForLoadState('domcontentloaded');
@@ -76,6 +100,11 @@ test.describe('Organization Domain Join E2E', () => {
 
   // ── Phase 2: Owner approves, then member access control ───────────
 
+  /**
+   * Owner approves the pending join request via API.
+   * @param {{ playwright: import('@playwright/test').Playwright }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('owner approves member join request', async ({ playwright }) => {
     // Approve via authenticated API context — the pending requests section in the
     // detail component relies on loadMembership middleware timing which is not
@@ -92,6 +121,11 @@ test.describe('Organization Domain Join E2E', () => {
     await ctx.dispose();
   });
 
+  /**
+   * Verifies approved member cannot see the manage chevron on account page.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('approved member — no Manage button on account page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto('/users');
@@ -107,6 +141,11 @@ test.describe('Organization Domain Join E2E', () => {
     await expect(chevron).toHaveCount(0, { timeout: 5000 });
   });
 
+  /**
+   * Verifies approved member cannot see management controls on org detail page.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('approved member — no management controls on org page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
@@ -129,6 +168,11 @@ test.describe('Organization Domain Join E2E', () => {
     await expect(pendingSection).toHaveCount(0, { timeout: 5000 });
   });
 
+  /**
+   * Verifies owner can see all management controls on org detail page.
+   * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
   test('owner sees full management controls', async ({ page }) => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);

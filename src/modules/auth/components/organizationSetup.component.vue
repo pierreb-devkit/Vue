@@ -26,7 +26,7 @@
         <!-- Suggested organization (domain match found) -->
         <template v-if="suggestedOrganization && !requestSent">
           <v-card variant="outlined" class="mb-6 pa-4" :class="config.vuetify.theme.rounded">
-            <v-row align="center" no-gutters>
+            <v-row align="center" density="compact">
               <v-avatar color="primary" size="40" class="mr-3">
                 <span class="text-white font-weight-bold">{{ suggestedOrganization.name?.charAt(0)?.toUpperCase() }}</span>
               </v-avatar>
