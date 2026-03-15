@@ -54,8 +54,8 @@ describe('Core Store', () => {
   it('should initialize routes', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/about', name: 'about', meta: { display: true } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/about', name: 'about', meta: { display: true, icon: 'fa-solid fa-info' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -66,9 +66,9 @@ describe('Core Store', () => {
   it('should refresh nav based on logged in status', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
-      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, icon: 'fa-solid fa-list', action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -86,7 +86,7 @@ describe('Core Store', () => {
 
   it('should initialize theme correctly', () => {
     const coreStore = useCoreStore();
-    const mockRoutes = [{ path: '/', name: 'home', meta: { display: true } }];
+    const mockRoutes = [{ path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } }];
 
     coreStore.init(mockRoutes);
 
@@ -97,9 +97,9 @@ describe('Core Store', () => {
   it('should filter out routes with display false', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/hidden', name: 'hidden', meta: { display: false } },
-      { path: '/about', name: 'about', meta: { display: true } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/hidden', name: 'hidden', meta: { display: false, icon: 'fa-solid fa-eye-slash' } },
+      { path: '/about', name: 'about', meta: { display: true, icon: 'fa-solid fa-info' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -109,12 +109,30 @@ describe('Core Store', () => {
     expect(hiddenRoute).toBeUndefined();
   });
 
+  it('should filter out routes without meta.icon', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/ghost', name: 'ghost', meta: { display: true } },
+      { path: '/org', name: 'Organizations', meta: { action: 'read', subject: 'Organization' } },
+    ];
+
+    coreStore.init(mockRoutes);
+    mockAbility.rules = [{ action: 'read', subject: 'Organization' }];
+    mockAbility.can.mockReturnValue(true);
+    coreStore.refreshNav(true);
+
+    expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    expect(coreStore.nav.find((r) => r.name === 'ghost')).toBeUndefined();
+    expect(coreStore.nav.find((r) => r.name === 'Organizations')).toBeUndefined();
+  });
+
   it('should show routes without action when not logged in', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/public', name: 'public', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/public', name: 'public', meta: { display: true, icon: 'fa-solid fa-globe' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -130,8 +148,8 @@ describe('Core Store', () => {
   it('should handle routes without meta.action property', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/public', name: 'public', meta: { display: true } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/public', name: 'public', meta: { display: true, icon: 'fa-solid fa-globe' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -145,9 +163,9 @@ describe('Core Store', () => {
   it('should show only public routes when not logged in', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
-      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, icon: 'fa-solid fa-list', action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -161,9 +179,9 @@ describe('Core Store', () => {
   it('should show guarded routes when logged in with matching abilities', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
-      { path: '/user', name: 'user', meta: { display: true, action: 'read', subject: 'Task' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
+      { path: '/user', name: 'user', meta: { display: true, icon: 'fa-solid fa-list', action: 'read', subject: 'Task' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -179,8 +197,8 @@ describe('Core Store', () => {
   it('should hide guarded routes when logged in but abilities do not match', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -195,9 +213,9 @@ describe('Core Store', () => {
   it('should always hide routes with display: false even when logged in with matching abilities', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/signin', name: 'signin', meta: { display: false } },
-      { path: '/admin-hidden', name: 'admin-hidden', meta: { display: false, action: 'manage', subject: 'User' } },
-      { path: '/', name: 'home', meta: { display: true } },
+      { path: '/signin', name: 'signin', meta: { display: false, icon: 'fa-solid fa-sign-in' } },
+      { path: '/admin-hidden', name: 'admin-hidden', meta: { display: false, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -213,8 +231,8 @@ describe('Core Store', () => {
   it('should hide guarded routes when logged in but no ability rules are loaded', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);
@@ -230,8 +248,8 @@ describe('Core Store', () => {
   it('should not show guarded routes when not logged in even without ability rules', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
-      { path: '/', name: 'home', meta: { display: true } },
-      { path: '/admin', name: 'admin', meta: { display: true, action: 'manage', subject: 'User' } },
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      { path: '/admin', name: 'admin', meta: { display: true, icon: 'fa-solid fa-user-tie', action: 'manage', subject: 'User' } },
     ];
 
     coreStore.init(mockRoutes);

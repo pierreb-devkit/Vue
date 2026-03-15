@@ -45,7 +45,7 @@ export const useCoreStore = defineStore('core', {
      */
     refreshNav(isLoggedIn) {
       const visible = pickBy(this.routes, (i) => {
-        if (i.meta.display !== false) {
+        if (i.meta.display !== false && i.meta.icon) {
           if (!('action' in i.meta)) return i; // no guard, always displayed
           if (isLoggedIn && ability.can(i.meta.action, i.meta.subject)) return i;
         }
