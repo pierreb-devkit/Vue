@@ -10,7 +10,7 @@ description: Run quality loop (audit + lint + tests + build) to verify code qual
 1. **Diff audit** — review all changes (`git diff master...HEAD` or staged changes) using your knowledge of the stack:
    - Read `CLAUDE.md` and `ERRORS.md` for conventions, architecture, and known pitfalls
    - Read the `tasks` reference module structure for layer/naming conventions
-   - Check `/frontend` skill for design system and Vuetify conventions
+   - Check `/ui` skill for design system and Vuetify conventions
    - Analyze the diff: architecture, security, UX, logic, consistency, error handling
    - No hardcoded checklist — reason from context. Examples of what to catch:
      - Router guards with permissive matching (startsWith vs exact)

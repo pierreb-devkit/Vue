@@ -1,5 +1,5 @@
 ---
-name: frontend
+name: ui
 description: >
   Design system reference for the Devkit Vue stack (Vuetify 4 + custom theme helpers).
   Use when asked about styling, theming, layout, design system, Vuetify components, visual verification, or UI patterns.
@@ -7,13 +7,13 @@ description: >
   Can also be invoked directly for design-only tasks (restyle, theme change, layout fix).
 ---
 
-# Frontend
+# UI
 
 Design system reference and visual quality guidelines for the Devkit Vue stack.
 
 **This is not a standalone workflow.** For full feature implementation, use `/feature` which automatically applies these guidelines when visual work is involved.
 
-Invoke `/frontend` directly only for pure design tasks (restyle, theme change, layout fix) that don't need the full `/feature` workflow.
+Invoke `/ui` directly only for pure design tasks (restyle, theme change, layout fix) that don't need the full `/feature` workflow.
 
 ## Design thinking
 
