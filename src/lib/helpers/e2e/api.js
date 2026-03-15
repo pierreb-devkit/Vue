@@ -30,7 +30,10 @@ export async function createOrgViaAPI(context, name, extra = {}) {
   if (!res.ok()) {
     throw new Error(`Create org failed (${res.status()}): ${JSON.stringify(body)}`);
   }
-  return body.data || body;
+  if (!body?.data) {
+    throw new Error(`Create org response missing data envelope: ${JSON.stringify(body)}`);
+  }
+  return body.data;
 }
 
 export { API };

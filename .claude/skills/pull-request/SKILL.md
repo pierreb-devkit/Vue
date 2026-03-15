@@ -151,7 +151,7 @@ If `no checks reported`, retry up to 5 times (30s apart). If still no checks aft
 
 ### 6b. Read all feedback — unresolved threads only
 
-Grace period: `sleep 180`. If 0 bot comments after 3 min, wait 2 more min.
+Grace period: `sleep 180` (3 min). Poll for new review threads (see monitoring.md); if count is zero, `sleep 120` (2 more min, 5 min total) before proceeding.
 
 Read **only unresolved threads** (resolved = ignored). See `references/monitoring.md` for exact commands.
 

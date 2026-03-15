@@ -155,13 +155,13 @@ export default {
      */
     async requestJoin() {
       if (!this.suggestedOrganization) return;
+      const organizationId = this.suggestedOrganization._id || this.suggestedOrganization.id;
+      if (!organizationId) return;
 
       this.requestLoading = true;
       const organizationsStore = useOrganizationsStore();
       try {
-        await organizationsStore.createJoinRequest(
-          this.suggestedOrganization._id || this.suggestedOrganization.id,
-        );
+        await organizationsStore.createJoinRequest(organizationId);
         this.requestSent = true;
         this.$emit('requestSent', this.suggestedOrganization);
       } catch (err) {

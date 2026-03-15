@@ -16,8 +16,6 @@ export default {
   },
   /**
    * @desc Guard against navigating away with unsaved changes.
-   * @param {Object} to - Target route
-   * @param {Object} from - Current route
    * @returns {boolean} false to cancel navigation, or undefined to allow
    */
   beforeRouteLeave() {

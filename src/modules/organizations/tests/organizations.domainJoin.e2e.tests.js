@@ -110,9 +110,16 @@ test.describe('Organization Domain Join E2E', () => {
     // detail component relies on loadMembership middleware timing which is not
     // deterministic in CI.  The banner proves the API works; use it directly.
     const ctx = await authenticatedContext(playwright, ownerEmail, password);
-    const reqRes = await ctx.get(`http://localhost:3000/api/organizations/${orgId}/requests`);
-    const reqBody = await reqRes.json();
-    const requests = reqBody.data || [];
+    let requests = [];
+    const deadline = Date.now() + 15000;
+    while (Date.now() < deadline && requests.length === 0) {
+      const reqRes = await ctx.get(`http://localhost:3000/api/organizations/${orgId}/requests`);
+      const reqBody = await reqRes.json();
+      requests = reqBody.data || [];
+      if (requests.length === 0) {
+        await new Promise((resolve) => { setTimeout(resolve, 500); });
+      }
+    }
     expect(requests.length).toBeGreaterThan(0);
 
     const requestId = requests[0]._id || requests[0].id;
@@ -134,7 +141,7 @@ test.describe('Organization Domain Join E2E', () => {
     // Click the Organizations tab
     const orgTab = page.getByRole('tab', { name: /organizations/i });
     await orgTab.click({ timeout: 10000 });
-    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText(`DomainOrg${timestamp}`)).toBeVisible({ timeout: 10000 });
 
     // Members should NOT see the chevron (manage) icon on their org item
     const chevron = page.locator('.v-list-item .fa-chevron-right');
@@ -149,7 +156,7 @@ test.describe('Organization Domain Join E2E', () => {
   test('approved member — no management controls on org page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText(`DomainOrg${timestamp}`)).toBeVisible({ timeout: 10000 });
 
     // Delete button NOT visible
     const deleteButton = page.locator('button', { hasText: 'Delete' });

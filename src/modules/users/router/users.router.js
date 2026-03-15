@@ -17,6 +17,13 @@ export default [
       requiresAuth: true,
     },
   },
+  {
+    path: '/users/:id',
+    redirect: '/users',
+    meta: {
+      requiresAuth: true,
+    },
+  },
 ];
 
 /**

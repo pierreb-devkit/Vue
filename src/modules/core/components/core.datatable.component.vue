@@ -59,7 +59,7 @@
                 </v-btn>
               </span>
               <span v-else-if="header.kind === 'tags'">
-                <v-chip v-for="(role, index) in lodash.get(item, header.value)" :key="index" class="mr-1" size="small" :index="index">{{ role }}</v-chip>
+                <v-chip v-for="(role, index) in lodash.get(item, header.value)" :key="index" class="mr-1" size="small">{{ role }}</v-chip>
               </span>
               <span v-else-if="header.kind === 'status'">
                 <v-icon v-if="lodash.get(item, header.value) === true" color="success" icon="fa-solid fa-check" size="small" />
@@ -188,7 +188,6 @@ export default {
       },
     };
   },
-  computed: {},
   watch: {
     options: {
       async handler(options) {

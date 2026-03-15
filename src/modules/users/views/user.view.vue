@@ -57,7 +57,7 @@
                             variant="text"
                             size="small"
                             class="text-none"
-                            @click.prevent="confirmLeave(org)"
+                            @click.stop.prevent="confirmLeave(org)"
                           >
                             Leave
                           </v-btn>
@@ -280,6 +280,7 @@ export default {
         this.$router.push('/signin');
       } catch {
         this.confirmDeleteAccount = false;
+        this.deleteConfirmInput = '';
       }
     },
   },

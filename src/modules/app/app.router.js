@@ -27,6 +27,11 @@ const getRouter = () => {
   const orgExemptPrefixes = ['/users', '/admin'];
   const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite'];
 
+  /**
+   * Handle global navigation checks (title, auth, org requirement, CASL access).
+   * @param {import('vue-router').RouteLocationNormalized} to Target route.
+   * @returns {Promise<boolean|string|void>} Navigation resolution.
+   */
   router.beforeEach(async (to) => {
     // meta
     const pageTitle = to.meta.title || to.name;
@@ -51,7 +56,7 @@ const getRouter = () => {
       authStore.isLoggedIn
       && authStore.serverConfig?.organizations?.enabled
       && !authStore.user?.currentOrganization
-      && !orgExemptPrefixes.some((p) => to.path.startsWith(p))
+      && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
       && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))
     ) {
       return '/organization-required';
