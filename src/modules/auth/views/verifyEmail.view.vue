@@ -65,7 +65,7 @@ export default {
    */
   async created() {
     const authStore = useAuthStore();
-    const { token } = this.$route.params;
+    const token = this.$route.params.token || this.$route.query.token;
 
     if (!token) {
       this.loading = false;

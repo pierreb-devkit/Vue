@@ -132,7 +132,7 @@ REPEAT:
   6. If actionable comments             → fix all, /verify, commit, push, reply, resolve, consecutive_zero=0, GOTO 1
   7. If non-actionable unresolved       → reply all explaining why, resolve all, consecutive_zero=0, GOTO 5
   8. If zero unresolved threads         → consecutive_zero++
-                                           if consecutive_zero >= 2 → check branch protection (see 6f), then STOP ✓
+                                           if consecutive_zero >= 3 → check branch protection (see 6f), then STOP ✓
                                            else GOTO 3
 ```
 
@@ -195,7 +195,7 @@ Wait 30s before watching CI (regular or force-push). Loop back to 6a. Never post
 
 ### 6f. Stop condition
 
-CI green **and** 2 consecutive passes with zero unresolved threads. Then check branch protection:
+CI green **and** 3 consecutive passes with zero unresolved threads (~9 min of grace periods). Then check branch protection:
 
 ```bash
 gh pr view "$PR" --json reviewDecision,mergeable | jq '{reviewDecision, mergeable}'

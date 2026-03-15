@@ -86,6 +86,17 @@
             </v-window-item>
           </v-window>
         </v-card>
+        <v-alert
+          v-if="showMailerWarning"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mt-4"
+          :class="config.vuetify.theme.rounded"
+          icon="fa-solid fa-triangle-exclamation"
+        >
+          <span class="text-body-medium">No mailer configured. Users can register with any email without verification. Set up SMTP to enable email verification.</span>
+        </v-alert>
       </v-col>
     </v-row>
 
@@ -111,6 +122,7 @@
  * Module dependencies.
  */
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import roleColor from '../../../lib/helpers/roleColor';
 import orgColor from '../../../lib/helpers/orgColor';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
@@ -160,6 +172,14 @@ export default {
     organizations() {
       const adminStore = useAdminStore();
       return adminStore.organizations;
+    },
+    /**
+     * @desc Whether to show the mailer warning in admin panel.
+     * @returns {boolean}
+     */
+    showMailerWarning() {
+      const authStore = useAuthStore();
+      return authStore.serverConfig?.mail?.configured === false;
     },
   },
   methods: {

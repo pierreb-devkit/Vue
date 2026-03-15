@@ -109,7 +109,7 @@
         >
           <h3 class="text-title-medium font-weight-medium mb-4">Invite Member</h3>
           <v-form ref="inviteForm" v-model="inviteValid" @submit.prevent="sendInvite">
-            <div class="d-flex ga-2 flex-column flex-sm-row">
+            <div class="d-flex ga-2 flex-column flex-sm-row align-end">
               <div class="flex-grow-1">
                 <label class="text-label-large font-weight-medium d-block mb-1">Email address</label>
                 <v-text-field
