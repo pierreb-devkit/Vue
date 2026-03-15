@@ -19,3 +19,5 @@ Use this file as a compact memory of recurring AI mistakes.
 - [2026-03-09] Vuetify 4 v-timeline: unconditional `density="compact"` hides `#opposite` slot -> if original was conditional (`:dense="$vuetify.display.xs"`), migrate to `:density="$vuetify.display.xs ? 'compact' : 'default'"` to preserve alternating layout on desktop
 - [2026-03-13] cleanup: test helpers/config outside src/ in a standalone folder -> place in src/lib/helpers/ alongside other helpers
 - [2026-03-13] docs: duplicate doc files covering the same topic (e.g. MIGRATION.md + MIGRATIONS.md) -> single file, no duplication
+- [2026-03-15] auth: adding CASL route guard (action/subject) without checking abilities config -> read abilities file first to confirm the ability exists for target roles; fallback to `requiresAuth: true` if no matching ability
+- [2026-03-15] pr scope: batching multiple unrelated fixes in one PR -> one fix = one PR to isolate blast radius and reduce iteration loops
