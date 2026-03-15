@@ -7,7 +7,7 @@ description: >
   Can also be invoked directly for design-only tasks (restyle, theme change, layout fix).
 ---
 
-# Frontend
+# UI
 
 Design system reference and visual quality guidelines for the Devkit Vue stack.
 
