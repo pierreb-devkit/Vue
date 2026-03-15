@@ -66,14 +66,14 @@ export default {
      */
     mailConfigured() {
       const authStore = useAuthStore();
-      return !!(authStore.serverConfig?.mail?.configured);
+      return authStore.serverConfig?.mail?.configured;
     },
     /**
      * @desc Whether the warning should be shown.
      * @returns {boolean}
      */
     shouldShow() {
-      return this.isLoggedIn && this.isAdmin && !this.mailConfigured;
+      return this.isLoggedIn && this.isAdmin && this.mailConfigured === false;
     },
     /**
      * @desc v-model binding for the snackbar visibility.

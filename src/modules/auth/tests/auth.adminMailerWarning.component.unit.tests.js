@@ -18,7 +18,7 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => storeMock,
 }));
 
-import AuthAdminMailerWarning from '../components/adminMailerWarning.component.vue';
+import AuthAdminMailerWarning from '../components/auth.adminMailerWarning.component.vue';
 
 /**
  * Mount the admin mailer warning component with Vuetify installed.
@@ -75,17 +75,17 @@ describe('auth.adminMailerWarning.component', () => {
     expect(wrapper.vm.visible).toBe(true);
   });
 
-  it('shows when admin is logged in and serverConfig is null', () => {
+  it('does not show when serverConfig is null (config still loading)', () => {
     storeMock.isLoggedIn = true;
     storeMock.user = { roles: ['admin'] };
     storeMock.serverConfig = null;
     const wrapper = mountComponent();
 
-    expect(wrapper.vm.shouldShow).toBe(true);
-    expect(wrapper.vm.visible).toBe(true);
+    expect(wrapper.vm.shouldShow).toBe(false);
+    expect(wrapper.vm.visible).toBe(false);
   });
 
-  it('hides when dismissed and persists in sessionStorage', () => {
+  it('hides when dismissed via dismiss() and persists in sessionStorage', () => {
     storeMock.isLoggedIn = true;
     storeMock.user = { roles: ['admin'] };
     storeMock.serverConfig = { mail: { configured: false } };
@@ -94,6 +94,21 @@ describe('auth.adminMailerWarning.component', () => {
     expect(wrapper.vm.visible).toBe(true);
 
     wrapper.vm.dismiss();
+
+    expect(wrapper.vm.visible).toBe(false);
+    expect(sessionStorage.getItem('adminMailerWarningDismissed')).toBe('true');
+  });
+
+  it('hides when dismissed via visible setter (implicit close) and persists in sessionStorage', async () => {
+    storeMock.isLoggedIn = true;
+    storeMock.user = { roles: ['admin'] };
+    storeMock.serverConfig = { mail: { configured: false } };
+    const wrapper = mountComponent();
+
+    expect(wrapper.vm.visible).toBe(true);
+
+    wrapper.vm.visible = false;
+    await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.visible).toBe(false);
     expect(sessionStorage.getItem('adminMailerWarningDismissed')).toBe('true');

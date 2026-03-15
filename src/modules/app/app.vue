@@ -40,7 +40,7 @@ import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
 import authEmailBanner from '../auth/components/emailBanner.component.vue';
 import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
-import authAdminMailerWarning from '../auth/components/adminMailerWarning.component.vue';
+import authAdminMailerWarning from '../auth/components/auth.adminMailerWarning.component.vue';
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
 
 /**

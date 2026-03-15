@@ -77,12 +77,19 @@ export default {
     try {
       await authStore.verifyEmail(token);
       this.success = true;
-      await this.handlePostVerificationRedirect(authStore);
     } catch (err) {
       this.error = true;
       this.errorMessage = err.response?.data?.message || 'Verification failed. The token may be invalid or expired.';
     } finally {
       this.loading = false;
+    }
+
+    if (this.success) {
+      try {
+        await this.handlePostVerificationRedirect(authStore);
+      } catch {
+        // Redirect errors should not affect the verified state — stay on page
+      }
     }
   },
   methods: {
