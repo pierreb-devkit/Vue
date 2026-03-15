@@ -37,7 +37,7 @@ const mountView = (token = 'verify-token-abc') =>
       plugins: [createVuetify()],
       mocks: {
         config: mockConfig,
-        $route: { params: { token } },
+        $route: { params: { token }, query: {} },
         $router: { push: vi.fn() },
       },
       stubs: { RouterLink: true },
@@ -113,7 +113,7 @@ describe('auth.verifyEmail.view', () => {
         plugins: [createVuetify()],
         mocks: {
           config: mockConfig,
-          $route: { params: {} },
+          $route: { params: {}, query: {} },
           $router: { push: vi.fn() },
         },
         stubs: { RouterLink: true },
@@ -121,6 +121,7 @@ describe('auth.verifyEmail.view', () => {
     });
 
     await wrapper.vm.$nextTick();
+    await vi.dynamicImportSettled();
 
     expect(wrapper.vm.error).toBe(true);
     expect(wrapper.vm.errorMessage).toBe('No verification token provided.');
