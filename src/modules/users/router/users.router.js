@@ -21,6 +21,7 @@ export default [
     path: '/users/:id',
     redirect: '/users',
     meta: {
+      display: false,
       requiresAuth: true,
     },
   },
