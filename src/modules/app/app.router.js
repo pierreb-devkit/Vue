@@ -51,6 +51,15 @@ const getRouter = () => {
       console.error('Router guard: failed to load server config or abilities, proceeding anyway', err);
     }
 
+    // Redirect authenticated users away from auth pages (signin, signup, etc.)
+    const authPages = ['/signin', '/signup', '/forgot', '/reset', '/token'];
+    if (authStore.isLoggedIn && authPages.some((p) => to.path === p || to.path.startsWith(`${p}/`))) {
+      if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
+        return '/organization-required';
+      }
+      return '/';
+    }
+
     // Organization membership required: if orgs enabled, user logged in, no org, and not on an exempt page → block
     if (
       authStore.isLoggedIn

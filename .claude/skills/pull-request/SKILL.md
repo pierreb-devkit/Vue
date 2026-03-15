@@ -234,7 +234,8 @@ REPEAT:
 ## 8. Conflict resolution
 
 ```bash
-git fetch origin && git rebase origin/HEAD
+BASE_REF=$(gh pr view "$PR" --json baseRefName -q .baseRefName)
+git fetch origin "$BASE_REF" && git rebase "origin/$BASE_REF"
 # Resolve conflicts, then: git add <files> && git rebase --continue
 git push --force-with-lease origin HEAD
 ```
