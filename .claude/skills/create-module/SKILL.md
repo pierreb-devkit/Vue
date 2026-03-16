@@ -64,7 +64,7 @@ Files to check:
 Business values (plans, roles, feature flags) should be driven by module config, not hardcoded in stores or components.
 
 Pattern:
-- Define in `modules/{module}/config/{module}.config.js`
+- Define in `src/modules/{module}/config/{module}.development.config.js` (and env-specific variants)
 - Import in stores/composables
 
 ### 7. Verify & report

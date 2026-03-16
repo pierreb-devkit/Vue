@@ -24,7 +24,7 @@ Audit or apply the project's file and folder naming conventions.
 | --------- | ------------------------------- | ------------------------- |
 | Component | `{module}.{name}.component.vue` | `home.hero.component.vue` |
 | View      | `{module}.{name}.view.vue`      | `auth.signin.view.vue`    |
-| Store     | `{module}.store.js`             | `tasks.store.js`          |
+| Store     | `{module}[.{name}].store.js`    | `tasks.store.js`          |
 | Router    | `{module}.router.js`            | `users.router.js`         |
 | Unit Test | `{target}.unit.tests.js`        | `home.store.unit.tests.js`  |
 | E2E Test  | `{target}.e2e.tests.js`         | `auth.signup.e2e.tests.js`  |
@@ -40,7 +40,7 @@ When a module contains multiple entities (e.g., `billing` with `subscription`), 
 | Correct | Wrong |
 | --- | --- |
 | `billing.subscription.store.js` | `subscription.store.js` |
-| `billing.PricingCard.component.vue` | `PricingCard.component.vue` |
+| `billing.pricingCard.component.vue` | `PricingCard.component.vue` |
 | `billing.plans.view.vue` | `plans.view.vue` |
 
 Pattern: `{module}.{entity}[.{name}].{type}.{ext}`
