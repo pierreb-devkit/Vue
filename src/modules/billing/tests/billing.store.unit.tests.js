@@ -14,6 +14,7 @@ vi.mock('../../../lib/services/axios', () => ({
 describe('Billing Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it('should initialize with default state', () => {
@@ -55,17 +56,16 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should handle fetchPlans error', async () => {
+    it('should propagate fetchPlans error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Network error'));
 
-      await store.fetchPlans();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchPlans()).rejects.toThrow('Network error');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -98,17 +98,16 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should handle fetchSubscription error', async () => {
+    it('should propagate fetchSubscription error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.fetchSubscription();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchSubscription()).rejects.toThrow('Failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -125,7 +124,7 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should send correct payload', async () => {
+    it('should send correct payload with priceId and redirect URLs', async () => {
       const store = useBillingStore();
 
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
@@ -133,26 +132,25 @@ describe('Billing Store', () => {
       await store.createCheckout('price_abc');
 
       expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/checkout'),
+        expect.stringContaining('/billing/checkout'),
         expect.objectContaining({
           priceId: 'price_abc',
-          successUrl: expect.stringContaining('/pricing?success=true'),
-          cancelUrl: expect.stringContaining('/pricing?canceled=true'),
+          successUrl: expect.stringContaining('/billing?success=true'),
+          cancelUrl: expect.stringContaining('/pricing'),
         }),
       );
     });
 
-    it('should handle createCheckout error', async () => {
+    it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Checkout failed'));
 
-      await store.createCheckout('price_123');
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.createCheckout('price_123')).rejects.toThrow('Checkout failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -175,17 +173,16 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
-    it('should handle openPortal error', async () => {
+    it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Portal failed'));
 
-      await store.openPortal();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.openPortal()).rejects.toThrow('Portal failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 });

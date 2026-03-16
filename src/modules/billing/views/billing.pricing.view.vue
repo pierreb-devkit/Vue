@@ -131,7 +131,9 @@ export default {
 
     const authStore = useAuthStore();
     if (authStore.isLoggedIn && (!authStore.serverConfig?.organizations?.enabled || authStore.user?.currentOrganization)) {
-      billingStore.fetchSubscription();
+      billingStore.fetchSubscription().catch((err) => {
+        console.error('Failed to load subscription:', err);
+      });
     }
 
     // Handle Stripe redirect query params
@@ -200,9 +202,13 @@ export default {
       try {
         const billingStore = useBillingStore();
         const checkout = await billingStore.createCheckout(priceId);
-        if (checkout?.url) {
-          window.location.href = checkout.url;
+        if (!checkout?.url) {
+          throw new Error('Checkout session did not include a redirect URL.');
         }
+        window.location.href = checkout.url;
+      } catch (err) {
+        console.error('Failed to start checkout:', err);
+        this.error = 'Failed to start checkout. Please try again.';
       } finally {
         this.checkoutLoading = false;
       }

@@ -31,7 +31,7 @@ export const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Pour les pros',
+    tagline: 'For professionals',
     highlighted: true,
     badge: 'Most Popular',
     cta: 'Get Started',
