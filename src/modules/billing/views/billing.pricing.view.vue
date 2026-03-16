@@ -95,7 +95,9 @@ export default {
 
     const authStore = useAuthStore();
     if (authStore.isLoggedIn) {
-      billingStore.fetchSubscription();
+      billingStore.fetchSubscription().catch((error) => {
+        console.error('Failed to load subscription:', error);
+      });
     }
   },
   methods: {

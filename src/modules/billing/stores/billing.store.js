@@ -91,7 +91,9 @@ export const useBillingStore = defineStore('billing', {
       try {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
-        window.location.href = res.data.data.url;
+        const portalUrl = res.data?.data?.url;
+        if (!portalUrl) throw new Error('Invalid portal URL received from API');
+        window.location.href = portalUrl;
       } catch (err) {
         console.log(err);
         throw err;
