@@ -111,7 +111,7 @@ export default {
     billingStore.fetchPlans();
 
     const authStore = useAuthStore();
-    if (authStore.isLoggedIn) {
+    if (authStore.isLoggedIn && (!authStore.serverConfig?.organizations?.enabled || authStore.user?.currentOrganization)) {
       billingStore.fetchSubscription();
     }
 
@@ -142,6 +142,7 @@ export default {
     /**
      * @desc Handle plan selection — validate auth/org, then create checkout session.
      * @param {Object} payload - { planId, priceId }
+     * @returns {Promise<void>}
      */
     async onSelectPlan({ planId, priceId }) {
       const authStore = useAuthStore();
