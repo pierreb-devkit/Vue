@@ -22,6 +22,7 @@
     <homeFeaturesComponent v-if="config.home.features" :setup="config.home.features"></homeFeaturesComponent>
     <homeServicesComponent v-if="config.home.services" :setup="config.home.services"></homeServicesComponent>
     <homeStepsComponent v-if="config.home.steps" :setup="config.home.steps"></homeStepsComponent>
+    <homePricingComponent v-if="config.home.pricing" :setup="config.home.pricing"></homePricingComponent>
     <homeGalleryComponent v-if="config.home.gallery" :setup="config.home.gallery"></homeGalleryComponent>
     <homeArticlesComponent v-if="config.home.articles && news.length > 0" :setup="{ content: news, ...config.home.articles }"></homeArticlesComponent>
     <homeStatisticsComponent
@@ -53,6 +54,7 @@ import homeCapabilitiesComponent from '../components/home.capabilities.component
 import homeFeaturesComponent from '../components/home.features.component.vue';
 import homeServicesComponent from '../components/home.services.component.vue';
 import homeStepsComponent from '../components/home.steps.component.vue';
+import homePricingComponent from '../components/home.pricing.component.vue';
 import homeGalleryComponent from '../components/home.gallery.component.vue';
 import homeSocialComponent from '../components/home.social.component.vue';
 import homeArticlesComponent from '../components/home.articles.component.vue';
@@ -72,6 +74,7 @@ export default {
     homeFeaturesComponent,
     homeServicesComponent,
     homeStepsComponent,
+    homePricingComponent,
     homeGalleryComponent,
     homeSocialComponent,
     homeArticlesComponent,
