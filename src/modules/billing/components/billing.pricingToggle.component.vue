@@ -21,6 +21,7 @@
       hide-details
       density="compact"
       inset
+      aria-label="Toggle annual billing"
       @update:model-value="$emit('update:annual', $event)"
     ></v-switch>
     <span class="text-body-1 font-weight-medium" :class="{ 'text-medium-emphasis': !annual }">Annual</span>
