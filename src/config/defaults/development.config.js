@@ -56,6 +56,7 @@ export default {
       auth: 'auth',
       account: 'account',
       tasks: 'tasks',
+      billing: 'billing',
     },
   },
   cookie: {
