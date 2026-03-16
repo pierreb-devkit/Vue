@@ -24,7 +24,7 @@ Audit or apply the project's file and folder naming conventions.
 | --------- | ------------------------------- | ------------------------- |
 | Component | `{module}.{name}.component.vue` | `home.hero.component.vue` |
 | View      | `{module}.{name}.view.vue`      | `auth.signin.view.vue`    |
-| Store     | `{module}[.{name}].store.js`    | `tasks.store.js`          |
+| Store     | `{module}.store.js`             | `tasks.store.js`          |
 | Router    | `{module}.router.js`            | `users.router.js`         |
 | Unit Test | `{target}.unit.tests.js`        | `home.store.unit.tests.js`  |
 | E2E Test  | `{target}.e2e.tests.js`         | `auth.signup.e2e.tests.js`  |
@@ -35,15 +35,15 @@ Audit or apply the project's file and folder naming conventions.
 
 ### Multi-entity modules
 
-When a module contains multiple entities (e.g., `billing` with `subscription`), files are still prefixed by the **module name**, not the entity:
+When a module contains multiple entities (e.g., `billing` with `subscription`), components and views add an entity segment after the module prefix. Stores keep the simple `{module}.store.js` pattern (one store per module).
 
 | Correct | Wrong |
 | --- | --- |
-| `billing.subscription.store.js` | `subscription.store.js` |
 | `billing.pricingCard.component.vue` | `PricingCard.component.vue` |
 | `billing.plans.view.vue` | `plans.view.vue` |
+| `billing.store.js` | `subscription.store.js` |
 
-Pattern: `{module}.{entity}[.{name}].{type}.{ext}`
+Pattern (components/views): `{module}.{entity}[.{name}].{type}.{ext}`
 
 ### Case conventions in code
 

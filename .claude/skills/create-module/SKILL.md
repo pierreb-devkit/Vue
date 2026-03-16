@@ -65,7 +65,7 @@ Business values (plans, roles, feature flags) should be driven by module config,
 
 Pattern:
 - Define in `src/modules/{module}/config/{module}.development.config.js` (and env-specific variants)
-- Import in stores/composables
+- Access via the centralized config service (`import config from '@/lib/services/config'`)
 
 ### 7. Verify & report
 
