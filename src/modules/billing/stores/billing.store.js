@@ -69,8 +69,8 @@ export const useBillingStore = defineStore('billing', {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/checkout`, {
           priceId,
-          successUrl: `${window.location.origin}/billing?success=true`,
-          cancelUrl: `${window.location.origin}/pricing`,
+          successUrl: `${window.location.origin}/pricing?success=true`,
+          cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
         return res.data.data;
       } catch (err) {
