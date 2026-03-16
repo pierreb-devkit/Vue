@@ -136,8 +136,8 @@ describe('Billing Store', () => {
         expect.stringContaining('/checkout'),
         expect.objectContaining({
           priceId: 'price_abc',
-          successUrl: expect.stringContaining('/billing?success=true'),
-          cancelUrl: expect.stringContaining('/pricing'),
+          successUrl: expect.stringContaining('/pricing?success=true'),
+          cancelUrl: expect.stringContaining('/pricing?canceled=true'),
         }),
       );
     });
