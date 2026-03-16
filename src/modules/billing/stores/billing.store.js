@@ -91,7 +91,11 @@ export const useBillingStore = defineStore('billing', {
       try {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
-        window.location.href = res.data.data.url;
+        const url = res?.data?.data?.url;
+        if (!url) {
+          throw new Error('Billing portal URL is missing from the API response');
+        }
+        window.location.href = url;
       } catch (err) {
         console.log(err);
         throw err;

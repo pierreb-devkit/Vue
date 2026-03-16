@@ -11,6 +11,13 @@
 
 <script>
 /**
+ * Validate supported billing plan identifiers.
+ * @param {string} value Plan identifier.
+ * @returns {boolean} True when the identifier is allowed.
+ */
+const isAllowedPlan = (value) => ['free', 'starter', 'pro'].includes(value);
+
+/**
  * Component definition.
  */
 export default {
@@ -19,7 +26,7 @@ export default {
     plan: {
       type: String,
       required: true,
-      validator: (value) => ['free', 'starter', 'pro'].includes(value),
+      validator: isAllowedPlan,
     },
   },
   computed: {

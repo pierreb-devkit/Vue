@@ -97,7 +97,11 @@ export default {
     const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
     const hasOrg = !!authStore.user?.currentOrganization;
     if (authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
-      billingStore.fetchSubscription();
+      try {
+        await billingStore.fetchSubscription();
+      } catch (error) {
+        console.error('Failed to load subscription:', error);
+      }
     }
   },
   methods: {

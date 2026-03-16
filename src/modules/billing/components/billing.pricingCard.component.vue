@@ -42,8 +42,11 @@
         <span class="text-h3 font-weight-bold">${{ displayPrice }}</span>
         <span class="text-body-2 text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
       </template>
-      <template v-else>
+      <template v-else-if="plan.id === 'free'">
         <span class="text-h3 font-weight-bold">Free</span>
+      </template>
+      <template v-else>
+        <span class="text-h6 text-medium-emphasis">Pricing unavailable</span>
       </template>
     </div>
 

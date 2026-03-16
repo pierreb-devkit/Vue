@@ -107,13 +107,17 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should send correct payload with priceId', async () => {
+    it('should send correct payload with priceId, successUrl, and cancelUrl', async () => {
       const store = useBillingStore();
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
       await store.createCheckout('price_abc');
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/billing/checkout'),
-        expect.objectContaining({ priceId: 'price_abc' }),
+        expect.objectContaining({
+          priceId: 'price_abc',
+          successUrl: expect.stringMatching(/\/billing\?success=true$/),
+          cancelUrl: expect.stringMatching(/\/pricing$/),
+        }),
       );
     });
 
@@ -140,6 +144,15 @@ describe('Billing Store', () => {
       expect(window.location.href).toBe(portalUrl);
       expect(store.loading).toBe(false);
       window.location = originalLocation;
+    });
+
+    it('should throw when portal URL is missing from API response', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+      await expect(store.openPortal()).rejects.toThrow('Billing portal URL is missing from the API response');
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
     });
 
     it('should propagate openPortal error to caller', async () => {

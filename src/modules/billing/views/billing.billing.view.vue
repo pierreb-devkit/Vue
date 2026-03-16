@@ -85,6 +85,7 @@
  * Module dependencies.
  */
 import { useBillingStore } from '../stores/billing.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import billingPlanBadgeComponent from '../components/billing.planBadge.component.vue';
 
 /**
@@ -134,8 +135,17 @@ export default {
    * @desc Fetch subscription data on mount.
    */
   async mounted() {
+    const authStore = useAuthStore();
+    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!authStore.user?.currentOrganization;
+    if (!authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
+
     const billingStore = useBillingStore();
-    await billingStore.fetchSubscription();
+    try {
+      await billingStore.fetchSubscription();
+    } catch (error) {
+      console.error('Failed to load billing details:', error);
+    }
   },
   methods: {
     /**
