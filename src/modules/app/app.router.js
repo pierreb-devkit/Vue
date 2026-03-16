@@ -77,6 +77,21 @@ const getRouter = () => {
       if (!authStore.isLoggedIn) return '/signin';
     }
 
+    // billing plan gate
+    if (to.meta.requiredPlan) {
+      const { useBillingStore } = await import('../billing/stores/billing.store');
+      const billingStore = useBillingStore();
+      if (!billingStore.subscription) {
+        try {
+          await billingStore.fetchSubscription();
+        } catch {
+          // best-effort — proceed with current state
+        }
+      }
+      const currentPlan = billingStore.subscription?.plan || 'free';
+      if (currentPlan !== to.meta.requiredPlan) return '/pricing';
+    }
+
     // secu
     if (to.matched.some((record) => record.meta.action)) {
       if (authStore.isLoggedIn) {
