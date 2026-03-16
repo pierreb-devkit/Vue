@@ -30,8 +30,8 @@ export default {
     color() {
       const colors = {
         free: 'grey',
-        starter: 'blue',
-        pro: 'purple',
+        starter: 'primary',
+        pro: 'secondary',
       };
       return colors[this.plan] || 'grey';
     },
