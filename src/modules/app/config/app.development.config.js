@@ -96,21 +96,14 @@ export default {
         ],
       },
       {
-        title: 'Resources',
-        sublinks: [
-          {
-            icon: 'fa-regular fa-newspaper',
-            title: 'Blog',
-            subtitle: 'Follow our updates and activities',
-            url: 'https://blog.devkit.me',
-          },
-        ],
+        title: 'Pricing',
+        url: '/pricing',
       },
     ],
     shortcuts: [ // CTA buttons (right side) — { title, url, variant: 'flat'|'outlined'|'elevated'|'tonal'|'text'|'plain' }
       {
         title: 'Get Started - free',
-        url: 'https://blog.devkit.me',
+        url: '/signup',
         variant: 'flat',
       },
     ],

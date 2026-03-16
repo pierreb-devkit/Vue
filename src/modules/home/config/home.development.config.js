@@ -507,24 +507,6 @@ export default {
       ],
     },
 
-    // === PRICING SECTION ===
-    // Purpose: Show pricing plans on the homepage
-    // Best for: Conversion, plan comparison, upselling
-    // Startup use: SaaS pricing, plan overview, quick signup
-    //
-    // Props (via setup):
-    // - icon (String): FontAwesome icon for section header
-    // - title (String): Section title
-    // - subtitle (String): Section subtitle
-    // - variant (String): 'default' | 'alternate'
-    pricing: {
-      icon: 'fa-solid fa-tags',
-      title: 'Pricing',
-      subtitle: 'Choose the plan that fits your needs',
-      alignment: 'center',
-      variant: 'alternate',
-    },
-
     // === GALLERY SECTION ===
     // Purpose: Image carousel/slideshow
     // Best for: Visual portfolio, product screenshots, designs
