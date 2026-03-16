@@ -1,8 +1,8 @@
 /**
  * Module dependencies.
  */
-import pricing from '../views/Pricing.view.vue';
-import billing from '../views/Billing.view.vue';
+import pricing from '../views/pricing.view.vue';
+import billing from '../views/billing.view.vue';
 
 /**
  * Router configuration.
