@@ -131,7 +131,9 @@ export default {
   },
   created() {
     const billingStore = useBillingStore();
-    billingStore.fetchPlans();
+    if (!billingStore.plans.length) {
+      billingStore.fetchPlans();
+    }
   },
   methods: {
     style,

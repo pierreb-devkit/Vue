@@ -146,4 +146,22 @@ describe('app.router', () => {
     await router.isReady();
     expect(router.currentRoute.value.path).toBe('/');
   });
+
+  it('allows /pricing for logged-in user without an organization', async () => {
+    mockAuthStore.isLoggedIn = true;
+    mockAuthStore.serverConfig = { organizations: { enabled: true } };
+    mockAuthStore.user = { currentOrganization: null };
+    const router = getRouter();
+    await router.push('/pricing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/pricing');
+  });
+
+  it('allows /pricing for unauthenticated users', async () => {
+    mockAuthStore.isLoggedIn = false;
+    const router = getRouter();
+    await router.push('/pricing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/pricing');
+  });
 });
