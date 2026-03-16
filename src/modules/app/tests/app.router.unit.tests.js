@@ -23,6 +23,15 @@ vi.mock('../../../lib/helpers/ability.js', () => ({
   ability: mockAbility,
 }));
 
+
+const mockBillingStore = {
+  subscription: null,
+  fetchSubscription: vi.fn().mockResolvedValue(),
+};
+vi.mock('../../billing/stores/billing.store', () => ({
+  useBillingStore: () => mockBillingStore,
+}));
+
 describe('app.router', () => {
   let getRouter;
 
@@ -39,6 +48,8 @@ describe('app.router', () => {
     mockAbility.rules = [];
     mockAbility.can.mockReset();
     mockAbility.can.mockReturnValue(false);
+    mockBillingStore.subscription = null;
+    mockBillingStore.fetchSubscription.mockReset().mockResolvedValue();
 
     // Re-apply mocks after resetModules
     vi.doMock('../../auth/stores/auth.store', () => ({
@@ -49,6 +60,9 @@ describe('app.router', () => {
     }));
     vi.doMock('../../../lib/helpers/ability.js', () => ({
       ability: mockAbility,
+    }));
+    vi.doMock('../../billing/stores/billing.store', () => ({
+      useBillingStore: () => mockBillingStore,
     }));
 
     const module = await import('../app.router.js');
@@ -145,5 +159,74 @@ describe('app.router', () => {
     await router.push('/');
     await router.isReady();
     expect(router.currentRoute.value.path).toBe('/');
+  });
+
+  describe('requiredPlan guard', () => {
+    it('redirects to /pricing when plan is insufficient', async () => {
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.user = { currentOrganization: null };
+      mockBillingStore.subscription = { plan: 'free', status: 'active' };
+      const router = getRouter();
+      // Add a test route with requiredPlan
+      router.addRoute({
+        path: '/pro-feature',
+        name: 'ProFeature',
+        component: { template: '<div>Pro</div>' },
+        meta: { requiredPlan: 'pro' },
+      });
+      await router.push('/pro-feature');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/pricing');
+    });
+
+    it('allows navigation when plan meets requirement', async () => {
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.user = { currentOrganization: null };
+      mockBillingStore.subscription = { plan: 'pro', status: 'active' };
+      const router = getRouter();
+      router.addRoute({
+        path: '/pro-feature',
+        name: 'ProFeature',
+        component: { template: '<div>Pro</div>' },
+        meta: { requiredPlan: 'pro' },
+      });
+      await router.push('/pro-feature');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/pro-feature');
+    });
+
+    it('allows higher-tier plan to access lower-tier route', async () => {
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.user = { currentOrganization: null };
+      mockBillingStore.subscription = { plan: 'pro', status: 'active' };
+      const router = getRouter();
+      router.addRoute({
+        path: '/starter-feature',
+        name: 'StarterFeature',
+        component: { template: '<div>Starter</div>' },
+        meta: { requiredPlan: 'starter' },
+      });
+      await router.push('/starter-feature');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/starter-feature');
+    });
+
+    it('skips gate when subscription is unknown (API failure)', async () => {
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.user = { currentOrganization: null };
+      mockBillingStore.subscription = null;
+      mockBillingStore.fetchSubscription.mockRejectedValueOnce(new Error('API down'));
+      const router = getRouter();
+      router.addRoute({
+        path: '/gated-feature',
+        name: 'GatedFeature',
+        component: { template: '<div>Gated</div>' },
+        meta: { requiredPlan: 'pro' },
+      });
+      await router.push('/gated-feature');
+      await router.isReady();
+      // Should allow navigation when subscription is unknown to avoid blocking paid users
+      expect(router.currentRoute.value.path).toBe('/gated-feature');
+    });
   });
 });

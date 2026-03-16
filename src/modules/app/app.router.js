@@ -85,11 +85,17 @@ const getRouter = () => {
         try {
           await billingStore.fetchSubscription();
         } catch {
-          // best-effort — proceed with current state
+          // best-effort — if fetch fails, allow navigation to avoid blocking paid users
         }
       }
-      const currentPlan = billingStore.subscription?.plan || 'free';
-      if (currentPlan !== to.meta.requiredPlan) return '/pricing';
+      // If subscription is unknown (e.g. API failure), skip the gate to avoid blocking paid users
+      if (billingStore.subscription) {
+        const planRanks = { free: 0, starter: 1, pro: 2 };
+        const currentPlan = billingStore.subscription.plan || 'free';
+        const currentRank = planRanks[currentPlan] ?? 0;
+        const requiredRank = planRanks[to.meta.requiredPlan] ?? 0;
+        if (currentRank < requiredRank) return '/pricing';
+      }
     }
 
     // secu
