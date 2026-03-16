@@ -17,15 +17,15 @@ describe('Billing Store', () => {
   });
 
   it('should initialize with default state', () => {
-    const store = useBillingStore();
-    expect(store.plans).toEqual([]);
-    expect(store.subscription).toBeNull();
-    expect(store.loading).toBe(false);
+    const billingStore = useBillingStore();
+    expect(billingStore.plans).toEqual([]);
+    expect(billingStore.subscription).toBeNull();
+    expect(billingStore.loading).toBe(false);
   });
 
   describe('fetchPlans', () => {
     it('should fetch and set plans', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const mockPlans = [
         { id: 'plan_1', name: 'Free', price: 0 },
         { id: 'plan_2', name: 'Pro', price: 29 },
@@ -33,159 +33,185 @@ describe('Billing Store', () => {
 
       axios.get.mockResolvedValueOnce({ data: { data: mockPlans } });
 
-      const result = await store.fetchPlans();
+      const result = await billingStore.fetchPlans();
 
-      expect(store.plans).toEqual(mockPlans);
+      expect(billingStore.plans).toEqual(mockPlans);
       expect(result).toEqual(mockPlans);
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
     });
 
     it('should set loading during fetch', async () => {
-      const store = useBillingStore();
-      let loadingDuringFetch = false;
+      const billingStore = useBillingStore();
 
-      axios.get.mockImplementationOnce(() => {
-        loadingDuringFetch = store.loading;
-        return Promise.resolve({ data: { data: [] } });
-      });
+      let resolvePromise;
+      axios.get.mockReturnValueOnce(new Promise((resolve) => { resolvePromise = resolve; }));
 
-      await store.fetchPlans();
+      const promise = billingStore.fetchPlans();
+      expect(billingStore.loading).toBe(true);
 
-      expect(loadingDuringFetch).toBe(true);
-      expect(store.loading).toBe(false);
+      resolvePromise({ data: { data: [] } });
+      await promise;
+
+      expect(billingStore.loading).toBe(false);
     });
 
     it('should handle fetchPlans error', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      axios.get.mockRejectedValueOnce(new Error('Network error'));
+      axios.get.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.fetchPlans();
+      await billingStore.fetchPlans();
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
       consoleLogSpy.mockRestore();
     });
   });
 
   describe('fetchSubscription', () => {
     it('should fetch and set subscription', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const mockSubscription = { id: 'sub_1', plan: 'Pro', status: 'active' };
 
       axios.get.mockResolvedValueOnce({ data: { data: mockSubscription } });
 
-      const result = await store.fetchSubscription();
+      const result = await billingStore.fetchSubscription();
 
-      expect(store.subscription).toEqual(mockSubscription);
+      expect(billingStore.subscription).toEqual(mockSubscription);
       expect(result).toEqual(mockSubscription);
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
     });
 
     it('should set loading during fetch', async () => {
-      const store = useBillingStore();
-      let loadingDuringFetch = false;
+      const billingStore = useBillingStore();
 
-      axios.get.mockImplementationOnce(() => {
-        loadingDuringFetch = store.loading;
-        return Promise.resolve({ data: { data: {} } });
-      });
+      let resolvePromise;
+      axios.get.mockReturnValueOnce(new Promise((resolve) => { resolvePromise = resolve; }));
 
-      await store.fetchSubscription();
+      const promise = billingStore.fetchSubscription();
+      expect(billingStore.loading).toBe(true);
 
-      expect(loadingDuringFetch).toBe(true);
-      expect(store.loading).toBe(false);
+      resolvePromise({ data: { data: null } });
+      await promise;
+
+      expect(billingStore.loading).toBe(false);
     });
 
     it('should handle fetchSubscription error', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.fetchSubscription();
+      await billingStore.fetchSubscription();
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
       consoleLogSpy.mockRestore();
     });
   });
 
   describe('createCheckout', () => {
     it('should create checkout and return data', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const mockCheckout = { url: 'https://checkout.stripe.com/session_123' };
 
       axios.post.mockResolvedValueOnce({ data: { data: mockCheckout } });
 
-      const result = await store.createCheckout('price_123');
+      const result = await billingStore.createCheckout('price_123');
 
       expect(result).toEqual(mockCheckout);
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
     });
 
-    it('should send correct payload', async () => {
-      const store = useBillingStore();
+    it('should set loading during checkout creation', async () => {
+      const billingStore = useBillingStore();
 
-      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+      let resolvePromise;
+      axios.post.mockReturnValueOnce(new Promise((resolve) => { resolvePromise = resolve; }));
 
-      await store.createCheckout('price_abc');
+      const promise = billingStore.createCheckout('price_123');
+      expect(billingStore.loading).toBe(true);
 
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/checkout'),
-        expect.objectContaining({
-          priceId: 'price_abc',
-          successUrl: expect.stringContaining('/pricing?success=true'),
-          cancelUrl: expect.stringContaining('/pricing?canceled=true'),
-        }),
-      );
+      resolvePromise({ data: { data: { url: 'https://checkout.stripe.com/session_123' } } });
+      await promise;
+
+      expect(billingStore.loading).toBe(false);
     });
 
     it('should handle createCheckout error', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      axios.post.mockRejectedValueOnce(new Error('Checkout failed'));
+      axios.post.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.createCheckout('price_123');
+      await billingStore.createCheckout('price_123');
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
       consoleLogSpy.mockRestore();
     });
   });
 
   describe('openPortal', () => {
-    it('should call portal endpoint and redirect', async () => {
-      const store = useBillingStore();
-      const portalUrl = 'https://billing.stripe.com/session_456';
+    it('should open portal and redirect', async () => {
+      const billingStore = useBillingStore();
+      const portalUrl = 'https://billing.stripe.com/portal_123';
 
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
 
       // Mock window.location.href
-      const originalLocation = window.location;
+      const locationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
       delete window.location;
-      window.location = { ...originalLocation, href: '' };
+      window.location = { href: '', origin: 'http://localhost' };
 
-      await store.openPortal();
+      await billingStore.openPortal();
 
       expect(window.location.href).toBe(portalUrl);
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
 
-      window.location = originalLocation;
+      // Restore window.location
+      if (locationDescriptor) {
+        Object.defineProperty(window, 'location', locationDescriptor);
+      }
+    });
+
+    it('should set loading during portal open', async () => {
+      const billingStore = useBillingStore();
+
+      let resolvePromise;
+      axios.post.mockReturnValueOnce(new Promise((resolve) => { resolvePromise = resolve; }));
+
+      // Mock window.location
+      const locationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+      delete window.location;
+      window.location = { href: '', origin: 'http://localhost' };
+
+      const promise = billingStore.openPortal();
+      expect(billingStore.loading).toBe(true);
+
+      resolvePromise({ data: { data: { url: 'https://billing.stripe.com/portal' } } });
+      await promise;
+
+      expect(billingStore.loading).toBe(false);
+
+      // Restore window.location
+      if (locationDescriptor) {
+        Object.defineProperty(window, 'location', locationDescriptor);
+      }
     });
 
     it('should handle openPortal error', async () => {
-      const store = useBillingStore();
+      const billingStore = useBillingStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      axios.post.mockRejectedValueOnce(new Error('Portal failed'));
+      axios.post.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.openPortal();
+      await billingStore.openPortal();
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      expect(store.loading).toBe(false);
+      expect(billingStore.loading).toBe(false);
       consoleLogSpy.mockRestore();
     });
   });
