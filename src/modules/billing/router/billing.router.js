@@ -25,7 +25,7 @@ export default [
       display: false,
       requiresAuth: true,
       action: 'read',
-      subject: 'Billing',
+      subject: 'BillingSubscription',
     },
   },
 ];
