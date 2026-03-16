@@ -2,8 +2,8 @@
   <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
     <!-- Header -->
     <div class="text-center mb-10">
-      <h1 class="text-h3 font-weight-bold mb-3">Pricing</h1>
-      <p class="text-body-1 text-medium-emphasis">Choose the plan that fits your needs.</p>
+      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
+      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
     </div>
 
     <!-- Billing toggle -->
@@ -11,8 +11,26 @@
       <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
     </div>
 
+    <!-- Error state -->
+    <v-alert
+      v-if="error"
+      type="error"
+      variant="tonal"
+      class="mb-6"
+    >
+      {{ error }}
+      <template #append>
+        <v-btn variant="text" size="small" @click="retryFetchPlans">Retry</v-btn>
+      </template>
+    </v-alert>
+
+    <!-- Loading state -->
+    <div v-if="loading" class="d-flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" size="48" />
+    </div>
+
     <!-- Plans grid -->
-    <v-row justify="center">
+    <v-row v-else-if="!error" justify="center">
       <v-col
         v-for="plan in mergedPlans"
         :key="plan.id"
@@ -73,6 +91,14 @@ export default {
       });
     },
     /**
+     * @desc Whether billing data is being loaded.
+     * @returns {boolean} True while loading
+     */
+    loading() {
+      const billingStore = useBillingStore();
+      return billingStore.loading;
+    },
+    /**
      * @desc Get the current subscription plan ID if user is logged in.
      * @returns {string|null} Current plan ID or null
      */
@@ -108,6 +134,20 @@ export default {
      */
     isCurrentPlan(planId) {
       return this.currentPlanId === planId;
+    },
+    /**
+     * @desc Retry fetching plans after an error.
+     * @returns {Promise<void>}
+     */
+    async retryFetchPlans() {
+      this.error = null;
+      const billingStore = useBillingStore();
+      try {
+        await billingStore.fetchPlans();
+      } catch (error) {
+        console.error('Failed to load pricing plans:', error);
+        this.error = 'Failed to load pricing. Please try again.';
+      }
     },
     /**
      * @desc Handle plan selection — create checkout session and redirect.
