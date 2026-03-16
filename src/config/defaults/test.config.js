@@ -61,6 +61,7 @@ export default {
       auth: 'auth',
       users: 'users',
       tasks: 'tasks',
+      billing: 'billing',
     },
   },
   cookie: { prefix: 'devkit' },
