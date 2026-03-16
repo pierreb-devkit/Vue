@@ -50,9 +50,9 @@
             variant="text"
             class="text-none text-body-large"
             size="large"
+            append-icon="fa-solid fa-arrow-right"
           >
             See all plans
-            <v-icon class="ml-4" size="x-small">fa-solid fa-arrow-right</v-icon>
           </v-btn>
         </v-col>
       </v-row>
@@ -106,7 +106,8 @@ export default {
       };
     },
     sectionStyle() {
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      const raw = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      const bgColor = String(raw).startsWith('#') ? raw : `rgb(${raw})`;
       return {
         ...style('section', this.setup),
         ...colorModeStyle(this.setup.colorMode),
@@ -132,7 +133,9 @@ export default {
   created() {
     const billingStore = useBillingStore();
     if (!billingStore.plans.length) {
-      billingStore.fetchPlans();
+      billingStore.fetchPlans().catch((err) => {
+        console.error('Failed to load pricing plans:', err);
+      });
     }
   },
   methods: {

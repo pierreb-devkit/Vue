@@ -24,8 +24,8 @@
 
     <!-- Header -->
     <div class="text-center mb-10">
-      <h1 class="text-h3 font-weight-bold mb-3">Pricing</h1>
-      <p class="text-body-1 text-medium-emphasis">Choose the plan that fits your needs.</p>
+      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
+      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
     </div>
 
     <!-- Billing toggle -->

@@ -34,20 +34,20 @@
     </v-chip>
 
     <!-- Plan name & tagline -->
-    <h3 class="text-h5 font-weight-bold mb-1">{{ plan.name }}</h3>
-    <p class="text-body-2 text-medium-emphasis mb-5">{{ plan.tagline }}</p>
+    <h3 class="text-headline-small font-weight-bold mb-1">{{ plan.name }}</h3>
+    <p class="text-body-medium text-medium-emphasis mb-5">{{ plan.tagline }}</p>
 
     <!-- Price -->
     <div class="mb-6">
       <template v-if="isFree">
-        <span class="text-h3 font-weight-bold">Free</span>
+        <span class="text-display-small font-weight-bold">Free</span>
       </template>
       <template v-else-if="displayPrice !== null">
-        <span class="text-h3 font-weight-bold">${{ displayPrice }}</span>
-        <span class="text-body-2 text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
+        <span class="text-display-small font-weight-bold">${{ displayPrice }}</span>
+        <span class="text-body-medium text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
       </template>
       <template v-else>
-        <span class="text-h3 font-weight-bold text-medium-emphasis">—</span>
+        <span class="text-display-small font-weight-bold text-medium-emphasis">—</span>
       </template>
     </div>
 
