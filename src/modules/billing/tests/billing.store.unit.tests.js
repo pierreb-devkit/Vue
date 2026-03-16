@@ -65,17 +65,16 @@ describe('Billing Store', () => {
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/plans'));
     });
 
-    it('should handle fetchPlans error', async () => {
+    it('should propagate fetchPlans error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Network error'));
 
-      await store.fetchPlans();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchPlans()).rejects.toThrow('Network error');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -102,17 +101,16 @@ describe('Billing Store', () => {
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/subscription'));
     });
 
-    it('should handle fetchSubscription error', async () => {
+    it('should propagate fetchSubscription error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.fetchSubscription();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchSubscription()).rejects.toThrow('Failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -143,17 +141,16 @@ describe('Billing Store', () => {
       );
     });
 
-    it('should handle createCheckout error', async () => {
+    it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Failed'));
 
-      await store.createCheckout('price_123');
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.createCheckout('price_123')).rejects.toThrow('Failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -176,17 +173,15 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
-    it('should handle openPortal error', async () => {
+    it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Portal failed'));
 
-      await store.openPortal();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
-      expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      await expect(store.openPortal()).rejects.toThrow('Portal failed');
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
     });
   });
 });

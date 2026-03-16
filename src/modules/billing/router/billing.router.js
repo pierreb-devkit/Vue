@@ -24,6 +24,8 @@ export default [
     meta: {
       display: false,
       requiresAuth: true,
+      action: 'read',
+      subject: 'Billing',
     },
   },
 ];
