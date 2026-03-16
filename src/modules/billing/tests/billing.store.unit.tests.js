@@ -173,6 +173,18 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
+    it('should throw when portal URL is missing from response', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      await expect(store.openPortal()).rejects.toThrow('Invalid portal URL received from API');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+
     it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
