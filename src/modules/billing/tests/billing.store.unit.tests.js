@@ -129,7 +129,7 @@ describe('Billing Store', () => {
   });
 
   describe('openPortal', () => {
-    it('should call portal endpoint and redirect', async () => {
+    it('should call portal endpoint and redirect without toggling global loading', async () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session456';
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });

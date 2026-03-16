@@ -88,7 +88,6 @@ export const useBillingStore = defineStore('billing', {
      * @returns {Promise<void>}
      */
     async openPortal() {
-      this.loading = true;
       try {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
@@ -96,14 +95,7 @@ export const useBillingStore = defineStore('billing', {
       } catch (err) {
         console.log(err);
         throw err;
-      } finally {
-        this.loading = false;
       }
     },
   },
 });
-
-/**
- * Exports.
- */
-export default useBillingStore;

@@ -53,6 +53,7 @@ export default {
   data() {
     return {
       annual: false,
+      error: null,
     };
   },
   computed: {
@@ -80,12 +81,22 @@ export default {
       return billingStore.subscription?.planId || null;
     },
   },
-  created() {
+  /**
+   * @desc Fetch billing plans and subscription data on component creation.
+   */
+  async created() {
     const billingStore = useBillingStore();
-    billingStore.fetchPlans();
+    try {
+      await billingStore.fetchPlans();
+    } catch (error) {
+      console.error('Failed to load pricing plans:', error);
+      this.error = 'Failed to load pricing. Please try again.';
+    }
 
     const authStore = useAuthStore();
-    if (authStore.isLoggedIn) {
+    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!authStore.user?.currentOrganization;
+    if (authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
       billingStore.fetchSubscription();
     }
   },
@@ -101,18 +112,23 @@ export default {
     /**
      * @desc Handle plan selection — create checkout session and redirect.
      * @param {Object} payload - { planId, priceId }
+     * @returns {Promise<void>}
      */
     async onSelectPlan({ priceId }) {
-      if (!priceId) return;
       const authStore = useAuthStore();
       if (!authStore.isLoggedIn) {
         this.$router.push({ name: 'Signin', query: { redirect: '/pricing' } });
         return;
       }
+      if (!priceId) return;
       const billingStore = useBillingStore();
-      const checkout = await billingStore.createCheckout(priceId);
-      if (checkout?.url) {
-        window.location.href = checkout.url;
+      try {
+        const checkout = await billingStore.createCheckout(priceId);
+        if (checkout?.url) {
+          window.location.href = checkout.url;
+        }
+      } catch (error) {
+        console.error('Failed to create checkout session:', error);
       }
     },
   },

@@ -1,7 +1,7 @@
 <template>
   <v-container class="py-10" style="max-width: 700px">
     <!-- Loading -->
-    <v-row v-if="loading" justify="center" class="py-16">
+    <v-row v-if="fetchLoading" justify="center" class="py-16">
       <v-progress-circular indeterminate color="primary" />
     </v-row>
 
@@ -101,7 +101,7 @@ export default {
     };
   },
   computed: {
-    loading() {
+    fetchLoading() {
       const billingStore = useBillingStore();
       return billingStore.loading;
     },
@@ -114,7 +114,7 @@ export default {
      * @returns {string} Plan identifier
      */
     currentPlan() {
-      return this.subscription?.plan || 'free';
+      return this.subscription?.planId || 'free';
     },
     /**
      * @desc Format the next billing date for display.

@@ -56,6 +56,7 @@
       :class="config.vuetify.theme.rounded"
       class="mb-6 text-none font-weight-bold"
       size="large"
+      :disabled="!activePriceId"
       @click="$emit('select', { planId: plan.id, priceId: activePriceId })"
     >
       {{ plan.cta }}
@@ -76,8 +77,8 @@
     <!-- Features -->
     <v-list density="compact" bg-color="transparent" class="pa-0">
       <v-list-item
-        v-for="(feature, i) in plan.features"
-        :key="i"
+        v-for="feature in plan.features"
+        :key="feature.text"
         class="px-0"
       >
         <template #prepend>
