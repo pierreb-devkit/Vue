@@ -35,6 +35,8 @@ describe('BillingPricingToggleComponent', () => {
     const spans = wrapper.findAll('span');
     const monthlySpan = spans.find((s) => s.text() === 'Monthly');
     const annualSpan = spans.find((s) => s.text() === 'Annual');
+    expect(monthlySpan).toBeDefined();
+    expect(annualSpan).toBeDefined();
     expect(monthlySpan.classes()).not.toContain('text-medium-emphasis');
     expect(annualSpan.classes()).toContain('text-medium-emphasis');
   });
@@ -44,6 +46,8 @@ describe('BillingPricingToggleComponent', () => {
     const spans = wrapper.findAll('span');
     const monthlySpan = spans.find((s) => s.text() === 'Monthly');
     const annualSpan = spans.find((s) => s.text() === 'Annual');
+    expect(monthlySpan).toBeDefined();
+    expect(annualSpan).toBeDefined();
     expect(monthlySpan.classes()).toContain('text-medium-emphasis');
     expect(annualSpan.classes()).not.toContain('text-medium-emphasis');
   });

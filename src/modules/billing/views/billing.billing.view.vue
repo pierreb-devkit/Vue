@@ -157,6 +157,8 @@ export default {
       try {
         const billingStore = useBillingStore();
         await billingStore.openPortal();
+      } catch (error) {
+        console.error('Failed to open billing portal:', error);
       } finally {
         this.portalLoading = false;
       }

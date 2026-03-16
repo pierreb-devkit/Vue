@@ -155,6 +155,15 @@ describe('Billing Store', () => {
       spy.mockRestore();
     });
 
+    it('should reject non-HTTPS portal URLs', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
+      await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
     it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});

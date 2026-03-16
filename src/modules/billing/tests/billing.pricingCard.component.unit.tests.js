@@ -96,14 +96,27 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('Current Plan');
   });
 
-  it('emits select with planId and priceId when CTA is clicked', async () => {
+  it('emits select with planId and monthly priceId when CTA is clicked', async () => {
     const wrapper = mountComponent({ plan: proPlan, current: false });
     const ctaBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Upgrade'));
+    expect(ctaBtn).toBeDefined();
     await ctaBtn.trigger('click');
     expect(wrapper.emitted('select')).toBeTruthy();
     expect(wrapper.emitted('select')[0][0]).toEqual({
       planId: 'pro',
       priceId: 'price_monthly',
+    });
+  });
+
+  it('emits select with annual priceId when annual is true', async () => {
+    const wrapper = mountComponent({ plan: proPlan, current: false, annual: true });
+    const ctaBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Upgrade'));
+    expect(ctaBtn).toBeDefined();
+    await ctaBtn.trigger('click');
+    expect(wrapper.emitted('select')).toBeTruthy();
+    expect(wrapper.emitted('select')[0][0]).toEqual({
+      planId: 'pro',
+      priceId: 'price_annual',
     });
   });
 

@@ -129,7 +129,12 @@ export default {
       try {
         const checkout = await billingStore.createCheckout(priceId);
         if (checkout?.url) {
-          window.location.href = checkout.url;
+          const parsed = new URL(checkout.url, window.location.origin);
+          if (parsed.protocol === 'https:') {
+            window.location.assign(parsed.toString());
+          } else {
+            console.error('Rejected non-HTTPS checkout URL');
+          }
         }
       } catch (error) {
         console.error('Failed to create checkout session:', error);

@@ -95,7 +95,11 @@ export const useBillingStore = defineStore('billing', {
         if (!url) {
           throw new Error('Billing portal URL is missing from the API response');
         }
-        window.location.href = url;
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:') {
+          throw new Error('Rejected non-HTTPS portal URL');
+        }
+        window.location.href = parsed.toString();
       } catch (err) {
         console.log(err);
         throw err;
