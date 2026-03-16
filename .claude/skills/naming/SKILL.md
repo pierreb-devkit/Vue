@@ -33,6 +33,18 @@ Audit or apply the project's file and folder naming conventions.
 | Plugin    | `{name}.js`                     | `vuetify.js`              |
 | Config    | `{name}.js` or `index.js`       | `development.js`          |
 
+### Multi-entity modules
+
+When a module contains multiple entities (e.g., `billing` with `subscription`), files are still prefixed by the **module name**, not the entity:
+
+| Correct | Wrong |
+| --- | --- |
+| `billing.subscription.store.js` | `subscription.store.js` |
+| `billing.PricingCard.component.vue` | `PricingCard.component.vue` |
+| `billing.plans.view.vue` | `plans.view.vue` |
+
+Pattern: `{module}.{entity}[.{name}].{type}.{ext}`
+
 ### Case conventions in code
 
 | Context             | Convention         | Example                             |
