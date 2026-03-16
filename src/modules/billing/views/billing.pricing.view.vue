@@ -144,6 +144,7 @@ export default {
     /**
      * @desc Handle plan selection — validate auth/org, then create checkout session.
      * @param {Object} payload - { planId, priceId }
+     * @returns {Promise<void>}
      */
     async onSelectPlan({ planId, priceId }) {
       const authStore = useAuthStore();

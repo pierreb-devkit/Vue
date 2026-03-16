@@ -61,7 +61,7 @@
       class="mb-6 text-none font-weight-bold"
       size="large"
       :loading="loading"
-      :disabled="loading"
+      :disabled="loading || (!isFree && !activePriceId)"
       @click="$emit('select', { planId: plan.id, priceId: activePriceId })"
     >
       {{ plan.cta }}
