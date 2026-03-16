@@ -59,6 +59,14 @@ Files to check:
 - Show plan before applying if many files affected
 - Don't rename unrelated code (e.g., "tasks" in comments about other features)
 
-### 6. Verify & report
+### 6. Config-driven values
+
+Business values (plans, roles, feature flags) should be driven by module config, not hardcoded in stores or components.
+
+Pattern:
+- Define in `src/modules/{module}/config/{module}.development.config.js` (and env-specific variants)
+- Access via the centralized config service (`import config from '@/lib/services/config'`)
+
+### 7. Verify & report
 
 Run `/verify`, then report: module path, renamed tokens, lint/test results, next steps (customize logic, update routes in `src/router`).

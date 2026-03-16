@@ -33,6 +33,18 @@ Audit or apply the project's file and folder naming conventions.
 | Plugin    | `{name}.js`                     | `vuetify.js`              |
 | Config    | `{name}.js` or `index.js`       | `development.js`          |
 
+### Multi-entity modules
+
+When a module contains multiple entities (e.g., `billing` with `subscription`), components and views add an entity segment after the module prefix. Stores keep the simple `{module}.store.js` pattern (one store per module).
+
+| Correct | Wrong |
+| --- | --- |
+| `billing.pricingCard.component.vue` | `PricingCard.component.vue` |
+| `billing.plans.view.vue` | `plans.view.vue` |
+| `billing.store.js` | `subscription.store.js` |
+
+Pattern (components/views): `{module}.{entity}[.{name}].{type}.{ext}`
+
 ### Case conventions in code
 
 | Context             | Convention         | Example                             |
