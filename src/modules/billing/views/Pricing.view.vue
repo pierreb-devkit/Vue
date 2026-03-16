@@ -22,10 +22,23 @@
       Checkout was canceled. You can try again whenever you are ready.
     </v-alert>
 
+    <!-- Error state -->
+    <v-alert
+      v-if="error"
+      type="error"
+      variant="tonal"
+      class="mb-6"
+    >
+      {{ error }}
+      <template #append>
+        <v-btn variant="text" size="small" @click="retryFetchPlans">Retry</v-btn>
+      </template>
+    </v-alert>
+
     <!-- Header -->
     <div class="text-center mb-10">
-      <h1 class="text-h3 font-weight-bold mb-3">Pricing</h1>
-      <p class="text-body-1 text-medium-emphasis">Choose the plan that fits your needs.</p>
+      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
+      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
     </div>
 
     <!-- Billing toggle -->
@@ -79,6 +92,7 @@ export default {
       checkoutSuccess: false,
       checkoutCanceled: false,
       checkoutLoading: false,
+      error: null,
     };
   },
   computed: {
@@ -106,9 +120,14 @@ export default {
       return billingStore.subscription?.planId || null;
     },
   },
-  created() {
+  async created() {
     const billingStore = useBillingStore();
-    billingStore.fetchPlans();
+    try {
+      await billingStore.fetchPlans();
+    } catch (err) {
+      console.error('Failed to load pricing plans:', err);
+      this.error = 'Failed to load pricing. Please try again.';
+    }
 
     const authStore = useAuthStore();
     if (authStore.isLoggedIn && (!authStore.serverConfig?.organizations?.enabled || authStore.user?.currentOrganization)) {
@@ -137,6 +156,20 @@ export default {
       this.checkoutCanceled = false;
       if (this.$route.query.success || this.$route.query.canceled) {
         this.$router.replace({ path: this.$route.path });
+      }
+    },
+    /**
+     * @desc Retry fetching plans after an error.
+     * @returns {Promise<void>}
+     */
+    async retryFetchPlans() {
+      this.error = null;
+      const billingStore = useBillingStore();
+      try {
+        await billingStore.fetchPlans();
+      } catch (err) {
+        console.error('Failed to load pricing plans:', err);
+        this.error = 'Failed to load pricing. Please try again.';
       }
     },
     /**
