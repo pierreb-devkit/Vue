@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
+import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
 
 const timestamp = Date.now();
 const testEmail = `e2e-billing-${timestamp}@billing${timestamp}.com`;
@@ -165,12 +166,12 @@ test.describe('Billing Page — Authenticated', () => {
   test.describe.configure({ mode: 'serial' });
 
   /**
-   * @desc Sign up a test user via API for authenticated billing tests.
+   * @desc Sign up a test user and create an org via API for authenticated billing tests.
    *       Requires the Node API backend.
-   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @param {{ playwright: import('playwright').Playwright, request: import('playwright').APIRequestContext }} fixtures
    * @returns {Promise<void>}
    */
-  test('setup: create test user via API', async ({ request }) => {
+  test('setup: create test user and org via API', async ({ playwright, request }) => {
     const apiUp = await isApiAvailable(request);
     test.skip(!apiUp, 'Node API backend not running');
 
@@ -181,6 +182,11 @@ test.describe('Billing Page — Authenticated', () => {
       lastName: 'Tester',
     });
     expect(res.user).toBeTruthy();
+
+    // Create an organization so the user passes the org-required router guard
+    const ctx = await authenticatedContext(playwright, testEmail, testPassword);
+    const org = await createOrgViaAPI(ctx, `BillingTestOrg${timestamp}`);
+    expect(org).toBeTruthy();
   });
 
   /**
