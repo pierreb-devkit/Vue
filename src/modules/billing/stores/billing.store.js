@@ -35,6 +35,7 @@ export const useBillingStore = defineStore('billing', {
         return this.plans;
       } catch (err) {
         console.log(err);
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -53,13 +54,14 @@ export const useBillingStore = defineStore('billing', {
         return this.subscription;
       } catch (err) {
         console.log(err);
+        throw err;
       } finally {
         this.loading = false;
       }
     },
 
     /**
-     * @desc Create a Stripe Checkout session and redirect.
+     * @desc Create a Stripe Checkout session and return checkout data.
      * @param {string} priceId - The Stripe price ID
      * @returns {Promise<Object>} Resolved checkout data with URL
      */
@@ -75,13 +77,14 @@ export const useBillingStore = defineStore('billing', {
         return res.data.data;
       } catch (err) {
         console.log(err);
+        throw err;
       } finally {
         this.loading = false;
       }
     },
 
     /**
-     * @desc Open Stripe Customer Portal and redirect.
+     * @desc Open Stripe Customer Portal by redirecting to the portal URL.
      * @returns {Promise<void>}
      */
     async openPortal() {
@@ -92,6 +95,7 @@ export const useBillingStore = defineStore('billing', {
         window.location.href = res.data.data.url;
       } catch (err) {
         console.log(err);
+        throw err;
       } finally {
         this.loading = false;
       }

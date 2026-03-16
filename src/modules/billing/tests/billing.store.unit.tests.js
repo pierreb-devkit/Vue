@@ -31,11 +31,8 @@ describe('Billing Store', () => {
         { id: 'free', name: 'Free' },
         { id: 'pro', name: 'Pro' },
       ];
-
       axios.get.mockResolvedValueOnce({ data: { data: mockPlans } });
-
       const result = await store.fetchPlans();
-
       expect(store.plans).toEqual(mockPlans);
       expect(result).toEqual(mockPlans);
       expect(store.loading).toBe(false);
@@ -44,14 +41,11 @@ describe('Billing Store', () => {
     it('should set loading to true during fetch', async () => {
       const store = useBillingStore();
       let loadingDuringFetch = false;
-
       axios.get.mockImplementationOnce(() => {
         loadingDuringFetch = store.loading;
         return Promise.resolve({ data: { data: [] } });
       });
-
       await store.fetchPlans();
-
       expect(loadingDuringFetch).toBe(true);
       expect(store.loading).toBe(false);
     });
@@ -59,60 +53,47 @@ describe('Billing Store', () => {
     it('should call correct API endpoint', async () => {
       const store = useBillingStore();
       axios.get.mockResolvedValueOnce({ data: { data: [] } });
-
       await store.fetchPlans();
-
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/plans'));
     });
 
-    it('should handle fetchPlans error', async () => {
+    it('should propagate fetchPlans error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.get.mockRejectedValueOnce(new Error('Network error'));
-
-      await store.fetchPlans();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchPlans()).rejects.toThrow('Network error');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
   describe('fetchSubscription', () => {
     it('should fetch and set subscription', async () => {
       const store = useBillingStore();
-      const mockSubscription = { planId: 'pro', status: 'active' };
-
-      axios.get.mockResolvedValueOnce({ data: { data: mockSubscription } });
-
+      const mockSub = { planId: 'pro', status: 'active' };
+      axios.get.mockResolvedValueOnce({ data: { data: mockSub } });
       const result = await store.fetchSubscription();
-
-      expect(store.subscription).toEqual(mockSubscription);
-      expect(result).toEqual(mockSubscription);
+      expect(store.subscription).toEqual(mockSub);
+      expect(result).toEqual(mockSub);
       expect(store.loading).toBe(false);
     });
 
     it('should call correct API endpoint', async () => {
       const store = useBillingStore();
       axios.get.mockResolvedValueOnce({ data: { data: {} } });
-
       await store.fetchSubscription();
-
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/subscription'));
     });
 
-    it('should handle fetchSubscription error', async () => {
+    it('should propagate fetchSubscription error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.get.mockRejectedValueOnce(new Error('Failed'));
-
-      await store.fetchSubscription();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.fetchSubscription()).rejects.toThrow('Failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -120,11 +101,8 @@ describe('Billing Store', () => {
     it('should create checkout session and return data', async () => {
       const store = useBillingStore();
       const mockCheckout = { url: 'https://checkout.stripe.com/session123' };
-
       axios.post.mockResolvedValueOnce({ data: { data: mockCheckout } });
-
       const result = await store.createCheckout('price_123');
-
       expect(result).toEqual(mockCheckout);
       expect(store.loading).toBe(false);
     });
@@ -132,28 +110,21 @@ describe('Billing Store', () => {
     it('should send correct payload with priceId', async () => {
       const store = useBillingStore();
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
-
       await store.createCheckout('price_abc');
-
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/billing/checkout'),
-        expect.objectContaining({
-          priceId: 'price_abc',
-        }),
+        expect.objectContaining({ priceId: 'price_abc' }),
       );
     });
 
-    it('should handle createCheckout error', async () => {
+    it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.post.mockRejectedValueOnce(new Error('Failed'));
-
-      await store.createCheckout('price_123');
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.createCheckout('price_123')).rejects.toThrow('Failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 
@@ -161,32 +132,24 @@ describe('Billing Store', () => {
     it('should call portal endpoint and redirect', async () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session456';
-
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
-
       const originalLocation = window.location;
       delete window.location;
       window.location = { ...originalLocation, href: '' };
-
       await store.openPortal();
-
       expect(window.location.href).toBe(portalUrl);
       expect(store.loading).toBe(false);
-
       window.location = originalLocation;
     });
 
-    it('should handle openPortal error', async () => {
+    it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.post.mockRejectedValueOnce(new Error('Portal failed'));
-
-      await store.openPortal();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
+      await expect(store.openPortal()).rejects.toThrow('Portal failed');
+      expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
-      consoleLogSpy.mockRestore();
+      spy.mockRestore();
     });
   });
 });
