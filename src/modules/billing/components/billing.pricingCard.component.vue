@@ -10,6 +10,7 @@
   - plan (Object): Plan object with id, name, tagline, features, highlighted, badge, cta, monthlyPrice, annualPrice
   - annual (Boolean): Whether annual billing is selected
   - current (Boolean): Whether this is the user's current plan
+  - loading (Boolean): Whether a checkout is in progress (disables CTA)
 
   EVENTS:
   - select (Object): Emitted with { planId, priceId } when CTA is clicked
@@ -56,7 +57,8 @@
       :class="config.vuetify.theme.rounded"
       class="mb-6 text-none font-weight-bold"
       size="large"
-      :disabled="!activePriceId"
+      :loading="loading"
+      :disabled="loading || !activePriceId"
       @click="$emit('select', { planId: plan.id, priceId: activePriceId })"
     >
       {{ plan.cta }}
@@ -113,6 +115,10 @@ export default {
       default: false,
     },
     current: {
+      type: Boolean,
+      default: false,
+    },
+    loading: {
       type: Boolean,
       default: false,
     },
