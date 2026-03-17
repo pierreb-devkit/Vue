@@ -71,7 +71,7 @@ describe('Billing Store', () => {
   describe('fetchSubscription', () => {
     it('should fetch and set subscription', async () => {
       const store = useBillingStore();
-      const mockSub = { planId: 'pro', status: 'active' };
+      const mockSub = { plan: 'pro', status: 'active' };
       axios.get.mockResolvedValueOnce({ data: { data: mockSub } });
       const result = await store.fetchSubscription();
       expect(store.subscription).toEqual(mockSub);
@@ -133,6 +133,23 @@ describe('Billing Store', () => {
   });
 
   describe('openPortal', () => {
+    it('should set loading to true during openPortal', async () => {
+      const store = useBillingStore();
+      let loadingDuringPortal = false;
+      const portalUrl = 'https://billing.stripe.com/session789';
+      axios.post.mockImplementationOnce(() => {
+        loadingDuringPortal = store.loading;
+        return Promise.resolve({ data: { data: { url: portalUrl } } });
+      });
+      const originalLocation = window.location;
+      delete window.location;
+      window.location = { ...originalLocation, href: '' };
+      await store.openPortal();
+      expect(loadingDuringPortal).toBe(true);
+      expect(store.loading).toBe(false);
+      window.location = originalLocation;
+    });
+
     it('should call portal endpoint and redirect', async () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session456';
