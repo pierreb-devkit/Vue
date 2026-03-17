@@ -46,6 +46,18 @@
       </template>
     </v-alert>
 
+    <!-- Checkout error (does not hide plans) -->
+    <v-alert
+      v-if="checkoutError"
+      type="error"
+      variant="tonal"
+      closable
+      class="mb-6"
+      @click:close="checkoutError = null"
+    >
+      {{ checkoutError }}
+    </v-alert>
+
     <!-- Loading state -->
     <div v-if="loading" class="d-flex justify-center py-12">
       <v-progress-circular indeterminate color="primary" size="48" />
@@ -97,6 +109,7 @@ export default {
       checkoutSuccess: false,
       checkoutCanceled: false,
       checkoutLoading: false,
+      checkoutError: null,
       error: null,
     };
   },
@@ -237,7 +250,7 @@ export default {
         }
       } catch (err) {
         console.error('Failed to start checkout:', err);
-        this.error = 'Failed to start checkout. Please try again.';
+        this.checkoutError = 'Failed to start checkout. Please try again.';
       } finally {
         this.checkoutLoading = false;
       }
