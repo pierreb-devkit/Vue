@@ -33,8 +33,26 @@
       <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
     </div>
 
+    <!-- Error state -->
+    <v-alert
+      v-if="error"
+      type="error"
+      variant="tonal"
+      class="mb-6"
+    >
+      {{ error }}
+      <template #append>
+        <v-btn variant="text" size="small" @click="retryFetchPlans">Retry</v-btn>
+      </template>
+    </v-alert>
+
+    <!-- Loading state -->
+    <div v-if="loading" class="d-flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" size="48" />
+    </div>
+
     <!-- Plans grid -->
-    <v-row justify="center">
+    <v-row v-else-if="!error" justify="center">
       <v-col
         v-for="plan in mergedPlans"
         :key="plan.id"
@@ -79,6 +97,7 @@ export default {
       checkoutSuccess: false,
       checkoutCanceled: false,
       checkoutLoading: false,
+      error: null,
     };
   },
   computed: {
@@ -98,6 +117,14 @@ export default {
       });
     },
     /**
+     * @desc Whether billing data is being loaded.
+     * @returns {boolean} True while loading
+     */
+    loading() {
+      const billingStore = useBillingStore();
+      return billingStore.loading;
+    },
+    /**
      * @desc Get the current subscription plan ID if user is logged in.
      * @returns {string|null} Current plan ID or null
      */
@@ -106,15 +133,25 @@ export default {
       return billingStore.subscription?.planId || null;
     },
   },
-  created() {
+  /**
+   * @desc Fetch billing plans and subscription data on component creation.
+   */
+  async created() {
     const billingStore = useBillingStore();
-    if (!billingStore.plans.length) {
-      billingStore.fetchPlans();
+    try {
+      await billingStore.fetchPlans();
+    } catch (err) {
+      console.error('Failed to load pricing plans:', err);
+      this.error = 'Failed to load pricing. Please try again.';
     }
 
     const authStore = useAuthStore();
-    if (authStore.isLoggedIn) {
-      billingStore.fetchSubscription();
+    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!authStore.user?.currentOrganization;
+    if (authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
+      billingStore.fetchSubscription().catch((err) => {
+        console.error('Failed to load subscription:', err);
+      });
     }
 
     // Handle Stripe redirect query params
@@ -142,6 +179,20 @@ export default {
       }
     },
     /**
+     * @desc Retry fetching plans after an error.
+     * @returns {Promise<void>}
+     */
+    async retryFetchPlans() {
+      this.error = null;
+      const billingStore = useBillingStore();
+      try {
+        await billingStore.fetchPlans();
+      } catch (err) {
+        console.error('Failed to load pricing plans:', err);
+        this.error = 'Failed to load pricing. Please try again.';
+      }
+    },
+    /**
      * @desc Handle plan selection — validate auth/org, then create checkout session.
      * @param {Object} payload - { planId, priceId }
      * @returns {Promise<void>}
@@ -149,29 +200,38 @@ export default {
     async onSelectPlan({ planId, priceId }) {
       const authStore = useAuthStore();
 
-      // Guest → redirect to sign-in with return URL
+      // Guest -> redirect to sign-in with return URL
       if (!authStore.isLoggedIn) {
         this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;
       }
 
-      // Logged-in but no organization → redirect to org setup
+      // Logged-in but no organization -> redirect to org setup
       if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
         this.$router.push({ path: '/organization-required' });
         return;
       }
 
-      // Free plan → no checkout needed
+      // Free plan -> no checkout needed
       if (!priceId || planId === 'free') return;
 
-      // Paid plan → create Stripe Checkout session
+      // Paid plan -> create Stripe Checkout session
       this.checkoutLoading = true;
       try {
         const billingStore = useBillingStore();
         const checkout = await billingStore.createCheckout(priceId);
-        if (checkout?.url) {
-          window.location.href = checkout.url;
+        if (!checkout?.url) {
+          throw new Error('Checkout session did not include a redirect URL.');
         }
+        const parsed = new URL(checkout.url, window.location.origin);
+        if (parsed.protocol === 'https:') {
+          window.location.assign(parsed.toString());
+        } else {
+          console.error('Rejected non-HTTPS checkout URL');
+        }
+      } catch (err) {
+        console.error('Failed to start checkout:', err);
+        this.error = 'Failed to start checkout. Please try again.';
       } finally {
         this.checkoutLoading = false;
       }

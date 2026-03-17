@@ -61,7 +61,7 @@ export const useBillingStore = defineStore('billing', {
     },
 
     /**
-     * @desc Create a Stripe Checkout session and redirect.
+     * @desc Create a Stripe Checkout session and return checkout data.
      * @param {string} priceId - The Stripe price ID
      * @returns {Promise<Object>} Resolved checkout data with URL
      */
@@ -72,7 +72,7 @@ export const useBillingStore = defineStore('billing', {
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/checkout`, {
           priceId,
           successUrl: `${window.location.origin}/billing?success=true`,
-          cancelUrl: `${window.location.origin}/pricing`,
+          cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
         return res.data.data;
       } catch (err) {
@@ -84,17 +84,22 @@ export const useBillingStore = defineStore('billing', {
     },
 
     /**
-     * @desc Open Stripe Customer Portal and redirect.
+     * @desc Open Stripe Customer Portal by redirecting to the portal URL.
      * @returns {Promise<void>}
      */
     async openPortal() {
-      this.loading = true;
       try {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
-        const portalUrl = res.data?.data?.url;
-        if (!portalUrl) throw new Error('Invalid portal URL received from API');
-        window.location.href = portalUrl;
+        const url = res?.data?.data?.url;
+        if (!url) {
+          throw new Error('Billing portal URL is missing from the API response');
+        }
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:') {
+          throw new Error('Rejected non-HTTPS portal URL');
+        }
+        window.location.href = parsed.toString();
       } catch (err) {
         console.log(err);
         throw err;
@@ -104,8 +109,3 @@ export const useBillingStore = defineStore('billing', {
     },
   },
 });
-
-/**
- * Exports.
- */
-export default useBillingStore;

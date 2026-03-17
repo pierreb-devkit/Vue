@@ -47,7 +47,7 @@
         <span class="text-body-medium text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
       </template>
       <template v-else>
-        <span class="text-display-small font-weight-bold text-medium-emphasis">—</span>
+        <span class="text-title-medium text-medium-emphasis">Pricing unavailable</span>
       </template>
     </div>
 

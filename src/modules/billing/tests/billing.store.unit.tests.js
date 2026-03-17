@@ -107,7 +107,7 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should send correct payload with priceId', async () => {
+    it('should send correct payload with priceId and redirect URLs', async () => {
       const store = useBillingStore();
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
       await store.createCheckout('price_abc');
@@ -116,7 +116,7 @@ describe('Billing Store', () => {
         expect.objectContaining({
           priceId: 'price_abc',
           successUrl: expect.stringContaining('/billing?success=true'),
-          cancelUrl: expect.stringContaining('/pricing'),
+          cancelUrl: expect.stringContaining('/pricing?canceled=true'),
         }),
       );
     });
@@ -124,8 +124,8 @@ describe('Billing Store', () => {
     it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      axios.post.mockRejectedValueOnce(new Error('Failed'));
-      await expect(store.createCheckout('price_123')).rejects.toThrow('Failed');
+      axios.post.mockRejectedValueOnce(new Error('Checkout failed'));
+      await expect(store.createCheckout('price_123')).rejects.toThrow('Checkout failed');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
       spy.mockRestore();
@@ -146,11 +146,21 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
-    it('should throw when portal URL is missing from response', async () => {
+    it('should throw when portal URL is missing from API response', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
-      await expect(store.openPortal()).rejects.toThrow('Invalid portal URL received from API');
+      await expect(store.openPortal()).rejects.toThrow('Billing portal URL is missing from the API response');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+
+    it('should reject non-HTTPS portal URLs', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
+      await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
       spy.mockRestore();
@@ -162,6 +172,7 @@ describe('Billing Store', () => {
       axios.post.mockRejectedValueOnce(new Error('Portal failed'));
       await expect(store.openPortal()).rejects.toThrow('Portal failed');
       expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
       spy.mockRestore();
     });
   });
