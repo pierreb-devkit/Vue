@@ -161,6 +161,35 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/');
   });
 
+  it('allows /pricing without organization (org-exempt)', async () => {
+    mockAuthStore.isLoggedIn = true;
+    mockAuthStore.serverConfig = { organizations: { enabled: true } };
+    mockAuthStore.user = { currentOrganization: null };
+    const router = getRouter();
+    await router.push('/pricing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/pricing');
+  });
+
+  it('redirects /billing to /signin when not logged in', async () => {
+    mockAuthStore.isLoggedIn = false;
+    const router = getRouter();
+    await router.push('/billing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/signin');
+  });
+
+  it('allows /billing when logged in with matching ability', async () => {
+    mockAuthStore.isLoggedIn = true;
+    mockAuthStore.user = { currentOrganization: 'org1' };
+    mockAbility.rules = [{ action: 'read', subject: 'Billing' }];
+    mockAbility.can.mockReturnValue(true);
+    const router = getRouter();
+    await router.push('/billing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/billing');
+  });
+
   describe('requiredPlan guard', () => {
     it('redirects to /pricing when plan is insufficient', async () => {
       mockAuthStore.isLoggedIn = true;

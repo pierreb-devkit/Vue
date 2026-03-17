@@ -146,11 +146,21 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
-    it('should throw when portal URL is missing from response', async () => {
+    it('should throw when portal URL is missing from API response', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
-      await expect(store.openPortal()).rejects.toThrow('Invalid portal URL received from API');
+      await expect(store.openPortal()).rejects.toThrow('Billing portal URL is missing from the API response');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+
+    it('should reject non-HTTPS portal URLs', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
+      await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
       spy.mockRestore();

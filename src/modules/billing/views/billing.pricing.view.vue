@@ -146,7 +146,9 @@ export default {
     }
 
     const authStore = useAuthStore();
-    if (authStore.isLoggedIn && (!authStore.serverConfig?.organizations?.enabled || authStore.user?.currentOrganization)) {
+    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!authStore.user?.currentOrganization;
+    if (authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
       billingStore.fetchSubscription().catch((err) => {
         console.error('Failed to load subscription:', err);
       });
@@ -221,7 +223,12 @@ export default {
         if (!checkout?.url) {
           throw new Error('Checkout session did not include a redirect URL.');
         }
-        window.location.href = checkout.url;
+        const parsed = new URL(checkout.url, window.location.origin);
+        if (parsed.protocol === 'https:') {
+          window.location.assign(parsed.toString());
+        } else {
+          console.error('Rejected non-HTTPS checkout URL');
+        }
       } catch (err) {
         console.error('Failed to start checkout:', err);
         this.error = 'Failed to start checkout. Please try again.';
