@@ -59,7 +59,7 @@ describe('Billing Store', () => {
 
     it('should propagate fetchPlans error to caller', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.get.mockRejectedValueOnce(new Error('Network error'));
       await expect(store.fetchPlans()).rejects.toThrow('Network error');
       expect(spy).toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe('Billing Store', () => {
 
     it('should propagate fetchSubscription error to caller', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.get.mockRejectedValueOnce(new Error('Failed'));
       await expect(store.fetchSubscription()).rejects.toThrow('Failed');
       expect(spy).toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('Billing Store', () => {
 
     it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockRejectedValueOnce(new Error('Checkout failed'));
       await expect(store.createCheckout('price_123')).rejects.toThrow('Checkout failed');
       expect(spy).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('Billing Store', () => {
 
     it('should throw when portal URL is missing from API response', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
       await expect(store.openPortal()).rejects.toThrow('Billing portal URL is missing from the API response');
       expect(spy).toHaveBeenCalled();
@@ -158,7 +158,7 @@ describe('Billing Store', () => {
 
     it('should reject non-HTTPS portal URLs', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
       await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
       expect(spy).toHaveBeenCalled();
@@ -168,7 +168,7 @@ describe('Billing Store', () => {
 
     it('should propagate openPortal error to caller', async () => {
       const store = useBillingStore();
-      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockRejectedValueOnce(new Error('Portal failed'));
       await expect(store.openPortal()).rejects.toThrow('Portal failed');
       expect(spy).toHaveBeenCalled();
