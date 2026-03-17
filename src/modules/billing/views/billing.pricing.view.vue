@@ -108,11 +108,17 @@ export default {
     mergedPlans() {
       const billingStore = useBillingStore();
       return plansConfig.map((staticPlan) => {
-        const stripePlan = billingStore.plans.find((p) => p.id === staticPlan.id) || {};
+        const stripePlan = billingStore.plans.find(
+          (p) => p.planId === staticPlan.id || p.name?.toLowerCase() === staticPlan.id,
+        ) || {};
         return {
           ...staticPlan,
-          monthlyPrice: stripePlan.monthlyPrice || null,
-          annualPrice: stripePlan.annualPrice || null,
+          monthlyPrice: stripePlan.stripePriceMonthly
+            ? { amount: stripePlan.monthlyPrice, id: stripePlan.stripePriceMonthly }
+            : null,
+          annualPrice: stripePlan.stripePriceAnnual
+            ? { amount: stripePlan.annualPrice, id: stripePlan.stripePriceAnnual }
+            : null,
         };
       });
     },
