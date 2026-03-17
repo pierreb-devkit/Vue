@@ -77,6 +77,27 @@ const getRouter = () => {
       if (!authStore.isLoggedIn) return '/signin';
     }
 
+    // billing plan gate
+    if (to.meta.requiredPlan) {
+      const { useBillingStore } = await import('../billing/stores/billing.store');
+      const billingStore = useBillingStore();
+      if (!billingStore.subscription) {
+        try {
+          await billingStore.fetchSubscription();
+        } catch {
+          // best-effort — if fetch fails, allow navigation to avoid blocking paid users
+        }
+      }
+      // If subscription is unknown (e.g. API failure), skip the gate to avoid blocking paid users
+      if (billingStore.subscription) {
+        const planRanks = { free: 0, starter: 1, pro: 2 };
+        const currentPlan = billingStore.subscription.plan || 'free';
+        const currentRank = planRanks[currentPlan] ?? 0;
+        const requiredRank = planRanks[to.meta.requiredPlan] ?? 0;
+        if (currentRank < requiredRank) return '/pricing';
+      }
+    }
+
     // secu
     if (to.matched.some((record) => record.meta.action)) {
       if (authStore.isLoggedIn) {

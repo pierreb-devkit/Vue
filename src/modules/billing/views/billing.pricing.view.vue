@@ -22,6 +22,17 @@
       Checkout was canceled. You can try again whenever you are ready.
     </v-alert>
 
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
+      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
+    </div>
+
+    <!-- Billing toggle -->
+    <div class="mb-10">
+      <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
+    </div>
+
     <!-- Error state -->
     <v-alert
       v-if="error"
@@ -35,19 +46,13 @@
       </template>
     </v-alert>
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
-      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
-    </div>
-
-    <!-- Billing toggle -->
-    <div class="mb-10">
-      <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
+    <!-- Loading state -->
+    <div v-if="loading" class="d-flex justify-center py-12">
+      <v-progress-circular indeterminate color="primary" size="48" />
     </div>
 
     <!-- Plans grid -->
-    <v-row justify="center">
+    <v-row v-else-if="!error" justify="center">
       <v-col
         v-for="plan in mergedPlans"
         :key="plan.id"
@@ -112,6 +117,14 @@ export default {
       });
     },
     /**
+     * @desc Whether billing data is being loaded.
+     * @returns {boolean} True while loading
+     */
+    loading() {
+      const billingStore = useBillingStore();
+      return billingStore.loading;
+    },
+    /**
      * @desc Get the current subscription plan ID if user is logged in.
      * @returns {string|null} Current plan ID or null
      */
@@ -120,6 +133,9 @@ export default {
       return billingStore.subscription?.planId || null;
     },
   },
+  /**
+   * @desc Fetch billing plans and subscription data on component creation.
+   */
   async created() {
     const billingStore = useBillingStore();
     try {
@@ -182,22 +198,22 @@ export default {
     async onSelectPlan({ planId, priceId }) {
       const authStore = useAuthStore();
 
-      // Guest → redirect to sign-in with return URL
+      // Guest -> redirect to sign-in with return URL
       if (!authStore.isLoggedIn) {
         this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;
       }
 
-      // Logged-in but no organization → redirect to org setup
+      // Logged-in but no organization -> redirect to org setup
       if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
         this.$router.push({ path: '/organization-required' });
         return;
       }
 
-      // Free plan → no checkout needed
+      // Free plan -> no checkout needed
       if (!priceId || planId === 'free') return;
 
-      // Paid plan → create Stripe Checkout session
+      // Paid plan -> create Stripe Checkout session
       this.checkoutLoading = true;
       try {
         const billingStore = useBillingStore();
