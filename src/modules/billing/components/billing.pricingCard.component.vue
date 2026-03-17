@@ -39,12 +39,12 @@
 
     <!-- Price -->
     <div class="mb-6">
-      <template v-if="displayPrice !== null">
+      <template v-if="isFree">
+        <span class="text-display-small font-weight-bold">Free</span>
+      </template>
+      <template v-else-if="displayPrice !== null">
         <span class="text-display-small font-weight-bold">${{ displayPrice }}</span>
         <span class="text-body-medium text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
-      </template>
-      <template v-else-if="plan.id === 'free'">
-        <span class="text-display-small font-weight-bold">Free</span>
       </template>
       <template v-else>
         <span class="text-title-medium text-medium-emphasis">Pricing unavailable</span>
@@ -61,7 +61,7 @@
       class="mb-6 text-none font-weight-bold"
       size="large"
       :loading="loading"
-      :disabled="loading || !activePriceId"
+      :disabled="loading || (!isFree && !activePriceId)"
       @click="$emit('select', { planId: plan.id, priceId: activePriceId })"
     >
       {{ plan.cta }}
@@ -129,8 +129,15 @@ export default {
   emits: ['select'],
   computed: {
     /**
+     * @desc Whether this plan is explicitly free (by ID convention).
+     * @returns {boolean}
+     */
+    isFree() {
+      return this.plan.id === 'free';
+    },
+    /**
      * @desc Get the price to display based on billing interval.
-     * @returns {number|null} Price amount or null for free plans
+     * @returns {number|null} Price amount or null when price is unavailable
      */
     displayPrice() {
       if (this.annual && this.plan.annualPrice) return this.plan.annualPrice.amount;

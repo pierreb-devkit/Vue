@@ -171,6 +171,14 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/pricing');
   });
 
+  it('allows /pricing for unauthenticated users', async () => {
+    mockAuthStore.isLoggedIn = false;
+    const router = getRouter();
+    await router.push('/pricing');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/pricing');
+  });
+
   it('redirects /billing to /signin when not logged in', async () => {
     mockAuthStore.isLoggedIn = false;
     const router = getRouter();
