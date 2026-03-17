@@ -5,8 +5,9 @@ export const plans = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'Pour d\u00e9couvrir',
+    tagline: 'Discover the platform',
     highlighted: false,
+    badge: null,
     cta: 'Get Started',
     features: [
       { text: '1 project', included: true },
@@ -18,8 +19,9 @@ export const plans = [
   {
     id: 'starter',
     name: 'Starter',
-    tagline: 'Pour les \u00e9quipes',
+    tagline: 'For growing teams',
     highlighted: false,
+    badge: null,
     cta: 'Get Started',
     features: [
       { text: '10 projects', included: true },
@@ -31,7 +33,7 @@ export const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Pour les pros',
+    tagline: 'For professionals',
     highlighted: true,
     badge: 'Most Popular',
     cta: 'Get Started',

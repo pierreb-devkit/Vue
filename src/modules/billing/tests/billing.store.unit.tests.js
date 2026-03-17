@@ -107,7 +107,7 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should send correct payload with priceId, successUrl, and cancelUrl', async () => {
+    it('should send correct payload with priceId and redirect URLs', async () => {
       const store = useBillingStore();
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
       await store.createCheckout('price_abc');
@@ -115,8 +115,8 @@ describe('Billing Store', () => {
         expect.stringContaining('/billing/checkout'),
         expect.objectContaining({
           priceId: 'price_abc',
-          successUrl: expect.stringMatching(/\/billing\?success=true$/),
-          cancelUrl: expect.stringMatching(/\/pricing$/),
+          successUrl: expect.stringContaining('/billing?success=true'),
+          cancelUrl: expect.stringContaining('/pricing?canceled=true'),
         }),
       );
     });
@@ -124,8 +124,8 @@ describe('Billing Store', () => {
     it('should propagate createCheckout error to caller', async () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      axios.post.mockRejectedValueOnce(new Error('Failed'));
-      await expect(store.createCheckout('price_123')).rejects.toThrow('Failed');
+      axios.post.mockRejectedValueOnce(new Error('Checkout failed'));
+      await expect(store.createCheckout('price_123')).rejects.toThrow('Checkout failed');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
       spy.mockRestore();
@@ -133,7 +133,7 @@ describe('Billing Store', () => {
   });
 
   describe('openPortal', () => {
-    it('should call portal endpoint and redirect without toggling global loading', async () => {
+    it('should call portal endpoint and redirect', async () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session456';
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
@@ -152,6 +152,7 @@ describe('Billing Store', () => {
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
       await expect(store.openPortal()).rejects.toThrow('Billing portal URL is missing from the API response');
       expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
       spy.mockRestore();
     });
 
@@ -161,6 +162,7 @@ describe('Billing Store', () => {
       axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
       await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
       expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
       spy.mockRestore();
     });
 

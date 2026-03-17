@@ -72,7 +72,7 @@ export const useBillingStore = defineStore('billing', {
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/checkout`, {
           priceId,
           successUrl: `${window.location.origin}/billing?success=true`,
-          cancelUrl: `${window.location.origin}/pricing`,
+          cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
         return res.data.data;
       } catch (err) {
@@ -103,6 +103,8 @@ export const useBillingStore = defineStore('billing', {
       } catch (err) {
         console.log(err);
         throw err;
+      } finally {
+        this.loading = false;
       }
     },
   },
