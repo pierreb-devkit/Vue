@@ -61,7 +61,17 @@ export default {
         console.log(err);
       }
     } else {
-      this.error = JSON.parse(this.$route.query.error);
+      try {
+        const parsed = JSON.parse(this.$route.query.error);
+        this.error = {
+          details: {
+            message: typeof parsed?.details?.message === 'string' ? parsed.details.message : 'An unexpected error occurred',
+            errors: {},
+          },
+        };
+      } catch {
+        this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
+      }
       console.log(this.error);
     }
   },
