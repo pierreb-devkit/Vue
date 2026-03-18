@@ -20,8 +20,10 @@ export default {
         scrollThreshold: 50, // scroll distance (px) before scroll behavior triggers
       },
       navigation: {
-        background: '#2c3e50', // navigation drawer background color
-        color: '#FFFFFF', // navigation drawer text color
+        background: '#2c3e50', // navigation drawer background color (fallback when glass is false)
+        color: '#FFFFFF', // navigation drawer text color (fallback when glass is false)
+        glass: true, // true to use liquid glass effect instead of solid background
+        inset: true, // true to float drawer with margin (Apple-style inset)
         drawer: {
           floating: true, // true for floating drawer style
           expand: true, // true to expand on hover

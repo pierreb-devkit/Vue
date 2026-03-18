@@ -111,9 +111,7 @@ export default {
       return this.theme.name;
     },
     computedTint() {
-      if (this.tint === 'auto') {
-        return this.themeName === 'dark' ? 0.75 : -0.5;
-      }
+      if (this.tint === 'auto') return 'auto';
       return this.tint;
     },
     indicatorStyle() {
@@ -122,9 +120,7 @@ export default {
           vuetifyTheme: this.theme,
           intensity: this.intensity,
           tint: this.computedTint,
-          variant: 'pill',
           border: 'none',
-          glowBorder: true,
         }),
         position: 'absolute',
         top: '50%',
@@ -142,9 +138,7 @@ export default {
           vuetifyTheme: this.theme,
           intensity: this.intensity,
           tint: this.computedTint,
-          variant: 'pill',
           border: 'none',
-          glowBorder: true,
         }),
         position: 'absolute',
         inset: 0,
@@ -284,22 +278,4 @@ export default {
   z-index: -1;
 }
 
-.tab-indicator::before,
-.sliding-indicator::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(var(--glow-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
 </style>

@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <PageHeader icon="fa-solid fa-building" title="Create Organization" />
-    <v-row class="pa-2" justify="center">
+    <v-row class="pa-2 mt-0" justify="center">
       <v-col cols="12" sm="10" md="8" lg="6">
         <v-card class="pa-8" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <h3 class="text-title-large font-weight-medium mb-6">Organization Details</h3>

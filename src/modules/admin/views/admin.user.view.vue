@@ -35,7 +35,7 @@
       </v-card>
     </v-dialog>
     <!-- Profile form -->
-    <v-row class="pa-2">
+    <v-row class="pa-2 mt-0">
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
           <accountUserProfileComponent :user="user" @save="update" @avatar-uploaded="onAvatarUploaded" />

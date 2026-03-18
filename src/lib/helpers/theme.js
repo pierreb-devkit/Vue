@@ -92,25 +92,22 @@ const adjustColor = (hex, amount, output = 'rgb') => {
  *
  * @param {Object} options - Configuration object
  * @param {Object} options.vuetifyTheme - Vuetify theme object (from useTheme()). Auto-extracts colors.
- * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 0.8
+ * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 1
  * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
- * @param {Number} options.opacity - Override background opacity (0-1). When set, uses a solid surface-color
- *   background at this opacity instead of the default computed value. Useful for elements like headers
- *   where text readability matters more than glass transparency. Default: undefined (auto-computed)
- * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'card'
+ * @param {Number} options.opacity - Background opacity (0-1). Uses a solid surface-color background
+ *   at this opacity. Lower values = more transparent glass. Default: 0.5
+ * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'pill'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
- * @param {Boolean|String} options.glowBorder - false, true (static gradient), or 'animated' (rotating). Default: false
  * @param {Object} options.extras - Additional CSS properties to merge
  * @returns {Object} CSS style object with liquid glass effect
  */
 export const liquidGlassStyle = ({
   vuetifyTheme,
-  intensity = 0.8,
+  intensity = 1,
   tint = 'auto',
-  opacity,
-  variant = 'card',
+  opacity = 0.5,
+  variant = 'pill',
   border: borderStyle = 'all',
-  glowBorder = false,
   extras = {},
 }) => {
   // Auto-detect theme name and colors from Vuetify
@@ -175,8 +172,8 @@ export const liquidGlassStyle = ({
   // === BOX SHADOW - key for light mode depth ===
   let boxShadow;
   if (dark) {
-    // Subtle inner glow for dark mode
-    boxShadow = i > 0 ? `inset 0 1px 1px rgba(255, 255, 255, ${(i * 0.1).toFixed(2)})` : 'none';
+    // Subtle outer shadow + inner glow for dark mode
+    boxShadow = i > 0 ? `0 2px 8px rgba(0, 0, 0, ${(i * 0.12).toFixed(2)}), inset 0 1px 1px rgba(255, 255, 255, ${(i * 0.1).toFixed(2)})` : 'none';
   } else {
     // Layered shadow for light mode - creates depth on white backgrounds
     boxShadow =
@@ -201,13 +198,6 @@ export const liquidGlassStyle = ({
   // Add specific borders if set
   if (borderTop) result.borderTop = borderTop;
   if (borderBottom) result.borderBottom = borderBottom;
-
-  // Add glowBorder pseudo-element styles via CSS custom properties
-  if (glowBorder) {
-    result['--glow-border'] = '1';
-    result['--glow-border-radius'] = borderRadius;
-    result['--glow-rotation'] = glowBorder === 'animated' ? 'var(--gradient-rotation, 135deg)' : '135deg';
-  }
 
   return result;
 };

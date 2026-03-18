@@ -192,7 +192,7 @@ describe('Theme Helpers', () => {
 
       expect(result).toHaveProperty('background');
       expect(result).toHaveProperty('border');
-      expect(result).toHaveProperty('borderRadius', '16px');
+      expect(result).toHaveProperty('borderRadius', '9999px');
       expect(result).toHaveProperty('boxShadow');
       expect(result).toHaveProperty('-webkit-backdrop-filter');
       expect(result).toHaveProperty('backdrop-filter');
@@ -207,7 +207,7 @@ describe('Theme Helpers', () => {
       const result = liquidGlassStyle({ vuetifyTheme: lightTheme });
 
       expect(result).toHaveProperty('background');
-      expect(result).toHaveProperty('borderRadius', '16px');
+      expect(result).toHaveProperty('borderRadius', '9999px');
     });
 
     it('should handle intensity parameter', () => {
@@ -267,21 +267,19 @@ describe('Theme Helpers', () => {
       expect(result.border).not.toBe('none');
     });
 
-    it('should handle glowBorder true', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: true });
-      expect(result).toHaveProperty('--glow-border', '1');
-      expect(result).toHaveProperty('--glow-rotation', '135deg');
+    it('should use solid background with default opacity', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme });
+      expect(result.background).toContain('rgba');
+      expect(result.background).toContain('0.50');
     });
 
-    it('should handle glowBorder animated', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: 'animated' });
-      expect(result).toHaveProperty('--glow-border', '1');
-      expect(result).toHaveProperty('--glow-rotation', 'var(--gradient-rotation, 135deg)');
-    });
-
-    it('should handle glowBorder false', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: false });
-      expect(result).not.toHaveProperty('--glow-border');
+    it('should return no shadow when intensity is 0 in light mode', () => {
+      const lightTheme = {
+        global: { name: { value: 'light' } },
+        current: { colors: { background: '#FFFFFF', surface: '#F5F5F5' } },
+      };
+      const result = liquidGlassStyle({ vuetifyTheme: lightTheme, intensity: 0 });
+      expect(result.boxShadow).toBe('none');
     });
 
     it('should merge extras into result', () => {

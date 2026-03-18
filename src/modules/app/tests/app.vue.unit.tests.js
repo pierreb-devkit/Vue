@@ -46,6 +46,59 @@ const makeConfig = (overrides = {}) => ({
   },
 });
 
+describe('App.vue — mainStyle', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useHeadMock.mockClear();
+  });
+
+  /**
+   * @desc Mount App component with a mocked route and optional config overrides.
+   * @param {String} path - Route path to mock (e.g. '/', '/tasks')
+   * @param {Object} configOverrides - Navigation config overrides (merged into navigation)
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
+  const mountWithRoute = (path, configOverrides = {}) => {
+    const config = {
+      ...makeConfig(),
+      vuetify: {
+        theme: {
+          snackbar: { status: false },
+          navigation: { glass: true, ...configOverrides },
+        },
+      },
+      header: { display: false },
+      footer: { links: [], variant: 'default' },
+    };
+    return mount(App, {
+      global: {
+        mocks: { config, $route: { path } },
+        stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
+      },
+    });
+  };
+
+  it('does not remove padding-left when user is not logged in', () => {
+    const wrapper = mountWithRoute('/');
+    const style = wrapper.vm.mainStyle;
+    // Auth mock returns isLoggedIn: false, so no padding override even on home
+    expect(style['padding-left']).toBeUndefined();
+    expect(style.background).toBe('#ffffff');
+  });
+
+  it('keeps default padding on non-home routes', () => {
+    const wrapper = mountWithRoute('/tasks');
+    const style = wrapper.vm.mainStyle;
+    expect(style['padding-left']).toBeUndefined();
+  });
+
+  it('keeps default padding when glass is false', () => {
+    const wrapper = mountWithRoute('/', { glass: false });
+    const style = wrapper.vm.mainStyle;
+    expect(style['padding-left']).toBeUndefined();
+  });
+});
+
 describe('App.vue — SEO (useHead)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

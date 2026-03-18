@@ -89,7 +89,7 @@ export default {
         'max-width': this.config.vuetify.theme.maxWidth,
         ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
         padding: '12px',
-        ...liquidGlassStyle({ vuetifyTheme: this.theme }),
+        ...liquidGlassStyle({ vuetifyTheme: this.theme, opacity: 0.25, variant: 'card' }),
       };
     },
   },

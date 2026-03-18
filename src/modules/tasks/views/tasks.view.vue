@@ -15,7 +15,7 @@
         </v-btn>
       </template>
     </PageHeader>
-    <v-row class="pa-2">
+    <v-row class="pa-2 mt-0">
       <taskComponent v-for="(item, index) in tasks" :key="item.id" :item="item" :index="index"></taskComponent>
     </v-row>
     <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
