@@ -267,6 +267,21 @@ describe('Theme Helpers', () => {
       expect(result.border).not.toBe('none');
     });
 
+    it('should use solid background with default opacity', () => {
+      const result = liquidGlassStyle({ vuetifyTheme: mockTheme });
+      expect(result.background).toContain('rgba');
+      expect(result.background).toContain('0.50');
+    });
+
+    it('should return no shadow when intensity is 0 in light mode', () => {
+      const lightTheme = {
+        global: { name: { value: 'light' } },
+        current: { colors: { background: '#FFFFFF', surface: '#F5F5F5' } },
+      };
+      const result = liquidGlassStyle({ vuetifyTheme: lightTheme, intensity: 0 });
+      expect(result.boxShadow).toBe('none');
+    });
+
     it('should merge extras into result', () => {
       const extras = { color: '#FF0000', padding: '20px' };
       const result = liquidGlassStyle({ vuetifyTheme: mockTheme, extras });
