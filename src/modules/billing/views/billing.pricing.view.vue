@@ -33,11 +33,12 @@
       <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
     </div>
 
-    <!-- Error state -->
+    <!-- Error state (non-blocking — plans still render from static config) -->
     <v-alert
       v-if="error"
-      type="error"
+      type="warning"
       variant="tonal"
+      closable
       class="mb-6"
     >
       {{ error }}
@@ -64,7 +65,7 @@
     </div>
 
     <!-- Plans grid -->
-    <v-row v-else-if="!error" justify="center">
+    <v-row v-else justify="center">
       <v-col
         v-for="plan in mergedPlans"
         :key="plan.id"
