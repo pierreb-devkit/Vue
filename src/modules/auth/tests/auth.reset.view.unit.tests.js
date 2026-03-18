@@ -97,4 +97,20 @@ describe('auth.reset.view', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('rules.password', () => {
+    it('returns error string for passwords shorter than 8 characters', () => {
+      const wrapper = mountView();
+      expect(wrapper.vm.rules.password('short')).toBe('Password must be at least 8 characters');
+      expect(wrapper.vm.rules.password('')).toBe('Password must be at least 8 characters');
+      expect(wrapper.vm.rules.password(null)).toBe('Password must be at least 8 characters');
+      expect(wrapper.vm.rules.password(undefined)).toBe('Password must be at least 8 characters');
+    });
+
+    it('returns true for passwords of 8+ characters', () => {
+      const wrapper = mountView();
+      expect(wrapper.vm.rules.password('longenough')).toBe(true);
+      expect(wrapper.vm.rules.password('exactly8')).toBe(true);
+    });
+  });
 });

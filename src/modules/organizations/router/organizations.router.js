@@ -16,6 +16,7 @@ export default [
     component: organizationRequired,
     meta: {
       display: false,
+      requiresAuth: true,
     },
   },
   {

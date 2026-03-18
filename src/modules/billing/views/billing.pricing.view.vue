@@ -33,11 +33,12 @@
       <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
     </div>
 
-    <!-- Error state -->
+    <!-- Error state (non-blocking — plans still render from static config) -->
     <v-alert
       v-if="error"
-      type="error"
+      type="warning"
       variant="tonal"
+      closable
       class="mb-6"
     >
       {{ error }}
@@ -58,13 +59,8 @@
       {{ checkoutError }}
     </v-alert>
 
-    <!-- Loading state -->
-    <div v-if="loading" class="d-flex justify-center py-12">
-      <v-progress-circular indeterminate color="primary" size="48" />
-    </div>
-
-    <!-- Plans grid -->
-    <v-row v-else-if="!error" justify="center">
+    <!-- Plans grid (always rendered from static config; prices fill in asynchronously) -->
+    <v-row justify="center">
       <v-col
         v-for="plan in mergedPlans"
         :key="plan.id"

@@ -153,6 +153,14 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/');
   });
 
+  it('redirects /organization-required to /signin when not logged in', async () => {
+    mockAuthStore.isLoggedIn = false;
+    const router = getRouter();
+    await router.push('/organization-required');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/signin');
+  });
+
   it('allows public routes without auth', async () => {
     mockAuthStore.isLoggedIn = false;
     const router = getRouter();

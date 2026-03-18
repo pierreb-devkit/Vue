@@ -69,4 +69,69 @@ describe('auth.token.view', () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe('error parsing (XSS hardening)', () => {
+    it('sets generic message when query.error is invalid JSON', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
+      await Promise.resolve();
+
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('sets generic message when query.error is missing', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Bad Request' });
+      await Promise.resolve();
+
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      consoleSpy.mockRestore();
+    });
+
+    it('sanitizes valid payload and preserves per-field errors', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const payload = {
+        details: {
+          message: 'Validation failed',
+          errors: { email: { message: 'Email is required' }, name: { message: 'Name too short' } },
+        },
+      };
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: JSON.stringify(payload) });
+      await Promise.resolve();
+
+      expect(wrapper.vm.error.details.message).toBe('Validation failed');
+      expect(wrapper.vm.error.details.errors.email.message).toBe('Email is required');
+      expect(wrapper.vm.error.details.errors.name.message).toBe('Name too short');
+      consoleSpy.mockRestore();
+    });
+
+    it('drops non-conforming error entries', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const payload = {
+        details: {
+          message: 'Validation failed',
+          errors: { good: { message: 'Valid' }, bad: { message: 123 }, ugly: 'not-object' },
+        },
+      };
+      const wrapper = mountView({ message: 'Test', error: JSON.stringify(payload) });
+      await Promise.resolve();
+
+      expect(wrapper.vm.error.details.errors.good.message).toBe('Valid');
+      expect(wrapper.vm.error.details.errors.bad).toBeUndefined();
+      expect(wrapper.vm.error.details.errors.ugly).toBeUndefined();
+      consoleSpy.mockRestore();
+    });
+
+    it('initializes error with safe shape for OAuth callback flow (no message)', () => {
+      tokenMock.mockResolvedValueOnce(undefined);
+      const wrapper = mountView();
+
+      // error should have the expected shape so template bindings don't throw
+      expect(wrapper.vm.error.details).toBeDefined();
+      expect(wrapper.vm.error.details.message).toBe('');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+    });
+  });
 });
