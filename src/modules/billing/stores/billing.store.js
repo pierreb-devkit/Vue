@@ -34,7 +34,7 @@ export const useBillingStore = defineStore('billing', {
         this.plans = res.data.data;
         return this.plans;
       } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
       } finally {
         this.loading = false;
@@ -53,7 +53,7 @@ export const useBillingStore = defineStore('billing', {
         this.subscription = res.data.data;
         return this.subscription;
       } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
       } finally {
         this.loading = false;
@@ -76,7 +76,7 @@ export const useBillingStore = defineStore('billing', {
         });
         return res.data.data;
       } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
       } finally {
         this.loading = false;
@@ -88,6 +88,7 @@ export const useBillingStore = defineStore('billing', {
      * @returns {Promise<void>}
      */
     async openPortal() {
+      this.loading = true;
       try {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
@@ -101,7 +102,7 @@ export const useBillingStore = defineStore('billing', {
         }
         window.location.href = parsed.toString();
       } catch (err) {
-        console.log(err);
+        console.error(err);
         throw err;
       } finally {
         this.loading = false;

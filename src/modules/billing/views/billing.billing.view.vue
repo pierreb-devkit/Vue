@@ -115,7 +115,7 @@ export default {
      * @returns {string} Plan identifier
      */
     currentPlan() {
-      return this.subscription?.planId || 'free';
+      return this.subscription?.plan || 'free';
     },
     /**
      * @desc Format the next billing date for display.

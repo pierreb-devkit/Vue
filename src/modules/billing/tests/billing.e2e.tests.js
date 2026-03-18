@@ -8,6 +8,27 @@ const testPassword = 'E2eTestPass99xyz';
 const API_URL = 'http://localhost:3000';
 
 /**
+ * @desc Mock plans returned by the billing API for E2E tests.
+ * @type {Array<Object>}
+ */
+const mockPlans = [
+  { planId: 'free', name: 'Free', monthlyPrice: 0, annualPrice: 0, stripePriceMonthly: 'price_free_m', stripePriceAnnual: 'price_free_a' },
+  { planId: 'starter', name: 'Starter', monthlyPrice: 19, annualPrice: 180, stripePriceMonthly: 'price_starter_m', stripePriceAnnual: 'price_starter_a' },
+  { planId: 'pro', name: 'Pro', monthlyPrice: 49, annualPrice: 468, stripePriceMonthly: 'price_pro_m', stripePriceAnnual: 'price_pro_a' },
+];
+
+/**
+ * @desc Intercept billing plans API and return mock data so tests work without a backend.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<void>}
+ */
+async function mockPlansAPI(page) {
+  await page.route('**/api/billing/plans', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: mockPlans }) }),
+  );
+}
+
+/**
  * @desc Check whether the Node API backend is reachable.
  * @param {import('@playwright/test').APIRequestContext} request
  * @returns {Promise<boolean>}
@@ -28,6 +49,7 @@ test.describe('Pricing Page E2E', () => {
    * @returns {Promise<void>}
    */
   test('displays pricing header and plan cards', async ({ page }) => {
+    await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 
@@ -53,6 +75,7 @@ test.describe('Pricing Page E2E', () => {
    * @returns {Promise<void>}
    */
   test('billing toggle switches between monthly and annual', async ({ page }) => {
+    await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 
@@ -83,6 +106,7 @@ test.describe('Pricing Page E2E', () => {
    * @returns {Promise<void>}
    */
   test('plan cards display feature lists', async ({ page }) => {
+    await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 
@@ -111,6 +135,7 @@ test.describe('Pricing Page E2E', () => {
    * @returns {Promise<void>}
    */
   test('CTA buttons are present on plan cards', async ({ page }) => {
+    await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 
@@ -128,10 +153,8 @@ test.describe('Pricing Page — Unauthenticated CTA', () => {
    * @param {{ page: import('playwright').Page, request: import('playwright').APIRequestContext }} fixtures
    * @returns {Promise<void>}
    */
-  test('CTA redirects unauthenticated user to signin', async ({ page, request }) => {
-    const apiUp = await isApiAvailable(request);
-    test.skip(!apiUp, 'Node API backend not running — CTA buttons are disabled without Stripe prices');
-
+  test('CTA redirects unauthenticated user to signin', async ({ page }) => {
+    await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 

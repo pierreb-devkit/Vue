@@ -145,7 +145,7 @@ export default {
      */
     currentPlanId() {
       const billingStore = useBillingStore();
-      return billingStore.subscription?.planId || null;
+      return billingStore.subscription?.plan || null;
     },
   },
   /**

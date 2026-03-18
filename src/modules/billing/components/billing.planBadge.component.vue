@@ -15,7 +15,7 @@
  * @param {string} value Plan identifier.
  * @returns {boolean} True when the identifier is allowed.
  */
-const isAllowedPlan = (value) => ['free', 'starter', 'pro'].includes(value);
+const isAllowedPlan = (value) => ['free', 'starter', 'pro', 'enterprise'].includes(value);
 
 /**
  * Component definition.
@@ -39,6 +39,7 @@ export default {
         free: 'grey',
         starter: 'primary',
         pro: 'secondary',
+        enterprise: 'warning',
       };
       return colors[this.plan] || 'grey';
     },
