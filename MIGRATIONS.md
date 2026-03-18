@@ -8,12 +8,16 @@ Breaking changes and upgrade notes for downstream projects.
 
 ### Navigation — Glass mode (optional)
 
-New config options in `navigation`:
+New config options in `vuetify.theme.navigation`:
 
 ```js
-navigation: {
-  glass: true,   // liquid glass effect (false = opaque, backward compatible)
-  inset: true,   // Apple-style floating with margin
+vuetify: {
+  theme: {
+    navigation: {
+      glass: true,   // liquid glass effect (false = opaque, backward compatible)
+      inset: true,   // Apple-style floating with margin
+    }
+  }
 }
 ```
 

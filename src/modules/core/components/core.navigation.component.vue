@@ -208,12 +208,7 @@ export default {
      * @returns {Object} CSS style object
      */
     glassButtonStyle() {
-      if (!this.isGlass) {
-        return {
-          '-webkit-backdrop-filter': 'blur(8px)',
-          'backdrop-filter': 'blur(8px)',
-        };
-      }
+      if (!this.isGlass) return {};
       return liquidGlassStyle({
         vuetifyTheme: this.theme,
       });

@@ -46,6 +46,53 @@ const makeConfig = (overrides = {}) => ({
   },
 });
 
+describe('App.vue — mainStyle', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useHeadMock.mockClear();
+  });
+
+  const mountWithRoute = (path, configOverrides = {}) => {
+    const config = {
+      ...makeConfig(),
+      vuetify: {
+        theme: {
+          snackbar: { status: false },
+          navigation: { glass: true, ...configOverrides },
+        },
+      },
+      header: { display: false },
+      footer: { links: [], variant: 'default' },
+    };
+    return mount(App, {
+      global: {
+        mocks: { config, $route: { path } },
+        stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
+      },
+    });
+  };
+
+  it('removes padding-left on home route when glass mode is active and logged in', async () => {
+    // Auth mock returns isLoggedIn: false by default, so padding-left should not be set
+    const wrapper = mountWithRoute('/');
+    const style = wrapper.vm.mainStyle;
+    // isLoggedIn is false in mock, so no padding override
+    expect(style.background).toBe('#ffffff');
+  });
+
+  it('keeps default padding on non-home routes', () => {
+    const wrapper = mountWithRoute('/tasks');
+    const style = wrapper.vm.mainStyle;
+    expect(style['padding-left']).toBeUndefined();
+  });
+
+  it('keeps default padding when glass is false', () => {
+    const wrapper = mountWithRoute('/', { glass: false });
+    const style = wrapper.vm.mainStyle;
+    expect(style['padding-left']).toBeUndefined();
+  });
+});
+
 describe('App.vue — SEO (useHead)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

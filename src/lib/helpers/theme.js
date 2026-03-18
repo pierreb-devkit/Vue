@@ -94,9 +94,8 @@ const adjustColor = (hex, amount, output = 'rgb') => {
  * @param {Object} options.vuetifyTheme - Vuetify theme object (from useTheme()). Auto-extracts colors.
  * @param {Number} options.intensity - Intensity of the glass effect (0 = flat, 1 = strong). Default: 1
  * @param {String|Number} options.tint - 'auto' for smart tint, or number (-1 to 1). Default: 'auto'
- * @param {Number} options.opacity - Override background opacity (0-1). When set, uses a solid surface-color
- *   background at this opacity instead of the default computed value. Useful for elements like headers
- *   where text readability matters more than glass transparency. Default: undefined (auto-computed)
+ * @param {Number} options.opacity - Background opacity (0-1). Uses a solid surface-color background
+ *   at this opacity. Lower values = more transparent glass. Default: 0.5
  * @param {String} options.variant - 'card', 'pill', or 'header' for different border-radius. Default: 'pill'
  * @param {String} options.border - 'all', 'bottom', 'top', or 'none'. Default: 'all'
  * @param {Object} options.extras - Additional CSS properties to merge
