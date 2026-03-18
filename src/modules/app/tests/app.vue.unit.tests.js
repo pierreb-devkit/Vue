@@ -52,6 +52,12 @@ describe('App.vue — mainStyle', () => {
     useHeadMock.mockClear();
   });
 
+  /**
+   * @desc Mount App component with a mocked route and optional config overrides.
+   * @param {String} path - Route path to mock (e.g. '/', '/tasks')
+   * @param {Object} configOverrides - Navigation config overrides (merged into navigation)
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
   const mountWithRoute = (path, configOverrides = {}) => {
     const config = {
       ...makeConfig(),
@@ -72,11 +78,11 @@ describe('App.vue — mainStyle', () => {
     });
   };
 
-  it('removes padding-left on home route when glass mode is active and logged in', async () => {
-    // Auth mock returns isLoggedIn: false by default, so padding-left should not be set
+  it('does not remove padding-left when user is not logged in', () => {
     const wrapper = mountWithRoute('/');
     const style = wrapper.vm.mainStyle;
-    // isLoggedIn is false in mock, so no padding override
+    // Auth mock returns isLoggedIn: false, so no padding override even on home
+    expect(style['padding-left']).toBeUndefined();
     expect(style.background).toBe('#ffffff');
   });
 
