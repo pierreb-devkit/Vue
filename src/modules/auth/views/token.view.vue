@@ -43,7 +43,7 @@ export default {
     const theme = useTheme();
     return {
       theme,
-      error: '',
+      error: { details: { message: '', errors: {} } },
     };
   },
   computed: {
@@ -63,12 +63,17 @@ export default {
     } else {
       try {
         const parsed = JSON.parse(this.$route.query.error);
-        this.error = {
-          details: {
-            message: typeof parsed?.details?.message === 'string' ? parsed.details.message : 'An unexpected error occurred',
-            errors: {},
-          },
-        };
+        const message = typeof parsed?.details?.message === 'string' ? parsed.details.message : 'An unexpected error occurred';
+        const rawErrors = parsed?.details?.errors;
+        const errors = {};
+        if (rawErrors && typeof rawErrors === 'object' && !Array.isArray(rawErrors)) {
+          Object.keys(rawErrors).forEach((key) => {
+            if (rawErrors[key] && typeof rawErrors[key].message === 'string') {
+              errors[key] = { message: rawErrors[key].message };
+            }
+          });
+        }
+        this.error = { details: { message, errors } };
       } catch {
         this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
       }
