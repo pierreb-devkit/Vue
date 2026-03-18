@@ -6,10 +6,9 @@
       :flat="config.vuetify.theme.flat"
       icon
       :style="{
-        color: config.vuetify.theme.navigation.color,
-        background: `${config.vuetify.theme.navigation.background}99`,
-        '-webkit-backdrop-filter': 'blur(8px)',
-        'backdrop-filter': 'blur(8px)',
+        color: navColor,
+        background: isGlass ? undefined : `${navBackground}99`,
+        ...glassButtonStyle,
       }"
       style="position: fixed; top: 7px; left: 5px; z-index: 9999"
       @click="drawer = !drawer"
@@ -20,40 +19,37 @@
     <v-navigation-drawer
       v-model="drawer"
       :floating="config.vuetify.theme.navigation.drawer.floating"
-      :style="{ background: config.vuetify.theme.navigation.background }"
+      :style="drawerStyle"
       :expand-on-hover="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.expand"
       :rail="config.vuetify.theme.navigation.drawer.rail"
+      :elevation="0"
     >
       <!-- Logo / drawer on mobile-->
-      <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
+      <v-list :style="listStyle" nav class="pt-4">
         <v-list-item
-          :style="{
-            color: config.vuetify.theme.navigation.color,
-          }"
+          :style="{ color: navColor }"
         >
           <template #prepend>
             <v-icon
               v-if="config.app.title"
-              :style="{
-                color: config.vuetify.theme.navigation.color,
-                opacity: 1,
-              }"
+              :style="{ color: navColor, opacity: 1 }"
               :icon="$vuetify.display.mobile ? 'nothing' : config.app.icon"
               size="large"
+              class="ms-n1"
             ></v-icon>
           </template>
           <v-list-item-title>{{ config.app.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
-      <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
+      <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
       <!-- Navigation -->
-      <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
+      <v-list :style="listStyle" nav>
         <v-list-item v-for="item in nav" :key="item.path" :to="item.path">
           <template #prepend>
             <v-icon
               :icon="item.meta.icon"
               :style="{
-                color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.navigation.color,
+                color: (item.meta.color && item.meta.color.icon) || navColor,
               }"
               size="small"
             ></v-icon>
@@ -64,13 +60,13 @@
       <!-- Bottom section -->
       <template #append>
         <!-- Bottom nav items -->
-        <v-list v-if="navBottom.length" :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
+        <v-list v-if="navBottom.length" :style="listStyle" nav>
           <v-list-item v-for="item in navBottom" :key="item.path" :to="item.path">
             <template #prepend>
               <v-icon
                 :icon="item.meta.icon"
                 :style="{
-                  color: (item.meta.color && item.meta.color.icon) || config.vuetify.theme.navigation.color,
+                  color: (item.meta.color && item.meta.color.icon) || navColor,
                 }"
                 size="small"
               ></v-icon>
@@ -88,20 +84,16 @@
             </v-list-item>
           </v-list>
         </template>
-        <v-divider :color="config.vuetify.theme.navigation.color" :thickness="3"></v-divider>
+        <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
         <!-- Sign out -->
-        <v-list :style="{ background: config.vuetify.theme.navigation.background, color: config.vuetify.theme.navigation.color }" nav>
+        <v-list :style="listStyle" nav>
           <v-list-item
-            :style="{
-              color: config.vuetify.theme.navigation.color,
-            }"
+            :style="{ color: navColor }"
             @click="signout"
           >
             <template #prepend>
               <v-icon
-                :style="{
-                  color: config.vuetify.theme.navigation.color,
-                }"
+                :style="{ color: navColor }"
                 icon="fa-solid fa-arrow-right"
                 size="small"
               ></v-icon>
@@ -118,16 +110,20 @@
 /**
  * Module dependencies.
  */
+import { useTheme } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
+import { liquidGlassStyle } from '../../../lib/helpers/theme';
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
   data() {
+    const theme = useTheme();
     return {
       drawer: true,
+      theme,
     };
   },
   computed: {
@@ -147,6 +143,80 @@ export default {
       const authStore = useAuthStore();
       if (!authStore.serverConfig?.organizations?.enabled) return true;
       return !!authStore.user?.currentOrganization;
+    },
+    /**
+     * @desc Whether the liquid glass mode is enabled.
+     * @returns {Boolean}
+     */
+    isGlass() {
+      return !!this.config.vuetify.theme.navigation.glass;
+    },
+    /**
+     * @desc Whether the inset floating mode is enabled.
+     * @returns {Boolean}
+     */
+    isInset() {
+      return !!this.config.vuetify.theme.navigation.inset;
+    },
+    /**
+     * @desc Text/icon color — theme-aware in glass mode, config-driven otherwise.
+     * @returns {String}
+     */
+    navColor() {
+      if (this.isGlass) return this.theme.current.colors.onSurface;
+      return this.config.vuetify.theme.navigation.color;
+    },
+    /**
+     * @desc Background color from config (used in non-glass mode).
+     * @returns {String}
+     */
+    navBackground() {
+      return this.config.vuetify.theme.navigation.background;
+    },
+    /**
+     * @desc Inline styles for the navigation drawer.
+     * @returns {Object} CSS style object
+     */
+    drawerStyle() {
+      if (this.isGlass) {
+        return {
+          ...liquidGlassStyle({
+            vuetifyTheme: this.theme,
+            variant: this.isInset ? 'card' : 'header',
+            border: 'none',
+            extras: {
+              color: this.theme.current.colors.onSurface,
+            },
+          }),
+          ...(this.isInset ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
+        };
+      }
+      return { background: this.navBackground };
+    },
+    /**
+     * @desc Transparent list background in glass mode, solid otherwise.
+     * @returns {Object} CSS style object
+     */
+    listStyle() {
+      return {
+        background: this.isGlass ? 'transparent' : this.navBackground,
+        color: this.navColor,
+      };
+    },
+    /**
+     * @desc Glass style for mobile button (only in glass mode).
+     * @returns {Object} CSS style object
+     */
+    glassButtonStyle() {
+      if (!this.isGlass) {
+        return {
+          '-webkit-backdrop-filter': 'blur(8px)',
+          'backdrop-filter': 'blur(8px)',
+        };
+      }
+      return liquidGlassStyle({
+        vuetifyTheme: this.theme,
+      });
     },
   },
   created() {

@@ -20,7 +20,7 @@
     <authPendingRequestBanner />
 
     <organizationsAdminPendingBanner />
-    <v-main class="pb-0" :style="{ background: theme.current.colors.background }">
+    <v-main class="pb-0" :style="mainStyle">
       <router-view />
     </v-main>
     <devkitFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
@@ -77,6 +77,17 @@ export default {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
     },
+    /**
+     * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
+     * @returns {Object} CSS style object
+     */
+    mainStyle() {
+      const base = { background: this.theme.current.colors.background };
+      if (this.config.vuetify.theme.navigation.glass && this.isLoggedIn && this.$route.path === '/') {
+        base['padding-left'] = '0px';
+      }
+      return base;
+    },
   },
   created() {
     const { app } = this.config;
@@ -122,10 +133,13 @@ export default {
 </script>
 
 <style>
-.v-application header a,
-.v-application nav a {
+.v-application header a {
   text-decoration: none !important;
   color: rgba(var(--v-theme-onPrimary), 1) !important;
+}
+.v-application nav a {
+  text-decoration: none !important;
+  color: inherit !important;
 }
 .v-application main a:not(.v-btn) {
   text-decoration: none !important;

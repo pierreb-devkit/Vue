@@ -203,11 +203,7 @@ export default {
       return {
         ...liquidGlassStyle({
           vuetifyTheme: this.theme,
-          intensity: 1,
-          tint: 0.5,
-          variant: 'pill',
-          border: 'none',
-          glowBorder: true,
+          opacity: 0.25,
           extras: {
             color: '#fff',
           },
@@ -238,27 +234,6 @@ export default {
   opacity: 0.95;
 }
 
-.blur-btn {
-  position: relative;
-}
-
-.blur-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(var(--glow-rotation, 135deg), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.4));
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
 
 .blur-btn:hover {
   transform: translateY(-2px);

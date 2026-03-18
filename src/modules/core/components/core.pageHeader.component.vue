@@ -1,5 +1,5 @@
 <template>
-  <v-row class="mx-4 mt-4 mb-2" align="center">
+  <v-row class="mx-4 my-1" align="center">
     <!-- Icon in avatar circle -->
     <slot name="avatar">
       <v-avatar v-if="icon" :color="avatarColor" size="40" class="mr-3">

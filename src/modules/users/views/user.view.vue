@@ -5,7 +5,7 @@
         <organizationsSwitcherComponent />
       </template>
     </PageHeader>
-    <v-row class="pa-2">
+    <v-row class="pa-2 mt-0">
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <v-tabs v-model="tab" color="primary">

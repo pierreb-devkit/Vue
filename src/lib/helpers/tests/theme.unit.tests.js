@@ -192,7 +192,7 @@ describe('Theme Helpers', () => {
 
       expect(result).toHaveProperty('background');
       expect(result).toHaveProperty('border');
-      expect(result).toHaveProperty('borderRadius', '16px');
+      expect(result).toHaveProperty('borderRadius', '9999px');
       expect(result).toHaveProperty('boxShadow');
       expect(result).toHaveProperty('-webkit-backdrop-filter');
       expect(result).toHaveProperty('backdrop-filter');
@@ -207,7 +207,7 @@ describe('Theme Helpers', () => {
       const result = liquidGlassStyle({ vuetifyTheme: lightTheme });
 
       expect(result).toHaveProperty('background');
-      expect(result).toHaveProperty('borderRadius', '16px');
+      expect(result).toHaveProperty('borderRadius', '9999px');
     });
 
     it('should handle intensity parameter', () => {
@@ -265,23 +265,6 @@ describe('Theme Helpers', () => {
     it('should handle border all', () => {
       const result = liquidGlassStyle({ vuetifyTheme: mockTheme, border: 'all' });
       expect(result.border).not.toBe('none');
-    });
-
-    it('should handle glowBorder true', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: true });
-      expect(result).toHaveProperty('--glow-border', '1');
-      expect(result).toHaveProperty('--glow-rotation', '135deg');
-    });
-
-    it('should handle glowBorder animated', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: 'animated' });
-      expect(result).toHaveProperty('--glow-border', '1');
-      expect(result).toHaveProperty('--glow-rotation', 'var(--gradient-rotation, 135deg)');
-    });
-
-    it('should handle glowBorder false', () => {
-      const result = liquidGlassStyle({ vuetifyTheme: mockTheme, glowBorder: false });
-      expect(result).not.toHaveProperty('--glow-border');
     });
 
     it('should merge extras into result', () => {

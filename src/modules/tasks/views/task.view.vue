@@ -14,7 +14,7 @@
       </template>
     </PageHeader>
     <!-- Form -->
-    <v-row class="pa-2">
+    <v-row class="pa-2 mt-0">
       <v-col cols="12" sm="12" md="6" lg="8" xl="9">
         <v-card class="pa-6" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <v-form ref="form" v-model="valid">

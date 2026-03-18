@@ -204,7 +204,6 @@ export default {
       return {
         ...liquidGlassStyle({
           vuetifyTheme: this.theme,
-          intensity: 1,
           opacity: this.config.vuetify.theme.header?.opacity,
           variant,
           border: 'none',

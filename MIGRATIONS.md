@@ -4,6 +4,53 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Liquid Glass Sidenav & Layout (2026-03-18)
+
+### Navigation — Glass mode (optional)
+
+New config options in `navigation`:
+
+```js
+navigation: {
+  glass: true,   // liquid glass effect (false = opaque, backward compatible)
+  inset: true,   // Apple-style floating with margin
+}
+```
+
+When `glass: true`, the sidenav uses `liquidGlassStyle()` instead of solid background. Content on `/` (home) becomes fullwidth; other routes keep the rail padding.
+
+### `liquidGlassStyle()` — New defaults
+
+| Param | Old default | New default |
+|-------|------------|-------------|
+| `intensity` | `0.8` | `1` |
+| `opacity` | `undefined` | `0.5` |
+| `variant` | `'card'` | `'pill'` |
+
+**Action for downstream:** Remove redundant params from existing calls. Add `variant: 'card'` explicitly for non-pill elements (e.g. presentation cards).
+
+### `liquidGlassStyle()` — Removed `glowBorder`
+
+The `glowBorder` parameter and all related CSS/JS have been removed. Remove any `glowBorder: true` or `glowBorder: 'animated'` from existing calls.
+
+### `liquidGlassStyle()` — Dark mode shadow
+
+Dark mode now includes a subtle outer shadow matching the existing light mode behavior.
+
+### Layout — Module views
+
+Content `v-row` after `PageHeader` should use `class="pa-2 mt-0"` to reduce gap between header and cards.
+
+### Layout — PageHeader
+
+Margins changed from `mt-4 mb-2` to `my-1`.
+
+### Global styles — Nav links
+
+`app.vue`: `nav a` color changed from `rgba(var(--v-theme-onPrimary))` to `inherit` to support glass mode.
+
+---
+
 ## Organizations & CASL (2026-03-13)
 
 This guide walks downstream Vue projects through migrating from the legacy role-based routing (`meta.roles` / `localStorage.UserRoles`) to the new CASL ability system and the optional organizations module.

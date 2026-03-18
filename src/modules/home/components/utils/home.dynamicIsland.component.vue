@@ -29,7 +29,7 @@
     <div :style="{ width: '260px', height: '56px', display: isFixed ? 'block' : 'none' }" class="mt-10"></div>
     <div :class="['dynamicIsland', { fixed: isFixed, expand: animate, minimize: hasAnimated && !animate }]" class="mt-10" :style="dynamicIslandStyle">
       <div :class="['content', { fadeIn: animate, fadeOut: !animate }]">
-        <div class="text-center font-weight-bold text-white">
+        <div class="text-center font-weight-bold">
           <span v-if="text && !steps" class="ml-4 mt-1 text-headline-small text-truncate">{{ text }}</span>
           <span v-if="step !== null && steps !== null">
             <span
@@ -92,7 +92,6 @@ export default {
       hasAnimated: false,
       disabled: false,
       stepsArray: [],
-      gradientRotation: 135,
       ticking: false,
     };
   },
@@ -104,16 +103,10 @@ export default {
       return {
         ...liquidGlassStyle({
           vuetifyTheme: this.theme,
-          intensity: 1,
-          tint: this.themeName === 'dark' ? 0.75 : -0.5,
-          variant: 'pill',
-          border: 'none',
-          glowBorder: 'animated',
           extras: {
             color: this.theme.current.colors.onSurface,
           },
         }),
-        '--gradient-rotation': `${this.gradientRotation}deg`,
       };
     },
   },
@@ -165,8 +158,6 @@ export default {
       const button = this.$el.querySelector('.dynamicIsland').getBoundingClientRect();
       const scrollDownTriger = (window.innerHeight / 3) * 2;
       const offset = 30;
-      // Mise à jour de la rotation du gradient au scroll (plus doux)
-      this.gradientRotation = (window.scrollY * 0.2) % 360;
       // Apparition : lorsque le container prend plus d'1/3 du viewport
       if (!this.animate && container.top < scrollDownTriger) {
         this.animate = true;
@@ -302,7 +293,7 @@ export default {
   width: 12px;
   height: 12px;
   border-radius: 6px;
-  background-color: rgb(var(--v-theme-onBackground));
+  background-color: currentColor;
   margin: 8px;
   margin-top: 12px;
   transition: width 0.3s ease-in-out;
