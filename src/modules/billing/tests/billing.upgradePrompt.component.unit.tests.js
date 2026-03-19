@@ -72,5 +72,20 @@ describe('BillingUpgradePrompt', () => {
     const btn = wrapper.findComponent({ name: 'v-btn' });
     expect(btn.exists()).toBe(true);
     expect(btn.text()).toContain('Upgrade');
+    expect(btn.props('to')).toBe('/pricing');
+  });
+
+  it('shows generic message when resource/action set but no quota data', () => {
+    const wrapper = mountComponent(
+      { requiredPlan: 'pro', resource: 'documents', action: 'create' },
+      {
+        plan: 'free',
+        period: '2026-03',
+        usage: {},
+        limits: {},
+      },
+    );
+    expect(wrapper.text()).toContain('This feature requires the');
+    expect(wrapper.text()).not.toContain("You've used");
   });
 });

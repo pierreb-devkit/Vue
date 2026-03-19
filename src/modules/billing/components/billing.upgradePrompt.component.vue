@@ -51,6 +51,10 @@ export default {
       default: '',
     },
   },
+  /**
+   * @desc Wires useQuota composable and exposes reactive usage and limits maps.
+   * @returns {{ usage: Object, limits: Object }}
+   */
   setup() {
     const { usage, limits } = useQuota();
     return { usage, limits };
@@ -68,7 +72,7 @@ export default {
      * @returns {boolean}
      */
     hasUsageInfo() {
-      return !!(this.resource && this.action);
+      return !!(this.resource && this.action && this.limits[this.key] !== undefined);
     },
     /**
      * @desc Current usage count for the resource action.

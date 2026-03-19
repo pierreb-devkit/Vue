@@ -24,7 +24,6 @@
       rounded
       height="20"
     />
-    <span v-else class="text-body-small text-medium-emphasis">Unlimited</span>
   </div>
 </template>
 
@@ -62,6 +61,10 @@ export default {
       default: '',
     },
   },
+  /**
+   * @desc Wires useQuota composable and exposes reactive usage, limits, and usagePercent.
+   * @returns {{ usage: Object, limits: Object, usagePercent: Function }}
+   */
   setup() {
     const { usage, limits, usagePercent } = useQuota();
 

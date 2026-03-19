@@ -44,6 +44,7 @@ describe('BillingUsageBarComponent', () => {
     expect(wrapper.vm.percent).toBe(25);
     const progressBar = wrapper.findComponent({ name: 'v-progress-linear' });
     expect(progressBar.exists()).toBe(true);
+    expect(progressBar.props('modelValue')).toBe(25);
   });
 
   it('shows green color when usage is below 70%', () => {
