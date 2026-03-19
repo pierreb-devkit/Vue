@@ -7,7 +7,7 @@ Stripe billing UI with quota display.
 ### `useQuota()`
 
 ```js
-import { useQuota } from '../composables/billing.useQuota.js';
+import { useQuota } from './composables/billing.useQuota.js';
 
 const { plan, usage, limits, canDo, usagePercent, refresh } = useQuota();
 
@@ -19,17 +19,17 @@ if (!canDo('documents', 'create')) {
 ### `useBilling()`
 
 ```js
-import { useBilling } from '../composables/billing.useBilling.js';
+import { useBilling } from './composables/billing.useBilling.js';
 
 const { currentPlan, isPlanActive, hasPlan } = useBilling();
 ```
 
 ## Components
 
-### `<BillingUsageBar>`
+### `<BillingUsageBarComponent>`
 
 ```vue
-<BillingUsageBar resource="documents" action="create" label="Documents" />
+<BillingUsageBarComponent resource="documents" action="create" label="Documents" />
 ```
 
 Auto-colored progress bar (green/orange/red). Shows "Unlimited" for uncapped plans.
@@ -41,11 +41,11 @@ Auto-colored progress bar (green/orange/red). Shows "Unlimited" for uncapped pla
 <BillingUpgradePrompt requiredPlan="starter" />
 
 <!-- With usage context -->
-<BillingUpgradePrompt requiredPlan="starter" resource="documents" action="create" label="documents" />
+<BillingUpgradePrompt requiredPlan="starter" resource="documents" action="create" label="Documents" />
 ```
 
-### `<BillingPlanBadge>`
+### `<BillingPlanBadgeComponent>`
 
 ```vue
-<BillingPlanBadge :plan="currentPlan" />
+<BillingPlanBadgeComponent :plan="currentPlan" />
 ```
