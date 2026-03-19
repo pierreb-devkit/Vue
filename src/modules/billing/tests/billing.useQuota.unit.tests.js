@@ -119,6 +119,17 @@ describe('useQuota composable', () => {
   });
 
   describe('usagePercent', () => {
+    it('should return 100 when limit is zero', () => {
+      store.quota = {
+        plan: 'starter',
+        period: '2026-03',
+        usage: { 'documents.create': 0 },
+        limits: { 'documents.create': 0 },
+      };
+      const { usagePercent } = useQuota();
+      expect(usagePercent('documents', 'create')).toBe(100);
+    });
+
     it('should return correct percentage', () => {
       store.quota = {
         plan: 'starter',

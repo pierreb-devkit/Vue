@@ -40,7 +40,8 @@ export function useQuota() {
   function usagePercent(resource, action) {
     const key = `${resource}.${action}`;
     const limit = limits.value[key];
-    if (!limit || limit === Infinity) return 0;
+    if (limit === undefined || limit === null || limit === Infinity) return 0;
+    if (limit <= 0) return 100;
     const current = usage.value[key] || 0;
     return Math.min(Math.round((current / limit) * 100), 100);
   }
