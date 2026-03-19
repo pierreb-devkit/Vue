@@ -18,6 +18,7 @@ export const useBillingStore = defineStore('billing', {
   state: () => ({
     plans: [],
     subscription: null,
+    quota: null,
     loading: false,
   }),
 
@@ -52,6 +53,25 @@ export const useBillingStore = defineStore('billing', {
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/subscription`);
         this.subscription = res.data.data;
         return this.subscription;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * @desc Fetch current usage and quota limits for the active organization.
+     * @returns {Promise<Object>} Resolved quota object
+     */
+    async fetchUsage() {
+      this.loading = true;
+      try {
+        const api = apiBase();
+        const res = await axios.get(`${api}/${config.api.endPoints.billing}/usage`);
+        this.quota = res.data.data;
+        return this.quota;
       } catch (err) {
         console.error(err);
         throw err;
