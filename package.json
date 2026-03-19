@@ -46,7 +46,7 @@
     "@casl/ability": "^6.8.0",
     "@casl/vue": "^2.2.6",
     "@fortawesome/fontawesome-free": "^7.2.0",
-    "@tryghost/content-api": "^1.12.5",
+    "@tryghost/content-api": "^1.12.6",
     "@unhead/vue": "^2.1.12",
     "aos": "^2.3.4",
     "axios": "^1.13.6",
