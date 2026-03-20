@@ -269,7 +269,9 @@ async function isBillingApiAvailable(request) {
 }
 
 /**
- * @desc Check whether Stripe env vars are configured on the backend.
+ * @desc Check whether the backend has paid plans with Stripe price IDs.
+ *       This is a heuristic — it verifies that plans exist with non-free Stripe
+ *       price IDs, which implies Stripe env vars are configured on the backend.
  * @param {import('@playwright/test').APIRequestContext} request
  * @returns {Promise<boolean>}
  */
@@ -357,6 +359,29 @@ test.describe('Stripe Checkout Flow', () => {
   test.describe.configure({ mode: 'serial' });
 
   /**
+   * @desc Create test user and org for Stripe checkout tests (self-contained setup).
+   * @param {{ playwright: import('playwright').Playwright, request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('setup: create test user for checkout tests', async ({ playwright, request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    // signupViaAPI is idempotent — safe to call even if user already exists
+    const res = await signupViaAPI(request, {
+      email: testEmail,
+      password: testPassword,
+      firstName: 'Billing',
+      lastName: 'Tester',
+    });
+    expect(res.user).toBeTruthy();
+
+    const ctx = await authenticatedContext(playwright, testEmail, testPassword);
+    const org = await createOrgViaAPI(ctx, `BillingTestOrg${timestamp}`);
+    expect(org).toBeTruthy();
+  });
+
+  /**
    * @desc Verify authenticated user clicking paid plan CTA redirects to Stripe Checkout.
    *       Skipped when Stripe is not configured on the backend.
    * @param {{ page: import('playwright').Page, request: import('playwright').APIRequestContext }} fixtures
@@ -368,7 +393,7 @@ test.describe('Stripe Checkout Flow', () => {
     const stripeUp = await isStripeConfigured(request);
     test.skip(!stripeUp, 'Stripe not configured');
 
-    // Sign in with the test user created earlier
+    // Sign in with the test user created in setup
     await signin(page, testEmail, testPassword);
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
@@ -389,10 +414,12 @@ test.describe('Stripe Checkout Flow', () => {
     ]);
 
     // Either we got a checkout API response with a Stripe URL, or the page navigated to Stripe
+    let stripeUrlVerified = false;
     if (response) {
       const body = await response.json().catch(() => ({}));
       if (body.url) {
         expect(body.url).toContain('checkout.stripe.com');
+        stripeUrlVerified = true;
       }
     }
     // If browser navigated away, check the URL
@@ -400,7 +427,10 @@ test.describe('Stripe Checkout Flow', () => {
     const url = page.url();
     if (url.includes('checkout.stripe.com')) {
       expect(url).toContain('checkout.stripe.com');
+      stripeUrlVerified = true;
     }
+    // Ensure at least one verification path succeeded
+    expect(stripeUrlVerified).toBe(true);
   });
 
   /**
