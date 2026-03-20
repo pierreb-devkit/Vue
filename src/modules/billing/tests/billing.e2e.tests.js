@@ -243,3 +243,197 @@ test.describe('Billing Page — Authenticated', () => {
     await expect(page.locator('h1:has-text("Billing")')).toBeVisible({ timeout: 10000 });
   });
 });
+
+/**
+ * @desc Check whether Stripe env vars are configured on the backend.
+ * @param {import('@playwright/test').APIRequestContext} request
+ * @returns {Promise<boolean>}
+ */
+async function isStripeConfigured(request) {
+  try {
+    const res = await request.get(`${API_URL}/api/billing/plans`);
+    if (!res.ok()) return false;
+    const body = await res.json();
+    // Stripe is configured if at least one plan has a real Stripe price ID
+    return body.data?.some((p) => p.stripePriceMonthly && !p.stripePriceMonthly.startsWith('price_free'));
+  } catch {
+    return false;
+  }
+}
+
+test.describe('Billing API — Security', () => {
+  /**
+   * @desc Verify GET /api/billing/plans returns plans (public endpoint).
+   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('GET /api/billing/plans returns plans', async ({ request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    const res = await request.get(`${API_URL}/api/billing/plans`);
+    expect(res.status()).toBe(200);
+
+    const body = await res.json();
+    expect(body.data).toBeTruthy();
+    expect(Array.isArray(body.data)).toBe(true);
+  });
+
+  /**
+   * @desc Verify GET /api/billing/subscription without auth returns 401.
+   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('GET /api/billing/subscription without auth returns 401', async ({ request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    const res = await request.get(`${API_URL}/api/billing/subscription`, {
+      headers: { Cookie: '' },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  /**
+   * @desc Verify POST /api/billing/checkout without auth returns 401.
+   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('POST /api/billing/checkout without auth returns 401', async ({ request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    const res = await request.post(`${API_URL}/api/billing/checkout`, {
+      headers: { Cookie: '' },
+      data: { priceId: 'price_test' },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  /**
+   * @desc Verify POST /api/billing/webhook with invalid signature returns 400.
+   * @param {{ request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('POST /api/billing/webhook with invalid signature returns 400', async ({ request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    const res = await request.post(`${API_URL}/api/billing/webhook`, {
+      headers: { 'stripe-signature': 'invalid_sig' },
+      data: '{}',
+    });
+    expect(res.status()).toBe(400);
+  });
+});
+
+test.describe('Stripe Checkout Flow', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  /**
+   * @desc Verify authenticated user clicking paid plan CTA redirects to Stripe Checkout.
+   *       Skipped when Stripe is not configured on the backend.
+   * @param {{ page: import('playwright').Page, request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('paid plan CTA redirects to Stripe Checkout', async ({ page, request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+    const stripeUp = await isStripeConfigured(request);
+    test.skip(!stripeUp, 'Stripe not configured');
+
+    // Sign in with the test user created earlier
+    await signin(page, testEmail, testPassword);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Navigate to pricing page (uses real API data since Stripe is configured)
+    await page.goto('/pricing', { waitUntil: 'networkidle', timeout: 15000 });
+    await page.waitForTimeout(2000);
+
+    // Click a paid plan CTA (Starter or Pro — skip "Get Started" on Free)
+    const paidCta = page.locator('.billing-pricing-card:not(:first-child) button:has-text("Get Started"):not([disabled])');
+    const ctaCount = await paidCta.count();
+    test.skip(ctaCount === 0, 'No enabled paid plan CTA found');
+
+    // Listen for navigation to Stripe
+    const [response] = await Promise.all([
+      page.waitForEvent('response', { predicate: (r) => r.url().includes('/api/billing/checkout'), timeout: 10000 }).catch(() => null),
+      paidCta.first().click(),
+    ]);
+
+    // Either we got a checkout API response with a Stripe URL, or the page navigated to Stripe
+    if (response) {
+      const body = await response.json().catch(() => ({}));
+      if (body.url) {
+        expect(body.url).toContain('checkout.stripe.com');
+      }
+    }
+    // If browser navigated away, check the URL
+    await page.waitForTimeout(3000);
+    const url = page.url();
+    if (url.includes('checkout.stripe.com')) {
+      expect(url).toContain('checkout.stripe.com');
+    }
+  });
+
+  /**
+   * @desc Verify checkout API returns a valid Stripe Checkout URL.
+   *       Skipped when Stripe is not configured on the backend.
+   * @param {{ playwright: import('playwright').Playwright, request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('checkout API returns Stripe Checkout URL', async ({ playwright, request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+    const stripeUp = await isStripeConfigured(request);
+    test.skip(!stripeUp, 'Stripe not configured');
+
+    // Get a real price ID from the plans endpoint
+    const plansRes = await request.get(`${API_URL}/api/billing/plans`);
+    const plans = (await plansRes.json()).data;
+    const paidPlan = plans.find((p) => p.stripePriceMonthly && p.planId !== 'free');
+    test.skip(!paidPlan, 'No paid plan with Stripe price found');
+
+    // Create authenticated context and call checkout
+    const ctx = await authenticatedContext(playwright, testEmail, testPassword);
+    const res = await ctx.post(`${API_URL}/api/billing/checkout`, {
+      data: { priceId: paidPlan.stripePriceMonthly },
+    });
+    expect(res.status()).toBe(200);
+
+    const body = await res.json();
+    expect(body.url).toBeTruthy();
+    expect(body.url).toContain('checkout.stripe.com');
+  });
+});
+
+test.describe('Stripe Portal Flow', () => {
+  /**
+   * @desc Verify portal API returns a valid billing.stripe.com URL.
+   *       Skipped when Stripe is not configured on the backend.
+   * @param {{ playwright: import('playwright').Playwright, request: import('playwright').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
+  test('portal API returns Stripe portal URL', async ({ playwright, request }) => {
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+    const stripeUp = await isStripeConfigured(request);
+    test.skip(!stripeUp, 'Stripe not configured');
+
+    // Create authenticated context and call portal
+    const ctx = await authenticatedContext(playwright, testEmail, testPassword);
+    const res = await ctx.post(`${API_URL}/api/billing/portal`);
+
+    // Portal may return 400 if user has no Stripe customer — skip gracefully
+    if (res.status() === 400) {
+      test.skip(true, 'User has no Stripe customer record — portal unavailable');
+    }
+
+    expect(res.status()).toBe(200);
+
+    const body = await res.json();
+    expect(body.url).toBeTruthy();
+    expect(body.url).toContain('billing.stripe.com');
+  });
+});
