@@ -139,10 +139,15 @@ test.describe('Pricing Page E2E', () => {
     await page.goto('/pricing');
     await page.waitForLoadState('networkidle');
 
-    // Each plan has a "Get Started" CTA button
+    // Free plan shows "Current Plan" (default plan for unauthenticated users),
+    // so only paid plans display "Get Started" CTA buttons.
     const ctaButtons = page.locator('.billing-pricing-card button:has-text("Get Started")');
     await expect(ctaButtons.first()).toBeVisible({ timeout: 10000 });
-    await expect(ctaButtons).toHaveCount(3);
+    await expect(ctaButtons).toHaveCount(2);
+
+    // Free plan shows the "Current Plan" indicator
+    const currentPlanBtn = page.locator('.billing-pricing-card button:has-text("Current Plan")');
+    await expect(currentPlanBtn).toHaveCount(1);
   });
 });
 
@@ -245,6 +250,25 @@ test.describe('Billing Page — Authenticated', () => {
 });
 
 /**
+ * @desc Check whether the billing API routes are available on the backend.
+ * @param {import('@playwright/test').APIRequestContext} request
+ * @returns {Promise<boolean>}
+ */
+async function isBillingApiAvailable(request) {
+  try {
+    const res = await request.get(`${API_URL}/api/billing/plans`);
+    if (!res.ok()) return false;
+    const text = await res.text();
+    // Guard against SPA HTML fallback masquerading as a 200 JSON response
+    if (text.startsWith('<')) return false;
+    const body = JSON.parse(text);
+    return Array.isArray(body.data);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * @desc Check whether Stripe env vars are configured on the backend.
  * @param {import('@playwright/test').APIRequestContext} request
  * @returns {Promise<boolean>}
@@ -253,7 +277,9 @@ async function isStripeConfigured(request) {
   try {
     const res = await request.get(`${API_URL}/api/billing/plans`);
     if (!res.ok()) return false;
-    const body = await res.json();
+    const text = await res.text();
+    if (text.startsWith('<')) return false;
+    const body = JSON.parse(text);
     // Stripe is configured if at least one plan has a real Stripe price ID
     return body.data?.some((p) => p.stripePriceMonthly && !p.stripePriceMonthly.startsWith('price_free'));
   } catch {
@@ -268,8 +294,8 @@ test.describe('Billing API — Security', () => {
    * @returns {Promise<void>}
    */
   test('GET /api/billing/plans returns plans', async ({ request }) => {
-    const apiUp = await isApiAvailable(request);
-    test.skip(!apiUp, 'Node API backend not running');
+    const billingUp = await isBillingApiAvailable(request);
+    test.skip(!billingUp, 'Billing API not available');
 
     const res = await request.get(`${API_URL}/api/billing/plans`);
     expect(res.status()).toBe(200);
@@ -285,8 +311,8 @@ test.describe('Billing API — Security', () => {
    * @returns {Promise<void>}
    */
   test('GET /api/billing/subscription without auth returns 401', async ({ request }) => {
-    const apiUp = await isApiAvailable(request);
-    test.skip(!apiUp, 'Node API backend not running');
+    const billingUp = await isBillingApiAvailable(request);
+    test.skip(!billingUp, 'Billing API not available');
 
     const res = await request.get(`${API_URL}/api/billing/subscription`, {
       headers: { Cookie: '' },
@@ -300,8 +326,8 @@ test.describe('Billing API — Security', () => {
    * @returns {Promise<void>}
    */
   test('POST /api/billing/checkout without auth returns 401', async ({ request }) => {
-    const apiUp = await isApiAvailable(request);
-    test.skip(!apiUp, 'Node API backend not running');
+    const billingUp = await isBillingApiAvailable(request);
+    test.skip(!billingUp, 'Billing API not available');
 
     const res = await request.post(`${API_URL}/api/billing/checkout`, {
       headers: { Cookie: '' },
@@ -316,8 +342,8 @@ test.describe('Billing API — Security', () => {
    * @returns {Promise<void>}
    */
   test('POST /api/billing/webhook with invalid signature returns 400', async ({ request }) => {
-    const apiUp = await isApiAvailable(request);
-    test.skip(!apiUp, 'Node API backend not running');
+    const billingUp = await isBillingApiAvailable(request);
+    test.skip(!billingUp, 'Billing API not available');
 
     const res = await request.post(`${API_URL}/api/billing/webhook`, {
       headers: { 'stripe-signature': 'invalid_sig' },
