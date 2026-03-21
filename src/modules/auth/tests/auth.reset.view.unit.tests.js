@@ -98,6 +98,24 @@ describe('auth.reset.view', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    it('initializes showPassword to false', () => {
+      const wrapper = mountView();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+
+    it('toggles showPassword when clicking the append-inner icon', () => {
+      const wrapper = mountView();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(true);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+  });
+
   describe('rules.password', () => {
     it('returns error string for passwords shorter than 8 characters', () => {
       const wrapper = mountView();

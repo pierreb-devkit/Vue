@@ -120,6 +120,26 @@ describe('auth.signin.view', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    it('initializes showPassword to false', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+
+    it('toggles showPassword when clicking the append-inner icon', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(true);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+  });
+
   describe('lockout UI', () => {
     it('computes lockoutMinutes rounded up from retryAfter seconds', async () => {
       lockoutState.locked = true;

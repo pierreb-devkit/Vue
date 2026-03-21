@@ -9,14 +9,16 @@
         <label class="text-label-large font-weight-medium d-block mb-1">New password</label>
         <v-text-field
           v-model="password"
-          :type="'password'"
+          :type="showPassword ? 'text' : 'password'"
           :rules="[rules.password]"
+          :append-inner-icon="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
           placeholder="Enter your new password"
           variant="outlined"
           density="comfortable"
           class="mb-6"
           required
           hide-details="auto"
+          @click:append-inner="showPassword = !showPassword"
         ></v-text-field>
         <v-btn
           :flat="config.vuetify.theme.flat"
@@ -55,6 +57,7 @@ export default {
       theme,
       valid: true, // TODO: switch to false when forms will be reactive
       password: '',
+      showPassword: false,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
