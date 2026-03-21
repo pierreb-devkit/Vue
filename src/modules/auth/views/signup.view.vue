@@ -120,7 +120,7 @@
           v-model="password"
           :type="showPassword ? 'text' : 'password'"
           :rules="[rules.password]"
-          :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+          :append-inner-icon="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
           placeholder="Create a password"
           variant="outlined"
           density="comfortable"

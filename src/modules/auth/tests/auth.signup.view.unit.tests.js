@@ -133,6 +133,26 @@ describe('auth.signup.view', () => {
     });
   });
 
+  describe('password visibility toggle', () => {
+    it('initializes showPassword to false', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+
+    it('toggles showPassword when clicking the append-inner icon', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.showPassword).toBe(false);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(true);
+      wrapper.vm.showPassword = !wrapper.vm.showPassword;
+      expect(wrapper.vm.showPassword).toBe(false);
+    });
+  });
+
   describe('organization signup flow', () => {
     it('does not show org step when organizations are disabled', async () => {
       signupMock.mockResolvedValueOnce({ user: { roles: ['user'] }, tokenExpiresIn: 123 });
