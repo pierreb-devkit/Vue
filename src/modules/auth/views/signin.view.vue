@@ -67,14 +67,16 @@
         <label class="text-label-large font-weight-medium d-block mb-1">Password</label>
         <v-text-field
           v-model="password"
-          :type="'password'"
+          :type="showPassword ? 'text' : 'password'"
           :rules="[rules.password]"
+          :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
           placeholder="Enter your password"
           variant="outlined"
           density="comfortable"
           class="mb-6"
           required
           hide-details="auto"
+          @click:append-inner="showPassword = !showPassword"
         ></v-text-field>
         <v-btn
           :flat="config.vuetify.theme.flat"
@@ -115,6 +117,7 @@ export default {
       serverConfig: undefined,
       email: '',
       password: '',
+      showPassword: false,
       lockoutTimer: null,
       oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
       rules: {
