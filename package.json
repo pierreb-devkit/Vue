@@ -53,7 +53,7 @@
     "dayjs": "^1.11.20",
     "dompurify": "^3.3.3",
     "lodash-es": "^4.17.23",
-    "marked": "^17.0.4",
+    "marked": "^17.0.5",
     "pinia": "^3.0.4",
     "posthog-js": "^1.363.1",
     "unhead": "^2.1.12",
