@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from '../../../lib/helpers/e2e/config.js';
 
 const timestamp = Date.now();
 const testEmail = `e2e-signup-${timestamp}@new${timestamp}.com`;
@@ -25,7 +26,7 @@ test.describe('Signup E2E', () => {
 
   test('can signin after signup', async ({ page }) => {
     // First signup via API to ensure user exists
-    const signupRes = await page.request.post('http://localhost:3000/api/auth/signup', {
+    const signupRes = await page.request.post(`${API_URL}/auth/signup`, {
       data: { email: `e2e-signin-${timestamp}@test.com`, password: testPassword, firstName: 'Test', lastName: 'User' },
     });
     expect(signupRes.ok()).toBeTruthy();

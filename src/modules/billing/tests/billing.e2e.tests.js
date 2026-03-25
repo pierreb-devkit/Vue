@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
 import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
+import { API_ORIGIN as API_URL } from '../../../lib/helpers/e2e/config.js';
 
 const timestamp = Date.now();
 const testEmail = `e2e-billing-${timestamp}@billing${timestamp}.com`;
 const testPassword = 'E2eTestPass99xyz';
-const API_URL = 'http://localhost:3000';
 
 /**
  * @desc Mock plans returned by the billing API for E2E tests.

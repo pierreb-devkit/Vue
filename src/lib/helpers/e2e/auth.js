@@ -1,3 +1,5 @@
+import { API_URL } from './config.js';
+
 /**
  * @desc Sign in a user via the UI
  * @param {import('@playwright/test').Page} page
@@ -21,7 +23,7 @@ export async function signin(page, email, password) {
  * @returns {Promise<Object>} signup response data
  */
 export async function signupViaAPI(request, { email, password, firstName, lastName }) {
-  const res = await request.post('http://localhost:3000/api/auth/signup', {
+  const res = await request.post(`${API_URL}/auth/signup`, {
     data: { email, password, firstName: firstName || 'Test', lastName: lastName || 'User' },
   });
   const body = await res.json();
@@ -39,7 +41,7 @@ export async function signupViaAPI(request, { email, password, firstName, lastNa
  * @returns {Promise<Object>}
  */
 export async function signinViaAPI(request, email, password) {
-  const res = await request.post('http://localhost:3000/api/auth/signin', {
+  const res = await request.post(`${API_URL}/auth/signin`, {
     data: { email, password },
   });
   const body = await res.json();

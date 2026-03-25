@@ -1,4 +1,6 @@
-const API = 'http://localhost:3000/api';
+import { API_URL } from './config.js';
+
+const API = API_URL;
 
 /**
  * @desc Create an authenticated API request context
