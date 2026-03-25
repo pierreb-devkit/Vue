@@ -1,8 +1,7 @@
 /**
  * Module dependencies.
  */
-import { ref, onUnmounted } from 'vue';
-import { usePostHog } from './analytics.usePostHog';
+import { ref, getCurrentInstance, onMounted, onUnmounted } from 'vue';
 
 /**
  * @desc Composable that returns a reactive ref tracking a PostHog feature flag.
@@ -14,7 +13,8 @@ import { usePostHog } from './analytics.usePostHog';
 export function useFeatureFlag(flagKey) {
   const flag = ref(false);
 
-  const posthog = usePostHog();
+  const instance = getCurrentInstance();
+  const posthog = instance?.appContext?.config?.globalProperties?.$posthog;
 
   if (!posthog) return flag;
 
@@ -33,8 +33,12 @@ export function useFeatureFlag(flagKey) {
   // Check immediately in case flags are already loaded
   sync();
 
-  const unsubscribe = posthog.onFeatureFlags(() => {
-    sync();
+  let unsubscribe;
+
+  onMounted(() => {
+    unsubscribe = posthog.onFeatureFlags(() => {
+      sync();
+    });
   });
 
   onUnmounted(() => {
