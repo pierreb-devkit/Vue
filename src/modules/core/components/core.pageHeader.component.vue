@@ -1,5 +1,5 @@
 <template>
-  <v-row class="mx-4 my-1" align="center" :style="$slots.tabs ? 'min-height: 56px' : ''">
+  <v-row class="mx-4 my-1" align="center" :style="$slots.tabs ? { minHeight: '56px' } : null">
     <template v-if="$slots.tabs">
       <!-- Tabs mode: tabs replace icon + title -->
       <slot name="tabs"></slot>
