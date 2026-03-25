@@ -5,6 +5,14 @@ import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 
+// Mock config
+vi.mock('../../../lib/services/config', () => ({
+  default: {
+    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
+    cookie: { prefix: 'devkit' },
+  },
+}));
+
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({
   default: {
@@ -657,6 +665,38 @@ describe('Auth Store', () => {
       await authStore.signin({ email: 'jane@test.com', password: 'password' });
 
       expect(posthog.identify).toHaveBeenCalledWith('u2', { email: 'jane@test.com', name: 'Jane' });
+    });
+
+    it('should deduce name from email when firstName and lastName are missing', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u3', email: 'john.doe@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'john.doe@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u3', { email: 'john.doe@test.com', name: 'John Doe' });
+    });
+
+    it('should omit name property when name cannot be deduced', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u4', email: '123456@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: '123456@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u4', { email: '123456@test.com' });
     });
   });
 });

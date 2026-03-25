@@ -121,7 +121,14 @@ export const useAuthStore = defineStore('auth', {
         // PostHog identify on login
         if (posthog.__loaded) {
           const u = res.data.user;
-          posthog.identify(u.id || u._id, { email: u.email, name: [u.firstName, u.lastName].filter(Boolean).join(' ') });
+          let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+          if (!name && u.email) {
+            const deduced = deduceNamesFromEmail(u.email);
+            name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
+          }
+          const identifyProps = { email: u.email };
+          if (name) identifyProps.name = name;
+          posthog.identify(u.id || u._id, identifyProps);
         }
       } catch (err) {
         if (err.response && err.response.status === 423) {
@@ -179,6 +186,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    /**
+     * @desc Sign out the current user: clear auth state, abilities, and localStorage.
+     * @returns {Promise<void>}
+     */
     async signout() {
       const coreStore = useCoreStore();
       this.auth = false;
