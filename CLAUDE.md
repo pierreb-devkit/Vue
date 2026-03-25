@@ -43,6 +43,12 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - E2E only for critical product flows (auth, org onboarding, invite/join); requires Node + Vue + MongoDB running
 - Docker (mongo + node-api): `docker compose -f docker-compose.test.yml up -d`
 
+## Downstream config patterns
+
+- **Config layering**: Module configs (`*.development.config.js`) load first, then global overrides (`{env}.config.js`). Override in global config, not module configs, to avoid stack merge conflicts.
+- **Post-login redirect**: Set `sign.route` in global config override. Used by signin, signup, and org flows. Default: `/tasks`.
+- **Custom home page**: Replace `home.router.js` with a project-specific router that maps `/` to a custom view. Set `display: false` in route meta to hide from sidenav.
+
 ## Guardrails
 
 - Never commit secrets (`.env*`, keys, tokens)
