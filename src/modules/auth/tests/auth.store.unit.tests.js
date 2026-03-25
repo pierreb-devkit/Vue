@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
 
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({
@@ -51,7 +52,7 @@ describe('Auth Store', () => {
 
   it('should initialize from localStorage', () => {
     const expireTime = Date.now() + 3600000;
-    localStorage.setItem('devkitCookieExpire', expireTime.toString());
+    localStorage.setItem(`${config.cookie.prefix}CookieExpire`, expireTime.toString());
 
     const authStore = useAuthStore();
     authStore.initFromStorage();
@@ -65,18 +66,18 @@ describe('Auth Store', () => {
     authStore.auth = true;
     authStore.cookieExpire = Date.now() + 1000;
     authStore.user = { id: '123', email: 'test@example.com' };
-    localStorage.setItem('devkitUserRoles', 'user,admin');
-    localStorage.setItem('devkitCookieExpire', '12345');
-    localStorage.setItem('devkitLastLoginAt', '2026-01-01T00:00:00Z');
+    localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user,admin');
+    localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
+    localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
 
     await authStore.signout();
 
     expect(authStore.auth).toBe(false);
     expect(authStore.cookieExpire).toBe(0);
     expect(authStore.user).toBe(null);
-    expect(localStorage.getItem('devkitUserRoles')).toBe(null);
-    expect(localStorage.getItem('devkitCookieExpire')).toBe(null);
-    expect(localStorage.getItem('devkitLastLoginAt')).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
   });
 
   it('should have mail state initialized', () => {
@@ -100,7 +101,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should clear lockout on successful signin', async () => {
@@ -132,7 +133,7 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
-      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
     it('should handle 423 lockout response', async () => {
@@ -203,7 +204,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should handle signup error', async () => {
@@ -233,7 +234,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user,admin');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user,admin');
     });
 
     it('should store lastLoginAt on token refresh', async () => {
@@ -249,7 +250,7 @@ describe('Auth Store', () => {
       axios.get.mockResolvedValueOnce(mockResponse);
       await authStore.token();
 
-      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
     it('should handle token refresh error', async () => {
@@ -307,7 +308,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should handle reset password error', async () => {
