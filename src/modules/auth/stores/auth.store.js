@@ -7,6 +7,7 @@ import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
+import { capture } from '../../../lib/helpers/analytics';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -179,6 +180,7 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         coreStore.refreshNav(this.isLoggedIn);
+        capture('signup_completed', { email: res.data.user.email });
         return res.data;
       } catch (err) {
         localStorage.removeItem('token');

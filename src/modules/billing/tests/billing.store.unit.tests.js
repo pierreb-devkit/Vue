@@ -11,10 +11,17 @@ vi.mock('../../../lib/services/axios', () => ({
   },
 }));
 
+// Mock analytics helper
+const mockCapture = vi.fn();
+vi.mock('../../../lib/helpers/analytics', () => ({
+  capture: (...args) => mockCapture(...args),
+}));
+
 describe('Billing Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mockCapture.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -105,6 +112,7 @@ describe('Billing Store', () => {
       const result = await store.createCheckout('price_123');
       expect(result).toEqual(mockCheckout);
       expect(store.loading).toBe(false);
+      expect(mockCapture).toHaveBeenCalledWith('plan_upgraded', { price_id: 'price_123' });
     });
 
     it('should send correct payload with priceId and redirect URLs', async () => {

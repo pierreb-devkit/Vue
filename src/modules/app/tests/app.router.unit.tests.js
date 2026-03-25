@@ -23,6 +23,11 @@ vi.mock('../../../lib/helpers/ability.js', () => ({
   ability: mockAbility,
 }));
 
+const mockCapturePageview = vi.fn();
+vi.mock('../../../lib/helpers/analytics', () => ({
+  capturePageview: (...args) => mockCapturePageview(...args),
+}));
+
 
 const mockBillingStore = {
   subscription: null,
@@ -50,6 +55,7 @@ describe('app.router', () => {
     mockAbility.can.mockReturnValue(false);
     mockBillingStore.subscription = null;
     mockBillingStore.fetchSubscription.mockReset().mockResolvedValue();
+    mockCapturePageview.mockReset();
 
     // Re-apply mocks after resetModules
     vi.doMock('../../auth/stores/auth.store', () => ({
@@ -63,6 +69,9 @@ describe('app.router', () => {
     }));
     vi.doMock('../../billing/stores/billing.store', () => ({
       useBillingStore: () => mockBillingStore,
+    }));
+    vi.doMock('../../../lib/helpers/analytics', () => ({
+      capturePageview: (...args) => mockCapturePageview(...args),
     }));
 
     const module = await import('../app.router.js');
@@ -204,6 +213,26 @@ describe('app.router', () => {
     await router.push('/billing');
     await router.isReady();
     expect(router.currentRoute.value.path).toBe('/billing');
+  });
+
+  describe('pageview tracking', () => {
+    it('should call capturePageview after navigation', async () => {
+      const router = getRouter();
+      await router.push('/');
+      await router.isReady();
+      expect(mockCapturePageview).toHaveBeenCalled();
+      const call = mockCapturePageview.mock.calls[0][0];
+      expect(call.fullPath).toBe('/');
+    });
+
+    it('should call capturePageview with route meta', async () => {
+      const router = getRouter();
+      await router.push('/does-not-exist');
+      await router.isReady();
+      const calls = mockCapturePageview.mock.calls;
+      const lastCall = calls[calls.length - 1][0];
+      expect(lastCall.meta.title).toBe('Page Not Found');
+    });
   });
 
   describe('requiredPlan guard', () => {

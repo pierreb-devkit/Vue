@@ -37,17 +37,24 @@ vi.mock('../../../lib/helpers/ability', () => ({
   updateAbilities: (...args) => mockUpdateAbilities(...args),
 }));
 
+// Mock analytics helper
+const mockCapture = vi.fn();
+vi.mock('../../../lib/helpers/analytics', () => ({
+  capture: (...args) => mockCapture(...args),
+}));
+
 describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
-    // Reset ability mock
+    // Reset mocks
     mockUpdateAbilities.mockClear();
     // Reset posthog mocks
     posthog.__loaded = false;
     posthog.identify.mockClear();
     posthog.reset.mockClear();
     posthog.group.mockClear();
+    mockCapture.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -229,6 +236,30 @@ describe('Auth Store', () => {
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
       expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
+    });
+
+    it('should capture signup_completed event on success', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(mockCapture).toHaveBeenCalledWith('signup_completed', { email: 'new@test.com' });
+    });
+
+    it('should not capture signup_completed on failure', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockRejectedValueOnce(new Error('Signup failed'));
+      await expect(authStore.signup({ email: 'new@test.com', password: 'password' })).rejects.toThrow('Signup failed');
+
+      expect(mockCapture).not.toHaveBeenCalled();
     });
 
     it('should handle signup error', async () => {

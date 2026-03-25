@@ -4,6 +4,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
+import { capturePageview } from '../../lib/helpers/analytics';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
@@ -119,6 +120,12 @@ const getRouter = () => {
       return '/signin';
     }
   });
+
+  // Automatic page-view tracking
+  router.afterEach((to) => {
+    capturePageview(to);
+  });
+
   return router;
 };
 

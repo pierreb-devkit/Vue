@@ -44,12 +44,19 @@ vi.mock('../../../lib/helpers/ability', () => ({
   updateAbilities: vi.fn(),
 }));
 
+// Mock analytics helper
+const mockCapture = vi.fn();
+vi.mock('../../../lib/helpers/analytics', () => ({
+  capture: (...args) => mockCapture(...args),
+}));
+
 const API = 'http://localhost:3000/api';
 
 describe('Organizations Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mockCapture.mockClear();
     mockAuthStore.user = null;
     mockAuthStore.cookieExpire = null;
     posthog.__loaded = false;
@@ -110,6 +117,7 @@ describe('Organizations Store', () => {
       expect(store.currentOrganization).toEqual(newOrg);
       expect(store.organizations).toContainEqual(newOrg);
       expect(result).toEqual(newOrg);
+      expect(mockCapture).toHaveBeenCalledWith('org_created', { organization_id: '1', name: 'New Org' });
     });
   });
 
@@ -570,6 +578,7 @@ describe('Organizations Store', () => {
 
       expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/invites`, { email: 'test@example.com' });
       expect(result).toEqual(mockInvite);
+      expect(mockCapture).toHaveBeenCalledWith('invitation_sent', { organization_id: 'org1', email: 'test@example.com' });
     });
   });
 
