@@ -25,11 +25,13 @@ try {
 }
 
 const rawPort = _config?.port;
-const port = typeof rawPort === 'number' ? rawPort : Number.parseInt(rawPort, 10) || 8080;
+const parsedPort = typeof rawPort === 'number' ? rawPort : Number.parseInt(rawPort, 10);
+const port = Number.isNaN(parsedPort) ? 8080 : parsedPort;
 const apiProtocol = _config?.api?.protocol ?? 'http';
 const apiHost = _config?.api?.host ?? 'localhost';
 const rawApiPort = _config?.api?.port;
-const apiPort = typeof rawApiPort === 'number' ? rawApiPort : Number.parseInt(rawApiPort, 10) || 3000;
+const parsedApiPort = typeof rawApiPort === 'number' ? rawApiPort : Number.parseInt(rawApiPort, 10);
+const apiPort = Number.isNaN(parsedApiPort) ? 3000 : parsedApiPort;
 const apiBase = _config?.api?.base ?? 'api';
 
 /** @type {string} Vue dev-server base URL, e.g. `http://localhost:8080` */
