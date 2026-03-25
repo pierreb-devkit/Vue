@@ -58,6 +58,13 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - PRs: always use `/pull-request` — never open manually
 - After user correction, evaluate if the pattern belongs in ERRORS.md
 
+## Workflow rules
+
+- **Never push directly to master/main.** Always create a branch, push, create a PR, wait for CI green + review, then merge.
+- **Never lower coverage thresholds** in `vitest.config.js`. If coverage drops after adding code, write tests for the new project modules to bring it back above thresholds.
+- **Audit existing modules before implementing.** Before creating new storage, utilities, or components, check `src/modules/` for existing solutions.
+- **Always run `/verify` after any code change** before declaring done. CI must be green.
+
 ## Skills
 
 | Skill            | Description                                                            |
