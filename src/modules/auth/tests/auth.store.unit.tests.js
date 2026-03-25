@@ -1,13 +1,33 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+import posthog from 'posthog-js';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
+
+// Mock config
+vi.mock('../../../lib/services/config', () => ({
+  default: {
+    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
+    cookie: { prefix: 'devkit' },
+  },
+}));
 
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
+  },
+}));
+
+// Mock posthog-js
+vi.mock('posthog-js', () => ({
+  default: {
+    __loaded: false,
+    identify: vi.fn(),
+    reset: vi.fn(),
+    group: vi.fn(),
   },
 }));
 
@@ -23,6 +43,11 @@ describe('Auth Store', () => {
     localStorage.clear();
     // Reset ability mock
     mockUpdateAbilities.mockClear();
+    // Reset posthog mocks
+    posthog.__loaded = false;
+    posthog.identify.mockClear();
+    posthog.reset.mockClear();
+    posthog.group.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -51,7 +76,7 @@ describe('Auth Store', () => {
 
   it('should initialize from localStorage', () => {
     const expireTime = Date.now() + 3600000;
-    localStorage.setItem('devkitCookieExpire', expireTime.toString());
+    localStorage.setItem(`${config.cookie.prefix}CookieExpire`, expireTime.toString());
 
     const authStore = useAuthStore();
     authStore.initFromStorage();
@@ -65,18 +90,18 @@ describe('Auth Store', () => {
     authStore.auth = true;
     authStore.cookieExpire = Date.now() + 1000;
     authStore.user = { id: '123', email: 'test@example.com' };
-    localStorage.setItem('devkitUserRoles', 'user,admin');
-    localStorage.setItem('devkitCookieExpire', '12345');
-    localStorage.setItem('devkitLastLoginAt', '2026-01-01T00:00:00Z');
+    localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user,admin');
+    localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
+    localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
 
     await authStore.signout();
 
     expect(authStore.auth).toBe(false);
     expect(authStore.cookieExpire).toBe(0);
     expect(authStore.user).toBe(null);
-    expect(localStorage.getItem('devkitUserRoles')).toBe(null);
-    expect(localStorage.getItem('devkitCookieExpire')).toBe(null);
-    expect(localStorage.getItem('devkitLastLoginAt')).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
+    expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
   });
 
   it('should have mail state initialized', () => {
@@ -100,7 +125,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should clear lockout on successful signin', async () => {
@@ -132,7 +157,7 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
-      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
     it('should handle 423 lockout response', async () => {
@@ -203,7 +228,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should handle signup error', async () => {
@@ -233,7 +258,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user,admin');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user,admin');
     });
 
     it('should store lastLoginAt on token refresh', async () => {
@@ -249,7 +274,7 @@ describe('Auth Store', () => {
       axios.get.mockResolvedValueOnce(mockResponse);
       await authStore.token();
 
-      expect(localStorage.getItem('devkitLastLoginAt')).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
     it('should handle token refresh error', async () => {
@@ -307,7 +332,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem('devkitUserRoles')).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
     it('should handle reset password error', async () => {
@@ -568,6 +593,110 @@ describe('Auth Store', () => {
 
       axios.post.mockRejectedValueOnce(new Error('Not authenticated'));
       await expect(authStore.resendVerification()).rejects.toThrow('Not authenticated');
+    });
+  });
+
+  describe('PostHog analytics', () => {
+    it('should call posthog.identify on signin when posthog is loaded', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u1', email: 'test@test.com', firstName: 'John', lastName: 'Doe', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u1', { email: 'test@test.com', name: 'John Doe' });
+    });
+
+    it('should not call posthog.identify on signin when posthog is not loaded', async () => {
+      posthog.__loaded = false;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u1', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(posthog.identify).not.toHaveBeenCalled();
+    });
+
+    it('should call posthog.reset on signout when posthog is loaded', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      await authStore.signout();
+
+      expect(posthog.reset).toHaveBeenCalledOnce();
+    });
+
+    it('should not call posthog.reset on signout when posthog is not loaded', async () => {
+      posthog.__loaded = false;
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      await authStore.signout();
+
+      expect(posthog.reset).not.toHaveBeenCalled();
+    });
+
+    it('should handle identify with _id fallback and partial name', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { _id: 'u2', email: 'jane@test.com', firstName: 'Jane', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'jane@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u2', { email: 'jane@test.com', name: 'Jane' });
+    });
+
+    it('should deduce name from email when firstName and lastName are missing', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u3', email: 'john.doe@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'john.doe@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u3', { email: 'john.doe@test.com', name: 'John Doe' });
+    });
+
+    it('should omit name property when name cannot be deduced', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u4', email: '123456@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: '123456@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u4', { email: '123456@test.com' });
     });
   });
 });

@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 import { defineStore } from 'pinia';
+import posthog from 'posthog-js';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../../auth/stores/auth.store';
@@ -128,6 +129,12 @@ export const useOrganizationsStore = defineStore('organizations', {
       if (result.tokenExpiresIn) {
         authStore.cookieExpire = result.tokenExpiresIn;
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, result.tokenExpiresIn);
+      }
+
+      // PostHog group on org switch
+      if (posthog.__loaded && this.currentOrganization) {
+        const org = this.currentOrganization;
+        posthog.group('company', org.id || org._id, { name: org.name, plan: org.plan });
       }
     },
 

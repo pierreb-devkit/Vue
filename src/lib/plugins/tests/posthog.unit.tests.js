@@ -28,7 +28,7 @@ describe('posthog plugin', () => {
     const app = makeApp({ key: 'phc_testkey', host: 'https://app.posthog.com' });
     posthogPlugin.install(app);
     expect(posthog.init).toHaveBeenCalledOnce();
-    expect(posthog.init).toHaveBeenCalledWith('phc_testkey', expect.any(Object));
+    expect(posthog.init).toHaveBeenCalledWith('phc_testkey', { api_host: 'https://app.posthog.com' });
     expect(app.config.globalProperties.$posthog).toBe('posthog-instance');
   });
 
