@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 import { defineStore } from 'pinia';
+import posthog from 'posthog-js';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
@@ -116,6 +117,12 @@ export const useAuthStore = defineStore('auth', {
         if (res.data.pendingRequests) this.pendingRequests = res.data.pendingRequests;
 
         coreStore.refreshNav(this.isLoggedIn);
+
+        // PostHog identify on login
+        if (posthog.__loaded) {
+          const u = res.data.user;
+          posthog.identify(u.id || u._id, { email: u.email, name: [u.firstName, u.lastName].filter(Boolean).join(' ') });
+        }
       } catch (err) {
         if (err.response && err.response.status === 423) {
           const retryAfter = Number(err.response.data?.retryAfter) || 0;
@@ -180,6 +187,9 @@ export const useAuthStore = defineStore('auth', {
       this.pendingRequests = [];
 
       updateAbilities([]);
+
+      // PostHog reset on logout
+      if (posthog.__loaded) posthog.reset();
 
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);

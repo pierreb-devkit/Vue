@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+import posthog from 'posthog-js';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import axios from '../../../lib/services/axios';
 import { updateAbilities } from '../../../lib/helpers/ability';
@@ -28,6 +29,16 @@ vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: vi.fn(() => mockAuthStore),
 }));
 
+// Mock posthog-js
+vi.mock('posthog-js', () => ({
+  default: {
+    __loaded: false,
+    identify: vi.fn(),
+    reset: vi.fn(),
+    group: vi.fn(),
+  },
+}));
+
 // Mock ability helper
 vi.mock('../../../lib/helpers/ability', () => ({
   updateAbilities: vi.fn(),
@@ -41,6 +52,7 @@ describe('Organizations Store', () => {
     vi.clearAllMocks();
     mockAuthStore.user = null;
     mockAuthStore.cookieExpire = null;
+    posthog.__loaded = false;
   });
 
   it('should initialize with default state', () => {
@@ -240,6 +252,42 @@ describe('Organizations Store', () => {
       await store.switchOrganization('999');
 
       expect(store.currentOrganization).toBeNull();
+    });
+
+    it('should call posthog.group on switch when posthog is loaded', async () => {
+      posthog.__loaded = true;
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: 'org1', name: 'Acme', plan: 'pro' }];
+
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      await store.switchOrganization('org1');
+
+      expect(posthog.group).toHaveBeenCalledWith('company', 'org1', { name: 'Acme', plan: 'pro' });
+    });
+
+    it('should not call posthog.group when posthog is not loaded', async () => {
+      posthog.__loaded = false;
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: 'org1', name: 'Acme' }];
+
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      await store.switchOrganization('org1');
+
+      expect(posthog.group).not.toHaveBeenCalled();
+    });
+
+    it('should not call posthog.group when org not found in list', async () => {
+      posthog.__loaded = true;
+      const store = useOrganizationsStore();
+      store.organizations = [];
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+
+      await store.switchOrganization('999');
+
+      expect(posthog.group).not.toHaveBeenCalled();
     });
   });
 

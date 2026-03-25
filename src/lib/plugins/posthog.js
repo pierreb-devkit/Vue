@@ -14,7 +14,7 @@ export default {
       app.config.globalProperties.config.analytics.posthog.host
     ) {
       app.config.globalProperties.$posthog = posthog.init(app.config.globalProperties.config.analytics.posthog.key, {
-        api_host: app.config.globalProperties.config.analytics.posthog.key,
+        api_host: app.config.globalProperties.config.analytics.posthog.host,
       });
     }
   },

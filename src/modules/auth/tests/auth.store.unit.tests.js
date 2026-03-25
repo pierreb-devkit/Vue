@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
+import posthog from 'posthog-js';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
@@ -9,6 +10,16 @@ vi.mock('../../../lib/services/axios', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
+  },
+}));
+
+// Mock posthog-js
+vi.mock('posthog-js', () => ({
+  default: {
+    __loaded: false,
+    identify: vi.fn(),
+    reset: vi.fn(),
+    group: vi.fn(),
   },
 }));
 
@@ -24,6 +35,11 @@ describe('Auth Store', () => {
     localStorage.clear();
     // Reset ability mock
     mockUpdateAbilities.mockClear();
+    // Reset posthog mocks
+    posthog.__loaded = false;
+    posthog.identify.mockClear();
+    posthog.reset.mockClear();
+    posthog.group.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -569,6 +585,78 @@ describe('Auth Store', () => {
 
       axios.post.mockRejectedValueOnce(new Error('Not authenticated'));
       await expect(authStore.resendVerification()).rejects.toThrow('Not authenticated');
+    });
+  });
+
+  describe('PostHog analytics', () => {
+    it('should call posthog.identify on signin when posthog is loaded', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u1', email: 'test@test.com', firstName: 'John', lastName: 'Doe', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u1', { email: 'test@test.com', name: 'John Doe' });
+    });
+
+    it('should not call posthog.identify on signin when posthog is not loaded', async () => {
+      posthog.__loaded = false;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u1', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(posthog.identify).not.toHaveBeenCalled();
+    });
+
+    it('should call posthog.reset on signout when posthog is loaded', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      await authStore.signout();
+
+      expect(posthog.reset).toHaveBeenCalledOnce();
+    });
+
+    it('should not call posthog.reset on signout when posthog is not loaded', async () => {
+      posthog.__loaded = false;
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      await authStore.signout();
+
+      expect(posthog.reset).not.toHaveBeenCalled();
+    });
+
+    it('should handle identify with _id fallback and partial name', async () => {
+      posthog.__loaded = true;
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { _id: 'u2', email: 'jane@test.com', firstName: 'Jane', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'jane@test.com', password: 'password' });
+
+      expect(posthog.identify).toHaveBeenCalledWith('u2', { email: 'jane@test.com', name: 'Jane' });
     });
   });
 });
