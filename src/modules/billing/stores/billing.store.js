@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
+import { capture } from '../../../lib/helpers/analytics';
 
 /**
  * @desc Build the base API URL from config.
@@ -94,6 +95,7 @@ export const useBillingStore = defineStore('billing', {
           successUrl: `${window.location.origin}/billing?success=true`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
+        capture('plan_upgraded', { price_id: priceId });
         return res.data.data;
       } catch (err) {
         console.error(err);

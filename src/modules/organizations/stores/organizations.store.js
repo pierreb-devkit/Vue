@@ -7,6 +7,7 @@ import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
+import { capture } from '../../../lib/helpers/analytics';
 
 /**
  * @desc Build the base API URL from config.
@@ -61,6 +62,7 @@ export const useOrganizationsStore = defineStore('organizations', {
       const created = res.data.data;
       this.currentOrganization = created;
       this.organizations = [created, ...this.organizations];
+      capture('org_created', { organization_id: created._id || created.id, name: created.name });
       return created;
     },
 
@@ -296,6 +298,7 @@ export const useOrganizationsStore = defineStore('organizations', {
     async inviteMember(organizationId, email) {
       const api = apiBase();
       const res = await axios.post(`${api}/organizations/${organizationId}/invites`, { email });
+      capture('invitation_sent', { organization_id: organizationId, email });
       return res.data.data;
     },
 

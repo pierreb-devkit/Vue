@@ -24,7 +24,7 @@ For each user-facing flow this feature creates or modifies, identify:
 
 ### 3. Check completeness
 
-- Every backend API endpoint has a corresponding UI
+- Will every backend API endpoint have a corresponding UI?
 - Every UI action has visible feedback (success + error)
 - Feature works without mailer / without organizations enabled
 
