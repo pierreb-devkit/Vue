@@ -12,7 +12,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 900 },
   },
   webServer: {
-    command: `npm run generateConfig && npx vite --port ${port}`,
+    command: `npx vite --port ${port}`,
     port,
     cwd: '.',
     reuseExistingServer: true,
