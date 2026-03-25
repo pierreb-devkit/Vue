@@ -24,9 +24,10 @@ description: Run quality loop (audit + lint + tests + build) to verify code qual
 
 2. **Lint** — `npm run lint`
 
-3. **Tests** — check if Node API is reachable (`curl -sf http://localhost:3000/api/home`):
-   - **Infra up** → `npm run test:all` (unit + E2E)
-   - **Infra down** → `npm run test:unit` (unit only) + warn: "E2E skipped — run `docker compose -f docker-compose.test.yml up -d` for full coverage"
+3. **Tests + coverage** — check if Node API is reachable (`curl -sf http://localhost:3000/api/home`):
+   - **Infra up** → `npm run test:coverage` (unit + coverage enforcement) then `npm run test:e2e` (Playwright E2E)
+   - **Infra down** → `npm run test:coverage` (unit + coverage) + warn: "E2E skipped — run `docker compose -f docker-compose.test.yml up -d` for full coverage"
+   - If coverage drops below thresholds (vitest.config.js) → fail. Add tests, never lower thresholds.
 
 4. **Build** — `npm run build`
 
