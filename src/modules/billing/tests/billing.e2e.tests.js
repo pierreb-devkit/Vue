@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
 import { authenticatedContext, createOrgViaAPI } from '../../../lib/helpers/e2e/api.js';
+import { API_ORIGIN } from '../../../lib/helpers/e2e/config.js';
 
 const timestamp = Date.now();
 const testEmail = `e2e-billing-${timestamp}@billing${timestamp}.com`;
 const testPassword = 'E2eTestPass99xyz';
-const API_URL = 'http://localhost:3000';
 
 /**
  * @desc Mock plans returned by the billing API for E2E tests.
@@ -35,7 +35,7 @@ async function mockPlansAPI(page) {
  */
 async function isApiAvailable(request) {
   try {
-    const res = await request.get(`${API_URL}/api`);
+    const res = await request.get(`${API_ORIGIN}/api`);
     return res.ok();
   } catch {
     return false;
@@ -256,7 +256,7 @@ test.describe('Billing Page — Authenticated', () => {
  */
 async function isBillingApiAvailable(request) {
   try {
-    const res = await request.get(`${API_URL}/api/billing/plans`);
+    const res = await request.get(`${API_ORIGIN}/api/billing/plans`);
     if (!res.ok()) return false;
     const text = await res.text();
     // Guard against SPA HTML fallback masquerading as a 200 JSON response
@@ -277,7 +277,7 @@ async function isBillingApiAvailable(request) {
  */
 async function isStripeConfigured(request) {
   try {
-    const res = await request.get(`${API_URL}/api/billing/plans`);
+    const res = await request.get(`${API_ORIGIN}/api/billing/plans`);
     if (!res.ok()) return false;
     const text = await res.text();
     if (text.startsWith('<')) return false;
@@ -299,7 +299,7 @@ test.describe('Billing API — Security', () => {
     const billingUp = await isBillingApiAvailable(request);
     test.skip(!billingUp, 'Billing API not available');
 
-    const res = await request.get(`${API_URL}/api/billing/plans`);
+    const res = await request.get(`${API_ORIGIN}/api/billing/plans`);
     expect(res.status()).toBe(200);
 
     const body = await res.json();
@@ -316,7 +316,7 @@ test.describe('Billing API — Security', () => {
     const billingUp = await isBillingApiAvailable(request);
     test.skip(!billingUp, 'Billing API not available');
 
-    const res = await request.get(`${API_URL}/api/billing/subscription`, {
+    const res = await request.get(`${API_ORIGIN}/api/billing/subscription`, {
       headers: { Cookie: '' },
     });
     expect(res.status()).toBe(401);
@@ -331,7 +331,7 @@ test.describe('Billing API — Security', () => {
     const billingUp = await isBillingApiAvailable(request);
     test.skip(!billingUp, 'Billing API not available');
 
-    const res = await request.post(`${API_URL}/api/billing/checkout`, {
+    const res = await request.post(`${API_ORIGIN}/api/billing/checkout`, {
       headers: { Cookie: '' },
       data: { priceId: 'price_test' },
     });
@@ -347,7 +347,7 @@ test.describe('Billing API — Security', () => {
     const billingUp = await isBillingApiAvailable(request);
     test.skip(!billingUp, 'Billing API not available');
 
-    const res = await request.post(`${API_URL}/api/billing/webhook`, {
+    const res = await request.post(`${API_ORIGIN}/api/billing/webhook`, {
       headers: { 'stripe-signature': 'invalid_sig' },
       data: '{}',
     });
@@ -451,14 +451,14 @@ test.describe('Stripe Checkout Flow', () => {
     test.skip(!stripeUp, 'Stripe not configured');
 
     // Get a real price ID from the plans endpoint
-    const plansRes = await request.get(`${API_URL}/api/billing/plans`);
+    const plansRes = await request.get(`${API_ORIGIN}/api/billing/plans`);
     const plans = (await plansRes.json()).data;
     const paidPlan = plans.find((p) => p.stripePriceMonthly && p.planId !== 'free');
     test.skip(!paidPlan, 'No paid plan with Stripe price found');
 
     // Create authenticated context and call checkout
     const ctx = await authenticatedContext(playwright, testEmail, testPassword);
-    const res = await ctx.post(`${API_URL}/api/billing/checkout`, {
+    const res = await ctx.post(`${API_ORIGIN}/api/billing/checkout`, {
       data: { priceId: paidPlan.stripePriceMonthly },
     });
     expect(res.status()).toBe(200);
@@ -484,7 +484,7 @@ test.describe('Stripe Portal Flow', () => {
 
     // Create authenticated context and call portal
     const ctx = await authenticatedContext(playwright, testEmail, testPassword);
-    const res = await ctx.post(`${API_URL}/api/billing/portal`);
+    const res = await ctx.post(`${API_ORIGIN}/api/billing/portal`);
 
     // Portal may return 400 if user has no Stripe customer — skip gracefully
     if (res.status() === 400) {
