@@ -112,7 +112,7 @@
         density="compact"
         variant="outlined"
         hide-details
-        style="max-width: 80px"
+        style="max-width: 100px"
         :class="config.vuetify.theme.rounded"
       ></v-select>
       <v-btn :disabled="options.page <= 1" variant="text" icon size="small" class="ml-2" @click="switchPage('-')">
