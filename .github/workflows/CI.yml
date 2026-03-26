@@ -3,13 +3,27 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'documentation/**'
+      - '.claude/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'documentation/**'
+      - '.claude/**'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint-unit-build:
     name: Lint, Unit Tests & Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pusher.name != 'web-flow')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,11 +38,13 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: pierreb-devkit/Vue
+          slug: ${{ github.repository }}
 
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pusher.name != 'web-flow')
     services:
       mongo:
         image: mongo:7
@@ -49,6 +65,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
+      # Cache Playwright browsers
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('Vue/package-lock.json') }}
 
       # Install & start Node backend
       - name: Install Node backend
