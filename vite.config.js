@@ -90,6 +90,11 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode !== 'production',
       rollupOptions: {
         output: {
+          /**
+           * Assign chunk names for selected vendor modules.
+           * @param {string} id Bundler module identifier.
+           * @returns {string|undefined} Chunk name when matched; otherwise undefined.
+           */
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (['vue', 'vue-router', 'pinia'].some((pkg) => id.includes(`/${pkg}/`))) return 'vue-vendor';

@@ -8,6 +8,8 @@ Breaking changes and upgrade notes for downstream projects.
 
 Vite 8 replaces Rollup with **Rolldown**. `manualChunks` as an object is no longer supported — must be a function.
 
+**Node.js requirement:** Rolldown requires Node.js `^20.19.0` or `>=22.12.0`. Upgrading to Vite 8 will fail on older Node versions (including CI/build images) until they are updated.
+
 **Action for downstream:** If your `vite.config.js` overrides `manualChunks`, convert the object to a function:
 
 ```js
@@ -47,13 +49,13 @@ All features are no-op when `key` is empty — safe to deploy without PostHog.
 
 | Feature | File | Notes |
 |---------|------|-------|
-| PostHog plugin | `lib/plugins/posthog.js` | Auto-init, conditional on config |
-| Analytics helpers | `lib/helpers/analytics.js` | `capture()`, `capturePageview()`, `isPosthogReady()` |
-| `usePostHog` composable | `modules/analytics/composables/` | Access PostHog instance |
-| `useFeatureFlag` composable | `modules/analytics/composables/` | Reactive feature flag ref |
-| Page view tracking | `modules/app/app.router.js` | `capturePageview()` in `router.afterEach` |
-| User identify | `auth.store.js` | `posthog.identify()` on signin, `posthog.reset()` on signout |
-| Org group | `organizations.store.js` | `posthog.group('company', ...)` on org switch |
+| PostHog plugin | `src/lib/plugins/posthog.js` | Auto-init, conditional on config |
+| Analytics helpers | `src/lib/helpers/analytics.js` | `capture()`, `capturePageview()`, `isPosthogReady()` |
+| `usePostHog` composable | `src/modules/analytics/composables/analytics.usePostHog.js` | Access PostHog instance |
+| `useFeatureFlag` composable | `src/modules/analytics/composables/analytics.useFeatureFlag.js` | Reactive feature flag ref |
+| Page view tracking | `src/modules/app/app.router.js` | `capturePageview()` in `router.afterEach` |
+| User identify | `src/modules/auth/stores/auth.store.js` | `posthog.identify()` on signin, `posthog.reset()` on signout |
+| Org group | `src/modules/organizations/stores/organizations.store.js` | `posthog.group('company', ...)` on org switch |
 
 ### Action for downstream
 
