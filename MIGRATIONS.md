@@ -4,6 +4,24 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Vite 8 / Rolldown (2026-03-26)
+
+Vite 8 replaces Rollup with **Rolldown**. `manualChunks` as an object is no longer supported — must be a function.
+
+**Action for downstream:** If your `vite.config.js` overrides `manualChunks`, convert the object to a function:
+
+```js
+// Before (Vite 7)
+manualChunks: { 'my-chunk': ['pkg-a', 'pkg-b'] }
+
+// After (Vite 8)
+manualChunks(id) {
+  if (['pkg-a', 'pkg-b'].some((p) => id.includes(`/${p}/`))) return 'my-chunk';
+}
+```
+
+---
+
 ## Liquid Glass Sidenav & Layout (2026-03-18)
 
 ### Navigation — Glass mode (optional)

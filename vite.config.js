@@ -90,10 +90,12 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode !== 'production',
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vue-vendor': ['vue', 'vue-router', 'pinia'],
-            'vuetify-vendor': ['vuetify'],
-            'utils-vendor': ['axios', 'lodash-es', 'dayjs'],
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (['vue', 'vue-router', 'pinia'].some((pkg) => id.includes(`/${pkg}/`))) return 'vue-vendor';
+              if (id.includes('/vuetify/')) return 'vuetify-vendor';
+              if (['axios', 'lodash-es', 'dayjs'].some((pkg) => id.includes(`/${pkg}/`))) return 'utils-vendor';
+            }
           },
         },
       },
