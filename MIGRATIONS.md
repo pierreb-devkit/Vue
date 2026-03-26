@@ -22,6 +22,47 @@ manualChunks(id) {
 
 ---
 
+## PostHog Analytics (2026-03-26)
+
+Client-side analytics, user/org identification, page view tracking, and feature flags via PostHog.
+
+### Configuration
+
+In your global config (e.g. `src/config/defaults/development.config.js`), uncomment:
+
+```js
+analytics: {
+  posthog: {
+    host: 'https://app.posthog.com',
+    key: 'ph_your_project_api_key',
+  },
+}
+```
+
+Or use env vars: `DEVKIT_VUE_analytics_posthog_host`, `DEVKIT_VUE_analytics_posthog_key`.
+
+All features are no-op when `key` is empty — safe to deploy without PostHog.
+
+### What's included
+
+| Feature | File | Notes |
+|---------|------|-------|
+| PostHog plugin | `lib/plugins/posthog.js` | Auto-init, conditional on config |
+| Analytics helpers | `lib/helpers/analytics.js` | `capture()`, `capturePageview()`, `isPosthogReady()` |
+| `usePostHog` composable | `modules/analytics/composables/` | Access PostHog instance |
+| `useFeatureFlag` composable | `modules/analytics/composables/` | Reactive feature flag ref |
+| Page view tracking | `modules/app/app.router.js` | `capturePageview()` in `router.afterEach` |
+| User identify | `auth.store.js` | `posthog.identify()` on signin, `posthog.reset()` on signout |
+| Org group | `organizations.store.js` | `posthog.group('company', ...)` on org switch |
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the changes
+2. Set config: `analytics.posthog.host` + `analytics.posthog.key`
+3. No additional setup needed — identify/group/pageview are automatic
+
+---
+
 ## Liquid Glass Sidenav & Layout (2026-03-18)
 
 ### Navigation — Glass mode (optional)
