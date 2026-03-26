@@ -38,6 +38,11 @@ import * as Sentry from '@sentry/vue';
  */
 export default {
   name: 'AppErrorBoundary',
+  /**
+   * Provides reactive error boundary state and handlers to the template.
+   *
+   * @returns {{ hasError: import('vue').Ref<boolean>, retry: Function }} Exposed reactive error state and retry handler.
+   */
   setup() {
     const hasError = ref(false);
 
@@ -47,6 +52,11 @@ export default {
       return false; // prevent propagation
     });
 
+    /**
+     * Reset the error state so the wrapped content can be rendered again.
+     *
+     * @returns {void}
+     */
     const retry = () => {
       hasError.value = false;
     };

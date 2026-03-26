@@ -8,13 +8,21 @@ vi.mock('@sentry/vue', () => ({
 import * as Sentry from '@sentry/vue';
 import ErrorBoundary from '../components/app.errorBoundary.component.vue';
 
+/** @type {Object} Mock application configuration used by the ErrorBoundary component. */
 const config = {
   vuetify: { theme: { rounded: 'rounded-lg' } },
 };
 
+/** @type {Object} A child component that renders successfully. */
 const ChildOk = { template: '<div class="child-ok">OK</div>' };
 
+/** @type {Object} A child component that throws during setup to trigger the error boundary. */
 const ChildError = {
+  /**
+   * Throws an error to simulate a child component failure.
+   *
+   * @throws {Error} Always throws 'render boom'.
+   */
   setup() {
     throw new Error('render boom');
   },
@@ -26,6 +34,12 @@ describe('AppErrorBoundary', () => {
     vi.clearAllMocks();
   });
 
+  /**
+   * Mounts the ErrorBoundary component with a given child in the default slot.
+   *
+   * @param {Object} child - The child component to render inside the boundary.
+   * @returns {import('@vue/test-utils').VueWrapper} The mounted wrapper instance.
+   */
   const mountBoundary = (child) =>
     mount(ErrorBoundary, {
       global: {

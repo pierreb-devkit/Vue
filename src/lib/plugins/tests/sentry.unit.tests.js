@@ -8,6 +8,12 @@ vi.mock('@sentry/vue', () => ({
 import * as Sentry from '@sentry/vue';
 import sentryPlugin from '../sentry';
 
+/**
+ * Creates a minimal Vue-like app stub with the given Sentry configuration.
+ *
+ * @param {Object|null} sentryConfig - Sentry configuration to embed in the app stub.
+ * @returns {Object} A mock app object with config.globalProperties.config.analytics.sentry set.
+ */
 const makeApp = (sentryConfig) => ({
   config: {
     globalProperties: {
