@@ -16,7 +16,7 @@ permissions:
 jobs:
   release:
     name: Semantic Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout
