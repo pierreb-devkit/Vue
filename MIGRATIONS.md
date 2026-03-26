@@ -8,6 +8,8 @@ Breaking changes and upgrade notes for downstream projects.
 
 Vite 8 replaces Rollup with **Rolldown**. `manualChunks` as an object is no longer supported — must be a function.
 
+**Node.js requirement:** Rolldown requires Node.js `^20.19.0` or `>=22.12.0`. Upgrading to Vite 8 will fail on older Node versions (including CI/build images) until they are updated.
+
 **Action for downstream:** If your `vite.config.js` overrides `manualChunks`, convert the object to a function:
 
 ```js
@@ -19,6 +21,47 @@ manualChunks(id) {
   if (['pkg-a', 'pkg-b'].some((p) => id.includes(`/${p}/`))) return 'my-chunk';
 }
 ```
+
+---
+
+## PostHog Analytics (2026-03-26)
+
+Client-side analytics, user/org identification, page view tracking, and feature flags via PostHog.
+
+### Configuration
+
+In your global config (e.g. `src/config/defaults/development.config.js`), uncomment:
+
+```js
+analytics: {
+  posthog: {
+    host: 'https://app.posthog.com',
+    key: 'ph_your_project_api_key',
+  },
+}
+```
+
+Or use env vars: `DEVKIT_VUE_analytics_posthog_host`, `DEVKIT_VUE_analytics_posthog_key`.
+
+All features are no-op when `key` is empty — safe to deploy without PostHog.
+
+### What's included
+
+| Feature | File | Notes |
+|---------|------|-------|
+| PostHog plugin | `src/lib/plugins/posthog.js` | Auto-init, conditional on config |
+| Analytics helpers | `src/lib/helpers/analytics.js` | `capture()`, `capturePageview()`, `isPosthogReady()` |
+| `usePostHog` composable | `src/modules/analytics/composables/analytics.usePostHog.js` | Access PostHog instance |
+| `useFeatureFlag` composable | `src/modules/analytics/composables/analytics.useFeatureFlag.js` | Reactive feature flag ref |
+| Page view tracking | `src/modules/app/app.router.js` | `capturePageview()` in `router.afterEach` |
+| User identify | `src/modules/auth/stores/auth.store.js` | `posthog.identify()` on signin, `posthog.reset()` on signout |
+| Org group | `src/modules/organizations/stores/organizations.store.js` | `posthog.group('company', ...)` on org switch |
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the changes
+2. Set config: `analytics.posthog.host` + `analytics.posthog.key`
+3. No additional setup needed — identify/group/pageview are automatic
 
 ---
 
