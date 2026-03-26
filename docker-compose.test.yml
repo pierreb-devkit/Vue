@@ -13,14 +13,14 @@ services:
 
   node-api:
     build:
-      context: ../Node
+      context: ${NODE_CONTEXT:-../Node}
       dockerfile: Dockerfile
     ports:
       - "3000:3001"
     environment:
       NODE_ENV: test
       DEVKIT_NODE_db_uri: mongodb://mongo:27017/NodeTest
-      DEVKIT_NODE_cors_origin: '["http://localhost:8080"]'
+      DEVKIT_NODE_cors_origin: '["http://localhost:8080","http://vue:8080"]'
       DEVKIT_NODE_cors_credentials: "true"
     depends_on:
       mongo:
@@ -30,3 +30,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  vue:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${VUE_PORT:-8080}:8080"
+    environment:
+      NODE_ENV: test
+      DEVKIT_VUE_api_protocol: http
+      DEVKIT_VUE_api_host: localhost
+      DEVKIT_VUE_api_port: "3000"
+      DEVKIT_VUE_api_base: api
+    depends_on:
+      node-api:
+        condition: service_healthy
