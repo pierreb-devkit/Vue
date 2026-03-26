@@ -7,7 +7,7 @@ describe('plugins index', () => {
     expect(plugins).not.toBeNull();
   });
 
-  const expectedPlugins = ['vuetify', 'posthog', 'dayjs', 'gravatar', 'images', 'aos', 'markdown', 'lodash'];
+  const expectedPlugins = ['vuetify', 'posthog', 'sentry', 'dayjs', 'gravatar', 'images', 'aos', 'markdown', 'lodash'];
 
   expectedPlugins.forEach((name) => {
     it(`exports ${name} plugin`, () => {

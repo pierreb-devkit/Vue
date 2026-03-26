@@ -6,7 +6,7 @@ import globals from 'globals';
 export default [
   // Ignore patterns
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/config/index.js'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/config/index.js', '.claude/worktrees/**'],
   },
   // Base configurations
   js.configs.recommended,

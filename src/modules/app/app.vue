@@ -21,7 +21,9 @@
 
     <organizationsAdminPendingBanner />
     <v-main class="pb-0" :style="mainStyle">
-      <router-view />
+      <appErrorBoundary>
+        <router-view />
+      </appErrorBoundary>
     </v-main>
     <devkitFooter :links="config.footer.links" :variant="config.footer.variant || 'default'" />
   </v-app>
@@ -42,6 +44,7 @@ import authEmailBanner from '../auth/components/emailBanner.component.vue';
 import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
 
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
+import appErrorBoundary from './components/app.errorBoundary.component.vue';
 
 /**
  * Component definition.
@@ -56,6 +59,7 @@ export default {
     authPendingRequestBanner,
 
     organizationsAdminPendingBanner,
+    appErrorBoundary,
   },
   data() {
     const theme = useTheme();
