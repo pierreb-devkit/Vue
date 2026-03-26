@@ -24,6 +24,7 @@ app.config.globalProperties.routes = routes;
 app
   .use(head)
   .use(pinia)
+  .use(plugins.sentry, { router: appRouter })
   .use(appRouter)
   .use(abilitiesPlugin, ability)
   .use(plugins.aos)

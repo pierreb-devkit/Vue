@@ -67,5 +67,11 @@ export default {
       // host: 'https://app.posthog.com', // PostHog instance URL
       // key: 'ph_project_api_key', // PostHog project API key
     },
+    sentry: { // Sentry error tracking — set dsn + enabled to activate
+      dsn: '', // Sentry DSN (e.g. 'https://examplePublicKey@o0.ingest.sentry.io/0')
+      environment: 'development', // environment tag sent with events
+      enabled: false, // true to enable Sentry SDK initialization
+      tracesSampleRate: 0.1, // performance tracing sample rate (0–1)
+    },
   },
 };
