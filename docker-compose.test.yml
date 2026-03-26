@@ -20,7 +20,7 @@ services:
     environment:
       NODE_ENV: test
       DEVKIT_NODE_db_uri: mongodb://mongo:27017/NodeTest
-      DEVKIT_NODE_cors_origin: '["http://localhost:8080","http://vue:8080"]'
+      DEVKIT_NODE_cors_origin: '["http://localhost:${VUE_PORT:-8080}","http://vue:8080"]'
       DEVKIT_NODE_cors_credentials: "true"
     depends_on:
       mongo:
