@@ -29,7 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: ${{ !vars.RUNNER }}
         with:
           node-version: lts/*
           cache: npm
@@ -68,7 +67,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
-        if: ${{ !vars.RUNNER }}
         with:
           node-version: lts/*
 
@@ -104,7 +102,6 @@ jobs:
         working-directory: Vue
         run: npm ci
       - name: Install Playwright browsers
-        if: ${{ !vars.RUNNER }}
         working-directory: Vue
         run: npx playwright install --with-deps chromium
       - name: Start Vue dev server
