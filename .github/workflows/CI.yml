@@ -24,6 +24,8 @@ jobs:
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pusher.name != 'web-flow')
+    env:
+      NODE_ENV: ${{ vars.APP_ENV || 'development' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,8 +34,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run generateConfig
-        env:
-          NODE_ENV: ${{ vars.APP_ENV || 'development' }}
       - run: npm run lint
       - run: npm run test:coverage
       - run: UV_USE_IO_URING=0 npm run build
@@ -47,6 +47,8 @@ jobs:
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 30
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.pusher.name != 'web-flow')
+    env:
+      NODE_ENV: ${{ vars.E2E_APP_ENV || vars.APP_ENV || 'test' }}
     services:
       mongo:
         image: mongo:7
@@ -105,9 +107,8 @@ jobs:
       - name: Start Vue dev server
         working-directory: Vue
         run: npm run dev &
-        env:
-          NODE_ENV: ${{ vars.APP_ENV || 'test' }}
       - name: Wait for Vue dev server
+        working-directory: Vue
         run: npx wait-on http://localhost:8080 --timeout 60000
 
       # Run E2E tests
