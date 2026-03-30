@@ -36,6 +36,7 @@ export const useAdminStore = defineStore('admin', {
     users: [],
     organizations: [],
     error: null,
+    readiness: [],
   }),
 
   actions: {
@@ -89,6 +90,15 @@ export const useAdminStore = defineStore('admin', {
 
     resetUser() {
       this.user = defaultUser();
+    },
+
+    async getReadiness() {
+      try {
+        const res = await axios.get(`${apiBase()}/admin/readiness`);
+        this.readiness = res.data.data;
+      } catch {
+        /* interceptor handles */
+      }
     },
 
     async getOrganizations(params) {

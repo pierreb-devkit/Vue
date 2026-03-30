@@ -76,3 +76,4 @@ mongod
 # =============
 .claude/*local.*
 .github/*local.*
+.claude/worktrees/
