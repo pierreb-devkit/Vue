@@ -92,12 +92,16 @@ export const useAdminStore = defineStore('admin', {
       this.user = defaultUser();
     },
 
+    /**
+     * @desc Fetch SaaS readiness checklist from the admin API.
+     * @returns {Promise<void>}
+     */
     async getReadiness() {
       try {
         const res = await axios.get(`${apiBase()}/admin/readiness`);
         this.readiness = res.data.data;
       } catch {
-        /* interceptor handles */
+        this.readiness = [];
       }
     },
 

@@ -127,13 +127,13 @@
                       <td class="text-body-medium text-capitalize">{{ item.category }}</td>
                       <td>
                         <v-icon
-                          :icon="item.status === 'ok' ? 'fa-solid fa-check-circle' : 'fa-solid fa-exclamation-triangle'"
-                          :color="item.status === 'ok' ? 'success' : 'warning'"
+                          :icon="readinessIcon(item.status)"
+                          :color="readinessColor(item.status)"
                           size="small"
                           class="mr-2"
                         ></v-icon>
                         <v-chip
-                          :color="item.status === 'ok' ? 'success' : 'warning'"
+                          :color="readinessColor(item.status)"
                           size="small"
                           variant="tonal"
                         >
@@ -289,6 +289,30 @@ export default {
       const orgId = membership.organizationId?._id || membership.organizationId?.id || membership.organizationId;
       return currentOrg && orgId && String(currentOrg) === String(orgId);
     },
+    /**
+     * @desc Map readiness status to icon name.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} FontAwesome icon class
+     */
+    readinessIcon(status) {
+      if (status === 'ok') return 'fa-solid fa-circle-check';
+      if (status === 'error') return 'fa-solid fa-circle-xmark';
+      return 'fa-solid fa-triangle-exclamation';
+    },
+    /**
+     * @desc Map readiness status to color.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} Vuetify color name
+     */
+    readinessColor(status) {
+      if (status === 'ok') return 'success';
+      if (status === 'error') return 'error';
+      return 'warning';
+    },
+    /**
+     * @desc Fetch readiness data from admin store.
+     * @returns {Promise<void>}
+     */
     async fetchReadiness() {
       this.readinessLoading = true;
       const adminStore = useAdminStore();

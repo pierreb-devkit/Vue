@@ -155,8 +155,9 @@ describe('Admin Store', () => {
       expect(store.readiness).toEqual(mockReadiness);
     });
 
-    it('should handle error gracefully', async () => {
+    it('should clear stale data on error', async () => {
       const store = useAdminStore();
+      store.readiness = [{ category: 'config', status: 'ok', message: 'stale' }];
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 

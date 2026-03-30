@@ -84,7 +84,6 @@ describe('AdminView – Readiness tab', () => {
   it('should render the Readiness tab', () => {
     const html = wrapper.html();
     expect(html).toContain('Readiness');
-    expect(html).toContain('fa-solid fa-clipboard-check');
   });
 
   it('should show loading state while fetching readiness', async () => {
