@@ -34,6 +34,7 @@ Before any visual work, read the [Anthropic frontend-design guidelines](https://
 - **Colors**: Theme tokens via config or CSS variables (`rgb(var(--v-theme-primary))`), never hardcoded hex in templates
 - **Dark/light**: Everything must work in both modes
 - **Config-driven**: Prefer config options over hardcoded values
+- **CSS last resort**: Prefer in order: Vuetify props (`flat`, `elevation`, `variant`, `density`) → Vuetify utility classes (`pa-0`, `d-flex`) → Vuetify transitions (`v-fade-transition`, `v-scale-transition`) → `<style scoped>` only if no Vuetify alternative exists
 - **Reuse**: Check existing components before creating new ones
 - **Verify**: Screenshot desktop+mobile, light+dark after visual changes
 
@@ -44,3 +45,4 @@ Before any visual work, read the [Anthropic frontend-design guidelines](https://
 - New components for things existing ones already handle
 - Ignoring dark mode
 - Skipping visual verification
+- Custom CSS when a Vuetify prop/class/transition covers the need

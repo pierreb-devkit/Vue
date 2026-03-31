@@ -645,6 +645,42 @@ export default {
       ],
     },
 
+    // === FAQ SECTION ===
+    // Purpose: Accordion FAQ with JSON-LD FAQPage schema
+    // Best for: Reducing support load, improving SEO, addressing common concerns
+    // Startup use: Pre-sales questions, pricing clarifications, onboarding help
+    //
+    // Props (via setup):
+    // - icon (String): FontAwesome icon for section header
+    // - title (String): Section title
+    // - subtitle (String): Section subtitle
+    // - alignment (String): 'left' | 'center' | 'right'
+    // - variant (String): 'default' | 'alternate'
+    // - overlap (Boolean|String|Object): Slides section up
+    // - style.section (Object): { background }
+    // - style.card (Object): { background }
+    //
+    // Content items:
+    // - question (String): The FAQ question
+    // - answer (String): The answer with **markdown** support
+    // - columns (Number): 1 (default, centered) | 2 (two-column layout)
+    faq: {
+      icon: 'fa-solid fa-circle-question',
+      title: 'Frequently asked questions',
+      subtitle: 'Everything you need to know',
+      variant: 'alternate',
+      alignment: 'center',
+      columns: 1,
+      overlap: false,
+      style: { section: {}, card: {} },
+      content: [
+        { question: 'How does it work?', answer: 'Markdown **supported** — describe your answer here.' },
+        { question: 'Is there a free trial?', answer: 'Yes, 14 days no credit card required.' },
+        { question: 'What payment methods do you accept?', answer: 'We accept all major cards via Stripe.' },
+        { question: 'Can I cancel anytime?', answer: 'Absolutely, no lock-in.' },
+      ],
+    },
+
     // === CONTACT SECTION ===
     // Purpose: Contact form for user inquiries
     // Best for: Lead generation, support requests, feedback
