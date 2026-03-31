@@ -152,7 +152,7 @@ export default {
      * @returns {Array<Array<Object>>}
      */
     columns() {
-      const content = this.setup.content || [];
+      const content = (this.setup.content || []).filter((item) => item?.question && item?.answer);
       if ((this.setup.columns || 1) === 2) {
         const half = Math.ceil(content.length / 2);
         const cols = [content.slice(0, half), content.slice(half)];
