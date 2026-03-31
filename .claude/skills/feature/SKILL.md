@@ -102,6 +102,9 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 - [ ] Tests added
 - [ ] Tests: unit tests (`*.unit.tests.js`) for all changes. E2E (`*.e2e.tests.js`) only if the change affects a critical user flow (auth, org onboarding, invite/join).
 
+**Error documentation:**
+- [ ] If a non-obvious bug was fixed, document it in `ERRORS.md` (root of repo) with: symptom, root cause, fix
+
 ### 7b. Elegance check
 
 For non-trivial changes: pause and ask yourself "is there a simpler or more elegant approach?" If the current implementation feels hacky, refactor before proceeding.
