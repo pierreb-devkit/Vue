@@ -35,8 +35,8 @@
           <v-col cols="12" :md="colWidth" :offset-md="columns.length === 1 ? 2 : 0">
             <v-expansion-panels flat>
               <v-expansion-panel
-                v-for="item in column"
-                :key="item.question"
+                v-for="(item, index) in column"
+                :key="`${ci}-${index}`"
                 :style="cardStyle"
                 :class="`mb-3 ${config.vuetify.theme.rounded}`"
                 elevation="0"
