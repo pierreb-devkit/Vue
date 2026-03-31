@@ -35,8 +35,8 @@
           <v-col cols="12" :md="colWidth" :offset-md="columns.length === 1 ? 2 : 0">
             <v-expansion-panels flat>
               <v-expansion-panel
-                v-for="(item, i) in column"
-                :key="i"
+                v-for="item in column"
+                :key="item.question"
                 :style="cardStyle"
                 :class="`mb-3 ${config.vuetify.theme.rounded}`"
                 elevation="0"
@@ -84,6 +84,31 @@ export default {
       required: true,
     },
   },
+  setup(props) {
+    if (props.setup.content && props.setup.content.length) {
+      useHead({
+        script: [
+          {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: props.setup.content.map((item) => ({
+                '@type': 'Question',
+                name: item.question,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.answer,
+                },
+              })),
+            }),
+          },
+        ],
+      });
+    }
+
+    return {};
+  },
   data() {
     const theme = useTheme();
     return {
@@ -91,15 +116,27 @@ export default {
     };
   },
   computed: {
+    /**
+     * Active visual variant of the section.
+     * @returns {string} 'default' or 'alternate'
+     */
     variant() {
       return this.setup.variant || 'default';
     },
+    /**
+     * Inline styles for the v-container, including max-width and optional overlap.
+     * @returns {Object}
+     */
     containerStyle() {
       return {
         'max-width': this.config.vuetify.theme.maxWidth,
         ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
       };
     },
+    /**
+     * Inline styles for the section element, using theme background based on variant.
+     * @returns {Object}
+     */
     sectionStyle() {
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
@@ -108,17 +145,30 @@ export default {
         background: bgColor,
       };
     },
+    /**
+     * Splits FAQ content into 1 or 2 columns; empty columns are filtered out.
+     * @returns {Array<Array<Object>>}
+     */
     columns() {
       const content = this.setup.content || [];
       if ((this.setup.columns || 1) === 2) {
         const half = Math.ceil(content.length / 2);
-        return [content.slice(0, half), content.slice(half)];
+        const cols = [content.slice(0, half), content.slice(half)];
+        return cols.filter((col) => col.length > 0);
       }
-      return [content];
+      return content.length ? [content] : [];
     },
+    /**
+     * Column width in Vuetify grid units for md+ breakpoints.
+     * @returns {number}
+     */
     colWidth() {
       return (this.setup.columns || 1) === 2 ? 6 : 8;
     },
+    /**
+     * Inline styles for each expansion panel card, using theme surface/background.
+     * @returns {Object}
+     */
     cardStyle() {
       const cardColor = this.variant === 'alternate' ? this.theme.current.colors.background : this.theme.current.colors.surface;
       return {
@@ -127,40 +177,20 @@ export default {
       };
     },
   },
-  created() {
-    if (!this.setup.content || !this.setup.content.length) return;
+  mounted() {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const prefersReducedMotion =
-      typeof window !== 'undefined' && window.matchMedia
-        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        : false;
-
-    if (prefersReducedMotion) {
-      const style = document.createElement('style');
-      style.setAttribute('data-faq-reduced-motion', '');
-      style.textContent = '#faq .v-expansion-panel-text__wrapper { transition-duration: 0ms !important; }';
-      document.head.appendChild(style);
+    const styleEl = document.createElement('style');
+    styleEl.setAttribute('data-faq-reduced-motion', '');
+    styleEl.textContent = '#faq .v-expansion-panel-text__wrapper { transition-duration: 0ms !important; }';
+    document.head.appendChild(styleEl);
+    this.reducedMotionStyle = styleEl;
+  },
+  beforeUnmount() {
+    if (this.reducedMotionStyle && this.reducedMotionStyle.parentNode) {
+      this.reducedMotionStyle.parentNode.removeChild(this.reducedMotionStyle);
     }
-
-    useHead({
-      script: [
-        {
-          type: 'application/ld+json',
-          innerHTML: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: this.setup.content.map((item) => ({
-              '@type': 'Question',
-              name: item.question,
-              acceptedAnswer: {
-                '@type': 'Answer',
-                text: item.answer,
-              },
-            })),
-          }),
-        },
-      ],
-    });
   },
   methods: {
     style,

@@ -657,13 +657,13 @@ export default {
     // - alignment (String): 'left' | 'center' | 'right'
     // - variant (String): 'default' | 'alternate'
     // - overlap (Boolean|String|Object): Slides section up
+    // - columns (Number): 1 (default, centered) | 2 (two-column layout)
     // - style.section (Object): { background }
     // - style.card (Object): { background }
     //
     // Content items:
     // - question (String): The FAQ question
     // - answer (String): The answer with **markdown** support
-    // - columns (Number): 1 (default, centered) | 2 (two-column layout)
     faq: {
       icon: 'fa-solid fa-circle-question',
       title: 'Frequently asked questions',
