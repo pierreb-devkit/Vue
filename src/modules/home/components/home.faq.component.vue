@@ -101,7 +101,7 @@ export default {
                   text: item.answer,
                 },
               })),
-            }),
+            }).replace(/</g, '\\u003c'),
           },
         ],
       });
