@@ -34,6 +34,7 @@
       :halo-colors="themeName === 'dark' ? config.home.statistics.blur?.dark?.haloColors : config.home.statistics.blur?.light?.haloColors"
       :color-mode="config.home.statistics.colorMode"
     ></homeStatisticsComponent>
+    <homeFaqComponent v-if="config.home.faq" :setup="config.home.faq"></homeFaqComponent>
     <homeContactComponent v-if="config.home.contact"></homeContactComponent>
   </div>
 </template>
@@ -57,6 +58,7 @@ import homeGalleryComponent from '../components/home.gallery.component.vue';
 import homeSocialComponent from '../components/home.social.component.vue';
 import homeArticlesComponent from '../components/home.articles.component.vue';
 import homeStatisticsComponent from '../components/home.statistics.component.vue';
+import homeFaqComponent from '../components/home.faq.component.vue';
 import homeContactComponent from '../components/home.contact.component.vue';
 
 /**
@@ -76,6 +78,7 @@ export default {
     homeSocialComponent,
     homeArticlesComponent,
     homeStatisticsComponent,
+    homeFaqComponent,
     homeContactComponent,
   },
   data() {
