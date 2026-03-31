@@ -93,14 +93,16 @@ export default {
             innerHTML: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
-              mainEntity: props.setup.content.map((item) => ({
-                '@type': 'Question',
-                name: item.question,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: item.answer,
-                },
-              })),
+              mainEntity: props.setup.content
+                .filter((item) => item.question && item.answer)
+                .map((item) => ({
+                  '@type': 'Question',
+                  name: item.question,
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: item.answer,
+                  },
+                })),
             }).replace(/</g, '\\u003c'),
           },
         ],
