@@ -192,9 +192,6 @@ export default {
       this.reducedMotionStyle.parentNode.removeChild(this.reducedMotionStyle);
     }
   },
-  methods: {
-    style,
-  },
 };
 </script>
 
