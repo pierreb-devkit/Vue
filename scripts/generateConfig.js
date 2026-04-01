@@ -34,19 +34,21 @@ const deepMerge = (target, source) => {
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
 /**
- * Discover module config files by scanning src/modules for all config.*.js files.
+ * Discover module config files by scanning src/modules for all *.{env}.config.js files.
+ * @param {string} env - Environment suffix to match (e.g. 'development', 'trawl')
  * @returns {string[]} Sorted list of absolute paths to matching config files
  */
-const discoverModuleConfigs = () => {
+const discoverModuleConfigs = (env = 'development') => {
   const modulesDir = path.join(process.cwd(), 'src', 'modules');
   if (!fs.existsSync(modulesDir)) return [];
+  const suffix = `.${env}.config.js`;
   const files = [];
   for (const d of fs.readdirSync(modulesDir, { withFileTypes: true })) {
     if (!d.isDirectory()) continue;
     const configDir = path.join(modulesDir, d.name, 'config');
     if (!fs.existsSync(configDir)) continue;
     for (const f of fs.readdirSync(configDir)) {
-      if (f.endsWith('.development.config.js')) {
+      if (f.endsWith(suffix)) {
         files.push(path.join(configDir, f));
       }
     }
@@ -55,11 +57,12 @@ const discoverModuleConfigs = () => {
 };
 
 /**
- * Load and merge all module config files.
+ * Load and merge all module config files for a given environment.
+ * @param {string} env - Environment suffix (e.g. 'development', 'trawl')
  * @returns {Promise<Object>} Merged config object from all matching module files
  */
-const loadModuleConfigs = async () => {
-  const files = discoverModuleConfigs();
+const loadModuleConfigs = async (env = 'development') => {
+  const files = discoverModuleConfigs(env);
   let merged = {};
   for (const file of files) {
     console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
@@ -105,8 +108,13 @@ const getConfiguration = async () => {
     config = deepMerge(config, globalDev);
   }
 
-  // 3. If not development, overlay env-specific configs
+  // 3. If not development, overlay env-specific configs (module + global)
   if (env !== 'development') {
+    // Module env overrides (e.g. home.trawl.config.js)
+    console.log(`+ Loading module ${env} overrides...`);
+    const moduleEnv = await loadModuleConfigs(env);
+    config = deepMerge(config, moduleEnv);
+
     // Global env overrides
     console.log(`+ Loading global ${env} overrides...`);
     const globalEnv = await loadGlobalConfig(env);
@@ -116,7 +124,8 @@ const getConfiguration = async () => {
 
     const STANDARD_ENVS = new Set(['development', 'production', 'test']);
     const hasEnvVarOverrides = Object.keys(process.env).some((key) => key.startsWith('DEVKIT_VUE_'));
-    if (!STANDARD_ENVS.has(env) && !globalEnv && !hasEnvVarOverrides) {
+    const hasModuleOverrides = discoverModuleConfigs(env).length > 0;
+    if (!STANDARD_ENVS.has(env) && !globalEnv && !hasEnvVarOverrides && !hasModuleOverrides) {
       console.warn(`+ Warning: NODE_ENV="${env}" but no ${env}.config.js found in src/config/defaults/ — using development defaults. Downstream projects should create config files (see README).`);
     }
   }
