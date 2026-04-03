@@ -59,6 +59,15 @@ export default {
       billing: 'billing',
     },
   },
+  admin: {
+    // tabs — extra tabs appended after Users & Organizations in /admin
+    // each entry: { value: string, label: string, icon?: string, route: string }
+    // example:
+    // tabs: [
+    //   { value: 'billing', label: 'Billing', icon: 'fa-solid fa-credit-card', route: '/admin/billing' },
+    // ],
+    tabs: [],
+  },
   cookie: {
     prefix: 'devkit', // prefix for all cookies (e.g. 'devkit' → 'devkit_token')
   },

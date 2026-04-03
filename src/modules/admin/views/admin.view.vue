@@ -13,6 +13,16 @@
               <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
               Organizations
             </v-tab>
+            <v-tab
+              v-for="extraTab in extraTabs"
+              :key="extraTab.value"
+              :value="extraTab.value"
+              :to="extraTab.route"
+              class="text-none text-body-medium"
+            >
+              <v-icon v-if="extraTab.icon" :icon="extraTab.icon" size="small" class="mr-2"></v-icon>
+              {{ extraTab.label }}
+            </v-tab>
           </v-tabs>
           <v-divider></v-divider>
           <v-window v-model="tab">
@@ -165,6 +175,14 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc Extra admin tabs from config.admin.tabs array.
+     * Each entry: { value, label, icon?, route }
+     * @returns {Array}
+     */
+    extraTabs() {
+      return this.config?.admin?.tabs || [];
+    },
     users() {
       const adminStore = useAdminStore();
       return adminStore.users;
