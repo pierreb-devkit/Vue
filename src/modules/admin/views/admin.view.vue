@@ -16,7 +16,6 @@
             <v-tab
               v-for="extraTab in extraTabs"
               :key="extraTab.value"
-              :value="extraTab.value"
               :to="extraTab.route"
               class="text-none text-body-medium"
             >
@@ -176,12 +175,22 @@ export default {
   },
   computed: {
     /**
-     * @desc Extra admin tabs from config.admin.tabs array.
+     * @desc Returns validated extra admin tabs from config.admin.tabs.
      * Each entry: { value, label, icon?, route }
      * @returns {Array}
      */
     extraTabs() {
-      return this.config?.admin?.tabs || [];
+      const tabs = this.config?.admin?.tabs;
+
+      if (!Array.isArray(tabs)) {
+        return [];
+      }
+
+      return tabs.filter((tab) => tab
+        && typeof tab === 'object'
+        && tab.value
+        && tab.label
+        && tab.route);
     },
     users() {
       const adminStore = useAdminStore();
