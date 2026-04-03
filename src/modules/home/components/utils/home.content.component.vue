@@ -55,7 +55,7 @@
       <component
         :is="'h' + headingLevel"
         v-if="setup.subtitle"
-        :class="['text-headline-medium text-sm-headline-large font-weight-bold mt-0 mb-4', themeColor ? '' : 'text-secondary']"
+        :class="['text-headline-medium text-sm-headline-large font-weight-bold mb-4', setup.icon || setup.title ? 'mt-3' : 'mt-0', themeColor ? '' : 'text-secondary']"
         :style="themeColor ? { color: themeColor } : {}"
       >
         <VMarkdown v-if="setup.subtitle && setup.subtitle.includes('**')" :source="setup.subtitle" class="d-inline" />
