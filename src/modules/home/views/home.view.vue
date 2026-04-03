@@ -28,7 +28,7 @@
       v-if="config.home.statistics"
       :setup="statistics"
       :animated="config.home.statistics.animated !== false"
-      :animation-duration="config.home.statistics.animationDuration || 1500"
+      :animation-duration="config.home.statistics.animationDuration ?? 1500"
       :animation-speed="config.home.statistics.blur?.animationSpeed || 1.5"
       :background-colors="
         themeName === 'dark' ? config.home.statistics.blur?.dark?.backgroundColors : config.home.statistics.blur?.light?.backgroundColors

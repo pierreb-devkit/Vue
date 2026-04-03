@@ -74,10 +74,13 @@ import { overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 import homeBlurBackgroundComponent from './utils/home.blur.background.component.vue';
 
 /**
- * Parse a stat value string into numeric target + prefix/suffix.
+ * Parse a stat value string into numeric target with prefix and suffix parts.
  * Examples: "1000+" -> { num: 1000, prefix: "", suffix: "+", decimals: 0 }
  *           "x2.08" -> { num: 2.08, prefix: "x", suffix: "", decimals: 2 }
  *           "50m"   -> { num: 50, prefix: "", suffix: "m", decimals: 0 }
+ *
+ * @param {*} raw Raw stat value to parse.
+ * @returns {{ num: number, prefix: string, suffix: string, decimals: number } | null} Parsed stat parts, or null when parsing fails.
  */
 function parseStatValue(raw) {
   const str = String(raw);
@@ -94,10 +97,17 @@ function parseStatValue(raw) {
   };
 }
 
-/** Cubic ease-out: 1 - (1 - t)^3 */
+/**
+ * Apply a cubic ease-out curve to a normalized progress value.
+ * @param {number} t The normalized progress value between 0 and 1.
+ * @returns {number} The eased progress value.
+ */
 function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);
 }
+
+// Exported for unit testing
+export { parseStatValue, easeOutCubic };
 
 export default {
   name: 'HomeStatisticsComponent',
@@ -212,11 +222,22 @@ export default {
         });
       }
     },
-    /** Set up IntersectionObserver on the section element. */
+    /**
+     * Set up IntersectionObserver on the section element.
+     * Falls back to immediate animation when IntersectionObserver is unavailable.
+     * @returns {void}
+     */
     observeSection() {
       this.cleanupObserver();
       const el = this.$refs.sectionRef;
       if (!el) return;
+      if (typeof IntersectionObserver === 'undefined') {
+        if (!this.hasAnimated) {
+          this.hasAnimated = true;
+          this.startCounters();
+        }
+        return;
+      }
       this.observer = new IntersectionObserver(
         (entries) => {
           if (entries[0] && entries[0].isIntersecting && !this.hasAnimated) {
@@ -229,32 +250,64 @@ export default {
       );
       this.observer.observe(el);
     },
-    /** Animate all counters from 0 to their target values. */
-    startCounters() {
-      if (!this.setup) return;
-      this.setup.forEach((stat, i) => {
-        const parsed = parseStatValue(stat.value);
-        if (!parsed) {
-          this.displayValues[i] = stat.value;
+    /**
+     * Check whether a statistic value still matches the seeded placeholder.
+     * @param {string} value Statistic value to inspect.
+     * @returns {boolean} True when the value still looks like the initial unloaded placeholder.
+     */
+    isPendingStatValue(value) {
+      return typeof value === 'string' && value.trim() === '0';
+    },
+    /**
+     * Animate a single counter, waiting briefly for async-loaded values if needed.
+     * @param {{ value: string }} stat Statistic entry being animated.
+     * @param {number} index Display slot index for the statistic.
+     * @returns {void}
+     */
+    startCounter(stat, index) {
+      const duration = this.animationDuration;
+      const waitStartedAt = performance.now();
+      const maxWait = duration;
+
+      const waitForTarget = (now) => {
+        // If value is still the placeholder '0', wait for async data
+        if (this.isPendingStatValue(stat.value) && now - waitStartedAt < maxWait) {
+          this.animationFrameIds[index] = requestAnimationFrame(waitForTarget);
           return;
         }
-        const start = performance.now();
-        const duration = this.animationDuration;
-        const step = (now) => {
-          const elapsed = now - start;
+
+        const parsed = parseStatValue(stat.value);
+        if (!parsed) {
+          this.displayValues[index] = stat.value;
+          return;
+        }
+
+        const start = now;
+        const step = (frameNow) => {
+          const elapsed = frameNow - start;
           const t = Math.min(elapsed / duration, 1);
           const eased = easeOutCubic(t);
           const current = eased * parsed.num;
           const formatted = parsed.decimals > 0 ? current.toFixed(parsed.decimals) : String(Math.round(current));
-          this.displayValues[i] = `${parsed.prefix}${formatted}${parsed.suffix}`;
+          this.displayValues[index] = `${parsed.prefix}${formatted}${parsed.suffix}`;
           if (t < 1) {
-            this.animationFrameIds[i] = requestAnimationFrame(step);
+            this.animationFrameIds[index] = requestAnimationFrame(step);
           } else {
             // Ensure exact final value
-            this.displayValues[i] = stat.value;
+            this.displayValues[index] = stat.value;
           }
         };
-        this.animationFrameIds[i] = requestAnimationFrame(step);
+
+        this.animationFrameIds[index] = requestAnimationFrame(step);
+      };
+
+      this.animationFrameIds[index] = requestAnimationFrame(waitForTarget);
+    },
+    /** Animate all counters from 0 to their target values. */
+    startCounters() {
+      if (!this.setup) return;
+      this.setup.forEach((stat, i) => {
+        this.startCounter(stat, i);
       });
     },
     /** Clean up observer. */
