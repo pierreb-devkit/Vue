@@ -63,11 +63,13 @@ export default {
       return this.theme.name;
     },
     /**
-     * @desc Resolved variant — home config overrides the prop when on a home route.
+     * @desc Resolve the footer variant, allowing a validated home-page config override.
+     * @returns {string} The resolved footer variant ('default' | 'alternate').
      */
     resolvedVariant() {
-      const homeFooter = this.config?.home?.footer;
-      if (homeFooter?.variant && this.$route?.name === 'Home') return homeFooter.variant;
+      const allowedVariants = ['default', 'alternate'];
+      const homeFooterVariant = this.config?.home?.footer?.variant;
+      if (this.$route?.path === '/' && allowedVariants.includes(homeFooterVariant)) return homeFooterVariant;
       return this.variant;
     },
     footerStyle() {
