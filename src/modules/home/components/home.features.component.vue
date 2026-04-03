@@ -19,6 +19,7 @@
       {
         subtitle: 'Product Name',
         img: '/images/card01.webp',
+        imgMode: 'cover',      // 'cover' (default) or 'contain' for SVG illustrations
         text: 'Description with **markdown** support.',
         reversed: false,       // Image position (false = top, true = bottom)
         fullWidth: false,      // Full width card
@@ -60,14 +61,14 @@
               <v-row align="center" justify="center" class="pa-0">
                 <v-col v-for="(item, i) in content" :key="i" cols="12" :md="item.fullWidth ? 12 : setup.content.length > 1 ? 6 : 12">
                   <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="style('card', { style: item.style })">
-                    <homeImgComponent v-if="item.img && !item.reversed" :img="item.img"></homeImgComponent>
+                    <homeImgComponent v-if="item.img && !item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
                     <homeContentComponent
                       :setup="item"
                       :alignment="item.alignment || 'center'"
                       :color="item.color || 'default'"
                       variant="card"
                     ></homeContentComponent>
-                    <homeImgComponent v-if="item.img && item.reversed" :img="item.img"></homeImgComponent>
+                    <homeImgComponent v-if="item.img && item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
                   </v-card>
                 </v-col>
               </v-row>
