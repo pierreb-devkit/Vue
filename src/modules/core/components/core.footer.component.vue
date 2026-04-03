@@ -62,8 +62,16 @@ export default {
     themeName() {
       return this.theme.name;
     },
+    /**
+     * @desc Resolved variant — home config overrides the prop when on a home route.
+     */
+    resolvedVariant() {
+      const homeFooter = this.config?.home?.footer;
+      if (homeFooter?.variant && this.$route?.name === 'Home') return homeFooter.variant;
+      return this.variant;
+    },
     footerStyle() {
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      const bgColor = this.resolvedVariant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         background: bgColor,
       };
