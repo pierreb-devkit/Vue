@@ -19,6 +19,7 @@
   - title (String): Title text displayed on image
   - text (String): Description text displayed on image
   - alt (String): Alt text for accessibility (falls back to title, then empty string for decorative images)
+  - imgMode (String): Image fit mode — 'cover' (default) or 'contain' for SVG illustrations
 
   NOTES:
   - Uses lazy-src for placeholder during loading
@@ -32,7 +33,8 @@
     :class="`${config.vuetify.theme.rounded}`"
     :height="height || ($vuetify.display.xsAndDown ? '225px' : $vuetify.display.smAndDown ? '300px' : '350px')"
     :gradient="gradient"
-    cover
+    :cover="imgMode !== 'contain'"
+    :style="imgMode === 'contain' ? 'object-fit: contain' : ''"
     :alt="alt || title || ''"
   >
     <template #placeholder>
@@ -78,6 +80,15 @@ export default {
     alt: {
       type: String,
       default: '',
+    },
+    /**
+     * Image fit mode: 'cover' (default) fills the area, 'contain' fits the
+     * entire image inside (useful for SVG illustrations).
+     * @type {string}
+     */
+    imgMode: {
+      type: String,
+      default: 'cover',
     },
   },
 };
