@@ -8,6 +8,7 @@
 
   CONFIG EXAMPLE (setup object):
   install: {
+    showStepLabel: true,             // Show opposite-side labels (default: false)
     style: {
       section: { background: 'surface' },
       card: { background: 'background' },
@@ -17,7 +18,7 @@
         icon: 'fa-solid fa-download',
         color: '#1abc9c',            // Dot color
         iconColor: 'white',          // Icon color (default: white)
-        title: 'Step 1',             // Opposite side title
+        title: 'Step 1',             // Opposite side title (visible when showStepLabel is true)
         subtitle: 'Installation',
         text: 'Description with **markdown** support.',
         img: '/images/step1.webp',   // Optional image
@@ -43,7 +44,7 @@
             fill-dot
             size="x-large"
           >
-            <template v-if="item.title" #opposite>
+            <template v-if="setup.showStepLabel && item.title" #opposite>
               <h3 class="text-headline-small text-md-headline-medium text-secondary font-weight-bold" v-text="item.title"></h3>
             </template>
             <v-card :class="`${config.vuetify.theme.rounded} my-8 pb-2`" :flat="config.vuetify.theme.flat" :style="cardStyle">
