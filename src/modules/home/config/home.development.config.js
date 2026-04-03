@@ -610,6 +610,8 @@ export default {
     statistics: {
       icon: 'fa-solid fa-chart-line',
       title: 'Our Impact',
+      animated: true, // enable scroll-triggered counter animation
+      animationDuration: 1500, // counter animation duration in ms
       variant: 'blur', // 'parallax' | 'blur'
       parallax: {
         image: '/images/parallax.webp',
