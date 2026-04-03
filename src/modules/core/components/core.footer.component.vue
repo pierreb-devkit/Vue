@@ -62,8 +62,18 @@ export default {
     themeName() {
       return this.theme.name;
     },
+    /**
+     * @desc Resolve the footer variant, allowing a validated home-page config override.
+     * @returns {string} The resolved footer variant ('default' | 'alternate').
+     */
+    resolvedVariant() {
+      const allowedVariants = ['default', 'alternate'];
+      const homeFooterVariant = this.config?.home?.footer?.variant;
+      if (this.$route?.path === '/' && allowedVariants.includes(homeFooterVariant)) return homeFooterVariant;
+      return this.variant;
+    },
     footerStyle() {
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
+      const bgColor = this.resolvedVariant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         background: bgColor,
       };

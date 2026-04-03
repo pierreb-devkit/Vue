@@ -701,5 +701,15 @@ export default {
       mail: 'mailto:pierre@devkit.me',
       alignment: 'center',
     },
+
+    // === FOOTER OVERRIDE ===
+    // Purpose: Control footer appearance on the home page
+    // Use case: Prevent last section and footer sharing the same background
+    //
+    // Props:
+    // - variant (String): 'default' | 'alternate' — overrides app-level footer variant on home route
+    footer: {
+      variant: 'alternate',
+    },
   },
 };
