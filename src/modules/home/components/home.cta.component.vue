@@ -24,21 +24,21 @@
         </v-col>
         <v-col cols="12" class="text-center">
           <v-btn
-            v-if="setup.button"
+            v-if="setup.button && setup.button.title && setup.button.link"
             :color="setup.button.color || 'primary'"
             variant="flat"
             size="x-large"
             :class="config.vuetify.theme.rounded"
-            :to="setup.button.link"
+            :href="setup.button.link"
           >
             {{ setup.button.title }}
           </v-btn>
           <v-btn
-            v-if="setup.secondaryButton"
+            v-if="setup.secondaryButton && setup.secondaryButton.title && setup.secondaryButton.link"
             variant="outlined"
             size="x-large"
-            :class="`ml-4 ${config.vuetify.theme.rounded}`"
-            :to="setup.secondaryButton.link"
+            :class="{ [config.vuetify.theme.rounded]: true, 'ml-4': setup.button && setup.button.title && setup.button.link }"
+            :href="setup.secondaryButton.link"
           >
             {{ setup.secondaryButton.title }}
           </v-btn>
@@ -70,6 +70,10 @@ export default {
       required: true,
     },
   },
+  /**
+   * Initialise component data with the current Vuetify theme instance.
+   * @returns {{ theme: import('vuetify').ThemeInstance }} Reactive theme reference.
+   */
   data() {
     const theme = useTheme();
     return {
