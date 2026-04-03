@@ -35,6 +35,7 @@
       :color-mode="config.home.statistics.colorMode"
     ></homeStatisticsComponent>
     <homeFaqComponent v-if="config.home.faq" :setup="config.home.faq"></homeFaqComponent>
+    <homeCtaComponent v-if="config.home.cta" :setup="config.home.cta"></homeCtaComponent>
     <homeContactComponent v-if="config.home.contact"></homeContactComponent>
   </div>
 </template>
@@ -59,6 +60,7 @@ import homeSocialComponent from '../components/home.social.component.vue';
 import homeArticlesComponent from '../components/home.articles.component.vue';
 import homeStatisticsComponent from '../components/home.statistics.component.vue';
 import homeFaqComponent from '../components/home.faq.component.vue';
+import homeCtaComponent from '../components/home.cta.component.vue';
 import homeContactComponent from '../components/home.contact.component.vue';
 
 /**
@@ -79,6 +81,7 @@ export default {
     homeArticlesComponent,
     homeStatisticsComponent,
     homeFaqComponent,
+    homeCtaComponent,
     homeContactComponent,
   },
   data() {
