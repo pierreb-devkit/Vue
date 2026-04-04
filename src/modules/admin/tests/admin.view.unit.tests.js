@@ -7,6 +7,7 @@ vi.mock('../stores/admin.store', () => ({
   useAdminStore: () => ({
     users: [],
     organizations: [],
+    error: null,
     getUsers: vi.fn(),
     getOrganizations: vi.fn(),
   }),

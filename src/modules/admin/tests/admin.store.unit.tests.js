@@ -29,6 +29,7 @@ describe('Admin Store', () => {
     const store = useAdminStore();
     expect(store.users).toEqual([]);
     expect(store.organizations).toEqual([]);
+    expect(store.error).toBeNull();
     expect(store.user).toEqual({
       firstName: '',
       lastName: '',
@@ -58,7 +59,7 @@ describe('Admin Store', () => {
       expect(store.users).toEqual(mockUsers);
     });
 
-    it('should handle error', async () => {
+    it('should handle error and set error state', async () => {
       const store = useAdminStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -67,7 +68,35 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
 
       expect(store.users).toEqual([]);
+      expect(store.error).toBe('Failed to load data');
       expect(consoleLogSpy).toHaveBeenCalled();
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should set error from API response message', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'Forbidden' } } });
+
+      await store.getUsers('0&10');
+
+      expect(store.error).toBe('Forbidden');
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should clear error on next action call', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.get.mockRejectedValueOnce(new Error('Failed'));
+      await store.getUsers('0&10');
+      expect(store.error).toBe('Failed to load data');
+
+      axios.get.mockResolvedValueOnce({ data: { data: [] } });
+      await store.getUsers('0&10');
+      expect(store.error).toBeNull();
+
       consoleLogSpy.mockRestore();
     });
   });
@@ -95,7 +124,7 @@ describe('Admin Store', () => {
       expect(store.organizations).toEqual(mockOrgs);
     });
 
-    it('should handle error', async () => {
+    it('should handle error and set error state', async () => {
       const store = useAdminStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -104,6 +133,7 @@ describe('Admin Store', () => {
       await store.getOrganizations('0&10');
 
       expect(store.organizations).toEqual([]);
+      expect(store.error).toBe('Failed to load data');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
@@ -134,7 +164,7 @@ describe('Admin Store', () => {
       expect(store.user).toMatchObject(updatedUser);
     });
 
-    it('should handle error', async () => {
+    it('should handle error and set error state', async () => {
       const store = useAdminStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -142,6 +172,7 @@ describe('Admin Store', () => {
 
       await expect(store.updateUser({ id: '123' })).rejects.toThrow('Failed');
 
+      expect(store.error).toBe('Failed to load data');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
@@ -170,7 +201,7 @@ describe('Admin Store', () => {
       });
     });
 
-    it('should handle error', async () => {
+    it('should handle error and set error state', async () => {
       const store = useAdminStore();
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -178,6 +209,7 @@ describe('Admin Store', () => {
 
       await expect(store.deleteUser({ id: '999' })).rejects.toThrow('Failed');
 
+      expect(store.error).toBe('Failed to load data');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
