@@ -16,7 +16,7 @@ services:
       context: ${NODE_CONTEXT:-../Node}
       dockerfile: Dockerfile
     ports:
-      - "3000:3001"
+      - "3000:3000"
     environment:
       NODE_ENV: test
       DEVKIT_NODE_api_port: "3001"
@@ -27,7 +27,7 @@ services:
       mongo:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/home').then(r => { if (!r.ok) throw 1 })"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/home').then(r => { if (!r.ok) throw 1 })"]
       interval: 5s
       timeout: 5s
       retries: 10

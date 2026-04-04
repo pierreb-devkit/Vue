@@ -26,6 +26,10 @@
               <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
               Organizations
             </v-tab>
+            <v-tab value="readiness" class="text-none text-body-medium">
+              <v-icon icon="fa-solid fa-clipboard-check" size="small" class="mr-2"></v-icon>
+              Readiness
+            </v-tab>
             <v-tab
               v-for="extraTab in extraTabs"
               :key="extraTab.value"
@@ -106,6 +110,43 @@
                 </coreDataTableComponent>
               </div>
             </v-window-item>
+            <!-- Readiness tab -->
+            <v-window-item value="readiness">
+              <div class="pa-4">
+                <v-progress-linear v-if="readinessLoading" indeterminate color="primary" class="mb-4"></v-progress-linear>
+                <v-table v-else-if="readiness.length">
+                  <thead>
+                    <tr>
+                      <th class="text-left text-body-medium">Category</th>
+                      <th class="text-left text-body-medium">Status</th>
+                      <th class="text-left text-body-medium">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in readiness" :key="item.category">
+                      <td class="text-body-medium text-capitalize">{{ item.category }}</td>
+                      <td>
+                        <v-icon
+                          :icon="readinessIcon(item.status)"
+                          :color="readinessColor(item.status)"
+                          size="small"
+                          class="mr-2"
+                        ></v-icon>
+                        <v-chip
+                          :color="readinessColor(item.status)"
+                          size="small"
+                          variant="tonal"
+                        >
+                          {{ item.status }}
+                        </v-chip>
+                      </td>
+                      <td class="text-body-medium">{{ item.message }}</td>
+                    </tr>
+                  </tbody>
+                </v-table>
+                <div v-else class="text-medium-emphasis text-body-medium">No readiness data available.</div>
+              </div>
+            </v-window-item>
           </v-window>
         </v-card>
         <v-alert
@@ -162,6 +203,7 @@ export default {
   data() {
     return {
       tab: 'users',
+      readinessLoading: false,
       deleteDialog: {
         show: false,
         userId: null,
@@ -217,6 +259,10 @@ export default {
       const adminStore = useAdminStore();
       return adminStore.organizations;
     },
+    readiness() {
+      const adminStore = useAdminStore();
+      return adminStore.readiness;
+    },
     /**
      * @desc Whether to show the mailer warning in admin panel.
      * @returns {boolean}
@@ -224,6 +270,11 @@ export default {
     showMailerWarning() {
       const authStore = useAuthStore();
       return authStore.serverConfig?.mail?.configured === false;
+    },
+  },
+  watch: {
+    tab(val) {
+      if (val === 'readiness') this.fetchReadiness();
     },
   },
   methods: {
@@ -237,6 +288,36 @@ export default {
       const currentOrg = user.currentOrganization?._id || user.currentOrganization?.id || user.currentOrganization;
       const orgId = membership.organizationId?._id || membership.organizationId?.id || membership.organizationId;
       return currentOrg && orgId && String(currentOrg) === String(orgId);
+    },
+    /**
+     * @desc Map readiness status to icon name.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} FontAwesome icon class
+     */
+    readinessIcon(status) {
+      if (status === 'ok') return 'fa-solid fa-circle-check';
+      if (status === 'error') return 'fa-solid fa-circle-xmark';
+      return 'fa-solid fa-triangle-exclamation';
+    },
+    /**
+     * @desc Map readiness status to color.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} Vuetify color name
+     */
+    readinessColor(status) {
+      if (status === 'ok') return 'success';
+      if (status === 'error') return 'error';
+      return 'warning';
+    },
+    /**
+     * @desc Fetch readiness data from admin store.
+     * @returns {Promise<void>}
+     */
+    async fetchReadiness() {
+      this.readinessLoading = true;
+      const adminStore = useAdminStore();
+      await adminStore.getReadiness();
+      this.readinessLoading = false;
     },
     async fetchUsers(params) {
       const adminStore = useAdminStore();

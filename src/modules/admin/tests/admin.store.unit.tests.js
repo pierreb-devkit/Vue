@@ -30,6 +30,7 @@ describe('Admin Store', () => {
     expect(store.users).toEqual([]);
     expect(store.organizations).toEqual([]);
     expect(store.error).toBeNull();
+    expect(store.readiness).toEqual([]);
     expect(store.user).toEqual({
       firstName: '',
       lastName: '',
@@ -136,6 +137,33 @@ describe('Admin Store', () => {
       expect(store.error).toBe('Failed to load data');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('getReadiness', () => {
+    it('should fetch and set readiness data', async () => {
+      const store = useAdminStore();
+      const mockReadiness = [
+        { category: 'config', status: 'ok', message: 'Domain configured' },
+        { category: 'security', status: 'warning', message: 'JWT secret is default' },
+      ];
+
+      axios.get.mockResolvedValueOnce({ data: { data: mockReadiness } });
+
+      await store.getReadiness();
+
+      expect(store.readiness).toEqual(mockReadiness);
+    });
+
+    it('should clear stale data on error', async () => {
+      const store = useAdminStore();
+      store.readiness = [{ category: 'config', status: 'ok', message: 'stale' }];
+
+      axios.get.mockRejectedValueOnce(new Error('Failed'));
+
+      await store.getReadiness();
+
+      expect(store.readiness).toEqual([]);
     });
   });
 
