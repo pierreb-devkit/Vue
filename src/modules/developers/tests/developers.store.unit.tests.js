@@ -23,8 +23,12 @@ describe('Developers Store', () => {
     const store = useDevelopersStore();
     expect(store.keys).toEqual([]);
     expect(store.keysTotal).toBe(0);
+    expect(store.keysPage).toBe(1);
+    expect(store.keysPerPage).toBe(20);
     expect(store.webhooks).toEqual([]);
     expect(store.webhooksTotal).toBe(0);
+    expect(store.webhooksPage).toBe(1);
+    expect(store.webhooksPerPage).toBe(20);
     expect(store.deliveries).toEqual([]);
     expect(store.deliveriesTotal).toBe(0);
     expect(store.loading).toBe(false);
@@ -47,7 +51,7 @@ describe('Developers Store', () => {
       expect(store.loading).toBe(false);
     });
 
-    it('should pass pagination params', async () => {
+    it('should pass pagination params and track page state', async () => {
       const store = useDevelopersStore();
       axios.get.mockResolvedValueOnce({ data: { data: [], total: 0 } });
       await store.fetchKeys(2, 10);
@@ -55,6 +59,8 @@ describe('Developers Store', () => {
         expect.stringContaining('/developers/keys'),
         { params: { page: 2, perPage: 10 } },
       );
+      expect(store.keysPage).toBe(2);
+      expect(store.keysPerPage).toBe(10);
     });
 
     it('should set loading during fetch', async () => {
@@ -89,14 +95,16 @@ describe('Developers Store', () => {
   });
 
   describe('createKey', () => {
-    it('should create key and prepend to list', async () => {
+    it('should create key and re-fetch page 1', async () => {
       const store = useDevelopersStore();
       const mockKey = { _id: 'k1', name: 'New Key', prefix: 'dk_new', plainKey: 'dk_new_full_key' };
+      const refreshedKeys = [{ _id: 'k1', name: 'New Key', prefix: 'dk_new' }];
       axios.post.mockResolvedValueOnce({ data: { data: mockKey } });
+      axios.get.mockResolvedValueOnce({ data: { data: refreshedKeys, total: 1 } });
       const result = await store.createKey({ name: 'New Key', scopes: ['read'] });
       expect(result).toEqual(mockKey);
-      expect(store.keys[0].name).toBe('New Key');
-      expect(store.keys[0].plainKey).toBeUndefined();
+      expect(store.keys).toEqual(refreshedKeys);
+      expect(store.keysTotal).toBe(1);
       expect(store.loading).toBe(false);
     });
 
@@ -104,11 +112,28 @@ describe('Developers Store', () => {
       const store = useDevelopersStore();
       const body = { name: 'Test', scopes: ['read', 'write'] };
       axios.post.mockResolvedValueOnce({ data: { data: { _id: 'k1', ...body } } });
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 0 } });
       await store.createKey(body);
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/developers/keys'),
         body,
       );
+    });
+
+    it('should re-fetch page 1 regardless of current page', async () => {
+      const store = useDevelopersStore();
+      store.keysPage = 3;
+      store.keysPerPage = 10;
+      const mockKey = { _id: 'k1', name: 'New Key' };
+      const refreshedKeys = [{ _id: 'k1', name: 'New Key' }];
+      axios.post.mockResolvedValueOnce({ data: { data: mockKey } });
+      axios.get.mockResolvedValueOnce({ data: { data: refreshedKeys, total: 21 } });
+      await store.createKey({ name: 'New Key' });
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/developers/keys'),
+        { params: { page: 1, perPage: 10 } },
+      );
+      expect(store.keysTotal).toBe(21);
     });
 
     it('should propagate error to caller', async () => {
@@ -123,16 +148,16 @@ describe('Developers Store', () => {
   });
 
   describe('revokeKey', () => {
-    it('should revoke key and remove from list', async () => {
+    it('should revoke key and re-fetch current page', async () => {
       const store = useDevelopersStore();
-      store.keys = [
-        { _id: 'k1', name: 'Key 1' },
-        { _id: 'k2', name: 'Key 2' },
-      ];
+      store.keysPage = 1;
+      store.keysPerPage = 20;
+      const refreshedKeys = [{ _id: 'k2', name: 'Key 2' }];
       axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: refreshedKeys, total: 1 } });
       await store.revokeKey('k1');
-      expect(store.keys).toHaveLength(1);
-      expect(store.keys[0]._id).toBe('k2');
+      expect(store.keys).toEqual(refreshedKeys);
+      expect(store.keysTotal).toBe(1);
       expect(store.loading).toBe(false);
     });
 
@@ -140,8 +165,23 @@ describe('Developers Store', () => {
       const store = useDevelopersStore();
       store.keys = [];
       axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 0 } });
       await store.revokeKey('k1');
       expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/developers/keys/k1'));
+    });
+
+    it('should re-fetch the active page after revoke', async () => {
+      const store = useDevelopersStore();
+      store.keysPage = 2;
+      store.keysPerPage = 10;
+      axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 10 } });
+      await store.revokeKey('k5');
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/developers/keys'),
+        { params: { page: 2, perPage: 10 } },
+      );
+      expect(store.keysTotal).toBe(10);
     });
 
     it('should propagate error to caller', async () => {
@@ -211,14 +251,16 @@ describe('Developers Store', () => {
   });
 
   describe('createWebhook', () => {
-    it('should create webhook and prepend to list without plainSecret', async () => {
+    it('should create webhook and re-fetch page 1', async () => {
       const store = useDevelopersStore();
       const mockWebhook = { _id: 'w1', url: 'https://example.com', events: ['scrap.success'], plainSecret: 'whsec_abc' };
+      const refreshedWebhooks = [{ _id: 'w1', url: 'https://example.com', events: ['scrap.success'] }];
       axios.post.mockResolvedValueOnce({ data: { data: mockWebhook } });
+      axios.get.mockResolvedValueOnce({ data: { data: refreshedWebhooks, total: 1 } });
       const result = await store.createWebhook({ url: 'https://example.com', events: ['scrap.success'] });
       expect(result).toEqual(mockWebhook);
-      expect(store.webhooks[0].plainSecret).toBeUndefined();
-      expect(store.webhooks[0].url).toBe('https://example.com');
+      expect(store.webhooks).toEqual(refreshedWebhooks);
+      expect(store.webhooksTotal).toBe(1);
       expect(store.loading).toBe(false);
     });
 
@@ -226,11 +268,27 @@ describe('Developers Store', () => {
       const store = useDevelopersStore();
       const body = { url: 'https://test.com/hook', events: ['scrap.created'] };
       axios.post.mockResolvedValueOnce({ data: { data: { _id: 'w1', ...body } } });
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 0 } });
       await store.createWebhook(body);
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/developers/webhooks'),
         body,
       );
+    });
+
+    it('should re-fetch page 1 regardless of current page', async () => {
+      const store = useDevelopersStore();
+      store.webhooksPage = 2;
+      store.webhooksPerPage = 10;
+      const mockWebhook = { _id: 'w1', url: 'https://example.com' };
+      axios.post.mockResolvedValueOnce({ data: { data: mockWebhook } });
+      axios.get.mockResolvedValueOnce({ data: { data: [mockWebhook], total: 11 } });
+      await store.createWebhook({ url: 'https://example.com' });
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/developers/webhooks'),
+        { params: { page: 1, perPage: 10 } },
+      );
+      expect(store.webhooksTotal).toBe(11);
     });
 
     it('should propagate error to caller', async () => {
@@ -291,13 +349,16 @@ describe('Developers Store', () => {
   });
 
   describe('deleteWebhook', () => {
-    it('should delete webhook and remove from list', async () => {
+    it('should delete webhook and re-fetch current page', async () => {
       const store = useDevelopersStore();
-      store.webhooks = [{ _id: 'w1' }, { _id: 'w2' }];
+      store.webhooksPage = 1;
+      store.webhooksPerPage = 20;
+      const refreshedWebhooks = [{ _id: 'w2' }];
       axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: refreshedWebhooks, total: 1 } });
       await store.deleteWebhook('w1');
-      expect(store.webhooks).toHaveLength(1);
-      expect(store.webhooks[0]._id).toBe('w2');
+      expect(store.webhooks).toEqual(refreshedWebhooks);
+      expect(store.webhooksTotal).toBe(1);
       expect(store.loading).toBe(false);
     });
 
@@ -305,8 +366,23 @@ describe('Developers Store', () => {
       const store = useDevelopersStore();
       store.webhooks = [];
       axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 0 } });
       await store.deleteWebhook('w1');
       expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/developers/webhooks/w1'));
+    });
+
+    it('should re-fetch the active page after delete', async () => {
+      const store = useDevelopersStore();
+      store.webhooksPage = 2;
+      store.webhooksPerPage = 10;
+      axios.delete.mockResolvedValueOnce({});
+      axios.get.mockResolvedValueOnce({ data: { data: [], total: 10 } });
+      await store.deleteWebhook('w5');
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/developers/webhooks'),
+        { params: { page: 2, perPage: 10 } },
+      );
+      expect(store.webhooksTotal).toBe(10);
     });
 
     it('should propagate error to caller', async () => {

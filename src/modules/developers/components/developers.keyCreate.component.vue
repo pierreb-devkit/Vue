@@ -91,7 +91,10 @@ export default {
     minDate() {
       const d = new Date();
       d.setDate(d.getDate() + 1);
-      return d.toISOString().split('T')[0];
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     },
   },
   methods: {
@@ -111,7 +114,8 @@ export default {
           scopes: this.scopes,
         };
         if (this.expiresAt) {
-          body.expiresAt = new Date(this.expiresAt).toISOString();
+          const [year, month, day] = this.expiresAt.split('-').map(Number);
+          body.expiresAt = new Date(Date.UTC(year, month - 1, day)).toISOString();
         }
         const key = await store.createKey(body);
         this.$emit('created', key);

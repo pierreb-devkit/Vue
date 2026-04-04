@@ -166,7 +166,7 @@ import PageHeader from '../../core/components/core.pageHeader.component.vue';
  * Component definition.
  */
 export default {
-  name: 'DevelopersView',
+  name: 'DevelopersIndexView',
   components: {
     developersKeysTab,
     developersKeyCreateComponent,
@@ -358,13 +358,15 @@ export default {
     /**
      * @desc Send a test ping for a webhook.
      * @param {string} id - Webhook ID
+     * @param {Object} callbacks - { resolve, reject } from child component
      */
-    async testWebhook(id) {
+    async testWebhook(id, callbacks) {
       const store = useDevelopersStore();
       try {
         await store.testWebhook(id);
-      } catch {
-        /* interceptor handles */
+        if (callbacks?.resolve) callbacks.resolve();
+      } catch (err) {
+        if (callbacks?.reject) callbacks.reject(err);
       }
     },
 

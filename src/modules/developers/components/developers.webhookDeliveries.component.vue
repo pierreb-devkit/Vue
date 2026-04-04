@@ -160,7 +160,7 @@ export default {
      * @returns {string} Formatted JSON string
      */
     formatJson(data) {
-      if (!data) return '—';
+      if (data == null) return '—';
       try {
         return JSON.stringify(data, null, 2);
       } catch {

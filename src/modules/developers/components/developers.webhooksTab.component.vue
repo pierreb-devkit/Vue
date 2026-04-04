@@ -240,15 +240,24 @@ export default {
     /**
      * @desc Send a test ping for a webhook via parent.
      * @param {Object} item - The webhook to test
+     * @returns {Promise<void>}
      */
-    testPing(item) {
+    async testPing(item) {
       const id = item.id || item._id;
       this.testingId = id;
-      this.$emit('test', id);
-      this.snackbarText = 'Test ping sent';
-      this.snackbarColor = 'success';
-      this.testingId = null;
-      this.showSnackbar = true;
+      try {
+        await new Promise((resolve, reject) => {
+          this.$emit('test', id, { resolve, reject });
+        });
+        this.snackbarText = 'Test ping sent';
+        this.snackbarColor = 'success';
+      } catch {
+        this.snackbarText = 'Test ping failed';
+        this.snackbarColor = 'error';
+      } finally {
+        this.testingId = null;
+        this.showSnackbar = true;
+      }
     },
 
     /**

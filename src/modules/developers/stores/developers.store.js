@@ -18,8 +18,12 @@ export const useDevelopersStore = defineStore('developers', {
   state: () => ({
     keys: [],
     keysTotal: 0,
+    keysPage: 1,
+    keysPerPage: 20,
     webhooks: [],
     webhooksTotal: 0,
+    webhooksPage: 1,
+    webhooksPerPage: 20,
     deliveries: [],
     deliveriesTotal: 0,
     loading: false,
@@ -43,6 +47,8 @@ export const useDevelopersStore = defineStore('developers', {
         });
         this.keys = res.data.data;
         this.keysTotal = res.data.total || res.data.data.length;
+        this.keysPage = page;
+        this.keysPerPage = perPage;
         return this.keys;
       } catch (err) {
         console.error(err);
@@ -63,7 +69,7 @@ export const useDevelopersStore = defineStore('developers', {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.developers}/keys`, data);
         const key = res.data.data;
-        this.keys.unshift({ ...key, plainKey: undefined });
+        await this.fetchKeys(1, this.keysPerPage);
         return key;
       } catch (err) {
         console.error(err);
@@ -83,7 +89,7 @@ export const useDevelopersStore = defineStore('developers', {
       try {
         const api = apiBase();
         await axios.delete(`${api}/${config.api.endPoints.developers}/keys/${id}`);
-        this.keys = this.keys.filter((k) => k.id !== id && k._id !== id);
+        await this.fetchKeys(this.keysPage, this.keysPerPage);
       } catch (err) {
         console.error(err);
         throw err;
@@ -109,6 +115,8 @@ export const useDevelopersStore = defineStore('developers', {
         });
         this.webhooks = res.data.data;
         this.webhooksTotal = res.data.total || res.data.data.length;
+        this.webhooksPage = page;
+        this.webhooksPerPage = perPage;
         return this.webhooks;
       } catch (err) {
         console.error(err);
@@ -129,7 +137,7 @@ export const useDevelopersStore = defineStore('developers', {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.developers}/webhooks`, data);
         const webhook = res.data.data;
-        this.webhooks.unshift({ ...webhook, plainSecret: undefined });
+        await this.fetchWebhooks(1, this.webhooksPerPage);
         return webhook;
       } catch (err) {
         console.error(err);
@@ -172,7 +180,7 @@ export const useDevelopersStore = defineStore('developers', {
       try {
         const api = apiBase();
         await axios.delete(`${api}/${config.api.endPoints.developers}/webhooks/${id}`);
-        this.webhooks = this.webhooks.filter((w) => w.id !== id && w._id !== id);
+        await this.fetchWebhooks(this.webhooksPage, this.webhooksPerPage);
       } catch (err) {
         console.error(err);
         throw err;

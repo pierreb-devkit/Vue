@@ -120,26 +120,33 @@ export default {
      * @param {Object|null} val - The webhook to edit
      */
     webhook(val) {
-      if (val) {
-        this.url = val.url || '';
-        this.events = val.events ? [...val.events] : [];
-        this.description = val.description || '';
-        this.active = val.active !== false;
-      } else {
-        this.reset();
-      }
+      if (this.modelValue) this.populate(val);
     },
     /**
-     * @desc Reset form when dialog opens for create mode.
+     * @desc Populate or reset form when dialog opens.
      * @param {boolean} val - Dialog visibility
      */
     modelValue(val) {
-      if (val && !this.webhook) {
-        this.reset();
-      }
+      if (val) this.populate(this.webhook);
     },
   },
   methods: {
+    /**
+     * @desc Populate form from a webhook object, or reset if null.
+     * @param {Object|null} webhook - The webhook to populate from
+     */
+    populate(webhook) {
+      if (!webhook) {
+        this.reset();
+        return;
+      }
+      this.url = webhook.url || '';
+      this.events = webhook.events ? [...webhook.events] : [];
+      this.description = webhook.description || '';
+      this.active = webhook.active !== false;
+      if (this.$refs.form) this.$refs.form.resetValidation();
+    },
+
     /**
      * @desc Submit the create or update webhook form.
      * @returns {Promise<void>}

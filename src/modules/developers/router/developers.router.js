@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import developers from '../views/developers.view.vue';
+import developers from '../views/developers.index.view.vue';
 
 /**
  * Router configuration.
