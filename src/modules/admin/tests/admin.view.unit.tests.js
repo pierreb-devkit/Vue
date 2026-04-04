@@ -86,28 +86,28 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
-    expect(tabs[2].text()).toContain('Logs');
-    const icons = tabs[2].findAllComponents({ name: 'VIcon' });
+    expect(tabs.length).toBe(4);
+    expect(tabs[3].text()).toContain('Logs');
+    const icons = tabs[3].findAllComponents({ name: 'VIcon' });
     expect(icons.length).toBe(0);
   });
 
   it('should gracefully handle empty admin.tabs array', () => {
     const wrapper = mountView({ admin: { tabs: [] } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
+    expect(tabs.length).toBe(3);
   });
 
   it('should gracefully handle missing admin config', () => {
     const wrapper = mountView();
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
+    expect(tabs.length).toBe(3);
   });
 
   it('should ignore invalid admin.tabs values (non-array)', () => {
     const wrapper = mountView({ admin: { tabs: 'invalid' } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
+    expect(tabs.length).toBe(3);
   });
 
   it('should filter out entries missing required fields', () => {
@@ -121,7 +121,7 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
-    expect(tabs[2].text()).toContain('Billing');
+    expect(tabs.length).toBe(4);
+    expect(tabs[3].text()).toContain('Billing');
   });
 });
