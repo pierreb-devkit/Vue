@@ -1,6 +1,19 @@
 <template>
   <v-container fluid>
     <PageHeader icon="fa-solid fa-user-tie" title="Admin" />
+    <v-alert
+      v-if="error"
+      type="error"
+      variant="tonal"
+      density="compact"
+      closable
+      class="mx-2 mt-2"
+      :class="config.vuetify.theme.rounded"
+      icon="fa-solid fa-circle-exclamation"
+      @click:close="clearError"
+    >
+      <span class="text-body-medium">{{ error }}</span>
+    </v-alert>
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
@@ -192,6 +205,10 @@ export default {
         && tab.label
         && tab.route);
     },
+    error() {
+      const adminStore = useAdminStore();
+      return adminStore.error;
+    },
     users() {
       const adminStore = useAdminStore();
       return adminStore.users;
@@ -212,6 +229,10 @@ export default {
   methods: {
     roleColor,
     orgColor,
+    clearError() {
+      const adminStore = useAdminStore();
+      adminStore.error = null;
+    },
     isUserActiveOrg(user, membership) {
       const currentOrg = user.currentOrganization?._id || user.currentOrganization?.id || user.currentOrganization;
       const orgId = membership.organizationId?._id || membership.organizationId?.id || membership.organizationId;
