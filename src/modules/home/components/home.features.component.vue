@@ -1,7 +1,7 @@
 <!--
   HomeCardsComponent
   ==================
-  Carousel of cards with image, text, and button. Supports sliding and styling.
+  Carousel or grid of cards with image, text, and button. Supports sliding and styling.
 
   USAGE:
   <homeCardsComponent :setup="config.home.repos" />
@@ -9,8 +9,10 @@
   CONFIG EXAMPLE (setup object):
   repos: {
     title: 'Our Products',
+    layout: 'carousel',        // 'carousel' (default) or 'grid'
+    cols: 2,                   // grid only — 2, 3, 4, or 6 (default: auto from item count)
     slide: {
-      interval: 15000,  // Auto-slide interval in ms
+      interval: 15000,         // Auto-slide interval in ms (carousel only)
     },
     style: {
       section: { background: 'surface' },
@@ -45,9 +47,25 @@
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
-        <v-col cols="12">
+        <!-- Grid layout -->
+        <template v-if="isGrid">
+          <v-col v-for="(item, i) in setup.content" :key="i" cols="12" :md="item.fullWidth ? 12 : gridColSize">
+            <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="style('card', { style: item.style })">
+              <homeImgComponent v-if="item.img && !item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
+              <homeContentComponent
+                :setup="item"
+                :alignment="item.alignment || 'center'"
+                :color="item.color || 'default'"
+                variant="card"
+              ></homeContentComponent>
+              <homeImgComponent v-if="item.img && item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
+            </v-card>
+          </v-col>
+        </template>
+        <!-- Carousel layout (default) -->
+        <v-col v-if="!isGrid" cols="12">
           <v-carousel
-            v-if="setup.content.length > 0"
+            v-if="setup.content?.length > 0"
             v-model="step"
             cycle
             height="100%"
@@ -75,7 +93,7 @@
             </v-carousel-item>
           </v-carousel>
         </v-col>
-        <homeDynamicIsland v-if="steps > 0" :container="cardsContainer" :step="step" :steps="steps" :action="stepper"></homeDynamicIsland>
+        <homeDynamicIsland v-if="!isGrid && steps > 0" :container="cardsContainer" :step="step" :steps="steps" :action="stepper"></homeDynamicIsland>
       </v-row>
     </v-container>
   </section>
@@ -116,6 +134,17 @@ export default {
     };
   },
   computed: {
+    isGrid() {
+      return this.setup.layout === 'grid';
+    },
+    gridColSize() {
+      const cols = Number(this.setup.cols);
+      if (!Number.isNaN(cols) && [2, 3, 4, 6].includes(cols)) return 12 / cols;
+      const count = this.setup.content?.length || 0;
+      if (count <= 2) return 6;
+      if (count <= 3) return 4;
+      return 3;
+    },
     variant() {
       return this.setup.variant || 'default';
     },
@@ -134,12 +163,14 @@ export default {
       };
     },
     steps() {
-      return this.$vuetify.display.smAndDown ? this.setup.content.length - 1 : Math.ceil(this.setup.content.length / 2) - 1;
+      const items = this.setup.content || [];
+      return this.$vuetify.display.smAndDown ? items.length - 1 : Math.ceil(items.length / 2) - 1;
     },
     content() {
+      const items = this.setup.content || [];
       return this.$vuetify.display.smAndDown
-        ? this.setup.content.slice(this.step, this.step + 1)
-        : this.setup.content.slice(this.step * 2, this.step * 2 + 2);
+        ? items.slice(this.step, this.step + 1)
+        : items.slice(this.step * 2, this.step * 2 + 2);
     },
   },
   mounted() {
