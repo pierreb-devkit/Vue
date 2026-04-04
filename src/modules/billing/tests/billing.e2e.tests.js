@@ -51,7 +51,7 @@ test.describe('Pricing Page E2E', () => {
   test('displays pricing header and plan cards', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Header
     await expect(page.getByRole('heading', { name: 'Pricing' })).toBeVisible({ timeout: 10000 });
@@ -77,7 +77,7 @@ test.describe('Pricing Page E2E', () => {
   test('billing toggle switches between monthly and annual', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Monthly and Annual labels visible
     await expect(page.getByText('Monthly')).toBeVisible({ timeout: 10000 });
@@ -108,7 +108,7 @@ test.describe('Pricing Page E2E', () => {
   test('plan cards display feature lists', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Free plan features
     await expect(page.getByText('1 project')).toBeVisible({ timeout: 10000 });
@@ -137,7 +137,7 @@ test.describe('Pricing Page E2E', () => {
   test('CTA buttons are present on plan cards', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Free plan shows "Current Plan" (default plan for unauthenticated users),
     // so only paid plans display "Get Started" CTA buttons.
@@ -161,7 +161,7 @@ test.describe('Pricing Page — Unauthenticated CTA', () => {
   test('CTA redirects unauthenticated user to signin', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click the first enabled "Get Started" button inside a pricing card
     const ctaButtons = page.locator('.billing-pricing-card button:has-text("Get Started"):not([disabled])');
