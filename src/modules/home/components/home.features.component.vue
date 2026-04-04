@@ -49,7 +49,7 @@
         </v-col>
         <!-- Grid layout -->
         <template v-if="isGrid">
-          <v-col v-for="(item, i) in setup.content" :key="i" cols="12" :md="gridColSize">
+          <v-col v-for="(item, i) in setup.content" :key="i" cols="12" :md="item.fullWidth ? 12 : gridColSize">
             <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="style('card', { style: item.style })">
               <homeImgComponent v-if="item.img && !item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
               <homeContentComponent
@@ -65,7 +65,7 @@
         <!-- Carousel layout (default) -->
         <v-col v-if="!isGrid" cols="12">
           <v-carousel
-            v-if="setup.content.length > 0"
+            v-if="setup.content?.length > 0"
             v-model="step"
             cycle
             height="100%"
@@ -138,8 +138,9 @@ export default {
       return this.setup.layout === 'grid';
     },
     gridColSize() {
-      if ([2, 3, 4, 6].includes(this.setup.cols)) return 12 / this.setup.cols;
-      const count = this.setup.content.length;
+      const cols = Number(this.setup.cols);
+      if (!Number.isNaN(cols) && [2, 3, 4, 6].includes(cols)) return 12 / cols;
+      const count = this.setup.content?.length || 0;
       if (count <= 2) return 6;
       if (count <= 3) return 4;
       return 3;
@@ -162,12 +163,14 @@ export default {
       };
     },
     steps() {
-      return this.$vuetify.display.smAndDown ? this.setup.content.length - 1 : Math.ceil(this.setup.content.length / 2) - 1;
+      const items = this.setup.content || [];
+      return this.$vuetify.display.smAndDown ? items.length - 1 : Math.ceil(items.length / 2) - 1;
     },
     content() {
+      const items = this.setup.content || [];
       return this.$vuetify.display.smAndDown
-        ? this.setup.content.slice(this.step, this.step + 1)
-        : this.setup.content.slice(this.step * 2, this.step * 2 + 2);
+        ? items.slice(this.step, this.step + 1)
+        : items.slice(this.step * 2, this.step * 2 + 2);
     },
   },
   mounted() {
