@@ -9,6 +9,7 @@
   CONFIG EXAMPLE (setup object):
   ressources: {
     title: 'Resources',
+    cols: 3, // optional — 2, 3, 4, or 6 (must divide 12 evenly)
     style: {
       section: { background: 'background' },
       card: { background: 'surface' },
@@ -36,7 +37,7 @@
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
-        <v-col v-for="(item, i) in setup.content" :key="i" cols="12" sm="12" md="4" data-aos="fade">
+        <v-col v-for="(item, i) in setup.content" :key="i" cols="12" sm="12" :md="colSize" data-aos="fade">
           <v-card :class="`py-6 px-2 ${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="cardStyle">
             <v-btn icon :color="item.color ? item.color : 'primary'" width="50" height="50" class="text-white ml-3 mb-4">
               <v-icon :icon="item.serviceIcon" size="x-medium"></v-icon>
@@ -77,6 +78,10 @@ export default {
     };
   },
   computed: {
+    colSize() {
+      const cols = [2, 3, 4, 6].includes(this.setup.cols) ? this.setup.cols : 3;
+      return 12 / cols;
+    },
     variant() {
       return this.setup.variant || 'default';
     },
