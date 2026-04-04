@@ -18,6 +18,8 @@
         subtitle: 'Feature Title',
         text: 'Description with **markdown** support.',
         img: '/images/feature.webp',          // Static image
+        imgBackground: '#f5f5f7',             // Wraps image in rounded card with bg color
+        // imgBackground: { light: '#f5f5f7', dark: '#1e293b' }  // Theme-aware variant
         video: {                               // Or video
           file: '/videos/demo.mp4',
           poster: '/videos/demo-poster.webp',
@@ -55,8 +57,21 @@
               fluid
             />
           </div>
+          <div
+            v-if="item.img && resolveImgBackground(item)"
+            :style="{ backgroundColor: resolveImgBackground(item), borderRadius: config.vuetify.theme.rounded === 'rounded-xl' ? '16px' : '8px' }"
+            class="my-6 pa-6 d-flex align-center justify-center"
+          >
+            <v-img
+              :src="item.img"
+              :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
+              :class="config.vuetify.theme.rounded"
+              contain
+              :alt="item.subtitle || item.title || 'content'"
+            ></v-img>
+          </div>
           <v-img
-            v-if="item.img"
+            v-else-if="item.img"
             :src="item.img"
             :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
             :class="`my-6 ${config.vuetify.theme.rounded}`"
@@ -121,6 +136,15 @@ export default {
   },
   methods: {
     style,
+    resolveImgBackground(item) {
+      const bg = item.imgBackground;
+      if (!bg) return null;
+      if (typeof bg === 'string') return bg;
+      if (typeof bg === 'object' && bg.light && bg.dark) {
+        return this.theme.name === 'dark' ? bg.dark : bg.light;
+      }
+      return null;
+    },
   },
 };
 </script>

@@ -14,8 +14,9 @@ import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing from '../billing/router/billing.router';
+import developers from '../developers/router/developers.router';
 
-const routes = [].concat(home, auth, organizations, admin, users, tasks, billing);
+const routes = [].concat(home, auth, organizations, admin, users, tasks, billing, developers);
 
 /**
  * Router configuration.

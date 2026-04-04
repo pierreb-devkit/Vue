@@ -57,6 +57,7 @@ export default {
       account: 'account',
       tasks: 'tasks',
       billing: 'billing',
+      developers: 'developers',
     },
   },
   admin: {
