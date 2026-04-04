@@ -56,9 +56,10 @@ describe('admin.view', () => {
   it('should render default tabs without extra tabs', () => {
     const wrapper = mountView();
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
+    expect(tabs.length).toBe(3);
     expect(tabs[0].text()).toContain('Users');
     expect(tabs[1].text()).toContain('Organizations');
+    expect(tabs[2].text()).toContain('Readiness');
   });
 
   it('should render extra tabs from config.admin.tabs with icon', () => {
@@ -70,9 +71,9 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
-    expect(tabs[2].text()).toContain('Billing');
-    const icons = tabs[2].findAllComponents({ name: 'VIcon' });
+    expect(tabs.length).toBe(4);
+    expect(tabs[3].text()).toContain('Billing');
+    const icons = tabs[3].findAllComponents({ name: 'VIcon' });
     expect(icons.length).toBe(1);
     expect(icons[0].props('icon')).toBe('fa-solid fa-credit-card');
   });
