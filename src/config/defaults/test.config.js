@@ -65,5 +65,13 @@ export default {
       developers: 'developers',
     },
   },
+  modules: {
+    tasks: { activated: true },
+    billing: { activated: true },
+    organizations: { activated: true },
+    developers: { activated: true },
+    analytics: { activated: true },
+    admin: { activated: true },
+  },
   cookie: { prefix: 'devkit' },
 };

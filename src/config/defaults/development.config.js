@@ -72,6 +72,14 @@ export default {
   cookie: {
     prefix: 'devkit', // prefix for all cookies (e.g. 'devkit' → 'devkit_token')
   },
+  modules: {
+    tasks: { activated: true }, // CRUD reference module
+    billing: { activated: true }, // Stripe billing & pricing
+    organizations: { activated: true }, // multi-org membership
+    developers: { activated: true }, // API keys
+    analytics: { activated: true }, // usage analytics
+    admin: { activated: true }, // admin panel
+  },
   analytics: {
     posthog: { // PostHog analytics — uncomment host + key to enable
       // host: 'https://app.posthog.com', // PostHog instance URL
