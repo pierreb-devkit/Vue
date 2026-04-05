@@ -140,6 +140,16 @@ const getRouter = () => {
     }
   });
 
+  // Block direct URL access to disabled modules
+  const disabledModulePaths = optionalModules
+    .filter((mod) => !isModuleActive(mod.name))
+    .flatMap((mod) => mod.routes.map((r) => r.path.split('/:')[0].split('/:')[0]));
+
+  router.beforeEach((to) => {
+    const isDisabled = disabledModulePaths.some((p) => to.path === p || to.path.startsWith(p + '/'));
+    if (isDisabled) return { path: '/' };
+  });
+
   // Automatic page-view tracking
   router.afterEach((to) => {
     capturePageview(to);

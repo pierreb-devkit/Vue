@@ -375,5 +375,19 @@ describe('app.router', () => {
       await router.isReady();
       expect(router.currentRoute.value.name).toBe('NotFound');
     });
+
+    it('redirects to / when navigating to a disabled module path via URL', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'billing';
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      // Add a fake billing-like route so it is not caught as NotFound
+      router.addRoute({ path: '/billing', name: 'BillingFake', component: { template: '<div />' } });
+      await router.push('/billing');
+      await router.isReady();
+      // The disabled-module guard should redirect to /
+      expect(router.currentRoute.value.path).toBe('/');
+    });
   });
 });
