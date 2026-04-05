@@ -69,7 +69,7 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
 
       expect(store.users).toEqual([]);
-      expect(store.error).toBe('Failed to load data');
+      expect(store.error).toBe('Failed to load data. Please try again.');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
@@ -92,7 +92,7 @@ describe('Admin Store', () => {
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
       await store.getUsers('0&10');
-      expect(store.error).toBe('Failed to load data');
+      expect(store.error).toBe('Failed to load data. Please try again.');
 
       axios.get.mockResolvedValueOnce({ data: { data: [] } });
       await store.getUsers('0&10');
@@ -134,7 +134,7 @@ describe('Admin Store', () => {
       await store.getOrganizations('0&10');
 
       expect(store.organizations).toEqual([]);
-      expect(store.error).toBe('Failed to load data');
+      expect(store.error).toBe('Failed to load data. Please try again.');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
@@ -164,6 +164,58 @@ describe('Admin Store', () => {
       await store.getReadiness();
 
       expect(store.readiness).toEqual([]);
+    });
+
+    it('should set error state when readiness fetch fails', async () => {
+      const store = useAdminStore();
+
+      axios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      await store.getReadiness();
+
+      expect(store.error).toBe('Failed to load data. Please try again.');
+    });
+  });
+
+  describe('sanitizeApiError', () => {
+    it('should expose safe short user-facing API messages', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'User not found' } } });
+
+      await store.getUsers('0&10');
+
+      expect(store.error).toBe('User not found');
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should redact messages containing internal details like stack traces', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.get.mockRejectedValueOnce({
+        response: { data: { message: 'Error: at Object.<anonymous> (/app/path/to/file.js:42)' } },
+      });
+
+      await store.getUsers('0&10');
+
+      expect(store.error).toBe('Failed to load data. Please try again.');
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should redact messages longer than 200 characters', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      axios.get.mockRejectedValueOnce({
+        response: { data: { message: 'x'.repeat(201) } },
+      });
+
+      await store.getUsers('0&10');
+
+      expect(store.error).toBe('Failed to load data. Please try again.');
+      consoleLogSpy.mockRestore();
     });
   });
 
@@ -200,7 +252,7 @@ describe('Admin Store', () => {
 
       await expect(store.updateUser({ id: '123' })).rejects.toThrow('Failed');
 
-      expect(store.error).toBe('Failed to load data');
+      expect(store.error).toBe('Failed to load data. Please try again.');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
@@ -237,7 +289,7 @@ describe('Admin Store', () => {
 
       await expect(store.deleteUser({ id: '999' })).rejects.toThrow('Failed');
 
-      expect(store.error).toBe('Failed to load data');
+      expect(store.error).toBe('Failed to load data. Please try again.');
       expect(consoleLogSpy).toHaveBeenCalled();
       consoleLogSpy.mockRestore();
     });
