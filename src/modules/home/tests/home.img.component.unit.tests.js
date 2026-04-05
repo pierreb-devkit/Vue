@@ -7,6 +7,11 @@ import { beforeEach, describe, it, expect, vi, afterEach } from 'vitest';
 // Mock DOMPurify — pass through safe content, strip dangerous patterns for test assertions
 vi.mock('dompurify', () => ({
   default: {
+    /**
+     * Test sanitizer mock that strips script tags and inline event handlers.
+     * @param {string} raw - Raw SVG markup.
+     * @returns {string} Sanitized SVG markup for assertions.
+     */
     sanitize: (raw) => raw
       .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
       .replace(/\son[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, ''),

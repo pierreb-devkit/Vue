@@ -20,7 +20,7 @@ const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar
 const sanitizeApiError = (err) => {
   const msg = err?.response?.data?.message || '';
   // Only expose messages that look like safe user-facing messages
-  if (msg && msg.length < 200 && !/collection|index|path|stack|Error:|at /.test(msg)) {
+  if (msg && msg.length <= 200 && !/\b(collection|stack)\b|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
     return msg;
   }
   return 'Failed to load data. Please try again.';
@@ -111,6 +111,7 @@ export const useAdminStore = defineStore('admin', {
      * @returns {Promise<void>}
      */
     async getReadiness() {
+      this.error = null;
       try {
         const res = await axios.get(`${apiBase()}/admin/readiness`);
         this.readiness = res.data.data;

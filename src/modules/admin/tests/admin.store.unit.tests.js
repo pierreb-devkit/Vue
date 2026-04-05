@@ -217,6 +217,21 @@ describe('Admin Store', () => {
       expect(store.error).toBe('Failed to load data. Please try again.');
       consoleLogSpy.mockRestore();
     });
+
+    it('should allow messages of exactly 200 characters', async () => {
+      const store = useAdminStore();
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const safeMsg = 'x'.repeat(200);
+
+      axios.get.mockRejectedValueOnce({
+        response: { data: { message: safeMsg } },
+      });
+
+      await store.getUsers('0&10');
+
+      expect(store.error).toBe(safeMsg);
+      consoleLogSpy.mockRestore();
+    });
   });
 
   describe('updateUser', () => {
