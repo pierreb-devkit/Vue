@@ -63,4 +63,24 @@ describe('Docs View', () => {
     const container = wrapper.find('.v-container');
     expect(container.exists()).toBe(true);
   });
+
+  it('should not mount ApiReference when host is missing', async () => {
+    vi.doMock('../../../lib/services/config', () => ({
+      default: { api: { protocol: 'http', host: '', port: '3000', base: 'api' } },
+    }));
+    vi.resetModules();
+    const { default: DocsViewFresh } = await import('../views/docs.view.vue');
+    const wrapper = mount(DocsViewFresh, { global: { plugins: [vuetify] } });
+    expect(wrapper.findComponent({ name: 'ApiReference' }).exists()).toBe(false);
+  });
+
+  it('should not mount ApiReference when port is missing', async () => {
+    vi.doMock('../../../lib/services/config', () => ({
+      default: { api: { protocol: 'http', host: 'localhost', port: '', base: 'api' } },
+    }));
+    vi.resetModules();
+    const { default: DocsViewFresh } = await import('../views/docs.view.vue');
+    const wrapper = mount(DocsViewFresh, { global: { plugins: [vuetify] } });
+    expect(wrapper.findComponent({ name: 'ApiReference' }).exists()).toBe(false);
+  });
 });
