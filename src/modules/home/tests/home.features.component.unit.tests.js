@@ -269,4 +269,26 @@ describe('HomeFeaturesComponent', () => {
     });
     expect(wrapper.vm.containerStyle['max-width']).toBe('1200px');
   });
+
+  // --- sectionStyle background ---
+
+  it('applies theme background when no custom background is set', () => {
+    const wrapper = mount(HomeFeaturesComponent, {
+      props: { setup: carouselSetup },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.sectionStyle.background).toBeDefined();
+  });
+
+  it('does not apply theme background when custom background is set in style.section', () => {
+    const setup = {
+      ...carouselSetup,
+      style: { section: { background: 'linear-gradient(135deg, #ff0000, #0000ff)' } },
+    };
+    const wrapper = mount(HomeFeaturesComponent, {
+      props: { setup },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.sectionStyle.background).toBeUndefined();
+  });
 });
