@@ -37,7 +37,7 @@
           color="medium-emphasis"
           class="mb-4"
         />
-        <p class="text-h6 text-medium-emphasis">
+        <p class="text-title-medium text-medium-emphasis">
           Guide not found
         </p>
         <v-btn
@@ -71,7 +71,7 @@ const guideMap = {
   organizations: organizationsMd,
 };
 
-const markdown = computed(() => guideMap[route.params.slug] || '');
+const markdown = computed(() => guideMap[String(route.params.slug || '')] || '');
 </script>
 
 <style scoped>

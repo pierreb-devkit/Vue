@@ -3,10 +3,10 @@
     class="py-12"
     :style="{ 'max-width': config.vuetify.theme.maxWidth }"
   >
-    <h1 class="text-h4 font-weight-bold mb-2">
+    <h1 class="text-headline-large font-weight-bold mb-2">
       Guides
     </h1>
-    <p class="text-body-1 text-medium-emphasis mb-8">
+    <p class="text-body-large text-medium-emphasis mb-8">
       Learn how to use the stack step by step.
     </p>
 
@@ -30,25 +30,20 @@
             color="primary"
             class="mb-4"
           />
-          <h2 class="text-h6 font-weight-bold mb-2">
+          <h2 class="text-title-medium font-weight-bold mb-2">
             {{ guide.title }}
           </h2>
-          <p class="text-body-2 text-medium-emphasis flex-grow-1">
+          <p class="text-body-medium text-medium-emphasis flex-grow-1">
             {{ guide.description }}
           </p>
           <div class="mt-4">
-            <v-btn
-              variant="text"
-              color="primary"
-              class="text-none text-body-medium pa-0"
-              :to="{ name: 'DocsGuide', params: { slug: guide.slug } }"
-            >
+            <span class="text-body-medium text-primary d-inline-flex align-center ga-1">
               Read guide
               <v-icon
-                end
+                size="small"
                 icon="mdi-arrow-right"
               />
-            </v-btn>
+            </span>
           </div>
         </v-card>
       </v-col>
