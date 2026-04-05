@@ -9,7 +9,7 @@
           :md="12 / links.filter((section) => section.items).length"
           class="text-center"
         >
-          <v-card :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
+          <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list :style="custom && custom.section ? custom.section : null" density="compact">
               <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
