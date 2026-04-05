@@ -92,11 +92,12 @@ export default {
       };
     },
     sectionStyle() {
+      const hasCustomBg = this.config.home.contact?.style?.section?.background;
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.config.home.contact),
         ...colorModeStyle(this.config.home.contact?.colorMode),
-        background: bgColor,
+        ...(hasCustomBg ? {} : { background: bgColor }),
       };
     },
     contact() {

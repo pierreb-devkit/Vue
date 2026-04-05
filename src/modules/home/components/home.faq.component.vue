@@ -140,11 +140,12 @@ export default {
      * @returns {Object}
      */
     sectionStyle() {
+      const hasCustomBg = this.setup?.style?.section?.background;
       const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
       return {
         ...style('section', this.setup),
         ...colorModeStyle(this.setup.colorMode),
-        background: bgColor,
+        ...(hasCustomBg ? {} : { background: bgColor }),
       };
     },
     /**
