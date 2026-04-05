@@ -13,6 +13,9 @@ vi.mock('@scalar/api-reference', () => ({
   },
 }));
 
+// Mock the style import
+vi.mock('@scalar/api-reference/style.css', () => ({}));
+
 // Mock config
 vi.mock('../../../lib/services/config', () => ({
   default: {

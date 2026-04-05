@@ -26,17 +26,18 @@ export default [
   },
   // Config files (Node environment)
   {
-    files: ['*.config.js', 'scripts/**/*.js'],
+    files: ['*.config.js', 'scripts/**/*.js', 'src/config/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },
   },
   // Test files (Vitest)
   {
-    files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js'],
+    files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js', '**/*.tests.js'],
     languageOptions: {
       globals: {
         ...globals.node,
+        global: 'readonly',
         describe: 'readonly',
         it: 'readonly',
         test: 'readonly',

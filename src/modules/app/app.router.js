@@ -46,7 +46,7 @@ const getRouter = () => {
   });
   // Routes that don't require an organization
   const orgExemptPrefixes = ['/users', '/admin'];
-  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite', '/pricing'];
+  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite', '/pricing', '/docs'];
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).
