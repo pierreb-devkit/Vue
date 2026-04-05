@@ -3,6 +3,16 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { beforeEach, describe, it, expect, vi, afterEach } from 'vitest';
+
+// Mock DOMPurify — pass through safe content, strip dangerous patterns for test assertions
+vi.mock('dompurify', () => ({
+  default: {
+    sanitize: (raw, _opts) => raw
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+      .replace(/\son[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, ''),
+  },
+}));
+
 import HomeImgComponent from '../components/utils/home.img.component.vue';
 
 const mockConfig = {
@@ -256,6 +266,29 @@ describe('HomeImgComponent', () => {
       global: globalOpts(vuetify),
     });
     expect(wrapper.find('.home-img-svg').attributes('style')).toContain('height: 50vh');
+  });
+
+  it('calls DOMPurify.sanitize when rendering SVG content', async () => {
+    const DOMPurify = (await import('dompurify')).default;
+    const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');
+
+    const url = uniqueSvgUrl();
+    const svgMarkup = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="5"/></svg>';
+    fetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve(svgMarkup) });
+
+    const wrapper = mount(HomeImgComponent, {
+      props: { img: url },
+      global: globalOpts(vuetify),
+    });
+
+    await vi.waitFor(() => {
+      expect(wrapper.find('.home-img-svg__content').exists()).toBe(true);
+    });
+    expect(sanitizeSpy).toHaveBeenCalledWith(svgMarkup, expect.objectContaining({
+      USE_PROFILES: { svg: true, svgFilters: true },
+      FORBID_TAGS: ['script', 'use'],
+      FORBID_ATTR: ['onload', 'onerror'],
+    }));
   });
 
   it('clears previous SVG when img changes', async () => {
