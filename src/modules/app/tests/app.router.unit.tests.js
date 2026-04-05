@@ -365,7 +365,7 @@ describe('app.router', () => {
       expect(paths).not.toContain('/developers');
     });
 
-    it('renders NotFound for deactivated module paths', async () => {
+    it('redirects to / for deactivated module paths (guard intercepts before NotFound)', async () => {
       vi.resetModules();
       mockIsModuleActive = (name) => name !== 'tasks';
 
@@ -373,7 +373,8 @@ describe('app.router', () => {
       const router = mod.default();
       await router.push('/tasks');
       await router.isReady();
-      expect(router.currentRoute.value.name).toBe('NotFound');
+      // The disabled-module beforeEach guard intercepts the navigation and redirects to /
+      expect(router.currentRoute.value.path).toBe('/');
     });
 
     it('redirects to / when navigating to a disabled module path via URL', async () => {
