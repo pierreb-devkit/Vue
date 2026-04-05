@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import testConfig from '../../../config/defaults/test.config.js';
 
+let mockIsModuleActive = () => true;
+vi.mock('../../../lib/helpers/modules', () => ({
+  isModuleActive: (...args) => mockIsModuleActive(...args),
+}));
+
 // Mock dependencies used by the router
 const mockAuthStore = {
   isLoggedIn: false,
@@ -37,6 +42,32 @@ vi.mock('../../billing/stores/billing.store', () => ({
   useBillingStore: () => mockBillingStore,
 }));
 
+/**
+ * Re-registers all doMock calls and re-imports the router module.
+ * Call after vi.resetModules() to get a fresh router with custom mock overrides.
+ */
+async function setupRouterModule() {
+  vi.doMock('../../auth/stores/auth.store', () => ({
+    useAuthStore: () => mockAuthStore,
+  }));
+  vi.doMock('../../../lib/services/config', () => ({
+    default: testConfig,
+  }));
+  vi.doMock('../../../lib/helpers/ability.js', () => ({
+    ability: mockAbility,
+  }));
+  vi.doMock('../../billing/stores/billing.store', () => ({
+    useBillingStore: () => mockBillingStore,
+  }));
+  vi.doMock('../../../lib/helpers/analytics', () => ({
+    capturePageview: (...args) => mockCapturePageview(...args),
+  }));
+  vi.doMock('../../../lib/helpers/modules', () => ({
+    isModuleActive: (...args) => mockIsModuleActive(...args),
+  }));
+  return import('../app.router.js');
+}
+
 describe('app.router', () => {
   let getRouter;
 
@@ -56,25 +87,9 @@ describe('app.router', () => {
     mockBillingStore.subscription = null;
     mockBillingStore.fetchSubscription.mockReset().mockResolvedValue();
     mockCapturePageview.mockReset();
+    mockIsModuleActive = () => true;
 
-    // Re-apply mocks after resetModules
-    vi.doMock('../../auth/stores/auth.store', () => ({
-      useAuthStore: () => mockAuthStore,
-    }));
-    vi.doMock('../../../lib/services/config', () => ({
-      default: testConfig,
-    }));
-    vi.doMock('../../../lib/helpers/ability.js', () => ({
-      ability: mockAbility,
-    }));
-    vi.doMock('../../billing/stores/billing.store', () => ({
-      useBillingStore: () => mockBillingStore,
-    }));
-    vi.doMock('../../../lib/helpers/analytics', () => ({
-      capturePageview: (...args) => mockCapturePageview(...args),
-    }));
-
-    const module = await import('../app.router.js');
+    const module = await setupRouterModule();
     getRouter = module.default;
   });
 
@@ -301,6 +316,64 @@ describe('app.router', () => {
       await router.isReady();
       // Should allow navigation when subscription is unknown to avoid blocking paid users
       expect(router.currentRoute.value.path).toBe('/gated-feature');
+    });
+  });
+
+  describe('module activation gating', () => {
+    it('includes all module routes when all modules are active', () => {
+      mockIsModuleActive = () => true;
+      const router = getRouter();
+      const paths = router.options.routes.map((r) => r.path);
+      expect(paths).toContain('/tasks');
+      expect(paths).toContain('/billing');
+      expect(paths).toContain('/admin');
+      expect(paths).toContain('/developers');
+      expect(paths).toContain('/organization-required');
+    });
+
+    it('excludes tasks routes when tasks module is deactivated', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'tasks';
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const paths = router.options.routes.map((r) => r.path);
+      expect(paths).not.toContain('/tasks');
+      expect(paths).not.toContain('/task');
+      expect(paths).not.toContain('/tasks/:id');
+      // Core routes still present
+      expect(paths).toContain('/');
+      expect(paths).toContain('/signin');
+    });
+
+    it('always includes core routes (home, auth, users) regardless of config', async () => {
+      vi.resetModules();
+      // Deactivate everything
+      mockIsModuleActive = (name) => ['home', 'auth', 'users', 'app', 'core'].includes(name);
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const paths = router.options.routes.map((r) => r.path);
+      // Core routes always present
+      expect(paths).toContain('/');
+      expect(paths).toContain('/signin');
+      expect(paths).toContain('/signup');
+      // Optional routes excluded
+      expect(paths).not.toContain('/tasks');
+      expect(paths).not.toContain('/admin');
+      expect(paths).not.toContain('/billing');
+      expect(paths).not.toContain('/developers');
+    });
+
+    it('renders NotFound for deactivated module paths', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'tasks';
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      await router.push('/tasks');
+      await router.isReady();
+      expect(router.currentRoute.value.name).toBe('NotFound');
     });
   });
 });

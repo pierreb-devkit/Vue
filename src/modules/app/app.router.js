@@ -5,6 +5,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
+import { isModuleActive } from '../../lib/helpers/modules';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
@@ -16,7 +17,22 @@ import tasks from '../tasks/router/tasks.router';
 import billing from '../billing/router/billing.router';
 import developers from '../developers/router/developers.router';
 
-const routes = [].concat(home, auth, organizations, admin, users, tasks, billing, developers);
+// Core modules — always mounted
+const coreRoutes = [].concat(home, auth, users);
+
+// Optional modules — mounted only when activated
+const optionalModules = [
+  { name: 'organizations', routes: organizations },
+  { name: 'admin', routes: admin },
+  { name: 'tasks', routes: tasks },
+  { name: 'billing', routes: billing },
+  { name: 'developers', routes: developers },
+];
+
+const routes = optionalModules.reduce(
+  (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
+  coreRoutes,
+);
 
 /**
  * Router configuration.

@@ -4,6 +4,31 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Module Activation Config (2026-04-05)
+
+Per-module `activated: true/false` config flag. When `activated: false`, the module's routes are not mounted and it's invisible to the app.
+
+### What changed
+
+- New `isModuleActive(moduleName)` helper in `src/lib/helpers/modules.js`
+- `src/modules/app/app.router.js` now conditionally includes routes based on activation status
+- Core modules (`home`, `auth`, `users`, `app`, `core`) are always active regardless of flag
+- New `modules` config block in `development.config.js` with `activated: true` defaults for: `tasks`, `billing`, `organizations`, `developers`, `analytics`, `admin`
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the change
+2. No breaking change — all modules default to `activated: true` (backward compatible)
+3. To deactivate a module, override in config:
+   ```js
+   // src/config/defaults/development.config.js
+   modules: { tasks: { activated: false } }
+   ```
+4. Sidenav items from deactivated modules are automatically hidden (routes not registered = no nav entries)
+5. If you have custom modules, add them to the `modules` config block with `activated: true`
+
+---
+
 ## Vite 8 / Rolldown (2026-03-26)
 
 Vite 8 replaces Rollup with **Rolldown**. `manualChunks` as an object is no longer supported — must be a function.
