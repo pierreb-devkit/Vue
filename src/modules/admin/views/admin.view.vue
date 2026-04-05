@@ -240,7 +240,7 @@ export default {
       return tabs.filter((tab) => {
         if (!tab || typeof tab !== 'object' || !tab.value || !tab.label || !tab.route) return false;
         const isValidRoute = typeof tab.route === 'string' && tab.route.startsWith('/admin/');
-        if (!isValidRoute && process.env.NODE_ENV !== 'production') {
+        if (!isValidRoute && import.meta.env.MODE !== 'production') {
           console.warn(`[admin] Invalid tab route filtered: "${tab.route}"`);
         }
         return isValidRoute;
