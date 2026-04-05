@@ -77,7 +77,7 @@ export default {
     billing: { activated: true }, // Stripe billing & pricing
     organizations: { activated: true }, // multi-org membership
     developers: { activated: true }, // API keys
-    docs: { activated: true }, // API documentation (Scalar)
+    docs: { activated: false }, // API documentation (Scalar) — disabled by default, opt-in per deployment
     analytics: { activated: true }, // usage analytics
     admin: { activated: true }, // admin panel
   },
