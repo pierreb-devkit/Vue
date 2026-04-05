@@ -365,7 +365,7 @@ describe('app.router', () => {
       expect(paths).not.toContain('/developers');
     });
 
-    it('renders NotFound for deactivated module paths', async () => {
+    it('redirects to / for deactivated module paths (guard intercepts before NotFound)', async () => {
       vi.resetModules();
       mockIsModuleActive = (name) => name !== 'tasks';
 
@@ -373,7 +373,22 @@ describe('app.router', () => {
       const router = mod.default();
       await router.push('/tasks');
       await router.isReady();
-      expect(router.currentRoute.value.name).toBe('NotFound');
+      // The disabled-module beforeEach guard intercepts the navigation and redirects to /
+      expect(router.currentRoute.value.path).toBe('/');
+    });
+
+    it('redirects to / when navigating to a disabled module path via URL', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'billing';
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      // Add a fake billing-like route so it is not caught as NotFound
+      router.addRoute({ path: '/billing', name: 'BillingFake', component: { template: '<div />' } });
+      await router.push('/billing');
+      await router.isReady();
+      // The disabled-module guard should redirect to /
+      expect(router.currentRoute.value.path).toBe('/');
     });
   });
 });

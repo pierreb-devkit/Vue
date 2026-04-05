@@ -84,6 +84,8 @@
   </v-img>
 </template>
 <script>
+import DOMPurify from 'dompurify';
+
 /**
  * Simple in-memory cache for fetched SVG content to avoid duplicate requests.
  * @type {Map<string, string>}
@@ -97,17 +99,15 @@ const svgCache = new Map();
 const LOCAL_URL_RE = /^(?:\/(?!\/)|\.{1,2}\/)/;
 
 /**
- * Sanitize raw SVG markup by removing dangerous elements and attributes.
+ * Sanitize raw SVG markup using DOMPurify to remove dangerous elements and attributes.
  * @param {string} raw - Raw SVG markup string.
  * @returns {string} Sanitized SVG markup safe for v-html rendering.
  */
-function sanitizeSvg(raw) {
-  return raw
-    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-    .replace(/<foreignObject[\s\S]*?>[\s\S]*?<\/foreignObject>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '')
-    .replace(/\s(?:href|xlink:href)\s*=\s*(['"])javascript:[\s\S]*?\1/gi, '');
-}
+const sanitizeSvg = (raw) => DOMPurify.sanitize(raw, {
+  USE_PROFILES: { svg: true, svgFilters: true },
+  FORBID_TAGS: ['script', 'use'],
+  FORBID_ATTR: ['onload', 'onerror'],
+});
 
 /**
  * Component definition.

@@ -140,6 +140,25 @@ const getRouter = () => {
     }
   });
 
+  // Block direct URL access to disabled modules
+  const disabledModulePaths = optionalModules
+    .filter((mod) => !isModuleActive(mod.name))
+    .flatMap((mod) => mod.routes.map((r) => r.path.split('/:')[0]));
+
+  // Paths exempt from the disabled-module guard (e.g. org-required must remain reachable regardless)
+  const disabledModuleExempt = ['/organization-required'];
+
+  /**
+   * Redirect navigation attempts to disabled module paths back to home.
+   * @param {import('vue-router').RouteLocationNormalized} to - Target route.
+   * @returns {{ path: string } | undefined} Redirect to / when path is disabled, otherwise undefined.
+   */
+  router.beforeEach((to) => {
+    if (disabledModuleExempt.includes(to.path)) return;
+    const isDisabled = disabledModulePaths.some((p) => to.path === p || to.path.startsWith(p + '/'));
+    if (isDisabled) return { path: '/' };
+  });
+
   // Automatic page-view tracking
   router.afterEach((to) => {
     capturePageview(to);

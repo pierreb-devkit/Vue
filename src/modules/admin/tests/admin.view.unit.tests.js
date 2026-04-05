@@ -125,4 +125,23 @@ describe('admin.view', () => {
     expect(tabs.length).toBe(4);
     expect(tabs[3].text()).toContain('Billing');
   });
+
+  it('should filter out tabs with routes not starting with /admin/', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const wrapper = mountView({
+      admin: {
+        tabs: [
+          { value: 'safe', label: 'Safe', route: '/admin/safe' },
+          { value: 'unsafe', label: 'Unsafe', route: '/evil/path' },
+        ],
+      },
+    });
+    const tabs = wrapper.findAllComponents({ name: 'VTab' });
+    expect(tabs.length).toBe(4); // 3 default + 1 valid extra
+    expect(tabs[3].text()).toContain('Safe');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/evil/path'),
+    );
+    consoleWarnSpy.mockRestore();
+  });
 });
