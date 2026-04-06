@@ -216,7 +216,12 @@ export default {
       this.svgError = false;
 
       if (svgCache.has(src)) {
-        this.svgContent = svgCache.get(src);
+        // Wait for the DOM to process the clear (svgContent = '') before reinserting.
+        // Without nextTick, Vue batches both assignments in the same tick — no real
+        // DOM clear happens, so the SVG elements are never fresh-inserted and CSS
+        // opacity animations don't replay on subsequent views.
+        await this.$nextTick();
+        if (this.img === src) this.svgContent = svgCache.get(src);
         return;
       }
 
