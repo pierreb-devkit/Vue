@@ -77,7 +77,7 @@
           >
             <v-carousel-item v-for="n in steps + 1" :key="n">
               <v-row align="center" justify="center" class="pa-0">
-                <v-col v-for="(item, i) in content" :key="i" cols="12" :md="item.fullWidth ? 12 : setup.content.length > 1 ? 6 : 12">
+                <v-col v-for="(item, i) in content" :key="`${step}-${i}`" cols="12" :md="item.fullWidth ? 12 : setup.content.length > 1 ? 6 : 12">
                   <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="style('card', { style: item.style })">
                     <homeImgComponent v-if="item.img && !item.reversed" :img="item.img" :img-mode="item.imgMode"></homeImgComponent>
                     <homeContentComponent
