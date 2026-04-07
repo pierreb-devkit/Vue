@@ -33,6 +33,19 @@ To adopt the pattern:
 
 ---
 
+## Billing config rename (2026-04-07)
+
+`billing.config.js` has been renamed to `billing.development.config.js` to align with the `{module}.development.config.js` stack convention.
+
+### Action for downstream
+
+If your downstream project imports or overrides `billing.config.js`, rename it:
+
+- `src/modules/billing/config/billing.config.js` → `src/modules/billing/config/billing.development.config.js`
+- Update any `import` statements from `'../config/billing.config'` to `'../config/billing.development.config'`
+
+---
+
 ## Module Activation Config (2026-04-05)
 
 Per-module `activated: true/false` config flag. When `activated: false`, the module's routes are not mounted and it's invisible to the app.
