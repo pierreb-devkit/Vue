@@ -108,14 +108,17 @@ const getConfiguration = async () => {
     config = deepMerge(config, globalDev);
   }
 
-  // 3. If not development, overlay env-specific configs (module + global)
+  // 3 & 4. If not development, overlay project-specific configs (module then global)
+  // Downstream projects set NODE_ENV to their project name (e.g. NODE_ENV=trawl).
+  // Layer 3: per-module project overrides — src/modules/*/config/{module}.{project}.config.js
+  // Layer 4: global project overrides    — src/config/defaults/{project}.config.js
   if (env !== 'development') {
-    // Module env overrides (e.g. home.trawl.config.js)
+    // Layer 3: per-module project overrides (e.g. home.trawl.config.js, auth.trawl.config.js)
     console.log(`+ Loading module ${env} overrides...`);
     const moduleEnv = await loadModuleConfigs(env);
     config = deepMerge(config, moduleEnv);
 
-    // Global env overrides
+    // Layer 4: global project overrides (e.g. trawl.config.js)
     console.log(`+ Loading global ${env} overrides...`);
     const globalEnv = await loadGlobalConfig(env);
     if (globalEnv) {
@@ -130,7 +133,7 @@ const getConfiguration = async () => {
     }
   }
 
-  // 4. DEVKIT_VUE_* env var overrides (final layer)
+  // 5. DEVKIT_VUE_* env var overrides (final layer)
   const environmentVars = mapKeys(
     pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),

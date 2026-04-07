@@ -113,9 +113,11 @@ src/config/defaults/
   development.config.js          ← infra only (app, port, api, cookie, analytics)
   production.config.js           ← production overrides (optional)
   test.config.js                 ← test overrides (optional)
+  myproject.config.js            ← downstream: global project overrides (template provided)
 
 src/modules/<name>/config/
   <name>.development.config.js   ← module defaults (e.g. auth.development.config.js)
+  <name>.myproject.config.js     ← downstream: per-module project overrides (optional)
 ```
 
 ### Merge order (priority ascending)
@@ -124,10 +126,11 @@ src/modules/<name>/config/
 |-------|--------|---------|
 | 1 | Module defaults | `src/modules/*/config/*.development.config.js` |
 | 2 | Global development defaults | `src/config/defaults/development.config.js` |
-| 3 | Global env overrides | `src/config/defaults/<env>.config.js` |
-| 4 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
+| 3 | Per-module project overrides | `src/modules/*/config/*.<project>.config.js` |
+| 4 | Global project overrides | `src/config/defaults/<project>.config.js` |
+| 5 | `DEVKIT_VUE_*` env vars | `DEVKIT_VUE_app_title='my app'` |
 
-Layer 3 is only applied when `NODE_ENV` is not `development`.
+Layers 3 and 4 are only applied when `NODE_ENV` is not `development`.
 
 ### Merge semantics
 
@@ -146,14 +149,40 @@ The merged result is written to `src/config/index.js` via `npm run generateConfi
 
 ### Downstream projects
 
-When running a downstream project that clones this stack, set `NODE_ENV` to the project name and create matching config files:
+When running a downstream project that clones this stack, set `NODE_ENV` to the project name (e.g. `trawl`) and create matching config files:
 
 ```text
+# Global project overrides (app title, API endpoint, footer links, etc.)
 src/config/defaults/
-  myproject.config.js            ← global project overrides
+  myproject.config.js            ← copy the template from the devkit stack's src/config/defaults/myproject.config.js, then rename it for your project
+
+# Per-module project overrides (theme, sign options, home sections, etc.)
+src/modules/<name>/config/
+  <name>.myproject.config.js     ← override only the keys that differ from defaults
 ```
 
-The generator discovers files named `${NODE_ENV}.config.js` in `src/config/defaults/` — module config files are always loaded regardless of environment.
+**When to use which:**
+- **Global** (`src/config/defaults/{project}.config.js`): infra-level keys shared across modules — `app`, `api`, `cookie`, `header`, `footer`, `sign`.
+- **Per-module** (`src/modules/{name}/config/{module}.{project}.config.js`): module-specific keys — sign options in `auth`, hero section in `home`. You can also place module-local `app` tweaks here, but note that global project `app.*` keys take precedence (global project overrides are applied after per-module overrides — see merge order table above).
+
+> **Precedence note:** if the same `app.*` key is defined in both a per-module project override and `src/config/defaults/{project}.config.js`, the global project value wins.
+
+**Example** — override the `auth` module for project `acme`:
+
+```js
+// src/modules/auth/config/auth.acme.config.js
+export default {
+  sign: {
+    route: '/dashboard',
+    up: false,       // disable signup
+  },
+  oAuth: {
+    google: true,
+  },
+};
+```
+
+Run with `NODE_ENV=acme npm run dev` — the generator picks up all `*.acme.config.js` files automatically.
 
 > **Migration note:** if your CI workflows still reference `WAOS_VUE_*` environment variables, rename them to `DEVKIT_VUE_*`.
 
