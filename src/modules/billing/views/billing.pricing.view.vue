@@ -86,7 +86,7 @@
  */
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import plansConfig from '../config/billing.development.config';
+import { plans as plansConfig } from '../config/billing.development.config';
 import billingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import billingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 
