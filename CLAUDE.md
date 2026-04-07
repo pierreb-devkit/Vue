@@ -57,6 +57,7 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - Every function: JSDoc header (`@param`, `@returns`)
 - PRs: always use `/pull-request` — never open manually
 - After user correction, evaluate if the pattern belongs in ERRORS.md
+- **No optional module names in core module code.** Core modules (`core`, `auth`, `users`, `home`, `app`) must not reference optional module names anywhere in their code — not in imports, not in string maps, not in route names, not in store references, not in config keys. Optional modules self-register their own behaviour and core modules read from config or a registry.
 
 ## Workflow rules
 
