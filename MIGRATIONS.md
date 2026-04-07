@@ -4,6 +4,35 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Per-module project config overrides (2026-04-07)
+
+Standardized the `{module}.{project}.config.js` pattern for per-module project overrides in downstream projects. The config loader already supported this — this note documents the standard and adds the template.
+
+### What changed
+
+- `src/config/defaults/myproject.config.js` — template for global project overrides (already existed, now documented)
+- Per-module override files (`src/modules/{name}/config/{module}.{project}.config.js`) are discovered automatically by `generateConfig.js` when `NODE_ENV` is set to the project name
+
+### Load order (lowest → highest priority)
+
+1. Module defaults: `src/modules/*/config/*.development.config.js`
+2. Global development defaults: `src/config/defaults/development.config.js`
+3. **Per-module project overrides**: `src/modules/*/config/*.{project}.config.js`
+4. **Global project overrides**: `src/config/defaults/{project}.config.js`
+5. Build-time env vars: `DEVKIT_VUE_*`
+
+### Action for downstream
+
+No breaking change — this is a documentation and template addition only.
+
+To adopt the pattern:
+
+1. Name your per-module override files `{module}.{project}.config.js` inside `src/modules/{module}/config/`
+2. Set `NODE_ENV={project}` when running `npm run dev` or building
+3. Use per-module files for module-specific overrides (theme, sign, home sections); use the global file for app/api/cookie/header/footer
+
+---
+
 ## Module Activation Config (2026-04-05)
 
 Per-module `activated: true/false` config flag. When `activated: false`, the module's routes are not mounted and it's invisible to the app.
