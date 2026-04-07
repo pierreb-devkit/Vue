@@ -154,7 +154,7 @@ When running a downstream project that clones this stack, set `NODE_ENV` to the 
 ```text
 # Global project overrides (app title, API endpoint, footer links, etc.)
 src/config/defaults/
-  myproject.config.js            ← copy of src/config/defaults/myproject.config.js
+  myproject.config.js            ← copy the template from the devkit stack's src/config/defaults/myproject.config.js, then rename it for your project
 
 # Per-module project overrides (theme, sign options, home sections, etc.)
 src/modules/<name>/config/
@@ -163,7 +163,9 @@ src/modules/<name>/config/
 
 **When to use which:**
 - **Global** (`src/config/defaults/{project}.config.js`): infra-level keys shared across modules — `app`, `api`, `cookie`, `header`, `footer`, `sign`.
-- **Per-module** (`src/modules/{name}/config/{module}.{project}.config.js`): module-specific keys — theme colors in `app`, sign options in `auth`, hero section in `home`.
+- **Per-module** (`src/modules/{name}/config/{module}.{project}.config.js`): module-specific keys — sign options in `auth`, hero section in `home`. You can also place module-local `app` tweaks here, but note that global project `app.*` keys take precedence (global project overrides are applied after per-module overrides — see merge order table above).
+
+> **Precedence note:** if the same `app.*` key is defined in both a per-module project override and `src/config/defaults/{project}.config.js`, the global project value wins.
 
 **Example** — override the `auth` module for project `acme`:
 

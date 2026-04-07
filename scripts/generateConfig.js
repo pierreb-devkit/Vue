@@ -133,7 +133,7 @@ const getConfiguration = async () => {
     }
   }
 
-  // 4. DEVKIT_VUE_* env var overrides (final layer)
+  // 5. DEVKIT_VUE_* env var overrides (final layer)
   const environmentVars = mapKeys(
     pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),
