@@ -49,4 +49,8 @@ export const plans = [
 /**
  * Exports.
  */
-export default plans;
+export default {
+  billing: {
+    plans,
+  },
+};

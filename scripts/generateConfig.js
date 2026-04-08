@@ -67,6 +67,7 @@ const loadModuleConfigs = async (env = 'development') => {
   for (const file of files) {
     console.log(`  + Module config: ${path.relative(process.cwd(), file)}`);
     const mod = await import(pathToFileURL(file).href);
+    if (!mod.default || typeof mod.default !== 'object' || Array.isArray(mod.default)) continue;
     merged = deepMerge(merged, mod.default);
   }
   return merged;
