@@ -175,7 +175,7 @@ export default {
         });
         this.$emit('avatar-uploaded');
       } catch (err) {
-        console.log(err);
+        console.error(err);
       } finally {
         event.target.value = '';
       }

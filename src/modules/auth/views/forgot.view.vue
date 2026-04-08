@@ -81,7 +81,7 @@ export default {
         try {
           await authStore.forgot({ email });
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },

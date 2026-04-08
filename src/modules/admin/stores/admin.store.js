@@ -61,7 +61,7 @@ export const useAdminStore = defineStore('admin', {
         this.users = res.data.data;
       } catch (err) {
         this.error = sanitizeApiError(err);
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -73,7 +73,7 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.error = sanitizeApiError(err);
         this.resetUser();
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -85,7 +85,7 @@ export const useAdminStore = defineStore('admin', {
         assign(this.user, res.data.data);
       } catch (err) {
         this.error = sanitizeApiError(err);
-        console.log(err);
+        console.error(err);
         throw err;
       }
     },
@@ -97,7 +97,7 @@ export const useAdminStore = defineStore('admin', {
         this.resetUser();
       } catch (err) {
         this.error = sanitizeApiError(err);
-        console.log(err);
+        console.error(err);
         throw err;
       }
     },
@@ -129,7 +129,7 @@ export const useAdminStore = defineStore('admin', {
         this.organizations = res.data.data;
       } catch (err) {
         this.error = sanitizeApiError(err);
-        console.log(err);
+        console.error(err);
       }
     },
   },

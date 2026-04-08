@@ -32,7 +32,7 @@ export const useTasksStore = defineStore('tasks', {
         const res = await axios.get(`${api}/${config.api.endPoints.tasks}/`);
         this.tasks = res.data.data;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -43,7 +43,7 @@ export const useTasksStore = defineStore('tasks', {
         const res = await axios.get(`${api}/${config.api.endPoints.tasks}/${params.id}`);
         this.task = res.data.data;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -55,7 +55,7 @@ export const useTasksStore = defineStore('tasks', {
         const res = await axios.post(`${api}/${config.api.endPoints.tasks}/`, obj);
         this.task = res.data.data;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -67,7 +67,7 @@ export const useTasksStore = defineStore('tasks', {
         const res = await axios.put(`${api}/${config.api.endPoints.tasks}/${params.id}`, obj);
         assign(this.task, res.data.data);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -78,7 +78,7 @@ export const useTasksStore = defineStore('tasks', {
         await axios.delete(`${api}/${config.api.endPoints.tasks}/${params.id}`);
         this.resetTask();
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
