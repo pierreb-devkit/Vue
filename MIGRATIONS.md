@@ -55,7 +55,7 @@ Per-module `activated: true/false` config flag. When `activated: false`, the mod
 - New `isModuleActive(moduleName)` helper in `src/lib/helpers/modules.js`
 - `src/modules/app/app.router.js` now conditionally includes routes based on activation status
 - Core modules (`home`, `auth`, `users`, `app`, `core`) are always active regardless of flag
-- New `modules` config block in `development.config.js` with `activated: true` defaults for: `tasks`, `billing`, `organizations`, `developers`, `analytics`, `admin`
+- New `modules` config block in `development.config.js` with `activated: true` defaults for: `tasks`, `billing`, `organizations`, `analytics`, `admin`
 
 ### Action for downstream
 

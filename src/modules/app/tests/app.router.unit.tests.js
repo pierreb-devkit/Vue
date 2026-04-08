@@ -327,7 +327,6 @@ describe('app.router', () => {
       expect(paths).toContain('/tasks');
       expect(paths).toContain('/billing');
       expect(paths).toContain('/admin');
-      expect(paths).toContain('/developers');
       expect(paths).toContain('/organization-required');
     });
 
@@ -362,7 +361,6 @@ describe('app.router', () => {
       expect(paths).not.toContain('/tasks');
       expect(paths).not.toContain('/admin');
       expect(paths).not.toContain('/billing');
-      expect(paths).not.toContain('/developers');
     });
 
     it('redirects to / for deactivated module paths (guard intercepts before NotFound)', async () => {

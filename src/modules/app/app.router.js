@@ -15,7 +15,6 @@ import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing from '../billing/router/billing.router';
-import developers from '../developers/router/developers.router';
 import docs from '../docs/router/docs.router';
 
 // Core modules — always mounted
@@ -27,7 +26,6 @@ const optionalModules = [
   { name: 'admin', routes: admin },
   { name: 'tasks', routes: tasks },
   { name: 'billing', routes: billing },
-  { name: 'developers', routes: developers },
   { name: 'docs', routes: docs },
 ];
 
