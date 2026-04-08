@@ -60,7 +60,7 @@ describe('auth.token.view', () => {
 
     it('does not throw when token() rejects', async () => {
       tokenMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       mountView();
       await Promise.resolve();
@@ -72,7 +72,7 @@ describe('auth.token.view', () => {
 
   describe('error parsing (XSS hardening)', () => {
     it('sets generic message when query.error is invalid JSON', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
       await Promise.resolve();
 
@@ -82,7 +82,7 @@ describe('auth.token.view', () => {
     });
 
     it('sets generic message when query.error is missing', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView({ message: 'Bad Request' });
       await Promise.resolve();
 
@@ -91,7 +91,7 @@ describe('auth.token.view', () => {
     });
 
     it('sanitizes valid payload and preserves per-field errors', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const payload = {
         details: {
           message: 'Validation failed',
@@ -108,7 +108,7 @@ describe('auth.token.view', () => {
     });
 
     it('drops non-conforming error entries', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const payload = {
         details: {
           message: 'Validation failed',

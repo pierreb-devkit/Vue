@@ -88,7 +88,7 @@ describe('auth.reset.view', () => {
 
     it('does not throw when reset rejects', async () => {
       resetMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
 
       wrapper.vm.password = 'NewSecurePass1';

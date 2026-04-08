@@ -87,14 +87,14 @@ describe('Tasks Store', () => {
 
     it('should handle getTasks error', async () => {
       const tasksStore = useTasksStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
       await tasksStore.getTasks();
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -112,14 +112,14 @@ describe('Tasks Store', () => {
 
     it('should handle getTask error', async () => {
       const tasksStore = useTasksStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
       await tasksStore.getTask({ id: '123' });
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -138,14 +138,14 @@ describe('Tasks Store', () => {
 
     it('should handle createTask error', async () => {
       const tasksStore = useTasksStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Failed'));
 
       await tasksStore.createTask({ title: 'Test' });
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -164,14 +164,14 @@ describe('Tasks Store', () => {
 
     it('should handle updateTask error', async () => {
       const tasksStore = useTasksStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.put.mockRejectedValueOnce(new Error('Failed'));
 
       await tasksStore.updateTask({ id: '789' });
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -189,14 +189,14 @@ describe('Tasks Store', () => {
 
     it('should handle deleteTask error', async () => {
       const tasksStore = useTasksStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.delete.mockRejectedValueOnce(new Error('Failed'));
 
       await tasksStore.deleteTask({ id: '999' });
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 });

@@ -116,15 +116,15 @@ describe('Users Store', () => {
 
     it('should handle getUsers error', async () => {
       const usersStore = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch users'));
 
       await usersStore.getUsers('0&10');
 
       expect(usersStore.users).toEqual([]);
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -153,14 +153,14 @@ describe('Users Store', () => {
 
     it('should handle getUser error', async () => {
       const usersStore = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch user'));
 
       await usersStore.getUser({ id: '123' });
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -202,14 +202,14 @@ describe('Users Store', () => {
 
     it('should handle updateUser error', async () => {
       const usersStore = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.put.mockRejectedValueOnce(new Error('Failed to update user'));
 
       await expect(usersStore.updateUser({ id: '789' })).rejects.toThrow('Failed to update user');
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should send only whitelisted fields to the API (not _id, updated, created)', async () => {
@@ -279,14 +279,14 @@ describe('Users Store', () => {
 
     it('should handle deleteUser error', async () => {
       const usersStore = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.delete.mockRejectedValueOnce(new Error('Failed to delete user'));
 
       await expect(usersStore.deleteUser({ id: '999' })).rejects.toThrow('Failed to delete user');
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 });
