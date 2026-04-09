@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick } from 'vue';
-import { useFeatureFlag } from '../composables/analytics.useFeatureFlag';
+import { useFeatureFlag } from '../analytics.useFeatureFlag';
 
 /**
  * @desc Helper that mounts a wrapper component calling useFeatureFlag
