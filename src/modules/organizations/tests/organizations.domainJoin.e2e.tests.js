@@ -156,7 +156,7 @@ test.describe('Organization Domain Join E2E', () => {
   test('approved member — no management controls on org page', async ({ page }) => {
     await signin(page, memberEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
-    await expect(page.getByText(`DomainOrg${timestamp}`)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: `DomainOrg${timestamp}` })).toBeVisible({ timeout: 10000 });
 
     // Delete button NOT visible
     const deleteButton = page.locator('button', { hasText: 'Delete' });
