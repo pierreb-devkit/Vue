@@ -1,11 +1,25 @@
+/**
+ * Module dependencies.
+ */
 import { defineStore } from 'pinia';
 import { assign } from 'lodash-es';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
 import { createLogger } from '../../../lib/helpers/logger';
+
 const logger = createLogger('admin');
+
+/**
+ * Whitelists.
+ */
 const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar', 'roles'];
+
+/**
+ * Sanitize API error messages to avoid leaking internal details (stack traces, DB paths, etc.).
+ * @param {unknown} err - The caught error object.
+ * @returns {string} A safe, user-facing error message.
+ */
 const sanitizeApiError = (err) => {
   const msg = err?.response?.data?.message || '';
   if (msg && msg.length <= 200 && !/\b(collection|stack)\b|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
@@ -13,6 +27,11 @@ const sanitizeApiError = (err) => {
   }
   return 'Failed to load data. Please try again.';
 };
+
+/**
+ * Build the base API URL from config.
+ * @returns {string} The base API URL.
+ */
 const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 const defaultUser = () => ({
   firstName: '',
@@ -26,8 +45,22 @@ const defaultUser = () => ({
   updated: '',
   created: '',
 });
+
+/**
+ * Store definition.
+ */
 export const useAdminStore = defineStore('admin', {
-  state: () => ({ user: defaultUser(), users: [], organizations: [], error: null, readiness: [], auditLogs: [], auditTotal: 0, auditPage: 1 }),
+  state: () => ({
+    user: defaultUser(),
+    users: [],
+    organizations: [],
+    error: null,
+    readiness: [],
+    auditLogs: [],
+    auditTotal: 0,
+    auditPage: 1,
+  }),
+
   actions: {
     async getUsers(params) {
       this.error = null;
@@ -39,6 +72,7 @@ export const useAdminStore = defineStore('admin', {
         console.error(err);
       }
     },
+
     async getUser(params) {
       this.error = null;
       try {
@@ -50,6 +84,7 @@ export const useAdminStore = defineStore('admin', {
         console.error(err);
       }
     },
+
     async updateUser(params, formData) {
       this.error = null;
       try {
@@ -62,6 +97,7 @@ export const useAdminStore = defineStore('admin', {
         throw err;
       }
     },
+
     async deleteUser(params) {
       this.error = null;
       try {
@@ -73,9 +109,15 @@ export const useAdminStore = defineStore('admin', {
         throw err;
       }
     },
+
     resetUser() {
       this.user = defaultUser();
     },
+
+    /**
+     * @desc Fetch SaaS readiness checklist from the admin API.
+     * @returns {Promise<void>}
+     */
     async getReadiness() {
       this.error = null;
       try {
@@ -87,6 +129,7 @@ export const useAdminStore = defineStore('admin', {
         logger.error(err);
       }
     },
+
     async getOrganizations(params) {
       this.error = null;
       try {
@@ -98,6 +141,18 @@ export const useAdminStore = defineStore('admin', {
         console.error(err);
       }
     },
+
+    /**
+     * @desc Fetch paginated audit logs from the admin API.
+     * Response shape: res.data = { type, message, data: { data: Array, total, page, perPage } }
+     * (standard responses.success() wrapper around AuditRepository.list() result).
+     * @param {Object} [params] - Query parameters.
+     * @param {string} [params.action] - Filter by action type.
+     * @param {string} [params.userId] - Filter by user ID.
+     * @param {number} [params.page] - Page number (1-based).
+     * @param {number} [params.perPage] - Items per page.
+     * @returns {Promise<void>}
+     */
     async getAuditLogs({ action, userId, page, perPage } = {}) {
       this.error = null;
       try {
@@ -121,4 +176,8 @@ export const useAdminStore = defineStore('admin', {
     },
   },
 });
+
+/**
+ * Exports.
+ */
 export default useAdminStore;

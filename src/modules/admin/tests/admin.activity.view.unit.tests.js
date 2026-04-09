@@ -203,4 +203,23 @@ describe('AdminView – Activity tab', () => {
     const result = wrapper.vm.formatActivityDate(null);
     expect(result).toBe('\u2014');
   });
+
+  it('should show disabled info state when audit is disabled via config', () => {
+    const disabledWrapper = shallowMount(AdminView, {
+      global: {
+        mocks: {
+          $router: { push: vi.fn() },
+          config: {
+            vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
+            whitelists: { users: { roles: ['user', 'admin'] } },
+            audit: { enabled: false },
+          },
+        },
+        stubs: vuetifyStubs,
+      },
+    });
+
+    const html = disabledWrapper.html();
+    expect(html).toContain('Audit logging is disabled');
+  });
 });

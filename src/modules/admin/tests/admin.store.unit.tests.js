@@ -313,6 +313,9 @@ describe('Admin Store', () => {
     });
   });
 
+  // Audit API response shape: responses.success() wraps AuditRepository.list() result as
+  // { type: 'success', message: '...', data: { data: Array, total, page, perPage } }
+  // so axios sees res.data = { type, message, data: { data, total, page, perPage } }
   describe('getAuditLogs', () => {
     it('should fetch and set audit logs', async () => {
       const store = useAdminStore();

@@ -125,8 +125,21 @@
                 <div v-else class="text-medium-emphasis text-body-medium">No readiness data available.</div>
               </div></v-window-item
             >
+            <!-- Activity tab -->
             <v-window-item value="activity"
               ><div class="pa-4">
+                <!-- Audit disabled info state -->
+                <v-alert
+                  v-if="config.audit && config.audit.enabled === false"
+                  type="info"
+                  variant="tonal"
+                  density="compact"
+                  :class="config.vuetify.theme.rounded"
+                  icon="fa-solid fa-circle-info"
+                >
+                  <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
+                </v-alert>
+                <template v-else>
                 <div class="d-flex align-center ga-2 flex-wrap mb-4">
                   <v-text-field
                     v-model="activityFilterAction"
@@ -225,7 +238,8 @@
                   ><v-btn :disabled="!activityHasNextPage" variant="text" icon size="small" @click="activityNextPage"
                     ><v-icon icon="fa-solid fa-angle-right" size="small"></v-icon
                   ></v-btn>
-                </div></div
+                </div>
+                </template></div
             ></v-window-item>
           </v-window>
         </v-card>
@@ -260,6 +274,9 @@
   </v-container>
 </template>
 <script>
+/**
+ * Module dependencies.
+ */
 import dayjs from 'dayjs';
 import { useAdminStore } from '../stores/admin.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
@@ -267,9 +284,16 @@ import roleColor from '../../../lib/helpers/roleColor';
 import orgColor from '../../../lib/helpers/orgColor';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+
+/**
+ * Component definition.
+ */
 export default {
   name: 'AdminView',
-  components: { coreDataTableComponent, PageHeader },
+  components: {
+    coreDataTableComponent,
+    PageHeader,
+  },
   data() {
     return {
       tab: 'users',
@@ -301,6 +325,10 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc Returns validated extra admin tabs from config.admin.tabs.
+     * @returns {Array} Each entry: { value, label, icon?, route }
+     */
     extraTabs() {
       const tabs = this.config?.admin?.tabs;
       if (!Array.isArray(tabs)) return [];
@@ -331,9 +359,17 @@ export default {
     auditTotal() {
       return useAdminStore().auditTotal;
     },
+    /**
+     * @desc Whether there are more pages of audit logs to fetch.
+     * @returns {boolean}
+     */
     activityHasNextPage() {
       return this.activityPage * this.activityPerPage < this.auditTotal;
     },
+    /**
+     * @desc Whether to show the mailer warning in admin panel.
+     * @returns {boolean}
+     */
     showMailerWarning() {
       return useAuthStore().serverConfig?.mail?.configured === false;
     },
@@ -359,16 +395,30 @@ export default {
       const orgId = membership.organizationId?._id || membership.organizationId?.id || membership.organizationId;
       return currentOrg && orgId && String(currentOrg) === String(orgId);
     },
+    /**
+     * @desc Map readiness status to icon name.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} FontAwesome icon class
+     */
     readinessIcon(status) {
       if (status === 'ok') return 'fa-solid fa-circle-check';
       if (status === 'error') return 'fa-solid fa-circle-xmark';
       return 'fa-solid fa-triangle-exclamation';
     },
+    /**
+     * @desc Map readiness status to color.
+     * @param {string} status - ok, warning, or error
+     * @returns {string} Vuetify color name
+     */
     readinessColor(status) {
       if (status === 'ok') return 'success';
       if (status === 'error') return 'error';
       return 'warning';
     },
+    /**
+     * @desc Fetch readiness data from admin store.
+     * @returns {Promise<void>}
+     */
     async fetchReadiness() {
       this.readinessLoading = true;
       await useAdminStore().getReadiness();
@@ -381,10 +431,10 @@ export default {
       await useAdminStore().getOrganizations(params);
     },
     async toggleUserRole(item, role) {
-      const s = useAdminStore();
-      const cur = item.roles || [];
-      const nr = cur.includes(role) ? cur.filter((r) => r !== role) : [...cur, role];
-      await s.updateUser({ id: item.id || item._id }, { roles: nr });
+      const adminStore = useAdminStore();
+      const currentRoles = item.roles || [];
+      const newRoles = currentRoles.includes(role) ? currentRoles.filter((r) => r !== role) : [...currentRoles, role];
+      await adminStore.updateUser({ id: item.id || item._id }, { roles: newRoles });
       await this.fetchUsers();
     },
     openDeleteDialog(item) {
@@ -399,13 +449,26 @@ export default {
       this.deleteDialog.show = false;
       await this.fetchUsers();
     },
+    /**
+     * @desc Format an ISO date string for display in the activity table.
+     * @param {string|null} date - ISO date string or null
+     * @returns {string} Formatted date or em dash
+     */
     formatActivityDate(date) {
       if (!date) return '\u2014';
       return dayjs(date).format('DD/MM/YY HH:mm:ss');
     },
+    /**
+     * @desc Toggle the expanded metadata row for an audit log entry.
+     * @param {string} id - The audit log entry ID
+     */
     toggleActivityExpand(id) {
       this.activityExpandedId = this.activityExpandedId === id ? null : id;
     },
+    /**
+     * @desc Fetch audit logs from the store with current filters and pagination.
+     * @returns {Promise<void>}
+     */
     async fetchActivityLogs() {
       this.activityLoading = true;
       await useAdminStore().getAuditLogs({
@@ -416,22 +479,26 @@ export default {
       });
       this.activityLoading = false;
     },
+    /** @desc Apply activity filters and reset to page 1. */
     applyActivityFilters() {
       this.activityPage = 1;
       this.fetchActivityLogs();
     },
+    /** @desc Clear all activity filters and reset to page 1. */
     clearActivityFilters() {
       this.activityFilterAction = '';
       this.activityFilterUserId = '';
       this.activityPage = 1;
       this.fetchActivityLogs();
     },
+    /** @desc Navigate to the previous page of audit logs. */
     activityPrevPage() {
       if (this.activityPage > 1) {
         this.activityPage -= 1;
         this.fetchActivityLogs();
       }
     },
+    /** @desc Navigate to the next page of audit logs. */
     activityNextPage() {
       if (this.activityHasNextPage) {
         this.activityPage += 1;
