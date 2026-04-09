@@ -77,7 +77,8 @@ export default {
           });
         }
         this.error = { details: { message, errors } };
-      } catch {
+      } catch (parseErr) {
+        logger.error('Failed to parse OAuth error query param:', parseErr);
         this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
       }
       logger.error('OAuth error:', this.error);

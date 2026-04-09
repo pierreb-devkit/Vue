@@ -6,6 +6,9 @@ import { assign } from 'lodash-es';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('admin');
 
 /**
  * Whitelists.
@@ -118,7 +121,7 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.readiness = [];
         this.error = sanitizeApiError(err);
-        console.error(err);
+        logger.error(err);
       }
     },
 
