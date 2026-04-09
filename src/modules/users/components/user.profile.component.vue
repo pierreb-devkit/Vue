@@ -22,7 +22,7 @@
         </v-col>
         <v-col cols="12" md="4" lg="3" xl="2" class="d-flex flex-column align-center">
           <div class="position-relative" style="cursor: pointer;" @click="triggerUpload()">
-            <userAvatarComponent :user="user" width="200px" height="200px" radius="50%" border="0px" color="#000" :size="512" :disabled="true" />
+            <userAvatarComponent :user="user" :size="200" />
             <div
               class="position-absolute d-flex align-center justify-center"
               :style="{ bottom: '8px', right: '8px', width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(var(--v-theme-primary), 1)', cursor: 'pointer' }"

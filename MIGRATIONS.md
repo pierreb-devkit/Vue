@@ -4,6 +4,35 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## UserAvatarComponent — Gravatar removal (2026-04-09)
+
+Replaced Gravatar-based avatar rendering with a reusable `UserAvatarComponent` that shows an uploaded image or colored initials fallback. The Gravatar plugin has been removed entirely.
+
+### What changed
+
+- `UserAvatarComponent` props reduced to `user` (Object, optional) + `size` (Number, default 32)
+- Removed props: `width`, `height`, `radius`, `border`, `color`, `disabled`
+- Removed: `src/lib/plugins/gravatar.js` and its unit tests
+- Removed: `app.use(plugins.gravatar)` from `main.js`
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the changes
+2. Replace old avatar usage:
+
+   ```vue
+   <!-- Before -->
+   <userAvatarComponent :user="user" :width="'60px'" :height="'60px'" :radius="'50%'" :size="128" />
+
+   <!-- After -->
+   <userAvatarComponent :user="user" :size="60" />
+   ```
+
+3. Remove any `disabled` prop usage — the component no longer wraps in an `<a>` tag
+4. If you imported or referenced the gravatar plugin directly, remove those imports
+
+---
+
 ## Per-module project config overrides (2026-04-07)
 
 Standardized the `{module}.{project}.config.js` pattern for per-module project overrides in downstream projects. The config loader already supported this — this note documents the standard and adds the template.

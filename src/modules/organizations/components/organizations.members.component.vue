@@ -8,7 +8,7 @@
     >
       <!-- Avatar column -->
       <template #avatar="{ item }">
-        <userAvatarComponent :user="item.userId || item" :width="'37px'" :height="'37px'" :radius="'50%'" :border="'0px'" :color="'#000'" />
+        <userAvatarComponent :user="item.userId || item" :size="37" />
       </template>
       <!-- Role column with chip -->
       <template #role="{ item }">

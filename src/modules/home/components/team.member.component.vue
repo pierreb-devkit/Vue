@@ -75,12 +75,7 @@
       <userAvatarComponent
         style="position: absolute; top: 50px; left: 50%; margin-left: -60px"
         :user="item"
-        :width="'120px'"
-        :height="'120px'"
-        :radius="'50%'"
-        :border="'5px'"
-        :color="theme.current.colors.surface"
-        :size="512"
+        :size="120"
       />
     </v-card>
   </v-col>

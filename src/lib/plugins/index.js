@@ -5,7 +5,6 @@ import vuetify from './vuetify';
 import posthog from './posthog';
 import sentry from './sentry';
 import dayjs from './dayjs';
-import gravatar from './gravatar';
 import images from './images';
 import aos from './aos';
 import markdown from './markdown';
@@ -19,7 +18,6 @@ export default {
   posthog,
   sentry,
   dayjs,
-  gravatar,
   images,
   aos,
   markdown,
