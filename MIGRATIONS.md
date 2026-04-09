@@ -4,6 +4,47 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## homeImgComponent in about section (2026-04-09)
+
+The `home.about.component.vue` now uses `homeImgComponent` instead of raw `<v-img>` for image rendering. This aligns with how `home.features.component.vue` already works.
+
+### What changed
+
+- About section images (both `imgBackground` and bare) now render through `homeImgComponent`
+- SVGs are inlined via `v-html` instead of loaded as `<img>` tags — they can now access Vuetify CSS custom properties and respond to theme toggling
+- `imgMode` from config is respected (`contain` for background images, `cover` default for bare images)
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the changes
+2. If you use custom SVGs in `about` or `aboutFeatures` sections, verify they render correctly with theme switching (they now follow Vuetify theme, not OS `prefers-color-scheme`)
+3. No config changes needed — existing `home.about` config is fully compatible
+
+---
+
+## OrgAvatarComponent — reusable component (2026-04-09)
+
+New reusable `OrgAvatarComponent` for displaying organization avatars with an uploaded image or colored initials fallback. Mirrors the pattern of `UserAvatarComponent`.
+
+### What changed
+
+- New component: `src/modules/organizations/components/organizations.avatar.component.vue`
+- Props: `organization` (Object, optional) + `size` (Number, default 32)
+- Displays uploaded org image or generates colored initials from the organization name
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the changes
+2. Replace any custom org avatar rendering with the new component:
+
+   ```vue
+   <orgAvatarComponent :organization="org" :size="40" />
+   ```
+
+3. No breaking change — this is a new component, existing code is unaffected
+
+---
+
 ## UserAvatarComponent — Gravatar removal (2026-04-09)
 
 Replaced Gravatar-based avatar rendering with a reusable `UserAvatarComponent` that shows an uploaded image or colored initials fallback. The Gravatar plugin has been removed entirely.
