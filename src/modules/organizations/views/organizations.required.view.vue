@@ -57,9 +57,7 @@
             :key="org.id || org._id"
           >
             <template #prepend>
-              <v-avatar :color="orgColor(org)" size="32" class="mr-3">
-                <span class="text-label-small font-weight-bold">{{ (org.name || '?').charAt(0).toUpperCase() }}</span>
-              </v-avatar>
+              <orgAvatarComponent :org="org" :size="32" class="mr-3" />
             </template>
             <v-list-item-title class="text-body-medium">{{ org.name }}</v-list-item-title>
             <template #append>
@@ -116,9 +114,13 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../../core/stores/core.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import orgColor from '../../../lib/helpers/orgColor';
+import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 export default {
   name: 'OrganizationsRequiredView',
+  components: {
+    orgAvatarComponent,
+  },
   data() {
     return {
       domainOrgs: [],
