@@ -1,60 +1,55 @@
 <!--
  Example:
- <userAvatarComponent
- :user="user"
- :width="'200px'"
- :height="'200px'"
- :radius="'50%'"
- :border="'0px'"
- :color="'#000'"
- :size="256"
- />
+ <userAvatarComponent :user="user" :size="32" />
 -->
 <template>
-  <div
-    :style="{
-      width,
-      height,
-    }"
-  >
-    <v-tooltip activator="parent" anchor="left">
-      <span v-if="user && user.firstname">{{ user.firstName }}</span>
-      <span v-if="user && user.lastName">{{ user.lastName }}</span>
-      <br v-if="user && (user.firstname || user.lastName) && user.email" />
-      <span v-if="user && user.email">{{ user.email }}</span>
-    </v-tooltip>
-    <!-- eslint-disable-next-line -->
-    <a v-if="user && user.id" :href="disabled === true ? null : `/users/${user.id}`">
-      <v-img
-        v-if="user.avatar && user.avatar !== ''"
-        :src="setImages(config.api, user.avatar, size ? size : 128, null)"
-        :style="{
-          width,
-          height,
-          'border-radius': radius,
-          border: `${border}px solid ${color}`,
-        }"
-      ></v-img>
-      <v-gravatar
-        v-if="!user.avatar || (user.avatar === '' && user.avatar)"
-        :email="user.email"
-        default-img="mp"
-        :size="size ? size : 128"
-        :style="{
-          width,
-          height,
-          'border-radius': radius,
-          border: `${border}px solid ${color}`,
-        }"
-      />
-    </a>
-  </div>
+  <v-tooltip activator="parent" location="bottom">
+    <template #activator="{ props: tooltipProps }">
+      <v-avatar
+        v-bind="tooltipProps"
+        :size="size"
+        :color="!hasAvatar ? avatarColor : undefined"
+      >
+        <v-img
+          v-if="hasAvatar"
+          :src="setImages(config.api, user.avatar, size * 2, null)"
+          :alt="fullName"
+        />
+        <span v-else class="text-white" :style="{ fontSize: `${Math.max(size * 0.4, 10)}px`, fontWeight: 500 }">
+          {{ initials }}
+        </span>
+      </v-avatar>
+    </template>
+    <span>{{ fullName }}</span>
+  </v-tooltip>
 </template>
 
 <script>
 /**
- * Component definition.
+ * @desc Reusable user avatar component.
+ * Shows uploaded avatar image or falls back to colored initials.
+ * Color is derived from email hash for consistency.
  */
+
+/**
+ * Generate a consistent color from a string using a simple hash.
+ * @param {string} str - Input string (email).
+ * @returns {string} Hex color code.
+ */
+function stringToColor(str) {
+  const palette = [
+    '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
+    '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41',
+    '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B',
+    '#FFB300',
+  ];
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+}
+
 export default {
   name: 'UserAvatarComponent',
   props: {
@@ -62,33 +57,27 @@ export default {
       type: Object,
       required: true,
     },
-    width: {
-      type: String,
-      default: '50px',
-    },
-    height: {
-      type: String,
-      default: '50px',
-    },
-    radius: {
-      type: String,
-      default: '50%',
-    },
-    border: {
-      type: String,
-      default: '0px',
-    },
-    color: {
-      type: String,
-      default: '#000',
-    },
     size: {
       type: Number,
-      default: 128,
+      default: 32,
     },
-    disabled: {
-      type: Boolean,
-      default: false,
+  },
+  computed: {
+    hasAvatar() {
+      return !!(this.user && this.user.avatar && this.user.avatar !== '');
+    },
+    initials() {
+      if (!this.user) return '';
+      const f = (this.user.firstName || '').charAt(0).toUpperCase();
+      const l = (this.user.lastName || '').charAt(0).toUpperCase();
+      return f + l || '?';
+    },
+    fullName() {
+      if (!this.user) return '';
+      return [this.user.firstName, this.user.lastName].filter(Boolean).join(' ') || this.user.email || '';
+    },
+    avatarColor() {
+      return stringToColor((this.user && this.user.email) || '');
     },
   },
 };

@@ -50,7 +50,7 @@
                 <a :href="`mailto:${lodash.get(item, header.value)}`" class="text-primary">{{ lodash.get(item, header.value) }}</a>
               </span>
               <span v-else-if="header.kind === 'avatar'">
-                <userAvatarComponent :user="item" :width="'37px'" :height="'37px'" :radius="'50%'" :border="'0px'" :color="'#000'" />
+                <userAvatarComponent :user="item" :size="37" />
               </span>
               <span v-else-if="header.kind === 'capitalize'" class="text-capitalize"> {{ lodash.get(item, header.value) }}</span>
               <span v-else-if="header.kind === 'link' && header.path && header.pathValue">
