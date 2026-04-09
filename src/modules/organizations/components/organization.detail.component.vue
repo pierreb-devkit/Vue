@@ -252,7 +252,6 @@ import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import orgColor from '../../../lib/helpers/orgColor';
 import roleColor from '../../../lib/helpers/roleColor';
 import organizationsMembersComponent from './organizations.members.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -333,7 +332,6 @@ export default {
     }
   },
   methods: {
-    orgColor,
     roleColor,
     async update() {
       const form = await this.$refs.form.validate();

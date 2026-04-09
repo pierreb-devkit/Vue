@@ -113,7 +113,6 @@
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../../core/stores/core.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
-import orgColor from '../../../lib/helpers/orgColor';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 export default {
@@ -161,7 +160,6 @@ export default {
     }
   },
   methods: {
-    orgColor,
     async refresh() {
       const authStore = useAuthStore();
       await authStore.refreshAbilities();

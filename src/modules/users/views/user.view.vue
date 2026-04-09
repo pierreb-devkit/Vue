@@ -164,7 +164,6 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
-import orgColor from '../../../lib/helpers/orgColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import userProfileComponent from '../components/user.profile.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
@@ -220,7 +219,6 @@ export default {
   },
   methods: {
     roleColor,
-    orgColor,
     /**
      * @desc Check whether the given org is the user's active organization.
      * @param {Object} org - Organization object
