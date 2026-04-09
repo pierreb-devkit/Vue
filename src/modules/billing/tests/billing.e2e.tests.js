@@ -420,7 +420,7 @@ test.describe('Stripe Checkout Flow', () => {
         stripeUrlVerified = true;
       }
     }
-    // If browser navigated away, check the URL
+    // External Stripe navigation may abort before reaching load state — safe to ignore, verified via url below
     await page.waitForLoadState('load').catch(() => {});
     const url = page.url();
     if (url.includes('checkout.stripe.com')) {
