@@ -49,8 +49,8 @@ test.describe('Organization Lifecycle E2E', () => {
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
 
-    // Should see the org detail page
-    await expect(page.locator('text=LifecycleOrg')).toBeVisible({ timeout: 10000 });
+    // Should see the org detail page (use heading role to avoid tooltip duplicates)
+    await expect(page.getByRole('heading', { name: /LifecycleOrg/ })).toBeVisible({ timeout: 10000 });
     expect(page.url()).toContain('/users/organizations/');
   });
 });

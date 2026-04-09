@@ -5,11 +5,7 @@
       :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
     >
       <template #avatar>
-        <v-avatar v-if="viewedOrganization" :color="orgColor(viewedOrganization)" size="40" class="mr-3">
-          <span class="text-body-large font-weight-bold" style="color: white;">
-            {{ (viewedOrganization.name || '?').charAt(0).toUpperCase() }}
-          </span>
-        </v-avatar>
+        <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
       </template>
       <template #actions>
         <v-btn
@@ -256,16 +252,17 @@ import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import orgColor from '../../../lib/helpers/orgColor';
 import roleColor from '../../../lib/helpers/roleColor';
 import organizationsMembersComponent from './organizations.members.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 export default {
   name: 'OrganizationDetailComponent',
   components: {
     organizationsMembersComponent,
     PageHeader,
+    orgAvatarComponent,
   },
   props: {
     organizationId: { type: String, required: true },
@@ -335,7 +332,6 @@ export default {
     }
   },
   methods: {
-    orgColor,
     roleColor,
     async update() {
       const form = await this.$refs.form.validate();

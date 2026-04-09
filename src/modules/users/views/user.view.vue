@@ -37,11 +37,7 @@
                       class="pa-4"
                     >
                       <template #prepend>
-                        <v-avatar :color="orgColor(org)" size="40" class="mr-4">
-                          <span class="text-title-medium font-weight-bold">
-                            {{ (org.name || '?').charAt(0).toUpperCase() }}
-                          </span>
-                        </v-avatar>
+                        <orgAvatarComponent :org="org" :size="40" class="mr-4" />
                       </template>
                       <v-list-item-title class="text-body-large font-weight-medium">{{ org.name }}</v-list-item-title>
                       <v-list-item-subtitle v-if="org.description" class="text-body-small">{{ org.description }}</v-list-item-subtitle>
@@ -168,10 +164,10 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
-import orgColor from '../../../lib/helpers/orgColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import userProfileComponent from '../components/user.profile.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
+import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 export default {
   name: 'UserView',
@@ -179,6 +175,7 @@ export default {
     PageHeader,
     userProfileComponent,
     organizationsSwitcherComponent,
+    orgAvatarComponent,
   },
   data() {
     return {
@@ -222,7 +219,6 @@ export default {
   },
   methods: {
     roleColor,
-    orgColor,
     /**
      * @desc Check whether the given org is the user's active organization.
      * @param {Object} org - Organization object

@@ -11,11 +11,7 @@
           :disabled="switching || organizations.length <= 1"
           :loading="switching"
         >
-          <v-avatar :color="orgColor(currentOrganization)" size="24" class="mr-2">
-            <span class="text-label-small font-weight-bold">
-              {{ activeInitial }}
-            </span>
-          </v-avatar>
+          <orgAvatarComponent v-if="currentOrganization" :org="currentOrganization" :size="24" class="mr-2" />
           {{ activeName }}
           <v-icon v-if="organizations.length > 1" icon="fa-solid fa-chevron-down" size="x-small" class="ml-2"></v-icon>
         </v-btn>
@@ -34,15 +30,7 @@
           @click="switchTo(org)"
         >
           <template #prepend>
-            <v-avatar
-              :color="orgColor(org)"
-              size="28"
-              class="mr-3"
-            >
-              <span class="text-label-small font-weight-bold">
-                {{ (org.name || '?').charAt(0).toUpperCase() }}
-              </span>
-            </v-avatar>
+            <orgAvatarComponent :org="org" :size="28" class="mr-3" />
           </template>
           <v-list-item-title class="text-body-medium">
             {{ org.name }}
@@ -62,13 +50,16 @@
  */
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
-import orgColor from '../../../lib/helpers/orgColor';
+import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 /**
  * Component definition.
  */
 export default {
   name: 'OrganizationsSwitcherComponent',
+  components: {
+    orgAvatarComponent,
+  },
   data() {
     return {
       switching: false,
@@ -105,13 +96,6 @@ export default {
     activeName() {
       return this.currentOrganization ? this.currentOrganization.name : 'Select Org';
     },
-    /**
-     * @desc First letter of the active organization name.
-     * @returns {string}
-     */
-    activeInitial() {
-      return (this.activeName || '?').charAt(0).toUpperCase();
-    },
   },
   created() {
     if (this.organizationsEnabled) {
@@ -128,7 +112,6 @@ export default {
     }
   },
   methods: {
-    orgColor,
     /**
      * @desc Check whether a given organization is the active one.
      * @param {Object} org - Organization object
