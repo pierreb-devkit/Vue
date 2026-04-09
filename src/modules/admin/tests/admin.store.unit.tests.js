@@ -31,6 +31,9 @@ describe('Admin Store', () => {
     expect(store.organizations).toEqual([]);
     expect(store.error).toBeNull();
     expect(store.readiness).toEqual([]);
+    expect(store.auditLogs).toEqual([]);
+    expect(store.auditTotal).toBe(0);
+    expect(store.auditPage).toBe(1);
     expect(store.user).toEqual({
       firstName: '',
       lastName: '',
@@ -307,6 +310,92 @@ describe('Admin Store', () => {
       expect(store.error).toBe('Failed to load data. Please try again.');
       expect(consoleErrorSpy).toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('getAuditLogs', () => {
+    it('should fetch and set audit logs', async () => {
+      const store = useAdminStore();
+      const mockLogs = [
+        { _id: '1', action: 'auth.login', userId: 'u1', ip: '127.0.0.1' },
+        { _id: '2', action: 'auth.logout', userId: 'u2', ip: '127.0.0.2' },
+      ];
+
+      axios.get.mockResolvedValueOnce({
+        data: { data: { data: mockLogs, total: 42, page: 1, perPage: 20 } },
+      });
+
+      await store.getAuditLogs({ page: 1, perPage: 20 });
+
+      expect(store.auditLogs).toEqual(mockLogs);
+      expect(store.auditTotal).toBe(42);
+      expect(store.auditPage).toBe(1);
+    });
+
+    it('should pass filters as query parameters', async () => {
+      const store = useAdminStore();
+
+      axios.get.mockResolvedValueOnce({
+        data: { data: { data: [], total: 0, page: 1, perPage: 20 } },
+      });
+
+      await store.getAuditLogs({ action: 'auth.login', userId: 'abc123abc123abc123abc123', page: 2, perPage: 10 });
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('action=auth.login'),
+      );
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('userId=abc123abc123abc123abc123'),
+      );
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('page=2'),
+      );
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('perPage=10'),
+      );
+    });
+
+    it('should handle error and clear audit logs', async () => {
+      const store = useAdminStore();
+      store.auditLogs = [{ _id: '1', action: 'stale' }];
+      store.auditTotal = 10;
+
+      axios.get.mockRejectedValueOnce(new Error('Failed'));
+
+      await store.getAuditLogs();
+
+      expect(store.auditLogs).toEqual([]);
+      expect(store.auditTotal).toBe(0);
+      expect(store.error).toBe('Failed to load data. Please try again.');
+    });
+
+    it('should handle pagination state correctly', async () => {
+      const store = useAdminStore();
+      const mockLogs = [{ _id: '1', action: 'test' }];
+
+      axios.get.mockResolvedValueOnce({
+        data: { data: { data: mockLogs, total: 100, page: 3, perPage: 10 } },
+      });
+
+      await store.getAuditLogs({ page: 3, perPage: 10 });
+
+      expect(store.auditLogs).toEqual(mockLogs);
+      expect(store.auditTotal).toBe(100);
+      expect(store.auditPage).toBe(3);
+    });
+
+    it('should call audit endpoint without query params when no filters', async () => {
+      const store = useAdminStore();
+
+      axios.get.mockResolvedValueOnce({
+        data: { data: { data: [], total: 0, page: 1, perPage: 20 } },
+      });
+
+      await store.getAuditLogs();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/audit'),
+      );
     });
   });
 });

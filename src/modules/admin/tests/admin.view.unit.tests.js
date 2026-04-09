@@ -8,8 +8,12 @@ vi.mock('../stores/admin.store', () => ({
     users: [],
     organizations: [],
     error: null,
+    auditLogs: [],
+    auditTotal: 0,
+    auditPage: 1,
     getUsers: vi.fn(),
     getOrganizations: vi.fn(),
+    getAuditLogs: vi.fn(),
   }),
 }));
 
@@ -56,7 +60,7 @@ describe('admin.view', () => {
   it('should render default tabs without extra tabs', () => {
     const wrapper = mountView();
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
+    expect(tabs.length).toBe(4);
     expect(tabs[0].text()).toContain('Users');
     expect(tabs[1].text()).toContain('Organizations');
     expect(tabs[2].text()).toContain('Readiness');
@@ -71,9 +75,9 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(4);
-    expect(tabs[3].text()).toContain('Billing');
-    const icons = tabs[3].findAllComponents({ name: 'VIcon' });
+    expect(tabs.length).toBe(5);
+    expect(tabs[4].text()).toContain('Billing');
+    const icons = tabs[4].findAllComponents({ name: 'VIcon' });
     expect(icons.length).toBe(1);
     expect(icons[0].props('icon')).toBe('fa-solid fa-credit-card');
   });
@@ -87,28 +91,28 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(4);
-    expect(tabs[3].text()).toContain('Logs');
-    const icons = tabs[3].findAllComponents({ name: 'VIcon' });
+    expect(tabs.length).toBe(5);
+    expect(tabs[4].text()).toContain('Logs');
+    const icons = tabs[4].findAllComponents({ name: 'VIcon' });
     expect(icons.length).toBe(0);
   });
 
   it('should gracefully handle empty admin.tabs array', () => {
     const wrapper = mountView({ admin: { tabs: [] } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
+    expect(tabs.length).toBe(4);
   });
 
   it('should gracefully handle missing admin config', () => {
     const wrapper = mountView();
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
+    expect(tabs.length).toBe(4);
   });
 
   it('should ignore invalid admin.tabs values (non-array)', () => {
     const wrapper = mountView({ admin: { tabs: 'invalid' } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
+    expect(tabs.length).toBe(4);
   });
 
   it('should filter out entries missing required fields', () => {
@@ -122,8 +126,8 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(4);
-    expect(tabs[3].text()).toContain('Billing');
+    expect(tabs.length).toBe(5);
+    expect(tabs[4].text()).toContain('Billing');
   });
 
   it('should filter out tabs with routes not starting with /admin/', () => {
@@ -137,8 +141,8 @@ describe('admin.view', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(4); // 3 default + 1 valid extra
-    expect(tabs[3].text()).toContain('Safe');
+    expect(tabs.length).toBe(5); // 3 default + 1 valid extra
+    expect(tabs[4].text()).toContain('Safe');
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       expect.stringContaining('/evil/path'),
     );
