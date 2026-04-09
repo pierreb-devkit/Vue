@@ -11,7 +11,7 @@
           :disabled="switching || organizations.length <= 1"
           :loading="switching"
         >
-          <orgAvatarComponent :org="currentOrganization" :size="24" class="mr-2" />
+          <orgAvatarComponent v-if="currentOrganization" :org="currentOrganization" :size="24" class="mr-2" />
           {{ activeName }}
           <v-icon v-if="organizations.length > 1" icon="fa-solid fa-chevron-down" size="x-small" class="ml-2"></v-icon>
         </v-btn>
@@ -50,7 +50,6 @@
  */
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
-import orgColor from '../../../lib/helpers/orgColor';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 
 /**
@@ -113,7 +112,6 @@ export default {
     }
   },
   methods: {
-    orgColor,
     /**
      * @desc Check whether a given organization is the active one.
      * @param {Object} org - Organization object
