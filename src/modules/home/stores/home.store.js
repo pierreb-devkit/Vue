@@ -73,8 +73,8 @@ export const useHomeStore = defineStore('home', {
     async getNews() {
       try {
         // Vérifier que la configuration existe avant d'accéder aux propriétés
-        if (!config.home.articles || !config.home.articles.url || !config.home.articles.key) {
-          console.warn('blog configuration is missing url or key');
+        if (!config.home?.articles?.url || !config.home?.articles?.key) {
+          console.warn('articles configuration is missing url or key');
           return;
         }
 

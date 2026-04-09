@@ -1,10 +1,10 @@
 <!--
-  HomeBlogComponent
-  =================
+  HomeArticlesComponent
+  =====================
   Carousel of image cards, typically used for blog posts or articles.
 
   USAGE:
-  <homeBlogComponent :setup="{ content: news, ...config.home.articles }" />
+  <homeArticlesComponent :setup="{ content: news, ...config.home.articles }" />
 
   CONFIG EXAMPLE (setup object):
   articles: {
