@@ -33,8 +33,8 @@ describe('user.avatar.component', () => {
   });
 
   describe('props', () => {
-    it('requires user prop', () => {
-      expect(UserAvatarComponent.props.user.required).toBe(true);
+    it('defaults user to null', () => {
+      expect(UserAvatarComponent.props.user.default).toBe(null);
     });
 
     it('defaults size to 32', () => {
@@ -124,6 +124,25 @@ describe('user.avatar.component', () => {
     });
   });
 
+  describe('textColorClass computed', () => {
+    it('returns correct contrast class based on background luminance', () => {
+      const wrapper = createWrapper({ user: { email: 'test@test.com' } });
+      const color = wrapper.vm.avatarColor;
+      const r = parseInt(color.slice(1, 3), 16) / 255;
+      const g = parseInt(color.slice(3, 5), 16) / 255;
+      const b = parseInt(color.slice(5, 7), 16) / 255;
+      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const expected = luminance > 0.5 ? 'text-black' : 'text-white';
+      expect(wrapper.vm.textColorClass).toBe(expected);
+    });
+
+    it('is consistent with avatarColor', () => {
+      const wrapper1 = createWrapper({ user: { email: 'same@email.com' } });
+      const wrapper2 = createWrapper({ user: { email: 'same@email.com' } });
+      expect(wrapper1.vm.textColorClass).toBe(wrapper2.vm.textColorClass);
+    });
+  });
+
   describe('rendering', () => {
     it('renders v-avatar element', () => {
       const wrapper = createWrapper({ user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' } });
@@ -145,10 +164,12 @@ describe('user.avatar.component', () => {
       expect(wrapper.find('.v-img').exists()).toBe(false);
     });
 
-    it('applies custom size', () => {
+    it('applies custom size to v-avatar', () => {
       const wrapper = createWrapper({ user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' }, size: 64 });
       const avatar = wrapper.find('.v-avatar');
       expect(avatar.exists()).toBe(true);
+      expect(avatar.attributes('style')).toContain('width: 64px');
+      expect(avatar.attributes('style')).toContain('height: 64px');
     });
   });
 });

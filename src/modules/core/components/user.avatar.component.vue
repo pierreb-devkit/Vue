@@ -3,7 +3,7 @@
  <userAvatarComponent :user="user" :size="32" />
 -->
 <template>
-  <v-tooltip activator="parent" location="bottom">
+  <v-tooltip location="bottom">
     <template #activator="{ props: tooltipProps }">
       <v-avatar
         v-bind="tooltipProps"
@@ -15,7 +15,7 @@
           :src="setImages(config.api, user.avatar, size * 2, null)"
           :alt="fullName"
         />
-        <span v-else class="text-white" :style="{ fontSize: `${Math.max(size * 0.4, 10)}px`, fontWeight: 500 }">
+        <span v-else :class="textColorClass" :style="{ fontSize: `${Math.max(size * 0.4, 10)}px`, fontWeight: 500 }">
           {{ initials }}
         </span>
       </v-avatar>
@@ -36,6 +36,20 @@
  * @param {string} str - Input string (email).
  * @returns {string} Hex color code.
  */
+/**
+ * Determine whether a hex color is light (needs dark text for contrast).
+ * Uses relative luminance per WCAG 2.x.
+ * @param {string} hex - Hex color code.
+ * @returns {boolean} True if the background is light.
+ */
+function isLightColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.5;
+}
+
 function stringToColor(str) {
   const palette = [
     '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
@@ -55,7 +69,7 @@ export default {
   props: {
     user: {
       type: Object,
-      required: true,
+      default: null,
     },
     size: {
       type: Number,
@@ -78,6 +92,9 @@ export default {
     },
     avatarColor() {
       return stringToColor((this.user && this.user.email) || '');
+    },
+    textColorClass() {
+      return isLightColor(this.avatarColor) ? 'text-black' : 'text-white';
     },
   },
 };
