@@ -583,7 +583,7 @@ export default {
       },
       title: 'Some contents to read',
       url: 'https://blog.devkit.me',
-      key: '0415f48774e7c49c713204f787',
+      key: '', // set via DEVKIT_VUE_home_articles_key env var
     },
 
     // === STATISTICS SECTION ===

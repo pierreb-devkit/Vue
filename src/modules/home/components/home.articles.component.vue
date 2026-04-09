@@ -1,16 +1,16 @@
 <!--
-  HomeBlogComponent
-  =================
+  HomeArticlesComponent
+  =====================
   Carousel of image cards, typically used for blog posts or articles.
 
   USAGE:
-  <homeBlogComponent :setup="{ content: news, ...config.home.blog }" />
+  <homeArticlesComponent :setup="{ content: news, ...config.home.articles }" />
 
   CONFIG EXAMPLE (setup object):
-  blog: {
+  articles: {
     title: 'Latest Articles',
     url: 'https://blog.example.com',
-    key: 'ghost_api_key',           // Ghost blog API key
+    key: '',                         // set via DEVKIT_VUE_home_articles_key env var
     slide: {
       interval: 15000,              // Auto-slide interval in ms
     },
