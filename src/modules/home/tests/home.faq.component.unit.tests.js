@@ -32,6 +32,11 @@ const mockConfig = {
   vuetify: { theme: { rounded: 'rounded-xl', maxWidth: '1200px', flat: false } },
 };
 
+/**
+ * Build global options with Vuetify + config global property.
+ * @param {object} vuetify - Vuetify instance.
+ * @returns {object} Vue test-utils global config.
+ */
 const globalOpts = (vuetify) => ({
   plugins: [vuetify],
   config: {
@@ -39,6 +44,11 @@ const globalOpts = (vuetify) => ({
   },
 });
 
+/**
+ * Create a FAQ setup object with optional overrides.
+ * @param {object} [overrides] - Fields to override in the default FAQ.
+ * @returns {object} FAQ setup for component props.
+ */
 const makeFaq = (overrides = {}) => ({
   icon: 'fa-solid fa-circle-question',
   title: 'FAQ',
