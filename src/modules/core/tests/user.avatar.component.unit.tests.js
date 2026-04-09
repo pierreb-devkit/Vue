@@ -122,6 +122,11 @@ describe('user.avatar.component', () => {
       const wrapper = createWrapper({ user: { email: 'test@test.com' } });
       expect(wrapper.vm.avatarColor).toMatch(/^#[A-Fa-f0-9]{6}$/);
     });
+
+    it('handles missing email gracefully', () => {
+      const wrapper = createWrapper({ user: { firstName: 'John' } });
+      expect(wrapper.vm.avatarColor).toMatch(/^#[A-Fa-f0-9]{6}$/);
+    });
   });
 
   describe('textColorClass computed', () => {

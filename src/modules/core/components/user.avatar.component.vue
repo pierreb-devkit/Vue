@@ -32,11 +32,6 @@
  */
 
 /**
- * Generate a consistent color from a string using a simple hash.
- * @param {string} str - Input string (email).
- * @returns {string} Hex color code.
- */
-/**
  * Determine whether a hex color is light (needs dark text for contrast).
  * Uses relative luminance per WCAG 2.x.
  * @param {string} hex - Hex color code.
@@ -50,6 +45,11 @@ function isLightColor(hex) {
   return luminance > 0.5;
 }
 
+/**
+ * Generate a consistent color from a string using a simple hash.
+ * @param {string} str - Input string (email).
+ * @returns {string} Hex color code.
+ */
 function stringToColor(str) {
   const palette = [
     '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',

@@ -19,6 +19,7 @@ Replaced Gravatar-based avatar rendering with a reusable `UserAvatarComponent` t
 
 1. Run `/update-stack` to pull the changes
 2. Replace old avatar usage:
+
    ```vue
    <!-- Before -->
    <userAvatarComponent :user="user" :width="'60px'" :height="'60px'" :radius="'50%'" :size="128" />
@@ -26,6 +27,7 @@ Replaced Gravatar-based avatar rendering with a reusable `UserAvatarComponent` t
    <!-- After -->
    <userAvatarComponent :user="user" :size="60" />
    ```
+
 3. Remove any `disabled` prop usage — the component no longer wraps in an `<a>` tag
 4. If you imported or referenced the gravatar plugin directly, remove those imports
 
