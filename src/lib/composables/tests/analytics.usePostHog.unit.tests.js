@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
-import { usePostHog } from '../composables/analytics.usePostHog';
+import { usePostHog } from '../analytics.usePostHog';
 
 /**
  * @desc Helper that mounts a wrapper component calling usePostHog

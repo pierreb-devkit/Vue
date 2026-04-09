@@ -118,8 +118,8 @@ All features are no-op when `key` is empty — safe to deploy without PostHog.
 |---------|------|-------|
 | PostHog plugin | `src/lib/plugins/posthog.js` | Auto-init, conditional on config |
 | Analytics helpers | `src/lib/helpers/analytics.js` | `capture()`, `capturePageview()`, `isPosthogReady()` |
-| `usePostHog` composable | `src/modules/analytics/composables/analytics.usePostHog.js` | Access PostHog instance |
-| `useFeatureFlag` composable | `src/modules/analytics/composables/analytics.useFeatureFlag.js` | Reactive feature flag ref |
+| `usePostHog` composable | `src/lib/composables/analytics.usePostHog.js` | Access PostHog instance |
+| `useFeatureFlag` composable | `src/lib/composables/analytics.useFeatureFlag.js` | Reactive feature flag ref |
 | Page view tracking | `src/modules/app/app.router.js` | `capturePageview()` in `router.afterEach` |
 | User identify | `src/modules/auth/stores/auth.store.js` | `posthog.identify()` on signin, `posthog.reset()` on signout |
 | Org group | `src/modules/organizations/stores/organizations.store.js` | `posthog.group('company', ...)` on org switch |
