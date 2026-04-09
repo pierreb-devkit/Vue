@@ -57,7 +57,6 @@ export default {
       account: 'account',
       tasks: 'tasks',
       billing: 'billing',
-      developers: 'developers',
       docs: 'docs',
     },
   },
@@ -77,7 +76,6 @@ export default {
     tasks: { activated: true }, // CRUD reference module
     billing: { activated: true }, // Stripe billing & pricing
     organizations: { activated: true }, // multi-org membership
-    developers: { activated: true }, // API keys
     docs: { activated: process.env.NODE_ENV === 'development' }, // guides (markdown) — avoid exposing /docs outside development by default
     analytics: { activated: true }, // usage analytics
     admin: { activated: true }, // admin panel
