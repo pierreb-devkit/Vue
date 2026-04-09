@@ -35,6 +35,9 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('auth');
 /**
  * Component definition.
  */
@@ -58,7 +61,7 @@ export default {
         await authStore.token();
         this.$router.push(this.config.sign.route);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
       }
     } else {
       try {
@@ -77,7 +80,7 @@ export default {
       } catch {
         this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
       }
-      console.log(this.error);
+      logger.error('OAuth error:', this.error);
     }
   },
 };

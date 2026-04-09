@@ -118,6 +118,7 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.readiness = [];
         this.error = sanitizeApiError(err);
+        console.error(err);
       }
     },
 
