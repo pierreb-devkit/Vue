@@ -166,9 +166,8 @@ test.describe('Pricing Page — Unauthenticated CTA', () => {
     // Click the first enabled "Get Started" button inside a pricing card
     const ctaButtons = page.locator('.billing-pricing-card button:has-text("Get Started"):not([disabled])');
     await ctaButtons.first().click();
-    await page.waitForTimeout(2000);
+    await page.waitForURL((url) => url.pathname.includes('/signin'), { timeout: 10000 });
 
-    // Should be redirected to signin
     expect(page.url()).toContain('/signin');
   });
 });
@@ -181,11 +180,9 @@ test.describe('Billing Page — Auth Guard', () => {
    */
   test('redirects unauthenticated user to signin', async ({ page }) => {
     await page.goto('/billing');
-    await page.waitForTimeout(2000);
+    await page.waitForURL((url) => url.pathname.includes('/signin'), { timeout: 10000 });
 
-    // Should not remain on /billing
     expect(page.url()).not.toContain('/billing');
-    // Should redirect to signin
     expect(page.url()).toContain('/signin');
   });
 });
@@ -230,11 +227,9 @@ test.describe('Billing Page — Authenticated', () => {
     // Sign in via UI and wait for post-login navigation to settle
     await signin(page, testEmail, testPassword);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
 
     // Navigate to /billing (full page reload - token restored from localStorage)
     await page.goto('/billing', { waitUntil: 'networkidle', timeout: 15000 });
-    await page.waitForTimeout(3000);
 
     const currentUrl = page.url();
 
@@ -401,11 +396,9 @@ test.describe('Stripe Checkout Flow', () => {
     // Sign in with the test user created in setup
     await signin(page, testEmail, testPassword);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
 
     // Navigate to pricing page (uses real API data since Stripe is configured)
     await page.goto('/pricing', { waitUntil: 'networkidle', timeout: 15000 });
-    await page.waitForTimeout(2000);
 
     // Click a paid plan CTA (Starter or Pro — skip "Get Started" on Free)
     const paidCta = page.locator('.billing-pricing-card:not(:first-child) button:has-text("Get Started"):not([disabled])');
@@ -427,8 +420,8 @@ test.describe('Stripe Checkout Flow', () => {
         stripeUrlVerified = true;
       }
     }
-    // If browser navigated away, check the URL
-    await page.waitForTimeout(3000);
+    // External Stripe navigation may abort before reaching load state — safe to ignore, verified via url below
+    await page.waitForLoadState('load').catch(() => {});
     const url = page.url();
     if (url.includes('checkout.stripe.com')) {
       expect(url).toContain('checkout.stripe.com');
