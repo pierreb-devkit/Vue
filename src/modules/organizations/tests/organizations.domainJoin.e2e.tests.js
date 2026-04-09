@@ -141,7 +141,7 @@ test.describe('Organization Domain Join E2E', () => {
     // Click the Organizations tab
     const orgTab = page.getByRole('tab', { name: /organizations/i });
     await orgTab.click({ timeout: 10000 });
-    await expect(page.getByText(`DomainOrg${timestamp}`, { exact: true })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('main').getByText(`DomainOrg${timestamp}`, { exact: true })).toBeVisible({ timeout: 10000 });
 
     // Members should NOT see the chevron (manage) icon on their org item
     const chevron = page.locator('.v-list-item .fa-chevron-right');
