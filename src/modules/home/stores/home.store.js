@@ -7,6 +7,9 @@ import GhostContentAPI from '@tryghost/content-api';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import * as tools from '../../../lib/helpers/tools';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const log = createLogger('home');
 
 /**
  * Store definition.
@@ -32,7 +35,7 @@ export const useHomeStore = defineStore('home', {
         const team = await axios.get(`${api}/${config.api.endPoints.home}/team`);
         this.team = team.data.data;
       } catch (err) {
-        console.error(err);
+        log.error(err);
       }
     },
 
@@ -47,7 +50,7 @@ export const useHomeStore = defineStore('home', {
           style: 'air',
         }));
       } catch (err) {
-        console.error(err);
+        log.error(err);
       }
     },
 
@@ -66,7 +69,7 @@ export const useHomeStore = defineStore('home', {
           };
         });
       } catch (err) {
-        console.error(err);
+        log.error(err);
       }
     },
 
@@ -74,7 +77,7 @@ export const useHomeStore = defineStore('home', {
       try {
         // Vérifier que la configuration existe avant d'accéder aux propriétés
         if (!config.home?.articles?.url || !config.home?.articles?.key) {
-          console.warn('articles configuration is missing url or key');
+          log.warn('articles configuration is missing url or key');
           return;
         }
 
@@ -86,7 +89,7 @@ export const useHomeStore = defineStore('home', {
         const res = await ghost.posts.browse({ limit: 6, filter: 'tag:article' });
         this.news = res;
       } catch (err) {
-        console.error(err);
+        log.error(err);
       }
     },
 
@@ -113,7 +116,7 @@ export const useHomeStore = defineStore('home', {
           this.statistics[2].value = users.data.data;
         }
       } catch (err) {
-        console.error(err);
+        log.error(err);
       }
     },
 
