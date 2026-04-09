@@ -22,15 +22,17 @@ const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar
  */
 const sanitizeApiError = (err) => {
   const msg = err?.response?.data?.message || '';
-  // Only expose messages that look like safe user-facing messages
   if (msg && msg.length <= 200 && !/\b(collection|stack)\b|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
     return msg;
   }
   return 'Failed to load data. Please try again.';
 };
 
+/**
+ * Build the base API URL from config.
+ * @returns {string} The base API URL.
+ */
 const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-
 const defaultUser = () => ({
   firstName: '',
   lastName: '',
@@ -54,6 +56,9 @@ export const useAdminStore = defineStore('admin', {
     organizations: [],
     error: null,
     readiness: [],
+    auditLogs: [],
+    auditTotal: 0,
+    auditPage: 1,
   }),
 
   actions: {
@@ -134,6 +139,39 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.error = sanitizeApiError(err);
         console.error(err);
+      }
+    },
+
+    /**
+     * @desc Fetch paginated audit logs from the admin API.
+     * Response shape: res.data = { type, message, data: { data: Array, total, page, perPage } }
+     * (standard responses.success() wrapper around AuditRepository.list() result).
+     * @param {Object} [params] - Query parameters.
+     * @param {string} [params.action] - Filter by action type.
+     * @param {string} [params.userId] - Filter by user ID.
+     * @param {number} [params.page] - Page number (1-based).
+     * @param {number} [params.perPage] - Items per page.
+     * @returns {Promise<void>}
+     */
+    async getAuditLogs({ action, userId, page, perPage } = {}) {
+      this.error = null;
+      try {
+        const query = new URLSearchParams();
+        if (action) query.set('action', action);
+        if (userId) query.set('userId', userId);
+        if (page) query.set('page', String(page));
+        if (perPage) query.set('perPage', String(perPage));
+        const qs = query.toString();
+        const url = `${apiBase()}/audit${qs ? '?' + qs : ''}`;
+        const res = await axios.get(url);
+        this.auditLogs = res.data.data?.data || [];
+        this.auditTotal = res.data.data?.total || 0;
+        this.auditPage = res.data.data?.page || 1;
+      } catch (err) {
+        this.auditLogs = [];
+        this.auditTotal = 0;
+        this.error = sanitizeApiError(err);
+        logger.error(err);
       }
     },
   },
