@@ -73,14 +73,14 @@ export const useHomeStore = defineStore('home', {
     async getNews() {
       try {
         // Vérifier que la configuration existe avant d'accéder aux propriétés
-        if (!config.home.blog || !config.home.blog.url || !config.home.blog.key) {
+        if (!config.home.articles || !config.home.articles.url || !config.home.articles.key) {
           console.warn('blog configuration is missing url or key');
           return;
         }
 
         const ghost = new GhostContentAPI({
-          url: config.home.blog.url,
-          key: config.home.blog.key,
+          url: config.home.articles.url,
+          key: config.home.articles.key,
           version: 'v3.0',
         });
         const res = await ghost.posts.browse({ limit: 6, filter: 'tag:article' });
