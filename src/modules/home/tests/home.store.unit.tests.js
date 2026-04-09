@@ -136,16 +136,16 @@ describe('Home Store', () => {
 
     it('should handle getTeam error', async () => {
       const homeStore = useHomeStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch team'));
 
       await homeStore.getTeam();
 
       expect(homeStore.team).toEqual([]);
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -175,16 +175,16 @@ describe('Home Store', () => {
 
     it('should handle getChangelogs error', async () => {
       const homeStore = useHomeStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch changelogs'));
 
       await homeStore.getChangelogs();
 
       expect(homeStore.contents).toEqual([]);
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -238,16 +238,16 @@ describe('Home Store', () => {
 
     it('should handle getPages error', async () => {
       const homeStore = useHomeStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch pages'));
 
       await homeStore.getPages('test');
 
       expect(homeStore.contents).toEqual([]);
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -327,14 +327,14 @@ describe('Home Store', () => {
       const homeStore = useHomeStore();
       homeStore.initStatistics();
 
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed to fetch statistics'));
 
       await homeStore.getStatistics();
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should handle null statistics gracefully', async () => {

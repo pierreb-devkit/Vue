@@ -145,7 +145,7 @@ export default {
           this.$emit('created', organization);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       } finally {
         this.loading = false;
       }
@@ -165,7 +165,7 @@ export default {
         this.requestSent = true;
         this.$emit('requestSent', this.suggestedOrganization);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       } finally {
         this.requestLoading = false;
       }

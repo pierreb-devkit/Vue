@@ -32,7 +32,7 @@ export const useHomeStore = defineStore('home', {
         const team = await axios.get(`${api}/${config.api.endPoints.home}/team`);
         this.team = team.data.data;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -47,7 +47,7 @@ export const useHomeStore = defineStore('home', {
           style: 'air',
         }));
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -66,7 +66,7 @@ export const useHomeStore = defineStore('home', {
           };
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -86,7 +86,7 @@ export const useHomeStore = defineStore('home', {
         const res = await ghost.posts.browse({ limit: 6, filter: 'tag:article' });
         this.news = res;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -113,7 +113,7 @@ export const useHomeStore = defineStore('home', {
           this.statistics[2].value = users.data.data;
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 

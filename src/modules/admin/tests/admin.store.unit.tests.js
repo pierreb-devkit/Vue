@@ -62,7 +62,7 @@ describe('Admin Store', () => {
 
     it('should handle error and set error state', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
@@ -70,25 +70,25 @@ describe('Admin Store', () => {
 
       expect(store.users).toEqual([]);
       expect(store.error).toBe('Failed to load data. Please try again.');
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should set error from API response message', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({ response: { data: { message: 'Forbidden' } } });
 
       await store.getUsers('0&10');
 
       expect(store.error).toBe('Forbidden');
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should clear error on next action call', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
       await store.getUsers('0&10');
@@ -98,7 +98,7 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
       expect(store.error).toBeNull();
 
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -127,7 +127,7 @@ describe('Admin Store', () => {
 
     it('should handle error and set error state', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Failed'));
 
@@ -135,8 +135,8 @@ describe('Admin Store', () => {
 
       expect(store.organizations).toEqual([]);
       expect(store.error).toBe('Failed to load data. Please try again.');
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -180,19 +180,19 @@ describe('Admin Store', () => {
   describe('sanitizeApiError', () => {
     it('should expose safe short user-facing API messages', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({ response: { data: { message: 'User not found' } } });
 
       await store.getUsers('0&10');
 
       expect(store.error).toBe('User not found');
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should redact messages containing internal details like stack traces', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({
         response: { data: { message: 'Error: at Object.<anonymous> (/app/path/to/file.js:42)' } },
@@ -201,12 +201,12 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
 
       expect(store.error).toBe('Failed to load data. Please try again.');
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should redact messages longer than 200 characters', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({
         response: { data: { message: 'x'.repeat(201) } },
@@ -215,12 +215,12 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
 
       expect(store.error).toBe('Failed to load data. Please try again.');
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
 
     it('should allow messages of exactly 200 characters', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const safeMsg = 'x'.repeat(200);
 
       axios.get.mockRejectedValueOnce({
@@ -230,7 +230,7 @@ describe('Admin Store', () => {
       await store.getUsers('0&10');
 
       expect(store.error).toBe(safeMsg);
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -261,15 +261,15 @@ describe('Admin Store', () => {
 
     it('should handle error and set error state', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.put.mockRejectedValueOnce(new Error('Failed'));
 
       await expect(store.updateUser({ id: '123' })).rejects.toThrow('Failed');
 
       expect(store.error).toBe('Failed to load data. Please try again.');
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -298,15 +298,15 @@ describe('Admin Store', () => {
 
     it('should handle error and set error state', async () => {
       const store = useAdminStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.delete.mockRejectedValueOnce(new Error('Failed'));
 
       await expect(store.deleteUser({ id: '999' })).rejects.toThrow('Failed');
 
       expect(store.error).toBe('Failed to load data. Please try again.');
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 });

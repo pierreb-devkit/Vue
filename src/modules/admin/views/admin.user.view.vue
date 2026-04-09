@@ -87,7 +87,7 @@ export default {
         try {
           await adminStore.getUser({ id: this.id });
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },
@@ -96,7 +96,7 @@ export default {
       try {
         await adminStore.updateUser({ id: this.id }, formData);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
     async onAvatarUploaded() {
@@ -111,7 +111,7 @@ export default {
         await adminStore.deleteUser({ id: this.id });
         this.$router.push('/admin');
       } catch (err) {
-        console.log(err);
+        console.error(err);
       } finally {
         this.removing = false;
       }

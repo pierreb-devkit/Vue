@@ -194,7 +194,7 @@ describe('Auth Store', () => {
 
     it('should handle signin error', async () => {
       const authStore = useAuthStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Signin failed'));
       await authStore.signin({ email: 'test@test.com', password: 'wrong' });
@@ -202,9 +202,9 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
       expect(localStorage.getItem('token')).toBe(null);
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
 
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -310,14 +310,14 @@ describe('Auth Store', () => {
 
     it('should handle token refresh error', async () => {
       const authStore = useAuthStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce(new Error('Token refresh failed'));
       await authStore.token();
 
       expect(authStore.auth).toBe(false);
-      expect(consoleLogSpy).toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -337,13 +337,13 @@ describe('Auth Store', () => {
 
     it('should handle forgot password error', async () => {
       const authStore = useAuthStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Forgot password failed'));
       await authStore.forgot({ email: 'forgot@test.com' });
 
       expect(authStore.mail.status).toBe(false);
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -368,14 +368,14 @@ describe('Auth Store', () => {
 
     it('should handle reset password error', async () => {
       const authStore = useAuthStore();
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Reset failed'));
       await authStore.reset({ token: 'resettoken', password: 'newpassword' });
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
-      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 

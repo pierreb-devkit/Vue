@@ -58,7 +58,7 @@ export default {
         await authStore.token();
         this.$router.push(this.config.sign.route);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     } else {
       try {

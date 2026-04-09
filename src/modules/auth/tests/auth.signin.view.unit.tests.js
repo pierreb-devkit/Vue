@@ -108,7 +108,7 @@ describe('auth.signin.view', () => {
 
     it('does not throw when signin rejects', async () => {
       signinMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
       await flushPromises();
 

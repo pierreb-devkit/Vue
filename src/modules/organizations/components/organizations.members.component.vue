@@ -255,7 +255,7 @@ export default {
         await organizationsStore.removeMember(this.organizationId, this.removeDialog.memberId);
         this.removeDialog.show = false;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
   },

@@ -72,7 +72,7 @@ describe('auth.forgot.view', () => {
 
     it('does not throw when forgot rejects', async () => {
       forgotMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
 
       wrapper.vm.email = 'forgot@example.com';

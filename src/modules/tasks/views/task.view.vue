@@ -115,7 +115,7 @@ export default {
         await tasksStore.getTask({ id: this.id });
         this.save = false;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     } else {
       tasksStore.resetTask();
@@ -131,7 +131,7 @@ export default {
           this.save = false;
           this.$router.push('/tasks');
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },
@@ -144,7 +144,7 @@ export default {
           this.save = false;
           this.$router.push('/tasks');
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },
@@ -156,7 +156,7 @@ export default {
           await tasksStore.deleteTask({ id: this.id });
           this.$router.push('/tasks');
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     },

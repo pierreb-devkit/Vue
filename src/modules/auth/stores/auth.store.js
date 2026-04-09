@@ -142,7 +142,7 @@ export const useAuthStore = defineStore('auth', {
           return;
         }
         localStorage.removeItem('token');
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -251,7 +251,7 @@ export const useAuthStore = defineStore('auth', {
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -263,7 +263,7 @@ export const useAuthStore = defineStore('auth', {
         this.mail.status = res.data.data.status;
         this.mail.message = res.data.message;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     },
 
@@ -283,7 +283,7 @@ export const useAuthStore = defineStore('auth', {
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
         localStorage.removeItem('token');
-        console.log(err);
+        console.error(err);
       }
     },
 
