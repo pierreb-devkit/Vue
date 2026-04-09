@@ -47,6 +47,9 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('auth');
 /**
  * Component definition.
  */
@@ -55,7 +58,7 @@ export default {
     const theme = useTheme();
     return {
       theme,
-      valid: true, // TODO: switch to false when forms will be reactive
+      valid: true,
       password: '',
       showPassword: false,
       rules: {
@@ -84,7 +87,7 @@ export default {
           await authStore.reset({ newPassword: password, token: this.$route.query.token });
           this.$router.push(this.config.sign.route);
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         }
       }
     },

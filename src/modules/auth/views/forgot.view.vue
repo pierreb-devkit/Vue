@@ -47,6 +47,9 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('auth');
 /**
  * Component definition.
  */
@@ -55,7 +58,7 @@ export default {
     const theme = useTheme();
     return {
       theme,
-      valid: true, // TODO: switch to false when forms will be reactive
+      valid: true,
       email: '',
       rules: {
         required: (v) => !!v || 'Required',
@@ -81,7 +84,7 @@ export default {
         try {
           await authStore.forgot({ email });
         } catch (err) {
-          console.error(err);
+          logger.error(err);
         }
       }
     },
