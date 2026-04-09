@@ -13,7 +13,7 @@ export async function signin(page, email, password) {
   await page.getByPlaceholder('name@example.com').fill(email);
   await page.getByPlaceholder('Enter your password').fill(password);
   await page.getByRole('main').getByRole('button', { name: 'Sign In' }).click();
-  await page.waitForTimeout(1500);
+  await page.waitForURL((url) => !url.pathname.includes('/signin'), { timeout: 15000 });
 }
 
 /**

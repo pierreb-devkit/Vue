@@ -14,9 +14,8 @@ test.describe('Signup E2E', () => {
     await page.getByPlaceholder('Create a password').fill(testPassword);
     await page.getByRole('main').getByRole('button', { name: 'Continue', exact: true }).click();
 
-    // Wait for the signup to complete — either redirects or shows org setup step
-    // With organizations enabled, the flow stays on /signup and shows the next step
-    await page.waitForTimeout(3000);
+    // Wait for signup to complete — either redirects or shows org setup step
+    await page.waitForLoadState('networkidle');
 
     // Should not show an error — the flow proceeds
     const errorAlert = page.locator('.v-alert[type="error"]');
