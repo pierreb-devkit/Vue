@@ -24,13 +24,14 @@ The `home.about.component.vue` now uses `homeImgComponent` instead of raw `<v-im
 
 ## OrgAvatarComponent — reusable component (2026-04-09)
 
-New reusable `OrgAvatarComponent` for displaying organization avatars with an uploaded image or colored initials fallback. Mirrors the pattern of `UserAvatarComponent`.
+New reusable `OrgAvatarComponent` for displaying organization avatars with colored initials and a tooltip. Mirrors the pattern of `UserAvatarComponent`.
 
 ### What changed
 
-- New component: `src/modules/organizations/components/organizations.avatar.component.vue`
-- Props: `organization` (Object, optional) + `size` (Number, default 32)
-- Displays uploaded org image or generates colored initials from the organization name
+- New component: `src/modules/core/components/org.avatar.component.vue`
+- Props: `org` (Object, required) + `size` (Number, default 32)
+- Renders a colored `v-avatar` with the first letter of the organization name and a tooltip showing the full name
+- Color is deterministic, derived from the organization name via `orgColor` helper
 
 ### Action for downstream
 
@@ -38,7 +39,7 @@ New reusable `OrgAvatarComponent` for displaying organization avatars with an up
 2. Replace any custom org avatar rendering with the new component:
 
    ```vue
-   <orgAvatarComponent :organization="org" :size="40" />
+   <orgAvatarComponent :org="currentOrganization" :size="40" />
    ```
 
 3. No breaking change — this is a new component, existing code is unaffected
