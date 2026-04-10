@@ -296,6 +296,58 @@ describe('HomeImgComponent', () => {
     }));
   });
 
+  describe('isSvg URL detection', () => {
+    /**
+     * Mount a component with a given img and return whether the inline SVG branch rendered.
+     * Uses an immediately-resolving failed fetch so `fetchSvg()` settles synchronously
+     * and unmounts the wrapper before returning to avoid leaking DOM/instances between tests.
+     * @param {string} img - Image URL to test.
+     * @returns {boolean} True if the inline SVG container is rendered.
+     */
+    const mountsAsInlineSvg = (img) => {
+      fetch.mockResolvedValueOnce({ ok: false });
+      const wrapper = mount(HomeImgComponent, {
+        props: { img },
+        global: globalOpts(vuetify),
+      });
+      const isInline = wrapper.find('.home-img-svg').exists();
+      wrapper.unmount();
+      return isInline;
+    };
+
+    it('inlines plain local .svg', () => {
+      expect(mountsAsInlineSvg('/images/foo.svg')).toBe(true);
+    });
+
+    it('inlines local .svg with single query param (cache-buster)', () => {
+      expect(mountsAsInlineSvg('/images/foo.svg?v=2')).toBe(true);
+    });
+
+    it('inlines local .svg with multiple query params', () => {
+      expect(mountsAsInlineSvg('/images/foo.svg?v=2&t=3')).toBe(true);
+    });
+
+    it('inlines local .svg with fragment', () => {
+      expect(mountsAsInlineSvg('/images/foo.svg#frag')).toBe(true);
+    });
+
+    it('inlines local .svg with both query and fragment', () => {
+      expect(mountsAsInlineSvg('/images/foo.svg?v=2#frag')).toBe(true);
+    });
+
+    it('does NOT inline absolute SVG URLs (even with query string)', () => {
+      expect(mountsAsInlineSvg('https://cdn.example/foo.svg?v=5')).toBe(false);
+    });
+
+    it('does NOT inline non-SVG local paths', () => {
+      expect(mountsAsInlineSvg('/images/foo.png')).toBe(false);
+    });
+
+    it('does NOT inline non-SVG local paths with query string', () => {
+      expect(mountsAsInlineSvg('/images/foo.png?v=2')).toBe(false);
+    });
+  });
+
   it('clears previous SVG when img changes', async () => {
     const url1 = uniqueSvgUrl();
     const url2 = uniqueSvgUrl();
