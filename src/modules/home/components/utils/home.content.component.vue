@@ -40,7 +40,7 @@
   <div>
     <v-card-title :class="[alignmentClass, variant === 'default' ? 'pa-0' : '']">
       <!-- Level 1: Icon + Title (inline) -->
-      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', justifyClass]">
+      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', justifyClass, titleRowReverseClass]">
         <v-icon v-if="setup.icon" size="x-small" :color="themeColor || 'primary'">{{ setup.icon }}</v-icon>
         <span
           v-if="setup.title"
@@ -149,6 +149,14 @@ export default {
       if (this.computedAlignment === 'center') return 'justify-center';
       if (this.computedAlignment === 'right') return 'justify-end';
       return 'justify-start';
+    },
+    /**
+     * Reverses DOM order of the icon+title row so the icon sits on the right of
+     * the title when `computedAlignment === 'right'`. Only applies to that row —
+     * must NOT leak onto `v-card-actions` where it would flip the button layout.
+     */
+    titleRowReverseClass() {
+      return this.computedAlignment === 'right' ? 'flex-row-reverse' : '';
     },
     themeColor() {
       if (this.color === 'light') {
