@@ -48,7 +48,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@sentry/vue": "^10.48.0",
     "@tryghost/content-api": "^1.12.6",
-    "@unhead/vue": "^2.1.13",
+    "@unhead/vue": "^3.0.2",
     "aos": "^2.3.4",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",
