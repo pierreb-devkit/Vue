@@ -180,17 +180,16 @@ export default {
      */
     drawerStyle() {
       if (this.isGlass) {
-        const isMobile = this.$vuetify.display.mobile;
         return {
           ...liquidGlassStyle({
             vuetifyTheme: this.theme,
-            variant: this.isInset && !isMobile ? 'card' : 'header',
+            variant: this.isInset ? 'card' : 'header',
             border: 'none',
             extras: {
               color: this.theme.current.colors.onSurface,
             },
           }),
-          ...(this.isInset && !isMobile ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
+          ...(this.isInset ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
         };
       }
       return { background: this.navBackground };
