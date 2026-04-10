@@ -1,12 +1,12 @@
 <template>
-  <v-row class="mx-4 my-1" align="center" :style="$slots.tabs ? { minHeight: '56px' } : null">
+  <v-row class="mx-4 my-1" align="center" :style="rowStyle">
     <template v-if="$slots.tabs">
       <!-- Tabs mode: tabs replace icon + title -->
       <slot name="tabs"></slot>
     </template>
     <template v-else>
       <!-- Standard mode: icon + title -->
-      <slot name="avatar">
+      <slot v-if="!$vuetify.display.mobile" name="avatar">
         <v-avatar v-if="icon" :color="avatarColor" size="40" class="mr-3">
           <v-icon :icon="icon" size="small" color="white"></v-icon>
         </v-avatar>
@@ -49,6 +49,13 @@ export default {
     avatarColor: {
       type: String,
       default: 'primary',
+    },
+  },
+  computed: {
+    rowStyle() {
+      const base = this.$slots.tabs ? { minHeight: '56px' } : {};
+      if (this.$vuetify.display.mobile) base.paddingLeft = '48px';
+      return base;
     },
   },
 };
