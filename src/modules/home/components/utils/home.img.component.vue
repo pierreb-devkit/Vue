@@ -166,7 +166,11 @@ export default {
      * @returns {boolean} True when the source is a local SVG.
      */
     isSvg() {
-      return this.img && this.img.toLowerCase().endsWith('.svg') && LOCAL_URL_RE.test(this.img);
+      if (!this.img) return false;
+      // Strip query string (?v=N cache-buster) and fragment (#id) before extension check
+      // so URLs like '/images/foo.svg?v=2' are still inlined.
+      const pathOnly = this.img.split('?')[0].split('#')[0].toLowerCase();
+      return pathOnly.endsWith('.svg') && LOCAL_URL_RE.test(this.img);
     },
     /**
      * Responsive height matching original v-img behaviour.
