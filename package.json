@@ -46,7 +46,7 @@
     "@casl/ability": "^6.8.0",
     "@casl/vue": "^2.2.6",
     "@fortawesome/fontawesome-free": "^7.2.0",
-    "@scalar/api-reference": "^1.51.0",
+    "@scalar/api-reference": "^1.52.0",
     "@sentry/vue": "^10.47.0",
     "@tryghost/content-api": "^1.12.6",
     "@unhead/vue": "^2.1.13",
