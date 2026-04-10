@@ -9,7 +9,7 @@
 
   PROPS:
   - setup (Object, required): Content object
-  - alignment (String): 'left' or 'center' - default: 'left'
+  - alignment (String): 'left' | 'center' | 'right' - default: 'left'
   - variant (String): 'default' or 'card' - default: 'default' (card adds padding to elements)
   - color (String): 'default' | 'light' | 'dark' - default: 'default'
     * default: primary/secondary/medium-emphasis colors
@@ -38,9 +38,9 @@
 -->
 <template>
   <div>
-    <v-card-title :class="[computedAlignment === 'center' ? 'text-center' : 'text-left', variant === 'default' ? 'pa-0' : '']">
+    <v-card-title :class="[alignmentClass, variant === 'default' ? 'pa-0' : '']">
       <!-- Level 1: Icon + Title (inline) -->
-      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', computedAlignment === 'center' ? 'justify-center' : '']">
+      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', justifyClass]">
         <v-icon v-if="setup.icon" size="x-small" :color="themeColor || 'primary'">{{ setup.icon }}</v-icon>
         <span
           v-if="setup.title"
@@ -63,7 +63,7 @@
       </component>
     </v-card-title>
 
-    <v-card-text v-if="setup.text" :class="[computedAlignment === 'center' ? 'text-center' : 'text-left', variant === 'default' ? 'pa-0' : '']">
+    <v-card-text v-if="setup.text" :class="[alignmentClass, variant === 'default' ? 'pa-0' : '']">
       <VMarkdown
         :class="['text-body-large', 'font-weight-regular my-4', themeColor ? '' : 'text-medium-emphasis']"
         :style="themeColor ? { color: themeColor } : ''"
@@ -73,7 +73,7 @@
 
     <v-card-actions
       v-if="setup.button && setup.button.title && setup.button.link"
-      :class="[variant === 'default' ? 'pa-0' : '', computedAlignment === 'center' ? 'justify-center' : '']"
+      :class="[variant === 'default' ? 'pa-0' : '', justifyClass]"
     >
       <v-btn
         :href="setup.button.link"
@@ -108,6 +108,7 @@ export default {
     alignment: {
       type: String,
       default: 'left',
+      validator: (value) => ['left', 'center', 'right'].includes(value),
     },
     variant: {
       type: String,
@@ -136,7 +137,18 @@ export default {
   },
   computed: {
     computedAlignment() {
-      return this.setup.alignment || this.alignment;
+      const value = this.setup.alignment || this.alignment;
+      return ['left', 'center', 'right'].includes(value) ? value : 'left';
+    },
+    alignmentClass() {
+      if (this.computedAlignment === 'center') return 'text-center';
+      if (this.computedAlignment === 'right') return 'text-right';
+      return 'text-left';
+    },
+    justifyClass() {
+      if (this.computedAlignment === 'center') return 'justify-center';
+      if (this.computedAlignment === 'right') return 'justify-end';
+      return 'justify-start';
     },
     themeColor() {
       if (this.color === 'light') {
