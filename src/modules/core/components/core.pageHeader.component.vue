@@ -1,5 +1,5 @@
 <template>
-  <v-row class="mx-4 my-1" align="center" :style="rowStyle">
+  <v-row class="mx-4 my-1" align="center" :style="$slots.tabs ? { minHeight: '56px' } : null">
     <template v-if="$slots.tabs">
       <!-- Tabs mode: tabs replace icon + title -->
       <slot name="tabs"></slot>
@@ -49,13 +49,6 @@ export default {
     avatarColor: {
       type: String,
       default: 'primary',
-    },
-  },
-  computed: {
-    rowStyle() {
-      const base = this.$slots.tabs ? { minHeight: '56px' } : {};
-      if (this.$vuetify.display.mobile) base.paddingLeft = '48px';
-      return base;
     },
   },
 };
