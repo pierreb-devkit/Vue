@@ -226,12 +226,15 @@ export default {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    visibility 0s linear 0.25s;
 }
 
 .capabilities-stack__item--active {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  transition-delay: 0s;
 }
 </style>
