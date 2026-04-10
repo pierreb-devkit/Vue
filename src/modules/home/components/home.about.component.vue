@@ -62,22 +62,21 @@
             :style="{ backgroundColor: resolveImgBackground(item), borderRadius: config.vuetify.theme.rounded === 'rounded-xl' ? '16px' : '8px' }"
             class="my-6 pa-6 d-flex align-center justify-center"
           >
-            <v-img
-              :src="item.img"
+            <homeImgComponent
+              :img="item.img"
+              :img-mode="item.imgMode || 'contain'"
               :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
-              :class="config.vuetify.theme.rounded"
-              contain
               :alt="item.subtitle || item.title || 'content'"
-            ></v-img>
+            ></homeImgComponent>
           </div>
-          <v-img
+          <homeImgComponent
             v-else-if="item.img"
-            :src="item.img"
+            :img="item.img"
+            :img-mode="item.imgMode"
             :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
-            :class="`my-6 ${config.vuetify.theme.rounded}`"
-            cover
             :alt="item.subtitle || item.title || 'content'"
-          ></v-img>
+            class="my-6"
+          ></homeImgComponent>
           <homeContentComponent v-if="!item.reversed" :setup="item"></homeContentComponent>
         </v-col>
       </v-row>
@@ -93,6 +92,7 @@ import { useTheme } from 'vuetify';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
 import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
+import homeImgComponent from './utils/home.img.component.vue';
 
 /**
  * Component definition.
@@ -102,6 +102,7 @@ export default {
   components: {
     VideoPlayer,
     homeContentComponent,
+    homeImgComponent,
   },
   props: {
     setup: {
