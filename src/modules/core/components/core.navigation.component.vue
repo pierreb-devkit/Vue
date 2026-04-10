@@ -34,7 +34,7 @@
             <v-icon
               v-if="config.app.title"
               :style="{ color: navColor, opacity: 1 }"
-              :icon="$vuetify.display.mobile ? 'nothing' : config.app.icon"
+              :icon="$vuetify.display.mobile && !isGlass ? 'nothing' : config.app.icon"
               size="large"
               class="ms-n1"
             ></v-icon>
