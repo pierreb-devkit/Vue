@@ -4,21 +4,23 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
-## homeImgComponent in about section (2026-04-09)
+## homeImgComponent in about section (2026-04-10)
 
-The `home.about.component.vue` now uses `homeImgComponent` instead of raw `<v-img>` for image rendering. This aligns with how `home.features.component.vue` already works.
+`src/modules/home/components/home.about.component.vue` now renders item images through the shared `homeImgComponent` instead of raw `<v-img>`. This aligns the About section with `home.features.component.vue` and enables inline SVG rendering (theme-aware via CSS custom properties).
 
 ### What changed
 
-- About section images (both `imgBackground` and bare) now render through `homeImgComponent`
+- About section images (both `imgBackground`-wrapped and bare) now render through `<homeImgComponent :img="item.img" :img-mode="item.imgMode || 'contain'" />`
 - SVGs are inlined via `v-html` instead of loaded as `<img>` tags — they can now access Vuetify CSS custom properties and respond to theme toggling
-- `imgMode` from config is respected (`contain` for background images, `cover` default for bare images)
+- `imgMode` from config is respected (`contain` for background-wrapped images, defaults to `contain` for bare images too)
+- No config schema change — existing `item.img` and optional `item.imgMode` keep working as before
 
 ### Action for downstream
 
 1. Run `/update-stack` to pull the changes
 2. If you use custom SVGs in `about` or `aboutFeatures` sections, verify they render correctly with theme switching (they now follow Vuetify theme, not OS `prefers-color-scheme`)
-3. No config changes needed — existing `home.about` config is fully compatible
+3. Downstream projects that **override** `home.about.component.vue` should review their override to keep image rendering consistent — either re-pull the file via `/update-stack` or manually swap `v-img` for `homeImgComponent` (using `:img="item.img"` and `:img-mode="item.imgMode"`) in the override
+4. No config changes needed — existing `home.about` config is fully compatible
 
 ---
 

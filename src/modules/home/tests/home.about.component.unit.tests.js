@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 
 /**
  * Mock theme helpers.
@@ -40,6 +40,11 @@ const globalOpts = (vuetify) => ({
   },
 });
 
+/**
+ * Build a default about item with optional overrides.
+ * @param {object} overrides - Partial item overrides merged on top of the default payload.
+ * @returns {object} About item payload ready to use in test setups.
+ */
 const makeItem = (overrides = {}) => ({
   subtitle: 'Feature Title',
   text: 'Description text.',
@@ -59,6 +64,11 @@ describe('HomeAboutComponent', () => {
   beforeEach(() => {
     vuetify = createVuetify({ components, directives });
     vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   // --- Basic rendering ---
@@ -113,6 +123,32 @@ describe('HomeAboutComponent', () => {
     // Verify the correct src is passed through
     const imgSrcs = imgs.map((img) => img.props('src'));
     expect(imgSrcs).toContain('/images/feature.webp');
+  });
+
+  it('inlines SVG content for local .svg images via homeImgComponent', async () => {
+    // homeImgComponent fetches the SVG markup and renders it via v-html for local URLs.
+    const svgMarkup = '<svg data-test="inline-svg" xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>';
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => svgMarkup,
+    });
+
+    const setup = { ...baseSetup, content: [makeItem({ img: '/images/feature.svg' })] };
+    const wrapper = mount(HomeAboutComponent, {
+      props: { setup },
+      global: globalOpts(vuetify),
+    });
+
+    // Wait for the async fetch + reactive update inside homeImgComponent.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await wrapper.vm.$nextTick();
+
+    // No raster VImg should be rendered for an inlined SVG.
+    const imgs = wrapper.findAllComponents({ name: 'VImg' });
+    expect(imgs.length).toBe(0);
+    // The inline SVG path is taken (wrapper div exists) — exact markup depends on
+    // async fetch timing which is covered directly by home.img.component tests.
+    expect(wrapper.find('.home-img-svg').exists()).toBe(true);
   });
 
   // --- imgBackground ---
