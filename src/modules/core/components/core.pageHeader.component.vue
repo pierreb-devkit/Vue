@@ -11,7 +11,7 @@
           <v-icon :icon="icon" size="small" color="white"></v-icon>
         </v-avatar>
       </slot>
-      <div class="ml-3">
+      <div class="ml-4">
         <h2 class="text-title-large font-weight-medium" :class="titleClass" style="line-height: 1;">
           <slot name="title">{{ title }}</slot>
         </h2>
