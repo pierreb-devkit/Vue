@@ -151,6 +151,29 @@ describe('HomeAboutComponent', () => {
     expect(wrapper.find('.home-img-svg').exists()).toBe(true);
   });
 
+  it('forwards imgMode from item config to homeImgComponent (bare image)', () => {
+    const setup = { ...baseSetup, content: [makeItem({ imgMode: 'contain' })] };
+    const wrapper = mount(HomeAboutComponent, {
+      props: { setup },
+      global: globalOpts(vuetify),
+    });
+    const homeImg = wrapper.findComponent({ name: 'HomeImgComponent' });
+    expect(homeImg.exists()).toBe(true);
+    expect(homeImg.props('imgMode')).toBe('contain');
+  });
+
+  it('forwards imgMode fallback to "contain" for background-wrapped items', () => {
+    const setup = { ...baseSetup, content: [makeItem({ imgBackground: '#f5f5f7' })] };
+    const wrapper = mount(HomeAboutComponent, {
+      props: { setup },
+      global: globalOpts(vuetify),
+    });
+    const homeImg = wrapper.findComponent({ name: 'HomeImgComponent' });
+    expect(homeImg.exists()).toBe(true);
+    // Background-wrapped items default to 'contain' when item.imgMode is not set.
+    expect(homeImg.props('imgMode')).toBe('contain');
+  });
+
   // --- imgBackground ---
 
   it('wraps image in background card when imgBackground is a string', () => {
