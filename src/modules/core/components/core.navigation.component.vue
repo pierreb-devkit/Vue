@@ -32,9 +32,9 @@
         >
           <template #prepend>
             <v-icon
-              v-if="config.app.title"
+              v-if="config.app.title && !($vuetify.display.mobile && !isGlass)"
               :style="{ color: navColor, opacity: 1 }"
-              :icon="$vuetify.display.mobile && !isGlass ? 'nothing' : config.app.icon"
+              :icon="config.app.icon"
               size="large"
               class="ms-n1"
             ></v-icon>
@@ -196,6 +196,7 @@ export default {
                 marginTop: '12px',
                 marginBottom: '12px',
                 marginLeft: applyLeftInset ? '12px' : '0',
+                marginRight: '12px',
                 height: 'calc(100% - 24px)',
                 borderRadius: '16px',
               }

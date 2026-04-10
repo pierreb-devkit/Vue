@@ -11,7 +11,7 @@
           <v-icon :icon="icon" size="small" color="white"></v-icon>
         </v-avatar>
       </slot>
-      <div :class="$vuetify.display.mobile ? 'ml-6' : 'ml-2'">
+      <div :class="[$vuetify.display.mobile ? 'ml-6' : '', !$vuetify.display.mobile && ($slots.avatar || icon) ? 'ml-2' : '']">
         <h2 class="text-title-large font-weight-medium" :class="titleClass" style="line-height: 1;">
           <slot name="title">{{ title }}</slot>
         </h2>
