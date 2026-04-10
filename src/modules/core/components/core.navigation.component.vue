@@ -2,7 +2,7 @@
   <div v-if="isLoggedIn && hasOrganization">
     <!-- Mobile drawer acces -->
     <v-btn
-      v-if="$vuetify.display.mobile"
+      v-if="$vuetify.display.mobile && !drawer"
       :flat="config.vuetify.theme.flat"
       icon
       :style="{
@@ -11,7 +11,7 @@
         ...glassButtonStyle,
       }"
       style="position: fixed; top: 7px; left: 5px; z-index: 9999"
-      @click="drawer = !drawer"
+      @click="drawer = true"
     >
       <v-icon icon="fa-solid fa-bars"></v-icon>
     </v-btn>
@@ -21,7 +21,8 @@
       :floating="config.vuetify.theme.navigation.drawer.floating"
       :style="drawerStyle"
       :expand-on-hover="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.expand"
-      :rail="config.vuetify.theme.navigation.drawer.rail"
+      :rail="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.rail"
+      :temporary="$vuetify.display.mobile"
       :elevation="0"
     >
       <!-- Logo / drawer on mobile-->
@@ -31,9 +32,9 @@
         >
           <template #prepend>
             <v-icon
-              v-if="config.app.title"
+              v-if="config.app.title && !($vuetify.display.mobile && !isGlass)"
               :style="{ color: navColor, opacity: 1 }"
-              :icon="$vuetify.display.mobile ? 'nothing' : config.app.icon"
+              :icon="config.app.icon"
               size="large"
               class="ms-n1"
             ></v-icon>
@@ -110,7 +111,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
+import { useTheme, useDisplay } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
@@ -122,7 +123,7 @@ export default {
   data() {
     const theme = useTheme();
     return {
-      drawer: true,
+      drawer: !useDisplay().mobile.value,
       theme,
     };
   },
@@ -179,6 +180,8 @@ export default {
      */
     drawerStyle() {
       if (this.isGlass) {
+        const isMobile = this.$vuetify.display.mobile;
+        const applyLeftInset = this.isInset && (!isMobile || this.drawer);
         return {
           ...liquidGlassStyle({
             vuetifyTheme: this.theme,
@@ -188,7 +191,16 @@ export default {
               color: this.theme.current.colors.onSurface,
             },
           }),
-          ...(this.isInset ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
+          ...(this.isInset
+            ? {
+                marginTop: '12px',
+                marginBottom: '12px',
+                marginLeft: applyLeftInset ? '12px' : '0',
+                marginRight: '12px',
+                height: 'calc(100% - 24px)',
+                borderRadius: '16px',
+              }
+            : {}),
         };
       }
       return { background: this.navBackground };

@@ -6,12 +6,12 @@
     </template>
     <template v-else>
       <!-- Standard mode: icon + title -->
-      <slot name="avatar">
-        <v-avatar v-if="icon" :color="avatarColor" size="40" class="mr-3">
+      <slot v-if="!$vuetify.display.mobile" name="avatar">
+        <v-avatar v-if="icon" :color="avatarColor" size="40">
           <v-icon :icon="icon" size="small" color="white"></v-icon>
         </v-avatar>
       </slot>
-      <div>
+      <div :class="[$vuetify.display.mobile ? 'ml-6' : '', !$vuetify.display.mobile && ($slots.avatar || icon) ? 'ml-2' : '']">
         <h2 class="text-title-large font-weight-medium" :class="titleClass" style="line-height: 1;">
           <slot name="title">{{ title }}</slot>
         </h2>
