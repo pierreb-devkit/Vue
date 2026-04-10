@@ -181,7 +181,7 @@ export default {
     drawerStyle() {
       if (this.isGlass) {
         const isMobile = this.$vuetify.display.mobile;
-        const applyInset = this.isInset && (!isMobile || this.drawer);
+        const applyLeftInset = this.isInset && (!isMobile || this.drawer);
         return {
           ...liquidGlassStyle({
             vuetifyTheme: this.theme,
@@ -191,7 +191,15 @@ export default {
               color: this.theme.current.colors.onSurface,
             },
           }),
-          ...(applyInset ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
+          ...(this.isInset
+            ? {
+                marginTop: '12px',
+                marginBottom: '12px',
+                marginLeft: applyLeftInset ? '12px' : '0',
+                height: 'calc(100% - 24px)',
+                borderRadius: '16px',
+              }
+            : {}),
         };
       }
       return { background: this.navBackground };
