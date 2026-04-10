@@ -40,7 +40,7 @@
   <div>
     <v-card-title :class="[alignmentClass, variant === 'default' ? 'pa-0' : '']">
       <!-- Level 1: Icon + Title (inline) -->
-      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', justifyClass, titleRowReverseClass]">
+      <div v-if="setup.icon || setup.title" :class="['d-flex align-center ga-2 my-0', titleRowClass]">
         <v-icon v-if="setup.icon" size="x-small" :color="themeColor || 'primary'">{{ setup.icon }}</v-icon>
         <span
           v-if="setup.title"
@@ -151,12 +151,26 @@ export default {
       return 'justify-start';
     },
     /**
-     * Reverses DOM order of the icon+title row so the icon sits on the right of
-     * the title when `computedAlignment === 'right'`. Only applies to that row —
-     * must NOT leak onto `v-card-actions` where it would flip the button layout.
+     * Justify + (optional) row-reverse class for the icon+title row only.
+     *
+     * When `computedAlignment === 'right'`, the row is visually reversed via
+     * `flex-row-reverse` so the icon sits on the right side of the title.
+     * Because `flex-row-reverse` also inverts the main axis, `justify-end`
+     * would push items to the LEFT edge, so we use `justify-start` instead —
+     * under a reversed row `flex-start` is the right edge, which is what we
+     * want for a right-aligned block.
+     *
+     * Note: `flex-row-reverse` only changes the visual order, not the DOM
+     * order. Assistive tech still reads `[icon][title]`, so screen-reader
+     * order is preserved.
+     *
+     * Scoped to the title row only — `v-card-actions` keeps using
+     * `justifyClass` so button content order is untouched.
+     * @returns {string} space-separated utility classes
      */
-    titleRowReverseClass() {
-      return this.computedAlignment === 'right' ? 'flex-row-reverse' : '';
+    titleRowClass() {
+      if (this.computedAlignment === 'right') return 'justify-start flex-row-reverse';
+      return this.justifyClass;
     },
     themeColor() {
       if (this.color === 'light') {
