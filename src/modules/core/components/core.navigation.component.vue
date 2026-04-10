@@ -2,7 +2,7 @@
   <div v-if="isLoggedIn && hasOrganization">
     <!-- Mobile drawer acces -->
     <v-btn
-      v-if="$vuetify.display.mobile"
+      v-if="$vuetify.display.mobile && !drawer"
       :flat="config.vuetify.theme.flat"
       icon
       :style="{
@@ -11,7 +11,7 @@
         ...glassButtonStyle,
       }"
       style="position: fixed; top: 7px; left: 5px; z-index: 9999"
-      @click="drawer = !drawer"
+      @click="drawer = true"
     >
       <v-icon icon="fa-solid fa-bars"></v-icon>
     </v-btn>
@@ -21,7 +21,8 @@
       :floating="config.vuetify.theme.navigation.drawer.floating"
       :style="drawerStyle"
       :expand-on-hover="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.expand"
-      :rail="config.vuetify.theme.navigation.drawer.rail"
+      :rail="$vuetify.display.mobile ? false : config.vuetify.theme.navigation.drawer.rail"
+      :temporary="$vuetify.display.mobile"
       :elevation="0"
     >
       <!-- Logo / drawer on mobile-->
@@ -110,7 +111,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
+import { useTheme, useDisplay } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
@@ -122,7 +123,7 @@ export default {
   data() {
     const theme = useTheme();
     return {
-      drawer: true,
+      drawer: !useDisplay().mobile.value,
       theme,
     };
   },
@@ -179,16 +180,17 @@ export default {
      */
     drawerStyle() {
       if (this.isGlass) {
+        const isMobile = this.$vuetify.display.mobile;
         return {
           ...liquidGlassStyle({
             vuetifyTheme: this.theme,
-            variant: this.isInset ? 'card' : 'header',
+            variant: this.isInset && !isMobile ? 'card' : 'header',
             border: 'none',
             extras: {
               color: this.theme.current.colors.onSurface,
             },
           }),
-          ...(this.isInset ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
+          ...(this.isInset && !isMobile ? { margin: '12px', height: 'calc(100% - 24px)', borderRadius: '16px' } : {}),
         };
       }
       return { background: this.navBackground };
