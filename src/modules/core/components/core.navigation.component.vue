@@ -5,16 +5,15 @@
       v-if="$vuetify.display.mobile && !drawer"
       :flat="config.vuetify.theme.flat"
       icon
-      size="small"
       :style="{
         color: navColor,
         background: isGlass ? undefined : `${navBackground}99`,
         ...glassButtonStyle,
       }"
-      style="position: fixed; top: 10px; left: 8px; z-index: 9999"
+      style="position: fixed; top: 7px; left: 5px; z-index: 9999"
       @click="drawer = true"
     >
-      <v-icon icon="fa-solid fa-bars" size="small"></v-icon>
+      <v-icon icon="fa-solid fa-bars"></v-icon>
     </v-btn>
     <!-- Navigation drawer -->
     <v-navigation-drawer
