@@ -23,7 +23,7 @@
         icon: 'fa-solid fa-gauge-high',
         title: 'Lightning Fast',
         description: 'Built with performance in mind from the ground up...',
-        cta: { text: 'Learn More', link: '/docs/performance' },
+        cta: { text: 'Learn More', link: '/' },
         image: '/images/feature-performance.png',
         reversed: false,
       },

@@ -200,9 +200,9 @@ describe('routeToOutputPath', () => {
     expect(routeToOutputPath(distDir, '/about')).toBe(join(distDir, 'about', 'index.html'));
   });
 
-  it('maps "/docs/intro" to dist/docs/intro/index.html', () => {
-    expect(routeToOutputPath(distDir, '/docs/intro')).toBe(
-      join(distDir, 'docs', 'intro', 'index.html'),
+  it('maps "/blog/intro" to dist/blog/intro/index.html', () => {
+    expect(routeToOutputPath(distDir, '/blog/intro')).toBe(
+      join(distDir, 'blog', 'intro', 'index.html'),
     );
   });
 

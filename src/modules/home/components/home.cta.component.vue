@@ -12,7 +12,7 @@
     title: 'Ready to get started?',
     subtitle: 'One sentence reinforcing the key benefit.',
     button: { title: 'Start Free', link: '/signup', color: 'primary' },
-    secondaryButton: { title: 'See how it works', link: '/docs' },
+    secondaryButton: { title: 'See how it works', link: '/' },
   }
 -->
 <template>

@@ -15,7 +15,6 @@ import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing from '../billing/router/billing.router';
-import docs from '../docs/router/docs.router';
 
 // Core modules — always mounted
 const coreRoutes = [].concat(home, auth, users);
@@ -26,7 +25,6 @@ const optionalModules = [
   { name: 'admin', routes: admin },
   { name: 'tasks', routes: tasks },
   { name: 'billing', routes: billing },
-  { name: 'docs', routes: docs },
 ];
 
 const routes = optionalModules.reduce(
@@ -44,7 +42,7 @@ const getRouter = () => {
   });
   // Routes that don't require an organization
   const orgExemptPrefixes = ['/users', '/admin'];
-  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite', '/pricing', '/docs'];
+  const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/invite', '/pricing'];
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).

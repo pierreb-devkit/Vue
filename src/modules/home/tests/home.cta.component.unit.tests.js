@@ -48,7 +48,7 @@ describe('HomeCtaComponent', () => {
     title: 'Ready to start?',
     subtitle: 'Get going now.',
     button: { title: 'Sign Up', link: '/signup', color: 'primary' },
-    secondaryButton: { title: 'Learn More', link: '/docs' },
+    secondaryButton: { title: 'Learn More', link: '/' },
   };
 
   it('renders primary and secondary buttons when both are provided', () => {
