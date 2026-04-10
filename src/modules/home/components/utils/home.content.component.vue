@@ -31,7 +31,7 @@
     // Optional: Button
     button: {
       title: 'Learn More',
-      link: '/docs',
+      link: '/',
       color: '#EA3F7D',  // Only for card variant
     },
   }

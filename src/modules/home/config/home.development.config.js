@@ -255,7 +255,7 @@ export default {
             'Built with **performance** in mind from the ground up. Our architecture ensures your application runs smoothly with optimized rendering, lazy loading, and minimal bundle sizes. Experience **sub-second load times** and instant interactions.',
           cta: {
             text: 'Learn More',
-            link: '/docs/performance',
+            link: '/',
           },
           image: '/images/card01.webp',
           reversed: false,
@@ -269,7 +269,7 @@ export default {
             "Security is not an afterthought. We implement industry-standard **JWT authentication**, **OAuth2 integration**, and robust **data encryption**. Your users' data is protected with the latest security practices.",
           cta: {
             text: 'View Security Guide',
-            link: '/docs/security',
+            link: '/',
           },
           image: '/images/content01.webp',
           reversed: true,
@@ -283,7 +283,7 @@ export default {
             'From **prototype to production**, our stack grows with you. **Modular architecture**, **microservices-ready**, and **cloud-native** design ensure your application can handle millions of users without breaking a sweat.',
           cta: {
             text: 'Architecture Guide',
-            link: '/docs/architecture',
+            link: '/',
           },
           image: '/images/card02.webp',
           reversed: false,
@@ -297,7 +297,7 @@ export default {
             'Focus on building features, not fighting tools. Hot module replacement, **comprehensive testing suite**, **CI/CD pipelines**, and extensive documentation ensure you spend time on what matters - creating great products.',
           cta: {
             text: 'Get Started',
-            link: '/docs/quickstart',
+            link: '/',
           },
           image: '/images/content02.webp',
           reversed: true,
