@@ -299,16 +299,20 @@ describe('HomeImgComponent', () => {
   describe('isSvg URL detection', () => {
     /**
      * Mount a component with a given img and return whether the inline SVG branch rendered.
+     * Uses an immediately-resolving failed fetch so `fetchSvg()` settles synchronously
+     * and unmounts the wrapper before returning to avoid leaking DOM/instances between tests.
      * @param {string} img - Image URL to test.
      * @returns {boolean} True if the inline SVG container is rendered.
      */
     const mountsAsInlineSvg = (img) => {
-      fetch.mockReturnValueOnce(new Promise(() => {}));
+      fetch.mockResolvedValueOnce({ ok: false });
       const wrapper = mount(HomeImgComponent, {
         props: { img },
         global: globalOpts(vuetify),
       });
-      return wrapper.find('.home-img-svg').exists();
+      const isInline = wrapper.find('.home-img-svg').exists();
+      wrapper.unmount();
+      return isInline;
     };
 
     it('inlines plain local .svg', () => {
