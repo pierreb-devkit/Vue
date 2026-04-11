@@ -89,12 +89,48 @@ describe('HomeContentComponent', () => {
     });
     const title = wrapper.findComponent({ name: 'VCardTitle' });
     expect(title.classes()).toContain('text-right');
-    const iconRow = title.find('div.d-flex');
-    expect(iconRow.classes()).toContain('justify-end');
     const text = wrapper.findComponent({ name: 'VCardText' });
     expect(text.classes()).toContain('text-right');
     const actions = wrapper.findComponent({ name: 'VCardActions' });
     expect(actions.classes()).toContain('justify-end');
+  });
+
+  it('reverses icon+title row order (flex-row-reverse) when right-aligned so the icon hugs the right edge', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup }, alignment: 'right' },
+      global: globalOpts(vuetify),
+    });
+    const title = wrapper.findComponent({ name: 'VCardTitle' });
+    const iconRow = title.find('div.d-flex');
+    // flex-row-reverse visually swaps icon + title
+    expect(iconRow.classes()).toContain('flex-row-reverse');
+    // under flex-row-reverse, justify-start = right edge (main axis is inverted)
+    // so we MUST use justify-start (not justify-end) to hug the right edge
+    expect(iconRow.classes()).toContain('justify-start');
+    expect(iconRow.classes()).not.toContain('justify-end');
+    // must not leak onto v-card-actions (would flip button content order)
+    const actions = wrapper.findComponent({ name: 'VCardActions' });
+    expect(actions.classes()).not.toContain('flex-row-reverse');
+  });
+
+  it('does NOT apply flex-row-reverse to the icon+title row when left-aligned', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup }, alignment: 'left' },
+      global: globalOpts(vuetify),
+    });
+    const iconRow = wrapper.findComponent({ name: 'VCardTitle' }).find('div.d-flex');
+    expect(iconRow.classes()).not.toContain('flex-row-reverse');
+    expect(iconRow.classes()).toContain('justify-start');
+  });
+
+  it('does NOT apply flex-row-reverse to the icon+title row when center-aligned', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup }, alignment: 'center' },
+      global: globalOpts(vuetify),
+    });
+    const iconRow = wrapper.findComponent({ name: 'VCardTitle' }).find('div.d-flex');
+    expect(iconRow.classes()).not.toContain('flex-row-reverse');
+    expect(iconRow.classes()).toContain('justify-center');
   });
 
   it('applies text-center and justify-center classes in the DOM when center-aligned', () => {
