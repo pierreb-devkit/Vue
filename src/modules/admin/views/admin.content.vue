@@ -1,6 +1,5 @@
 <template>
-  <v-container fluid>
-    <PageHeader icon="fa-solid fa-user-tie" title="Admin" />
+  <v-container fluid class="pa-0">
     <v-alert
       v-if="error"
       type="error"
@@ -26,9 +25,6 @@
             >
             <v-tab value="activity" class="text-none text-body-medium"
               ><v-icon icon="fa-solid fa-clock-rotate-left" size="small" class="mr-2"></v-icon>Activity</v-tab
-            >
-            <v-tab v-for="extraTab in extraTabs" :key="extraTab.value" :to="extraTab.route" class="text-none text-body-medium"
-              ><v-icon v-if="extraTab.icon" :icon="extraTab.icon" size="small" class="mr-2"></v-icon>{{ extraTab.label }}</v-tab
             >
           </v-tabs>
           <v-divider></v-divider>
@@ -283,16 +279,14 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import roleColor from '../../../lib/helpers/roleColor';
 import orgColor from '../../../lib/helpers/orgColor';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
-import PageHeader from '../../core/components/core.pageHeader.component.vue';
 
 /**
  * Component definition.
  */
 export default {
-  name: 'AdminView',
+  name: 'AdminContent',
   components: {
     coreDataTableComponent,
-    PageHeader,
   },
   data() {
     return {
@@ -325,22 +319,6 @@ export default {
     };
   },
   computed: {
-    /**
-     * @desc Returns validated extra admin tabs from config.admin.tabs.
-     * @returns {Array} Each entry: { value, label, icon?, route }
-     */
-    extraTabs() {
-      const tabs = this.config?.admin?.tabs;
-      if (!Array.isArray(tabs)) return [];
-      return tabs.filter((tab) => {
-        if (!tab || typeof tab !== 'object' || !tab.value || !tab.label || !tab.route) return false;
-        const isValidRoute = typeof tab.route === 'string' && tab.route.startsWith('/admin/');
-        if (!isValidRoute && import.meta.env.MODE !== 'production') {
-          console.warn('[admin] Invalid tab route filtered: "' + tab.route + '"');
-        }
-        return isValidRoute;
-      });
-    },
     error() {
       return useAdminStore().error;
     },
