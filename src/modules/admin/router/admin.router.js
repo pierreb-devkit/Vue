@@ -22,6 +22,7 @@ import adminOrganization from '../views/admin.organization.view.vue';
 export default [
   {
     path: '/admin',
+    name: 'Admin',
     component: adminLayout,
     meta: {
       icon: 'fa-solid fa-user-tie',
@@ -31,7 +32,7 @@ export default [
     children: [
       {
         path: '',
-        name: 'Admin',
+        name: 'Admin General',
         component: adminContent,
         meta: {
           action: 'manage', subject: 'UserAdmin',

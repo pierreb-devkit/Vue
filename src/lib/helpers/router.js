@@ -33,7 +33,9 @@
  *
  * @param {Array<object>} adminRoutes - Admin module routes (the array exported by admin.router.js).
  * @param {Array<{ name: string, routes: Array<object> }>} childModules - Modules to inject.
- * @param {(name: string) => boolean} isModuleActive - Module activation predicate.
+ * @param {(name: string) => boolean} [isModuleActive] - Optional module
+ *   activation predicate. When omitted, all provided modules are treated
+ *   as active and injected unconditionally.
  * @returns {Array<object>} The same `adminRoutes` reference (mutated) for chaining.
  */
 /**

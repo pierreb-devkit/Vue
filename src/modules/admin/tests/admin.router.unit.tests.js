@@ -11,9 +11,10 @@ describe('admin.router (structure)', () => {
     expect(Array.isArray(parent.children)).toBe(true);
   });
 
-  it('should expose Admin / Admin User / Admin Organization as child routes', () => {
+  it('should expose the parent and Admin General / User / Organization children', () => {
+    expect(adminRoutes[0].name).toBe('Admin');
     const names = adminRoutes[0].children.map((r) => r.name);
-    expect(names).toContain('Admin');
+    expect(names).toContain('Admin General');
     expect(names).toContain('Admin User');
     expect(names).toContain('Admin Organization');
   });
@@ -70,14 +71,15 @@ describe('admin.router (integration with vue-router)', () => {
     });
   };
 
-  it('should resolve /admin to the nested Admin child route', async () => {
+  it('should resolve /admin to the nested Admin General child route', async () => {
     const router = buildRouter();
     await router.push('/admin');
     const matched = router.currentRoute.value.matched;
-    // matched[0] = layout parent, matched[1] = the empty child "Admin"
+    // matched[0] = layout parent (named "Admin"), matched[1] = empty child "Admin General"
     expect(matched.length).toBe(2);
     expect(matched[0].path).toBe('/admin');
-    expect(matched[1].name).toBe('Admin');
+    expect(matched[0].name).toBe('Admin');
+    expect(matched[1].name).toBe('Admin General');
   });
 
   it('should resolve /admin/users/:id to Admin User via the layout parent', async () => {
@@ -135,7 +137,7 @@ describe('admin.router (integration with vue-router)', () => {
       router.afterEach(() => resolve());
     });
     expect(router.currentRoute.value.path).toBe('/admin');
-    expect(router.currentRoute.value.name).toBe('Admin');
+    expect(router.currentRoute.value.name).toBe('Admin General');
     expect(router.currentRoute.value.matched[0].components.default).toBe(beforeLayout.components.default);
     // Go forward — should return to /admin/knowledge, parent still the same.
     await new Promise((resolve) => {
@@ -166,7 +168,8 @@ describe('admin.router (integration with vue-router)', () => {
   it('should still work when no extra tabs are configured (no regression)', async () => {
     const router = buildRouter();
     await router.push('/admin');
-    expect(router.currentRoute.value.name).toBe('Admin');
+    expect(router.currentRoute.value.name).toBe('Admin General');
     expect(router.currentRoute.value.matched.length).toBe(2);
+    expect(router.currentRoute.value.matched[0].name).toBe('Admin');
   });
 });

@@ -91,9 +91,10 @@ layout (no full-page navigation, no PageHeader duplication).
    ```
 
    Legacy absolute routes nested under `/admin/` (e.g.
-   `'/admin/knowledge'`) still work during the transition; absolute
-   routes outside `/admin/` are filtered out with a dev-mode warning.
-   Migrate to relative paths when you can.
+   `'/admin/knowledge'`) still work during the transition and log a
+   dev-mode warning to nudge you toward relative paths. Absolute
+   routes outside `/admin/` are filtered out (also with a dev-mode
+   warning). Migrate to relative paths when you can.
 
 4. **View component** — remove `PageHeader` from the tab's view component:
    the admin layout now provides it. Keep the `v-container` + inner content,

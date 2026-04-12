@@ -44,7 +44,7 @@ export default {
   components: { PageHeader },
   data() {
     return {
-      activeTab: null,
+      activeTab: '/admin',
     };
   },
   computed: {
@@ -58,29 +58,83 @@ export default {
     },
     /**
      * @desc Returns validated extra admin tabs from `config.admin.tabs`.
-     *       Accepts both relative (`'knowledge'`) and legacy absolute
-     *       (`'/admin/knowledge'`) routes. Legacy absolute routes outside
-     *       of `/admin/` are filtered and warned about in non-production.
+     *
+     * Accepted shapes (in preference order):
+     *  - **Relative path** (new): `'knowledge'`, `'billing'`, …
+     *    No leading slash, non-empty, no `..` traversal segments, no
+     *    `?`/`#`, no whitespace.
+     *  - **Legacy absolute under /admin/**: `'/admin/knowledge'` — still
+     *    works during the migration but logs a dev-mode warning.
+     *
+     * Anything else (absolute routes outside `/admin/`, malformed entries,
+     * path traversal, empty strings) is filtered out silently in
+     * production and with a dev-mode warning otherwise.
+     *
      * @returns {Array<{ value: string, label: string, icon?: string, route: string }>}
      */
     extraTabs() {
       const tabs = this.config?.admin?.tabs;
       if (!Array.isArray(tabs)) return [];
-      return tabs.filter((tab) => {
-        if (!tab || typeof tab !== 'object' || !tab.value || !tab.label || !tab.route) return false;
-        if (typeof tab.route !== 'string') return false;
-        // Relative path (new) — any non-empty segment without leading slash.
-        if (!tab.route.startsWith('/')) return true;
-        // Absolute path (legacy) — must be nested under /admin/.
-        const isValid = tab.route.startsWith('/admin/');
-        if (!isValid && import.meta.env.MODE !== 'production') {
-          console.warn('[admin] Invalid tab route filtered: "' + tab.route + '"');
-        }
-        return isValid;
-      });
+      return tabs.filter((tab) => this.isValidTab(tab));
+    },
+  },
+  watch: {
+    /**
+     * @desc Keep `activeTab` in sync with the current route so the tab
+     *       indicator stays correct across deep-links and back/forward.
+     */
+    $route: {
+      immediate: true,
+      handler(to) {
+        if (!to || typeof to.path !== 'string') return;
+        this.activeTab = this.resolveActiveTab(to.path);
+      },
     },
   },
   methods: {
+    /**
+     * @desc Validate a single tab descriptor (shared by `extraTabs`).
+     * @param {unknown} tab - Raw entry from `config.admin.tabs`.
+     * @returns {boolean} True if the tab should render.
+     */
+    isValidTab(tab) {
+      if (!tab || typeof tab !== 'object' || !tab.value || !tab.label || !tab.route) return false;
+      if (typeof tab.route !== 'string') return false;
+      const route = tab.route;
+      // Reject whitespace, query, fragment, or traversal segments.
+      if (/\s/.test(route) || route.includes('?') || route.includes('#')) {
+        if (import.meta.env?.MODE !== 'production') {
+          console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+        }
+        return false;
+      }
+      if (route === '' || route === '/' || route === '.' || route === '..') {
+        if (import.meta.env?.MODE !== 'production') {
+          console.warn(`[admin] Empty or dot tab route filtered: "${route}"`);
+        }
+        return false;
+      }
+      const segments = route.split('/');
+      if (segments.some((seg) => seg === '..' || seg === '.')) {
+        if (import.meta.env?.MODE !== 'production') {
+          console.warn(`[admin] Path-traversal tab route filtered: "${route}"`);
+        }
+        return false;
+      }
+      // Relative path (preferred).
+      if (!route.startsWith('/')) return true;
+      // Absolute path — only legacy `/admin/*` is allowed (with a warning).
+      if (route.startsWith('/admin/')) {
+        if (import.meta.env?.MODE !== 'production') {
+          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
+        }
+        return true;
+      }
+      if (import.meta.env?.MODE !== 'production') {
+        console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+      }
+      return false;
+    },
     /**
      * @desc Resolve a tab descriptor to a concrete absolute path.
      *       Relative paths are joined under `/admin/`.
@@ -90,6 +144,21 @@ export default {
     tabTo(tab) {
       if (tab.route.startsWith('/')) return tab.route;
       return `${this.basePath}/${tab.route}`.replace(/\/+/g, '/');
+    },
+    /**
+     * @desc Map a router path to the `v-tab` value it should activate.
+     *       Exact-match for the base path, then prefix-match for extra
+     *       tabs. Falls back to the base path so the indicator never
+     *       leaves a visible tab empty.
+     * @param {string} path - Current route path.
+     * @returns {string} The matching tab's `value`.
+     */
+    resolveActiveTab(path) {
+      if (path === this.basePath) return this.basePath;
+      const match = this.extraTabs
+        .map((tab) => this.tabTo(tab))
+        .find((to) => path === to || path.startsWith(`${to}/`));
+      return match || this.basePath;
     },
   },
 };

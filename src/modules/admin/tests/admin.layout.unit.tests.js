@@ -74,7 +74,8 @@ describe('admin.layout', () => {
     expect(wrapper.vm.tabTo({ route: 'knowledge' })).toBe('/admin/knowledge');
   });
 
-  it('should accept legacy absolute routes under /admin/', () => {
+  it('should accept legacy absolute routes under /admin/ and warn', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const wrapper = mountLayout({
       admin: {
         tabs: [
@@ -86,6 +87,46 @@ describe('admin.layout', () => {
     expect(tabs.length).toBe(2);
     expect(tabs[1].text()).toContain('Legacy');
     expect(wrapper.vm.tabTo({ route: '/admin/legacy' })).toBe('/admin/legacy');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Legacy absolute tab route'));
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should filter out tab routes with path traversal segments', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const wrapper = mountLayout({
+      admin: {
+        tabs: [
+          { value: 'ok', label: 'Ok', route: 'ok' },
+          { value: 'evil', label: 'Evil', route: '../users' },
+          { value: 'dotted', label: 'Dotted', route: 'foo/./bar' },
+        ],
+      },
+    });
+    const tabs = wrapper.findAllComponents({ name: 'VTab' });
+    expect(tabs.length).toBe(2); // General + Ok
+    expect(tabs[1].text()).toContain('Ok');
+    expect(consoleWarnSpy).toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should filter out empty and whitespace tab routes', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const wrapper = mountLayout({
+      admin: {
+        tabs: [
+          { value: 'ok', label: 'Ok', route: 'ok' },
+          { value: 'empty', label: 'Empty', route: '' },
+          { value: 'ws', label: 'WS', route: 'has space' },
+          { value: 'qs', label: 'QS', route: 'leak?x=1' },
+          { value: 'frag', label: 'Frag', route: 'leak#foo' },
+        ],
+      },
+    });
+    const tabs = wrapper.findAllComponents({ name: 'VTab' });
+    expect(tabs.length).toBe(2); // General + Ok
+    expect(tabs[1].text()).toContain('Ok');
+    expect(consoleWarnSpy).toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
   });
 
   it('should filter out tabs missing required fields', () => {
@@ -123,6 +164,58 @@ describe('admin.layout', () => {
     const wrapper = mountLayout({ admin: { tabs: 'invalid' } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
     expect(tabs.length).toBe(1);
+  });
+
+  it('should sync activeTab with the current route on deep-link', () => {
+    const wrapper = mount(AdminLayout, {
+      global: {
+        plugins: [createVuetify()],
+        mocks: {
+          config: {
+            ...baseConfig,
+            admin: { tabs: [{ value: 'knowledge', label: 'Knowledge', route: 'knowledge' }] },
+          },
+          $route: { path: '/admin/knowledge' },
+          $router: { push: vi.fn() },
+        },
+        stubs: {
+          RouterLink: true,
+          RouterView: { template: '<div class="router-view-stub" />' },
+          PageHeader: { template: '<div class="page-header-stub" />' },
+        },
+      },
+    });
+    expect(wrapper.vm.activeTab).toBe('/admin/knowledge');
+  });
+
+  it('should fall back to base path when the route does not match any tab', () => {
+    const wrapper = mount(AdminLayout, {
+      global: {
+        plugins: [createVuetify()],
+        mocks: {
+          config: baseConfig,
+          $route: { path: '/admin/users/abc' },
+          $router: { push: vi.fn() },
+        },
+        stubs: {
+          RouterLink: true,
+          RouterView: { template: '<div />' },
+          PageHeader: { template: '<div />' },
+        },
+      },
+    });
+    expect(wrapper.vm.activeTab).toBe('/admin');
+  });
+
+  it('should update activeTab when the route changes', async () => {
+    const wrapper = mountLayout({
+      admin: { tabs: [{ value: 'knowledge', label: 'Knowledge', route: 'knowledge' }] },
+    });
+    // Initial: $route.path === '/admin'
+    expect(wrapper.vm.activeTab).toBe('/admin');
+    // Simulate navigation
+    wrapper.vm.$options.watch.$route.handler.call(wrapper.vm, { path: '/admin/knowledge' });
+    expect(wrapper.vm.activeTab).toBe('/admin/knowledge');
   });
 
   it('should render icons when provided', () => {
