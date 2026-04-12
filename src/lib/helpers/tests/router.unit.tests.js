@@ -122,6 +122,53 @@ describe('injectAdminChildren', () => {
     expect(injectAdminChildren(undefined, [], () => true)).toBeUndefined();
   });
 
+  it('should filter out routes with absolute paths and warn', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    const bad = [
+      { path: '/admin/bad', name: 'Bad', component: { name: 'Bad' } },
+      { path: 'good', name: 'Good', component: { name: 'Good' } },
+    ];
+    injectAdminChildren(admin, [{ name: 'mixed', routes: bad }], () => true);
+    const names = admin[0].children.map((r) => r.name);
+    expect(names).toContain('Good');
+    expect(names).not.toContain('Bad');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('absolute path'));
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should filter out routes missing a path', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    const bad = [
+      { name: 'NoPath', component: { name: 'X' } },
+      { path: '', name: 'EmptyPath', component: { name: 'X' } },
+      { path: 'ok', name: 'Ok', component: { name: 'Ok' } },
+    ];
+    injectAdminChildren(admin, [{ name: 'test', routes: bad }], () => true);
+    const names = admin[0].children.map((r) => r.name);
+    expect(names).toContain('Ok');
+    expect(names).not.toContain('NoPath');
+    expect(names).not.toContain('EmptyPath');
+    expect(consoleWarnSpy).toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should filter out routes without a component', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    const bad = [
+      { path: 'no-component', name: 'NoComp' },
+      { path: 'ok', name: 'Ok', component: { name: 'Ok' } },
+    ];
+    injectAdminChildren(admin, [{ name: 'test', routes: bad }], () => true);
+    const names = admin[0].children.map((r) => r.name);
+    expect(names).toContain('Ok');
+    expect(names).not.toContain('NoComp');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('missing component'));
+    consoleWarnSpy.mockRestore();
+  });
+
   it('should propagate CASL meta fields on injected children', () => {
     const admin = makeAdminRoutes();
     const guarded = [

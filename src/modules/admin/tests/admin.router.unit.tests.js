@@ -129,9 +129,22 @@ describe('admin.router (integration with vue-router)', () => {
     // Same parent layout component instance => tabs don't unmount
     expect(afterLayout.path).toBe(beforeLayout.path);
     expect(afterLayout.components.default).toBe(beforeLayout.components.default);
-    // Go back
-    await router.go(-1);
-    await router.isReady();
+    // Go back — should return to /admin with the same parent layout.
+    await new Promise((resolve) => {
+      router.back();
+      router.afterEach(() => resolve());
+    });
+    expect(router.currentRoute.value.path).toBe('/admin');
+    expect(router.currentRoute.value.name).toBe('Admin');
+    expect(router.currentRoute.value.matched[0].components.default).toBe(beforeLayout.components.default);
+    // Go forward — should return to /admin/knowledge, parent still the same.
+    await new Promise((resolve) => {
+      router.forward();
+      router.afterEach(() => resolve());
+    });
+    expect(router.currentRoute.value.path).toBe('/admin/knowledge');
+    expect(router.currentRoute.value.name).toBe('Admin Knowledge');
+    expect(router.currentRoute.value.matched[0].components.default).toBe(beforeLayout.components.default);
   });
 
   it('should not inject disabled modules', async () => {

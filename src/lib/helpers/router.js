@@ -36,6 +36,45 @@
  * @param {(name: string) => boolean} isModuleActive - Module activation predicate.
  * @returns {Array<object>} The same `adminRoutes` reference (mutated) for chaining.
  */
+/**
+ * @desc Validate a single child route record before injection.
+ *
+ * Rejects malformed records that could corrupt the admin children array:
+ *  - must be a non-null object
+ *  - must have a string `path`
+ *  - `path` must be relative (no leading `/`) — absolute paths would
+ *    escape the admin parent and break nesting
+ *  - must have a `component` (function, object, or Promise for async)
+ *
+ * Invalid records are logged in non-production mode and silently skipped.
+ *
+ * @param {unknown} route - Route record to validate.
+ * @param {string} moduleName - Owning module name (for warnings).
+ * @returns {boolean} True if the route is safe to inject.
+ */
+const isValidChildRoute = (route, moduleName) => {
+  if (!route || typeof route !== 'object') return false;
+  if (typeof route.path !== 'string' || route.path.length === 0) {
+    if (import.meta.env?.MODE !== 'production') {
+      console.warn(`[injectAdminChildren] "${moduleName}": child route missing string path — skipped`);
+    }
+    return false;
+  }
+  if (route.path.startsWith('/')) {
+    if (import.meta.env?.MODE !== 'production') {
+      console.warn(`[injectAdminChildren] "${moduleName}": absolute path "${route.path}" cannot be an admin child — use a relative path`);
+    }
+    return false;
+  }
+  if (!route.component) {
+    if (import.meta.env?.MODE !== 'production') {
+      console.warn(`[injectAdminChildren] "${moduleName}": child route "${route.path}" missing component — skipped`);
+    }
+    return false;
+  }
+  return true;
+};
+
 export const injectAdminChildren = (adminRoutes, childModules, isModuleActive) => {
   if (!Array.isArray(adminRoutes) || !Array.isArray(childModules)) return adminRoutes;
   const parent = adminRoutes.find((r) => r && r.path === '/admin' && Array.isArray(r.children));
@@ -43,7 +82,8 @@ export const injectAdminChildren = (adminRoutes, childModules, isModuleActive) =
   for (const mod of childModules) {
     if (!mod || !mod.name || !Array.isArray(mod.routes)) continue;
     if (typeof isModuleActive === 'function' && !isModuleActive(mod.name)) continue;
-    parent.children.push(...mod.routes);
+    const validRoutes = mod.routes.filter((r) => isValidChildRoute(r, mod.name));
+    parent.children.push(...validRoutes);
   }
   return adminRoutes;
 };

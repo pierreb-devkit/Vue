@@ -26,13 +26,13 @@ const coreRoutes = [].concat(home, auth, users);
  * module that contributes an admin tab here (see MIGRATIONS.md).
  *
  * Each module's router file should export routes with **relative** paths
- * (e.g. `'knowledge'` rather than `'/admin/knowledge'`) so they resolve
- * under the `/admin/` parent.
+ * (e.g. `'my-tab'` rather than `'/admin/my-tab'`) so they resolve under
+ * the `/admin/` parent.
  *
  * @example
- *   import knowledge from '../knowledge/router/knowledge.router';
+ *   import myTabRoutes from '../my-tab/router/my-tab.router';
  *   const adminChildModules = [
- *     { name: 'knowledge', routes: knowledge },
+ *     { name: 'my-tab', routes: myTabRoutes },
  *   ];
  */
 const adminChildModules = [];

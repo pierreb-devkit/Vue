@@ -9,7 +9,7 @@ Breaking changes and upgrade notes for downstream projects.
 **Breaking change.** Downstream projects that added admin tabs via
 `config.admin.tabs` + sibling routes under `/admin/*` must migrate to the
 new nested-route layout. Extra tabs now render **inline** inside the admin
-layout (no full page navigation, no PageHeader duplication).
+layout (no full-page navigation, no PageHeader duplication).
 
 ### What changed in the stack
 
@@ -90,8 +90,10 @@ layout (no full page navigation, no PageHeader duplication).
    }
    ```
 
-   Legacy absolute routes (`'/admin/knowledge'`) still work during the
-   transition but will log a dev-mode warning; migrate when you can.
+   Legacy absolute routes nested under `/admin/` (e.g.
+   `'/admin/knowledge'`) still work during the transition; absolute
+   routes outside `/admin/` are filtered out with a dev-mode warning.
+   Migrate to relative paths when you can.
 
 4. **View component** — remove `PageHeader` from the tab's view component:
    the admin layout now provides it. Keep the `v-container` + inner content,
