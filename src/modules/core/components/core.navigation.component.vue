@@ -45,7 +45,7 @@
       <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
       <!-- Navigation -->
       <v-list :style="listStyle" nav>
-        <v-list-item v-for="item in nav" :key="item.path" :to="item.path">
+        <v-list-item v-for="item in nav" :key="item.path" v-bind="navItemBind(item)">
           <template #prepend>
             <v-icon
               :icon="item.meta.icon"
@@ -62,7 +62,7 @@
       <template #append>
         <!-- Bottom nav items -->
         <v-list v-if="navBottom.length" :style="listStyle" nav>
-          <v-list-item v-for="item in navBottom" :key="item.path" :to="item.path">
+          <v-list-item v-for="item in navBottom" :key="item.path" v-bind="navItemBind(item)">
             <template #prepend>
               <v-icon
                 :icon="item.meta.icon"
@@ -232,6 +232,24 @@ export default {
     coreStore.refreshNav(authStore.isLoggedIn);
   },
   methods: {
+    /**
+     * @desc Build the v-bind props for a sidenav item — external link (`meta.href`)
+     *       resolves to `{ href, target, rel }` so Vuetify renders an anchor tag
+     *       (and never applies the active-route styling), internal routes resolve
+     *       to `{ to }` and keep the default router-link behavior.
+     * @param {Object} item - Nav item from the core store (route record).
+     * @returns {Object} Props bag to spread onto `<v-list-item>`.
+     */
+    navItemBind(item) {
+      if (item?.meta?.href) {
+        return {
+          href: item.meta.href,
+          target: item.meta.target || '_blank',
+          rel: item.meta.rel || 'noopener',
+        };
+      }
+      return { to: item.path };
+    },
     async signout() {
       const authStore = useAuthStore();
       const coreStore = useCoreStore();

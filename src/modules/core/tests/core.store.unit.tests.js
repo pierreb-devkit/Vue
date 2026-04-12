@@ -245,6 +245,94 @@ describe('Core Store', () => {
     expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
   });
 
+  it('should include external-link routes (meta.href without component) in the nav', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+      {
+        path: '/api-docs',
+        name: 'API Docs',
+        meta: { display: true, icon: 'fa-solid fa-book', href: 'https://api.trawl.me/api/docs', target: '_blank' },
+      },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    const external = coreStore.nav.find((r) => r.name === 'API Docs');
+    expect(external).toBeDefined();
+    expect(external.meta.href).toBe('https://api.trawl.me/api/docs');
+  });
+
+  it('should place external-link routes in navBottom when meta.position is "bottom"', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      {
+        path: '/api-docs',
+        name: 'API Docs',
+        meta: {
+          display: true,
+          icon: 'fa-solid fa-book',
+          href: 'https://api.trawl.me/api/docs',
+          position: 'bottom',
+        },
+      },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    expect(coreStore.nav.find((r) => r.name === 'API Docs')).toBeUndefined();
+    expect(coreStore.navBottom.find((r) => r.name === 'API Docs')).toBeDefined();
+  });
+
+  it('should hide external-link routes when meta.display is false', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      {
+        path: '/api-docs',
+        name: 'API Docs',
+        meta: { display: false, icon: 'fa-solid fa-book', href: 'https://api.trawl.me/api/docs' },
+      },
+    ];
+
+    coreStore.init(mockRoutes);
+    coreStore.refreshNav(false);
+
+    expect(coreStore.nav.find((r) => r.name === 'API Docs')).toBeUndefined();
+    expect(coreStore.navBottom.find((r) => r.name === 'API Docs')).toBeUndefined();
+  });
+
+  it('should respect CASL permissions on external-link routes', () => {
+    const coreStore = useCoreStore();
+    const mockRoutes = [
+      {
+        path: '/admin-docs',
+        name: 'Admin Docs',
+        meta: {
+          display: true,
+          icon: 'fa-solid fa-book',
+          href: 'https://admin.example.com/docs',
+          action: 'manage',
+          subject: 'User',
+        },
+      },
+    ];
+
+    coreStore.init(mockRoutes);
+    // User without matching ability
+    mockAbility.rules = [];
+    mockAbility.can.mockReturnValue(false);
+    coreStore.refreshNav(true);
+    expect(coreStore.nav.find((r) => r.name === 'Admin Docs')).toBeUndefined();
+
+    // User with matching ability
+    mockAbility.rules = [{ action: 'manage', subject: 'User' }];
+    mockAbility.can.mockReturnValue(true);
+    coreStore.refreshNav(true);
+    expect(coreStore.nav.find((r) => r.name === 'Admin Docs')).toBeDefined();
+  });
+
   it('should not show guarded routes when not logged in even without ability rules', () => {
     const coreStore = useCoreStore();
     const mockRoutes = [
