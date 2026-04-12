@@ -35,12 +35,15 @@ git merge devkit-vue/master
 | `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
 | Downstream-only new files (new modules, helpers, composables, lib additions) | Never delete — these do not exist in the stack, `git checkout --ours <file>` if flagged |
 
-After resolving `package.json`:
+After resolving `package.json`, regenerate the lockfile with a **full install** (not `--package-lock-only`):
 
 ```bash
-npm install --package-lock-only
+rm -rf node_modules package-lock.json
+npm install
 git add package-lock.json
 ```
+
+**Why full install, not `npm install --package-lock-only`:** `--package-lock-only` writes the lockfile without actually installing, so platform-specific optional peer deps (e.g. `@emnapi/core` on darwin) can be omitted from the top-level lockfile tree. The lockfile looks fine locally but `npm ci` on the linux CI runner fails with `Missing: @emnapi/core@X.Y.Z from lock file`. A full `npm install` resolves the cross-platform optional dep tree correctly and validates the install in one go. Do not "optimize" this back to `--package-lock-only`.
 
 Stage all resolved files and complete the merge:
 
