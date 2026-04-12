@@ -4,6 +4,119 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Admin extra tabs are now nested routes (2026-04-12)
+
+**Breaking change.** Downstream projects that added admin tabs via
+`config.admin.tabs` + sibling routes under `/admin/*` must migrate to the
+new nested-route layout. Extra tabs now render **inline** inside the admin
+layout (no full-page navigation, no PageHeader duplication).
+
+### What changed in the stack
+
+- **NEW:** `src/modules/admin/views/admin.layout.vue` — parent layout that
+  renders `PageHeader` + the tab bar (General + config-driven extra tabs)
+  + `<router-view>`.
+- **NEW:** `src/modules/admin/views/admin.content.vue` — renamed from
+  `admin.view.vue`. Contains only the built-in tabs (Users, Organizations,
+  Readiness, Activity). `PageHeader` and extra-tabs logic moved to the
+  layout.
+- **CHANGED:** `src/modules/admin/router/admin.router.js` — now exports a
+  single parent route `/admin` with `children` (`''` → `AdminContent`,
+  `users/:id`, `organizations/:organizationId`).
+- **NEW:** `src/lib/helpers/router.js` — exports `injectAdminChildren`.
+- **UPDATED:** `src/modules/app/app.router.js` — calls `injectAdminChildren`
+  before mounting the router, so downstream "admin tab" modules attach
+  as children of the admin parent route.
+
+### Action for downstream projects (per module contributing an admin tab)
+
+1. **Router file** — change `path` from `'/admin/xxx'` to `'xxx'` (relative),
+   and remove the leading slash:
+
+   ```javascript
+   // Before
+   export default [
+     {
+       path: '/admin/knowledge',
+       name: 'Admin Knowledge',
+       component: adminKnowledge,
+       meta: { display: false, action: 'manage', subject: 'UserAdmin' },
+     },
+   ];
+
+   // After
+   export default [
+     {
+       path: 'knowledge',
+       name: 'Admin Knowledge',
+       component: adminKnowledge,
+       meta: { display: false, action: 'manage', subject: 'UserAdmin' },
+     },
+   ];
+   ```
+
+2. **`app.router.js`** — register the module via `injectAdminChildren`
+   instead of adding it to `optionalModules`:
+
+   ```javascript
+   import { injectAdminChildren } from '@/lib/helpers/router';
+   import { isModuleActive } from '@/lib/helpers/modules';
+   import admin from '../admin/router/admin.router';
+   import knowledge from '../knowledge/router/knowledge.router';
+   import costs from '../costs/router/costs.router';
+
+   const adminChildModules = [
+     { name: 'knowledge', routes: knowledge },
+     { name: 'costs', routes: costs },
+   ];
+   injectAdminChildren(admin, adminChildModules, isModuleActive);
+   ```
+
+3. **Config** — update `config.admin.tabs[].route` to a relative path:
+
+   ```javascript
+   // Before
+   admin: {
+     tabs: [
+       { value: 'knowledge', label: 'Knowledge', icon: 'fa-solid fa-book', route: '/admin/knowledge' },
+     ],
+   }
+
+   // After
+   admin: {
+     tabs: [
+       { value: 'knowledge', label: 'Knowledge', icon: 'fa-solid fa-book', route: 'knowledge' },
+     ],
+   }
+   ```
+
+   Legacy absolute routes nested under `/admin/` (e.g.
+   `'/admin/knowledge'`) still work during the transition and log a
+   dev-mode warning to nudge you toward relative paths. Absolute
+   routes outside `/admin/` are filtered out (also with a dev-mode
+   warning). Migrate to relative paths when you can.
+
+4. **View component** — remove `PageHeader` from the tab's view component:
+   the admin layout now provides it. Keep the `v-container` + inner content,
+   drop `<PageHeader icon="..." title="..." />`.
+
+5. **CASL guards** — keep `meta.action` / `meta.subject` on each injected
+   child route. The router guard walks `to.matched`, so parent + children
+   each enforce their own CASL meta.
+
+### Why
+
+Previously, extra tabs used `:to="route"` to sibling `/admin/xxx` pages,
+unmounting the admin view on click and showing a separate page with its
+own header. Nesting them under the admin parent route means:
+
+- The admin layout (tab bar + header) stays mounted across tab switches
+- URL updates are deep-linkable (`/admin/knowledge` renders in-layout)
+- Browser back/forward works between tabs
+- Downstream modules register WITHOUT modifying the admin module itself
+
+---
+
 ## homeImgComponent in about section (2026-04-10)
 
 `src/modules/home/components/home.about.component.vue` now renders item images through the shared `homeImgComponent` instead of raw `<v-img>`. This aligns the About section with `home.features.component.vue` and enables inline SVG rendering (theme-aware via CSS custom properties).

@@ -6,6 +6,7 @@ import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
 import { isModuleActive } from '../../lib/helpers/modules';
+import { injectAdminChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
@@ -18,6 +19,24 @@ import billing from '../billing/router/billing.router';
 
 // Core modules — always mounted
 const coreRoutes = [].concat(home, auth, users);
+
+/**
+ * Admin child modules — routes injected as children of the `/admin` parent
+ * route via `injectAdminChildren`. Downstream projects should register any
+ * module that contributes an admin tab here (see MIGRATIONS.md).
+ *
+ * Each module's router file should export routes with **relative** paths
+ * (e.g. `'my-tab'` rather than `'/admin/my-tab'`) so they resolve under
+ * the `/admin/` parent.
+ *
+ * @example
+ *   import myTabRoutes from '../my-tab/router/my-tab.router';
+ *   const adminChildModules = [
+ *     { name: 'my-tab', routes: myTabRoutes },
+ *   ];
+ */
+const adminChildModules = [];
+injectAdminChildren(admin, adminChildModules, isModuleActive);
 
 // Optional modules — mounted only when activated
 const optionalModules = [

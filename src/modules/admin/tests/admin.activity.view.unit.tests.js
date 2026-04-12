@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useAdminStore } from '../stores/admin.store';
-import AdminView from '../views/admin.view.vue';
+import AdminView from '../views/admin.content.vue';
 
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({
