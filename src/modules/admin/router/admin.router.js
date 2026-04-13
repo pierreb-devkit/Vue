@@ -26,6 +26,7 @@ export default [
     component: adminLayout,
     meta: {
       icon: 'fa-solid fa-user-tie',
+      order: 20, // sidenav sort order within bottom section (lower = first)
       position: 'bottom',
       action: 'manage', subject: 'UserAdmin',
     },

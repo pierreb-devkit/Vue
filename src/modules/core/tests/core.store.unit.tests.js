@@ -347,4 +347,114 @@ describe('Core Store', () => {
     expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
     expect(coreStore.nav.find((r) => r.name === 'admin')).toBeUndefined();
   });
+
+  describe('refreshNav — meta.order sorting', () => {
+    it('should sort nav by meta.order ascending (lower first)', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/c', name: 'c', meta: { display: true, icon: 'i', order: 30 } },
+        { path: '/a', name: 'a', meta: { display: true, icon: 'i', order: 10 } },
+        { path: '/b', name: 'b', meta: { display: true, icon: 'i', order: 20 } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should sort navBottom by meta.order independently from nav', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/top-b', name: 'top-b', meta: { display: true, icon: 'i', order: 20 } },
+        { path: '/top-a', name: 'top-a', meta: { display: true, icon: 'i', order: 10 } },
+        { path: '/bot-b', name: 'bot-b', meta: { display: true, icon: 'i', order: 20, position: 'bottom' } },
+        { path: '/bot-a', name: 'bot-a', meta: { display: true, icon: 'i', order: 10, position: 'bottom' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['top-a', 'top-b']);
+      expect(coreStore.navBottom.map((r) => r.name)).toEqual(['bot-a', 'bot-b']);
+    });
+
+    it('should place routes without meta.order at the end', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/no-order', name: 'no-order', meta: { display: true, icon: 'i' } },
+        { path: '/ordered', name: 'ordered', meta: { display: true, icon: 'i', order: 10 } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['ordered', 'no-order']);
+    });
+
+    it('should place ordered routes before unordered ones in mixed case', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/no-a', name: 'no-a', meta: { display: true, icon: 'i' } },
+        { path: '/ord-b', name: 'ord-b', meta: { display: true, icon: 'i', order: 20 } },
+        { path: '/no-b', name: 'no-b', meta: { display: true, icon: 'i' } },
+        { path: '/ord-a', name: 'ord-a', meta: { display: true, icon: 'i', order: 10 } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      // ordered items come first, in ascending order
+      expect(coreStore.nav[0].name).toBe('ord-a');
+      expect(coreStore.nav[1].name).toBe('ord-b');
+      // unordered items follow
+      expect(coreStore.nav.slice(2).map((r) => r.name).sort()).toEqual(['no-a', 'no-b']);
+    });
+
+    it('should fall back to meta.action desc tiebreaker when orders are equal', () => {
+      const coreStore = useCoreStore();
+      // Same order, different meta.action — desc alpha => 'read' before 'create'
+      const mockRoutes = [
+        { path: '/create', name: 'create', meta: { display: true, icon: 'i', order: 10, action: 'create', subject: 'Task' } },
+        { path: '/read', name: 'read', meta: { display: true, icon: 'i', order: 10, action: 'read', subject: 'Task' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      mockAbility.rules = [{ action: 'manage', subject: 'all' }];
+      mockAbility.can.mockReturnValue(true);
+      coreStore.refreshNav(true);
+
+      // 'read' > 'create' alphabetically, desc tiebreaker → 'read' first
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['read', 'create']);
+    });
+
+    it('should preserve legacy meta.action desc behaviour for unordered routes', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/create', name: 'create', meta: { display: true, icon: 'i', action: 'create', subject: 'Task' } },
+        { path: '/read', name: 'read', meta: { display: true, icon: 'i', action: 'read', subject: 'Task' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      mockAbility.rules = [{ action: 'manage', subject: 'all' }];
+      mockAbility.can.mockReturnValue(true);
+      coreStore.refreshNav(true);
+
+      // Legacy tiebreaker: 'read' (desc) before 'create'
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['read', 'create']);
+    });
+
+    it('should treat meta.order: 0 as a valid leading position', () => {
+      const coreStore = useCoreStore();
+      const mockRoutes = [
+        { path: '/ten', name: 'ten', meta: { display: true, icon: 'i', order: 10 } },
+        { path: '/zero', name: 'zero', meta: { display: true, icon: 'i', order: 0 } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.map((r) => r.name)).toEqual(['zero', 'ten']);
+    });
+  });
 });

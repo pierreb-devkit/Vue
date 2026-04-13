@@ -14,6 +14,7 @@ export default [
     component: tasks,
     meta: {
       icon: 'fa-solid fa-list-check',
+      order: 20, // sidenav sort order (lower = first)
       action: 'read', subject: 'Task',
     },
   },

@@ -13,6 +13,7 @@ export default [
     component: user,
     meta: {
       icon: 'fa-solid fa-circle-user',
+      order: 10, // sidenav sort order within bottom section (lower = first)
       position: 'bottom',
       requiresAuth: true,
     },

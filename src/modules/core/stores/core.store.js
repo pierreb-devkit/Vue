@@ -40,6 +40,11 @@ export const useCoreStore = defineStore('core', {
 
     /**
      * @desc Rebuild the navigation list based on current login state and CASL abilities.
+     *
+     * Sort order: `meta.order` ascending (lower first), then `meta.action` desc as tiebreaker.
+     * Routes without `meta.order` fall to the end (treated as `+Infinity`), preserving the
+     * legacy ordering for backward compat. Use increments of 10 (10, 20, 30...) so downstream
+     * projects can slot routes between stack ones without renumbering.
      * @param {boolean} isLoggedIn - Whether the current user is authenticated.
      * @returns {void}
      */
@@ -54,13 +59,13 @@ export const useCoreStore = defineStore('core', {
 
       this.nav = orderBy(
         pickBy(visible, (i) => i.meta.position !== 'bottom'),
-        ['meta.action'],
-        ['desc'],
+        [(i) => i.meta.order ?? Number.POSITIVE_INFINITY, 'meta.action'],
+        ['asc', 'desc'],
       );
       this.navBottom = orderBy(
         pickBy(visible, (i) => i.meta.position === 'bottom'),
-        ['meta.action'],
-        ['desc'],
+        [(i) => i.meta.order ?? Number.POSITIVE_INFINITY, 'meta.action'],
+        ['asc', 'desc'],
       );
     },
   },
