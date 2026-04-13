@@ -14,7 +14,8 @@ export default {
       if (size) name = `${name}-${size}`;
       if (operation) name = `${name}-${operation}`;
       name = `${name}.${base[1]}`;
-      return `${api.protocol}://${api.host}:${api.port}/api/uploads/images/${name}`;
+      const port = api.port ? `:${api.port}` : '';
+      return `${api.protocol}://${api.host}${port}/api/uploads/images/${name}`;
     };
   },
 };

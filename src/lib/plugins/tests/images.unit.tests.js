@@ -47,4 +47,14 @@ describe('images plugin', () => {
   it('preserves extension correctly', () => {
     expect(setImages(api, 'avatar.png', '100', null)).toBe('http://localhost:3000/api/uploads/images/avatar-100.png');
   });
+
+  it('omits port when api.port is empty', () => {
+    const apiNoPort = { protocol: 'https', host: 'trawl.me', port: '' };
+    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://trawl.me/api/uploads/images/photo.jpg');
+  });
+
+  it('omits port when api.port is undefined', () => {
+    const apiNoPort = { protocol: 'https', host: 'trawl.me' };
+    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://trawl.me/api/uploads/images/photo.jpg');
+  });
 });
