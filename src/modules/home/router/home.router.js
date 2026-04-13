@@ -16,6 +16,7 @@ export default [
     component: home,
     meta: {
       icon: 'fa-solid fa-house',
+      order: 10, // sidenav sort order (lower = first)
       footer: true, // display footer
     },
   },

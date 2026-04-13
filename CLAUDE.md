@@ -20,7 +20,7 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - **Ability helper**: `src/lib/helpers/ability.js` exports reactive `ability` + `updateAbilities(rules)`.
 - **Plugin**: `@casl/vue` `abilitiesPlugin` registered in `main.js` — `$can()` / `$cannot()` in templates.
 - **Route guards**: `meta.action` + `meta.subject` (never `meta.roles`). Guard checks `ability.can()` with `isLoggedIn` fallback.
-- **Navigation**: `core.store.js` `refreshNav()` uses same ability check.
+- **Navigation**: `core.store.js` `refreshNav()` uses same ability check. Sidenav items are sorted by `meta.order` ascending (lower first), then `meta.action` desc as tiebreaker. Use increments of 10 (`10`, `20`, ...) so downstream projects can slot routes between stack ones. Routes without `meta.order` fall to the end. `meta.position: 'bottom'` moves an item to the bottom section; `meta.order` then controls position within that section.
 - **Auth flow**: `updateAbilities(res.data.abilities)` on signin/token, `updateAbilities([])` on signout.
 - **Organizations**: `src/modules/organizations/` — CRUD + members + switching. Switcher auto-hides when disabled or single-org.
 - **Signup org step**: Controlled by `serverConfig.organizations.enabled`. Three-step: form → setup → app.
