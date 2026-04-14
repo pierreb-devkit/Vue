@@ -89,6 +89,12 @@ export default {
     hasAvatar() {
       return !!(this.user && this.user.avatar && this.user.avatar !== '');
     },
+    /**
+     * Snap the requested avatar size (doubled for retina) to the backend
+     * sharp whitelist. Any value outside `SHARP_SIZES` would return HTTP 422,
+     * so we pick the smallest allowed size that fits — or cap at the largest.
+     * @returns {number} A size from `SHARP_SIZES` (128, 256, 512, or 1024).
+     */
     avatarSize() {
       const requested = this.size * 2;
       return SHARP_SIZES.find((s) => s >= requested) ?? SHARP_SIZES[SHARP_SIZES.length - 1];
