@@ -10,16 +10,16 @@
           ></template
         >
         <template #organizations="{ item }"
-          ><v-chip
-            v-for="m in item.memberships || []"
-            :key="m._id || m.id"
-            size="small"
-            :variant="isUserActiveOrg(item, m) ? 'flat' : 'tonal'"
-            :color="orgColor(m.organizationId)"
-            class="mr-1 text-capitalize"
-            style="cursor: pointer"
-            @click="$router.push('/admin/organizations/' + (m.organizationId?._id || m.organizationId?.id))"
-            >{{ (m.organizationId && m.organizationId.name) || '—' }} ({{ m.role || '—' }})</v-chip
+          ><template v-for="m in item.memberships || []" :key="m._id || m.id"
+            ><v-chip
+              size="small"
+              :variant="isUserActiveOrg(item, m) ? 'flat' : 'tonal'"
+              :color="orgColor(m.organizationId)"
+              class="mr-1 text-capitalize"
+              :style="membershipOrgId(m) ? 'cursor: pointer' : ''"
+              @click="navigateToMembershipOrg(m)"
+              >{{ (m.organizationId && m.organizationId.name) || '—' }} ({{ m.role || '—' }})</v-chip
+            ></template
           ><span v-if="!item.memberships || !item.memberships.length" class="text-medium-emphasis">—</span></template
         >
         <template #roles="{ item }"
@@ -125,15 +125,43 @@ export default {
       return currentOrg && orgId && String(currentOrg) === String(orgId);
     },
     /**
+     * @desc Extract a usable organization id from a membership entry.
+     * @param {object} membership - A membership record from `user.memberships`.
+     * @returns {string|null} The id or `null` when unavailable.
+     */
+    membershipOrgId(membership) {
+      const raw = membership?.organizationId;
+      if (!raw) return null;
+      const id = raw._id || raw.id;
+      return id ? String(id) : null;
+    },
+    /**
+     * @desc Navigate to the organization detail page for a membership, if
+     *       the organization id is available. No-op otherwise so we never
+     *       push `/admin/organizations/undefined`.
+     * @param {object} membership - A membership record from `user.memberships`.
+     */
+    navigateToMembershipOrg(membership) {
+      const id = this.membershipOrgId(membership);
+      if (!id) return;
+      this.$router.push(`/admin/organizations/${id}`);
+    },
+    /**
      * @desc Fetch the users list from the admin store.
-     * @param {object} [params] - Optional query params forwarded to the store.
+     *       `coreDataTableComponent` forwards a pagination query-string
+     *       (e.g. `'0&5&search'`) that the store interpolates into the
+     *       request URL.
+     * @param {string} [pageRequest] - Optional pagination query-string segment.
      * @returns {Promise<void>}
      */
-    async fetchUsers(params) {
-      await useAdminStore().getUsers(params);
+    async fetchUsers(pageRequest) {
+      await useAdminStore().getUsers(pageRequest);
     },
     /**
      * @desc Toggle an app-level role on a user and refresh the list.
+     *       Errors are swallowed locally — the admin store already records
+     *       failure state via its `error` banner, and we must not leak an
+     *       unhandled rejection out of the click handler.
      * @param {object} item - The user record.
      * @param {string} role - Role to toggle.
      * @returns {Promise<void>}
@@ -142,8 +170,12 @@ export default {
       const adminStore = useAdminStore();
       const currentRoles = item.roles || [];
       const newRoles = currentRoles.includes(role) ? currentRoles.filter((r) => r !== role) : [...currentRoles, role];
-      await adminStore.updateUser({ id: item.id || item._id }, { roles: newRoles });
-      await this.fetchUsers();
+      try {
+        await adminStore.updateUser({ id: item.id || item._id }, { roles: newRoles });
+        await this.fetchUsers();
+      } catch {
+        // Admin store surfaces the error via its banner; avoid unhandled rejection.
+      }
     },
     /**
      * @desc Open the deletion confirmation dialog for the given user.
@@ -158,12 +190,19 @@ export default {
     },
     /**
      * @desc Confirm and execute deletion of the currently targeted user.
+     *       On failure the dialog stays open and the admin store surfaces
+     *       the error via its banner — we intentionally catch to avoid an
+     *       unhandled promise rejection from the click handler.
      * @returns {Promise<void>}
      */
     async confirmDeleteUser() {
-      await useAdminStore().deleteUser({ id: this.deleteDialog.userId });
-      this.deleteDialog.show = false;
-      await this.fetchUsers();
+      try {
+        await useAdminStore().deleteUser({ id: this.deleteDialog.userId });
+        this.deleteDialog.show = false;
+        await this.fetchUsers();
+      } catch {
+        // Keep the dialog open so the user can retry; banner shows the error.
+      }
     },
   },
 };

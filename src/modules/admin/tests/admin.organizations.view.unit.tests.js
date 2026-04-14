@@ -54,8 +54,8 @@ describe('admin.organizations.view', () => {
   });
 
   it('should fetch organizations via the store action', async () => {
-    await wrapper.vm.fetchOrganizations({ page: 2 });
-    expect(adminStore.getOrganizations).toHaveBeenCalledWith({ page: 2 });
+    await wrapper.vm.fetchOrganizations('0&10&acme');
+    expect(adminStore.getOrganizations).toHaveBeenCalledWith('0&10&acme');
   });
 
   it('should declare the expected organization table headers', () => {

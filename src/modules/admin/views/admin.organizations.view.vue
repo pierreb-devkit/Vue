@@ -51,11 +51,14 @@ export default {
   methods: {
     /**
      * @desc Fetch the organizations list from the admin store.
-     * @param {object} [params] - Optional query params forwarded to the store.
+     *       `coreDataTableComponent` forwards a pagination query-string
+     *       (e.g. `'0&5&search'`) that the store interpolates into the
+     *       request URL.
+     * @param {string} [pageRequest] - Optional pagination query-string segment.
      * @returns {Promise<void>}
      */
-    async fetchOrganizations(params) {
-      await useAdminStore().getOrganizations(params);
+    async fetchOrganizations(pageRequest) {
+      await useAdminStore().getOrganizations(pageRequest);
     },
   },
 };

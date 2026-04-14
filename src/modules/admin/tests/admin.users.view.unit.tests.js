@@ -78,8 +78,8 @@ describe('admin.users.view', () => {
   });
 
   it('should fetch users via the store action', async () => {
-    await wrapper.vm.fetchUsers({ page: 1 });
-    expect(adminStore.getUsers).toHaveBeenCalledWith({ page: 1 });
+    await wrapper.vm.fetchUsers('0&5&search');
+    expect(adminStore.getUsers).toHaveBeenCalledWith('0&5&search');
   });
 
   it('should detect the active organization of a user', () => {

@@ -188,17 +188,22 @@ export default {
     },
     /**
      * @desc Fetch audit logs from the store with current filters and pagination.
+     *       Loading flag is always cleared, even if the store action rejects,
+     *       so the progress bar does not stay pinned on failure.
      * @returns {Promise<void>}
      */
     async fetchActivityLogs() {
       this.activityLoading = true;
-      await useAdminStore().getAuditLogs({
-        action: this.activityFilterAction || undefined,
-        userId: this.activityFilterUserId || undefined,
-        page: this.activityPage,
-        perPage: this.activityPerPage,
-      });
-      this.activityLoading = false;
+      try {
+        await useAdminStore().getAuditLogs({
+          action: this.activityFilterAction || undefined,
+          userId: this.activityFilterUserId || undefined,
+          page: this.activityPage,
+          perPage: this.activityPerPage,
+        });
+      } finally {
+        this.activityLoading = false;
+      }
     },
     /** @desc Apply activity filters and reset to page 1. */
     applyActivityFilters() {

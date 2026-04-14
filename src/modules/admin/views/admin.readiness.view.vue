@@ -76,13 +76,18 @@ export default {
       return 'warning';
     },
     /**
-     * @desc Fetch readiness data from admin store.
+     * @desc Fetch readiness data from admin store. Loading flag is always
+     *       cleared via `finally`, even if the store action rejects, so the
+     *       view never gets stuck on the progress bar.
      * @returns {Promise<void>}
      */
     async fetchReadiness() {
       this.readinessLoading = true;
-      await useAdminStore().getReadiness();
-      this.readinessLoading = false;
+      try {
+        await useAdminStore().getReadiness();
+      } finally {
+        this.readinessLoading = false;
+      }
     },
   },
 };

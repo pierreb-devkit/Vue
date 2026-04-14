@@ -46,9 +46,9 @@ and extras continue to render inline inside the admin layout.
 
 1. Run `/update-stack` to pull the changes.
 2. Verify hard-coded links in your project. The old URL `/admin` used to
-   land on the nested "General" tab; it now 301-redirects to
-   `/admin/users`, so existing links keep working. If you want to point
-   somewhere else, use one of the new stable URLs:
+   land on the nested "General" tab; it now redirects to `/admin/users`
+   (client-side via vue-router), so existing links keep working. If you
+   want to point somewhere else, use one of the new stable URLs:
    - `/admin/users`
    - `/admin/organizations`
    - `/admin/readiness`
