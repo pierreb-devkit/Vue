@@ -4,6 +4,77 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Admin tabs flattened to a single routed row (2026-04-14)
+
+**Breaking change (URL-level).** The admin section now exposes its four
+built-in sections (Users, Organizations, Readiness, Activity) as routed
+siblings of the downstream `config.admin.tabs` extras. There is no more
+nested "General" tab with an internal `v-window` — every tab is a real
+URL and renders through the same `<router-view>`.
+
+### What changed in the stack
+
+- **REMOVED:** `src/modules/admin/views/admin.content.vue` — the inner
+  nested tab bar is gone. Its four window items are now dedicated views.
+- **NEW:**
+  - `src/modules/admin/views/admin.users.view.vue`
+  - `src/modules/admin/views/admin.organizations.view.vue`
+  - `src/modules/admin/views/admin.readiness.view.vue`
+  - `src/modules/admin/views/admin.activity.view.vue`
+- **CHANGED:** `src/modules/admin/router/admin.router.js` — the parent
+  `/admin` route now has dedicated children:
+  - `''` → redirect to `{ name: 'Admin Users' }`
+  - `users` → `Admin Users`
+  - `users/:id` → `Admin User`
+  - `organizations` → `Admin Organizations`
+  - `organizations/:organizationId` → `Admin Organization`
+  - `readiness` → `Admin Readiness`
+  - `activity` → `Admin Activity`
+- **CHANGED:** `src/modules/admin/views/admin.layout.vue` — the tab bar
+  now renders built-in tabs + `config.admin.tabs` extras in one flat row.
+  The global error banner and the mailer warning were moved from the old
+  `admin.content.vue` into the layout so they stay visible across every
+  admin tab (including downstream extras).
+- Readiness and Activity now fetch their data on `mounted()` (previously
+  via a `watch: { tab }` inside the old nested window).
+
+### Action for downstream projects
+
+**No config change is required.** The mechanism for contributing extra
+admin tabs via `config.admin.tabs` + `injectAdminChildren` is unchanged,
+and extras continue to render inline inside the admin layout.
+
+1. Run `/update-stack` to pull the changes.
+2. Verify hard-coded links in your project. The old URL `/admin` used to
+   land on the nested "General" tab; it now 301-redirects to
+   `/admin/users`, so existing links keep working. If you want to point
+   somewhere else, use one of the new stable URLs:
+   - `/admin/users`
+   - `/admin/organizations`
+   - `/admin/readiness`
+   - `/admin/activity`
+   Optional check: `grep -r "/admin" src/`.
+3. Downstream projects that override `admin.content.vue` must delete the
+   override — the file no longer exists. Replace any such override with
+   a dedicated override of `admin.users.view.vue` /
+   `admin.organizations.view.vue` / `admin.readiness.view.vue` /
+   `admin.activity.view.vue`, or attach a custom tab via
+   `config.admin.tabs` + `injectAdminChildren`.
+4. No route-name breakage for downstream extras — `injectAdminChildren`
+   still mounts your routes as children of the same `/admin` parent.
+
+### Why
+
+Two stacked tab bars on `*/admin` (top-level General + extras, nested
+Users / Organizations / Readiness / Activity) was visually noisy and
+duplicated navigation. The original intent of `config.admin.tabs` was
+for downstream extras to live **alongside** the built-ins — not above
+them. Flattening gives every admin section a real URL, preserves
+deep-linking and browser back/forward, and keeps downstream extras
+config-driven with zero migration work.
+
+---
+
 ## Admin extra tabs are now nested routes (2026-04-12)
 
 **Breaking change.** Downstream projects that added admin tabs via

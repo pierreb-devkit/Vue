@@ -1,6 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+
+vi.mock('../stores/admin.store', () => ({
+  useAdminStore: () => ({
+    error: null,
+  }),
+}));
+
+vi.mock('../../auth/stores/auth.store', () => ({
+  useAuthStore: () => ({
+    serverConfig: null,
+  }),
+}));
 
 import AdminLayout from '../views/admin.layout.vue';
 
@@ -9,17 +22,18 @@ const baseConfig = {
 };
 
 /**
- * Mount admin layout with optional config overrides.
+ * Mount admin layout with optional config overrides and $route.path.
  * @param {object} configOverrides - merged into baseConfig
+ * @param {string} [routePath] - current route path (defaults to /admin/users)
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountLayout = (configOverrides = {}) =>
+const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
   mount(AdminLayout, {
     global: {
       plugins: [createVuetify()],
       mocks: {
         config: { ...baseConfig, ...configOverrides },
-        $route: { path: '/admin' },
+        $route: { path: routePath },
         $router: { push: vi.fn() },
       },
       stubs: {
@@ -31,6 +45,10 @@ const mountLayout = (configOverrides = {}) =>
   });
 
 describe('admin.layout', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   it('should render the page header', () => {
     const wrapper = mountLayout();
     expect(wrapper.find('.page-header-stub').exists()).toBe(true);
@@ -41,14 +59,17 @@ describe('admin.layout', () => {
     expect(wrapper.find('.router-view-stub').exists()).toBe(true);
   });
 
-  it('should render only the General tab when no extra tabs are configured', () => {
+  it('should render the four built-in tabs when no extras are configured', () => {
     const wrapper = mountLayout();
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(1);
-    expect(tabs[0].text()).toContain('General');
+    expect(tabs.length).toBe(4);
+    expect(tabs[0].text()).toContain('Users');
+    expect(tabs[1].text()).toContain('Organizations');
+    expect(tabs[2].text()).toContain('Readiness');
+    expect(tabs[3].text()).toContain('Activity');
   });
 
-  it('should render extra tabs from config.admin.tabs (relative routes)', () => {
+  it('should render built-in + extra tabs from config.admin.tabs in a single flat row', () => {
     const wrapper = mountLayout({
       admin: {
         tabs: [
@@ -58,9 +79,11 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(3);
-    expect(tabs[1].text()).toContain('Knowledge');
-    expect(tabs[2].text()).toContain('Costs');
+    expect(tabs.length).toBe(6);
+    expect(tabs[0].text()).toContain('Users');
+    expect(tabs[3].text()).toContain('Activity');
+    expect(tabs[4].text()).toContain('Knowledge');
+    expect(tabs[5].text()).toContain('Costs');
   });
 
   it('should resolve relative tab routes under /admin/', () => {
@@ -84,8 +107,8 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
-    expect(tabs[1].text()).toContain('Legacy');
+    expect(tabs.length).toBe(5); // 4 built-in + Legacy
+    expect(tabs[4].text()).toContain('Legacy');
     expect(wrapper.vm.tabTo({ route: '/admin/legacy' })).toBe('/admin/legacy');
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Legacy absolute tab route'));
     consoleWarnSpy.mockRestore();
@@ -103,8 +126,8 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2); // General + Ok
-    expect(tabs[1].text()).toContain('Ok');
+    expect(tabs.length).toBe(5); // 4 built-in + Ok
+    expect(tabs[4].text()).toContain('Ok');
     expect(consoleWarnSpy).toHaveBeenCalled();
     consoleWarnSpy.mockRestore();
   });
@@ -123,8 +146,8 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2); // General + Ok
-    expect(tabs[1].text()).toContain('Ok');
+    expect(tabs.length).toBe(5); // 4 built-in + Ok
+    expect(tabs[4].text()).toContain('Ok');
     expect(consoleWarnSpy).toHaveBeenCalled();
     consoleWarnSpy.mockRestore();
   });
@@ -140,8 +163,8 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2);
-    expect(tabs[1].text()).toContain('Valid');
+    expect(tabs.length).toBe(5); // 4 built-in + Valid
+    expect(tabs[4].text()).toContain('Valid');
   });
 
   it('should filter out absolute routes outside /admin/ and warn', () => {
@@ -155,7 +178,7 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(2); // General + Safe
+    expect(tabs.length).toBe(5); // 4 built-in + Safe
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('/evil/path'));
     consoleWarnSpy.mockRestore();
   });
@@ -163,62 +186,49 @@ describe('admin.layout', () => {
   it('should gracefully handle non-array admin.tabs', () => {
     const wrapper = mountLayout({ admin: { tabs: 'invalid' } });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    expect(tabs.length).toBe(1);
+    expect(tabs.length).toBe(4);
   });
 
-  it('should sync activeTab with the current route on deep-link', () => {
-    const wrapper = mount(AdminLayout, {
-      global: {
-        plugins: [createVuetify()],
-        mocks: {
-          config: {
-            ...baseConfig,
-            admin: { tabs: [{ value: 'knowledge', label: 'Knowledge', route: 'knowledge' }] },
-          },
-          $route: { path: '/admin/knowledge' },
-          $router: { push: vi.fn() },
-        },
-        stubs: {
-          RouterLink: true,
-          RouterView: { template: '<div class="router-view-stub" />' },
-          PageHeader: { template: '<div class="page-header-stub" />' },
-        },
-      },
-    });
+  it('should sync activeTab with the current route on deep-link to an extra tab', () => {
+    const wrapper = mountLayout(
+      { admin: { tabs: [{ value: 'knowledge', label: 'Knowledge', route: 'knowledge' }] } },
+      '/admin/knowledge',
+    );
     expect(wrapper.vm.activeTab).toBe('/admin/knowledge');
   });
 
-  it('should fall back to base path when the route does not match any tab', () => {
-    const wrapper = mount(AdminLayout, {
-      global: {
-        plugins: [createVuetify()],
-        mocks: {
-          config: baseConfig,
-          $route: { path: '/admin/users/abc' },
-          $router: { push: vi.fn() },
-        },
-        stubs: {
-          RouterLink: true,
-          RouterView: { template: '<div />' },
-          PageHeader: { template: '<div />' },
-        },
-      },
-    });
-    expect(wrapper.vm.activeTab).toBe('/admin');
+  it('should activate /admin/users by default', () => {
+    const wrapper = mountLayout({}, '/admin/users');
+    expect(wrapper.vm.activeTab).toBe('/admin/users');
+  });
+
+  it('should fall back to /admin/users when the route does not match any tab', () => {
+    const wrapper = mountLayout({}, '/admin/unknown');
+    expect(wrapper.vm.activeTab).toBe('/admin/users');
+  });
+
+  it('should keep the users tab active on detail routes (/admin/users/:id)', () => {
+    const wrapper = mountLayout({}, '/admin/users/abc');
+    expect(wrapper.vm.activeTab).toBe('/admin/users');
+  });
+
+  it('should keep the organizations tab active on detail routes', () => {
+    const wrapper = mountLayout({}, '/admin/organizations/org42');
+    expect(wrapper.vm.activeTab).toBe('/admin/organizations');
   });
 
   it('should update activeTab when the route changes', async () => {
     const wrapper = mountLayout({
       admin: { tabs: [{ value: 'knowledge', label: 'Knowledge', route: 'knowledge' }] },
     });
-    // Initial: $route.path === '/admin'
-    expect(wrapper.vm.activeTab).toBe('/admin');
-    // Simulate navigation
+    // Initial: $route.path === '/admin/users'
+    expect(wrapper.vm.activeTab).toBe('/admin/users');
+    // Simulate navigation to an extra tab
     wrapper.vm.$options.watch.$route.handler.call(wrapper.vm, { path: '/admin/knowledge' });
     expect(wrapper.vm.activeTab).toBe('/admin/knowledge');
   });
 
-  it('should render icons when provided', () => {
+  it('should render icons on both built-in and extra tabs', () => {
     const wrapper = mountLayout({
       admin: {
         tabs: [
@@ -227,7 +237,9 @@ describe('admin.layout', () => {
       },
     });
     const tabs = wrapper.findAllComponents({ name: 'VTab' });
-    const extraIcons = tabs[1].findAllComponents({ name: 'VIcon' });
+    // Each built-in tab has one icon; extras only when `icon` is set.
+    expect(tabs[0].findAllComponents({ name: 'VIcon' }).length).toBeGreaterThanOrEqual(1);
+    const extraIcons = tabs[4].findAllComponents({ name: 'VIcon' });
     expect(extraIcons.length).toBe(1);
     expect(extraIcons[0].props('icon')).toBe('fa-solid fa-book');
   });

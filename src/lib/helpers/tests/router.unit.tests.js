@@ -10,7 +10,7 @@ const makeAdminRoutes = () => [
     path: '/admin',
     component: { name: 'AdminLayout' },
     children: [
-      { path: '', name: 'Admin', component: { name: 'AdminContent' } },
+      { path: 'users', name: 'Admin Users', component: { name: 'AdminUsers' } },
       { path: 'users/:id', name: 'Admin User', component: { name: 'AdminUser' } },
     ],
   },
