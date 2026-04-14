@@ -12,7 +12,7 @@
       >
         <v-img
           v-if="hasAvatar"
-          :src="setImages(config.api, user.avatar, size * 2, null)"
+          :src="setImages(config.api, user.avatar, avatarSize, null)"
           :alt="fullName"
         />
         <span v-else :class="textColorClass" :style="{ fontSize: `${Math.max(size * 0.4, 10)}px`, fontWeight: 500 }">
@@ -30,6 +30,15 @@
  * Shows uploaded avatar image or falls back to colored initials.
  * Color is derived from email hash for consistency.
  */
+
+/**
+ * Allowed avatar sizes served by the backend `/api/uploads/images/` endpoint.
+ * Mirrors the sharp-resize whitelist in devkit Node
+ * `modules/uploads/config/uploads.{env}.config.js` (field `uploads.avatar.sharp.sizes`).
+ * Any value outside this list returns HTTP 422 "Wrong size param" — if you
+ * change one, update the other.
+ */
+const SHARP_SIZES = [128, 256, 512, 1024];
 
 /**
  * Determine whether a hex color is light (needs dark text for contrast).
@@ -79,6 +88,10 @@ export default {
   computed: {
     hasAvatar() {
       return !!(this.user && this.user.avatar && this.user.avatar !== '');
+    },
+    avatarSize() {
+      const requested = this.size * 2;
+      return SHARP_SIZES.find((s) => s >= requested) ?? SHARP_SIZES[SHARP_SIZES.length - 1];
     },
     initials() {
       if (!this.user) return '';

@@ -86,6 +86,33 @@ describe('user.avatar.component', () => {
     });
   });
 
+  describe('avatarSize computed', () => {
+    it('snaps size=24 (requested 48) to 128', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 24 });
+      expect(wrapper.vm.avatarSize).toBe(128);
+    });
+
+    it('snaps size=64 (requested 128) to 128', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 64 });
+      expect(wrapper.vm.avatarSize).toBe(128);
+    });
+
+    it('snaps size=200 (requested 400) to 512', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 200 });
+      expect(wrapper.vm.avatarSize).toBe(512);
+    });
+
+    it('snaps size=512 (requested 1024) to 1024', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 512 });
+      expect(wrapper.vm.avatarSize).toBe(1024);
+    });
+
+    it('caps size=600 (requested 1200) to 1024', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 600 });
+      expect(wrapper.vm.avatarSize).toBe(1024);
+    });
+  });
+
   describe('hasAvatar computed', () => {
     it('returns true when user has avatar', () => {
       const wrapper = createWrapper({ user: { avatar: 'photo.jpg', email: 'a@b.com' } });
