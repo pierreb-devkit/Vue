@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import UserAvatarComponent from '../components/user.avatar.component.vue';
 
 const mockConfig = {
@@ -83,6 +83,47 @@ describe('user.avatar.component', () => {
     it('returns empty string for null user', () => {
       const wrapper = createWrapper({ user: null });
       expect(wrapper.vm.fullName).toBe('');
+    });
+  });
+
+  describe('avatarSize computed', () => {
+    it('snaps size=24 (requested 48) to 128', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 24 });
+      expect(wrapper.vm.avatarSize).toBe(128);
+    });
+
+    it('snaps size=64 (requested 128) to 128', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 64 });
+      expect(wrapper.vm.avatarSize).toBe(128);
+    });
+
+    it('snaps size=200 (requested 400) to 512', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 200 });
+      expect(wrapper.vm.avatarSize).toBe(512);
+    });
+
+    it('snaps size=512 (requested 1024) to 1024', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 512 });
+      expect(wrapper.vm.avatarSize).toBe(1024);
+    });
+
+    it('caps size=600 (requested 1200) to 1024', () => {
+      const wrapper = createWrapper({ user: { email: 'a@b.com' }, size: 600 });
+      expect(wrapper.vm.avatarSize).toBe(1024);
+    });
+
+    it('uses snapped size when building avatar image URL', () => {
+      const setImages = vi.fn((api, file, size) => `${api.protocol}://${api.host}:${api.port}/api/uploads/images/${file}-${size}`);
+      const wrapper = mount(UserAvatarComponent, {
+        props: { user: { email: 'a@b.com', avatar: 'photo.jpg' }, size: 200 },
+        global: {
+          plugins: [vuetify],
+          config: { globalProperties: { config: mockConfig, setImages } },
+        },
+      });
+
+      expect(wrapper.vm.avatarSize).toBe(512);
+      expect(setImages).toHaveBeenCalledWith(mockConfig.api, 'photo.jpg', 512, null);
     });
   });
 
