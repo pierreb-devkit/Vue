@@ -11,12 +11,21 @@ describe('admin.router (structure)', () => {
     expect(Array.isArray(parent.children)).toBe(true);
   });
 
-  it('should expose the parent and Admin General / User / Organization children', () => {
+  it('should expose the parent and the four built-in + detail children', () => {
     expect(adminRoutes[0].name).toBe('Admin');
-    const names = adminRoutes[0].children.map((r) => r.name);
-    expect(names).toContain('Admin General');
+    const names = adminRoutes[0].children.map((r) => r.name).filter(Boolean);
+    expect(names).toContain('Admin Users');
+    expect(names).toContain('Admin Organizations');
+    expect(names).toContain('Admin Readiness');
+    expect(names).toContain('Admin Activity');
     expect(names).toContain('Admin User');
     expect(names).toContain('Admin Organization');
+  });
+
+  it('should redirect the empty child path to Admin Users', () => {
+    const empty = adminRoutes[0].children.find((r) => r.path === '');
+    expect(empty).toBeDefined();
+    expect(empty.redirect).toEqual({ name: 'Admin Users' });
   });
 
   it('should use relative paths for all children', () => {
@@ -25,11 +34,12 @@ describe('admin.router (structure)', () => {
     }
   });
 
-  it('should propagate CASL meta (action+subject) to all child routes', () => {
+  it('should propagate CASL meta (action+subject) to all named child routes', () => {
     const parent = adminRoutes[0];
     expect(parent.meta.action).toBe('manage');
     expect(parent.meta.subject).toBe('UserAdmin');
     for (const child of parent.children) {
+      if (!child.name) continue; // skip the redirect-only child
       expect(child.meta.action).toBe('manage');
       expect(child.meta.subject).toBe('UserAdmin');
     }
@@ -71,15 +81,31 @@ describe('admin.router (integration with vue-router)', () => {
     });
   };
 
-  it('should resolve /admin to the nested Admin General child route', async () => {
+  it('should redirect /admin to /admin/users', async () => {
     const router = buildRouter();
     await router.push('/admin');
+    expect(router.currentRoute.value.path).toBe('/admin/users');
+    expect(router.currentRoute.value.name).toBe('Admin Users');
+  });
+
+  it('should resolve /admin/users to the Admin Users child route via the layout parent', async () => {
+    const router = buildRouter();
+    await router.push('/admin/users');
     const matched = router.currentRoute.value.matched;
-    // matched[0] = layout parent (named "Admin"), matched[1] = empty child "Admin General"
     expect(matched.length).toBe(2);
     expect(matched[0].path).toBe('/admin');
     expect(matched[0].name).toBe('Admin');
-    expect(matched[1].name).toBe('Admin General');
+    expect(matched[1].name).toBe('Admin Users');
+  });
+
+  it('should resolve /admin/organizations, /admin/readiness, /admin/activity', async () => {
+    const router = buildRouter();
+    await router.push('/admin/organizations');
+    expect(router.currentRoute.value.name).toBe('Admin Organizations');
+    await router.push('/admin/readiness');
+    expect(router.currentRoute.value.name).toBe('Admin Readiness');
+    await router.push('/admin/activity');
+    expect(router.currentRoute.value.name).toBe('Admin Activity');
   });
 
   it('should resolve /admin/users/:id to Admin User via the layout parent', async () => {
@@ -124,20 +150,20 @@ describe('admin.router (integration with vue-router)', () => {
       { path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } },
     ];
     const router = buildRouter([{ name: 'knowledge', routes: knowledge }]);
-    await router.push('/admin');
+    await router.push('/admin/users');
     const beforeLayout = router.currentRoute.value.matched[0];
     await router.push('/admin/knowledge');
     const afterLayout = router.currentRoute.value.matched[0];
     // Same parent layout component instance => tabs don't unmount
     expect(afterLayout.path).toBe(beforeLayout.path);
     expect(afterLayout.components.default).toBe(beforeLayout.components.default);
-    // Go back — should return to /admin with the same parent layout.
+    // Go back — should return to /admin/users with the same parent layout.
     await new Promise((resolve) => {
       router.back();
       router.afterEach(() => resolve());
     });
-    expect(router.currentRoute.value.path).toBe('/admin');
-    expect(router.currentRoute.value.name).toBe('Admin General');
+    expect(router.currentRoute.value.path).toBe('/admin/users');
+    expect(router.currentRoute.value.name).toBe('Admin Users');
     expect(router.currentRoute.value.matched[0].components.default).toBe(beforeLayout.components.default);
     // Go forward — should return to /admin/knowledge, parent still the same.
     await new Promise((resolve) => {
@@ -167,8 +193,8 @@ describe('admin.router (integration with vue-router)', () => {
 
   it('should still work when no extra tabs are configured (no regression)', async () => {
     const router = buildRouter();
-    await router.push('/admin');
-    expect(router.currentRoute.value.name).toBe('Admin General');
+    await router.push('/admin/users');
+    expect(router.currentRoute.value.name).toBe('Admin Users');
     expect(router.currentRoute.value.matched.length).toBe(2);
     expect(router.currentRoute.value.matched[0].name).toBe('Admin');
   });

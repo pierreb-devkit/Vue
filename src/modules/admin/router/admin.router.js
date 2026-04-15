@@ -2,7 +2,10 @@
  * Module dependencies.
  */
 import adminLayout from '../views/admin.layout.vue';
-import adminContent from '../views/admin.content.vue';
+import adminUsers from '../views/admin.users.view.vue';
+import adminOrganizations from '../views/admin.organizations.view.vue';
+import adminReadiness from '../views/admin.readiness.view.vue';
+import adminActivity from '../views/admin.activity.view.vue';
 import adminUser from '../views/admin.user.view.vue';
 import adminOrganization from '../views/admin.organization.view.vue';
 
@@ -10,14 +13,17 @@ import adminOrganization from '../views/admin.organization.view.vue';
  * Router configuration.
  *
  * The admin module exports a **parent route** (`/admin`) whose component
- * is the admin layout (page header + tab bar + `<router-view>`). Built-in
- * views (general content, user/organization detail) and any downstream
- * injected child routes are rendered inside that `<router-view>`.
+ * is the admin layout (page header + tab bar + `<router-view>`). Each
+ * built-in section (Users, Organizations, Readiness, Activity) is a
+ * routed child so that the tab bar and the downstream-contributed extras
+ * (`config.admin.tabs`) live in one flat navigation row.
  *
- * Downstream modules should **not** add sibling routes like
- * `/admin/knowledge` anymore. Instead, register them via the
- * `injectAdminChildren` helper in `@/lib/helpers/router` so they become
- * children of this parent route.
+ * Detail views (`users/:id`, `organizations/:organizationId`) are also
+ * children of the same parent — they deep-link inside the layout.
+ *
+ * Downstream modules that contribute an "admin tab" must register their
+ * routes via the `injectAdminChildren` helper in `@/lib/helpers/router`
+ * with **relative** paths (e.g. `'knowledge'`, not `'/admin/knowledge'`).
  */
 export default [
   {
@@ -33,8 +39,12 @@ export default [
     children: [
       {
         path: '',
-        name: 'Admin General',
-        component: adminContent,
+        redirect: { name: 'Admin Users' },
+      },
+      {
+        path: 'users',
+        name: 'Admin Users',
+        component: adminUsers,
         meta: {
           action: 'manage', subject: 'UserAdmin',
         },
@@ -49,11 +59,35 @@ export default [
         },
       },
       {
+        path: 'organizations',
+        name: 'Admin Organizations',
+        component: adminOrganizations,
+        meta: {
+          action: 'manage', subject: 'UserAdmin',
+        },
+      },
+      {
         path: 'organizations/:organizationId',
         name: 'Admin Organization',
         component: adminOrganization,
         meta: {
           display: false,
+          action: 'manage', subject: 'UserAdmin',
+        },
+      },
+      {
+        path: 'readiness',
+        name: 'Admin Readiness',
+        component: adminReadiness,
+        meta: {
+          action: 'manage', subject: 'UserAdmin',
+        },
+      },
+      {
+        path: 'activity',
+        name: 'Admin Activity',
+        component: adminActivity,
+        meta: {
           action: 'manage', subject: 'UserAdmin',
         },
       },
