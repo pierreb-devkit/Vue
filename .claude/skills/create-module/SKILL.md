@@ -1,6 +1,11 @@
 ---
 name: create-module
-description: Create a new feature module by duplicating the canonical `tasks` module template. Use when adding a new module to the application, scaffolding a new domain area from scratch, or generating the boilerplate for a new feature.
+description: >
+  Use this whenever the user asks to "create a module", "scaffold a feature",
+  "add a Vue domain", "new module called X", or starts work on a brand-new
+  vertical (views + components + store + router entry + tests). Duplicates
+  the canonical `src/modules/tasks` template, applies kebab/Pascal/camel/
+  UPPER renames, and wires config-driven values. Module stays self-contained.
 ---
 
 # Create Module Skill

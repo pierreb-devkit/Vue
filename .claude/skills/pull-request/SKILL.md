@@ -1,6 +1,13 @@
 ---
 name: pull-request
-description: Full PR lifecycle — branch, commit, issue, draft PR, CI, ready, autonomous monitor loop (fix comments, resolve threads, iterate until CI green and zero actionable threads).
+description: >
+  Use this whenever the user asks to "open a PR", "ship this", "create the
+  pull request", "make a PR", or once a Vue feature/fix is verified and ready
+  to push. Full lifecycle: branch → commit (commitizen) → issue → draft PR →
+  CI → ready → autonomous monitor loop (fix comments, resolve threads,
+  iterate until CI green + zero unresolved threads). `--perfect` adds a
+  CodeRabbit convergence loop on top. Never works on `main`/`master`, never
+  uses `--no-verify`.
 ---
 
 # Pull Request Skill
