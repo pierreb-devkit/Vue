@@ -1,6 +1,13 @@
 ---
 name: feature
-description: Implement a new feature or modify existing functionality. Use when asked to implement, add, build, create, or modify a feature, page, component, or module. Includes scope analysis, edge case detection, module scaffolding, implementation with UI quality, and verification.
+description: >
+  Use this whenever the user asks to "implement", "add", "build", "create",
+  or "modify" a feature, page, view, component, or module in this Vue
+  project. Three phases: Phase 0 scope analysis (flows + edge cases + UI
+  needs + plan validation, STOP for user), Phase 1 implementation (layered
+  UI → Store → API, Vue 3 Composition + Vuetify 4, /ui design rules), Phase
+  2 Definition-of-Done checklist + /verify + /pull-request. Auto-runs
+  /create-module if the target module doesn't exist.
 ---
 
 # Feature Skill

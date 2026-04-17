@@ -1,6 +1,12 @@
 ---
 name: update-stack
-description: Merge the latest changes from the Devkit Vue stack repository into a downstream project. Use when pulling stack updates, syncing with upstream via `git merge devkit-vue/master`, or resolving merge conflicts from stack updates.
+description: >
+  Use this whenever a downstream Vue project needs to absorb upstream Devkit
+  Vue changes — triggers on "update stack", "sync with devkit", "merge
+  upstream", "pull stack updates", "resolve stack conflicts". Two-phase: ISO
+  merge (stack modules stay byte-identical to upstream) then project
+  alignment (apply MIGRATIONS.md, diff project modules vs `tasks` reference,
+  /verify). Stack-code failures get an issue on `pierreb-devkit/Vue`.
 ---
 
 # Update Stack Skill

@@ -1,6 +1,12 @@
 ---
 name: verify
-description: Run quality loop (audit + lint + tests + build) to verify code quality, correctness, and UI completeness. Use after making changes and before committing.
+description: >
+  Run this after every code change in this Vue project, before committing,
+  before opening a PR, or whenever the user says "verify", "check", "lint",
+  "run tests", "build", "audit". Diff audit (router guards, store boundaries,
+  UX, /ui consistency, error handling) → lint → tests + coverage gate →
+  build. Coverage drops → add tests, never lower thresholds. Triggers on
+  "is this ready to commit?", "any issues?", "tests passing?".
 ---
 
 # Verify Skill

@@ -1,6 +1,13 @@
 ---
 name: naming
-description: Check or apply file and folder naming conventions for this Vue project. Use when creating new files or folders, renaming existing ones, auditing a module for naming consistency, or any time the correct name/path for a file is unclear.
+description: >
+  Use this whenever a new file/folder is created or renamed in this Vue
+  project, when reviewing a module for consistency, or when the right path
+  for a file is unclear. Also triggers on "what should I name this?", "is
+  this file named correctly?", "audit module naming". Enforces kebab-case
+  folders, dot-prefixed `{module}.{name}.{type}.vue|js` files, multi-entity
+  rules, singular vs plural for views, and the layered structure
+  UI → Store → API.
 ---
 
 # Naming Skill
