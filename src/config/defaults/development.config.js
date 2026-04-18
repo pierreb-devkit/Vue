@@ -5,7 +5,8 @@ export default {
     description: 'Vue - Boilerplate Front : Vuetify, Axios, Jest, Cypress (Alpha) ', // <meta name="description">
     keywords: 'vue, vuetify, axios, jest, cypress', // <meta name="keywords">
     author: 'pierre@devkit.me', // <meta name="author">
-    icon: 'fa-solid fa-earth-americas', // FontAwesome icon class for app icon
+    icon: 'fa-solid fa-earth-americas', // FontAwesome icon class for app icon (sidenav fallback when logoFile unset)
+    logoFile: null, // Optional: path to SVG/PNG (e.g. '/images/logo.svg' in /public) for a branded sidenav logo — takes precedence over icon
     lang: 'en', // html lang attribute — 'en' | 'fr' | 'de' | 'es' | etc.
     url: 'http://localhost:8080', // canonical base URL — override in production
     notFound: {
