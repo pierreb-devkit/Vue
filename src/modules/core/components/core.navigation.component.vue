@@ -28,11 +28,21 @@
       <!-- Logo / drawer on mobile-->
       <v-list :style="listStyle" nav class="pt-4">
         <v-list-item
+          to="/"
           :style="{ color: navColor }"
         >
           <template #prepend>
+            <v-img
+              v-if="config.app.logoFile"
+              :src="config.app.logoFile"
+              :alt="config.app.title"
+              width="32"
+              height="32"
+              class="ms-n1"
+              inline
+            ></v-img>
             <v-icon
-              v-if="config.app.title && !($vuetify.display.mobile && !isGlass)"
+              v-else-if="config.app.title && !($vuetify.display.mobile && !isGlass)"
               :style="{ color: navColor, opacity: 1 }"
               :icon="config.app.icon"
               size="large"

@@ -38,10 +38,11 @@ import CoreNavigation from '../components/core.navigation.component.vue';
 
 /**
  * @desc Minimal config mock — only the keys the component reads.
+ * @param {Object} [overrides] - partial overrides merged onto the default config
  * @returns {Object}
  */
-const makeConfig = () => ({
-  app: { title: 'Test App', icon: 'fa-solid fa-cube' },
+const makeConfig = (overrides = {}) => ({
+  app: { title: 'Test App', icon: 'fa-solid fa-cube', logoFile: null, ...(overrides.app || {}) },
   header: { socials: [] },
   vuetify: {
     theme: {
@@ -63,9 +64,10 @@ const makeConfig = () => ({
  * @param {Object} opts
  * @param {Array}  opts.nav - items for the main nav list
  * @param {Array}  opts.navBottom - items for the bottom nav list
+ * @param {Object} [opts.configOverrides] - partial config overrides (e.g. { app: { logoFile: '/logo.svg' } })
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountNav = ({ nav = [], navBottom = [] } = {}) => {
+const mountNav = ({ nav = [], navBottom = [], configOverrides = {} } = {}) => {
   coreStoreState.nav = nav;
   coreStoreState.navBottom = navBottom;
   const vuetify = createVuetify({ components, directives });
@@ -73,7 +75,7 @@ const mountNav = ({ nav = [], navBottom = [] } = {}) => {
     global: {
       plugins: [vuetify],
       mocks: {
-        config: makeConfig(),
+        config: makeConfig(configOverrides),
         $vuetify: { display: { mobile: false } },
       },
       stubs: {
@@ -221,5 +223,48 @@ describe('core.navigation.component — template rendering', () => {
     expect(html).toContain('Tasks');
     expect(html).toContain('API Docs');
     expect(html).toContain('href="https://api.trawl.me/api/docs"');
+  });
+});
+
+describe('core.navigation.component — sidenav logo', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('renders a v-img when config.app.logoFile is set', () => {
+    const wrapper = mountNav({ configOverrides: { app: { logoFile: '/images/logo.svg' } } });
+    const img = wrapper.findComponent({ name: 'VImg' });
+    expect(img.exists()).toBe(true);
+    expect(img.props('src')).toBe('/images/logo.svg');
+    // FA icon for the app logo must NOT be rendered when logoFile takes precedence
+    const icons = wrapper.findAllComponents({ name: 'VIcon' });
+    const hasAppIcon = icons.some((i) => i.props('icon') === 'fa-solid fa-cube');
+    expect(hasAppIcon).toBe(false);
+  });
+
+  it('exposes the app.title as alt text on the logo image', () => {
+    const wrapper = mountNav({ configOverrides: { app: { logoFile: '/images/logo.svg', title: 'Brand Alpha' } } });
+    const img = wrapper.findComponent({ name: 'VImg' });
+    expect(img.exists()).toBe(true);
+    expect(img.props('alt')).toBe('Brand Alpha');
+  });
+
+  it('falls back to the FA icon when logoFile is unset (back-compat)', () => {
+    const wrapper = mountNav();
+    // No v-img rendered for the logo
+    const img = wrapper.findComponent({ name: 'VImg' });
+    expect(img.exists()).toBe(false);
+  });
+
+  it('wraps the logo v-list-item with to="/" in both branches', () => {
+    // FA branch — first v-list-item is the logo item
+    const wrapperIcon = mountNav();
+    const logoItemIcon = wrapperIcon.findAllComponents({ name: 'VListItem' })[0];
+    expect(logoItemIcon.props('to')).toBe('/');
+
+    // logoFile branch
+    const wrapperImg = mountNav({ configOverrides: { app: { logoFile: '/images/logo.svg' } } });
+    const logoItemImg = wrapperImg.findAllComponents({ name: 'VListItem' })[0];
+    expect(logoItemImg.props('to')).toBe('/');
   });
 });
