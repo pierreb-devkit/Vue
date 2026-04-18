@@ -3,7 +3,7 @@
     <div class="pa-4">
       <v-card width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
         <v-progress-linear :active="readinessLoading" indeterminate color="primary"></v-progress-linear>
-        <v-table v-if="readiness.length"
+        <v-table v-if="!readinessLoading && readiness.length"
           ><thead>
             <tr>
               <th class="text-left text-label-medium">Category</th>

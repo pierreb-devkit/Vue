@@ -52,7 +52,7 @@
           >
         </v-card-title>
         <v-progress-linear :active="activityLoading" indeterminate color="primary"></v-progress-linear>
-        <v-table v-if="auditLogs.length" fixed-header
+        <v-table v-if="!activityLoading && auditLogs.length" fixed-header
           ><thead>
             <tr>
               <th class="text-left text-label-medium">Date</th>
