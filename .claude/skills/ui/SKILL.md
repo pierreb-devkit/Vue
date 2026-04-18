@@ -15,9 +15,7 @@ Design system reference and visual quality guidelines for the Devkit Vue stack.
 
 Invoke `/ui` directly only for pure design tasks (restyle, theme change, layout fix) that don't need the full `/feature` workflow.
 
-## Design thinking
-
-Before any visual work, read the [Anthropic frontend-design guidelines](https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md) for design thinking, typography, color, motion, spatial composition, and anti-patterns. Apply those principles, then constrain with the stack's design system below.
+This skill is an **enforcer**, not a creative brief. Its job is to keep visual work within the stack's design system (Vuetify 4 + MD3 + theme helpers). Creative direction for net-new identity work (landings, brand, bold aesthetic stances) belongs outside this skill.
 
 ## References
 
