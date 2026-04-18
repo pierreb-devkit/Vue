@@ -12,8 +12,8 @@
       >
         <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
       </v-alert>
-      <template v-else>
-        <div class="d-flex align-center ga-2 flex-wrap mb-4">
+      <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+        <v-card-title class="d-flex align-center flex-wrap ga-2">
           <v-text-field
             v-model="activityFilterAction"
             placeholder="Filter by action"
@@ -50,9 +50,9 @@
             @click="clearActivityFilters"
             >Clear</v-btn
           >
-        </div>
-        <v-progress-linear :active="activityLoading" indeterminate color="primary" class="mb-4"></v-progress-linear>
-        <v-table v-if="auditLogs.length" fixed-header
+        </v-card-title>
+        <v-progress-linear :active="activityLoading" indeterminate color="primary"></v-progress-linear>
+        <v-table v-if="!activityLoading && auditLogs.length" fixed-header
           ><thead>
             <tr>
               <th class="text-left text-label-medium">Date</th>
@@ -93,8 +93,8 @@
             >
           </tbody></v-table
         >
-        <div v-if="!activityLoading && !auditLogs.length" class="text-medium-emphasis text-body-medium">No audit logs found.</div>
-        <div class="d-flex align-center justify-end mt-4 ga-2">
+        <div v-if="!activityLoading && !auditLogs.length" class="pa-4 text-medium-emphasis text-body-medium">No audit logs found.</div>
+        <v-card-actions class="d-flex align-center justify-end ga-2">
           <span class="text-body-small text-medium-emphasis mr-2">Per page</span
           ><v-select
             v-model="activityPerPage"
@@ -111,8 +111,8 @@
           ><v-btn :disabled="!activityHasNextPage" variant="text" icon size="small" @click="activityNextPage"
             ><v-icon icon="fa-solid fa-angle-right" size="small"></v-icon
           ></v-btn>
-        </div>
-      </template>
+        </v-card-actions>
+      </v-card>
     </div>
   </v-container>
 </template>

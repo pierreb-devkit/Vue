@@ -25,6 +25,9 @@ vi.mock('../../../lib/services/config', () => ({
 const vuetifyStubs = {
   'v-container': { template: '<div><slot /></div>' },
   'v-alert': { template: '<div><slot /></div>' },
+  'v-card': { template: '<div><slot /></div>' },
+  'v-card-title': { template: '<div><slot /></div>' },
+  'v-card-actions': { template: '<div><slot /></div>' },
   'v-table': { template: '<div><slot /></div>' },
   'v-chip': { template: '<span><slot /></span>' },
   'v-icon': { template: '<i />' },
