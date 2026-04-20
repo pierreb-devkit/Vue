@@ -195,7 +195,7 @@ describe('Users Store', () => {
 
       axios.put.mockResolvedValueOnce({ data: { data: updatedUser } });
 
-      await usersStore.updateUser({ id: '789' });
+      await usersStore.updateUser({ id: '789' }, updatedUser);
 
       expect(usersStore.user).toMatchObject(updatedUser);
     });
