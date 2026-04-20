@@ -85,10 +85,20 @@ export const useAdminStore = defineStore('admin', {
       }
     },
 
+    /**
+     * @desc Update a user via the admin API using a partial patch.
+     * Only the fields present in `formData` (after whitelist sanitization) are sent,
+     * so callers must provide every field they want persisted. Merging with the
+     * local `this.user` placeholder is intentionally avoided to prevent empty
+     * defaults from wiping persisted fields (e.g. role-toggle from the list view).
+     * @param {{ id: string }} params - Route params, must contain the target user id.
+     * @param {Object} [formData] - Partial user payload (whitelisted fields only).
+     * @returns {Promise<void>}
+     */
     async updateUser(params, formData) {
       this.error = null;
       try {
-        const obj = model.clean({ ...this.user, ...formData }, whitelists);
+        const obj = model.clean(formData || {}, whitelists);
         const res = await axios.put(`${apiBase()}/admin/users/${params.id}`, obj);
         assign(this.user, res.data.data);
       } catch (err) {
