@@ -257,9 +257,22 @@ describe('Admin Store', () => {
 
       axios.put.mockResolvedValueOnce({ data: { data: updatedUser } });
 
-      await store.updateUser({ id: '123' });
+      await store.updateUser({ id: '123' }, { firstName: 'New', email: 'new@example.com' });
 
       expect(store.user).toMatchObject(updatedUser);
+    });
+
+    // Regression: toggleUserRole from the admin users list passes only { roles }
+    // as formData while store.user is the untouched defaultUser() placeholder.
+    // Merging the two would send empty firstName/lastName/email and _.assignIn
+    // on the server wipes those fields in DB. Payload must be the patch alone.
+    it('sends only the provided patch, never the stale store.user placeholder', async () => {
+      const store = useAdminStore();
+      axios.put.mockResolvedValueOnce({ data: { data: { id: '123', roles: ['user', 'admin'] } } });
+
+      await store.updateUser({ id: '123' }, { roles: ['user', 'admin'] });
+
+      expect(axios.put).toHaveBeenCalledWith(expect.stringContaining('/admin/users/123'), { roles: ['user', 'admin'] });
     });
 
     it('should handle error and set error state', async () => {

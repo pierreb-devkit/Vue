@@ -214,7 +214,7 @@ describe('Users Store', () => {
 
     it('should send only whitelisted fields to the API (not _id, updated, created)', async () => {
       const usersStore = useAdminStore();
-      usersStore.user = {
+      const formData = {
         _id: 'should-not-be-sent',
         firstName: 'John',
         lastName: 'Doe',
@@ -228,9 +228,9 @@ describe('Users Store', () => {
       };
 
       axios.put.mockClear();
-      axios.put.mockResolvedValueOnce({ data: { data: usersStore.user } });
+      axios.put.mockResolvedValueOnce({ data: { data: formData } });
 
-      await usersStore.updateUser({ id: 'should-not-be-sent' });
+      await usersStore.updateUser({ id: 'should-not-be-sent' }, formData);
 
       const sentPayload = axios.put.mock.calls[0][1];
       expect(sentPayload).not.toHaveProperty('_id');

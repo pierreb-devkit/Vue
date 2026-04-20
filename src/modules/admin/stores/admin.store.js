@@ -88,7 +88,7 @@ export const useAdminStore = defineStore('admin', {
     async updateUser(params, formData) {
       this.error = null;
       try {
-        const obj = model.clean({ ...this.user, ...formData }, whitelists);
+        const obj = model.clean(formData || {}, whitelists);
         const res = await axios.put(`${apiBase()}/admin/users/${params.id}`, obj);
         assign(this.user, res.data.data);
       } catch (err) {
