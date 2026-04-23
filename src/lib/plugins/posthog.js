@@ -47,9 +47,7 @@ export default {
         session_recording: { maskAllInputs: true },
       }),
 
-      ...(!isEnabled(phConfig.featureFlags) && {
-        bootstrap: { featureFlags: {} },
-      }),
+      advanced_disable_feature_flags: !isEnabled(phConfig.featureFlags),
 
       disable_surveys: !isEnabled(phConfig.surveys),
       capture_performance: isEnabled(phConfig.webVitals),

@@ -42,10 +42,11 @@ const captureException = (err, ctx = {}) => {
   try {
     const phConfig = config?.analytics?.posthog;
     if (phConfig?.key && isEnabled(phConfig?.errorTracking)) {
+      const isError = err instanceof Error;
       posthog.capture('$exception', {
-        $exception_message: err?.message,
-        $exception_type: err?.name,
-        $exception_stack: err?.stack,
+        $exception_message: isError ? err.message : String(err ?? 'Unknown error'),
+        $exception_type: isError ? err.name : typeof err === 'object' ? 'Non-Error' : typeof err,
+        $exception_stack: isError ? err.stack : undefined,
         ...ctx,
       });
     }

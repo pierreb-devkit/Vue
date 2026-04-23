@@ -110,20 +110,22 @@ describe('posthog plugin', () => {
     );
   });
 
-  it('bootstraps empty feature flags when featureFlags=false (prevents initial fetch)', () => {
+  it('sets advanced_disable_feature_flags=true when featureFlags=false (prevents initial fetch)', () => {
     const app = makeApp({ key: 'phc_testkey', featureFlags: false });
     posthogPlugin.install(app);
     expect(posthog.init).toHaveBeenCalledWith(
       'phc_testkey',
-      expect.objectContaining({ bootstrap: { featureFlags: {} } }),
+      expect.objectContaining({ advanced_disable_feature_flags: true }),
     );
   });
 
-  it('does not bootstrap feature flags when featureFlags=true (allows fetch)', () => {
+  it('sets advanced_disable_feature_flags=false when featureFlags=true (allows fetch)', () => {
     const app = makeApp({ key: 'phc_testkey', featureFlags: true });
     posthogPlugin.install(app);
-    const callArgs = posthog.init.mock.calls[0][1];
-    expect(callArgs.bootstrap).toBeUndefined();
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ advanced_disable_feature_flags: false }),
+    );
   });
 
   it('disables surveys by default (surveys=false)', () => {
@@ -160,5 +162,82 @@ describe('posthog plugin', () => {
       'phc_testkey',
       expect.objectContaining({ capture_performance: true }),
     );
+  });
+
+  it('disables feature flags by default via advanced_disable_feature_flags', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ advanced_disable_feature_flags: true }),
+    );
+  });
+
+  it('enables feature flags when featureFlags=true', () => {
+    const app = makeApp({ key: 'phc_testkey', featureFlags: true });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ advanced_disable_feature_flags: false }),
+    );
+  });
+
+  it('enables capture_pageleave when capturePageleave=true', () => {
+    const app = makeApp({ key: 'phc_testkey', capturePageleave: true });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ capture_pageleave: true }),
+    );
+  });
+
+  describe('docker string normalization for opt-in flags', () => {
+    it('enables session replay on sessionReplay="true"', () => {
+      const app = makeApp({ key: 'phc_testkey', sessionReplay: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({
+          disable_session_recording: false,
+          session_recording: { maskAllInputs: true },
+        }),
+      );
+    });
+
+    it('enables feature flags on featureFlags="true"', () => {
+      const app = makeApp({ key: 'phc_testkey', featureFlags: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ advanced_disable_feature_flags: false }),
+      );
+    });
+
+    it('enables surveys on surveys="true"', () => {
+      const app = makeApp({ key: 'phc_testkey', surveys: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ disable_surveys: false }),
+      );
+    });
+
+    it('enables web vitals on webVitals="true"', () => {
+      const app = makeApp({ key: 'phc_testkey', webVitals: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ capture_performance: true }),
+      );
+    });
+
+    it('enables capture_pageleave on capturePageleave="true"', () => {
+      const app = makeApp({ key: 'phc_testkey', capturePageleave: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ capture_pageleave: true }),
+      );
+    });
   });
 });

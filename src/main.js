@@ -54,11 +54,23 @@ app.config.errorHandler = (err, instance, info) => {
 
 app.mount('#app');
 
-// Unhandled promise rejections — browser-level safety net
+// Window-level safety net — Sentry's native onerror/onunhandledrejection are
+// disabled (see plugins/sentry.js) so our fan-out is the single capture path.
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     captureException(
       event.reason instanceof Error ? event.reason : new Error(String(event.reason ?? 'Unhandled rejection')),
     );
+  });
+
+  window.addEventListener('error', (event) => {
+    const error = event.error instanceof Error
+      ? event.error
+      : new Error(event.message || 'Uncaught error');
+    captureException(error, {
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    });
   });
 }

@@ -179,4 +179,69 @@ describe('errorTracker helper', () => {
       }));
     });
   });
+
+  describe('tracker failure isolation', () => {
+    it('should still call PostHog when Sentry throws, and never rethrow', () => {
+      config.analytics = {
+        sentry: { dsn: 'https://fake@sentry.io/4', enabled: true },
+        posthog: { key: 'ph_test_key', errorTracking: true },
+      };
+      Sentry.captureException.mockImplementationOnce(() => { throw new Error('sentry down'); });
+
+      expect(() => captureException(new Error('boom'))).not.toThrow();
+      expect(posthog.capture).toHaveBeenCalledTimes(1);
+    });
+
+    it('should still call Sentry when PostHog throws, and never rethrow', () => {
+      config.analytics = {
+        sentry: { dsn: 'https://fake@sentry.io/5', enabled: true },
+        posthog: { key: 'ph_test_key', errorTracking: true },
+      };
+      posthog.capture.mockImplementationOnce(() => { throw new Error('posthog down'); });
+
+      expect(() => captureException(new Error('boom'))).not.toThrow();
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('non-Error reason normalization', () => {
+    beforeEach(() => {
+      config.analytics = {
+        sentry: {},
+        posthog: { key: 'ph_test_key', errorTracking: true },
+      };
+    });
+
+    it('should normalise a string reason into $exception_message', () => {
+      captureException('plain string rejection');
+      expect(posthog.capture).toHaveBeenCalledWith('$exception', expect.objectContaining({
+        $exception_message: 'plain string rejection',
+        $exception_type: 'string',
+        $exception_stack: undefined,
+      }));
+    });
+
+    it('should fall back to "Unknown error" for null/undefined reason', () => {
+      captureException(null);
+      expect(posthog.capture).toHaveBeenCalledWith('$exception', expect.objectContaining({
+        $exception_message: 'Unknown error',
+        $exception_type: 'Non-Error',
+      }));
+    });
+
+    it('should tag plain object reasons as Non-Error', () => {
+      captureException({ weird: true });
+      expect(posthog.capture).toHaveBeenCalledWith('$exception', expect.objectContaining({
+        $exception_type: 'Non-Error',
+      }));
+    });
+
+    it('should tag primitive number reason with its typeof', () => {
+      captureException(42);
+      expect(posthog.capture).toHaveBeenCalledWith('$exception', expect.objectContaining({
+        $exception_message: '42',
+        $exception_type: 'number',
+      }));
+    });
+  });
 });
