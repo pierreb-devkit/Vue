@@ -10,6 +10,7 @@ import router from './modules/app/app.router';
 import plugins from './lib/plugins';
 import config from './config/index.js';
 import { ability } from './lib/helpers/ability';
+import { captureException } from './lib/helpers/errorTracker.js';
 import App from './modules/app/app.vue';
 
 const app = createApp(App);
@@ -38,4 +39,19 @@ app
 // Initialize stores after all plugins are loaded
 initializeStores(routes);
 
+// Wire global error handlers — fan-out to active trackers (Sentry / PostHog)
+// Must be set after plugins so Sentry is already initialised
+app.config.errorHandler = (err) => {
+  captureException(err instanceof Error ? err : new Error(String(err)));
+};
+
 app.mount('#app');
+
+// Unhandled promise rejections — browser-level safety net
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    captureException(
+      event.reason instanceof Error ? event.reason : new Error(String(event.reason ?? 'Unhandled rejection')),
+    );
+  });
+}

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 
-vi.mock('@sentry/vue', () => ({
+vi.mock('../../../lib/helpers/errorTracker.js', () => ({
   captureException: vi.fn(),
 }));
 
-import * as Sentry from '@sentry/vue';
+import { captureException } from '../../../lib/helpers/errorTracker.js';
 import ErrorBoundary from '../components/app.errorBoundary.component.vue';
 
 /** @type {Object} Mock application configuration used by the ErrorBoundary component. */
@@ -59,11 +59,11 @@ describe('AppErrorBoundary', () => {
     expect(wrapper.vm.hasError).toBe(true);
   });
 
-  it('reports error to Sentry when child throws', () => {
+  it('reports error via errorTracker.captureException when child throws', () => {
     mountBoundary(ChildError);
-    expect(Sentry.captureException).toHaveBeenCalledOnce();
-    expect(Sentry.captureException.mock.calls[0][0]).toBeInstanceOf(Error);
-    expect(Sentry.captureException.mock.calls[0][0].message).toBe('render boom');
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException.mock.calls[0][0]).toBeInstanceOf(Error);
+    expect(captureException.mock.calls[0][0].message).toBe('render boom');
   });
 
   it('resets error state on retry', () => {

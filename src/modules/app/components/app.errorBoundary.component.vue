@@ -31,7 +31,7 @@
  * Module dependencies.
  */
 import { ref, onErrorCaptured } from 'vue';
-import * as Sentry from '@sentry/vue';
+import { captureException } from '../../../lib/helpers/errorTracker.js';
 
 /**
  * Component definition.
@@ -48,7 +48,7 @@ export default {
 
     onErrorCaptured((err) => {
       hasError.value = true;
-      Sentry.captureException(err);
+      captureException(err);
       return false; // prevent propagation
     });
 
