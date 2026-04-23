@@ -5,8 +5,9 @@ import posthog from 'posthog-js';
 
 /**
  * Normalise a boolean-like value.
- * Accepts true (boolean) or 'true' (string from Docker ARG / env var).
- * @param {*} value
+ * Returns true only for boolean true or the string 'true' (from Docker ARG / env var).
+ * All other values evaluate to false.
+ * @param {*} value - Value to test for explicit enabled state
  * @returns {boolean}
  */
 const isEnabled = (value) => value === true || value === 'true';
@@ -59,11 +60,15 @@ export default {
       loaded: (ph) => {
         // surveys: disable when not opted-in
         if (!isEnabled(phConfig.surveys)) {
-          try { ph.config.disable_surveys = true; } catch (e) { /* best-effort config */ } // eslint-disable-line no-unused-vars
+          try {
+            ph.config.disable_surveys = true;
+          } catch { /* best-effort config */ }
         }
         // web vitals: disable when not opted-in
         if (!isEnabled(phConfig.webVitals)) {
-          try { ph.config.__add_tracing_headers = false; } catch (e) { /* best-effort config */ } // eslint-disable-line no-unused-vars
+          try {
+            ph.config.__add_tracing_headers = false;
+          } catch { /* best-effort config */ }
         }
       },
     });

@@ -7,9 +7,9 @@ import config from '../../config/index.js';
 
 /**
  * Normalise a boolean-like value.
- * Accepts true (boolean), 'true' (string from Docker ARG / env var), or
- * any other truthy value that is strictly === true.
- * @param {*} value
+ * Returns true only for boolean true or the string 'true' (from Docker ARG / env var).
+ * All other values evaluate to false.
+ * @param {*} value - Value to test for explicit enabled state
  * @returns {boolean}
  */
 const isEnabled = (value) => value === true || value === 'true';
@@ -36,7 +36,7 @@ const captureException = (err, ctx = {}) => {
     if (sentryConfig?.dsn && sentryConfig?.enabled !== false) {
       Sentry.captureException(err, { extra: ctx });
     }
-  } catch (e) { /* tracker must never break caller */ } // eslint-disable-line no-unused-vars
+  } catch { /* tracker must never break caller */ }
 
   // PostHog fan-out — only when errorTracking is explicitly opted-in
   try {
@@ -49,7 +49,7 @@ const captureException = (err, ctx = {}) => {
         ...ctx,
       });
     }
-  } catch (e) { /* tracker must never break caller */ } // eslint-disable-line no-unused-vars
+  } catch { /* tracker must never break caller */ }
 };
 
 export { captureException };

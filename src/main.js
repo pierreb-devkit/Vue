@@ -41,8 +41,15 @@ initializeStores(routes);
 
 // Wire global error handlers — fan-out to active trackers (Sentry / PostHog)
 // Must be set after plugins so Sentry is already initialised
-app.config.errorHandler = (err) => {
-  captureException(err instanceof Error ? err : new Error(String(err)));
+app.config.errorHandler = (err, instance, info) => {
+  const error = err instanceof Error ? err : new Error(String(err));
+  const componentName = instance?.$?.type?.name || instance?.$?.type?.__name || instance?.$options?.name;
+  const route = appRouter.currentRoute?.value;
+  captureException(error, {
+    vueInfo: info,
+    componentName,
+    route: route ? { name: route.name, path: route.path } : undefined,
+  });
 };
 
 app.mount('#app');
