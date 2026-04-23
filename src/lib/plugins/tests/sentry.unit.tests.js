@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@sentry/vue', () => ({
   init: vi.fn(),
   browserTracingIntegration: vi.fn().mockReturnValue('browser-tracing-integration'),
+  globalHandlersIntegration: vi.fn().mockReturnValue('global-handlers-integration'),
 }));
 
 import * as Sentry from '@sentry/vue';
@@ -40,9 +41,11 @@ describe('sentry plugin', () => {
       app,
       dsn: 'https://key@sentry.io/123',
       environment: 'production',
-      integrations: ['browser-tracing-integration'],
+      integrations: ['global-handlers-integration', 'browser-tracing-integration'],
       tracesSampleRate: 0.5,
+      attachErrorHandler: false,
     });
+    expect(Sentry.globalHandlersIntegration).toHaveBeenCalledWith({ onerror: false, onunhandledrejection: false });
     expect(Sentry.browserTracingIntegration).toHaveBeenCalledWith({ router });
   });
 
@@ -69,7 +72,14 @@ describe('sentry plugin', () => {
     sentryPlugin.install(app);
     expect(Sentry.init).toHaveBeenCalledOnce();
     expect(Sentry.browserTracingIntegration).not.toHaveBeenCalled();
-    expect(Sentry.init.mock.calls[0][0].integrations).toEqual([]);
+    expect(Sentry.init.mock.calls[0][0].integrations).toEqual(['global-handlers-integration']);
+  });
+
+  it('disables Sentry native error handlers (fan-out via errorTracker.js is sole capture path)', () => {
+    const app = makeApp({ dsn: 'https://key@sentry.io/123', enabled: true });
+    sentryPlugin.install(app);
+    expect(Sentry.globalHandlersIntegration).toHaveBeenCalledWith({ onerror: false, onunhandledrejection: false });
+    expect(Sentry.init.mock.calls[0][0].attachErrorHandler).toBe(false);
   });
 
   it('defaults environment to development when not specified', () => {

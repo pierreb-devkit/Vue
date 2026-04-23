@@ -10,6 +10,7 @@ import router from './modules/app/app.router';
 import plugins from './lib/plugins';
 import config from './config/index.js';
 import { ability } from './lib/helpers/ability';
+import { captureException } from './lib/helpers/errorTracker.js';
 import App from './modules/app/app.vue';
 
 const app = createApp(App);
@@ -38,4 +39,38 @@ app
 // Initialize stores after all plugins are loaded
 initializeStores(routes);
 
+// Wire global error handlers — fan-out to active trackers (Sentry / PostHog)
+// Must be set after plugins so Sentry is already initialised
+app.config.errorHandler = (err, instance, info) => {
+  const error = err instanceof Error ? err : new Error(String(err));
+  const componentName = instance?.$?.type?.name || instance?.$?.type?.__name || instance?.$options?.name;
+  const route = appRouter.currentRoute?.value;
+  captureException(error, {
+    vueInfo: info,
+    componentName,
+    route: route ? { name: route.name, path: route.path } : undefined,
+  });
+};
+
 app.mount('#app');
+
+// Window-level safety net — Sentry's native onerror/onunhandledrejection are
+// disabled (see plugins/sentry.js) so our fan-out is the single capture path.
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    captureException(
+      event.reason instanceof Error ? event.reason : new Error(String(event.reason ?? 'Unhandled rejection')),
+    );
+  });
+
+  window.addEventListener('error', (event) => {
+    const error = event.error instanceof Error
+      ? event.error
+      : new Error(event.message || 'Uncaught error');
+    captureException(error, {
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    });
+  });
+}
