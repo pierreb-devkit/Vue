@@ -22,7 +22,9 @@ export default {
       && sentryConfig.dsn
       && sentryConfig.enabled !== false
     ) {
-      const integrations = [];
+      const integrations = [
+        Sentry.globalHandlersIntegration({ onerror: false, onunhandledrejection: false }),
+      ];
       if (router) {
         integrations.push(Sentry.browserTracingIntegration({ router }));
       }
@@ -32,6 +34,7 @@ export default {
         environment: sentryConfig.environment || 'development',
         integrations,
         tracesSampleRate: sentryConfig.tracesSampleRate ?? 0.1,
+        attachErrorHandler: false,
       });
     }
   },

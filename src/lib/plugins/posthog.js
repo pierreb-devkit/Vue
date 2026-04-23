@@ -39,38 +39,20 @@ export default {
     posthog.init(phConfig.key, {
       api_host: phConfig.host || 'https://us.i.posthog.com',
 
-      // autocapture: opt-in (clicks, inputs, form submissions)
       autocapture: isEnabled(phConfig.autoCapture),
-
-      // pageleave: opt-in
       capture_pageleave: isEnabled(phConfig.capturePageleave),
 
-      // session replay: opt-in — when off, recording is disabled
       disable_session_recording: !sessionReplayEnabled,
       ...(sessionReplayEnabled && {
         session_recording: { maskAllInputs: true },
       }),
 
-      // feature flags: when not opted-in, bootstrap with empty flags to
-      // prevent the initial network fetch
       ...(!isEnabled(phConfig.featureFlags) && {
         bootstrap: { featureFlags: {} },
       }),
 
-      loaded: (ph) => {
-        // surveys: disable when not opted-in
-        if (!isEnabled(phConfig.surveys)) {
-          try {
-            ph.config.disable_surveys = true;
-          } catch { /* best-effort config */ }
-        }
-        // web vitals: disable when not opted-in
-        if (!isEnabled(phConfig.webVitals)) {
-          try {
-            ph.config.__add_tracing_headers = false;
-          } catch { /* best-effort config */ }
-        }
-      },
+      disable_surveys: !isEnabled(phConfig.surveys),
+      capture_performance: isEnabled(phConfig.webVitals),
     });
 
     app.config.globalProperties.$posthog = posthog;

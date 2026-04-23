@@ -126,49 +126,39 @@ describe('posthog plugin', () => {
     expect(callArgs.bootstrap).toBeUndefined();
   });
 
-  describe('loaded callback', () => {
-    /**
-     * Helper to invoke the `loaded` callback from posthog.init options.
-     * @param {Object} posthogConfig
-     * @param {Object} phInstance - Mock PostHog instance passed to loaded
-     */
-    const invokeLoaded = (posthogConfig, phInstance) => {
-      const app = makeApp(posthogConfig);
-      posthogPlugin.install(app);
-      const loadedFn = posthog.init.mock.calls[0][1].loaded;
-      if (loadedFn) loadedFn(phInstance);
-    };
+  it('disables surveys by default (surveys=false)', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ disable_surveys: true }),
+    );
+  });
 
-    it('sets disable_surveys on the ph instance when surveys=false (default)', () => {
-      const phInstance = { config: {} };
-      invokeLoaded({ key: 'phc_testkey', surveys: false }, phInstance);
-      expect(phInstance.config.disable_surveys).toBe(true);
-    });
+  it('enables surveys when surveys=true', () => {
+    const app = makeApp({ key: 'phc_testkey', surveys: true });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ disable_surveys: false }),
+    );
+  });
 
-    it('does not set disable_surveys when surveys=true', () => {
-      const phInstance = { config: {} };
-      invokeLoaded({ key: 'phc_testkey', surveys: true }, phInstance);
-      expect(phInstance.config.disable_surveys).toBeUndefined();
-    });
+  it('disables capture_performance (web vitals) by default', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ capture_performance: false }),
+    );
+  });
 
-    it('sets __add_tracing_headers=false when webVitals=false (default)', () => {
-      const phInstance = { config: {} };
-      invokeLoaded({ key: 'phc_testkey', webVitals: false }, phInstance);
-      expect(phInstance.config.__add_tracing_headers).toBe(false);
-    });
-
-    it('does not set __add_tracing_headers when webVitals=true', () => {
-      const phInstance = { config: {} };
-      invokeLoaded({ key: 'phc_testkey', webVitals: true }, phInstance);
-      expect(phInstance.config.__add_tracing_headers).toBeUndefined();
-    });
-
-    it('silently ignores errors in loaded callback (best-effort config)', () => {
-      // ph.config throws on assignment — should not propagate
-      const phInstance = {
-        get config() { throw new Error('no config'); },
-      };
-      expect(() => invokeLoaded({ key: 'phc_testkey' }, phInstance)).not.toThrow();
-    });
+  it('enables capture_performance when webVitals=true', () => {
+    const app = makeApp({ key: 'phc_testkey', webVitals: true });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ capture_performance: true }),
+    );
   });
 });
