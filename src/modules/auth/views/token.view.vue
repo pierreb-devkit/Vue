@@ -2,28 +2,36 @@
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
       <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
-        <v-col cols="12">
-          <h4>Error during oAuth</h4>
-          <v-divider></v-divider>
-        </v-col>
-        <v-container>
-          <v-alert type="error" color="error">
-            <b>{{ $route.query.message }}</b> : {{ error.details.message }}
-            <span v-for="(key, i) in Object.keys(error.details.errors)" :key="i">{{ error.details.errors[key].message }}</span>
-          </v-alert>
-          <br />
-          <p>
-            Back to
-            <b>
-              <router-link to="/signin">Sign In</router-link>
-            </b>
-            or
-            <b>
-              <router-link to="/signup">Sign Up</router-link>
-            </b>
-            !
-          </p>
-        </v-container>
+        <template v-if="loading">
+          <v-col cols="12" class="text-center py-8">
+            <v-progress-circular indeterminate color="primary" size="48" />
+            <p class="mt-4">Signing you in…</p>
+          </v-col>
+        </template>
+        <template v-else>
+          <v-col cols="12">
+            <h4>Error during oAuth</h4>
+            <v-divider></v-divider>
+          </v-col>
+          <v-container>
+            <v-alert type="error" color="error">
+              <b>{{ $route.query.message }}</b> : {{ error.details.message }}
+              <span v-for="(key, i) in Object.keys(error.details.errors)" :key="i">{{ error.details.errors[key].message }}</span>
+            </v-alert>
+            <br />
+            <p>
+              Back to
+              <b>
+                <router-link to="/signin">Sign In</router-link>
+              </b>
+              or
+              <b>
+                <router-link to="/signup">Sign Up</router-link>
+              </b>
+              !
+            </p>
+          </v-container>
+        </template>
       </v-card>
     </v-row>
   </v-container>
@@ -46,6 +54,7 @@ export default {
     const theme = useTheme();
     return {
       theme,
+      loading: true,
       error: { details: { message: '', errors: {} } },
     };
   },
@@ -62,6 +71,13 @@ export default {
         this.$router.push(this.config.sign.route);
       } catch (err) {
         logger.error(err);
+        this.error = {
+          details: {
+            message: err?.message || 'Failed to complete sign-in',
+            errors: {},
+          },
+        };
+        this.loading = false;
       }
     } else {
       try {
@@ -82,6 +98,7 @@ export default {
         this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
       }
       logger.error('OAuth error:', this.error);
+      this.loading = false;
     }
   },
 };

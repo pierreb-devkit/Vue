@@ -19,16 +19,17 @@ const mockConfig = {
 /**
  * Mount the token (oAuth callback) view with Vuetify installed.
  * @param {object} query - Route query parameters.
+ * @param {object} [router] - Optional router mock override.
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
-const mountView = (query = {}) =>
+const mountView = (query = {}, router = { push: vi.fn() }) =>
   mount(AuthTokenView, {
     global: {
       plugins: [createVuetify()],
       mocks: {
         config: mockConfig,
         $route: { query },
-        $router: { push: vi.fn() },
+        $router: router,
       },
       stubs: { RouterLink: true, VAlert: { template: '<div />' } },
     },
@@ -66,6 +67,94 @@ describe('auth.token.view', () => {
       await Promise.resolve();
 
       // No unhandled rejection
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('loading state (issue #4017)', () => {
+    it('shows the loader and hides the error UI on initial render while token() is pending', async () => {
+      let resolveToken;
+      tokenMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveToken = resolve;
+          }),
+      );
+
+      const wrapper = mountView();
+
+      expect(wrapper.vm.loading).toBe(true);
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(true);
+      expect(wrapper.text()).toContain('Signing you in');
+      expect(wrapper.text()).not.toContain('Error during oAuth');
+
+      resolveToken();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    it('navigates to sign.route and never exposes the error UI when token() resolves', async () => {
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn();
+
+      const wrapper = mountView({}, { push });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(push).toHaveBeenCalledWith('/tasks');
+      expect(wrapper.text()).not.toContain('Error during oAuth');
+    });
+
+    it('surfaces the caught error and renders the error UI when token() rejects', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockRejectedValueOnce(new Error('network error'));
+
+      const wrapper = mountView();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('network error');
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(false);
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to a generic message when token() rejects without a message', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockRejectedValueOnce({});
+
+      const wrapper = mountView();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('Failed to complete sign-in');
+      consoleSpy.mockRestore();
+    });
+
+    it('renders the error UI immediately and never shows the loader when query.message is present', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { details: { message: 'Validation failed', errors: {} } };
+
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: JSON.stringify(payload) });
+      await Promise.resolve();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(false);
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('renders the error UI with the fallback message when query.error is malformed', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
+      await Promise.resolve();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      expect(wrapper.text()).toContain('Error during oAuth');
       consoleSpy.mockRestore();
     });
   });
