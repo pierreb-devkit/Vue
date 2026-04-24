@@ -91,9 +91,14 @@ export default {
         this.loading = false;
       }
     } else {
+      const raw = this.$route.query.error;
+      let details = { message: 'An unexpected error occurred', errors: {} };
       try {
-        const parsed = JSON.parse(this.$route.query.error);
-        const message = typeof parsed?.details?.message === 'string' ? parsed.details.message : 'An unexpected error occurred';
+        const parsed = JSON.parse(raw);
+        const msg = parsed?.description
+          || parsed?.details?.message
+          || parsed?.message
+          || (typeof raw === 'string' ? raw : 'An unexpected error occurred');
         const rawErrors = parsed?.details?.errors;
         const errors = {};
         if (rawErrors && typeof rawErrors === 'object' && !Array.isArray(rawErrors)) {
@@ -103,11 +108,12 @@ export default {
             }
           });
         }
-        this.error = { details: { message, errors } };
-      } catch (parseErr) {
-        logger.error('Failed to parse OAuth error query param:', parseErr);
-        this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
+        details = { message: msg, errors };
+      } catch {
+        // Fallback: error query was a plain string (older backend) — surface it directly
+        if (typeof raw === 'string' && raw.length > 0) details = { message: raw, errors: {} };
       }
+      this.error = { details };
       logger.error('OAuth error:', this.error);
       this.loading = false;
     }
