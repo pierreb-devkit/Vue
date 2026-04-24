@@ -17,12 +17,18 @@ const mockConfig = {
 };
 
 /**
+ * Build a default router mock with a resolved push().
+ * @returns {{push: ReturnType<typeof vi.fn>}} router mock
+ */
+const defaultRouter = () => ({ push: vi.fn().mockResolvedValue(undefined) });
+
+/**
  * Mount the token (oAuth callback) view with Vuetify installed.
  * @param {object} query - Route query parameters.
  * @param {object} [router] - Optional router mock override.
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
-const mountView = (query = {}, router = { push: vi.fn().mockResolvedValue(undefined) }) =>
+const mountView = (query = {}, router = defaultRouter()) =>
   mount(AuthTokenView, {
     global: {
       plugins: [createVuetify()],
@@ -180,7 +186,7 @@ describe('auth.token.view', () => {
           mocks: {
             config: mockConfig,
             $route: { query: {} },
-            $router: { push: vi.fn().mockResolvedValue(undefined) },
+            $router: defaultRouter(),
           },
           stubs: { RouterLink: true },
         },
