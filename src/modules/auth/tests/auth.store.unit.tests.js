@@ -47,7 +47,10 @@ describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
-    // Reset mocks
+    // Reset mocks — clear axios call history so per-test `toHaveBeenCalledWith`
+    // assertions don't see calls from previous tests.
+    axios.post.mockReset();
+    axios.get.mockReset();
     mockUpdateAbilities.mockClear();
     // Reset posthog mocks
     posthog.__loaded = false;
@@ -121,7 +124,11 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce({ data: {} });
       await authStore.signout();
 
-      expect(axios.post).toHaveBeenCalledWith('http://localhost:3000/api/auth/signout');
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/auth/signout',
+        null,
+        { __isRetryRequest: true },
+      );
     });
 
     it('should clear local state even when backend signout rejects', async () => {
@@ -141,7 +148,11 @@ describe('Auth Store', () => {
       // Must not throw — signout always resolves so the user is never trapped as logged-in.
       await expect(authStore.signout()).resolves.toBeUndefined();
 
-      expect(axios.post).toHaveBeenCalledWith('http://localhost:3000/api/auth/signout');
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/auth/signout',
+        null,
+        { __isRetryRequest: true },
+      );
       expect(authStore.auth).toBe(false);
       expect(authStore.cookieExpire).toBe(0);
       expect(authStore.user).toBe(null);

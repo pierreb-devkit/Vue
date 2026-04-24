@@ -201,8 +201,12 @@ export const useAuthStore = defineStore('auth', {
       // Call backend first so the server can clear the httpOnly TOKEN cookie.
       // Swallow any error (older backends may not expose this endpoint, or the
       // server may be unreachable) — the local reset below must still run.
+      // `__isRetryRequest: true` flags this request so the 401 interceptor does
+      // not re-enter signout() and recurse (see src/lib/services/axios.js).
       try {
-        await axios.post(`${api}/${config.api.endPoints.auth}/signout`);
+        await axios.post(`${api}/${config.api.endPoints.auth}/signout`, null, {
+          __isRetryRequest: true,
+        });
       } catch {
         // Never trap the user logged-in on backend failure.
       }
