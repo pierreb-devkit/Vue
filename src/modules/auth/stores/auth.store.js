@@ -189,11 +189,24 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * @desc Sign out the current user: clear auth state, abilities, and localStorage.
+     * @desc Sign out the current user: call backend to clear the httpOnly TOKEN cookie,
+     * then reset auth state, abilities, and localStorage. Backend failures never trap the
+     * user as logged-in on the client — local reset always runs.
      * @returns {Promise<void>}
      */
     async signout() {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
+
+      // Call backend first so the server can clear the httpOnly TOKEN cookie.
+      // Swallow any error (older backends may not expose this endpoint, or the
+      // server may be unreachable) — the local reset below must still run.
+      try {
+        await axios.post(`${api}/${config.api.endPoints.auth}/signout`);
+      } catch {
+        // Never trap the user logged-in on backend failure.
+      }
+
       this.auth = false;
       this.cookieExpire = 0;
       this.user = null;
