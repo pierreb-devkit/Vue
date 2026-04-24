@@ -63,6 +63,14 @@ export default {
       return this.theme.name;
     },
   },
+  /**
+   * OAuth callback handler. When no route query.message is present, exchange the
+   * authorization code for a session token and redirect to the post-sign route.
+   * When an error message is present, parse the tolerant `error` query payload —
+   * canonical `description`, legacy `details.message`, top-level `message`, or
+   * plain string (older backend wire shape, issue #4021) — for display.
+   * @returns {Promise<void>}
+   */
   async created() {
     if (!this.$route.query.message) {
       const authStore = useAuthStore();
@@ -92,13 +100,22 @@ export default {
       }
     } else {
       const raw = this.$route.query.error;
-      let details = { message: 'An unexpected error occurred', errors: {} };
+      const FALLBACK = 'An unexpected error occurred';
+      /**
+       * Return `value` if it is a non-empty string, otherwise `undefined`.
+       * @param {*} value - Candidate value to type-check.
+       * @returns {string|undefined} The string, or undefined when not usable.
+       */
+      const asNonEmptyString = (value) => (typeof value === 'string' && value.length > 0 ? value : undefined);
+      let details = { message: FALLBACK, errors: {} };
       try {
         const parsed = JSON.parse(raw);
-        const msg = parsed?.description
-          || parsed?.details?.message
-          || parsed?.message
-          || (typeof raw === 'string' ? raw : 'An unexpected error occurred');
+        // Prefer canonical `description`, then legacy `details.message`, then top-level `message`.
+        // Each candidate must itself be a non-empty string — never surface the raw JSON body.
+        const msg = asNonEmptyString(parsed?.description)
+          || asNonEmptyString(parsed?.details?.message)
+          || asNonEmptyString(parsed?.message)
+          || FALLBACK;
         const rawErrors = parsed?.details?.errors;
         const errors = {};
         if (rawErrors && typeof rawErrors === 'object' && !Array.isArray(rawErrors)) {
@@ -110,8 +127,10 @@ export default {
         }
         details = { message: msg, errors };
       } catch {
-        // Fallback: error query was a plain string (older backend) — surface it directly
-        if (typeof raw === 'string' && raw.length > 0) details = { message: raw, errors: {} };
+        // Older backend shape: `error` query param is a plain (non-JSON) string.
+        // Vue's `{{ }}` interpolation auto-escapes HTML, so this is safe to render.
+        const plain = asNonEmptyString(raw);
+        if (plain) details = { message: plain, errors: {} };
       }
       this.error = { details };
       logger.error('OAuth error:', this.error);

@@ -215,14 +215,35 @@ describe('auth.token.view', () => {
       consoleSpy.mockRestore();
     });
 
-    it('sets generic message when query.error is malformed JSON', async () => {
+    it('surfaces malformed JSON string as-is via plain-string fallback', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView({ message: 'Bad Request', error: '{ malformed json' });
       await flushPromises();
 
-      // Malformed JSON is a non-empty string, so fallback surfaces it as-is (older backend shape).
+      // Malformed JSON is a non-empty string, so the catch branch surfaces it as-is (older backend shape).
       expect(wrapper.vm.error.details.message).toBe('{ malformed json');
       expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to generic message when JSON parses but has no recognized message field', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify({ foo: 'bar' }) });
+      await flushPromises();
+
+      // Never surface the raw JSON body when no string-valued key is recognized — avoids leaking noisy payloads.
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('ignores non-string description/details.message/message values', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { description: 42, details: { message: { nested: 'x' } }, message: ['array'] };
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify(payload) });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
       consoleSpy.mockRestore();
     });
 
