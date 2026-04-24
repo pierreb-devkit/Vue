@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
@@ -17,22 +17,34 @@ const mockConfig = {
 };
 
 /**
+ * Build a default router mock with a resolved push().
+ * @returns {object} router mock
+ */
+function buildRouterMock() {
+  return { push: vi.fn().mockResolvedValue(undefined) };
+}
+
+/**
  * Mount the token (oAuth callback) view with Vuetify installed.
  * @param {object} query - Route query parameters.
+ * @param {object} router - Router mock.
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
-const mountView = (query = {}) =>
-  mount(AuthTokenView, {
+function mountView(query, router) {
+  const q = query || {};
+  const r = router || buildRouterMock();
+  return mount(AuthTokenView, {
     global: {
       plugins: [createVuetify()],
       mocks: {
         config: mockConfig,
-        $route: { query },
-        $router: { push: vi.fn() },
+        $route: { query: q },
+        $router: r,
       },
       stubs: { RouterLink: true, VAlert: { template: '<div />' } },
     },
   });
+}
 
 describe('auth.token.view', () => {
   beforeEach(() => {
@@ -45,7 +57,7 @@ describe('auth.token.view', () => {
       tokenMock.mockResolvedValueOnce(undefined);
 
       mountView();
-      await Promise.resolve(); // flush created() microtask
+      await flushPromises();
 
       expect(tokenMock).toHaveBeenCalledTimes(1);
       expect(tokenMock).toHaveBeenCalledWith();
@@ -53,7 +65,7 @@ describe('auth.token.view', () => {
 
     it('does not call token() when route query contains an error message', async () => {
       mountView({ message: 'Unprocessable Entity', error: '{}' });
-      await Promise.resolve();
+      await flushPromises();
 
       expect(tokenMock).not.toHaveBeenCalled();
     });
@@ -63,9 +75,130 @@ describe('auth.token.view', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       mountView();
-      await Promise.resolve();
+      await flushPromises();
 
       // No unhandled rejection
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('loading state (issue #4017)', () => {
+    it('shows the loader and hides the error UI on initial render while token() is pending', async () => {
+      let resolveToken;
+      tokenMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveToken = resolve;
+          }),
+      );
+
+      const wrapper = mountView();
+
+      expect(wrapper.vm.loading).toBe(true);
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(true);
+      expect(wrapper.text()).toContain('Signing you in');
+      expect(wrapper.text()).not.toContain('Error during oAuth');
+
+      resolveToken();
+      await flushPromises();
+    });
+
+    it('navigates to sign.route and never exposes the error UI when token() resolves', async () => {
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockResolvedValue(undefined);
+
+      const wrapper = mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/tasks');
+      expect(wrapper.text()).not.toContain('Error during oAuth');
+    });
+
+    it('surfaces the caught error and renders the error UI when token() rejects', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockRejectedValueOnce(new Error('network error'));
+
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('network error');
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(false);
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to a generic message when token() rejects without a message', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockRejectedValueOnce({});
+
+      const wrapper = mountView();
+      await flushPromises();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('Failed to complete sign-in');
+      consoleSpy.mockRestore();
+    });
+
+    it('renders the error UI immediately and never shows the loader when query.message is present', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { details: { message: 'Validation failed', errors: {} } };
+
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: JSON.stringify(payload) });
+      await flushPromises();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.find('.v-progress-circular').exists()).toBe(false);
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('renders the error UI with the fallback message when query.error is malformed', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
+      await flushPromises();
+
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('surfaces the error UI when router.push rejects after a successful token()', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockRejectedValue(new Error('navigation aborted'));
+
+      const wrapper = mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/tasks');
+      expect(wrapper.vm.loading).toBe(false);
+      expect(wrapper.vm.error.details.message).toBe('navigation aborted');
+      expect(wrapper.text()).toContain('Error during oAuth');
+      consoleSpy.mockRestore();
+    });
+
+    it('uses a fallback label (Sign-in failed) in the alert when no query.message is present', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      tokenMock.mockRejectedValueOnce(new Error('network error'));
+
+      // Render without the VAlert stub so we can inspect the alert content.
+      const wrapper = mount(AuthTokenView, {
+        global: {
+          plugins: [createVuetify()],
+          mocks: {
+            config: mockConfig,
+            $route: { query: {} },
+            $router: buildRouterMock(),
+          },
+          stubs: { RouterLink: true },
+        },
+      });
+      await flushPromises();
+
+      expect(wrapper.html()).toContain('Sign-in failed');
       consoleSpy.mockRestore();
     });
   });
@@ -74,7 +207,7 @@ describe('auth.token.view', () => {
     it('sets generic message when query.error is invalid JSON', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
-      await Promise.resolve();
+      await flushPromises();
 
       expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
       expect(wrapper.vm.error.details.errors).toEqual({});
@@ -84,7 +217,7 @@ describe('auth.token.view', () => {
     it('sets generic message when query.error is missing', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView({ message: 'Bad Request' });
-      await Promise.resolve();
+      await flushPromises();
 
       expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
       consoleSpy.mockRestore();
@@ -99,7 +232,7 @@ describe('auth.token.view', () => {
         },
       };
       const wrapper = mountView({ message: 'Unprocessable Entity', error: JSON.stringify(payload) });
-      await Promise.resolve();
+      await flushPromises();
 
       expect(wrapper.vm.error.details.message).toBe('Validation failed');
       expect(wrapper.vm.error.details.errors.email.message).toBe('Email is required');
@@ -116,7 +249,7 @@ describe('auth.token.view', () => {
         },
       };
       const wrapper = mountView({ message: 'Test', error: JSON.stringify(payload) });
-      await Promise.resolve();
+      await flushPromises();
 
       expect(wrapper.vm.error.details.errors.good.message).toBe('Valid');
       expect(wrapper.vm.error.details.errors.bad).toBeUndefined();
