@@ -46,6 +46,16 @@ import { useAuthStore } from '../stores/auth.store';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const logger = createLogger('auth');
+
+/**
+ * Return `value` if it is a non-empty string, otherwise `undefined`.
+ * @param {*} value - Candidate value to type-check.
+ * @returns {string|undefined} The string, or undefined when not usable.
+ */
+function asNonEmptyString(value) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
 /**
  * Component definition.
  */
@@ -101,12 +111,6 @@ export default {
     } else {
       const raw = this.$route.query.error;
       const FALLBACK = 'An unexpected error occurred';
-      /**
-       * Return `value` if it is a non-empty string, otherwise `undefined`.
-       * @param {*} value - Candidate value to type-check.
-       * @returns {string|undefined} The string, or undefined when not usable.
-       */
-      const asNonEmptyString = (value) => (typeof value === 'string' && value.length > 0 ? value : undefined);
       let details = { message: FALLBACK, errors: {} };
       try {
         const parsed = JSON.parse(raw);
