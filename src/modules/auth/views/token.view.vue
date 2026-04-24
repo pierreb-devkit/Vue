@@ -46,6 +46,16 @@ import { useAuthStore } from '../stores/auth.store';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const logger = createLogger('auth');
+
+/**
+ * Return `value` if it is a non-empty string, otherwise `undefined`.
+ * @param {*} value - Candidate value to type-check.
+ * @returns {string|undefined} The string, or undefined when not usable.
+ */
+function asNonEmptyString(value) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
 /**
  * Component definition.
  */
@@ -63,6 +73,14 @@ export default {
       return this.theme.name;
     },
   },
+  /**
+   * OAuth callback handler. When no route query.message is present, exchange the
+   * authorization code for a session token and redirect to the post-sign route.
+   * When an error message is present, parse the tolerant `error` query payload —
+   * canonical `description`, legacy `details.message`, top-level `message`, or
+   * plain string (older backend wire shape, issue #4021) — for display.
+   * @returns {Promise<void>}
+   */
   async created() {
     if (!this.$route.query.message) {
       const authStore = useAuthStore();
@@ -91,9 +109,17 @@ export default {
         this.loading = false;
       }
     } else {
+      const raw = this.$route.query.error;
+      const FALLBACK = 'An unexpected error occurred';
+      let details = { message: FALLBACK, errors: {} };
       try {
-        const parsed = JSON.parse(this.$route.query.error);
-        const message = typeof parsed?.details?.message === 'string' ? parsed.details.message : 'An unexpected error occurred';
+        const parsed = JSON.parse(raw);
+        // Prefer canonical `description`, then legacy `details.message`, then top-level `message`.
+        // Each candidate must itself be a non-empty string — never surface the raw JSON body.
+        const msg = asNonEmptyString(parsed?.description)
+          || asNonEmptyString(parsed?.details?.message)
+          || asNonEmptyString(parsed?.message)
+          || FALLBACK;
         const rawErrors = parsed?.details?.errors;
         const errors = {};
         if (rawErrors && typeof rawErrors === 'object' && !Array.isArray(rawErrors)) {
@@ -103,11 +129,14 @@ export default {
             }
           });
         }
-        this.error = { details: { message, errors } };
-      } catch (parseErr) {
-        logger.error('Failed to parse OAuth error query param:', parseErr);
-        this.error = { details: { message: 'An unexpected error occurred', errors: {} } };
+        details = { message: msg, errors };
+      } catch {
+        // Older backend shape: `error` query param is a plain (non-JSON) string.
+        // Vue's `{{ }}` interpolation auto-escapes HTML, so this is safe to render.
+        const plain = asNonEmptyString(raw);
+        if (plain) details = { message: plain, errors: {} };
       }
+      this.error = { details };
       logger.error('OAuth error:', this.error);
       this.loading = false;
     }

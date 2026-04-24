@@ -153,14 +153,15 @@ describe('auth.token.view', () => {
       consoleSpy.mockRestore();
     });
 
-    it('renders the error UI with the fallback message when query.error is malformed', async () => {
+    it('renders the error UI and surfaces the plain-string payload when query.error is not JSON (issue #4021)', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
       await flushPromises();
 
       expect(wrapper.vm.loading).toBe(false);
-      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      // Tolerant parser (#4021) surfaces plain-string payloads as-is instead of swallowing them.
+      expect(wrapper.vm.error.details.message).toBe('not-json');
       expect(wrapper.text()).toContain('Error during oAuth');
       consoleSpy.mockRestore();
     });
@@ -204,13 +205,45 @@ describe('auth.token.view', () => {
   });
 
   describe('error parsing (XSS hardening)', () => {
-    it('sets generic message when query.error is invalid JSON', async () => {
+    it('surfaces plain-string query.error directly when not valid JSON', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const wrapper = mountView({ message: 'Bad Request', error: 'not-json' });
+      const wrapper = mountView({ message: 'Bad Request', error: 'plain string fallback' });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('plain string fallback');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('surfaces malformed JSON string as-is via plain-string fallback', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Bad Request', error: '{ malformed json' });
+      await flushPromises();
+
+      // Malformed JSON is a non-empty string, so the catch branch surfaces it as-is (older backend shape).
+      expect(wrapper.vm.error.details.message).toBe('{ malformed json');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to generic message when JSON parses but has no recognized message field', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify({ foo: 'bar' }) });
+      await flushPromises();
+
+      // Never surface the raw JSON body when no string-valued key is recognized — avoids leaking noisy payloads.
+      expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('ignores non-string description/details.message/message values', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { description: 42, details: { message: { nested: 'x' } }, message: ['array'] };
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify(payload) });
       await flushPromises();
 
       expect(wrapper.vm.error.details.message).toBe('An unexpected error occurred');
-      expect(wrapper.vm.error.details.errors).toEqual({});
       consoleSpy.mockRestore();
     });
 
@@ -265,6 +298,48 @@ describe('auth.token.view', () => {
       expect(wrapper.vm.error.details).toBeDefined();
       expect(wrapper.vm.error.details.message).toBe('');
       expect(wrapper.vm.error.details.errors).toEqual({});
+    });
+  });
+
+  describe('error parsing (tolerant multi-shape)', () => {
+    it('prefers canonical description over other keys', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { description: 'Registration is currently deactivated' };
+      const wrapper = mountView({ message: 'Signup error', error: JSON.stringify(payload) });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('Registration is currently deactivated');
+      expect(wrapper.vm.error.details.errors).toEqual({});
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to legacy details.message when no description', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { details: { message: 'legacy msg' } };
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify(payload) });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('legacy msg');
+      consoleSpy.mockRestore();
+    });
+
+    it('falls back to top-level message when no description or details.message', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const payload = { message: 'top-level only' };
+      const wrapper = mountView({ message: 'Bad Request', error: JSON.stringify(payload) });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('top-level only');
+      consoleSpy.mockRestore();
+    });
+
+    it('surfaces plain-string query.error (older backend wire shape)', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const wrapper = mountView({ message: 'Signup error', error: 'Signup error' });
+      await flushPromises();
+
+      expect(wrapper.vm.error.details.message).toBe('Signup error');
+      consoleSpy.mockRestore();
     });
   });
 });
