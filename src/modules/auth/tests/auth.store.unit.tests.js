@@ -47,7 +47,10 @@ describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     localStorage.clear();
-    // Reset mocks
+    // Reset mocks — clear axios call history so per-test `toHaveBeenCalledWith`
+    // assertions don't see calls from previous tests.
+    axios.post.mockReset();
+    axios.get.mockReset();
     mockUpdateAbilities.mockClear();
     // Reset posthog mocks
     posthog.__loaded = false;
@@ -101,6 +104,7 @@ describe('Auth Store', () => {
     localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
     localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
 
+    axios.post.mockResolvedValueOnce({ data: {} });
     await authStore.signout();
 
     expect(authStore.auth).toBe(false);
@@ -109,6 +113,70 @@ describe('Auth Store', () => {
     expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
     expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
+  });
+
+  describe('signout backend call', () => {
+    it('should call backend signout endpoint with the correct URL', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/auth/signout',
+        null,
+        { __isRetryRequest: true },
+      );
+    });
+
+    it('should clear local state even when backend signout rejects', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.cookieExpire = Date.now() + 1000;
+      authStore.user = { id: 'u1' };
+      authStore.pendingRequests = [{ id: 'r1' }];
+      localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user');
+      localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
+      localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
+
+      const backendError = new Error('Backend unreachable');
+      backendError.response = { status: 500 };
+      axios.post.mockRejectedValueOnce(backendError);
+
+      // Must not throw — signout always resolves so the user is never trapped as logged-in.
+      await expect(authStore.signout()).resolves.toBeUndefined();
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/auth/signout',
+        null,
+        { __isRetryRequest: true },
+      );
+      expect(authStore.auth).toBe(false);
+      expect(authStore.cookieExpire).toBe(0);
+      expect(authStore.user).toBe(null);
+      expect(authStore.pendingRequests).toEqual([]);
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
+      expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
+    });
+
+    it('should clear local state when backend signout returns 404 (older backend)', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      const notFoundError = new Error('Not found');
+      notFoundError.response = { status: 404 };
+      axios.post.mockRejectedValueOnce(notFoundError);
+
+      await authStore.signout();
+
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+    });
   });
 
   it('should have mail state initialized', () => {
