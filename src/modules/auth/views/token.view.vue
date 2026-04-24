@@ -15,7 +15,7 @@
           </v-col>
           <v-container>
             <v-alert type="error" color="error">
-              <b>{{ $route.query.message }}</b> : {{ error.details.message }}
+              <b>{{ $route.query.message || 'Sign-in failed' }}</b> : {{ error.details.message }}
               <span v-for="(key, i) in Object.keys(error.details.errors)" :key="i">{{ error.details.errors[key].message }}</span>
             </v-alert>
             <br />
@@ -68,7 +68,18 @@ export default {
       const authStore = useAuthStore();
       try {
         await authStore.token();
-        this.$router.push(this.config.sign.route);
+        try {
+          await this.$router.push(this.config.sign.route);
+        } catch (navErr) {
+          logger.error(navErr);
+          this.error = {
+            details: {
+              message: navErr?.message || 'Failed to redirect after sign-in',
+              errors: {},
+            },
+          };
+          this.loading = false;
+        }
       } catch (err) {
         logger.error(err);
         this.error = {
