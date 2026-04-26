@@ -14,6 +14,7 @@ import CorePageHeader from '../components/core.pageHeader.component.vue';
  * @param {boolean} [mobile=false]
  * @returns {ReturnType<typeof createVuetify>}
  */
+// biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Vitest context
 const makeVuetify = (mobile = false) =>
   createVuetify({
     components,
@@ -29,6 +30,7 @@ const makeVuetify = (mobile = false) =>
  * @param {boolean} [opts.mobile] - whether $vuetify.display.mobile should report true
  * @returns {import('@vue/test-utils').VueWrapper}
  */
+// biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Vitest context
 const mountHeader = ({ props = {}, slots = {}, mobile = false } = {}) => {
   const vuetify = makeVuetify(mobile);
   return mount(CorePageHeader, {
