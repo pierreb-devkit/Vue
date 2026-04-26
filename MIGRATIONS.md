@@ -4,6 +4,69 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## core.pageHeader — breadcrumb slot + canonical 56px height + overflow fix (2026-04-26)
+
+**Non-breaking for default consumers.** The shared
+`src/modules/core/components/core.pageHeader.component.vue` now exposes
+a richer contract so downstream projects that previously needed to fork
+this file can drop their custo and live on the stack version.
+
+### What changed in the stack
+
+- **NEW slot `#breadcrumb`** — when provided, renders **in place of** the
+  `<h2>` title (and suppresses the subtitle). Use it for detail-view
+  breadcrumb trails:
+
+  ```vue
+  <core-page-header icon="fa-list">
+    <template #breadcrumb>
+      <router-link to="/scraps">Scraps</router-link> &rsaquo; {{ current }}
+    </template>
+    <template #actions>...</template>
+  </core-page-header>
+  ```
+
+- **Canonical 56px height** — `min-height` and `max-height` are now both
+  pinned to 56px on the root row, in every mode (title, breadcrumb,
+  tabs). This guarantees a jump-free transition between list view (title)
+  and detail view (breadcrumb).
+- **Overflow fix** — the title/breadcrumb container now uses
+  `flex: 1; min-width: 0;` plus `text-truncate`, so long content
+  ellipsis-truncates instead of pushing the actions cluster off-screen.
+  The main row is `flex-nowrap` (actions stay on the same line). Inner
+  `flex-wrap` is kept on the actions cluster as a safety net for extreme
+  viewports.
+- **Actions cluster** — the `#actions` slot is now rendered inside a
+  `<div class="d-flex align-center flex-wrap">` wrapper (only when the
+  slot has content).
+
+### Action for downstream projects
+
+**No config change is required.** Default consumers (header with `title`
++ optional `subtitle` + optional `actions`) keep the same DOM and look.
+
+If your project has a **custom version** of
+`src/modules/core/components/core.pageHeader.component.vue` to add a
+breadcrumb, fix overflow, or impose a fixed height: **revert to the
+stack file** at the next `/update-stack`:
+
+```sh
+git checkout <devkit>/master -- src/modules/core/components/core.pageHeader.component.vue
+```
+
+Then verify your detail-view breadcrumbs still render via the new
+`#breadcrumb` slot and run your usual smoke pass.
+
+### Why
+
+Several downstream projects (notably `trawl_vue`) had to fork this file
+to support breadcrumbs + overflow + canonical height, which produced
+recurring merge conflicts on every `/update-stack`. Pushing the contract
+upstream lets every project drop its custo and removes a sharp edge from
+stack syncs.
+
+---
+
 ## Admin tabs flattened to a single routed row (2026-04-14)
 
 **Breaking change (URL-level).** The admin section now exposes its four
