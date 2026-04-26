@@ -4,9 +4,11 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
-  // Ignore patterns
+  // Ignore patterns (only entries that fall within the lint allowlist; broad
+  // top-level dirs like dist/, node_modules/, coverage/ are excluded by virtue
+  // of the allowlist scoping in package.json scripts).
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/config/index.js', '.claude/worktrees/**'],
+    ignores: ['src/config/index.js'],
   },
   // Base configurations
   js.configs.recommended,
