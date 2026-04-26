@@ -43,6 +43,10 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - E2E only for critical product flows (auth, org onboarding, invite/join); requires Node + Vue + MongoDB running
 - Docker (mongo + node-api): `docker compose -f docker-compose.test.yml up -d`
 
+## Dev tooling
+
+- **Code knowledge graph (optional)**: install Graphify via `uv tool install graphifyy==0.5.0` (Python tool, system-wide). Run `graphify update .` to generate `graph.json` + report under `graphify-out/`. Pin v0.5.0 — Graphify ships fast (5 releases / 48h around 22-23 April 2026), expect breaking changes on minor bumps.
+
 ## Downstream config patterns
 
 - **Config layering**: Module configs (`*.development.config.js`) load first, then global overrides (`{env}.config.js`). Override in global config, not module configs, to avoid stack merge conflicts.
