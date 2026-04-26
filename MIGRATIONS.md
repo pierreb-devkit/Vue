@@ -51,7 +51,7 @@ breadcrumb, fix overflow, or impose a fixed height: **revert to the
 stack file** at the next `/update-stack`:
 
 ```sh
-git checkout <devkit>/master -- src/modules/core/components/core.pageHeader.component.vue
+git checkout origin/master -- src/modules/core/components/core.pageHeader.component.vue
 ```
 
 Then verify your detail-view breadcrumbs still render via the new

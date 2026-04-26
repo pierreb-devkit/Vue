@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import CorePageHeader from '../components/core.pageHeader.component.vue';
 
 /**
@@ -195,10 +195,6 @@ describe('core.pageHeader.component — actions cluster', () => {
 });
 
 describe('core.pageHeader.component — tabs mode (unchanged)', () => {
-  beforeEach(() => {
-    // no-op
-  });
-
   it('renders the tabs slot and skips the icon/title block', () => {
     const wrapper = mountHeader({
       props: { title: 'Tasks', icon: 'fa-solid fa-list-check' },
