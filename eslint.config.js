@@ -4,11 +4,11 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
-  // Ignore patterns (only entries that fall within the lint allowlist; broad
-  // top-level dirs like dist/, node_modules/, coverage/ are excluded by virtue
-  // of the allowlist scoping in package.json scripts).
+  // Ignore patterns — keep dist/ and coverage/ here so IDE ESLint extensions
+  // (which read eslint.config.js directly, not the CLI allowlist) do not flag
+  // build artifacts. node_modules/ is excluded by ESLint by default.
   {
-    ignores: ['src/config/index.js'],
+    ignores: ['dist/**', 'coverage/**', 'src/config/index.js'],
   },
   // Base configurations
   js.configs.recommended,
