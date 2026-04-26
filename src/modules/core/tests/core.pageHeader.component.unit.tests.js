@@ -11,7 +11,7 @@ import CorePageHeader from '../components/core.pageHeader.component.vue';
  *       cutoff is `lg` (1145px), which would force every test into mobile mode.
  *       We pin `mobileBreakpoint` so the desktop branch is the default and tests
  *       can opt-in to mobile via the `mobile: true` option.
- * @param {Boolean} [mobile=false]
+ * @param {boolean} [mobile=false]
  * @returns {ReturnType<typeof createVuetify>}
  */
 const makeVuetify = (mobile = false) =>
@@ -26,7 +26,7 @@ const makeVuetify = (mobile = false) =>
  * @param {Object} [opts]
  * @param {Object} [opts.props] - props to forward to the component
  * @param {Object} [opts.slots] - slot templates to inject
- * @param {Boolean} [opts.mobile] - whether $vuetify.display.mobile should report true
+ * @param {boolean} [opts.mobile] - whether $vuetify.display.mobile should report true
  * @returns {import('@vue/test-utils').VueWrapper}
  */
 const mountHeader = ({ props = {}, slots = {}, mobile = false } = {}) => {
