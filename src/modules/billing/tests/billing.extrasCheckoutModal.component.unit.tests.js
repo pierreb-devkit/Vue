@@ -1,9 +1,10 @@
+import { ref } from 'vue';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
-import { useBillingStore } from '../stores/billing.store';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
+import * as useMeterModule from '../composables/billing.useMeter.js';
 
 const vuetify = createVuetify();
 
@@ -12,18 +13,18 @@ const mockPacks = [
   { packId: 'pack_1000', label: '1000 units', priceUsd: 16, meterUnits: 1000 },
 ];
 
+/** Shared purchasePack spy, reset in beforeEach. */
+let purchasePackSpy;
+
 /**
  * Mount BillingExtrasCheckoutModalComponent with Vuetify and Pinia.
- * Stubs v-dialog (requires visualViewport, unavailable in jsdom) and
- * spies on store actions to prevent HTTP calls from useMeter polling.
+ * Mocks useMeter composable entirely so purchasePack is directly observable
+ * without relying on the internal store delegation chain.
  * @param {Object} props - Component props
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountComponent = (props = {}) => {
-  const store = useBillingStore();
-  vi.spyOn(store, 'fetchUsageMeter').mockResolvedValue(null);
-  vi.spyOn(store, 'fetchExtrasBalance').mockResolvedValue(null);
-  return mount(BillingExtrasCheckoutModalComponent, {
+const mountComponent = (props = {}) =>
+  mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: false, packs: mockPacks, ...props },
     global: {
       plugins: [vuetify],
@@ -39,12 +40,23 @@ const mountComponent = (props = {}) => {
     },
     attachTo: document.body,
   });
-};
 
 describe('BillingExtrasCheckoutModalComponent', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    purchasePackSpy = vi.fn();
+    vi.spyOn(useMeterModule, 'useMeter').mockReturnValue({
+      used: ref(0),
+      quota: ref(0),
+      extras: ref(0),
+      breakdown: ref({}),
+      progress: ref(0),
+      breakdownPercent: ref({}),
+      totalRemaining: ref(0),
+      refresh: vi.fn(),
+      purchasePack: purchasePackSpy,
+    });
   });
 
   // ── Rendering ────────────────────────────────────────────────────────────
@@ -126,8 +138,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
   // ── Buy flow ─────────────────────────────────────────────────────────────
 
   it('calls purchasePack with selected packId when Buy is clicked', async () => {
-    const store = useBillingStore();
-    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+    purchasePackSpy.mockResolvedValue(undefined);
 
     const wrapper = mountComponent({ modelValue: true });
     // selectedPackId defaults to first pack
@@ -135,13 +146,12 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     expect(buyBtn).toBeDefined();
     await buyBtn.trigger('click');
     await wrapper.vm.$nextTick();
-    expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_500');
+    expect(purchasePackSpy).toHaveBeenCalledWith('pack_500');
   });
 
   it('sets purchasing=true while buy is in progress', async () => {
-    const store = useBillingStore();
     let resolve;
-    vi.spyOn(store, 'createExtrasCheckout').mockReturnValue(
+    purchasePackSpy.mockReturnValue(
       new Promise((res) => {
         resolve = res;
       }),
@@ -149,7 +159,8 @@ describe('BillingExtrasCheckoutModalComponent', () => {
 
     const wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
-    buyBtn.trigger('click');
+    // Await trigger so the click handler starts executing (purchasing flips synchronously)
+    await buyBtn.trigger('click');
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.purchasing).toBe(true);
 
@@ -159,8 +170,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
   });
 
   it('resets purchasing=false after error in purchasePack', async () => {
-    const store = useBillingStore();
-    vi.spyOn(store, 'createExtrasCheckout').mockRejectedValue(new Error('Network error'));
+    purchasePackSpy.mockRejectedValue(new Error('Network error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const wrapper = mountComponent({ modelValue: true });

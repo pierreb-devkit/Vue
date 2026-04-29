@@ -156,10 +156,13 @@ export default {
   },
   /**
    * @desc Wire useMeter composable for the meter-mode section.
+   * Injects billingStore once here so computed properties reference
+   * this.billingStore instead of calling useBillingStore() on every evaluation.
    */
   setup() {
     const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = useMeter({ pollIntervalMs: 30000 });
-    return { meterUsed, meterQuota, meterExtras, meterBreakdown };
+    const billingStore = useBillingStore();
+    return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore };
   },
   data() {
     return {
@@ -170,12 +173,10 @@ export default {
   },
   computed: {
     fetchLoading() {
-      const billingStore = useBillingStore();
-      return billingStore.loading;
+      return this.billingStore.loading;
     },
     subscription() {
-      const billingStore = useBillingStore();
-      return billingStore.subscription;
+      return this.billingStore.subscription;
     },
     /**
      * @desc Whether meter billing mode is active (from server config).
@@ -187,13 +188,13 @@ export default {
     },
     /**
      * @desc Available extras packs for checkout modal.
+     * Uses billingStore injected in setup to avoid repeated useBillingStore() calls.
      * @returns {Array}
      */
     packsAvailable() {
-      const billingStore = useBillingStore();
       return (
-        billingStore.usageMeter?.packsAvailable ??
-        billingStore.extrasBalance?.packsAvailable ??
+        this.billingStore.usageMeter?.packsAvailable ??
+        this.billingStore.extrasBalance?.packsAvailable ??
         []
       );
     },
@@ -227,9 +228,8 @@ export default {
     const hasOrg = !!authStore.user?.currentOrganization;
     if (!authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
 
-    const billingStore = useBillingStore();
     try {
-      await billingStore.fetchSubscription();
+      await this.billingStore.fetchSubscription();
     } catch (error) {
       console.error('Failed to load billing details:', error);
     }
@@ -242,8 +242,7 @@ export default {
     async manageSubscription() {
       this.portalLoading = true;
       try {
-        const billingStore = useBillingStore();
-        await billingStore.openPortal();
+        await this.billingStore.openPortal();
       } catch (error) {
         console.error('Failed to open billing portal:', error);
       } finally {

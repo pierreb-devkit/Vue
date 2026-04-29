@@ -119,14 +119,18 @@ export default {
   emits: ['open-drawer'],
 
   /**
-   * @desc Wires both useQuota (legacy) and useMeter (meter) composables.
-   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed: ComputedRef, meterQuota: ComputedRef, meterExtras: ComputedRef }}
+   * @desc Wires useQuota (always) and useMeter only in meter mode to avoid
+   * unnecessary reactive subscriptions and polling in legacy mode.
+   * @param {Object} props - Component props
+   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef }}
    */
-  setup() {
+  setup(props) {
     const { usage, limits, usagePercent } = useQuota();
-    const { used: meterUsed, quota: meterQuota, extras: meterExtras } = useMeter({ pollIntervalMs: 0 });
-
-    return { usage, limits, usagePercent, meterUsed, meterQuota, meterExtras };
+    if (props.mode === 'meter') {
+      const { used: meterUsed, quota: meterQuota, extras: meterExtras } = useMeter({ pollIntervalMs: 0 });
+      return { usage, limits, usagePercent, meterUsed, meterQuota, meterExtras };
+    }
+    return { usage, limits, usagePercent };
   },
 
   computed: {

@@ -131,12 +131,14 @@ export default {
   emits: ['update:modelValue'],
 
   /**
-   * @desc Wires useMeter composable to source reactive meter data.
-   * @returns {{ used: ComputedRef<number>, quota: ComputedRef<number>, extras: ComputedRef<number>, breakdown: ComputedRef<Object> }}
+   * @desc Wires useMeter composable and injects billingStore once so computed
+   * properties do not call useBillingStore() on every evaluation.
+   * @returns {{ used: ComputedRef<number>, quota: ComputedRef<number>, extras: ComputedRef<number>, breakdown: ComputedRef<Object>, billingStore: Object }}
    */
   setup() {
     const { used, quota, extras, breakdown } = useMeter({ pollIntervalMs: 30000 });
-    return { used, quota, extras, breakdown };
+    const billingStore = useBillingStore();
+    return { used, quota, extras, breakdown, billingStore };
   },
 
   data() {
@@ -149,13 +151,13 @@ export default {
   computed: {
     /**
      * @desc Available extras packs from store.
+     * Uses billingStore injected in setup to avoid repeated useBillingStore() calls.
      * @returns {Array<{packId: string, label: string, priceUsd: number, meterUnits: number}>}
      */
     packsAvailable() {
-      const billingStore = useBillingStore();
       return (
-        billingStore.usageMeter?.packsAvailable ??
-        billingStore.extrasBalance?.packsAvailable ??
+        this.billingStore.usageMeter?.packsAvailable ??
+        this.billingStore.extrasBalance?.packsAvailable ??
         []
       );
     },
