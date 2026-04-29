@@ -92,29 +92,20 @@ describe('BillingMeterProgressComponent', () => {
 
   // ── A11y attributes ──────────────────────────────────────────────────────
 
-  it('has role=progressbar on root element', () => {
+  it('has role=button on root element (interactive widget)', () => {
     const wrapper = mountComponent({ used: 50, quota: 100 });
-    expect(wrapper.find('.billing-meter-progress').attributes('role')).toBe('progressbar');
-  });
-
-  it('sets aria-valuenow to clamped progress', () => {
-    const wrapper = mountComponent({ used: 75, quota: 100 });
-    expect(wrapper.find('.billing-meter-progress').attributes('aria-valuenow')).toBe('75');
-  });
-
-  it('sets aria-valuemin to 0', () => {
-    const wrapper = mountComponent({ used: 50, quota: 100 });
-    expect(wrapper.find('.billing-meter-progress').attributes('aria-valuemin')).toBe('0');
-  });
-
-  it('sets aria-valuemax to 100', () => {
-    const wrapper = mountComponent({ used: 50, quota: 100 });
-    expect(wrapper.find('.billing-meter-progress').attributes('aria-valuemax')).toBe('100');
+    expect(wrapper.find('.billing-meter-progress').attributes('role')).toBe('button');
   });
 
   it('includes label in aria-label when label prop is provided', () => {
     const wrapper = mountComponent({ used: 50, quota: 100, label: 'Compute' });
     expect(wrapper.find('.billing-meter-progress').attributes('aria-label')).toContain('Compute');
+  });
+
+  it('includes usage stats in aria-label', () => {
+    const wrapper = mountComponent({ used: 75, quota: 100 });
+    expect(wrapper.find('.billing-meter-progress').attributes('aria-label')).toContain('75');
+    expect(wrapper.find('.billing-meter-progress').attributes('aria-label')).toContain('100');
   });
 
   // ── Variant switching ────────────────────────────────────────────────────

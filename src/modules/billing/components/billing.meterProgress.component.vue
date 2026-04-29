@@ -5,8 +5,8 @@
   Emits `click` for parent-driven drilldown (e.g. open a usage drawer).
 
   USAGE:
-  <billingMeterProgressComponent :used="120" :quota="200" :extras="30" label="Compute" />
-  <billingMeterProgressComponent :used="180" :quota="200" variant="donut" />
+  <BillingMeterProgressComponent :used="120" :quota="200" :extras="30" label="Compute" />
+  <BillingMeterProgressComponent :used="180" :quota="200" variant="donut" />
 
   PROPS:
   - used     (Number, required) : credits consumed
@@ -21,10 +21,7 @@
 <template>
   <div
     class="billing-meter-progress"
-    role="progressbar"
-    :aria-valuenow="clampedProgress"
-    aria-valuemin="0"
-    aria-valuemax="100"
+    role="button"
     :aria-label="ariaLabel"
     tabindex="0"
     style="cursor: pointer"

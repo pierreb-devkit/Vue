@@ -6,8 +6,8 @@
   Vuetify theme tokens for deterministic visual mapping.
 
   USAGE:
-  <billingMeterBreakdownChartComponent :breakdown="{ scrap: 100, autofix: 50, wizard: 200 }" />
-  <billingMeterBreakdownChartComponent :breakdown="breakdown" :total="500" />
+  <BillingMeterBreakdownChartComponent :breakdown="{ scrap: 100, autofix: 50, wizard: 200 }" />
+  <BillingMeterBreakdownChartComponent :breakdown="breakdown" :total="500" />
 
   PROPS:
   - breakdown (Object, required) : map of bucket → credit count (e.g. { scrap: 100, autofix: 50 })
@@ -43,7 +43,7 @@
       </div>
 
       <!-- Legend -->
-      <div class="billing-meter-breakdown-chart__legend d-flex flex-wrap gap-2 mt-2">
+      <div class="billing-meter-breakdown-chart__legend d-flex flex-wrap ga-2 mt-2">
         <div
           v-for="bucket in activeBuckets"
           :key="bucket.key"
