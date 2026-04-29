@@ -47,7 +47,7 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
    */
   const progress = computed(() => {
     if (quota.value === 0) return 0;
-    return Math.min(100, Math.round((used.value / quota.value) * 100));
+    return Math.max(0, Math.min(100, Math.round((used.value / quota.value) * 100)));
   });
 
   /**
@@ -81,10 +81,15 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
   const refresh = () =>
     Promise.all([billingStore.fetchUsageMeter(), billingStore.fetchExtrasBalance()]);
 
+  /** @desc Safe wrapper: catches refresh errors to avoid unhandled Promise rejections. */
+  const safeRefresh = () => refresh().catch(() => {});
+
   onMounted(() => {
-    refresh();
+    void safeRefresh();
     if (pollIntervalMs > 0) {
-      timer = setInterval(refresh, pollIntervalMs);
+      timer = setInterval(() => {
+        void safeRefresh();
+      }, pollIntervalMs);
     }
   });
 

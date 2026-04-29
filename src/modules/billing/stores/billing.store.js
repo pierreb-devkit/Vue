@@ -207,14 +207,19 @@ export const useBillingStore = defineStore('billing', {
       try {
         const api = apiBase();
         const successUrl = `${window.location.origin}/billing?packPurchased=1`;
-        const cancelUrl = `${window.location.origin}/billing/pricing`;
+        const cancelUrl = `${window.location.origin}/pricing`;
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
           packId,
           successUrl,
           cancelUrl,
         });
-        const { url } = res.data.data;
-        if (url) window.location.assign(url);
+        const url = res?.data?.data?.url;
+        if (!url) return;
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:') {
+          throw new Error('Rejected non-HTTPS checkout URL');
+        }
+        window.location.assign(parsed.toString());
       } catch (err) {
         console.error(err);
         throw err;

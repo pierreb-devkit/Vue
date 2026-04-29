@@ -102,7 +102,7 @@ describe('useMeter composable', () => {
   });
 
   it('progress is clamped to 0 minimum', () => {
-    store.usageMeter = { meterUsed: 0, meterQuota: 8000 };
+    store.usageMeter = { meterUsed: -100, meterQuota: 8000 };
     const { result } = mountMeter({ pollIntervalMs: 0 });
     expect(result.progress.value).toBe(0);
   });

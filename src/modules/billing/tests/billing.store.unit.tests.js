@@ -349,7 +349,7 @@ describe('Billing Store', () => {
         expect.objectContaining({
           packId: 'pack_500',
           successUrl: 'https://app.example.com/billing?packPurchased=1',
-          cancelUrl: 'https://app.example.com/billing/pricing',
+          cancelUrl: 'https://app.example.com/pricing',
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);
@@ -374,6 +374,28 @@ describe('Billing Store', () => {
       expect(window.location.assign).not.toHaveBeenCalled();
 
       window.location = originalLocation;
+    });
+
+    it('should reject non-HTTPS checkout URLs', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/checkout' } } });
+
+      const originalLocation = window.location;
+      delete window.location;
+      window.location = {
+        ...originalLocation,
+        origin: 'https://app.example.com',
+        assign: vi.fn(),
+      };
+
+      await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Rejected non-HTTPS checkout URL');
+      expect(window.location.assign).not.toHaveBeenCalled();
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+
+      window.location = originalLocation;
+      spy.mockRestore();
     });
 
     it('should propagate createExtrasCheckout error to caller', async () => {
