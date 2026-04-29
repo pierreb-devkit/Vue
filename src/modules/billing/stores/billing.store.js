@@ -21,6 +21,10 @@ export const useBillingStore = defineStore('billing', {
     subscription: null,
     quota: null,
     loading: false,
+    // meter billing (meterMode: true)
+    usageMeter: null, // { plan, planVersion, weekKey, weekResetAt, meterUsed, meterQuota, meterBreakdown, extrasRemaining, packsAvailable }
+    extrasBalance: null, // { balance, packsAvailable }
+    extrasLedger: { entries: [], total: 0, page: 1, limit: 20 },
   }),
 
   actions: {
@@ -123,6 +127,99 @@ export const useBillingStore = defineStore('billing', {
           throw new Error('Rejected non-HTTPS portal URL');
         }
         window.location.href = parsed.toString();
+      } catch (err) {
+        console.error(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * @desc Fetch current meter usage and quota for the active organization.
+     * @returns {Promise<Object>} Resolved usageMeter object
+     */
+    async fetchUsageMeter() {
+      this.loading = true;
+      try {
+        const api = apiBase();
+        const res = await axios.get(`${api}/${config.api.endPoints.billing}/usage`);
+        this.usageMeter = res.data.data;
+        return this.usageMeter;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * @desc Fetch the extras credit balance for the active organization.
+     * @returns {Promise<Object>} Resolved extrasBalance object
+     */
+    async fetchExtrasBalance() {
+      this.loading = true;
+      try {
+        const api = apiBase();
+        const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/balance`);
+        this.extrasBalance = res.data.data;
+        return this.extrasBalance;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * @desc Fetch a paginated ledger of extras credit transactions.
+     * @param {Object} [opts] - Pagination options
+     * @param {number} [opts.page=1] - Page number (1-based)
+     * @param {number} [opts.limit=20] - Page size
+     * @returns {Promise<Object>} Resolved extrasLedger object { entries, total, page, limit }
+     */
+    async fetchExtrasLedger({ page = 1, limit = 20 } = {}) {
+      this.loading = true;
+      try {
+        const api = apiBase();
+        const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/ledger`, {
+          params: { page, limit },
+        });
+        this.extrasLedger = res.data.data;
+        return this.extrasLedger;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * @desc Purchase an extras credit pack and redirect to Stripe Checkout.
+     * @param {string} packId - The pack identifier to purchase
+     * @returns {Promise<void>}
+     */
+    async createExtrasCheckout(packId) {
+      this.loading = true;
+      try {
+        const api = apiBase();
+        const successUrl = `${window.location.origin}/billing?packPurchased=1`;
+        const cancelUrl = `${window.location.origin}/pricing`;
+        const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
+          packId,
+          successUrl,
+          cancelUrl,
+        });
+        const url = res?.data?.data?.url;
+        if (!url) return;
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'https:') {
+          throw new Error('Rejected non-HTTPS checkout URL');
+        }
+        window.location.assign(parsed.toString());
       } catch (err) {
         console.error(err);
         throw err;
