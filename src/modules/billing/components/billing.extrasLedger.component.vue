@@ -65,7 +65,8 @@
         <template #[`item.amount`]="{ item }">
           <span
             class="font-weight-medium"
-            :style="{ fontFamily: 'monospace', color: item.amount >= 0 ? 'rgb(var(--v-theme-success))' : 'rgb(var(--v-theme-error))' }"
+            :class="item.amount >= 0 ? 'text-success' : 'text-error'"
+            style="font-family: monospace"
           >
             {{ item.amount >= 0 ? '+' : '' }}{{ item.amount }}
           </span>

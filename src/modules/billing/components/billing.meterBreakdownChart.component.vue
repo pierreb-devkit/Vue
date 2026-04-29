@@ -36,7 +36,8 @@
         <div
           v-for="bucket in activeBuckets"
           :key="bucket.key"
-          :style="{ width: bucket.pct + '%', backgroundColor: 'rgb(var(--v-theme-' + bucket.color + '))' }"
+          :class="'bg-' + bucket.color"
+          :style="{ width: bucket.pct + '%' }"
           :title="`${bucket.key}: ${bucket.value} (${bucket.pct}%)`"
         />
       </div>
@@ -49,7 +50,8 @@
           class="d-flex align-center ga-1 text-caption"
         >
           <div
-            :style="{ width: '10px', height: '10px', borderRadius: '2px', flexShrink: 0, backgroundColor: 'rgb(var(--v-theme-' + bucket.color + '))' }"
+            :class="'bg-' + bucket.color"
+            style="width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0"
           />
           <span class="text-medium-emphasis">{{ bucket.key }}</span>
           <span class="font-weight-medium">{{ bucket.pct }}%</span>
