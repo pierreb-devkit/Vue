@@ -32,8 +32,7 @@ const mockUsageMeterNormal = {
   plan: 'starter',
   planVersion: 1,
   weekKey: '2025-W17',
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-  weekResetAt: new Date(Date.now() + 86400000).toISOString(),
+  weekResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   meterUsed: 120,
   meterQuota: 500,
   meterBreakdown: { scrap: 80, autofix: 40 },
@@ -233,9 +232,10 @@ async function mockApiHealthcheck(page) {
  */
 async function injectFakeAuth(page) {
   await page.addInitScript(() => {
-    // Simulate a valid cookie expiry (1 day from now)
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    localStorage.setItem('DevkitCookieExpire', String(Date.now() + 86400000));
+    // Simulate a valid cookie expiry (1 day from now).
+    // Key must match the auth store: `${config.cookie.prefix}CookieExpire`
+    // where prefix defaults to 'devkit' (lowercase) in src/config/defaults/development.config.js.
+    localStorage.setItem('devkitCookieExpire', String(Date.now() + 24 * 60 * 60 * 1000));
   });
 }
 
@@ -483,17 +483,15 @@ test.describe('Meter billing — /billing page (meterMode)', () => {
     // carries the error color class (v-progress-linear with error color)
     const progressLinear = page.locator('.v-progress-linear').first();
     await expect(progressLinear).toBeVisible({ timeout: 5000 });
-    // The bar container or fill element should carry the error color attribute
+    // At 92% usage the BillingMeterProgressComponent thresholdColor returns 'error'.
+    // The bar container or fill element should carry the error color attribute.
     const colorAttr = await progressLinear.getAttribute('class');
     const hasErrorColor = colorAttr?.includes('error') || await page.locator('.v-progress-linear .v-progress-linear__determinate[class*="error"], .v-progress-linear[class*="error"]').count() > 0;
-    // Acceptable: either the class carries "error" or the computed style uses the Vuetify error token.
-    // At 92% usage the BillingMeterProgressComponent thresholdColor returns 'error'.
-    // Playwright cannot introspect Vuetify CSS variables reliably; verify the computed progress value instead.
+    expect(hasErrorColor).toBeTruthy();
+    // Verify the computed progress value as an additional user-facing signal.
     const ariaLabel = await billing.meterProgress().getAttribute('aria-label');
     expect(ariaLabel).toContain('460');
     expect(ariaLabel).toContain('92%');
-    // Optionally check that error color is NOT absent (best-effort, not blocking)
-    void hasErrorColor;
   });
 
   /**
@@ -633,11 +631,13 @@ test.describe('Extras checkout flow — mocked Stripe', () => {
     const dialog = page.locator('.v-dialog, [role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 8000 });
 
-    // Intercept the navigation triggered by window.location.assign
+    // Intercept the network response triggered by the checkout call.
+    // No .catch here — if the checkout API never fires, the test must fail
+    // (otherwise a regression that breaks the CTA wiring would pass silently).
     const navigationPromise = page.waitForEvent('response', {
       predicate: (r) => r.url().includes('/api/billing/extras/checkout'),
       timeout: 8000,
-    }).catch(() => null);
+    });
 
     // Click the buy button
     const buyBtn = page.getByRole('button', { name: /Buy 500 units/i });
@@ -645,11 +645,9 @@ test.describe('Extras checkout flow — mocked Stripe', () => {
     await buyBtn.click();
 
     const checkoutResponse = await navigationPromise;
-    if (checkoutResponse) {
-      const body = await checkoutResponse.json().catch(() => ({}));
-      // Stripe test URL returned from the mock
-      expect(body?.data?.url).toBe(mockStripeCheckoutUrl);
-    }
+    const body = await checkoutResponse.json();
+    // Stripe test URL returned from the mock
+    expect(body?.data?.url).toBe(mockStripeCheckoutUrl);
     // The store validates the URL is HTTPS before calling assign; our mock
     // returns stripe.test which is HTTPS, so the redirect is triggered.
     // Since Playwright blocks navigation to external hosts in testing mode,
@@ -736,9 +734,11 @@ test.describe('Meter billing — polling refresh', () => {
     const summaryInDrawer = page.locator('.v-navigation-drawer .text-caption').first();
     await expect(summaryInDrawer).toContainText('120 / 500', { timeout: 6000 });
 
-    // Update mock to return higher meterUsed (after polling tick)
-    await page.unrouteAll();
-    await mountMeterMocks(page, { critical: false });
+    // Update mock to return higher meterUsed (after polling tick).
+    // Unroute only the usage handler so the new mock supersedes the previous one
+    // (Playwright evaluates handlers in registration order — re-registering
+    // without unroute would leave the original handler responding first).
+    await page.unroute('**/api/billing/usage');
     await mockUsageAPI(page, { ...mockUsageMeterNormal, meterUsed: 350 });
 
     // Advance fake clock by 31s to trigger the setInterval callback

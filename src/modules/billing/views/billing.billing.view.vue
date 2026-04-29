@@ -159,7 +159,6 @@ export default {
    * tenants do not incur polling overhead.  Injects billingStore once here so
    * computed properties reference this.billingStore instead of calling
    * useBillingStore() on every evaluation.
-   * @param {Object} props - Component props
    * @returns {{ billingStore: Object, authStore: Object, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterBreakdown?: ComputedRef }}
    */
   setup() {
