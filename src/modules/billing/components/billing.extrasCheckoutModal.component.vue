@@ -3,7 +3,7 @@
   =====================================
   Dialog for purchasing an extras credit pack.
   Presents a radio list of available packs with label and price,
-  and a CTA that redirects to Stripe via useMeter().purchasePack().
+  and a CTA that redirects to Stripe via billingStore.createExtrasCheckout().
 
   USAGE:
   <BillingExtrasCheckoutModalComponent

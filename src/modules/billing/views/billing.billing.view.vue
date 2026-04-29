@@ -160,16 +160,16 @@ export default {
    * computed properties reference this.billingStore instead of calling
    * useBillingStore() on every evaluation.
    * @param {Object} props - Component props
-   * @returns {{ billingStore: Object, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterBreakdown?: ComputedRef }}
+   * @returns {{ billingStore: Object, authStore: Object, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterBreakdown?: ComputedRef }}
    */
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
     if (authStore.serverConfig?.billing?.meterMode === true) {
       const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = useMeter({ pollIntervalMs: 30000 });
-      return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore };
+      return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore, authStore };
     }
-    return { billingStore };
+    return { billingStore, authStore };
   },
   data() {
     return {
@@ -187,11 +187,11 @@ export default {
     },
     /**
      * @desc Whether meter billing mode is active (from server config).
+     * Uses authStore injected in setup for consistency with billingStore pattern.
      * @returns {boolean}
      */
     meterMode() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.billing?.meterMode === true;
+      return this.authStore.serverConfig?.billing?.meterMode === true;
     },
     /**
      * @desc Available extras packs for checkout modal.
@@ -230,10 +230,9 @@ export default {
    * @desc Fetch subscription data on mount.
    */
   async mounted() {
-    const authStore = useAuthStore();
-    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
-    const hasOrg = !!authStore.user?.currentOrganization;
-    if (!authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
+    const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!this.authStore.user?.currentOrganization;
+    if (!this.authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
 
     try {
       await this.billingStore.fetchSubscription();
