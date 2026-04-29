@@ -1,5 +1,10 @@
 /**
  * Billing plans static marketing content.
+ *
+ * Each plan may optionally include an `equivalences` array for meter mode display.
+ * Equivalences are illustrative devkit defaults — downstream projects override with
+ * their own branding and counts.
+ * @type {Array<{label: string, count: number}>}
  */
 export const plans = [
   {
@@ -15,6 +20,10 @@ export const plans = [
       { text: 'Community support', included: true },
       { text: 'Advanced analytics', included: false },
     ],
+    // i18n key: billing.equivalences.scrapRun → "operations / week"
+    equivalences: [
+      { label: 'operations / week', count: 100 },
+    ],
   },
   {
     id: 'starter',
@@ -28,6 +37,9 @@ export const plans = [
       { text: '10 team members', included: true },
       { text: 'Email support', included: true },
       { text: 'Advanced analytics', included: false },
+    ],
+    equivalences: [
+      { label: 'operations / week', count: 500 },
     ],
   },
   {
@@ -43,8 +55,18 @@ export const plans = [
       { text: 'Priority support', included: true },
       { text: 'Advanced analytics', included: true },
     ],
+    equivalences: [
+      { label: 'operations / week', count: 2000 },
+    ],
   },
 ];
+
+/**
+ * Extra credit packs available for purchase.
+ * Devkit default is empty — downstream projects populate with marketing copy and Stripe pack IDs.
+ * @type {Array<{packId: string, label: string, priceUsd: number, meterUnits: number}>}
+ */
+export const packs = [];
 
 /**
  * Exports.
@@ -52,5 +74,6 @@ export const plans = [
 export default {
   billing: {
     plans,
+    packs,
   },
 };
