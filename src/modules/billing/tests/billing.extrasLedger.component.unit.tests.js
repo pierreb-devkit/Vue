@@ -156,10 +156,11 @@ describe('BillingExtrasLedgerComponent', () => {
     expect(wrapper.vm.pageCount).toBe(1);
   });
 
-  it('emits update:page when pagination changes', async () => {
+  it('emits update:page when VPagination fires update:modelValue', async () => {
     const wrapper = mountComponent({ entries: SAMPLE_ENTRIES, total: 45, limit: 20, page: 1 });
-    wrapper.vm.$emit('update:page', 2);
-    await wrapper.vm.$nextTick();
+    const pagination = wrapper.findComponent({ name: 'VPagination' });
+    expect(pagination.exists()).toBe(true);
+    await pagination.vm.$emit('update:modelValue', 2);
     expect(wrapper.emitted('update:page')).toBeTruthy();
     expect(wrapper.emitted('update:page')[0]).toEqual([2]);
   });

@@ -103,21 +103,25 @@ export default {
 
     /**
      * @desc Non-zero buckets enriched with color assignment and percentage.
-     * Color is assigned by stable index position in the sorted key list so the
-     * mapping is deterministic for a given set of bucket names.
+     * Color is assigned by stable index position in the sorted key list across
+     * ALL provided bucket names (zero or not), so the palette is deterministic
+     * for a given set of bucket names — toggling a zero bucket never shifts the
+     * colors of other buckets.
      * @returns {Array<{ key: string, value: number, pct: number, color: string }>}
      */
     activeBuckets() {
       const total = this.effectiveTotal;
       if (total === 0) return [];
 
-      return Object.entries(this.breakdown)
-        .filter(([, v]) => v > 0)
-        .map(([key, value], idx) => ({
+      const allKeys = Object.keys(this.breakdown).sort();
+      return allKeys
+        .map((key) => ({ key, value: this.breakdown[key] || 0, paletteIdx: allKeys.indexOf(key) }))
+        .filter(({ value }) => value > 0)
+        .map(({ key, value, paletteIdx }) => ({
           key,
           value,
           pct: Math.round((value / total) * 100),
-          color: PALETTE[idx % PALETTE.length],
+          color: PALETTE[paletteIdx % PALETTE.length],
         }));
     },
 

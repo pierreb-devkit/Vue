@@ -35,7 +35,7 @@
     <!-- Label row -->
     <div
       v-if="label"
-      class="d-flex justify-space-between text-body-small text-medium-emphasis mb-1"
+      class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1"
     >
       <span>{{ label }}</span>
       <span class="font-weight-medium">{{ clampedProgress }}%</span>

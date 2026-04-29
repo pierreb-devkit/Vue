@@ -116,6 +116,21 @@ describe('BillingMeterBreakdownChartComponent', () => {
     expect(wrapper.vm.activeBuckets[6].color).toBe('primary');
   });
 
+  it('palette colors are stable when a zero bucket is toggled on', () => {
+    // Initial state: a=0, b=50, c=0, d=100 — only b and d are active
+    const w1 = mountComponent({ breakdown: { a: 0, b: 50, c: 0, d: 100 } });
+    const colorB1 = w1.vm.activeBuckets.find((bk) => bk.key === 'b').color;
+    const colorD1 = w1.vm.activeBuckets.find((bk) => bk.key === 'd').color;
+
+    // After toggle: a becomes 10 — b and d must keep the exact same colors
+    const w2 = mountComponent({ breakdown: { a: 10, b: 50, c: 0, d: 100 } });
+    const colorB2 = w2.vm.activeBuckets.find((bk) => bk.key === 'b').color;
+    const colorD2 = w2.vm.activeBuckets.find((bk) => bk.key === 'd').color;
+
+    expect(colorB2).toBe(colorB1);
+    expect(colorD2).toBe(colorD1);
+  });
+
   // ── Rendering ─────────────────────────────────────────────────────────────
 
   it('renders the stacked bar when there are active buckets', () => {
