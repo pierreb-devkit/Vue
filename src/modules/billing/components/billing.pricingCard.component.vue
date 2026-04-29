@@ -1,16 +1,24 @@
 <!--
   BillingPricingCardComponent
   ===========================
-  Displays a single pricing plan card with name, price, features, and CTA.
+  Displays a single pricing plan card with name, price, features/equivalences, and CTA.
 
-  USAGE:
-  <billingPricingCardComponent :plan="plan" :annual="false" :current="false" @select="onSelect" />
+  USAGE (legacy — feature list):
+  <BillingPricingCardComponent :plan="plan" :annual="false" :current="false" @select="onSelect" />
+
+  USAGE (meter mode — equivalences):
+  <BillingPricingCardComponent
+    :plan="plan"
+    :equivalences="[{ label: 'operations / week', count: 500 }]"
+    @select="onSelect"
+  />
 
   PROPS:
-  - plan (Object): Plan object with id, name, tagline, features, highlighted, badge, cta, monthlyPrice, annualPrice
-  - annual (Boolean): Whether annual billing is selected
-  - current (Boolean): Whether this is the user's current plan
-  - loading (Boolean): Whether a checkout is in progress (disables CTA)
+  - plan         (Object, required): Plan object with id, name, tagline, features, highlighted, badge, cta, monthlyPrice, annualPrice
+  - annual       (Boolean): Whether annual billing is selected
+  - current      (Boolean): Whether this is the user's current plan
+  - loading      (Boolean): Whether a checkout is in progress (disables CTA)
+  - equivalences (Array<{label: String, count: Number}>, optional): When provided, renders equivalence bullets instead of feature list
 
   EVENTS:
   - select (Object): Emitted with { planId, priceId } when CTA is clicked
@@ -79,8 +87,39 @@
       Current Plan
     </v-btn>
 
-    <!-- Features -->
-    <v-list density="compact" bg-color="transparent" class="pa-0">
+    <!-- Equivalences (meter mode) — rendered when equivalences prop is present -->
+    <v-list
+      v-if="equivalences && equivalences.length > 0"
+      density="compact"
+      bg-color="transparent"
+      class="pa-0"
+    >
+      <v-list-item
+        v-for="equiv in equivalences"
+        :key="equiv.label"
+        class="px-0"
+      >
+        <template #prepend>
+          <v-icon
+            icon="fa-solid fa-tilde"
+            color="primary"
+            size="small"
+            class="mr-3"
+          ></v-icon>
+        </template>
+        <v-list-item-title>
+          ~{{ equiv.count }} {{ equiv.label }}
+        </v-list-item-title>
+      </v-list-item>
+    </v-list>
+
+    <!-- Features (legacy mode) — rendered when equivalences is absent or empty -->
+    <v-list
+      v-else
+      density="compact"
+      bg-color="transparent"
+      class="pa-0"
+    >
       <v-list-item
         v-for="feature in plan.features"
         :key="feature.text"
@@ -124,6 +163,15 @@ export default {
     loading: {
       type: Boolean,
       default: false,
+    },
+    /**
+     * @desc Optional meter-mode equivalences. When provided, renders a bullet list of
+     * "~{count} {label}" items instead of the legacy feature list.
+     * @type {Array<{label: string, count: number}>}
+     */
+    equivalences: {
+      type: Array,
+      default: null,
     },
   },
   emits: ['select'],

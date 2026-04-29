@@ -73,6 +73,7 @@
           :annual="annual"
           :current="isCurrentPlan(plan.id)"
           :loading="checkoutLoading"
+          :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
           @select="onSelectPlan"
         />
       </v-col>
@@ -89,6 +90,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { plans as plansConfig } from '../config/billing.development.config';
 import billingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import billingPricingCardComponent from '../components/billing.pricingCard.component.vue';
+
 
 /**
  * Component definition.
@@ -146,6 +148,14 @@ export default {
     currentPlanId() {
       const billingStore = useBillingStore();
       return billingStore.subscription?.plan ?? 'free';
+    },
+    /**
+     * @desc Whether meter billing mode is active (from server config).
+     * @returns {boolean}
+     */
+    meterMode() {
+      const authStore = useAuthStore();
+      return authStore.serverConfig?.billing?.meterMode === true;
     },
   },
   /**

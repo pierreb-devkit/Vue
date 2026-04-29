@@ -125,4 +125,53 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('Unlimited projects');
     expect(wrapper.text()).toContain('Priority support');
   });
+
+  // ── Equivalences prop (meter mode) ───────────────────────────────────────
+
+  it('renders equivalence bullets when equivalences prop is provided', () => {
+    const wrapper = mountComponent({
+      plan: proPlan,
+      equivalences: [{ label: 'operations / week', count: 2000 }],
+    });
+    expect(wrapper.text()).toContain('~2000 operations / week');
+  });
+
+  it('renders multiple equivalences', () => {
+    const wrapper = mountComponent({
+      plan: proPlan,
+      equivalences: [
+        { label: 'scrapes / week', count: 1500 },
+        { label: 'autofixes / week', count: 500 },
+      ],
+    });
+    expect(wrapper.text()).toContain('~1500 scrapes / week');
+    expect(wrapper.text()).toContain('~500 autofixes / week');
+  });
+
+  it('hides feature list when equivalences are provided', () => {
+    const wrapper = mountComponent({
+      plan: proPlan,
+      equivalences: [{ label: 'operations / week', count: 2000 }],
+    });
+    expect(wrapper.text()).not.toContain('Unlimited projects');
+    expect(wrapper.text()).not.toContain('Priority support');
+  });
+
+  it('shows feature list when equivalences prop is null (backward compat)', () => {
+    const wrapper = mountComponent({ plan: proPlan, equivalences: null });
+    expect(wrapper.text()).toContain('Unlimited projects');
+    expect(wrapper.text()).not.toContain('~');
+  });
+
+  it('shows feature list when equivalences prop is omitted (backward compat)', () => {
+    const wrapper = mountComponent({ plan: proPlan });
+    expect(wrapper.text()).toContain('Unlimited projects');
+    expect(wrapper.text()).not.toContain('~');
+  });
+
+  it('shows feature list when equivalences is empty array', () => {
+    const wrapper = mountComponent({ plan: proPlan, equivalences: [] });
+    expect(wrapper.text()).toContain('Unlimited projects');
+    expect(wrapper.text()).not.toContain('~');
+  });
 });
