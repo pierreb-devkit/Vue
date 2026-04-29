@@ -201,4 +201,189 @@ describe('Billing Store', () => {
       spy.mockRestore();
     });
   });
+
+  describe('fetchUsageMeter', () => {
+    it('should initialize usageMeter and extrasLedger with default state', () => {
+      const store = useBillingStore();
+      expect(store.usageMeter).toBeNull();
+      expect(store.extrasBalance).toBeNull();
+      expect(store.extrasLedger).toEqual({ entries: [], total: 0, page: 1, limit: 20 });
+    });
+
+    it('should fetch and set usageMeter from backend payload', async () => {
+      const store = useBillingStore();
+      const mockMeter = {
+        plan: 'pro',
+        planVersion: 'v1',
+        weekKey: '2026-W18',
+        weekResetAt: '2026-05-04T00:00:00Z',
+        meterUsed: 1234,
+        meterQuota: 8000,
+        meterBreakdown: { scrap: 800, autofix: 434 },
+        extrasRemaining: 12500,
+        packsAvailable: [],
+      };
+      axios.get.mockResolvedValueOnce({ data: { data: mockMeter } });
+      const result = await store.fetchUsageMeter();
+      expect(store.usageMeter).toEqual(mockMeter);
+      expect(result).toEqual(mockMeter);
+      expect(store.loading).toBe(false);
+    });
+
+    it('should call correct API endpoint for fetchUsageMeter', async () => {
+      const store = useBillingStore();
+      axios.get.mockResolvedValueOnce({ data: { data: {} } });
+      await store.fetchUsageMeter();
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/usage'));
+    });
+
+    it('should propagate fetchUsageMeter error to caller', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.get.mockRejectedValueOnce(new Error('Meter fetch failed'));
+      await expect(store.fetchUsageMeter()).rejects.toThrow('Meter fetch failed');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+  });
+
+  describe('fetchExtrasBalance', () => {
+    it('should fetch and set extrasBalance', async () => {
+      const store = useBillingStore();
+      const mockBalance = { balance: 5000, packsAvailable: [{ id: 'pack_500', credits: 500 }] };
+      axios.get.mockResolvedValueOnce({ data: { data: mockBalance } });
+      const result = await store.fetchExtrasBalance();
+      expect(store.extrasBalance).toEqual(mockBalance);
+      expect(result).toEqual(mockBalance);
+      expect(store.loading).toBe(false);
+    });
+
+    it('should call correct API endpoint for fetchExtrasBalance', async () => {
+      const store = useBillingStore();
+      axios.get.mockResolvedValueOnce({ data: { data: {} } });
+      await store.fetchExtrasBalance();
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/extras/balance'));
+    });
+
+    it('should propagate fetchExtrasBalance error to caller', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.get.mockRejectedValueOnce(new Error('Balance fetch failed'));
+      await expect(store.fetchExtrasBalance()).rejects.toThrow('Balance fetch failed');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+  });
+
+  describe('fetchExtrasLedger', () => {
+    it('should fetch and set extrasLedger with default pagination', async () => {
+      const store = useBillingStore();
+      const mockLedger = {
+        entries: [{ id: 'tx_1', credits: 500, createdAt: '2026-04-01' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+      };
+      axios.get.mockResolvedValueOnce({ data: { data: mockLedger } });
+      const result = await store.fetchExtrasLedger();
+      expect(store.extrasLedger).toEqual(mockLedger);
+      expect(result).toEqual(mockLedger);
+      expect(store.loading).toBe(false);
+    });
+
+    it('should call API endpoint with correct pagination params', async () => {
+      const store = useBillingStore();
+      axios.get.mockResolvedValueOnce({
+        data: { data: { entries: [], total: 0, page: 2, limit: 10 } },
+      });
+      await store.fetchExtrasLedger({ page: 2, limit: 10 });
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/billing/extras/ledger'),
+        expect.objectContaining({ params: { page: 2, limit: 10 } }),
+      );
+    });
+
+    it('should default to page 1 and limit 20', async () => {
+      const store = useBillingStore();
+      axios.get.mockResolvedValueOnce({
+        data: { data: { entries: [], total: 0, page: 1, limit: 20 } },
+      });
+      await store.fetchExtrasLedger();
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('/billing/extras/ledger'),
+        expect.objectContaining({ params: { page: 1, limit: 20 } }),
+      );
+    });
+
+    it('should propagate fetchExtrasLedger error to caller', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.get.mockRejectedValueOnce(new Error('Ledger fetch failed'));
+      await expect(store.fetchExtrasLedger()).rejects.toThrow('Ledger fetch failed');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+  });
+
+  describe('createExtrasCheckout', () => {
+    it('should call extras checkout API with correct packId and redirect URLs', async () => {
+      const store = useBillingStore();
+      const checkoutUrl = 'https://checkout.stripe.com/extras_session123';
+      axios.post.mockResolvedValueOnce({ data: { data: { url: checkoutUrl } } });
+
+      const originalLocation = window.location;
+      delete window.location;
+      window.location = {
+        ...originalLocation,
+        origin: 'https://app.example.com',
+        assign: vi.fn(),
+      };
+
+      await store.createExtrasCheckout('pack_500');
+
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/billing/extras/checkout'),
+        expect.objectContaining({
+          packId: 'pack_500',
+          successUrl: 'https://app.example.com/billing?packPurchased=1',
+          cancelUrl: 'https://app.example.com/billing/pricing',
+        }),
+      );
+      expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);
+      expect(store.loading).toBe(false);
+
+      window.location = originalLocation;
+    });
+
+    it('should not redirect when URL is absent in API response', async () => {
+      const store = useBillingStore();
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      const originalLocation = window.location;
+      delete window.location;
+      window.location = {
+        ...originalLocation,
+        origin: 'https://app.example.com',
+        assign: vi.fn(),
+      };
+
+      await store.createExtrasCheckout('pack_500');
+      expect(window.location.assign).not.toHaveBeenCalled();
+
+      window.location = originalLocation;
+    });
+
+    it('should propagate createExtrasCheckout error to caller', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.post.mockRejectedValueOnce(new Error('Extras checkout failed'));
+      await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Extras checkout failed');
+      expect(spy).toHaveBeenCalled();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+  });
 });
