@@ -121,6 +121,10 @@ export default {
   /**
    * @desc Wires useQuota (always) and useMeter only in meter mode to avoid
    * unnecessary reactive subscriptions and polling in legacy mode.
+   * pollIntervalMs:0 disables the 30-second setInterval inside useMeter, but
+   * safeRefresh() still fires once on mount to populate the initial meter state.
+   * The parent component (e.g. BillingMeterDrawer) handles its own polling with
+   * pollIntervalMs:30000 for continuous refresh while the drawer is open.
    * @param {Object} props - Component props
    * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef }}
    */
