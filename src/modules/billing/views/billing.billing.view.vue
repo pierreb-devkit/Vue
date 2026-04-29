@@ -155,14 +155,21 @@ export default {
     BillingExtrasCheckoutModalComponent,
   },
   /**
-   * @desc Wire useMeter composable for the meter-mode section.
-   * Injects billingStore once here so computed properties reference
-   * this.billingStore instead of calling useBillingStore() on every evaluation.
+   * @desc Wire useMeter composable only when meter mode is active so legacy
+   * tenants do not incur polling overhead.  Injects billingStore once here so
+   * computed properties reference this.billingStore instead of calling
+   * useBillingStore() on every evaluation.
+   * @param {Object} props - Component props
+   * @returns {{ billingStore: Object, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterBreakdown?: ComputedRef }}
    */
   setup() {
-    const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = useMeter({ pollIntervalMs: 30000 });
     const billingStore = useBillingStore();
-    return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore };
+    const authStore = useAuthStore();
+    if (authStore.serverConfig?.billing?.meterMode === true) {
+      const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = useMeter({ pollIntervalMs: 30000 });
+      return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore };
+    }
+    return { billingStore };
   },
   data() {
     return {

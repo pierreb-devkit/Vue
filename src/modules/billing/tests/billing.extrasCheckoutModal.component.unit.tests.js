@@ -1,10 +1,9 @@
-import { ref } from 'vue';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { useBillingStore } from '../stores/billing.store';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
-import * as useMeterModule from '../composables/billing.useMeter.js';
 
 const vuetify = createVuetify();
 
@@ -13,13 +12,13 @@ const mockPacks = [
   { packId: 'pack_1000', label: '1000 units', priceUsd: 16, meterUnits: 1000 },
 ];
 
-/** Shared purchasePack spy, reset in beforeEach. */
+/** Shared createExtrasCheckout spy, reset in beforeEach. */
 let purchasePackSpy;
 
 /**
  * Mount BillingExtrasCheckoutModalComponent with Vuetify and Pinia.
- * Mocks useMeter composable entirely so purchasePack is directly observable
- * without relying on the internal store delegation chain.
+ * Spies on billingStore.createExtrasCheckout so purchasePack is directly
+ * observable without triggering HTTP calls.
  * @param {Object} props - Component props
  * @returns {import('@vue/test-utils').VueWrapper}
  */
@@ -36,6 +35,13 @@ const mountComponent = (props = {}) =>
           emits: ['update:modelValue'],
           template: '<div class="v-dialog-stub" v-bind="$attrs"><slot /></div>',
         },
+        // v-alert: stub to avoid Vuetify overlay/transition complexity in unit tests
+        'v-alert': {
+          name: 'v-alert',
+          props: ['type', 'variant', 'density', 'closable'],
+          emits: ['click:close'],
+          template: '<div class="v-alert-stub" v-bind="$attrs"><slot /></div>',
+        },
       },
     },
     attachTo: document.body,
@@ -46,17 +52,8 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     purchasePackSpy = vi.fn();
-    vi.spyOn(useMeterModule, 'useMeter').mockReturnValue({
-      used: ref(0),
-      quota: ref(0),
-      extras: ref(0),
-      breakdown: ref({}),
-      progress: ref(0),
-      breakdownPercent: ref({}),
-      totalRemaining: ref(0),
-      refresh: vi.fn(),
-      purchasePack: purchasePackSpy,
-    });
+    const store = useBillingStore();
+    vi.spyOn(store, 'createExtrasCheckout').mockImplementation(purchasePackSpy);
   });
 
   // ── Rendering ────────────────────────────────────────────────────────────
@@ -137,7 +134,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
 
   // ── Buy flow ─────────────────────────────────────────────────────────────
 
-  it('calls purchasePack with selected packId when Buy is clicked', async () => {
+  it('calls createExtrasCheckout with selected packId when Buy is clicked', async () => {
     purchasePackSpy.mockResolvedValue(undefined);
 
     const wrapper = mountComponent({ modelValue: true });
@@ -169,7 +166,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     expect(wrapper.vm.purchasing).toBe(false);
   });
 
-  it('resets purchasing=false after error in purchasePack', async () => {
+  it('resets purchasing=false and sets purchaseError after error in createExtrasCheckout', async () => {
     purchasePackSpy.mockRejectedValue(new Error('Network error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -180,6 +177,29 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     await wrapper.vm.$nextTick(); // let the promise settle
 
     expect(wrapper.vm.purchasing).toBe(false);
+    expect(wrapper.vm.purchaseError).toBe('Unable to start checkout. Please try again.');
+    consoleSpy.mockRestore();
+  });
+
+  it('clears purchaseError on retry (new buy attempt)', async () => {
+    purchasePackSpy
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValue(undefined);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const wrapper = mountComponent({ modelValue: true });
+    const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
+
+    // First click → error
+    await buyBtn.trigger('click');
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseError).toBeTruthy();
+
+    // Second click → clears error before attempt
+    await buyBtn.trigger('click');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseError).toBeNull();
     consoleSpy.mockRestore();
   });
 

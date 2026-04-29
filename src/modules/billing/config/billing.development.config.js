@@ -4,7 +4,7 @@
  * Each plan may optionally include an `equivalences` array for meter mode display.
  * Equivalences are illustrative devkit defaults — downstream projects override with
  * their own branding and counts.
- * @type {Array<{label: string, count: number}>}
+ * @type {Array<{id: string, name: string, tagline: string, highlighted: boolean, badge: string|null, cta: string, features: Array<{text: string, included: boolean}>, equivalences?: Array<{label: string, count: number}>}>}
  */
 export const plans = [
   {

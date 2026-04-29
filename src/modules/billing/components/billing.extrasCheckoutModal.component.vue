@@ -54,6 +54,19 @@
         </p>
       </v-card-text>
 
+      <!-- Purchase error -->
+      <v-alert
+        v-if="purchaseError"
+        type="error"
+        variant="tonal"
+        density="compact"
+        class="mx-5 mb-2"
+        closable
+        @click:close="purchaseError = null"
+      >
+        {{ purchaseError }}
+      </v-alert>
+
       <!-- Actions -->
       <v-card-actions class="px-5 pb-5 ga-2">
         <!-- i18n key: billing.extras.cta → Buy units -->
@@ -84,7 +97,7 @@
 /**
  * Module dependencies.
  */
-import { useMeter } from '../composables/billing.useMeter';
+import { useBillingStore } from '../stores/billing.store';
 
 /**
  * Component definition.
@@ -113,12 +126,13 @@ export default {
   emits: ['update:modelValue'],
 
   /**
-   * @desc Wires useMeter composable to access purchasePack.
-   * @returns {{ purchasePack: Function }}
+   * @desc Injects billingStore directly so only createExtrasCheckout is wired —
+   * no polling side-effect on mount (avoids the safeRefresh triggered by useMeter).
+   * @returns {{ billingStore: Object }}
    */
   setup() {
-    const { purchasePack } = useMeter({ pollIntervalMs: 0 });
-    return { purchasePack };
+    const billingStore = useBillingStore();
+    return { billingStore };
   },
 
   data() {
@@ -127,6 +141,8 @@ export default {
       selectedPackId: null,
       /** @type {boolean} Whether a purchase is in progress */
       purchasing: false,
+      /** @type {string|null} User-facing error message when checkout initiation fails */
+      purchaseError: null,
     };
   },
 
@@ -164,17 +180,20 @@ export default {
   methods: {
     /**
      * @desc Initiate Stripe checkout for the selected pack.
-     * Delegates to useMeter().purchasePack() which redirects to Stripe.
+     * Delegates to billingStore.createExtrasCheckout() which redirects to Stripe.
+     * On failure, sets purchaseError so the user understands what went wrong.
      * @returns {Promise<void>}
      */
     async onBuy() {
       if (!this.selectedPackId) return;
       this.purchasing = true;
+      this.purchaseError = null;
       try {
-        await this.purchasePack(this.selectedPackId);
+        await this.billingStore.createExtrasCheckout(this.selectedPackId);
         // On success, Stripe redirects — so we only reach here on error
       } catch (err) {
         console.error('Failed to initiate extras checkout:', err);
+        this.purchaseError = 'Unable to start checkout. Please try again.';
       } finally {
         this.purchasing = false;
       }
