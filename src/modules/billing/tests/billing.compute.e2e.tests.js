@@ -32,6 +32,7 @@ const mockUsageMeterNormal = {
   plan: 'starter',
   planVersion: 1,
   weekKey: '2025-W17',
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
   weekResetAt: new Date(Date.now() + 86400000).toISOString(),
   meterUsed: 120,
   meterQuota: 500,
@@ -233,6 +234,7 @@ async function mockApiHealthcheck(page) {
 async function injectFakeAuth(page) {
   await page.addInitScript(() => {
     // Simulate a valid cookie expiry (1 day from now)
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
     localStorage.setItem('DevkitCookieExpire', String(Date.now() + 86400000));
   });
 }
