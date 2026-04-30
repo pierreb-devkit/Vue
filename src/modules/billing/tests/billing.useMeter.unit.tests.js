@@ -10,13 +10,14 @@ vi.mock('../../../lib/services/axios', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
 
-// Module-level ref so mountMeter can register each wrapper for afterEach cleanup
+// Module-level array so mountMeter can register every wrapper for afterEach cleanup
 // even when tests only destructure `result` and never capture `wrapper` themselves.
-let _wrapper;
+// Using an array handles the case where a test calls mountMeter() more than once.
+const _wrappers = [];
 
 /**
  * @desc Mount a wrapper component calling useMeter and expose its return value.
- * Registers the created wrapper into the module-level _wrapper for afterEach cleanup.
+ * Registers the created wrapper into _wrappers for afterEach cleanup.
  * @param {Object} [opts] - Options forwarded to useMeter
  * @returns {{ result: Object, wrapper: import('@vue/test-utils').VueWrapper }}
  */
@@ -30,7 +31,7 @@ function mountMeter(opts = {}) {
     template: '<div />',
   });
   const wrapper = mount(Wrapper);
-  _wrapper = wrapper;
+  _wrappers.push(wrapper);
   return { result, wrapper };
 }
 
@@ -49,8 +50,8 @@ describe('useMeter composable', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    _wrapper?.unmount();
-    _wrapper = null;
+    _wrappers.forEach((w) => w.unmount());
+    _wrappers.length = 0;
   });
 
   // ── Computed defaults ────────────────────────────────────────────────────

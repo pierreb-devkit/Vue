@@ -205,7 +205,7 @@ export default {
       }
     });
 
-    return { billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown };
+    return { billingStore, authStore, meterMode, meterUsed, meterQuota, meterExtras, meterBreakdown };
   },
   data() {
     return {
@@ -226,14 +226,6 @@ export default {
     },
     subscription() {
       return this.billingStore.subscription;
-    },
-    /**
-     * @desc Whether meter billing mode is active (from server config).
-     * Uses authStore injected in setup for consistency with billingStore pattern.
-     * @returns {boolean}
-     */
-    meterMode() {
-      return this.authStore.serverConfig?.billing?.meterMode === true;
     },
     /**
      * @desc Available extras packs for checkout modal.
