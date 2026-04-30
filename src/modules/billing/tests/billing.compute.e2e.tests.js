@@ -105,30 +105,109 @@ const mockPlans = [
 
 /**
  * @desc Intercept auth config to inject meterMode: true.
+ *
+ * Two-layer interception to handle a race condition on CI (ARC runners):
+ *
+ * 1. `page.addInitScript` — installs an XHR stub BEFORE the Vue app boots.
+ *    The router's beforeEach guard calls fetchServerConfig() on the very first
+ *    navigation, which fires before page.route handlers are guaranteed to be
+ *    active on a fresh page context. The XHR stub catches that bootstrap request.
+ *
+ * 2. `page.route` — network-layer fallback that covers any retry or lazy fetch
+ *    that happens after the page is fully loaded (e.g., the polling refresh path).
+ *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
  */
 async function mockAuthConfigMeter(page) {
+  // Layer 1: XHR stub injected before the Vue app executes — catches the
+  // bootstrap fetchServerConfig() call that fires in router.beforeEach.
+  const responseBody = JSON.stringify({ data: mockServerConfigMeter });
+  await page.addInitScript((body) => {
+    const OrigXHR = window.XMLHttpRequest;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+    window.XMLHttpRequest = class extends OrigXHR {
+      open(method, url, ...rest) {
+        this._intercepted = typeof url === 'string' && url.endsWith('/api/auth/config');
+        super.open(method, url, ...rest);
+      }
+      send(data) {
+        if (this._intercepted) {
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'status', { get: () => 200 });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'responseText', { get: () => body });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'response', { get: () => body });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'readyState', { get: () => 4 });
+          setTimeout(() => {
+            this.dispatchEvent(new Event('readystatechange'));
+            this.dispatchEvent(new Event('load'));
+          }, 0);
+          return;
+        }
+        super.send(data);
+      }
+    };
+  }, responseBody);
+
+  // Layer 2: network-level intercept (handles fetch-based callers + polling retries).
   await page.route('**/api/auth/config', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ data: mockServerConfigMeter }),
+      body: responseBody,
     }),
   );
 }
 
 /**
  * @desc Intercept auth config to inject meterMode: false (legacy).
+ *
+ * Same two-layer approach as mockAuthConfigMeter — see that function's JSDoc
+ * for the full explanation of why both layers are needed.
+ *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
  */
 async function mockAuthConfigLegacy(page) {
+  const responseBody = JSON.stringify({ data: mockServerConfigLegacy });
+  await page.addInitScript((body) => {
+    const OrigXHR = window.XMLHttpRequest;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+    window.XMLHttpRequest = class extends OrigXHR {
+      open(method, url, ...rest) {
+        this._intercepted = typeof url === 'string' && url.endsWith('/api/auth/config');
+        super.open(method, url, ...rest);
+      }
+      send(data) {
+        if (this._intercepted) {
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'status', { get: () => 200 });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'responseText', { get: () => body });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'response', { get: () => body });
+          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+          Object.defineProperty(this, 'readyState', { get: () => 4 });
+          setTimeout(() => {
+            this.dispatchEvent(new Event('readystatechange'));
+            this.dispatchEvent(new Event('load'));
+          }, 0);
+          return;
+        }
+        super.send(data);
+      }
+    };
+  }, responseBody);
+
+  // Layer 2: network-level intercept (handles fetch-based callers + polling retries).
   await page.route('**/api/auth/config', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ data: mockServerConfigLegacy }),
+      body: responseBody,
     }),
   );
 }
