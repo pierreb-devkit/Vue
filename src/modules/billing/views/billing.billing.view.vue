@@ -11,6 +11,16 @@
 
       <!-- ── Meter mode section ──────────────────────────────────────── -->
       <template v-if="meterMode">
+        <!-- Usage bar mini-bar — click to open the detailed meter drawer -->
+        <BillingUsageBarComponent
+          mode="meter"
+          class="mb-4"
+          @open-drawer="meterDrawerOpen = true"
+        />
+
+        <!-- Detailed meter drawer (opens on usage-bar click) -->
+        <BillingMeterDrawerComponent v-model="meterDrawerOpen" />
+
         <!-- Meter progress card -->
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-6">
           <!-- i18n key: billing.usage.weekly -->
@@ -143,6 +153,8 @@ import billingPlanBadgeComponent from '../components/billing.planBadge.component
 import BillingMeterProgressComponent from '../components/billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from '../components/billing.meterBreakdownChart.component.vue';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
+import BillingUsageBarComponent from '../components/billing.usageBar.component.vue';
+import BillingMeterDrawerComponent from '../components/billing.meterDrawer.component.vue';
 
 /**
  * Component definition.
@@ -154,6 +166,8 @@ export default {
     BillingMeterProgressComponent,
     BillingMeterBreakdownChartComponent,
     BillingExtrasCheckoutModalComponent,
+    BillingUsageBarComponent,
+    BillingMeterDrawerComponent,
   },
   /**
    * @desc Always instantiates useMeter (pollIntervalMs: 0) so reactive refs are
@@ -212,6 +226,8 @@ export default {
       portalLoading: false,
       /** @type {boolean} Controls extras checkout modal visibility */
       extrasModalOpen: false,
+      /** @type {boolean} Controls meter drawer visibility (meter mode only) */
+      meterDrawerOpen: false,
     };
   },
   computed: {
