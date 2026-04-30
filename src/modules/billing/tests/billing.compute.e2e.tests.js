@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { BASE_URL, API_ORIGIN, API_URL } from '../../../lib/helpers/e2e/config.js';
+import { BASE_URL, API_ORIGIN, API_URL, cookiePrefix } from '../../../lib/helpers/e2e/config.js';
 
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
@@ -274,11 +274,12 @@ async function mockApiHealthcheck(page) {
  * @returns {Promise<void>}
  */
 async function injectFakeAuth(page) {
-  await page.addInitScript(() => {
-    // Simulate a valid cookie expiry (1 day from now)
+  await page.addInitScript((prefix) => {
+    // Simulate a valid cookie expiry (1 day from now).
+    // Key must match auth.store.js initFromStorage: `${config.cookie.prefix}CookieExpire`
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    localStorage.setItem('DevkitCookieExpire', String(Date.now() + 86400000));
-  });
+    localStorage.setItem(`${prefix}CookieExpire`, String(Date.now() + 86400000));
+  }, cookiePrefix);
 }
 
 /**
