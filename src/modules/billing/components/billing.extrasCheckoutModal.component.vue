@@ -161,10 +161,14 @@ export default {
   watch: {
     /**
      * @desc Pre-select the first available pack when the dialog opens or packs change.
+     * Also clears any stale purchaseError so a re-opened modal starts clean.
      */
     modelValue(open) {
-      if (open && this.packs.length > 0 && !this.selectedPackId) {
-        this.selectedPackId = this.packs[0].packId;
+      if (open) {
+        this.purchaseError = null;
+        if (this.packs.length > 0 && !this.selectedPackId) {
+          this.selectedPackId = this.packs[0].packId;
+        }
       }
     },
     packs: {

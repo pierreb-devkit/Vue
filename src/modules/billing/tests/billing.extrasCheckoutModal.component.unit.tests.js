@@ -181,6 +181,31 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     consoleSpy.mockRestore();
   });
 
+  it('clears purchaseError when dialog is reopened (M2 fix)', async () => {
+    purchasePackSpy.mockRejectedValueOnce(new Error('Network error'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const wrapper = mountComponent({ modelValue: true });
+    const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
+
+    // Trigger error on first attempt
+    await buyBtn.trigger('click');
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseError).toBeTruthy();
+
+    // Close dialog
+    await wrapper.setProps({ modelValue: false });
+    await wrapper.vm.$nextTick();
+
+    // Re-open: purchaseError must be cleared
+    await wrapper.setProps({ modelValue: true });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseError).toBeNull();
+
+    consoleSpy.mockRestore();
+  });
+
   it('clears purchaseError on retry (new buy attempt)', async () => {
     purchasePackSpy
       .mockRejectedValueOnce(new Error('Network error'))

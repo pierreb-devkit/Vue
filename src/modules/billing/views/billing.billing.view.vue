@@ -135,6 +135,7 @@
 /**
  * Module dependencies.
  */
+import { computed, watch, onUnmounted } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
@@ -155,21 +156,56 @@ export default {
     BillingExtrasCheckoutModalComponent,
   },
   /**
-   * @desc Wire useMeter composable only when meter mode is active so legacy
-   * tenants do not incur polling overhead.  Injects billingStore once here so
-   * computed properties reference this.billingStore instead of calling
-   * useBillingStore() on every evaluation.
-   * @param {Object} props - Component props
-   * @returns {{ billingStore: Object, authStore: Object, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterBreakdown?: ComputedRef }}
+   * @desc Always instantiates useMeter (pollIntervalMs: 0) so reactive refs are
+   * available from first render regardless of when serverConfig resolves async.
+   * A watcher on meterMode calls refresh() and enables polling once serverConfig
+   * confirms meter billing is active. Legacy tenants (meterMode false/undefined)
+   * never incur polling because the watcher only calls refresh() when active=true.
+   * @returns {{ billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown }}
    */
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
-    if (authStore.serverConfig?.billing?.meterMode === true) {
-      const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = useMeter({ pollIntervalMs: 30000 });
-      return { meterUsed, meterQuota, meterExtras, meterBreakdown, billingStore, authStore };
-    }
-    return { billingStore, authStore };
+
+    // Always instantiate so refs are reactive once data flows in
+    const meter = useMeter({ pollIntervalMs: 0 });
+    const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown, refresh } = meter;
+
+    // Reactive meterMode — resolves async after serverConfig loads
+    const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
+
+    let pollingTimer = null;
+
+    watch(
+      meterMode,
+      (active) => {
+        if (active) {
+          // serverConfig just resolved with meterMode=true: fetch immediately
+          void refresh().catch(() => {});
+          // Start 30s polling (clear any previous timer first for safety)
+          if (pollingTimer) clearInterval(pollingTimer);
+          pollingTimer = setInterval(() => {
+            void refresh().catch(() => {});
+          }, 30000);
+        } else {
+          // meterMode turned off or never active: stop polling
+          if (pollingTimer) {
+            clearInterval(pollingTimer);
+            pollingTimer = null;
+          }
+        }
+      },
+      { immediate: true },
+    );
+
+    onUnmounted(() => {
+      if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+      }
+    });
+
+    return { billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown };
   },
   data() {
     return {
@@ -180,6 +216,12 @@ export default {
   },
   computed: {
     fetchLoading() {
+      // Global flag covers initial page load (fetchPlans, fetchSubscription, etc.).
+      // Per-action meter counters (usageMeterRequests, extrasBalanceRequests) are intentionally
+      // excluded here: meter data loads lazily after serverConfig resolves and is also
+      // refreshed every 30 s via polling — hiding the whole page on every poll would
+      // produce jarring full-page flashes. The meter card handles stale-data gracefully
+      // while a background refresh runs.
       return this.billingStore.loading;
     },
     subscription() {
