@@ -296,10 +296,17 @@ async function injectFakeAuth(page) {
     abilities: [],
   };
 
+  // Abilities must be non-empty and include read BillingSubscription so the CASL guard
+  // in app.router.js (line 137-154) allows access to /billing. An empty abilities array
+  // causes the guard to redirect to '/' (forbidden).
+  const fakeAbilities = [
+    { action: 'manage', subject: 'all' },
+  ];
+
   const fakeTokenResponse = {
     user: fakeUser,
     tokenExpiresIn: String(Date.now() + 86400000),
-    abilities: [],
+    abilities: fakeAbilities,
     pendingRequests: [],
   };
 
