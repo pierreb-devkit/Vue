@@ -455,8 +455,9 @@ describe('Billing Store', () => {
       window.location = originalLocation;
     });
 
-    it('should not redirect when URL is absent in API response', async () => {
+    it('should throw and not redirect when URL is absent in API response', async () => {
       const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: {} } });
 
       const originalLocation = window.location;
@@ -467,10 +468,12 @@ describe('Billing Store', () => {
         assign: vi.fn(),
       };
 
-      await store.createExtrasCheckout('pack_500');
+      await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Checkout URL missing in response');
       expect(window.location.assign).not.toHaveBeenCalled();
+      expect(store.extrasCheckoutLoading).toBe(false);
 
       window.location = originalLocation;
+      spy.mockRestore();
     });
 
     it('should reject non-HTTPS checkout URLs', async () => {

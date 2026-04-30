@@ -230,7 +230,7 @@ export const useBillingStore = defineStore('billing', {
           cancelUrl,
         });
         const url = res?.data?.data?.url;
-        if (!url) return;
+        if (!url) throw new Error('Checkout URL missing in response');
         const parsed = new URL(url);
         if (parsed.protocol !== 'https:') {
           throw new Error('Rejected non-HTTPS checkout URL');

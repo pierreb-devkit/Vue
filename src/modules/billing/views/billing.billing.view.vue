@@ -217,7 +217,7 @@ export default {
   },
   computed: {
     fetchLoading() {
-      return this.billingStore.loading;
+      return this.billingStore.loading || this.billingStore.usageMeterLoading || this.billingStore.extrasBalanceLoading;
     },
     subscription() {
       return this.billingStore.subscription;
