@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { BASE_URL, API_ORIGIN } from '../../../lib/helpers/e2e/config.js';
+import { BASE_URL, API_ORIGIN, API_URL } from '../../../lib/helpers/e2e/config.js';
 
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
@@ -104,129 +104,57 @@ const mockPlans = [
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
 /**
- * @desc Install a combined fetch + XHR stub in the page context before the Vue
- * app boots, so router.beforeEach's fetchServerConfig() is intercepted
- * regardless of whether axios uses fetch or XHR.
+ * @desc Install a three-layer auth/config intercept so meterMode is always
+ * injected regardless of how the request is made on CI.
  *
- * Chromium XHR status/readyState/responseText are C++-backed and cannot be
- * shadowed via Object.defineProperty on the instance — so we replace
- * XMLHttpRequest entirely for matching URLs with a plain EventTarget-based
- * fake that returns the supplied body synchronously (from the caller's
- * perspective) via a zero-delay setTimeout.
+ * Layer 1 — page.context().route() exact URL: highest-priority Playwright
+ * intercept; fires before any network activity reaches the real backend.
+ *
+ * Layer 2 — page.route() glob: covers retries / polling after hydration.
+ *
+ * Layer 3 — addInitScript fetch stub: catches the axios bootstrap call that
+ * fires inside router.beforeEach before the page is fully loaded, because in
+ * modern Chromium axios defaults to the fetch adapter.
  *
  * @param {import('@playwright/test').Page} page
- * @param {Object} mockBody - The parsed response body to inject (will be JSON-stringified)
+ * @param {Object} mockBody - Parsed response body (will be JSON-stringified)
  * @returns {Promise<void>}
  */
 async function installAuthConfigStub(page, mockBody) {
   const responseBody = JSON.stringify({ data: mockBody });
-  // Layer 1: fetch + XHR stub installed before the app executes.
+  const exactUrl = `${API_URL}/auth/config`;
+
+  const fulfill = (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: responseBody,
+    });
+
+  // Layer 1: context-level route with exact URL — highest priority, persists
+  // across navigations within this browser context.
+  await page.context().route(exactUrl, fulfill);
+
+  // Layer 2: page-level route with glob — catches any variant URL or retry.
+  await page.route('**/api/auth/config', fulfill);
+
+  // Layer 3: in-page fetch stub via addInitScript — guarantees the very first
+  // fetchServerConfig() call (inside router.beforeEach) is intercepted even
+  // before Playwright's network layer activates for the new document.
   await page.addInitScript((body) => {
-    // --- fetch interception ---
     const origFetch = window.fetch;
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
     window.fetch = async (input, init) => {
-      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
       if (url.includes('/api/auth/config')) {
         return new Response(body, {
           status: 200,
           headers: { 'content-type': 'application/json' },
         });
       }
-      return origFetch(input, init);
-    };
-
-    // --- XHR interception (axios uses XHR in browser environments) ---
-    // Replace XMLHttpRequest entirely for matching URLs — do NOT use
-    // Object.defineProperty on a native XHR instance (C++ backing prevents it).
-    const OrigXHR = window.XMLHttpRequest;
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    window.XMLHttpRequest = class FakeableXHR extends OrigXHR {
-      constructor() {
-        super();
-        this._fakeUrl = null;
-        this._listeners = {};
-        this._onreadystatechange = null;
-        this._onload = null;
-        this._onerror = null;
-      }
-
-      open(method, url, ...rest) {
-        if (typeof url === 'string' && url.includes('/api/auth/config')) {
-          this._fakeUrl = url;
-          // Do NOT call super.open — we intercept the full request.
-        } else {
-          this._fakeUrl = null;
-          super.open(method, url, ...rest);
-        }
-      }
-
-      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-      get status() { return this._fakeUrl ? 200 : super.status; }
-      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-      get readyState() { return this._fakeUrl ? 4 : super.readyState; }
-      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-      get responseText() { return this._fakeUrl ? body : super.responseText; }
-      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-      get response() { return this._fakeUrl ? body : super.response; }
-      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-      get statusText() { return this._fakeUrl ? 'OK' : super.statusText; }
-
-      set onreadystatechange(fn) { this._onreadystatechange = fn; }
-      get onreadystatechange() { return this._onreadystatechange; }
-      set onload(fn) { this._onload = fn; }
-      get onload() { return this._onload; }
-      set onerror(fn) { this._onerror = fn; }
-      get onerror() { return this._onerror; }
-
-      addEventListener(type, fn) {
-        if (!this._listeners[type]) this._listeners[type] = [];
-        this._listeners[type].push(fn);
-      }
-
-      removeEventListener(type, fn) {
-        if (this._listeners[type]) {
-          this._listeners[type] = this._listeners[type].filter((f) => f !== fn);
-        }
-      }
-
-      dispatchFakeEvent(type) {
-        const evt = new Event(type);
-        (this._listeners[type] || []).forEach((fn) => fn.call(this, evt));
-      }
-
-      send(...args) {
-        if (this._fakeUrl) {
-          setTimeout(() => {
-            if (typeof this._onreadystatechange === 'function') this._onreadystatechange();
-            this.dispatchFakeEvent('readystatechange');
-            if (typeof this._onload === 'function') this._onload();
-            this.dispatchFakeEvent('load');
-          }, 0);
-          return;
-        }
-        super.send(...args);
-      }
-
-      setRequestHeader(...args) {
-        if (!this._fakeUrl) super.setRequestHeader(...args);
-      }
-
-      abort() {
-        if (!this._fakeUrl) super.abort();
-      }
+      return origFetch.call(window, input, init);
     };
   }, responseBody);
-
-  // Layer 2: network-level intercept — fallback for any caller that bypasses the
-  // in-page stub (e.g. polling retries after Vue hydration).
-  await page.route('**/api/auth/config', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: responseBody,
-    }),
-  );
 }
 
 /**
