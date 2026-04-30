@@ -135,7 +135,7 @@
 /**
  * Module dependencies.
  */
-import { computed, watch } from 'vue';
+import { computed, watch, onUnmounted } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
@@ -198,6 +198,13 @@ export default {
       },
       { immediate: true },
     );
+
+    onUnmounted(() => {
+      if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+      }
+    });
 
     return { billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown };
   },
