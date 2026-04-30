@@ -10,6 +10,17 @@ vi.mock('../../../lib/services/axios', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
 
+// Mutable auth store state shared across tests
+const authState = vi.hoisted(() => ({
+  isLoggedIn: true,
+  user: null,
+  serverConfig: null,
+}));
+
+vi.mock('../../auth/stores/auth.store', () => ({
+  useAuthStore: () => authState,
+}));
+
 const vuetify = createVuetify();
 
 /**
@@ -34,6 +45,8 @@ const mountComponent = (props, quotaData = null) => {
 describe('BillingUsageBarComponent', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    authState.user = null;
+    authState.serverConfig = null;
     vi.clearAllMocks();
   });
 
@@ -167,8 +180,9 @@ describe('BillingUsageBarComponent', () => {
     expect(meterRoot.exists()).toBe(true);
   });
 
-  it('displays used / quota text in meter mode', () => {
+  it('displays used / quota text in meter mode (standard)', () => {
     const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
     store.usageMeter = { meterUsed: 300, meterQuota: 1000 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
     expect(wrapper.text()).toContain('300');
@@ -238,5 +252,73 @@ describe('BillingUsageBarComponent', () => {
     );
     expect(wrapper.find('.billing-usage-bar--meter').exists()).toBe(false);
     expect(wrapper.findComponent({ name: 'v-progress-linear' }).exists()).toBe(true);
+  });
+
+  // ── Meter mode: displayMode variants ────────────────────────────────────
+
+  it('displayMode is "admin" when user has admin role', () => {
+    authState.user = { roles: ['admin'] };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.displayMode).toBe('admin');
+  });
+
+  it('displays "∞ Admin" label in admin displayMode', () => {
+    authState.user = { roles: ['admin'] };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.text()).toContain('∞ Admin');
+  });
+
+  it('admin display has billing-usage-bar--admin class', () => {
+    authState.user = { roles: ['admin'] };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.find('.billing-usage-bar--admin').exists()).toBe(true);
+  });
+
+  it('displayMode is "free" when no subscription and no usageMeter', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = null;
+    store.usageMeter = null;
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.displayMode).toBe('free');
+  });
+
+  it('free display shows "0 / <freeTierQuota> compute"', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = null;
+    store.usageMeter = null;
+    const wrapper = mountComponent({ mode: 'meter', freeTierQuota: 10 });
+    expect(wrapper.text()).toContain('0 / 10 compute');
+  });
+
+  it('free display renders progress bar at 0%', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = null;
+    store.usageMeter = null;
+    const wrapper = mountComponent({ mode: 'meter' });
+    const bar = wrapper.findComponent({ name: 'v-progress-linear' });
+    expect(bar.exists()).toBe(true);
+    expect(bar.props('modelValue')).toBe(0);
+  });
+
+  it('displayMode is "standard" when subscription and usageMeter exist', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 200, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.displayMode).toBe('standard');
+  });
+
+  it('standard display shows used / quota via meterDisplay', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 200, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.text()).toContain('200');
+    expect(wrapper.text()).toContain('1000');
   });
 });

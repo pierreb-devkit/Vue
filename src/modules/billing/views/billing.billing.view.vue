@@ -53,11 +53,23 @@
             color="primary"
             variant="flat"
             :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
+            class="text-none text-body-medium mb-6"
             @click="extrasModalOpen = true"
           >
             Buy units
           </v-btn>
+
+          <!-- Ledger: last 20 entries -->
+          <v-divider class="mb-4" />
+          <!-- i18n key: billing.extras.ledger.title -->
+          <p class="text-body-medium font-weight-medium mb-3">Transaction history</p>
+          <BillingExtrasLedgerComponent
+            :entries="extrasLedger.entries"
+            :total="extrasLedger.total"
+            :page="extrasLedger.page"
+            :limit="extrasLedger.limit"
+            @update:page="onLedgerPageChange"
+          />
         </v-card>
 
         <!-- Extras checkout modal -->
@@ -153,6 +165,7 @@ import billingPlanBadgeComponent from '../components/billing.planBadge.component
 import BillingMeterProgressComponent from '../components/billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from '../components/billing.meterBreakdownChart.component.vue';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
+import BillingExtrasLedgerComponent from '../components/billing.extrasLedger.component.vue';
 import BillingUsageBarComponent from '../components/billing.usageBar.component.vue';
 import BillingMeterDrawerComponent from '../components/billing.meterDrawer.component.vue';
 
@@ -166,6 +179,7 @@ export default {
     BillingMeterProgressComponent,
     BillingMeterBreakdownChartComponent,
     BillingExtrasCheckoutModalComponent,
+    BillingExtrasLedgerComponent,
     BillingUsageBarComponent,
     BillingMeterDrawerComponent,
   },
@@ -196,6 +210,10 @@ export default {
         if (active) {
           // serverConfig just resolved with meterMode=true: fetch immediately
           void refresh().catch(() => {});
+          // Also fetch extras ledger (covers the case where serverConfig resolves after mount)
+          void billingStore.fetchExtrasLedger({ page: 1, limit: 20 }).catch((error) => {
+            console.error('Failed to load extras ledger:', error);
+          });
           // Start 30s polling (clear any previous timer first for safety)
           if (pollingTimer) clearInterval(pollingTimer);
           pollingTimer = setInterval(() => {
@@ -256,6 +274,13 @@ export default {
       );
     },
     /**
+     * @desc Extras credit ledger data for the paginated history table.
+     * @returns {{ entries: Array, total: number, page: number, limit: number }}
+     */
+    extrasLedger() {
+      return this.billingStore.extrasLedger ?? { entries: [], total: 0, page: 1, limit: 20 };
+    },
+    /**
      * @desc Derive current plan from subscription or default to free.
      * @returns {string} Plan identifier
      */
@@ -277,7 +302,7 @@ export default {
     },
   },
   /**
-   * @desc Fetch subscription data on mount.
+   * @desc Fetch subscription data and extras ledger on mount.
    */
   async mounted() {
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
@@ -288,6 +313,11 @@ export default {
       await this.billingStore.fetchSubscription();
     } catch (error) {
       console.error('Failed to load billing details:', error);
+    }
+
+    // Fetch extras ledger when meterMode — non-blocking
+    if (this.meterMode) {
+      void this.billingStore.fetchExtrasLedger({ page: 1, limit: 20 }).catch(() => {});
     }
   },
   methods: {
@@ -303,6 +333,18 @@ export default {
         console.error('Failed to open billing portal:', error);
       } finally {
         this.portalLoading = false;
+      }
+    },
+    /**
+     * @desc Handle ledger page change from BillingExtrasLedgerComponent.
+     * @param {number} page - Requested page number (1-based)
+     * @returns {Promise<void>}
+     */
+    async onLedgerPageChange(page) {
+      try {
+        await this.billingStore.fetchExtrasLedger({ page, limit: this.extrasLedger.limit });
+      } catch (error) {
+        console.error('Failed to load ledger page:', error);
       }
     },
   },

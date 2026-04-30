@@ -71,6 +71,30 @@
           </v-form>
         </v-card>
 
+        <!-- Billing & Plan shortcut (shown when billing is enabled for the org) -->
+        <v-card
+          v-if="showBillingLink"
+          color="surface"
+          :flat="config.vuetify.theme.flat"
+          :class="config.vuetify.theme.rounded"
+          class="pa-6 mt-4 d-flex align-center justify-space-between flex-wrap ga-3"
+        >
+          <div>
+            <h3 class="text-title-small font-weight-medium mb-1">Billing &amp; Plan</h3>
+            <p class="text-body-small text-medium-emphasis mb-0">Manage subscription and usage.</p>
+          </div>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            to="/billing"
+          >
+            <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2" />
+            Manage subscription
+          </v-btn>
+        </v-card>
+
         <v-card
           v-if="Object.keys(roleDescriptions).length > 0"
           color="surface"
@@ -252,6 +276,7 @@ import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { useBilling } from '../../billing/composables/billing.useBilling';
 import roleColor from '../../../lib/helpers/roleColor';
 import organizationsMembersComponent from './organizations.members.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -267,6 +292,15 @@ export default {
   props: {
     organizationId: { type: String, required: true },
     backRoute: { type: String, default: '/users' },
+  },
+  /**
+   * @desc Wires auth and billing helpers for use in computed properties.
+   * @returns {{ authStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   */
+  setup() {
+    const authStore = useAuthStore();
+    const { isPlanActive } = useBilling();
+    return { authStore, isPlanActive };
   },
   data() {
     return {
@@ -293,14 +327,24 @@ export default {
       return organizationsStore.viewedOrganization;
     },
     roleDescriptions() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.organizations?.roleDescriptions || {};
+      return this.authStore.serverConfig?.organizations?.roleDescriptions || {};
     },
     canManage() {
       if (ability && ability.rules && ability.rules.length > 0) {
         return ability.can('update', subject('Organization', { _id: this.organizationId }));
       }
       return false;
+    },
+    /**
+     * @desc Show the billing link when billing is enabled (meterMode or active subscription).
+     * Only visible to org owners/admins who can already manage the org.
+     * @returns {boolean}
+     */
+    showBillingLink() {
+      if (!this.canManage) return false;
+      const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
+      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
+      return billingEnabled && (meterMode || this.isPlanActive);
     },
     name: {
       get() { return this.viewedOrganization ? this.viewedOrganization.name : ''; },
