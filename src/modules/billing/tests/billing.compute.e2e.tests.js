@@ -104,55 +104,122 @@ const mockPlans = [
 // ─── Mock helpers ─────────────────────────────────────────────────────────────
 
 /**
- * @desc Intercept auth config to inject meterMode: true.
+ * @desc Install a combined fetch + XHR stub in the page context before the Vue
+ * app boots, so router.beforeEach's fetchServerConfig() is intercepted
+ * regardless of whether axios uses fetch or XHR.
  *
- * Two-layer interception to handle a race condition on CI (ARC runners):
- *
- * 1. `page.addInitScript` — installs an XHR stub BEFORE the Vue app boots.
- *    The router's beforeEach guard calls fetchServerConfig() on the very first
- *    navigation, which fires before page.route handlers are guaranteed to be
- *    active on a fresh page context. The XHR stub catches that bootstrap request.
- *
- * 2. `page.route` — network-layer fallback that covers any retry or lazy fetch
- *    that happens after the page is fully loaded (e.g., the polling refresh path).
+ * Chromium XHR status/readyState/responseText are C++-backed and cannot be
+ * shadowed via Object.defineProperty on the instance — so we replace
+ * XMLHttpRequest entirely for matching URLs with a plain EventTarget-based
+ * fake that returns the supplied body synchronously (from the caller's
+ * perspective) via a zero-delay setTimeout.
  *
  * @param {import('@playwright/test').Page} page
+ * @param {Object} mockBody - The parsed response body to inject (will be JSON-stringified)
  * @returns {Promise<void>}
  */
-async function mockAuthConfigMeter(page) {
-  // Layer 1: XHR stub injected before the Vue app executes — catches the
-  // bootstrap fetchServerConfig() call that fires in router.beforeEach.
-  const responseBody = JSON.stringify({ data: mockServerConfigMeter });
+async function installAuthConfigStub(page, mockBody) {
+  const responseBody = JSON.stringify({ data: mockBody });
+  // Layer 1: fetch + XHR stub installed before the app executes.
   await page.addInitScript((body) => {
+    // --- fetch interception ---
+    const origFetch = window.fetch;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+    window.fetch = async (input, init) => {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.includes('/api/auth/config')) {
+        return new Response(body, {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return origFetch(input, init);
+    };
+
+    // --- XHR interception (axios uses XHR in browser environments) ---
+    // Replace XMLHttpRequest entirely for matching URLs — do NOT use
+    // Object.defineProperty on a native XHR instance (C++ backing prevents it).
     const OrigXHR = window.XMLHttpRequest;
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    window.XMLHttpRequest = class extends OrigXHR {
-      open(method, url, ...rest) {
-        this._intercepted = typeof url === 'string' && url.endsWith('/api/auth/config');
-        super.open(method, url, ...rest);
+    window.XMLHttpRequest = class FakeableXHR extends OrigXHR {
+      constructor() {
+        super();
+        this._fakeUrl = null;
+        this._listeners = {};
+        this._onreadystatechange = null;
+        this._onload = null;
+        this._onerror = null;
       }
-      send(data) {
-        if (this._intercepted) {
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'status', { get: () => 200 });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'responseText', { get: () => body });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'response', { get: () => body });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'readyState', { get: () => 4 });
+
+      open(method, url, ...rest) {
+        if (typeof url === 'string' && url.includes('/api/auth/config')) {
+          this._fakeUrl = url;
+          // Do NOT call super.open — we intercept the full request.
+        } else {
+          this._fakeUrl = null;
+          super.open(method, url, ...rest);
+        }
+      }
+
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+      get status() { return this._fakeUrl ? 200 : super.status; }
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+      get readyState() { return this._fakeUrl ? 4 : super.readyState; }
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+      get responseText() { return this._fakeUrl ? body : super.responseText; }
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+      get response() { return this._fakeUrl ? body : super.response; }
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+      get statusText() { return this._fakeUrl ? 'OK' : super.statusText; }
+
+      set onreadystatechange(fn) { this._onreadystatechange = fn; }
+      get onreadystatechange() { return this._onreadystatechange; }
+      set onload(fn) { this._onload = fn; }
+      get onload() { return this._onload; }
+      set onerror(fn) { this._onerror = fn; }
+      get onerror() { return this._onerror; }
+
+      addEventListener(type, fn) {
+        if (!this._listeners[type]) this._listeners[type] = [];
+        this._listeners[type].push(fn);
+      }
+
+      removeEventListener(type, fn) {
+        if (this._listeners[type]) {
+          this._listeners[type] = this._listeners[type].filter((f) => f !== fn);
+        }
+      }
+
+      dispatchFakeEvent(type) {
+        const evt = new Event(type);
+        (this._listeners[type] || []).forEach((fn) => fn.call(this, evt));
+      }
+
+      send(...args) {
+        if (this._fakeUrl) {
           setTimeout(() => {
-            this.dispatchEvent(new Event('readystatechange'));
-            this.dispatchEvent(new Event('load'));
+            if (typeof this._onreadystatechange === 'function') this._onreadystatechange();
+            this.dispatchFakeEvent('readystatechange');
+            if (typeof this._onload === 'function') this._onload();
+            this.dispatchFakeEvent('load');
           }, 0);
           return;
         }
-        super.send(data);
+        super.send(...args);
+      }
+
+      setRequestHeader(...args) {
+        if (!this._fakeUrl) super.setRequestHeader(...args);
+      }
+
+      abort() {
+        if (!this._fakeUrl) super.abort();
       }
     };
   }, responseBody);
 
-  // Layer 2: network-level intercept (handles fetch-based callers + polling retries).
+  // Layer 2: network-level intercept — fallback for any caller that bypasses the
+  // in-page stub (e.g. polling retries after Vue hydration).
   await page.route('**/api/auth/config', (route) =>
     route.fulfill({
       status: 200,
@@ -163,53 +230,21 @@ async function mockAuthConfigMeter(page) {
 }
 
 /**
+ * @desc Intercept auth config to inject meterMode: true.
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<void>}
+ */
+async function mockAuthConfigMeter(page) {
+  await installAuthConfigStub(page, mockServerConfigMeter);
+}
+
+/**
  * @desc Intercept auth config to inject meterMode: false (legacy).
- *
- * Same two-layer approach as mockAuthConfigMeter — see that function's JSDoc
- * for the full explanation of why both layers are needed.
- *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
  */
 async function mockAuthConfigLegacy(page) {
-  const responseBody = JSON.stringify({ data: mockServerConfigLegacy });
-  await page.addInitScript((body) => {
-    const OrigXHR = window.XMLHttpRequest;
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    window.XMLHttpRequest = class extends OrigXHR {
-      open(method, url, ...rest) {
-        this._intercepted = typeof url === 'string' && url.endsWith('/api/auth/config');
-        super.open(method, url, ...rest);
-      }
-      send(data) {
-        if (this._intercepted) {
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'status', { get: () => 200 });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'responseText', { get: () => body });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'response', { get: () => body });
-          // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-          Object.defineProperty(this, 'readyState', { get: () => 4 });
-          setTimeout(() => {
-            this.dispatchEvent(new Event('readystatechange'));
-            this.dispatchEvent(new Event('load'));
-          }, 0);
-          return;
-        }
-        super.send(data);
-      }
-    };
-  }, responseBody);
-
-  // Layer 2: network-level intercept (handles fetch-based callers + polling retries).
-  await page.route('**/api/auth/config', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: responseBody,
-    }),
-  );
+  await installAuthConfigStub(page, mockServerConfigLegacy);
 }
 
 /**
