@@ -6,7 +6,7 @@
     - 'legacy' (default): reads quota data via useQuota composable (resource/action props required).
     - 'meter': reads weekly meter data via useMeter composable. Emits 'open-drawer' on click.
              Always renders when authenticated + meterMode, regardless of subscription state.
-             displayMode resolves to 'admin' | 'free' | 'standard' based on user/subscription.
+             displayMode resolves to 'admin' | 'loading' | 'free' | 'standard' based on user/subscription.
 
   USAGE (legacy):
   <BillingUsageBarComponent resource="documents" action="create" />
@@ -44,11 +44,25 @@
         <span
           class="font-weight-medium billing-usage-bar__admin-label"
           style="background: linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
-        >∞ Admin</span>
+        >{{ meterUsed != null ? meterUsed : '' }} ∞ Admin</span>
       </div>
       <div
         class="billing-usage-bar__admin-track"
         style="height:6px; border-radius:3px; background:linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); opacity:0.6;"
+      />
+    </template>
+
+    <!-- Loading display: placeholder skeleton while billing data fetches -->
+    <template v-else-if="displayMode === 'loading'">
+      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
+        <span class="font-weight-medium">—</span>
+      </div>
+      <v-progress-linear
+        :model-value="0"
+        color="grey-lighten-2"
+        rounded
+        height="6"
       />
     </template>
 
@@ -261,12 +275,14 @@ export default {
     /**
      * @desc Determines the visual display variant for meter mode.
      * - 'admin'    : user has 'admin' role → rainbow/∞ display
+     * - 'loading'  : billing data still fetching (prevents flicker into free)
      * - 'free'     : authenticated but no active subscription/usageMeter → free tier display
      * - 'standard' : active subscription with usageMeter data → normal quota bar
-     * @returns {'admin'|'free'|'standard'}
+     * @returns {'admin'|'loading'|'free'|'standard'}
      */
     displayMode() {
       if (this.authStore.user?.roles?.includes('admin')) return 'admin';
+      if (this.billingStore.loading) return 'loading';
       if (!this.billingStore.subscription || !this.billingStore.usageMeter) return 'free';
       return 'standard';
     },
