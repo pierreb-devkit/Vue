@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -44,32 +44,39 @@ const mountComponent = (props = {}) => {
 };
 
 describe('BillingMeterDrawerComponent', () => {
+  let wrapper;
+
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
   // ── Props ────────────────────────────────────────────────────────────────
 
   it('renders a v-navigation-drawer', () => {
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'v-navigation-drawer' }).exists()).toBe(true);
   });
 
   it('passes modelValue to the drawer', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const drawer = wrapper.findComponent({ name: 'v-navigation-drawer' });
     expect(drawer.props('modelValue')).toBe(true);
   });
 
   it('drawer has location=right', () => {
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     const drawer = wrapper.findComponent({ name: 'v-navigation-drawer' });
     expect(drawer.props('location')).toBe('right');
   });
 
   it('drawer is temporary', () => {
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     const drawer = wrapper.findComponent({ name: 'v-navigation-drawer' });
     // Boolean prop may be passed as '' or true depending on the stub
     const temporaryVal = drawer.props('temporary');
@@ -79,7 +86,7 @@ describe('BillingMeterDrawerComponent', () => {
   // ── Emits ────────────────────────────────────────────────────────────────
 
   it('emits update:modelValue false when close button is clicked', async () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     // Find close button by aria-label
     const closeBtn = wrapper.find('[aria-label="Close meter drawer"]');
     await closeBtn.trigger('click');
@@ -90,37 +97,37 @@ describe('BillingMeterDrawerComponent', () => {
   // ── Content ──────────────────────────────────────────────────────────────
 
   it('renders "Weekly meter" header text', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('Weekly meter');
   });
 
   it('renders "Breakdown" section label', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('Breakdown');
   });
 
   it('renders "Extra units" section label', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('Extra units');
   });
 
   it('renders "Buy units" CTA button', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('Buy units');
   });
 
   it('renders BillingMeterProgressComponent', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.findComponent({ name: 'BillingMeterProgressComponent' }).exists()).toBe(true);
   });
 
   it('renders BillingMeterBreakdownChartComponent', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.findComponent({ name: 'BillingMeterBreakdownChartComponent' }).exists()).toBe(true);
   });
 
   it('renders BillingExtrasCheckoutModalComponent', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.findComponent({ name: 'BillingExtrasCheckoutModalComponent' }).exists()).toBe(true);
   });
 
@@ -129,7 +136,7 @@ describe('BillingMeterDrawerComponent', () => {
   it('reflects store meter values in the progress component', () => {
     const store = useBillingStore();
     store.usageMeter = { meterUsed: 400, meterQuota: 1000, extrasRemaining: 50 };
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const progress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
     expect(progress.props('used')).toBe(400);
     expect(progress.props('quota')).toBe(1000);
@@ -143,7 +150,7 @@ describe('BillingMeterDrawerComponent', () => {
       meterQuota: 1000,
       meterBreakdown: { scrap: 200, autofix: 100 },
     };
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const chart = wrapper.findComponent({ name: 'BillingMeterBreakdownChartComponent' });
     expect(chart.props('breakdown')).toEqual({ scrap: 200, autofix: 100 });
   });
@@ -151,12 +158,12 @@ describe('BillingMeterDrawerComponent', () => {
   // ── Extras checkout modal open ────────────────────────────────────────────
 
   it('extras modal is closed by default', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.vm.extrasModalOpen).toBe(false);
   });
 
   it('opens extras modal when "Buy units" is clicked', async () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy units'));
     expect(buyBtn).toBeDefined();
     await buyBtn.trigger('click');
@@ -169,7 +176,7 @@ describe('BillingMeterDrawerComponent', () => {
     const store = useBillingStore();
     const packs = [{ packId: 'pack_500', label: '500 units', priceUsd: 9, meterUnits: 500 }];
     store.usageMeter = { meterUsed: 0, meterQuota: 1000, packsAvailable: packs };
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.vm.packsAvailable).toEqual(packs);
   });
 
@@ -178,12 +185,12 @@ describe('BillingMeterDrawerComponent', () => {
     const packs = [{ packId: 'pack_200', label: '200 units', priceUsd: 4, meterUnits: 200 }];
     store.usageMeter = { meterUsed: 0, meterQuota: 1000 };
     store.extrasBalance = { balance: 0, packsAvailable: packs };
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.vm.packsAvailable).toEqual(packs);
   });
 
   it('returns empty array when neither store has packs', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.vm.packsAvailable).toEqual([]);
   });
 });

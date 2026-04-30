@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -48,6 +48,8 @@ const mountComponent = (props = {}) =>
   });
 
 describe('BillingExtrasCheckoutModalComponent', () => {
+  let wrapper;
+
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
@@ -56,75 +58,80 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     vi.spyOn(store, 'createExtrasCheckout').mockImplementation(purchasePackSpy);
   });
 
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
   // ── Rendering ────────────────────────────────────────────────────────────
 
   it('renders a v-dialog', () => {
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'v-dialog' }).exists()).toBe(true);
   });
 
   it('passes modelValue to the dialog', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.findComponent({ name: 'v-dialog' }).props('modelValue')).toBe(true);
   });
 
   it('renders pack radio options', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('500 units');
     expect(wrapper.text()).toContain('1000 units');
   });
 
   it('renders pack price in label', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('$9');
     expect(wrapper.text()).toContain('$16');
   });
 
   it('renders unit count in label', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.text()).toContain('+500 units');
     expect(wrapper.text()).toContain('+1000 units');
   });
 
   it('shows "No packs available" when packs is empty', () => {
-    const wrapper = mountComponent({ modelValue: true, packs: [] });
+    wrapper = mountComponent({ modelValue: true, packs: [] });
     expect(wrapper.text()).toContain('No packs available');
   });
 
   // ── Default selection ────────────────────────────────────────────────────
 
   it('pre-selects the first pack when packs are provided', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     expect(wrapper.vm.selectedPackId).toBe('pack_500');
   });
 
   it('does not pre-select when packs is empty', () => {
-    const wrapper = mountComponent({ modelValue: true, packs: [] });
+    wrapper = mountComponent({ modelValue: true, packs: [] });
     expect(wrapper.vm.selectedPackId).toBeNull();
   });
 
   it('pre-selects on open when dialog opens with packs', async () => {
-    const wrapper = mountComponent({ modelValue: false });
+    wrapper = mountComponent({ modelValue: false });
     expect(wrapper.vm.selectedPackId).toBe('pack_500'); // packs watcher fires immediately
   });
 
   // ── CTA label ────────────────────────────────────────────────────────────
 
   it('CTA button shows selected pack label', () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     // First pack selected by default
     expect(wrapper.vm.selectedPackLabel).toBe('500 units');
   });
 
   it('selectedPackLabel is empty string when no selection', () => {
-    const wrapper = mountComponent({ modelValue: true, packs: [] });
+    wrapper = mountComponent({ modelValue: true, packs: [] });
     expect(wrapper.vm.selectedPackLabel).toBe('');
   });
 
   // ── Emits ────────────────────────────────────────────────────────────────
 
   it('emits update:modelValue false when Cancel is clicked', async () => {
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const cancelBtn = wrapper.findAll('.v-btn').find((b) => b.text() === 'Cancel');
     expect(cancelBtn).toBeDefined();
     await cancelBtn.trigger('click');
@@ -137,7 +144,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
   it('calls createExtrasCheckout with selected packId when Buy is clicked', async () => {
     purchasePackSpy.mockResolvedValue(undefined);
 
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     // selectedPackId defaults to first pack
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
     expect(buyBtn).toBeDefined();
@@ -154,7 +161,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
       }),
     );
 
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
     // Await trigger so the click handler starts executing (purchasing flips synchronously)
     await buyBtn.trigger('click');
@@ -170,7 +177,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     purchasePackSpy.mockRejectedValue(new Error('Network error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
     await buyBtn.trigger('click');
     await wrapper.vm.$nextTick();
@@ -185,7 +192,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     purchasePackSpy.mockRejectedValueOnce(new Error('Network error'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
 
     // Trigger error on first attempt
@@ -212,7 +219,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
       .mockResolvedValue(undefined);
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const wrapper = mountComponent({ modelValue: true });
+    wrapper = mountComponent({ modelValue: true });
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy'));
 
     // First click → error
@@ -230,7 +237,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
 
   it('Buy button is disabled when selectedPackId is null', () => {
     // When packs is empty, selectedPackId remains null → buy CTA should be disabled
-    const wrapper = mountComponent({ modelValue: true, packs: [] });
+    wrapper = mountComponent({ modelValue: true, packs: [] });
     expect(wrapper.vm.selectedPackId).toBeNull();
     // Component logic: :disabled="!selectedPackId || purchasing"
     // When selectedPackId is null, the computed disabled condition is true
@@ -244,7 +251,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
   });
 
   it('renders correctly with modelValue=false (closed state)', () => {
-    const wrapper = mountComponent({ modelValue: false });
+    wrapper = mountComponent({ modelValue: false });
     const dialog = wrapper.findComponent({ name: 'v-dialog' });
     expect(dialog.props('modelValue')).toBe(false);
   });

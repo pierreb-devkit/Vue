@@ -14,6 +14,9 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     css: false,
+    pool: 'forks',
+    restoreMocks: true,
+    clearMocks: true,
     server: {
       deps: {
         inline: ['vuetify'],
