@@ -274,12 +274,15 @@ async function mockApiHealthcheck(page) {
  * @returns {Promise<void>}
  */
 async function injectFakeAuth(page) {
-  await page.addInitScript((prefix) => {
-    // Simulate a valid cookie expiry (1 day from now).
-    // Key must match auth.store.js initFromStorage: `${config.cookie.prefix}CookieExpire`
+  // Install at context level for maximum reliability — fires before all page
+  // scripts including addInitScript registered at page level.
+  const expiry = String(Date.now() + 86400000);
+  await page.context().addInitScript((args) => {
+    const [prefix, exp] = args;
+    // Key must match auth.store.js: `${config.cookie.prefix}CookieExpire`
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    localStorage.setItem(`${prefix}CookieExpire`, String(Date.now() + 86400000));
-  }, cookiePrefix);
+    localStorage.setItem(`${prefix}CookieExpire`, exp);
+  }, [cookiePrefix, expiry]);
 }
 
 /**
