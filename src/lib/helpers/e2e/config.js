@@ -13,7 +13,7 @@ import { resolve } from 'node:path';
 // Only run generateConfig if the file does not already exist; multiple Playwright
 // workers all import this module and each call would rewrite src/config/index.js,
 // triggering repeated Vite HMR restarts that destabilise the running E2E tests.
-const configPath = resolve(new URL('.', import.meta.url).pathname, '../../../../config/index.js');
+const configPath = resolve(new URL('.', import.meta.url).pathname, '../../../config/index.js');
 if (!existsSync(configPath)) {
   try {
     execSync('npm run generateConfig', { stdio: 'ignore' });
