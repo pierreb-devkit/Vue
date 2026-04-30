@@ -5,14 +5,22 @@
  */
 
 import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // Ensure the generated config exists before importing it —
 // playwright.config.js resolves imports before webServer.command runs.
-try {
-  execSync('npm run generateConfig', { stdio: 'ignore' });
-} catch {
-  // generateConfig may fail if scripts/generateConfig.js is missing (e.g. CI
-  // without the script). The dynamic import below will fall back to defaults.
+// Only run generateConfig if the file does not already exist; multiple Playwright
+// workers all import this module and each call would rewrite src/config/index.js,
+// triggering repeated Vite HMR restarts that destabilise the running E2E tests.
+const configPath = resolve(new URL('.', import.meta.url).pathname, '../../../../config/index.js');
+if (!existsSync(configPath)) {
+  try {
+    execSync('npm run generateConfig', { stdio: 'ignore' });
+  } catch {
+    // generateConfig may fail if scripts/generateConfig.js is missing (e.g. CI
+    // without the script). The dynamic import below will fall back to defaults.
+  }
 }
 
 let _config;
