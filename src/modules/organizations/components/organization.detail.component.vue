@@ -276,7 +276,7 @@ import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { useBillingStore } from '../../billing/stores/billing.store';
+import { useBilling } from '../../billing/composables/billing.useBilling';
 import roleColor from '../../../lib/helpers/roleColor';
 import organizationsMembersComponent from './organizations.members.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -292,6 +292,15 @@ export default {
   props: {
     organizationId: { type: String, required: true },
     backRoute: { type: String, default: '/users' },
+  },
+  /**
+   * @desc Wires auth and billing helpers for use in computed properties.
+   * @returns {{ authStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   */
+  setup() {
+    const authStore = useAuthStore();
+    const { isPlanActive } = useBilling();
+    return { authStore, isPlanActive };
   },
   data() {
     return {
@@ -318,8 +327,7 @@ export default {
       return organizationsStore.viewedOrganization;
     },
     roleDescriptions() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.organizations?.roleDescriptions || {};
+      return this.authStore.serverConfig?.organizations?.roleDescriptions || {};
     },
     canManage() {
       if (ability && ability.rules && ability.rules.length > 0) {
@@ -333,13 +341,10 @@ export default {
      * @returns {boolean}
      */
     showBillingLink() {
-      const authStore = useAuthStore();
-      const billingStore = useBillingStore();
       if (!this.canManage) return false;
-      const billingEnabled = authStore.serverConfig?.billing?.enabled === true;
-      const meterMode = authStore.serverConfig?.billing?.meterMode === true;
-      const hasSubscription = !!billingStore.subscription;
-      return billingEnabled && (meterMode || hasSubscription);
+      const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
+      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
+      return billingEnabled && (meterMode || this.isPlanActive);
     },
     name: {
       get() { return this.viewedOrganization ? this.viewedOrganization.name : ''; },

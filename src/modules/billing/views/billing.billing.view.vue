@@ -210,6 +210,10 @@ export default {
         if (active) {
           // serverConfig just resolved with meterMode=true: fetch immediately
           void refresh().catch(() => {});
+          // Also fetch extras ledger (covers the case where serverConfig resolves after mount)
+          void billingStore.fetchExtrasLedger({ page: 1, limit: 20 }).catch((error) => {
+            console.error('Failed to load extras ledger:', error);
+          });
           // Start 30s polling (clear any previous timer first for safety)
           if (pollingTimer) clearInterval(pollingTimer);
           pollingTimer = setInterval(() => {

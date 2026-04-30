@@ -119,6 +119,7 @@
  */
 import { useQuota } from '../composables/billing.useQuota';
 import { useMeter } from '../composables/billing.useMeter';
+import { useBilling } from '../composables/billing.useBilling';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useBillingStore } from '../stores/billing.store';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
@@ -190,13 +191,14 @@ export default {
    */
   setup(props) {
     const { usage, limits, usagePercent } = useQuota();
+    const { isPlanActive } = useBilling();
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     if (props.mode === 'meter') {
       const { used: meterUsed, quota: meterQuota, extras: meterExtras } = useMeter({ pollIntervalMs: 0 });
-      return { usage, limits, usagePercent, meterUsed, meterQuota, meterExtras, authStore, billingStore };
+      return { usage, limits, usagePercent, isPlanActive, meterUsed, meterQuota, meterExtras, authStore, billingStore };
     }
-    return { usage, limits, usagePercent, authStore, billingStore };
+    return { usage, limits, usagePercent, isPlanActive, authStore, billingStore };
   },
 
   computed: {
@@ -283,7 +285,7 @@ export default {
     displayMode() {
       if (this.authStore.user?.roles?.includes('admin')) return 'admin';
       if (this.billingStore.loading) return 'loading';
-      if (!this.billingStore.subscription || !this.billingStore.usageMeter) return 'free';
+      if (!this.isPlanActive || !this.billingStore.usageMeter) return 'free';
       return 'standard';
     },
 

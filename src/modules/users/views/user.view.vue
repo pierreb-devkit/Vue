@@ -186,7 +186,7 @@
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
-import { useBillingStore } from '../../billing/stores/billing.store';
+import { useBilling } from '../../billing/composables/billing.useBilling';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -202,6 +202,17 @@ export default {
     organizationsSwitcherComponent,
     orgAvatarComponent,
   },
+  /**
+   * @desc Wires auth, organizations and billing helpers for use across computed
+   * properties and methods.
+   * @returns {{ authStore: Object, organizationsStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   */
+  setup() {
+    const authStore = useAuthStore();
+    const organizationsStore = useOrganizationsStore();
+    const { isPlanActive } = useBilling();
+    return { authStore, organizationsStore, isPlanActive };
+  },
   data() {
     return {
       tab: 'profile',
@@ -213,20 +224,17 @@ export default {
   },
   computed: {
     user() {
-      const authStore = useAuthStore();
-      return authStore.user || {};
+      return this.authStore.user || {};
     },
     organizations() {
-      const organizationsStore = useOrganizationsStore();
-      return organizationsStore.organizations;
+      return this.organizationsStore.organizations;
     },
     /**
      * @desc The ID of the user's current active organization.
      * @returns {string|undefined}
      */
     currentOrganizationId() {
-      const authStore = useAuthStore();
-      const id = authStore.user?.currentOrganization;
+      const id = this.authStore.user?.currentOrganization;
       return id?._id || id?.id || id;
     },
     /**
@@ -235,12 +243,9 @@ export default {
      * @returns {boolean}
      */
     showBillingLink() {
-      const authStore = useAuthStore();
-      const billingStore = useBillingStore();
-      const meterMode = authStore.serverConfig?.billing?.meterMode === true;
-      const billingEnabled = authStore.serverConfig?.billing?.enabled === true;
-      const hasSubscription = !!billingStore.subscription;
-      return billingEnabled && (meterMode || hasSubscription);
+      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
+      const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
+      return billingEnabled && (meterMode || this.isPlanActive);
     },
   },
   /**
@@ -248,9 +253,8 @@ export default {
    * @returns {Promise<void>}
    */
   async created() {
-    const organizationsStore = useOrganizationsStore();
     try {
-      await organizationsStore.fetchOrganizations();
+      await this.organizationsStore.fetchOrganizations();
     } catch {
       // interceptor handles snackbar
     }
@@ -274,32 +278,28 @@ export default {
           bio: formData.bio,
           position: formData.position,
         });
-        const authStore = useAuthStore();
-        await authStore.refreshAbilities();
+        await this.authStore.refreshAbilities();
       } catch {
         // interceptor handles snackbar
       }
     },
     async onAvatarUploaded() {
-      const authStore = useAuthStore();
-      await authStore.refreshAbilities();
+      await this.authStore.refreshAbilities();
     },
     confirmLeave(org) {
       this.orgToLeave = org;
       this.leaveDialog = true;
     },
     async leaveOrg() {
-      const organizationsStore = useOrganizationsStore();
       try {
-        await organizationsStore.leaveOrganization(this.orgToLeave.id || this.orgToLeave._id);
+        await this.organizationsStore.leaveOrganization(this.orgToLeave.id || this.orgToLeave._id);
         this.leaveDialog = false;
         this.orgToLeave = null;
-        const authStore = useAuthStore();
-        await authStore.refreshAbilities();
-        if (organizationsStore.organizations.length === 0) {
+        await this.authStore.refreshAbilities();
+        if (this.organizationsStore.organizations.length === 0) {
           this.$router.push('/organization-required');
-        } else if (!organizationsStore.currentOrganization) {
-          await organizationsStore.switchOrganization(organizationsStore.organizations[0].id || organizationsStore.organizations[0]._id);
+        } else if (!this.organizationsStore.currentOrganization) {
+          await this.organizationsStore.switchOrganization(this.organizationsStore.organizations[0].id || this.organizationsStore.organizations[0]._id);
         }
       } catch {
         this.leaveDialog = false;
@@ -309,8 +309,7 @@ export default {
       try {
         const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
         await axios.delete(`${api}/users`);
-        const authStore = useAuthStore();
-        await authStore.signout();
+        await this.authStore.signout();
         this.$router.push('/signin');
       } catch {
         this.confirmDeleteAccount = false;
