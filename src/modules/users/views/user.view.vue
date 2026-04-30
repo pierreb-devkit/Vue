@@ -89,6 +89,30 @@
           </v-window>
         </v-card>
 
+        <!-- Billing & Plan link (meterMode or non-free subscription) -->
+        <v-card
+          v-if="showBillingLink"
+          color="surface"
+          :flat="config.vuetify.theme.flat"
+          :class="config.vuetify.theme.rounded"
+          class="mt-4 pa-6 d-flex align-center justify-space-between flex-wrap ga-4"
+        >
+          <div>
+            <h3 class="text-title-medium font-weight-medium mb-1">Billing &amp; Plan</h3>
+            <p class="text-body-small text-medium-emphasis mb-0">Manage your subscription and usage.</p>
+          </div>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            to="/billing"
+          >
+            <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2" />
+            Manage subscription
+          </v-btn>
+        </v-card>
+
         <!-- Danger zone -->
         <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
           <div class="d-flex align-center flex-wrap ga-4">
@@ -162,6 +186,7 @@
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useBillingStore } from '../../billing/stores/billing.store';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -203,6 +228,19 @@ export default {
       const authStore = useAuthStore();
       const id = authStore.user?.currentOrganization;
       return id?._id || id?.id || id;
+    },
+    /**
+     * @desc Show the billing link when meterMode is enabled OR the user has an active subscription.
+     * Always dormant when billing is not configured.
+     * @returns {boolean}
+     */
+    showBillingLink() {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      const meterMode = authStore.serverConfig?.billing?.meterMode === true;
+      const billingEnabled = authStore.serverConfig?.billing?.enabled === true;
+      const hasSubscription = !!billingStore.subscription;
+      return billingEnabled && (meterMode || hasSubscription);
     },
   },
   /**

@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { useBillingStore } from '../../billing/stores/billing.store';
 import UserView from '../views/user.view.vue';
 
 // Mock axios
@@ -122,5 +123,101 @@ describe('UserView – leaveOrg redirect behaviour', () => {
     expect(organizationsStore.leaveOrganization).toHaveBeenCalledWith(orgId);
     expect(organizationsStore.switchOrganization).toHaveBeenCalledWith(remainingOrg.id);
     expect(routerPush).not.toHaveBeenCalled();
+  });
+});
+
+// ── UserView – showBillingLink computed ──────────────────────────────────────
+
+describe('UserView – showBillingLink', () => {
+  let authStore;
+  let billingStore;
+
+  /**
+   * @desc Helper to mount UserView for showBillingLink tests.
+   * @param {Object} serverConfig - Auth store serverConfig
+   * @param {Object|null} subscription - Billing store subscription
+   * @returns {import('@vue/test-utils').VueWrapper}
+   */
+  const mountForBilling = (serverConfig, subscription = null) => {
+    authStore.serverConfig = serverConfig;
+    billingStore.subscription = subscription;
+
+    return shallowMount(UserView, {
+      global: {
+        mocks: {
+          $router: { push: vi.fn() },
+          config: {
+            api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
+            vuetify: { theme: { flat: true, rounded: 'rounded' } },
+          },
+        },
+        stubs: {
+          PageHeader: true,
+          userProfileComponent: true,
+          organizationsSwitcherComponent: true,
+          orgAvatarComponent: true,
+          'v-container': { template: '<div><slot /></div>' },
+          'v-row': { template: '<div><slot /></div>' },
+          'v-col': { template: '<div><slot /></div>' },
+          'v-card': { template: '<div><slot /></div>' },
+          'v-tabs': { template: '<div><slot /></div>' },
+          'v-tab': { template: '<div><slot /></div>' },
+          'v-divider': { template: '<div />' },
+          'v-window': { template: '<div><slot /></div>' },
+          'v-window-item': { template: '<div><slot /></div>' },
+          'v-list': { template: '<div><slot /></div>' },
+          'v-list-item': { template: '<div><slot /></div>' },
+          'v-list-item-title': { template: '<div><slot /></div>' },
+          'v-list-item-subtitle': { template: '<div><slot /></div>' },
+          'v-avatar': { template: '<div><slot /></div>' },
+          'v-chip': { template: '<div><slot /></div>' },
+          'v-btn': { template: '<div><slot /></div>' },
+          'v-icon': { template: '<div />' },
+          'v-dialog': { template: '<div><slot /></div>' },
+          'v-card-title': { template: '<div><slot /></div>' },
+          'v-card-text': { template: '<div><slot /></div>' },
+          'v-card-actions': { template: '<div><slot /></div>' },
+          'v-spacer': { template: '<div />' },
+          'v-text-field': { template: '<div />' },
+        },
+      },
+    });
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    authStore = useAuthStore();
+    billingStore = useBillingStore();
+
+    const organizationsStore = useOrganizationsStore();
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
+  });
+
+  it('showBillingLink is true when billing enabled and meterMode is true', () => {
+    const wrapper = mountForBilling({ billing: { enabled: true, meterMode: true } });
+    expect(wrapper.vm.showBillingLink).toBe(true);
+  });
+
+  it('showBillingLink is true when billing enabled and user has active subscription', () => {
+    const wrapper = mountForBilling(
+      { billing: { enabled: true, meterMode: false } },
+      { status: 'active', plan: 'starter' },
+    );
+    expect(wrapper.vm.showBillingLink).toBe(true);
+  });
+
+  it('showBillingLink is false when billing disabled', () => {
+    const wrapper = mountForBilling({ billing: { enabled: false, meterMode: true } });
+    expect(wrapper.vm.showBillingLink).toBe(false);
+  });
+
+  it('showBillingLink is false when billing not configured', () => {
+    const wrapper = mountForBilling(null);
+    expect(wrapper.vm.showBillingLink).toBe(false);
+  });
+
+  it('showBillingLink is false when billing enabled but meterMode false and no subscription', () => {
+    const wrapper = mountForBilling({ billing: { enabled: true, meterMode: false } }, null);
+    expect(wrapper.vm.showBillingLink).toBe(false);
   });
 });

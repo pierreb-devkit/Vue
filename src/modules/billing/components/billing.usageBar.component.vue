@@ -5,6 +5,8 @@
   Supports two modes:
     - 'legacy' (default): reads quota data via useQuota composable (resource/action props required).
     - 'meter': reads weekly meter data via useMeter composable. Emits 'open-drawer' on click.
+             Always renders when authenticated + meterMode, regardless of subscription state.
+             displayMode resolves to 'admin' | 'free' | 'standard' based on user/subscription.
 
   USAGE (legacy):
   <BillingUsageBarComponent resource="documents" action="create" />
@@ -26,6 +28,7 @@
   <div
     v-if="mode === 'meter'"
     class="billing-usage-bar billing-usage-bar--meter"
+    :class="`billing-usage-bar--${displayMode}`"
     role="button"
     tabindex="0"
     style="cursor: pointer"
@@ -34,15 +37,47 @@
     @keydown.enter="$emit('open-drawer')"
     @keydown.space.prevent="$emit('open-drawer')"
   >
-    <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
-      <span>{{ displayLabel || 'Weekly usage' }}</span>
-      <span class="font-weight-medium">{{ meterDisplay }}</span>
-    </div>
-    <BillingMeterProgressComponent
-      :used="meterUsed"
-      :quota="meterQuota"
-      :extras="meterExtras"
-    />
+    <!-- Admin display: rainbow gradient, show total consumed with no cap -->
+    <template v-if="displayMode === 'admin'">
+      <div class="d-flex justify-space-between text-body-2 mb-1">
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
+        <span
+          class="font-weight-medium billing-usage-bar__admin-label"
+          style="background: linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
+        >∞ Admin</span>
+      </div>
+      <div
+        class="billing-usage-bar__admin-track"
+        style="height:6px; border-radius:3px; background:linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); opacity:0.6;"
+      />
+    </template>
+
+    <!-- Free display: 0 / free-tier quota, neutral colour -->
+    <template v-else-if="displayMode === 'free'">
+      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
+        <span class="font-weight-medium">0 / {{ freeTierQuota }} compute</span>
+      </div>
+      <v-progress-linear
+        :model-value="0"
+        color="grey-lighten-1"
+        rounded
+        height="6"
+      />
+    </template>
+
+    <!-- Standard display: current behaviour -->
+    <template v-else>
+      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
+        <span class="font-weight-medium">{{ meterDisplay }}</span>
+      </div>
+      <BillingMeterProgressComponent
+        :used="meterUsed"
+        :quota="meterQuota"
+        :extras="meterExtras"
+      />
+    </template>
   </div>
 
   <!-- Legacy mode -->
@@ -70,6 +105,8 @@
  */
 import { useQuota } from '../composables/billing.useQuota';
 import { useMeter } from '../composables/billing.useMeter';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { useBillingStore } from '../stores/billing.store';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
 
 /**
@@ -87,6 +124,7 @@ export default {
      * @desc Rendering mode.
      * - 'legacy': reads quota via useQuota (resource + action required).
      * - 'meter': reads weekly meter data via useMeter; emits 'open-drawer' on click.
+     *            Always renders (free / admin / standard) when authenticated + meterMode.
      */
     mode: {
       type: String,
@@ -114,6 +152,14 @@ export default {
       type: String,
       default: '',
     },
+    /**
+     * @desc Free-tier quota shown when user has no active subscription.
+     * Defaults to 10 (override in project config if needed).
+     */
+    freeTierQuota: {
+      type: Number,
+      default: 10,
+    },
   },
 
   emits: ['open-drawer'],
@@ -126,15 +172,17 @@ export default {
    * The parent component (e.g. BillingMeterDrawer) handles its own polling with
    * pollIntervalMs:30000 for continuous refresh while the drawer is open.
    * @param {Object} props - Component props
-   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef }}
+   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, authStore: Object, billingStore: Object }}
    */
   setup(props) {
     const { usage, limits, usagePercent } = useQuota();
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
     if (props.mode === 'meter') {
       const { used: meterUsed, quota: meterQuota, extras: meterExtras } = useMeter({ pollIntervalMs: 0 });
-      return { usage, limits, usagePercent, meterUsed, meterQuota, meterExtras };
+      return { usage, limits, usagePercent, meterUsed, meterQuota, meterExtras, authStore, billingStore };
     }
-    return { usage, limits, usagePercent };
+    return { usage, limits, usagePercent, authStore, billingStore };
   },
 
   computed: {
@@ -211,7 +259,20 @@ export default {
     // ── Meter mode computeds ───────────────────────────────────────────────
 
     /**
-     * @desc Usage summary text shown in meter mode header: "{used} / {quota} +{extras}".
+     * @desc Determines the visual display variant for meter mode.
+     * - 'admin'    : user has 'admin' role → rainbow/∞ display
+     * - 'free'     : authenticated but no active subscription/usageMeter → free tier display
+     * - 'standard' : active subscription with usageMeter data → normal quota bar
+     * @returns {'admin'|'free'|'standard'}
+     */
+    displayMode() {
+      if (this.authStore.user?.roles?.includes('admin')) return 'admin';
+      if (!this.billingStore.subscription || !this.billingStore.usageMeter) return 'free';
+      return 'standard';
+    },
+
+    /**
+     * @desc Usage summary text shown in standard meter mode: "{used} / {quota} +{extras}".
      * @returns {string}
      */
     meterDisplay() {
