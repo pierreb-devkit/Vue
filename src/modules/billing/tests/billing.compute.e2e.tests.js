@@ -268,18 +268,18 @@ async function mockApiHealthcheck(page) {
 
 /**
  * @desc Inject fake authentication using a four-layer strategy to guarantee auth on
- * every test regardless of CI timing, worker count, or axios adapter (fetch vs XHR).
+ * every test regardless of CI timing or axios adapter.
  *
  * Layer 1 — page.context().route() exact URL: Playwright CDP intercept, highest
  *   priority, fires before any request reaches the real network.
  *
  * Layer 2 — page.route() glob: catches URL variants and retries after hydration.
  *
- * Layer 3 — context-level addInitScript fetch + XHR stub: context-level scripts run
- *   before page-level scripts and before any Vue/Pinia code. Patches window.fetch AND
- *   XMLHttpRequest to intercept refreshAbilities() inside router.beforeEach during page
- *   bootstrap. Using page.context().addInitScript() (not page.addInitScript()) ensures
- *   the stub is registered at the highest scope and cannot be missed by any navigation.
+ * Layer 3 — context-level addInitScript fetch stub: context-level init scripts run
+ *   before page-level init scripts and before any Vue/Pinia code. Patches window.fetch
+ *   to intercept refreshAbilities() calls inside router.beforeEach during page bootstrap.
+ *   Using page.context().addInitScript() (not page.addInitScript()) ensures the stub is
+ *   registered at the highest scope. Axios 1.x uses the fetch adapter in modern Chromium.
  *
  * Layer 4 — localStorage pre-population: sets devkitCookieExpire so initFromStorage()
  *   finds isLoggedIn=true before the router guard runs.
@@ -331,12 +331,11 @@ async function injectFakeAuth(page) {
     route.fulfill({ status: 200, contentType: 'application/json', body: tokenBody }),
   );
 
-  // Layer 3: context-level in-page fetch + XHR stub — fires before any page script on
-  // every navigation. Using page.context().addInitScript (not page.addInitScript) gives
-  // context scope, guaranteeing the stub is in place even if CDP intercept hasn't
-  // activated yet for the new document. Covers both fetch and XHR adapters.
+  // Layer 3: context-level in-page fetch stub — fires before any page script on every
+  // navigation. Using page.context().addInitScript (not page.addInitScript) gives context
+  // scope, guaranteeing the stub is in place for the new document before Vue/Pinia code
+  // runs. Axios 1.x uses the fetch adapter by default in modern Chromium.
   await page.context().addInitScript((body) => {
-    // Fetch stub
     const origFetch = window.fetch;
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
     window.fetch = async (input, init) => {
@@ -348,37 +347,6 @@ async function injectFakeAuth(page) {
         });
       }
       return origFetch.call(window, input, init);
-    };
-    // XHR stub — covers the XMLHttpRequest adapter fallback in axios
-    const OrigXHR = window.XMLHttpRequest;
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    window.XMLHttpRequest = function () {
-      const xhr = new OrigXHR();
-      const origOpen = xhr.open.bind(xhr);
-      let _stubbed = false;
-      xhr.open = function (method, url, ...rest) {
-        if (typeof url === 'string' && url.includes('/api/auth/token')) {
-          _stubbed = true;
-        }
-        return origOpen(method, url, ...rest);
-      };
-      const origSend = xhr.send.bind(xhr);
-      xhr.send = function (...args) {
-        if (_stubbed) {
-          // Simulate a successful response asynchronously
-          setTimeout(() => {
-            Object.defineProperty(xhr, 'status', { get: () => 200, configurable: true });
-            Object.defineProperty(xhr, 'readyState', { get: () => 4, configurable: true });
-            Object.defineProperty(xhr, 'responseText', { get: () => body, configurable: true });
-            Object.defineProperty(xhr, 'response', { get: () => body, configurable: true });
-            if (typeof xhr.onreadystatechange === 'function') xhr.onreadystatechange();
-            if (typeof xhr.onload === 'function') xhr.onload();
-          }, 0);
-          return;
-        }
-        return origSend(...args);
-      };
-      return xhr;
     };
   }, tokenBody);
 
