@@ -166,8 +166,11 @@ export default {
     modelValue(open) {
       if (open) {
         this.purchaseError = null;
-        if (this.packs.length > 0 && !this.selectedPackId) {
-          this.selectedPackId = this.packs[0].packId;
+        if (this.packs.length === 0) {
+          this.selectedPackId = null;
+        } else {
+          const stillValid = this.packs.some((p) => p.packId === this.selectedPackId);
+          if (!stillValid) this.selectedPackId = this.packs[0].packId;
         }
       }
     },
