@@ -275,11 +275,11 @@ async function mockApiHealthcheck(page) {
  *
  * Layer 2 — page.route() glob: catches URL variants and retries after hydration.
  *
- * Layer 3 — context-level addInitScript fetch stub: context-level init scripts run
- *   before page-level init scripts and before any Vue/Pinia code. Patches window.fetch
- *   to intercept refreshAbilities() calls inside router.beforeEach during page bootstrap.
- *   Using page.context().addInitScript() (not page.addInitScript()) ensures the stub is
- *   registered at the highest scope. Axios 1.x uses the fetch adapter in modern Chromium.
+ * Layer 3 — page-level addInitScript fetch stub: patches window.fetch to intercept
+ *   refreshAbilities() calls inside router.beforeEach during page bootstrap.
+ *   Uses page.addInitScript() (page-scoped, NOT context-scoped) to avoid stub accumulation
+ *   across test navigations in the same browser context, which corrupts the auth/config
+ *   mock chain. Axios 1.x uses the fetch adapter by default in modern Chromium.
  *
  * Layer 4 — localStorage pre-population: sets devkitCookieExpire so initFromStorage()
  *   finds isLoggedIn=true before the router guard runs.
@@ -331,11 +331,11 @@ async function injectFakeAuth(page) {
     route.fulfill({ status: 200, contentType: 'application/json', body: tokenBody }),
   );
 
-  // Layer 3: context-level in-page fetch stub — fires before any page script on every
-  // navigation. Using page.context().addInitScript (not page.addInitScript) gives context
-  // scope, guaranteeing the stub is in place for the new document before Vue/Pinia code
-  // runs. Axios 1.x uses the fetch adapter by default in modern Chromium.
-  await page.context().addInitScript((body) => {
+  // Layer 3: page-level addInitScript fetch stub — scoped to this page only, avoids
+  // accumulating stubs across navigations in the same browser context (which corrupts
+  // the auth/config mock chain installed by installAuthConfigStub). Axios 1.x uses the
+  // fetch adapter by default in modern Chromium.
+  await page.addInitScript((body) => {
     const origFetch = window.fetch;
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
     window.fetch = async (input, init) => {
