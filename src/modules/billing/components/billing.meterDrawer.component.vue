@@ -16,6 +16,7 @@
 -->
 <template>
   <v-navigation-drawer
+    class="billing-meter-drawer"
     :model-value="modelValue"
     location="right"
     temporary

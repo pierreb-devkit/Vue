@@ -267,18 +267,24 @@ async function mockApiHealthcheck(page) {
 }
 
 /**
- * @desc Inject fake authentication using addInitScript + token API mock.
+ * @desc Inject fake authentication using a three-layer strategy identical to
+ * installAuthConfigStub. All three layers must fire to guarantee auth on every test
+ * regardless of CI timing, worker count, or axios adapter (fetch vs XHR).
  *
- * Two-layer strategy:
- * 1. page.context().addInitScript() writes `${prefix}CookieExpire` to localStorage
- *    before every page load. auth.store.js initFromStorage() reads this key on every
- *    app mount, setting cookieExpire and making isLoggedIn return true — with no
- *    extra navigation needed.
- * 2. Mock /api/auth/token at context + page level. router.beforeEach calls
- *    refreshAbilities() when `isLoggedIn && !user`. Without this mock, refreshAbilities
- *    hits the real backend with a fake token, gets 401, and calls signout() — which
- *    clears cookieExpire and undoes the auth injection. The mock returns a valid user
- *    so the route guard completes without signing out.
+ * Layer 1 — page.context().route() exact URL: Playwright CDP intercept, highest
+ *   priority, fires before the request reaches the network.
+ *
+ * Layer 2 — page.route() glob: catches any URL variant or retry after hydration.
+ *
+ * Layer 3 — addInitScript fetch stub: catches the very first refreshAbilities() call
+ *   inside router.beforeEach, which fires synchronously during page bootstrap before
+ *   Playwright route handlers are fully active for that document. Mirrors the identical
+ *   layer-3 approach used for /api/auth/config in installAuthConfigStub.
+ *
+ * Without layer 3, intermittent signin redirects occur on CI: the axios /api/auth/token
+ * request races past the Playwright CDP intercept during initial page load, the real
+ * backend returns 401, refreshAbilities() calls signout(), cookieExpire is cleared, and
+ * isLoggedIn becomes false — redirecting to /signin.
  *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
@@ -310,22 +316,35 @@ async function injectFakeAuth(page) {
     pendingRequests: [],
   };
 
-  // Mock /api/auth/token — prevents refreshAbilities() from calling signout() on 401.
-  // Install at both context (highest priority) and page level (fallback) before any navigation.
+  const tokenBody = JSON.stringify(fakeTokenResponse);
+
+  // Layer 1: context-level route with exact URL — highest priority, persists across navigations.
   await page.context().route(`${API_URL}/auth/token`, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(fakeTokenResponse),
-    }),
+    route.fulfill({ status: 200, contentType: 'application/json', body: tokenBody }),
   );
+
+  // Layer 2: page-level route with glob — catches URL variants and retries.
   await page.route('**/api/auth/token', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(fakeTokenResponse),
-    }),
+    route.fulfill({ status: 200, contentType: 'application/json', body: tokenBody }),
   );
+
+  // Layer 3: in-page fetch stub via addInitScript — intercepts the refreshAbilities()
+  // fetch that fires inside router.beforeEach during page bootstrap, before Playwright's
+  // CDP network layer is fully active for the new document.
+  await page.addInitScript((body) => {
+    const origFetch = window.fetch;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+    window.fetch = async (input, init) => {
+      const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
+      if (url.includes('/api/auth/token')) {
+        return new Response(body, {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return origFetch.call(window, input, init);
+    };
+  }, tokenBody);
 
   // Write auth cookie expiry to localStorage via addInitScript (fires before every page
   // load, before any Vue/Pinia code runs). initFromStorage() reads this on app mount.
@@ -489,11 +508,14 @@ class MeterDrawerPOM {
   }
 
   /**
-   * @desc Locate the navigation drawer itself.
+   * @desc Locate the billing meter drawer specifically (class added in billing.meterDrawer.component.vue).
+   * Using .billing-meter-drawer avoids matching the app navigation drawer which is also
+   * a v-navigation-drawer and is already visible, which would make waitForDrawerOpen() resolve
+   * immediately and getByText('Weekly meter') then fail inside the wrong element.
    * @returns {import('@playwright/test').Locator}
    */
   drawer() {
-    return this.page.locator('.v-navigation-drawer').first();
+    return this.page.locator('.billing-meter-drawer').first();
   }
 
   /**
