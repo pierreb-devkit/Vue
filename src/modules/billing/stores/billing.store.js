@@ -28,11 +28,14 @@ export const useBillingStore = defineStore('billing', {
      * in useMeter.refresh + 30s polling).
      */
     loading: false,
-    // Per-action loading flags for meter actions (avoids race with parallel fetches)
-    usageMeterLoading: false,
-    extrasBalanceLoading: false,
-    extrasLedgerLoading: false,
-    extrasCheckoutLoading: false,
+    // Per-action in-flight counters for meter actions.
+    // Using counters (not booleans) so that overlapping calls from the 30s polling loop
+    // cannot flip the flag false while a prior request is still in-flight.
+    // Loading state = counter > 0; idle state = counter === 0.
+    usageMeterRequests: 0,
+    extrasBalanceRequests: 0,
+    extrasLedgerRequests: 0,
+    extrasCheckoutRequests: 0,
     // meter billing (meterMode: true)
     usageMeter: null, // { plan, planVersion, weekKey, weekResetAt, meterUsed, meterQuota, meterBreakdown, extrasRemaining, packsAvailable }
     extrasBalance: null, // { balance, packsAvailable }
@@ -149,11 +152,12 @@ export const useBillingStore = defineStore('billing', {
 
     /**
      * @desc Fetch current meter usage and quota for the active organization.
-     * Uses per-action flag `usageMeterLoading` to avoid race with parallel fetches.
+     * Uses a per-action in-flight counter so overlapping polling calls cannot
+     * race each other to a false-idle state.
      * @returns {Promise<Object>} Resolved usageMeter object
      */
     async fetchUsageMeter() {
-      this.usageMeterLoading = true;
+      this.usageMeterRequests += 1;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/usage`);
@@ -163,17 +167,18 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.usageMeterLoading = false;
+        this.usageMeterRequests -= 1;
       }
     },
 
     /**
      * @desc Fetch the extras credit balance for the active organization.
-     * Uses per-action flag `extrasBalanceLoading` to avoid race with parallel fetches.
+     * Uses a per-action in-flight counter so overlapping polling calls cannot
+     * race each other to a false-idle state.
      * @returns {Promise<Object>} Resolved extrasBalance object
      */
     async fetchExtrasBalance() {
-      this.extrasBalanceLoading = true;
+      this.extrasBalanceRequests += 1;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/balance`);
@@ -183,20 +188,20 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.extrasBalanceLoading = false;
+        this.extrasBalanceRequests -= 1;
       }
     },
 
     /**
      * @desc Fetch a paginated ledger of extras credit transactions.
-     * Uses per-action flag `extrasLedgerLoading` to avoid race with parallel fetches.
+     * Uses a per-action in-flight counter so overlapping calls cannot race.
      * @param {Object} [opts] - Pagination options
      * @param {number} [opts.page=1] - Page number (1-based)
      * @param {number} [opts.limit=20] - Page size
      * @returns {Promise<Object>} Resolved extrasLedger object { entries, total, page, limit }
      */
     async fetchExtrasLedger({ page = 1, limit = 20 } = {}) {
-      this.extrasLedgerLoading = true;
+      this.extrasLedgerRequests += 1;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/ledger`, {
@@ -208,18 +213,18 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.extrasLedgerLoading = false;
+        this.extrasLedgerRequests -= 1;
       }
     },
 
     /**
      * @desc Purchase an extras credit pack and redirect to Stripe Checkout.
-     * Uses per-action flag `extrasCheckoutLoading` to avoid race with parallel fetches.
+     * Uses a per-action in-flight counter so concurrent calls cannot race.
      * @param {string} packId - The pack identifier to purchase
      * @returns {Promise<void>}
      */
     async createExtrasCheckout(packId) {
-      this.extrasCheckoutLoading = true;
+      this.extrasCheckoutRequests += 1;
       try {
         const api = apiBase();
         const successUrl = `${window.location.origin}/billing?packPurchased=1`;
@@ -240,7 +245,7 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.extrasCheckoutLoading = false;
+        this.extrasCheckoutRequests -= 1;
       }
     },
   },

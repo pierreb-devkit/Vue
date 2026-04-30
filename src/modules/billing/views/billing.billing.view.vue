@@ -158,11 +158,10 @@ export default {
   /**
    * @desc Always instantiates useMeter (pollIntervalMs: 0) so reactive refs are
    * available from first render regardless of when serverConfig resolves async.
-   * A watcher on meterMode kicks the first refresh and enables polling once
-   * serverConfig confirms meter billing is active.  Legacy tenants (meterMode
-   * false/undefined) never incur polling because pollIntervalMs stays 0 and
-   * safeRefresh is only called when meterMode becomes true.
-   * @returns {{ billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown, meter }}
+   * A watcher on meterMode calls refresh() and enables polling once serverConfig
+   * confirms meter billing is active. Legacy tenants (meterMode false/undefined)
+   * never incur polling because the watcher only calls refresh() when active=true.
+   * @returns {{ billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown }}
    */
   setup() {
     const billingStore = useBillingStore();
@@ -217,7 +216,13 @@ export default {
   },
   computed: {
     fetchLoading() {
-      return this.billingStore.loading || this.billingStore.usageMeterLoading || this.billingStore.extrasBalanceLoading;
+      // Global flag covers initial page load (fetchPlans, fetchSubscription, etc.).
+      // Per-action meter counters (usageMeterRequests, extrasBalanceRequests) are intentionally
+      // excluded here: meter data loads lazily after serverConfig resolves and is also
+      // refreshed every 30 s via polling — hiding the whole page on every poll would
+      // produce jarring full-page flashes. The meter card handles stale-data gracefully
+      // while a background refresh runs.
+      return this.billingStore.loading;
     },
     subscription() {
       return this.billingStore.subscription;

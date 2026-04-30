@@ -29,11 +29,11 @@ describe('Billing Store', () => {
     expect(store.plans).toEqual([]);
     expect(store.subscription).toBeNull();
     expect(store.loading).toBe(false);
-    // Per-action loading flags — all start false
-    expect(store.usageMeterLoading).toBe(false);
-    expect(store.extrasBalanceLoading).toBe(false);
-    expect(store.extrasLedgerLoading).toBe(false);
-    expect(store.extrasCheckoutLoading).toBe(false);
+    // Per-action in-flight counters — all start at 0
+    expect(store.usageMeterRequests).toBe(0);
+    expect(store.extrasBalanceRequests).toBe(0);
+    expect(store.extrasLedgerRequests).toBe(0);
+    expect(store.extrasCheckoutRequests).toBe(0);
   });
 
   describe('fetchPlans', () => {
@@ -233,24 +233,24 @@ describe('Billing Store', () => {
       expect(store.usageMeter).toEqual(mockMeter);
       expect(result).toEqual(mockMeter);
       // Uses per-action flag — global loading is untouched
-      expect(store.usageMeterLoading).toBe(false);
+      expect(store.usageMeterRequests).toBe(0);
       expect(store.loading).toBe(false);
     });
 
-    it('should set usageMeterLoading=true during fetch and reset after', async () => {
+    it('should set usageMeterRequests > 0 during fetch, 0 after', async () => {
       const store = useBillingStore();
       let flagDuringFetch = false;
       let globalLoadingDuringFetch = false;
       axios.get.mockImplementationOnce(() => {
-        flagDuringFetch = store.usageMeterLoading;
+        flagDuringFetch = store.usageMeterRequests;
         globalLoadingDuringFetch = store.loading;
         return Promise.resolve({ data: { data: {} } });
       });
       await store.fetchUsageMeter();
-      expect(flagDuringFetch).toBe(true);
+      expect(flagDuringFetch).toBe(1);
       // Global loading flag must NOT be toggled by fetchUsageMeter
       expect(globalLoadingDuringFetch).toBe(false);
-      expect(store.usageMeterLoading).toBe(false);
+      expect(store.usageMeterRequests).toBe(0);
     });
 
     it('should call correct API endpoint for fetchUsageMeter', async () => {
@@ -266,7 +266,7 @@ describe('Billing Store', () => {
       axios.get.mockRejectedValueOnce(new Error('Meter fetch failed'));
       await expect(store.fetchUsageMeter()).rejects.toThrow('Meter fetch failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.usageMeterLoading).toBe(false);
+      expect(store.usageMeterRequests).toBe(0);
       spy.mockRestore();
     });
 
@@ -277,18 +277,18 @@ describe('Billing Store', () => {
       // Both resolve after a microtask
       axios.get
         .mockImplementationOnce(() => {
-          usageFlagDuring = store.usageMeterLoading;
+          usageFlagDuring = store.usageMeterRequests;
           return Promise.resolve({ data: { data: {} } });
         })
         .mockImplementationOnce(() => {
-          extrasFlagDuring = store.extrasBalanceLoading;
+          extrasFlagDuring = store.extrasBalanceRequests;
           return Promise.resolve({ data: { data: {} } });
         });
       await Promise.all([store.fetchUsageMeter(), store.fetchExtrasBalance()]);
-      expect(usageFlagDuring).toBe(true);
-      expect(extrasFlagDuring).toBe(true);
-      expect(store.usageMeterLoading).toBe(false);
-      expect(store.extrasBalanceLoading).toBe(false);
+      expect(usageFlagDuring).toBe(1);
+      expect(extrasFlagDuring).toBe(1);
+      expect(store.usageMeterRequests).toBe(0);
+      expect(store.extrasBalanceRequests).toBe(0);
       // Global loading flag must remain false throughout
       expect(store.loading).toBe(false);
     });
@@ -302,20 +302,20 @@ describe('Billing Store', () => {
       const result = await store.fetchExtrasBalance();
       expect(store.extrasBalance).toEqual(mockBalance);
       expect(result).toEqual(mockBalance);
-      expect(store.extrasBalanceLoading).toBe(false);
+      expect(store.extrasBalanceRequests).toBe(0);
       expect(store.loading).toBe(false);
     });
 
-    it('should set extrasBalanceLoading=true during fetch and reset after', async () => {
+    it('should set extrasBalanceRequests > 0 during fetch, 0 after', async () => {
       const store = useBillingStore();
       let flagDuringFetch = false;
       axios.get.mockImplementationOnce(() => {
-        flagDuringFetch = store.extrasBalanceLoading;
+        flagDuringFetch = store.extrasBalanceRequests;
         return Promise.resolve({ data: { data: {} } });
       });
       await store.fetchExtrasBalance();
-      expect(flagDuringFetch).toBe(true);
-      expect(store.extrasBalanceLoading).toBe(false);
+      expect(flagDuringFetch).toBe(1);
+      expect(store.extrasBalanceRequests).toBe(0);
     });
 
     it('should call correct API endpoint for fetchExtrasBalance', async () => {
@@ -331,7 +331,7 @@ describe('Billing Store', () => {
       axios.get.mockRejectedValueOnce(new Error('Balance fetch failed'));
       await expect(store.fetchExtrasBalance()).rejects.toThrow('Balance fetch failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasBalanceLoading).toBe(false);
+      expect(store.extrasBalanceRequests).toBe(0);
       spy.mockRestore();
     });
   });
@@ -349,20 +349,20 @@ describe('Billing Store', () => {
       const result = await store.fetchExtrasLedger();
       expect(store.extrasLedger).toEqual(mockLedger);
       expect(result).toEqual(mockLedger);
-      expect(store.extrasLedgerLoading).toBe(false);
+      expect(store.extrasLedgerRequests).toBe(0);
       expect(store.loading).toBe(false);
     });
 
-    it('should set extrasLedgerLoading=true during fetch and reset after', async () => {
+    it('should set extrasLedgerRequests > 0 during fetch, 0 after', async () => {
       const store = useBillingStore();
       let flagDuringFetch = false;
       axios.get.mockImplementationOnce(() => {
-        flagDuringFetch = store.extrasLedgerLoading;
+        flagDuringFetch = store.extrasLedgerRequests;
         return Promise.resolve({ data: { data: { entries: [], total: 0, page: 1, limit: 20 } } });
       });
       await store.fetchExtrasLedger();
-      expect(flagDuringFetch).toBe(true);
-      expect(store.extrasLedgerLoading).toBe(false);
+      expect(flagDuringFetch).toBe(1);
+      expect(store.extrasLedgerRequests).toBe(0);
     });
 
     it('should call API endpoint with correct pagination params', async () => {
@@ -395,7 +395,7 @@ describe('Billing Store', () => {
       axios.get.mockRejectedValueOnce(new Error('Ledger fetch failed'));
       await expect(store.fetchExtrasLedger()).rejects.toThrow('Ledger fetch failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasLedgerLoading).toBe(false);
+      expect(store.extrasLedgerRequests).toBe(0);
       spy.mockRestore();
     });
   });
@@ -425,18 +425,18 @@ describe('Billing Store', () => {
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);
-      expect(store.extrasCheckoutLoading).toBe(false);
+      expect(store.extrasCheckoutRequests).toBe(0);
       expect(store.loading).toBe(false);
 
       window.location = originalLocation;
     });
 
-    it('should set extrasCheckoutLoading=true during checkout and reset after', async () => {
+    it('should set extrasCheckoutRequests > 0 during checkout, 0 after', async () => {
       const store = useBillingStore();
       let flagDuringFetch = false;
       const checkoutUrl = 'https://checkout.stripe.com/extras_session_flag';
       axios.post.mockImplementationOnce(() => {
-        flagDuringFetch = store.extrasCheckoutLoading;
+        flagDuringFetch = store.extrasCheckoutRequests;
         return Promise.resolve({ data: { data: { url: checkoutUrl } } });
       });
 
@@ -449,8 +449,8 @@ describe('Billing Store', () => {
       };
 
       await store.createExtrasCheckout('pack_500');
-      expect(flagDuringFetch).toBe(true);
-      expect(store.extrasCheckoutLoading).toBe(false);
+      expect(flagDuringFetch).toBe(1);
+      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
     });
@@ -470,7 +470,7 @@ describe('Billing Store', () => {
 
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Checkout URL missing in response');
       expect(window.location.assign).not.toHaveBeenCalled();
-      expect(store.extrasCheckoutLoading).toBe(false);
+      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
       spy.mockRestore();
@@ -492,7 +492,7 @@ describe('Billing Store', () => {
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Rejected non-HTTPS checkout URL');
       expect(window.location.assign).not.toHaveBeenCalled();
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasCheckoutLoading).toBe(false);
+      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
       spy.mockRestore();
@@ -504,7 +504,7 @@ describe('Billing Store', () => {
       axios.post.mockRejectedValueOnce(new Error('Extras checkout failed'));
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Extras checkout failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasCheckoutLoading).toBe(false);
+      expect(store.extrasCheckoutRequests).toBe(0);
       spy.mockRestore();
     });
   });
