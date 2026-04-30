@@ -267,21 +267,18 @@ async function mockApiHealthcheck(page) {
 }
 
 /**
- * @desc Inject fake authentication into localStorage using page.evaluate().
+ * @desc Inject fake authentication using addInitScript + token API mock.
  *
- * Strategy: navigate to the SPA root (a public route that doesn't require auth)
- * so that Vue mounts and the localStorage origin is established. Then call
- * page.evaluate() to write the `${prefix}CookieExpire` key directly. This value
- * persists to the next page.goto() within the same browser context; Vue's
- * `authStore.initFromStorage()` reads it on every app mount and sets
- * `cookieExpire`, which makes `isLoggedIn` return true.
- *
- * Also mock /api/auth/token so that router.beforeEach's `refreshAbilities()` call
- * (fired when `isLoggedIn && !user`) returns a valid user object without hitting
- * the real backend.
- *
- * This approach is resilient to Vite HMR restarts because localStorage is
- * per-browser-origin and survives server-side restarts.
+ * Two-layer strategy:
+ * 1. page.context().addInitScript() writes `${prefix}CookieExpire` to localStorage
+ *    before every page load. auth.store.js initFromStorage() reads this key on every
+ *    app mount, setting cookieExpire and making isLoggedIn return true — with no
+ *    extra navigation needed.
+ * 2. Mock /api/auth/token at context + page level. router.beforeEach calls
+ *    refreshAbilities() when `isLoggedIn && !user`. Without this mock, refreshAbilities
+ *    hits the real backend with a fake token, gets 401, and calls signout() — which
+ *    clears cookieExpire and undoes the auth injection. The mock returns a valid user
+ *    so the route guard completes without signing out.
  *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
@@ -306,8 +303,8 @@ async function injectFakeAuth(page) {
     pendingRequests: [],
   };
 
-  // Mock /api/auth/token — called by router.beforeEach when isLoggedIn && !user
-  // (refreshAbilities). This must be installed before any navigation.
+  // Mock /api/auth/token — prevents refreshAbilities() from calling signout() on 401.
+  // Install at both context (highest priority) and page level (fallback) before any navigation.
   await page.context().route(`${API_URL}/auth/token`, (route) =>
     route.fulfill({
       status: 200,
@@ -323,36 +320,16 @@ async function injectFakeAuth(page) {
     }),
   );
 
+  // Write auth cookie expiry to localStorage via addInitScript (fires before every page
+  // load, before any Vue/Pinia code runs). initFromStorage() reads this on app mount.
   const expiry = String(Date.now() + 86400000);
-
-  // Check if the page already has an established origin (i.e. we navigated at least once).
-  // If the page is blank / not yet loaded, we navigate to /pricing to establish the
-  // localhost origin in localStorage. Otherwise, we write directly to avoid navigating
-  // away from the current page (e.g. mid-test remocking in the polling test).
-  const currentUrl = page.url();
-  const needsNavigation = !currentUrl || currentUrl === 'about:blank';
-
-  if (needsNavigation) {
-    // Navigate to /pricing — a public route that renders without auth, so the SPA
-    // mounts successfully and the localhost:port origin is established in localStorage.
-    // We choose /pricing over / because the home page may redirect authenticated users
-    // in downstream projects.
-    await page.goto('/pricing', { waitUntil: 'domcontentloaded' });
-  }
-
-  // Write the auth key directly into localStorage. page.evaluate() runs in the current
-  // page context, so the write is guaranteed to complete before the next page.goto().
-  // auth.store.js initFromStorage() reads `${prefix}CookieExpire` on every app mount —
-  // the next navigation will pick this up automatically.
-  await page.evaluate(
-    ([prefix, exp, user]) => {
+  await page.context().addInitScript(
+    ([prefix, exp]) => {
       // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
       localStorage.setItem(`${prefix}CookieExpire`, exp);
       localStorage.setItem(`${prefix}UserRoles`, 'user');
-      // Pre-populate user in localStorage so org guards are skipped (if used by downstream)
-      try { localStorage.setItem(`${prefix}User`, JSON.stringify(user)); } catch { /* ignore */ }
     },
-    [cookiePrefix, expiry, fakeUser],
+    [cookiePrefix, expiry],
   );
 }
 
