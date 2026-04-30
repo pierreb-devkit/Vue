@@ -267,24 +267,27 @@ async function mockApiHealthcheck(page) {
 }
 
 /**
- * @desc Inject fake authentication using a three-layer strategy identical to
- * installAuthConfigStub. All three layers must fire to guarantee auth on every test
- * regardless of CI timing, worker count, or axios adapter (fetch vs XHR).
+ * @desc Inject fake authentication using a four-layer strategy to guarantee auth on
+ * every test regardless of CI timing, worker count, or axios adapter (fetch vs XHR).
  *
  * Layer 1 — page.context().route() exact URL: Playwright CDP intercept, highest
- *   priority, fires before the request reaches the network.
+ *   priority, fires before any request reaches the real network.
  *
- * Layer 2 — page.route() glob: catches any URL variant or retry after hydration.
+ * Layer 2 — page.route() glob: catches URL variants and retries after hydration.
  *
- * Layer 3 — addInitScript fetch stub: catches the very first refreshAbilities() call
- *   inside router.beforeEach, which fires synchronously during page bootstrap before
- *   Playwright route handlers are fully active for that document. Mirrors the identical
- *   layer-3 approach used for /api/auth/config in installAuthConfigStub.
+ * Layer 3 — context-level addInitScript fetch + XHR stub: context-level scripts run
+ *   before page-level scripts and before any Vue/Pinia code. Patches window.fetch AND
+ *   XMLHttpRequest to intercept refreshAbilities() inside router.beforeEach during page
+ *   bootstrap. Using page.context().addInitScript() (not page.addInitScript()) ensures
+ *   the stub is registered at the highest scope and cannot be missed by any navigation.
  *
- * Without layer 3, intermittent signin redirects occur on CI: the axios /api/auth/token
+ * Layer 4 — localStorage pre-population: sets devkitCookieExpire so initFromStorage()
+ *   finds isLoggedIn=true before the router guard runs.
+ *
+ * Without layer 3, intermittent signin redirects occur: the axios /api/auth/token
  * request races past the Playwright CDP intercept during initial page load, the real
- * backend returns 401, refreshAbilities() calls signout(), cookieExpire is cleared, and
- * isLoggedIn becomes false — redirecting to /signin.
+ * backend returns 401, refreshAbilities() calls signout(), cookieExpire is cleared,
+ * and isLoggedIn becomes false — redirecting to /signin.
  *
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<void>}
@@ -328,10 +331,12 @@ async function injectFakeAuth(page) {
     route.fulfill({ status: 200, contentType: 'application/json', body: tokenBody }),
   );
 
-  // Layer 3: in-page fetch stub via addInitScript — intercepts the refreshAbilities()
-  // fetch that fires inside router.beforeEach during page bootstrap, before Playwright's
-  // CDP network layer is fully active for the new document.
-  await page.addInitScript((body) => {
+  // Layer 3: context-level in-page fetch + XHR stub — fires before any page script on
+  // every navigation. Using page.context().addInitScript (not page.addInitScript) gives
+  // context scope, guaranteeing the stub is in place even if CDP intercept hasn't
+  // activated yet for the new document. Covers both fetch and XHR adapters.
+  await page.context().addInitScript((body) => {
+    // Fetch stub
     const origFetch = window.fetch;
     // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
     window.fetch = async (input, init) => {
@@ -344,10 +349,41 @@ async function injectFakeAuth(page) {
       }
       return origFetch.call(window, input, init);
     };
+    // XHR stub — covers the XMLHttpRequest adapter fallback in axios
+    const OrigXHR = window.XMLHttpRequest;
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
+    window.XMLHttpRequest = function () {
+      const xhr = new OrigXHR();
+      const origOpen = xhr.open.bind(xhr);
+      let _stubbed = false;
+      xhr.open = function (method, url, ...rest) {
+        if (typeof url === 'string' && url.includes('/api/auth/token')) {
+          _stubbed = true;
+        }
+        return origOpen(method, url, ...rest);
+      };
+      const origSend = xhr.send.bind(xhr);
+      xhr.send = function (...args) {
+        if (_stubbed) {
+          // Simulate a successful response asynchronously
+          setTimeout(() => {
+            Object.defineProperty(xhr, 'status', { get: () => 200, configurable: true });
+            Object.defineProperty(xhr, 'readyState', { get: () => 4, configurable: true });
+            Object.defineProperty(xhr, 'responseText', { get: () => body, configurable: true });
+            Object.defineProperty(xhr, 'response', { get: () => body, configurable: true });
+            if (typeof xhr.onreadystatechange === 'function') xhr.onreadystatechange();
+            if (typeof xhr.onload === 'function') xhr.onload();
+          }, 0);
+          return;
+        }
+        return origSend(...args);
+      };
+      return xhr;
+    };
   }, tokenBody);
 
-  // Write auth cookie expiry to localStorage via addInitScript (fires before every page
-  // load, before any Vue/Pinia code runs). initFromStorage() reads this on app mount.
+  // Layer 4: context-level localStorage pre-population. Runs before any Vue/Pinia code
+  // so initFromStorage() finds devkitCookieExpire and sets isLoggedIn=true.
   const expiry = String(Date.now() + 86400000);
   await page.context().addInitScript(
     ([prefix, exp]) => {
@@ -470,11 +506,17 @@ class BillingPage {
   }
 
   /**
-   * @desc Locate the Buy units CTA button in the extras section.
+   * @desc Locate the Buy units CTA button in the billing extras card section.
+   * Scoped to avoid matching the identically-named button inside the meter drawer,
+   * which is kept in the DOM (with `inert` attr) when closed, creating a strict-mode
+   * violation if getByRole resolves to 2 elements.
    * @returns {import('@playwright/test').Locator}
    */
   buyUnitsButton() {
-    return this.page.getByRole('button', { name: /Buy units/i });
+    // The extras card is a v-card containing "Extra units" heading and a Buy units button.
+    // Scoping to .v-card:has(p:text("Extra units")) ensures we target the page-level
+    // extras card, not the meter drawer's Buy units button.
+    return this.page.locator('.v-card:has(p:text("Extra units")) button:has-text("Buy units")').first();
   }
 
   /**
@@ -527,12 +569,16 @@ class MeterDrawerPOM {
   }
 
   /**
-   * @desc Wait for the drawer to become visible.
+   * @desc Wait for the meter drawer to open (Vuetify --active class present).
+   * Cannot use waitFor({ state: 'visible' }) because Vuetify keeps the drawer element
+   * in the DOM with `inert` when closed — Playwright considers inert elements visible.
+   * Instead, poll for the v-navigation-drawer--active class which Vuetify adds only
+   * when isActive is true.
    * @param {number} [timeout=8000] Timeout in ms
    * @returns {Promise<void>}
    */
   async waitForDrawerOpen(timeout = 8000) {
-    await this.drawer().waitFor({ state: 'visible', timeout });
+    await expect(this.drawer()).toHaveClass(/v-navigation-drawer--active/, { timeout });
   }
 
   /**
@@ -680,8 +726,11 @@ test.describe('Meter billing — drawer open / close', () => {
 
     // Close via the × button
     await drawer.closeViaButton();
-    // Drawer transitions out; wait for it to leave the viewport or become hidden
-    await expect(drawer.drawer()).not.toBeVisible({ timeout: 6000 });
+    // Vuetify v-navigation-drawer[temporary] keeps the element in the DOM and adds
+    // `inert` when closed (does not detach). Playwright does not treat `inert` elements
+    // as hidden, so not.toBeVisible() would fail. Use the Vuetify active CSS class as
+    // the reliable close signal: --active is removed when isActive turns false.
+    await expect(drawer.drawer()).not.toHaveClass(/v-navigation-drawer--active/, { timeout: 6000 });
   });
 
   /**
@@ -702,7 +751,8 @@ test.describe('Meter billing — drawer open / close', () => {
 
     // Escape to dismiss
     await drawer.closeViaEscape();
-    await expect(drawer.drawer()).not.toBeVisible({ timeout: 6000 });
+    // Vuetify keeps the drawer in DOM with `inert` when closed; check --active class removal.
+    await expect(drawer.drawer()).not.toHaveClass(/v-navigation-drawer--active/, { timeout: 6000 });
   });
 });
 
@@ -855,8 +905,9 @@ test.describe('Meter billing — polling refresh', () => {
     await drawer.openViaUsageBar();
     await drawer.waitForDrawerOpen();
 
-    // Initial state: 120 / 500 in summary
-    const summaryInDrawer = page.locator('.v-navigation-drawer .text-caption').first();
+    // Initial state: 120 / 500 in summary. Scoped to .billing-meter-drawer to avoid
+    // matching the app navigation drawer which is also a v-navigation-drawer.
+    const summaryInDrawer = page.locator('.billing-meter-drawer .text-caption').first();
     await expect(summaryInDrawer).toContainText('120 / 500', { timeout: 6000 });
 
     // Update mock to return higher meterUsed (after polling tick)

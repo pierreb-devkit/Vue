@@ -46,6 +46,8 @@ const mountView = () =>
         BillingMeterProgressComponent: true,
         BillingMeterBreakdownChartComponent: true,
         BillingExtrasCheckoutModalComponent: true,
+        BillingUsageBarComponent: true,
+        BillingMeterDrawerComponent: true,
         billingPlanBadgeComponent: true,
       },
     },
