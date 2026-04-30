@@ -101,6 +101,17 @@ export default {
     billingPricingToggleComponent,
     billingPricingCardComponent,
   },
+  /**
+   * @desc Inject billingStore and authStore once in setup so computed
+   * properties reference this.billingStore / this.authStore instead of
+   * calling the store factory on every evaluation.
+   * @returns {{ billingStore: Object, authStore: Object }}
+   */
+  setup() {
+    const billingStore = useBillingStore();
+    const authStore = useAuthStore();
+    return { billingStore, authStore };
+  },
   data() {
     return {
       annual: false,
@@ -117,9 +128,8 @@ export default {
      * @returns {Array} Plans array with marketing content and pricing data combined
      */
     mergedPlans() {
-      const billingStore = useBillingStore();
       return plansConfig.map((staticPlan) => {
-        const stripePlan = billingStore.plans.find(
+        const stripePlan = this.billingStore.plans.find(
           (p) => p.planId === staticPlan.id || p.name?.toLowerCase() === staticPlan.id,
         ) || {};
         return {
@@ -138,43 +148,38 @@ export default {
      * @returns {boolean} True while loading
      */
     loading() {
-      const billingStore = useBillingStore();
-      return billingStore.loading;
+      return this.billingStore.loading;
     },
     /**
      * @desc Get the current subscription plan ID if user is logged in.
      * @returns {string|null} Current plan ID or null
      */
     currentPlanId() {
-      const billingStore = useBillingStore();
-      return billingStore.subscription?.plan ?? 'free';
+      return this.billingStore.subscription?.plan ?? 'free';
     },
     /**
      * @desc Whether meter billing mode is active (from server config).
      * @returns {boolean}
      */
     meterMode() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.billing?.meterMode === true;
+      return this.authStore.serverConfig?.billing?.meterMode === true;
     },
   },
   /**
    * @desc Fetch billing plans and subscription data on component creation.
    */
   async created() {
-    const billingStore = useBillingStore();
     try {
-      await billingStore.fetchPlans();
+      await this.billingStore.fetchPlans();
     } catch (err) {
       console.error('Failed to load pricing plans:', err);
       this.error = 'Failed to load pricing. Please try again.';
     }
 
-    const authStore = useAuthStore();
-    const orgsEnabled = authStore.serverConfig?.organizations?.enabled;
-    const hasOrg = !!authStore.user?.currentOrganization;
-    if (authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
-      billingStore.fetchSubscription().catch((err) => {
+    const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
+    const hasOrg = !!this.authStore.user?.currentOrganization;
+    if (this.authStore.isLoggedIn && (!orgsEnabled || hasOrg)) {
+      this.billingStore.fetchSubscription().catch((err) => {
         console.error('Failed to load subscription:', err);
       });
     }
@@ -209,9 +214,8 @@ export default {
      */
     async retryFetchPlans() {
       this.error = null;
-      const billingStore = useBillingStore();
       try {
-        await billingStore.fetchPlans();
+        await this.billingStore.fetchPlans();
       } catch (err) {
         console.error('Failed to load pricing plans:', err);
         this.error = 'Failed to load pricing. Please try again.';
@@ -223,16 +227,14 @@ export default {
      * @returns {Promise<void>}
      */
     async onSelectPlan({ planId, priceId }) {
-      const authStore = useAuthStore();
-
       // Guest -> redirect to sign-in with return URL
-      if (!authStore.isLoggedIn) {
+      if (!this.authStore.isLoggedIn) {
         this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;
       }
 
       // Logged-in but no organization -> redirect to org setup
-      if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
+      if (this.authStore.serverConfig?.organizations?.enabled && !this.authStore.user?.currentOrganization) {
         this.$router.push({ path: '/organization-required' });
         return;
       }
@@ -243,8 +245,7 @@ export default {
       // Paid plan -> create Stripe Checkout session
       this.checkoutLoading = true;
       try {
-        const billingStore = useBillingStore();
-        const checkout = await billingStore.createCheckout(priceId);
+        const checkout = await this.billingStore.createCheckout(priceId);
         if (!checkout?.url) {
           throw new Error('Checkout session did not include a redirect URL.');
         }

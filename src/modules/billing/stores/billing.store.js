@@ -20,7 +20,19 @@ export const useBillingStore = defineStore('billing', {
     plans: [],
     subscription: null,
     quota: null,
+    /**
+     * Legacy global loading flag — remains for backward compat with existing
+     * consumers (fetchPlans, fetchSubscription, fetchUsage, createCheckout,
+     * openPortal).  New meter actions use per-action flags below to avoid
+     * false-idle flashes when multiple fetches run in parallel (e.g. Promise.all
+     * in useMeter.refresh + 30s polling).
+     */
     loading: false,
+    // Per-action loading flags for meter actions (avoids race with parallel fetches)
+    usageMeterLoading: false,
+    extrasBalanceLoading: false,
+    extrasLedgerLoading: false,
+    extrasCheckoutLoading: false,
     // meter billing (meterMode: true)
     usageMeter: null, // { plan, planVersion, weekKey, weekResetAt, meterUsed, meterQuota, meterBreakdown, extrasRemaining, packsAvailable }
     extrasBalance: null, // { balance, packsAvailable }
@@ -137,10 +149,11 @@ export const useBillingStore = defineStore('billing', {
 
     /**
      * @desc Fetch current meter usage and quota for the active organization.
+     * Uses per-action flag `usageMeterLoading` to avoid race with parallel fetches.
      * @returns {Promise<Object>} Resolved usageMeter object
      */
     async fetchUsageMeter() {
-      this.loading = true;
+      this.usageMeterLoading = true;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/usage`);
@@ -150,16 +163,17 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.loading = false;
+        this.usageMeterLoading = false;
       }
     },
 
     /**
      * @desc Fetch the extras credit balance for the active organization.
+     * Uses per-action flag `extrasBalanceLoading` to avoid race with parallel fetches.
      * @returns {Promise<Object>} Resolved extrasBalance object
      */
     async fetchExtrasBalance() {
-      this.loading = true;
+      this.extrasBalanceLoading = true;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/balance`);
@@ -169,19 +183,20 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.loading = false;
+        this.extrasBalanceLoading = false;
       }
     },
 
     /**
      * @desc Fetch a paginated ledger of extras credit transactions.
+     * Uses per-action flag `extrasLedgerLoading` to avoid race with parallel fetches.
      * @param {Object} [opts] - Pagination options
      * @param {number} [opts.page=1] - Page number (1-based)
      * @param {number} [opts.limit=20] - Page size
      * @returns {Promise<Object>} Resolved extrasLedger object { entries, total, page, limit }
      */
     async fetchExtrasLedger({ page = 1, limit = 20 } = {}) {
-      this.loading = true;
+      this.extrasLedgerLoading = true;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/ledger`, {
@@ -193,17 +208,18 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.loading = false;
+        this.extrasLedgerLoading = false;
       }
     },
 
     /**
      * @desc Purchase an extras credit pack and redirect to Stripe Checkout.
+     * Uses per-action flag `extrasCheckoutLoading` to avoid race with parallel fetches.
      * @param {string} packId - The pack identifier to purchase
      * @returns {Promise<void>}
      */
     async createExtrasCheckout(packId) {
-      this.loading = true;
+      this.extrasCheckoutLoading = true;
       try {
         const api = apiBase();
         const successUrl = `${window.location.origin}/billing?packPurchased=1`;
@@ -224,7 +240,7 @@ export const useBillingStore = defineStore('billing', {
         console.error(err);
         throw err;
       } finally {
-        this.loading = false;
+        this.extrasCheckoutLoading = false;
       }
     },
   },
