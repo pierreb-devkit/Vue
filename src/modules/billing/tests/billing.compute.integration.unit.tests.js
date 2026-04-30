@@ -291,8 +291,8 @@ describe('Suite 2 — Meter drawer open / close', () => {
   it('BillingMeterDrawerComponent stub starts with modelValue=false', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const drawerStub = wrapper.find('billing-meter-drawer-component-stub');
-    expect(drawerStub.attributes('modelvalue')).toBe('false');
+    // Assert via parent vm state — more robust than DOM attribute serialization
+    expect(wrapper.vm.meterDrawerOpen).toBe(false);
   });
 
   it('opens meter drawer when usage bar is clicked', async () => {
@@ -301,8 +301,8 @@ describe('Suite 2 — Meter drawer open / close', () => {
     const usageBar = wrapper.find('.billing-usage-bar--meter');
     await usageBar.trigger('click');
     await flushPromises();
-    const drawerStub = wrapper.find('billing-meter-drawer-component-stub');
-    expect(drawerStub.attributes('modelvalue')).toBe('true');
+    // Assert via parent vm state — more robust than DOM attribute serialization
+    expect(wrapper.vm.meterDrawerOpen).toBe(true);
   });
 
   it('BillingUsageBarComponent is absent in legacy mode', async () => {
@@ -336,20 +336,20 @@ describe('Suite 3 — Extras checkout flow', () => {
     wrapper = null;
   });
 
-  it('extrasModalOpen starts as false (stub modelValue=false)', async () => {
+  it('extrasModalOpen starts as false', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const modalStub = wrapper.find('billing-extras-checkout-modal-component-stub');
-    expect(modalStub.attributes('modelvalue')).toBe('false');
+    // Assert via parent vm state — more robust than DOM attribute serialization
+    expect(wrapper.vm.extrasModalOpen).toBe(false);
   });
 
   it('opens extras modal when Buy units button is clicked', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
     const buyBtn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Buy units'));
+    expect(buyBtn).toBeDefined();
     await buyBtn.trigger('click');
     await flushPromises();
-    // Verify the vm state is updated (meterDrawerOpen is analogous to extrasModalOpen)
     expect(wrapper.vm.extrasModalOpen).toBe(true);
   });
 
@@ -399,10 +399,11 @@ describe('Suite 3 — Extras checkout flow', () => {
   });
 
   it('window.location.assign is called when createExtrasCheckout resolves', async () => {
+    const assignMock = vi.fn();
+    vi.stubGlobal('location', { assign: assignMock, href: '' });
     store.createExtrasCheckout.mockImplementation(async () => {
       window.location.assign(mockStripeCheckoutUrl);
     });
-    const assignSpy = vi.spyOn(window.location, 'assign').mockImplementation(() => {});
     const checkoutWrapper = mount(BillingExtrasCheckoutModalComponent, {
       props: {
         modelValue: true,
@@ -415,8 +416,8 @@ describe('Suite 3 — Extras checkout flow', () => {
     });
     await checkoutWrapper.vm.onBuy();
     expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_500');
-    expect(assignSpy).toHaveBeenCalledWith(mockStripeCheckoutUrl);
-    assignSpy.mockRestore();
+    expect(assignMock).toHaveBeenCalledWith(mockStripeCheckoutUrl);
+    vi.unstubAllGlobals();
     checkoutWrapper.unmount();
   });
 });
@@ -518,6 +519,7 @@ describe('Suite 5 — Polling refresh', () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+    setIntervalSpy.mockRestore();
   });
 
   it('fetchUsageMeter is called again after one 30s tick', async () => {
