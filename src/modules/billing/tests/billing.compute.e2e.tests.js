@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { BASE_URL, API_ORIGIN, API_URL, cookiePrefix } from '../../../lib/helpers/e2e/config.js';
+import { BASE_URL, API_ORIGIN, API_URL } from '../../../lib/helpers/e2e/config.js';
 
 // ─── Mock data ───────────────────────────────────────────────────────────────
 
@@ -267,22 +267,117 @@ async function mockApiHealthcheck(page) {
 }
 
 /**
- * @desc Inject a fake auth token into localStorage so the router treats the
- * user as logged-in (cookieExpire key checked by isLoggedIn getter).
- * Also pre-populates a basic user object so org guards are skipped.
+ * @desc Sign in through the Vue UI using fully mocked API responses.
+ *
+ * Rather than injecting localStorage directly (which is unreliable due to
+ * addInitScript timing on CI ARC runners), we drive the real Vue auth flow:
+ *
+ * 1. Mock all auth-adjacent endpoints (signin, token/refreshAbilities, auth/config)
+ *    so no real backend is needed.
+ * 2. Navigate to /signin and fill the form with fake credentials.
+ * 3. Submit — the mocked signin response sets authStore.cookieExpire via the
+ *    real signin action, identical to the production path.
+ * 4. Wait until the router navigates away from /signin (auth guard redirects to /).
+ *
+ * The `serverConfig` parameter is the config object returned by GET /api/auth/config
+ * during and after the signin flow. Pass the same config you will use for the test
+ * (e.g. mockServerConfigMeter) so that Pinia's cached serverConfig already has the
+ * right meterMode value before the test navigates to /billing.
+ *
  * @param {import('@playwright/test').Page} page
+ * @param {Object} [serverConfig] - Auth/config to stub; defaults to sign.in=true, meterMode=false
  * @returns {Promise<void>}
  */
-async function injectFakeAuth(page) {
-  // Install at context level for maximum reliability — fires before all page
-  // scripts including addInitScript registered at page level.
-  const expiry = String(Date.now() + 86400000);
-  await page.context().addInitScript((args) => {
-    const [prefix, exp] = args;
-    // Key must match auth.store.js: `${config.cookie.prefix}CookieExpire`
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Playwright context
-    localStorage.setItem(`${prefix}CookieExpire`, exp);
-  }, [cookiePrefix, expiry]);
+async function injectFakeAuth(page, serverConfig = { sign: { in: true, up: true }, billing: { meterMode: false }, organizations: { enabled: false } }) {
+  const fakeUser = {
+    _id: 'user_test_e2e',
+    email: 'meter-e2e@devkit.test',
+    firstName: 'Meter',
+    lastName: 'Tester',
+    role: 'user',
+    roles: ['user'],
+    emailVerified: true,
+    currentOrganization: null,
+    abilities: [],
+  };
+
+  // auth.store.js reads res.data.user and res.data.tokenExpiresIn directly
+  const fakeSigninResponse = {
+    user: fakeUser,
+    tokenExpiresIn: String(Date.now() + 86400000),
+    abilities: [],
+    pendingRequests: [],
+  };
+
+  // auth.store.js refreshAbilities reads res.data.abilities, res.data.user, res.data.pendingRequests
+  const fakeTokenResponse = {
+    user: fakeUser,
+    tokenExpiresIn: String(Date.now() + 86400000),
+    abilities: [],
+    pendingRequests: [],
+  };
+
+  // Mock signin — exact URL first (context-level), then glob fallback (page-level)
+  await page.context().route(`${API_URL}/auth/signin`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(fakeSigninResponse),
+    }),
+  );
+  await page.route('**/api/auth/signin', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(fakeSigninResponse),
+    }),
+  );
+
+  // Mock token / refreshAbilities — called by router.beforeEach when isLoggedIn && !user
+  await page.context().route(`${API_URL}/auth/token`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(fakeTokenResponse),
+    }),
+  );
+  await page.route('**/api/auth/token', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(fakeTokenResponse),
+    }),
+  );
+
+  // Install the auth/config stub using the caller-supplied serverConfig so that
+  // Pinia's cached serverConfig is already correct when the test navigates to /billing.
+  await installAuthConfigStub(page, serverConfig);
+
+  // Navigate to /signin and submit the form with fake credentials.
+  // If the user is already authenticated (e.g. second call in the same test),
+  // the router guard immediately redirects away — detect this and skip the form flow.
+  await page.goto('/signin', { waitUntil: 'domcontentloaded' });
+
+  // Check whether the signin form actually rendered (not redirected away already)
+  const emailInput = page.locator('input[placeholder="name@example.com"]');
+  const isSigninPage = await emailInput.isVisible({ timeout: 3000 }).catch(() => false);
+
+  if (isSigninPage) {
+    // Fill email and password fields. Vuetify v-text-field renders a native <input>
+    // inside the component; locate by placeholder since no explicit type/autocomplete is set.
+    await emailInput.fill('meter-e2e@devkit.test');
+    await page.locator('input[placeholder="Enter your password"]').fill('fake-password-e2e');
+
+    // Vuetify validates on input and sets `valid = true` — wait for the Sign In button
+    // to become enabled (disabled="false") before clicking.
+    const signInBtn = page.getByRole('button', { name: /sign in/i });
+    await expect(signInBtn).toBeEnabled({ timeout: 5000 });
+    await signInBtn.click();
+
+    // Wait for the router to redirect away from /signin (auth guard sends authenticated users to /)
+    await page.waitForURL((url) => !url.pathname.startsWith('/signin'), { timeout: 10000 });
+  }
+  // If not on signin page, the user was already authenticated — mocks are installed, proceed.
 }
 
 /**
@@ -347,7 +442,9 @@ async function isSpaAvailable(request) {
  * @returns {Promise<void>}
  */
 async function mountMeterMocks(page, { critical = false } = {}) {
-  await injectFakeAuth(page);
+  // Pass mockServerConfigMeter so the Pinia-cached serverConfig already has
+  // meterMode:true when the test navigates to /billing (no re-fetch needed).
+  await injectFakeAuth(page, mockServerConfigMeter);
   await mockAuthConfigMeter(page);
   await mockUserAPI(page);
   await mockUsageAPI(page, critical ? mockUsageMeterCritical : mockUsageMeterNormal);
@@ -712,7 +809,7 @@ test.describe('Pricing page — meter-mode equivalences', () => {
   test('plan cards show equivalence bullets in meter mode', async ({ page, request }) => {
     const spaUp = await isSpaAvailable(request);
     test.skip(!spaUp, 'SPA dev-server not running — skipping pricing equivalences E2E');
-    await injectFakeAuth(page);
+    await injectFakeAuth(page, mockServerConfigMeter);
     await mockAuthConfigMeter(page);
     await mockUserAPI(page);
     await mockPlansAPI(page);
