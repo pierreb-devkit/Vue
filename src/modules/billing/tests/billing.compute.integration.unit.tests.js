@@ -49,6 +49,7 @@ const mockUsageMeterNormal = {
   plan: 'starter',
   planVersion: 1,
   weekKey: '2025-W17',
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Vitest context
   weekResetAt: new Date(Date.now() + 86400000).toISOString(),
   meterUsed: 120,
   meterQuota: 500,
