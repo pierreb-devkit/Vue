@@ -184,6 +184,7 @@ function seedMeterStore(store, usageMeter = mockUsageMeterNormal, extrasBalance 
   store.extrasBalance = extrasBalance;
   vi.spyOn(store, 'fetchUsageMeter').mockResolvedValue(usageMeter);
   vi.spyOn(store, 'fetchExtrasBalance').mockResolvedValue(extrasBalance);
+  vi.spyOn(store, 'fetchExtrasLedger').mockResolvedValue({ entries: [], total: 0, page: 1, limit: 20 });
   vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
   vi.spyOn(store, 'fetchPlans').mockResolvedValue([]);
   vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
@@ -488,9 +489,9 @@ describe('Suite 4 — Pricing equivalences (meterMode)', () => {
   });
 });
 
-// ─── Suite 5: Polling refresh ────────────────────────────────────────────────
+// ─── Suite 5: Shared meter store wiring ──────────────────────────────────────
 
-describe('Suite 5 — Polling refresh', () => {
+describe('Suite 5 — Shared meter store wiring', () => {
   let wrapper;
   let store;
 
@@ -507,58 +508,46 @@ describe('Suite 5 — Polling refresh', () => {
     vi.useRealTimers();
   });
 
-  it('fetchUsageMeter is called on mount when meterMode is true', async () => {
+  it('does not refetch preloaded meter data on mount when meterMode is true', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    expect(store.fetchUsageMeter).toHaveBeenCalled();
+    expect(store.fetchUsageMeter).not.toHaveBeenCalled();
   });
 
-  it('starts a 30s polling interval when meterMode is true', async () => {
+  it('does not create a view-owned polling interval when the drawer is stubbed', async () => {
     vi.useFakeTimers();
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+    expect(setIntervalSpy).not.toHaveBeenCalled();
     setIntervalSpy.mockRestore();
   });
 
-  it('fetchUsageMeter is called again after one 30s tick', async () => {
-    vi.useFakeTimers();
+  it('fetches extras ledger when meterMode is true', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    store.fetchUsageMeter.mockClear();
-    vi.advanceTimersByTime(30000);
-    expect(store.fetchUsageMeter).toHaveBeenCalledTimes(1);
+    expect(store.fetchExtrasLedger).toHaveBeenCalledWith({ page: 1, limit: 20 });
   });
 
-  it('fetchUsageMeter is called twice after two 30s ticks', async () => {
-    vi.useFakeTimers();
-    wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
-    await flushPromises();
-    store.fetchUsageMeter.mockClear();
-    vi.advanceTimersByTime(30000);
-    vi.advanceTimersByTime(30000);
-    expect(store.fetchUsageMeter).toHaveBeenCalledTimes(2);
-  });
-
-  it('polling does not fire when meterMode is false', async () => {
-    vi.useFakeTimers();
+  it('does not fetch extras ledger when meterMode is false', async () => {
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
-    store.fetchUsageMeter.mockClear();
-    vi.advanceTimersByTime(60000);
-    expect(store.fetchUsageMeter).not.toHaveBeenCalled();
+    expect(store.fetchExtrasLedger).not.toHaveBeenCalled();
   });
 
-  it('polling stops after unmount', async () => {
+  it('does not poll on timer ticks when the shared poller is not mounted in this test', async () => {
     vi.useFakeTimers();
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    wrapper.unmount();
-    wrapper = null;
     store.fetchUsageMeter.mockClear();
-    vi.advanceTimersByTime(60000);
+    vi.advanceTimersByTime(30000);
     expect(store.fetchUsageMeter).not.toHaveBeenCalled();
+  });
+
+  it('mounted hook still fetches subscription data', async () => {
+    wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    expect(store.fetchSubscription).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -604,11 +593,11 @@ describe('Suite 6 — Legacy regression (meterMode: false)', () => {
     expect(wrapper.find('h1').text()).toBe('Billing');
   });
 
-  it('fetchUsageMeter is called when meterMode is true', async () => {
+  it('does not refetch preloaded meter data when meterMode is true', async () => {
     const store = useBillingStore();
     wrapper = mountBillingView({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    expect(store.fetchUsageMeter).toHaveBeenCalled();
+    expect(store.fetchUsageMeter).not.toHaveBeenCalled();
   });
 
   it('polling does not start when meterMode is false', async () => {

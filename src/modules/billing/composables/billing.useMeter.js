@@ -1,8 +1,34 @@
 /**
  * Module dependencies.
  */
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onUnmounted } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
+
+let pollTimer = null;
+let consumerCount = 0;
+
+/**
+ * @desc Fetch meter-backed billing data once when it has not been loaded yet.
+ * Uses store state and in-flight counters to avoid duplicate initial requests
+ * when multiple consumers mount during the same render cycle.
+ * @param {ReturnType<typeof useBillingStore>} billingStore - Billing store instance
+ * @returns {Promise<Array<unknown>>} Pending fetches, or an empty array when already loaded
+ */
+function fetchMissingMeterData(billingStore) {
+  const requests = [];
+
+  if (billingStore.usageMeter === null && billingStore.usageMeterRequests === 0) {
+    requests.push(billingStore.fetchUsageMeter());
+  }
+
+  if (billingStore.extrasBalance === null && billingStore.extrasBalanceRequests === 0) {
+    requests.push(billingStore.fetchExtrasBalance());
+  }
+
+  if (requests.length === 0) return Promise.resolve([]);
+
+  return Promise.all(requests);
+}
 
 /**
  * @desc Composable exposing meter-based usage helpers for compute billing.
@@ -23,6 +49,7 @@ import { useBillingStore } from '../stores/billing.store';
  */
 export function useMeter({ pollIntervalMs = 30000 } = {}) {
   const billingStore = useBillingStore();
+  consumerCount += 1;
 
   /** @type {import('vue').ComputedRef<number>} Meter credits consumed this week */
   const used = computed(() => billingStore.usageMeter?.meterUsed ?? 0);
@@ -72,8 +99,6 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
    */
   const totalRemaining = computed(() => Math.max(0, quota.value - used.value) + extras.value);
 
-  let timer = null;
-
   /**
    * @desc Trigger parallel refresh of meter usage and extras balance.
    * @returns {Promise<[Object, Object]>} Both resolved values
@@ -84,19 +109,19 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
   /** @desc Safe wrapper: catches refresh errors to avoid unhandled Promise rejections. */
   const safeRefresh = () => refresh().catch(() => {});
 
-  onMounted(() => {
-    void safeRefresh();
-    if (pollIntervalMs > 0) {
-      timer = setInterval(() => {
-        void safeRefresh();
-      }, pollIntervalMs);
-    }
-  });
+  void fetchMissingMeterData(billingStore).catch(() => {});
+
+  if (pollIntervalMs > 0 && pollTimer === null) {
+    pollTimer = setInterval(() => {
+      void safeRefresh();
+    }, pollIntervalMs);
+  }
 
   onUnmounted(() => {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
+    consumerCount -= 1;
+    if (consumerCount === 0 && pollTimer !== null) {
+      clearInterval(pollTimer);
+      pollTimer = null;
     }
   });
 
@@ -124,3 +149,15 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
  * Exports.
  */
 export default useMeter;
+
+/**
+ * @desc Reset module-scope polling state for isolated unit tests.
+ * @returns {void}
+ */
+export function __resetUseMeterForTests() {
+  if (pollTimer !== null) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+  consumerCount = 0;
+}

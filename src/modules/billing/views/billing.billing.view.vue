@@ -157,7 +157,7 @@
 /**
  * Module dependencies.
  */
-import { computed, watch, onUnmounted } from 'vue';
+import { computed, watch } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
@@ -184,12 +184,11 @@ export default {
     BillingMeterDrawerComponent,
   },
   /**
-   * @desc Always instantiates useMeter (pollIntervalMs: 0) so reactive refs are
-   * available from first render regardless of when serverConfig resolves async.
-   * A watcher on meterMode calls refresh() and enables polling once serverConfig
-   * confirms meter billing is active. Legacy tenants (meterMode false/undefined)
-   * never incur polling because the watcher only calls refresh() when active=true.
-   * @returns {{ billingStore, authStore, meterUsed, meterQuota, meterExtras, meterBreakdown }}
+   * @desc Instantiates useMeter once for derived refs while delegating polling
+   * ownership to the shared composable singleton used by the meter drawer.
+   * The local watcher remains only to lazily fetch the extras ledger when
+   * serverConfig resolves meter mode asynchronously after mount.
+   * @returns {{ billingStore, authStore, meterMode, meterUsed, meterQuota, meterExtras, meterBreakdown }}
    */
   setup() {
     const billingStore = useBillingStore();
@@ -197,45 +196,23 @@ export default {
 
     // Always instantiate so refs are reactive once data flows in
     const meter = useMeter({ pollIntervalMs: 0 });
-    const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown, refresh } = meter;
+    const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = meter;
 
     // Reactive meterMode — resolves async after serverConfig loads
     const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
-
-    let pollingTimer = null;
 
     watch(
       meterMode,
       (active) => {
         if (active) {
-          // serverConfig just resolved with meterMode=true: fetch immediately
-          void refresh().catch(() => {});
-          // Also fetch extras ledger (covers the case where serverConfig resolves after mount)
+          // Covers the case where serverConfig resolves after mount.
           void billingStore.fetchExtrasLedger({ page: 1, limit: 20 }).catch((error) => {
             console.error('Failed to load extras ledger:', error);
           });
-          // Start 30s polling (clear any previous timer first for safety)
-          if (pollingTimer) clearInterval(pollingTimer);
-          pollingTimer = setInterval(() => {
-            void refresh().catch(() => {});
-          }, 30000);
-        } else {
-          // meterMode turned off or never active: stop polling
-          if (pollingTimer) {
-            clearInterval(pollingTimer);
-            pollingTimer = null;
-          }
         }
       },
       { immediate: true },
     );
-
-    onUnmounted(() => {
-      if (pollingTimer) {
-        clearInterval(pollingTimer);
-        pollingTimer = null;
-      }
-    });
 
     return { billingStore, authStore, meterMode, meterUsed, meterQuota, meterExtras, meterBreakdown };
   },

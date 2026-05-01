@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia';
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
-import { useMeter } from '../composables/billing.useMeter';
+import { __resetUseMeterForTests, useMeter } from '../composables/billing.useMeter';
 
 // Mock axios (used indirectly via store)
 vi.mock('../../../lib/services/axios', () => ({
@@ -35,6 +35,19 @@ function mountMeter(opts = {}) {
   return { result, wrapper };
 }
 
+/**
+ * @desc Build a deferred promise pair for timing-sensitive tests.
+ * @returns {{ promise: Promise<void>, resolve: () => void }}
+ */
+function createDeferred() {
+  let resolve;
+  const promise = new Promise((res) => {
+    resolve = res;
+  });
+
+  return { promise, resolve };
+}
+
 describe('useMeter composable', () => {
   let store;
 
@@ -42,9 +55,25 @@ describe('useMeter composable', () => {
     setActivePinia(createPinia());
     store = useBillingStore();
     vi.clearAllMocks();
-    // Stub store actions to no-ops by default
-    vi.spyOn(store, 'fetchUsageMeter').mockResolvedValue(null);
-    vi.spyOn(store, 'fetchExtrasBalance').mockResolvedValue(null);
+    __resetUseMeterForTests();
+    vi.spyOn(store, 'fetchUsageMeter').mockImplementation(async () => {
+      store.usageMeterRequests += 1;
+      try {
+        store.usageMeter ??= { meterUsed: 0, meterQuota: 0, meterBreakdown: {}, extrasRemaining: 0 };
+        return store.usageMeter;
+      } finally {
+        store.usageMeterRequests -= 1;
+      }
+    });
+    vi.spyOn(store, 'fetchExtrasBalance').mockImplementation(async () => {
+      store.extrasBalanceRequests += 1;
+      try {
+        store.extrasBalance ??= { balance: 0, packsAvailable: [] };
+        return store.extrasBalance;
+      } finally {
+        store.extrasBalanceRequests -= 1;
+      }
+    });
     vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
   });
 
@@ -52,6 +81,7 @@ describe('useMeter composable', () => {
     vi.useRealTimers();
     _wrappers.forEach((w) => w.unmount());
     _wrappers.length = 0;
+    __resetUseMeterForTests();
   });
 
   // ── Computed defaults ────────────────────────────────────────────────────
@@ -191,12 +221,60 @@ describe('useMeter composable', () => {
 
   it('refresh is called on mount', async () => {
     mountMeter({ pollIntervalMs: 0 });
-    // onMounted fires synchronously in test environment with @vue/test-utils
-    expect(store.fetchUsageMeter).toHaveBeenCalled();
-    expect(store.fetchExtrasBalance).toHaveBeenCalled();
+    expect(store.fetchUsageMeter).toHaveBeenCalledTimes(1);
+    expect(store.fetchExtrasBalance).toHaveBeenCalledTimes(1);
   });
 
   // ── polling ────────────────────────────────────────────────────────────────
+
+  it('mounting multiple consumers only fetches initial meter data once', async () => {
+    const usageDeferred = createDeferred();
+    const extrasDeferred = createDeferred();
+
+    store.fetchUsageMeter.mockImplementation(() => {
+      store.usageMeterRequests += 1;
+      return usageDeferred.promise
+        .then(() => {
+          store.usageMeter = { meterUsed: 10, meterQuota: 100, meterBreakdown: {}, extrasRemaining: 4 };
+          return store.usageMeter;
+        })
+        .finally(() => {
+          store.usageMeterRequests -= 1;
+        });
+    });
+
+    store.fetchExtrasBalance.mockImplementation(() => {
+      store.extrasBalanceRequests += 1;
+      return extrasDeferred.promise
+        .then(() => {
+          store.extrasBalance = { balance: 4, packsAvailable: [] };
+          return store.extrasBalance;
+        })
+        .finally(() => {
+          store.extrasBalanceRequests -= 1;
+        });
+    });
+
+    mountMeter({ pollIntervalMs: 0 });
+    mountMeter({ pollIntervalMs: 0 });
+
+    expect(store.fetchUsageMeter).toHaveBeenCalledTimes(1);
+    expect(store.fetchExtrasBalance).toHaveBeenCalledTimes(1);
+
+    usageDeferred.resolve();
+    extrasDeferred.resolve();
+    await Promise.all([usageDeferred.promise, extrasDeferred.promise]);
+  });
+
+  it('creates the polling timer only once for multiple polling consumers', () => {
+    vi.useFakeTimers();
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+
+    mountMeter({ pollIntervalMs: 5000 });
+    mountMeter({ pollIntervalMs: 5000 });
+
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+  });
 
   it('polling refreshes on every interval tick', async () => {
     vi.useFakeTimers();
@@ -242,6 +320,20 @@ describe('useMeter composable', () => {
     // No further calls after unmount
     expect(store.fetchUsageMeter).not.toHaveBeenCalled();
     expect(store.fetchExtrasBalance).not.toHaveBeenCalled();
+  });
+
+  it('cleans up the polling timer when the last consumer unmounts', () => {
+    vi.useFakeTimers();
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    const first = mountMeter({ pollIntervalMs: 5000 });
+    const second = mountMeter({ pollIntervalMs: 0 });
+
+    clearIntervalSpy.mockClear();
+    first.wrapper.unmount();
+    expect(clearIntervalSpy).not.toHaveBeenCalled();
+
+    second.wrapper.unmount();
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
 
   // ── purchasePack ───────────────────────────────────────────────────────────
