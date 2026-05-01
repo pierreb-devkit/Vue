@@ -1,9 +1,15 @@
 <!--
   BillingPacksComponent
   =====================
-  Cards grid mapping `config.billing.packs[]` (label, priceUsd, meterUnits) to
-  clickable purchase cards. On click → calls `billingStore.createExtrasCheckout(packId)`
-  (same flow as the ExtrasCheckout modal).
+  Cards grid for purchasing extra compute units.
+
+  Data source: `billingStore.usageMeter.packsAvailable` or
+  `billingStore.extrasBalance.packsAvailable` (Stripe-backed, fetched at runtime).
+  Falls back to the static `billing.static-content` defaults (empty array at devkit
+  level; downstream projects populate it with marketing copy and Stripe pack IDs).
+
+  On click → calls `billingStore.createExtrasCheckout(packId)` which initiates a
+  Stripe Checkout session and redirects the user.
 
   USAGE:
   <BillingPacksComponent />
@@ -31,7 +37,6 @@
           :class="config.vuetify.theme.rounded"
           class="billing-packs__card pa-6 d-flex flex-column"
           :loading="purchasingId === pack.packId"
-          @click="onBuy(pack)"
         >
           <p class="text-title-medium font-weight-bold mb-2">{{ pack.label }}</p>
           <p class="text-display-small font-weight-bold mb-1">${{ pack.priceUsd }}</p>
@@ -140,10 +145,6 @@ export default {
 
 <style scoped>
 .billing-packs__card {
-  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.billing-packs__card:hover {
-  transform: translateY(-2px);
 }
 </style>

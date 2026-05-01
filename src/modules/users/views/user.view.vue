@@ -258,6 +258,16 @@ export default {
     '$route.hash'() {
       this.applyTabFromRoute();
     },
+    /**
+     * @desc Re-apply the route tab when showSubscriptionsTab flips to true.
+     * Fixes the async race: mounted() calls applyTabFromRoute() before
+     * fetchOrganizations() resolves, so showSubscriptionsTab is still false
+     * and ?tab=subscriptions is silently ignored. Re-applying once the tab
+     * becomes visible ensures the redirect from /billing lands correctly.
+     */
+    showSubscriptionsTab(val) {
+      if (val) this.applyTabFromRoute();
+    },
   },
   /**
    * Fetch organizations on component creation.
