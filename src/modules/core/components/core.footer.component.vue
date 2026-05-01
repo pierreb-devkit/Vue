@@ -15,7 +15,7 @@
               <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
                 <v-list-item-title>
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
-                  <span class="text-secondary text-center text-label-small"> {{ item.label }} </span>
+                  <span class="text-onSurface text-high-emphasis text-label-small"> {{ item.label }} </span>
                 </v-list-item-title>
               </v-list-item>
             </v-list>
