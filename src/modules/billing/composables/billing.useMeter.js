@@ -43,6 +43,8 @@ function fetchMissingMeterData(billingStore) {
  *   progress: import('vue').ComputedRef<number>,
  *   breakdownPercent: import('vue').ComputedRef<Object>,
  *   totalRemaining: import('vue').ComputedRef<number>,
+ *   netRemainingRaw: import('vue').ComputedRef<number>,
+ *   overage: import('vue').ComputedRef<number>,
  *   refresh: () => Promise<[Object, Object]>,
  *   purchasePack: (packId: string) => Promise<void>
  * }}
@@ -96,8 +98,25 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
   /**
    * @type {import('vue').ComputedRef<number>}
    * Sum of remaining included quota and extras credits (floor 0).
+   * Used by progress bars and visual indicators — always >= 0 (backward-compat).
    */
   const totalRemaining = computed(() => Math.max(0, quota.value - used.value) + extras.value);
+
+  /**
+   * @type {import('vue').ComputedRef<number>}
+   * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
+   * push usage past quota (e.g. a long-running scrape finishing after quota is hit).
+   * Use this in detail views / ledger displays that must show the real debt.
+   */
+  const netRemainingRaw = computed(() => quota.value - used.value + extras.value);
+
+  /**
+   * @type {import('vue').ComputedRef<number>}
+   * Credits consumed beyond the included quota (floor 0).
+   * Positive only when used > quota, regardless of extras balance.
+   * Use this to show an "over quota" chip in drawer / detail views.
+   */
+  const overage = computed(() => Math.max(0, used.value - quota.value));
 
   /**
    * @desc Trigger parallel refresh of meter usage and extras balance.
@@ -140,6 +159,8 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
     progress,
     breakdownPercent,
     totalRemaining,
+    netRemainingRaw,
+    overage,
     refresh,
     purchasePack,
   };

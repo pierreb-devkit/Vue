@@ -206,6 +206,72 @@ describe('useMeter composable', () => {
     expect(result.totalRemaining.value).toBe(1500);
   });
 
+  // ── netRemainingRaw ───────────────────────────────────────────────────────
+
+  it('netRemainingRaw is quota - used + extras (positive case)', () => {
+    store.usageMeter = { meterUsed: 2000, meterQuota: 8000, extrasRemaining: 500 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(6500);
+  });
+
+  it('netRemainingRaw can be negative when used > quota and extras = 0', () => {
+    store.usageMeter = { meterUsed: 10000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(-2000);
+  });
+
+  it('netRemainingRaw accounts for extras even when used > quota', () => {
+    store.usageMeter = { meterUsed: 10000, meterQuota: 8000, extrasRemaining: 5000 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(3000);
+  });
+
+  it('netRemainingRaw is 0 when used equals quota and extras = 0', () => {
+    store.usageMeter = { meterUsed: 8000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(0);
+  });
+
+  // ── overage ───────────────────────────────────────────────────────────────
+
+  it('overage is 0 when used < quota', () => {
+    store.usageMeter = { meterUsed: 2000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.overage.value).toBe(0);
+  });
+
+  it('overage is 0 when used equals quota', () => {
+    store.usageMeter = { meterUsed: 8000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.overage.value).toBe(0);
+  });
+
+  it('overage is positive when used > quota', () => {
+    store.usageMeter = { meterUsed: 10000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.overage.value).toBe(2000);
+  });
+
+  it('overage ignores extras balance (reflects raw quota breach)', () => {
+    store.usageMeter = { meterUsed: 10000, meterQuota: 8000, extrasRemaining: 5000 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.overage.value).toBe(2000);
+  });
+
+  // ── totalRemaining regression (always >= 0) ───────────────────────────────
+
+  it('totalRemaining is always >= 0 even when used > quota (regression)', () => {
+    store.usageMeter = { meterUsed: 50000, meterQuota: 8000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.totalRemaining.value).toBeGreaterThanOrEqual(0);
+  });
+
+  it('totalRemaining stays >= 0 when used far exceeds quota with no extras', () => {
+    store.usageMeter = { meterUsed: 100000, meterQuota: 1000, extrasRemaining: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.totalRemaining.value).toBe(0);
+  });
+
   // ── refresh ────────────────────────────────────────────────────────────────
 
   it('refresh calls fetchUsageMeter and fetchExtrasBalance in parallel', async () => {
