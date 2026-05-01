@@ -75,11 +75,11 @@ npm run preview    # Preview production build locally
 ### Testing
 
 ```bash
-npm test                  # Run tests in watch mode
-npm run test:watch        # Run tests in watch mode (explicit alias)
-npm run test:unit         # Run unit tests once (one-shot)
+npm test                    # Run unit tests once (alias for test:unit)
+npm run test:unit           # Run unit tests once (one-shot)
+npm run test:watch          # Run tests in watch mode
 npm run test:unit:coverage  # Generate coverage report (canonical)
-npm run test:coverage     # Legacy alias — forwards to test:unit:coverage
+npm run test:coverage       # Legacy alias — forwards to test:unit:coverage
 ```
 
 Tests are organized per module in `src/modules/*/tests/`
