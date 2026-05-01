@@ -53,6 +53,50 @@ export const billingFr = {
       /** i18n key: billing.equivalences.scrapRun */
       scrapRun: 'opérations / semaine',
     },
+    subscriptions: {
+      /** i18n key: billing.subscriptions.title */
+      title: 'Abonnements',
+      /** i18n key: billing.subscriptions.empty */
+      empty: 'Aucun abonnement actif.',
+      /** i18n key: billing.subscriptions.portal */
+      portal: 'Gérer l’abonnement',
+      plan: {
+        /** i18n key: billing.subscriptions.plan.current */
+        current: 'Plan actuel',
+      },
+      meter: {
+        /** i18n key: billing.subscriptions.meter.label */
+        label: 'Compteur hebdo',
+      },
+      extras: {
+        /** i18n key: billing.subscriptions.extras.balance */
+        balance: 'Unités supplémentaires',
+        /** i18n key: billing.subscriptions.extras.ledger */
+        ledger: 'Historique des transactions',
+      },
+      cta: {
+        /** i18n key: billing.subscriptions.cta.upgrade */
+        upgrade: 'Passer à un plan supérieur',
+      },
+    },
+    pricing: {
+      tabs: {
+        /** i18n key: billing.pricing.tabs.plans */
+        plans: 'Plans',
+        /** i18n key: billing.pricing.tabs.units */
+        units: 'Unités',
+      },
+    },
+    packs: {
+      /** i18n key: billing.packs.title */
+      title: 'Packs d’unités',
+      /** i18n key: billing.packs.cta */
+      cta: 'Acheter des unités',
+      /** i18n key: billing.packs.purchase — interpolate {label} */
+      purchase: 'Acheter {label}',
+      /** i18n key: billing.packs.units — interpolate {amount} */
+      units: '+{amount} unités',
+    },
   },
 };
 

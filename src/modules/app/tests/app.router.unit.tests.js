@@ -211,23 +211,25 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/pricing');
   });
 
-  it('redirects /billing to /signin when not logged in', async () => {
+  it('/billing redirects to /signin when not logged in (via /users requiresAuth)', async () => {
     mockAuthStore.isLoggedIn = false;
     const router = getRouter();
     await router.push('/billing');
     await router.isReady();
+    // /billing is now a redirect → /users?tab=subscriptions; /users requiresAuth.
     expect(router.currentRoute.value.path).toBe('/signin');
   });
 
-  it('allows /billing when logged in with matching ability', async () => {
+  it('/billing redirects to /users?tab=subscriptions when logged in', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: 'org1' };
-    mockAbility.rules = [{ action: 'read', subject: 'Billing' }];
+    mockAbility.rules = [{ action: 'read', subject: 'User' }];
     mockAbility.can.mockReturnValue(true);
     const router = getRouter();
     await router.push('/billing');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/billing');
+    expect(router.currentRoute.value.path).toBe('/users');
+    expect(router.currentRoute.value.query.tab).toBe('subscriptions');
   });
 
   describe('pageview tracking', () => {

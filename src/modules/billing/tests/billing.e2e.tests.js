@@ -138,10 +138,10 @@ billingDescribe('Billing Page - Auth Guard', () => {
    * @returns {Promise<void>}
    */
   test('redirects unauthenticated user to signin', async ({ page }) => {
+    // /billing now redirects to /users?tab=subscriptions which itself requiresAuth.
     await page.goto('/billing');
     await page.waitForURL((url) => url.pathname.includes('/signin'), { timeout: 10000 });
 
-    expect(page.url()).not.toContain('/billing');
     expect(page.url()).toContain('/signin');
   });
 });
@@ -173,17 +173,20 @@ billingDescribe('Billing Page - Authenticated', () => {
   });
 
   /**
-   * @desc Verify that an authenticated user can access the billing page.
+   * @desc Verify that /billing redirects authenticated users to the
+   * user account "Subscriptions" tab (the page-level Billing view was retired).
    * @param {{ page: import('playwright').Page }} fixtures
    * @returns {Promise<void>}
    */
-  test('authenticated user can access billing page', async ({ page }) => {
+  test('authenticated user lands on /users?tab=subscriptions when hitting /billing', async ({ page }) => {
     await signin(page, testEmail, testPassword);
     await page.waitForLoadState('networkidle');
     await page.goto('/billing', { waitUntil: 'networkidle', timeout: 15000 });
 
-    await expect(page.getByRole('heading', { name: 'Billing' })).toBeVisible({ timeout: 10000 });
-    expect(page.url()).toContain('/billing');
+    // The redirect resolves to /users with the Subscriptions tab pre-selected
+    await page.waitForURL((url) => url.pathname.includes('/users'), { timeout: 10000 });
+    expect(page.url()).toContain('/users');
+    expect(page.url()).toContain('tab=subscriptions');
   });
 });
 

@@ -14,6 +14,22 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <!-- billing.alerts.threshold80 / threshold100 toasts — emitted once per meter week cycle.
+         Gated by `isLoggedIn && meterMode` so non-billing apps stay dormant. -->
+    <v-snackbar
+      v-if="isLoggedIn && meterMode"
+      v-model="meterAlert.visible"
+      location="top right"
+      :timeout="6000"
+      :color="meterAlert.color"
+    >
+      {{ meterAlert.text }}
+      <template #actions>
+        <v-btn icon @click="meterAlert.visible = false">
+          <v-icon icon="fa-solid fa-circle-xmark" />
+        </v-btn>
+      </template>
+    </v-snackbar>
     <devkitNav v-if="isLoggedIn" />
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
@@ -36,6 +52,7 @@
 import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../auth/stores/auth.store';
+import { useBillingStore } from '../billing/stores/billing.store';
 import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
 import devkitNav from '../core/components/core.navigation.component.vue';
@@ -71,6 +88,22 @@ export default {
         timeout: 4000,
         text: 'toto',
       },
+      /**
+       * @desc In-app compute threshold toast state.
+       * Deduped per meter week cycle via `meterAlertedKeys`.
+       */
+      meterAlert: {
+        visible: false,
+        color: 'warning',
+        text: '',
+      },
+      /**
+       * @desc Tracks which `${weekKey}:${level}` pair has already been alerted.
+       * Deduplication guard so the same threshold is only toasted once per billing week.
+       * Format: `"{weekKey}:{level}"` — e.g. `"2026-W18:80"`.
+       * @type {Set<string>}
+       */
+      meterAlertedKeys: new Set(),
     };
   },
   computed: {
@@ -82,6 +115,36 @@ export default {
       return authStore.isLoggedIn;
     },
     /**
+     * @desc Whether compute meter mode is active for this session.
+     * Gate: `serverConfig.billing.meterMode === true`. Defaults to `false` so
+     * non-billing apps stay dormant.
+     * @returns {boolean}
+     */
+    meterMode() {
+      const authStore = useAuthStore();
+      return authStore.serverConfig?.billing?.meterMode === true;
+    },
+    /**
+     * @desc Reactive meter progress percentage (0–100) for threshold watches.
+     * Derived from billingStore.usageMeter, returns 0 when no data.
+     * @returns {number}
+     */
+    meterProgress() {
+      const billingStore = useBillingStore();
+      const meter = billingStore.usageMeter;
+      if (!meter || !meter.meterQuota) return 0;
+      return Math.max(0, Math.min(100, Math.round((meter.meterUsed / meter.meterQuota) * 100)));
+    },
+    /**
+     * @desc Current meter week key — used to namespace dedup guards so alerts
+     * reset automatically each new billing week.
+     * @returns {string|null}
+     */
+    meterWeekKey() {
+      const billingStore = useBillingStore();
+      return billingStore.usageMeter?.weekKey ?? null;
+    },
+    /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
      * @returns {Object} CSS style object
      */
@@ -91,6 +154,41 @@ export default {
         base['padding-left'] = '0px';
       }
       return base;
+    },
+  },
+  watch: {
+    /**
+     * @desc Fire a warning toast once per week cycle when meter crosses 80 % / 100 %.
+     * Uses `meterAlertedKeys` set to dedup — key format: `"{weekKey}:{level}"`.
+     * Gated on `meterMode && isLoggedIn` so non-billing apps stay dormant.
+     * @param {number} newVal - Updated progress percentage
+     */
+    meterProgress(newVal) {
+      if (!this.meterMode || !this.isLoggedIn) return;
+      const weekKey = this.meterWeekKey ?? 'unknown';
+      if (newVal >= 100) {
+        const key = `${weekKey}:100`;
+        if (!this.meterAlertedKeys.has(key)) {
+          this.meterAlertedKeys.add(key);
+          this.meterAlert = {
+            visible: true,
+            color: 'error',
+            text: 'Compute exhausted. Extras consumed.',
+          };
+          // Also suppress the 80 dedup so it doesn't fire afterwards
+          this.meterAlertedKeys.add(`${weekKey}:80`);
+        }
+      } else if (newVal >= 80) {
+        const key = `${weekKey}:80`;
+        if (!this.meterAlertedKeys.has(key)) {
+          this.meterAlertedKeys.add(key);
+          this.meterAlert = {
+            visible: true,
+            color: 'warning',
+            text: "You've used 80% of weekly compute",
+          };
+        }
+      }
     },
   },
   created() {
