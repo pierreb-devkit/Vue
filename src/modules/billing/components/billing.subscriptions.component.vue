@@ -259,9 +259,8 @@ export default {
       console.error('Failed to load billing details:', error);
     }
 
-    if (this.meterMode) {
-      void this.billingStore.fetchExtrasLedger({ page: 1, limit: 20 }).catch(() => {});
-    }
+    // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
+    // no duplicate call needed here.
   },
   methods: {
     /**

@@ -104,7 +104,7 @@
  */
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { plans as plansConfig } from '../config/billing.development.config';
+import { plans as plansConfig } from '../config/billing.static-content';
 import billingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import billingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
@@ -189,11 +189,14 @@ export default {
     },
     /**
      * @desc Items consumed by HomeTabsComponent (only used when meterMode is true).
+     * Labels sourced from i18n keys billing.pricing.tabs.plans / billing.pricing.tabs.units.
      * @returns {Array<{id: string, label: string}>}
      */
     tabItems() {
       return [
+        // i18n key: billing.pricing.tabs.plans
         { id: 'plans', label: 'Plans' },
+        // i18n key: billing.pricing.tabs.units
         { id: 'units', label: 'Units' },
       ];
     },

@@ -78,6 +78,17 @@ export default {
     organizationsAdminPendingBanner,
     appErrorBoundary,
   },
+  /**
+   * @desc Initialise Pinia stores once so computed properties reference them
+   * via `this.authStore` / `this.billingStore` instead of calling the store
+   * factory on every evaluation.
+   * @returns {{ authStore: Object, billingStore: Object }}
+   */
+  setup() {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    return { authStore, billingStore };
+  },
   data() {
     const theme = useTheme();
     return {
@@ -111,8 +122,7 @@ export default {
       return this.theme.name;
     },
     isLoggedIn() {
-      const authStore = useAuthStore();
-      return authStore.isLoggedIn;
+      return this.authStore.isLoggedIn;
     },
     /**
      * @desc Whether compute meter mode is active for this session.
@@ -121,8 +131,7 @@ export default {
      * @returns {boolean}
      */
     meterMode() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.billing?.meterMode === true;
+      return this.authStore.serverConfig?.billing?.meterMode === true;
     },
     /**
      * @desc Reactive meter progress percentage (0–100) for threshold watches.
@@ -130,8 +139,7 @@ export default {
      * @returns {number}
      */
     meterProgress() {
-      const billingStore = useBillingStore();
-      const meter = billingStore.usageMeter;
+      const meter = this.billingStore.usageMeter;
       if (!meter || !meter.meterQuota) return 0;
       return Math.max(0, Math.min(100, Math.round((meter.meterUsed / meter.meterQuota) * 100)));
     },
@@ -141,8 +149,7 @@ export default {
      * @returns {string|null}
      */
     meterWeekKey() {
-      const billingStore = useBillingStore();
-      return billingStore.usageMeter?.weekKey ?? null;
+      return this.billingStore.usageMeter?.weekKey ?? null;
     },
     /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
@@ -173,7 +180,8 @@ export default {
           this.meterAlert = {
             visible: true,
             color: 'error',
-            text: 'Compute exhausted. Extras consumed.',
+            // i18n key: billing.alerts.threshold100
+            text: 'Quota reached — extras consumed',
           };
           // Also suppress the 80 dedup so it doesn't fire afterwards
           this.meterAlertedKeys.add(`${weekKey}:80`);
@@ -185,7 +193,8 @@ export default {
           this.meterAlert = {
             visible: true,
             color: 'warning',
-            text: "You've used 80% of weekly compute",
+            // i18n key: billing.alerts.threshold80
+            text: "You've used 80% of your weekly quota",
           };
         }
       }

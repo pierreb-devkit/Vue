@@ -72,7 +72,7 @@
  * Module dependencies.
  */
 import { useBillingStore } from '../stores/billing.store';
-import { packs as packsConfig } from '../config/billing.development.config';
+import { packs as packsConfig } from '../config/billing.static-content';
 
 /**
  * Component definition.
