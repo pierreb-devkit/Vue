@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { useBillingStore } from '../stores/billing.store';
 
 // Prevent real HTTP calls from store actions
 vi.mock('../../../lib/services/axios', () => ({
@@ -54,51 +55,32 @@ const mountView = () =>
     },
   });
 
-describe('billing.billing.view — pollingTimer cleanup', () => {
+describe('billing.billing.view — meter mode behavior', () => {
+  let store;
+
   beforeEach(() => {
     setActivePinia(createPinia());
+    store = useBillingStore();
     authState.isLoggedIn = true;
     authState.user = null;
     authState.serverConfig = null;
     vi.clearAllMocks();
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+    vi.spyOn(store, 'fetchExtrasLedger').mockResolvedValue({ entries: [], total: 0, page: 1, limit: 20 });
+    vi.spyOn(store, 'fetchUsageMeter').mockResolvedValue(null);
+    vi.spyOn(store, 'fetchExtrasBalance').mockResolvedValue(null);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('calls setInterval when meterMode becomes true', async () => {
+  it('does not create a view-owned polling interval when meterMode is true', async () => {
     vi.useFakeTimers();
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
     authState.serverConfig = { billing: { meterMode: true } };
-    const wrapper = mountView();
-    await flushPromises();
-
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
-
-    wrapper.unmount();
-  });
-
-  it('calls clearInterval with the timer id on unmount when meterMode is true', async () => {
-    vi.useFakeTimers();
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-
-    authState.serverConfig = { billing: { meterMode: true } };
-    const wrapper = mountView();
-    await flushPromises();
-
-    // Unmount should call clearInterval
-    wrapper.unmount();
-
-    expect(clearIntervalSpy).toHaveBeenCalled();
-  });
-
-  it('does not start polling when meterMode is false', async () => {
-    vi.useFakeTimers();
-    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-
-    authState.serverConfig = { billing: { meterMode: false } };
     const wrapper = mountView();
     await flushPromises();
 
@@ -107,47 +89,37 @@ describe('billing.billing.view — pollingTimer cleanup', () => {
     wrapper.unmount();
   });
 
-  it('stops polling after unmount — no more refreshes fire', async () => {
-    vi.useFakeTimers();
-
+  it('fetches extras ledger when meterMode is true', async () => {
     authState.serverConfig = { billing: { meterMode: true } };
     const wrapper = mountView();
     await flushPromises();
 
-    // Unmount immediately to clear the timer
+    expect(store.fetchExtrasLedger).toHaveBeenCalledWith({ page: 1, limit: 20 });
     wrapper.unmount();
-
-    // Capture call count right after unmount
-    const { useBillingStore } = await import('../stores/billing.store');
-    const store = useBillingStore();
-    const fetchUsageSpy = vi.spyOn(store, 'fetchUsageMeter').mockResolvedValue(null);
-    const fetchExtrasSpy = vi.spyOn(store, 'fetchExtrasBalance').mockResolvedValue(null);
-
-    // Advance past the 30s interval — no calls should fire
-    vi.advanceTimersByTime(60000);
-
-    expect(fetchUsageSpy).not.toHaveBeenCalled();
-    expect(fetchExtrasSpy).not.toHaveBeenCalled();
   });
 
-  it('starts polling when meterMode becomes true after mount (async serverConfig resolution)', async () => {
-    vi.useFakeTimers();
-    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-
-    // Mount with meterMode=false (serverConfig not yet loaded)
+  it('does not fetch extras ledger when meterMode is false', async () => {
     authState.serverConfig = { billing: { meterMode: false } };
     const wrapper = mountView();
     await flushPromises();
-    expect(setIntervalSpy).not.toHaveBeenCalled();
 
-    // Trigger a re-mount with meterMode=true to verify the watch path
+    expect(store.fetchExtrasLedger).not.toHaveBeenCalled();
     wrapper.unmount();
+  });
+
+  it('fetches extras ledger when meterMode becomes true after remount', async () => {
+    authState.serverConfig = { billing: { meterMode: false } };
+    const wrapper = mountView();
+    await flushPromises();
+    expect(store.fetchExtrasLedger).not.toHaveBeenCalled();
+
+    wrapper.unmount();
+    store.fetchExtrasLedger.mockClear();
     authState.serverConfig = { billing: { meterMode: true } };
     const wrapper2 = mountView();
     await flushPromises();
 
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
-
+    expect(store.fetchExtrasLedger).toHaveBeenCalledWith({ page: 1, limit: 20 });
     wrapper2.unmount();
   });
 
@@ -174,8 +146,6 @@ describe('billing.billing.view — pollingTimer cleanup', () => {
     const wrapper = mountView();
     await flushPromises();
 
-    const { useBillingStore } = await import('../stores/billing.store');
-    const store = useBillingStore();
     store.extrasLedger = { entries: [{ at: new Date().toISOString(), kind: 'topup', amount: 100 }], total: 1, page: 1, limit: 20 };
 
     expect(wrapper.vm.extrasLedger.entries).toHaveLength(1);
@@ -200,8 +170,6 @@ describe('billing.billing.view — pollingTimer cleanup', () => {
     const wrapper = mountView();
     await flushPromises();
 
-    const { useBillingStore } = await import('../stores/billing.store');
-    const store = useBillingStore();
     const fetchSpy = vi.spyOn(store, 'fetchExtrasLedger').mockResolvedValue({ entries: [], total: 0, page: 2, limit: 20 });
 
     await wrapper.vm.onLedgerPageChange(2);
@@ -211,28 +179,15 @@ describe('billing.billing.view — pollingTimer cleanup', () => {
     wrapper.unmount();
   });
 
-  it('stops polling when meterMode turns off after being active', async () => {
+  it('does not create a view-owned polling interval when meterMode is false', async () => {
     vi.useFakeTimers();
+    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
-    // Mount with meterMode=true
-    authState.serverConfig = { billing: { meterMode: true } };
+    authState.serverConfig = { billing: { meterMode: false } };
     const wrapper = mountView();
     await flushPromises();
 
-    // The watcher fires with active=false when meterMode is false.
-    // Trigger this by unmounting and re-mounting with meterMode=false — the
-    // clearInterval path is verified in "calls clearInterval on unmount".
-    // Here we verify that mounting with meterMode=false calls NO setInterval.
-    wrapper.unmount();
-    authState.serverConfig = { billing: { meterMode: false } };
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-    const wrapper2 = mountView();
-    await flushPromises();
-
     expect(setIntervalSpy).not.toHaveBeenCalled();
-
-    wrapper2.unmount();
-    void clearIntervalSpy;
+    wrapper.unmount();
   });
 });
