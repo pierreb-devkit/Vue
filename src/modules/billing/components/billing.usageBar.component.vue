@@ -4,7 +4,7 @@
   Displays a progress bar showing usage quota for a given resource action.
   Supports two modes:
     - 'legacy' (default): reads quota data via useQuota composable (resource/action props required).
-    - 'meter': reads weekly meter data via useMeter composable. Emits 'open-drawer' on click.
+    - 'meter': reads weekly meter data via useMeter composable. Informational only — no click handler.
              Always renders when authenticated + meterMode, regardless of subscription state.
              displayMode resolves to 'admin' | 'loading' | 'free' | 'standard' based on user/subscription.
 
@@ -12,16 +12,13 @@
   <BillingUsageBarComponent resource="documents" action="create" />
 
   USAGE (meter):
-  <BillingUsageBarComponent mode="meter" @open-drawer="drawerOpen = true" />
+  <BillingUsageBarComponent mode="meter" />
 
   PROPS:
   - mode     ('legacy'|'meter', default 'legacy'): rendering mode
   - resource (String): Resource name — required in legacy mode
   - action   (String): Action name — required in legacy mode
   - label    (String, optional): Display label
-
-  EVENTS:
-  - open-drawer: emitted on click in meter mode (parent should open BillingMeterDrawerComponent)
 -->
 <template>
   <!-- Meter mode -->
@@ -29,13 +26,6 @@
     v-if="mode === 'meter'"
     class="billing-usage-bar billing-usage-bar--meter"
     :class="`billing-usage-bar--${displayMode}`"
-    role="button"
-    tabindex="0"
-    style="cursor: pointer"
-    aria-label="Open meter drawer"
-    @click="$emit('open-drawer')"
-    @keydown.enter="$emit('open-drawer')"
-    @keydown.space.prevent="$emit('open-drawer')"
   >
     <!-- Admin display: rainbow gradient, show total consumed with no cap -->
     <template v-if="displayMode === 'admin'">
@@ -138,7 +128,7 @@ export default {
     /**
      * @desc Rendering mode.
      * - 'legacy': reads quota via useQuota (resource + action required).
-     * - 'meter': reads weekly meter data via useMeter; emits 'open-drawer' on click.
+     * - 'meter': reads weekly meter data via useMeter; informational only (no click handler).
      *            Always renders (free / admin / standard) when authenticated + meterMode.
      */
     mode: {
@@ -177,15 +167,13 @@ export default {
     },
   },
 
-  emits: ['open-drawer'],
+  emits: [],
 
   /**
    * @desc Wires useQuota (always) and useMeter only in meter mode to avoid
    * unnecessary reactive subscriptions and polling in legacy mode.
    * pollIntervalMs:0 disables the 30-second setInterval inside useMeter, but
    * safeRefresh() still fires once on mount to populate the initial meter state.
-   * The parent component (e.g. BillingMeterDrawer) handles its own polling with
-   * pollIntervalMs:30000 for continuous refresh while the drawer is open.
    * @param {Object} props - Component props
    * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, authStore: Object, billingStore: Object }}
    */

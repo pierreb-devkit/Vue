@@ -2,10 +2,13 @@
  * Module dependencies.
  */
 import pricing from '../views/billing.pricing.view.vue';
-import billing from '../views/billing.billing.view.vue';
 
 /**
  * Router configuration.
+ *
+ * `/billing` is no longer a stand-alone view: subscriptions live under
+ * the user account "Subscriptions" tab. Hitting `/billing` redirects to
+ * `/users?tab=subscriptions` so old links keep working.
  */
 export default [
   {
@@ -20,7 +23,7 @@ export default [
   {
     path: '/billing',
     name: 'Billing',
-    component: billing,
+    redirect: { path: '/users', query: { tab: 'subscriptions' } },
     meta: {
       display: false,
       requiresAuth: true,

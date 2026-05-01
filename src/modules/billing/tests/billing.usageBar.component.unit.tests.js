@@ -203,27 +203,19 @@ describe('BillingUsageBarComponent', () => {
     expect(wrapper.vm.meterDisplay).not.toContain('+');
   });
 
-  it('emits open-drawer on click in meter mode', async () => {
+  it('does not emit open-drawer on click in meter mode (informational only)', async () => {
     const store = useBillingStore();
     store.usageMeter = { meterUsed: 100, meterQuota: 500 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
     await wrapper.find('.billing-usage-bar--meter').trigger('click');
-    expect(wrapper.emitted('open-drawer')).toHaveLength(1);
+    expect(wrapper.emitted('open-drawer')).toBeUndefined();
   });
 
-  it('emits open-drawer on Enter key in meter mode', async () => {
-    const store = useBillingStore();
-    store.usageMeter = { meterUsed: 100, meterQuota: 500 };
-    const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
-    await wrapper.find('.billing-usage-bar--meter').trigger('keydown.enter');
-    expect(wrapper.emitted('open-drawer')).toHaveLength(1);
-  });
-
-  it('meter mode root has role=button', () => {
+  it('meter mode root has no role=button (informational only)', () => {
     const store = useBillingStore();
     store.usageMeter = { meterUsed: 0, meterQuota: 0 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
-    expect(wrapper.find('.billing-usage-bar--meter').attributes('role')).toBe('button');
+    expect(wrapper.find('.billing-usage-bar--meter').attributes('role')).toBeUndefined();
   });
 
   it('uses custom label in meter mode', () => {

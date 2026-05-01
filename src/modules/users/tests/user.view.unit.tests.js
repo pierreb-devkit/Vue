@@ -29,6 +29,46 @@ vi.mock('../../../lib/helpers/roleColor', () => ({ default: () => 'primary' }));
 vi.mock('../../../lib/helpers/orgColor', () => ({ default: () => 'blue' }));
 vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 
+const sharedStubs = {
+  PageHeader: true,
+  userProfileComponent: true,
+  organizationsSwitcherComponent: true,
+  orgAvatarComponent: true,
+  BillingSubscriptionsComponent: true,
+  'v-container': { template: '<div><slot /></div>' },
+  'v-row': { template: '<div><slot /></div>' },
+  'v-col': { template: '<div><slot /></div>' },
+  'v-card': { template: '<div><slot /></div>' },
+  'v-tabs': { template: '<div><slot /></div>' },
+  'v-tab': { template: '<div><slot /></div>' },
+  'v-divider': { template: '<div />' },
+  'v-window': { template: '<div><slot /></div>' },
+  'v-window-item': { template: '<div><slot /></div>' },
+  'v-list': { template: '<div><slot /></div>' },
+  'v-list-item': { template: '<div><slot /></div>' },
+  'v-list-item-title': { template: '<div><slot /></div>' },
+  'v-list-item-subtitle': { template: '<div><slot /></div>' },
+  'v-avatar': { template: '<div><slot /></div>' },
+  'v-chip': { template: '<div><slot /></div>' },
+  'v-btn': { template: '<div><slot /></div>' },
+  'v-icon': { template: '<div />' },
+  'v-dialog': { template: '<div><slot /></div>' },
+  'v-card-title': { template: '<div><slot /></div>' },
+  'v-card-text': { template: '<div><slot /></div>' },
+  'v-card-actions': { template: '<div><slot /></div>' },
+  'v-spacer': { template: '<div />' },
+  'v-text-field': { template: '<div />' },
+};
+
+const sharedMocks = ($router = { push: vi.fn() }, $route = { query: {}, hash: '' }) => ({
+  $router,
+  $route,
+  config: {
+    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
+    vuetify: { theme: { flat: true, rounded: 'rounded' } },
+  },
+});
+
 describe('UserView – leaveOrg redirect behaviour', () => {
   let organizationsStore;
   let authStore;
@@ -47,41 +87,8 @@ describe('UserView – leaveOrg redirect behaviour', () => {
 
     wrapper = shallowMount(UserView, {
       global: {
-        mocks: {
-          $router: { push: routerPush },
-          config: {
-            api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
-            vuetify: { theme: { flat: true, rounded: 'rounded' } },
-          },
-        },
-        stubs: {
-          PageHeader: true,
-          userProfileComponent: true,
-          organizationsSwitcherComponent: true,
-          'v-container': { template: '<div><slot /></div>' },
-          'v-row': { template: '<div><slot /></div>' },
-          'v-col': { template: '<div><slot /></div>' },
-          'v-card': { template: '<div><slot /></div>' },
-          'v-tabs': { template: '<div><slot /></div>' },
-          'v-tab': { template: '<div><slot /></div>' },
-          'v-divider': { template: '<div />' },
-          'v-window': { template: '<div><slot /></div>' },
-          'v-window-item': { template: '<div><slot /></div>' },
-          'v-list': { template: '<div><slot /></div>' },
-          'v-list-item': { template: '<div><slot /></div>' },
-          'v-list-item-title': { template: '<div><slot /></div>' },
-          'v-list-item-subtitle': { template: '<div><slot /></div>' },
-          'v-avatar': { template: '<div><slot /></div>' },
-          'v-chip': { template: '<div><slot /></div>' },
-          'v-btn': { template: '<div><slot /></div>' },
-          'v-icon': { template: '<div />' },
-          'v-dialog': { template: '<div><slot /></div>' },
-          'v-card-title': { template: '<div><slot /></div>' },
-          'v-card-text': { template: '<div><slot /></div>' },
-          'v-card-actions': { template: '<div><slot /></div>' },
-          'v-spacer': { template: '<div />' },
-          'v-text-field': { template: '<div />' },
-        },
+        mocks: sharedMocks({ push: routerPush }),
+        stubs: sharedStubs,
       },
     });
   });
@@ -126,60 +133,30 @@ describe('UserView – leaveOrg redirect behaviour', () => {
   });
 });
 
-// ── UserView – showBillingLink computed ──────────────────────────────────────
+// ── UserView – showSubscriptionsTab computed ─────────────────────────────────
 
-describe('UserView – showBillingLink', () => {
+describe('UserView – showSubscriptionsTab', () => {
   let authStore;
   let billingStore;
+  let organizationsStore;
 
   /**
-   * @desc Helper to mount UserView for showBillingLink tests.
-   * @param {Object} serverConfig - Auth store serverConfig
-   * @param {Object|null} subscription - Billing store subscription
+   * @desc Helper to mount UserView for showSubscriptionsTab tests.
+   * @param {Object} opts
+   * @param {Object} [opts.serverConfig]
+   * @param {Object|null} [opts.subscription]
+   * @param {Array} [opts.organizations]
    * @returns {import('@vue/test-utils').VueWrapper}
    */
-  const mountForBilling = (serverConfig, subscription = null) => {
+  const mountForTab = ({ serverConfig = null, subscription = null, organizations = [] } = {}) => {
     authStore.serverConfig = serverConfig;
     billingStore.subscription = subscription;
+    organizationsStore.organizations = organizations;
 
     return shallowMount(UserView, {
       global: {
-        mocks: {
-          $router: { push: vi.fn() },
-          config: {
-            api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
-            vuetify: { theme: { flat: true, rounded: 'rounded' } },
-          },
-        },
-        stubs: {
-          PageHeader: true,
-          userProfileComponent: true,
-          organizationsSwitcherComponent: true,
-          orgAvatarComponent: true,
-          'v-container': { template: '<div><slot /></div>' },
-          'v-row': { template: '<div><slot /></div>' },
-          'v-col': { template: '<div><slot /></div>' },
-          'v-card': { template: '<div><slot /></div>' },
-          'v-tabs': { template: '<div><slot /></div>' },
-          'v-tab': { template: '<div><slot /></div>' },
-          'v-divider': { template: '<div />' },
-          'v-window': { template: '<div><slot /></div>' },
-          'v-window-item': { template: '<div><slot /></div>' },
-          'v-list': { template: '<div><slot /></div>' },
-          'v-list-item': { template: '<div><slot /></div>' },
-          'v-list-item-title': { template: '<div><slot /></div>' },
-          'v-list-item-subtitle': { template: '<div><slot /></div>' },
-          'v-avatar': { template: '<div><slot /></div>' },
-          'v-chip': { template: '<div><slot /></div>' },
-          'v-btn': { template: '<div><slot /></div>' },
-          'v-icon': { template: '<div />' },
-          'v-dialog': { template: '<div><slot /></div>' },
-          'v-card-title': { template: '<div><slot /></div>' },
-          'v-card-text': { template: '<div><slot /></div>' },
-          'v-card-actions': { template: '<div><slot /></div>' },
-          'v-spacer': { template: '<div />' },
-          'v-text-field': { template: '<div />' },
-        },
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
       },
     });
   };
@@ -188,36 +165,119 @@ describe('UserView – showBillingLink', () => {
     setActivePinia(createPinia());
     authStore = useAuthStore();
     billingStore = useBillingStore();
-
-    const organizationsStore = useOrganizationsStore();
+    organizationsStore = useOrganizationsStore();
     organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
   });
 
-  it('showBillingLink is true when billing enabled and meterMode is true', () => {
-    const wrapper = mountForBilling({ billing: { enabled: true, meterMode: true } });
-    expect(wrapper.vm.showBillingLink).toBe(true);
+  it('is true when billing enabled, meterMode true, and user is owner of an org', () => {
+    const wrapper = mountForTab({
+      serverConfig: { billing: { enabled: true, meterMode: true } },
+      organizations: [{ id: 'o1', role: 'owner' }],
+    });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
   });
 
-  it('showBillingLink is true when billing enabled and user has active subscription', () => {
-    const wrapper = mountForBilling(
-      { billing: { enabled: true, meterMode: false } },
-      { status: 'active', plan: 'starter' },
-    );
-    expect(wrapper.vm.showBillingLink).toBe(true);
+  it('is true when billing enabled, user has active subscription, and is admin', () => {
+    const wrapper = mountForTab({
+      serverConfig: { billing: { enabled: true, meterMode: false } },
+      subscription: { status: 'active', plan: 'starter' },
+      organizations: [{ id: 'o1', role: 'admin' }],
+    });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
   });
 
-  it('showBillingLink is false when billing disabled', () => {
-    const wrapper = mountForBilling({ billing: { enabled: false, meterMode: true } });
-    expect(wrapper.vm.showBillingLink).toBe(false);
+  it('is false when user has only member-role orgs (no owner/admin)', () => {
+    const wrapper = mountForTab({
+      serverConfig: { billing: { enabled: true, meterMode: true } },
+      organizations: [{ id: 'o1', role: 'member' }],
+    });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
   });
 
-  it('showBillingLink is false when billing not configured', () => {
-    const wrapper = mountForBilling(null);
-    expect(wrapper.vm.showBillingLink).toBe(false);
+  it('is false when billing is disabled', () => {
+    const wrapper = mountForTab({
+      serverConfig: { billing: { enabled: false, meterMode: true } },
+      organizations: [{ id: 'o1', role: 'owner' }],
+    });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
   });
 
-  it('showBillingLink is false when billing enabled but meterMode false and no subscription', () => {
-    const wrapper = mountForBilling({ billing: { enabled: true, meterMode: false } }, null);
-    expect(wrapper.vm.showBillingLink).toBe(false);
+  it('is false when billing not configured', () => {
+    const wrapper = mountForTab({ serverConfig: null, organizations: [{ id: 'o1', role: 'owner' }] });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
+  });
+
+  it('is true when billing is enabled and user is owner, even when meterMode false and no active subscription', () => {
+    // BillingSubscriptionsComponent renders a valid free-plan state; the tab should
+    // not require meterMode or an active subscription to be visible.
+    const wrapper = mountForTab({
+      serverConfig: { billing: { enabled: true, meterMode: false } },
+      subscription: null,
+      organizations: [{ id: 'o1', role: 'owner' }],
+    });
+    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
+  });
+});
+
+// ── UserView – tab routing from query/hash ───────────────────────────────────
+
+describe('UserView – tab routing from query/hash', () => {
+  let authStore;
+  let billingStore;
+  let organizationsStore;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    authStore = useAuthStore();
+    billingStore = useBillingStore();
+    organizationsStore = useOrganizationsStore();
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
+  });
+
+  /**
+   * @desc Mount with explicit $route — caller controls query/hash.
+   * @param {Object} route
+   * @returns {import('@vue/test-utils').VueWrapper}
+   */
+  const mountWithRoute = (route) =>
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks({ push: vi.fn() }, route),
+        stubs: sharedStubs,
+      },
+    });
+
+  it('switches to subscriptions tab when ?tab=subscriptions and tab is visible', async () => {
+    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
+    billingStore.subscription = { status: 'active', plan: 'starter' };
+
+    const wrapper = mountWithRoute({ query: { tab: 'subscriptions' }, hash: '' });
+    // mounted hook applies the tab
+    expect(wrapper.vm.tab).toBe('subscriptions');
+  });
+
+  it('falls back to profile when ?tab=subscriptions but tab is not visible', async () => {
+    authStore.serverConfig = { billing: { enabled: false } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
+
+    const wrapper = mountWithRoute({ query: { tab: 'subscriptions' }, hash: '' });
+    expect(wrapper.vm.tab).toBe('profile');
+  });
+
+  it('switches to subscriptions tab when #subscriptions hash and tab is visible', async () => {
+    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
+
+    const wrapper = mountWithRoute({ query: {}, hash: '#subscriptions' });
+    expect(wrapper.vm.tab).toBe('subscriptions');
+  });
+
+  it('keeps default profile tab when neither query nor hash is set', async () => {
+    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
+
+    const wrapper = mountWithRoute({ query: {}, hash: '' });
+    expect(wrapper.vm.tab).toBe('profile');
   });
 });

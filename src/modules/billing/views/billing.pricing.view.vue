@@ -28,11 +28,6 @@
       <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
     </div>
 
-    <!-- Billing toggle -->
-    <div class="mb-10">
-      <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
-    </div>
-
     <!-- Error state (non-blocking — plans still render from static config) -->
     <v-alert
       v-if="error"
@@ -59,25 +54,47 @@
       {{ checkoutError }}
     </v-alert>
 
-    <!-- Plans grid (always rendered from static config; prices fill in asynchronously) -->
-    <v-row justify="center">
-      <v-col
-        v-for="plan in mergedPlans"
-        :key="plan.id"
-        cols="12"
-        sm="6"
-        md="4"
-      >
-        <billingPricingCardComponent
-          :plan="plan"
-          :annual="annual"
-          :current="isCurrentPlan(plan.id)"
-          :loading="checkoutLoading"
-          :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-          @select="onSelectPlan"
-        />
-      </v-col>
-    </v-row>
+    <!-- Glass tabs (meter mode only) -->
+    <div v-if="meterMode" class="d-flex justify-center mb-8">
+      <homeTabsComponent
+        :items="tabItems"
+        :model-value="activeTab"
+        @update:model-value="activeTab = $event"
+      />
+    </div>
+
+    <!-- ── Plans tab (default / always shown when meterMode is false) ── -->
+    <template v-if="!meterMode || activeTab === 0">
+      <!-- Billing toggle -->
+      <div class="mb-10">
+        <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
+      </div>
+
+      <!-- Plans grid (always rendered from static config; prices fill in asynchronously) -->
+      <v-row justify="center">
+        <v-col
+          v-for="plan in mergedPlans"
+          :key="plan.id"
+          cols="12"
+          sm="6"
+          md="4"
+        >
+          <billingPricingCardComponent
+            :plan="plan"
+            :annual="annual"
+            :current="isCurrentPlan(plan.id)"
+            :loading="checkoutLoading"
+            :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
+            @select="onSelectPlan"
+          />
+        </v-col>
+      </v-row>
+    </template>
+
+    <!-- ── Units tab (meter mode only) ── -->
+    <template v-if="meterMode && activeTab === 1">
+      <BillingPacksComponent />
+    </template>
   </v-container>
 </template>
 
@@ -87,9 +104,11 @@
  */
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { plans as plansConfig } from '../config/billing.development.config';
+import { plans as plansConfig } from '../config/billing.static-content';
 import billingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import billingPricingCardComponent from '../components/billing.pricingCard.component.vue';
+import BillingPacksComponent from '../components/billing.packs.component.vue';
+import homeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
 
 
 /**
@@ -100,6 +119,8 @@ export default {
   components: {
     billingPricingToggleComponent,
     billingPricingCardComponent,
+    BillingPacksComponent,
+    homeTabsComponent,
   },
   /**
    * @desc Inject billingStore and authStore once in setup so computed
@@ -120,6 +141,8 @@ export default {
       checkoutLoading: false,
       checkoutError: null,
       error: null,
+      /** @type {number} Active glass tab index — 0=plans, 1=units (meter mode only) */
+      activeTab: 0,
     };
   },
   computed: {
@@ -163,6 +186,19 @@ export default {
      */
     meterMode() {
       return this.authStore.serverConfig?.billing?.meterMode === true;
+    },
+    /**
+     * @desc Items consumed by HomeTabsComponent (only used when meterMode is true).
+     * Labels sourced from i18n keys billing.pricing.tabs.plans / billing.pricing.tabs.units.
+     * @returns {Array<{id: string, label: string}>}
+     */
+    tabItems() {
+      return [
+        // i18n key: billing.pricing.tabs.plans
+        { id: 'plans', label: 'Plans' },
+        // i18n key: billing.pricing.tabs.units
+        { id: 'units', label: 'Units' },
+      ];
     },
   },
   /**

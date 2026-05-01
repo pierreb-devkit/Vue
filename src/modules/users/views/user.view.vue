@@ -17,6 +17,14 @@
               <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
               Organizations
             </v-tab>
+            <v-tab
+              v-if="showSubscriptionsTab"
+              value="subscriptions"
+              class="text-none text-body-medium"
+            >
+              <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2"></v-icon>
+              Subscriptions
+            </v-tab>
           </v-tabs>
           <v-divider></v-divider>
           <v-window v-model="tab">
@@ -86,31 +94,13 @@
                 </div>
               </div>
             </v-window-item>
+            <!-- Subscriptions tab — visible to org owners/admins, gated for billing-enabled servers -->
+            <v-window-item v-if="showSubscriptionsTab" value="subscriptions">
+              <div class="pa-6">
+                <BillingSubscriptionsComponent />
+              </div>
+            </v-window-item>
           </v-window>
-        </v-card>
-
-        <!-- Billing & Plan link (meterMode or non-free subscription) -->
-        <v-card
-          v-if="showBillingLink"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="mt-4 pa-6 d-flex align-center justify-space-between flex-wrap ga-4"
-        >
-          <div>
-            <h3 class="text-title-medium font-weight-medium mb-1">Billing &amp; Plan</h3>
-            <p class="text-body-small text-medium-emphasis mb-0">Manage your subscription and usage.</p>
-          </div>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            to="/billing"
-          >
-            <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2" />
-            Manage subscription
-          </v-btn>
         </v-card>
 
         <!-- Danger zone -->
@@ -193,6 +183,7 @@ import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import userProfileComponent from '../components/user.profile.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
+import BillingSubscriptionsComponent from '../../billing/components/billing.subscriptions.component.vue';
 
 export default {
   name: 'UserView',
@@ -201,6 +192,7 @@ export default {
     userProfileComponent,
     organizationsSwitcherComponent,
     orgAvatarComponent,
+    BillingSubscriptionsComponent,
   },
   /**
    * @desc Wires auth, organizations and billing helpers for use across computed
@@ -238,14 +230,45 @@ export default {
       return id?._id || id?.id || id;
     },
     /**
-     * @desc Show the billing link when meterMode is enabled OR the user has an active subscription.
-     * Always dormant when billing is not configured.
+     * @desc Whether the user owns / administrates at least one organization.
+     * Drives Subscriptions tab visibility — only owners/admins see/manage billing.
      * @returns {boolean}
      */
-    showBillingLink() {
-      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
+    hasOwnerOrAdminRole() {
+      const orgs = this.organizations || [];
+      return orgs.some((org) => org.role === 'owner' || org.role === 'admin');
+    },
+    /**
+     * @desc Show the Subscriptions tab when billing is enabled AND the user
+     * owns/administrates at least one org. Does NOT additionally require
+     * meterMode or an active subscription — BillingSubscriptionsComponent
+     * already renders a valid free-plan state when subscription is null, so
+     * gating on plan status would incorrectly hide the tab for free users on
+     * billing-enabled servers.
+     * @returns {boolean}
+     */
+    showSubscriptionsTab() {
       const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
-      return billingEnabled && (meterMode || this.isPlanActive);
+      if (!billingEnabled) return false;
+      return this.hasOwnerOrAdminRole;
+    },
+  },
+  watch: {
+    '$route.query.tab'() {
+      this.applyTabFromRoute();
+    },
+    '$route.hash'() {
+      this.applyTabFromRoute();
+    },
+    /**
+     * @desc Re-apply the route tab when showSubscriptionsTab flips to true.
+     * Fixes the async race: mounted() calls applyTabFromRoute() before
+     * fetchOrganizations() resolves, so showSubscriptionsTab is still false
+     * and ?tab=subscriptions is silently ignored. Re-applying once the tab
+     * becomes visible ensures the redirect from /billing lands correctly.
+     */
+    showSubscriptionsTab(val) {
+      if (val) this.applyTabFromRoute();
     },
   },
   /**
@@ -259,8 +282,28 @@ export default {
       // interceptor handles snackbar
     }
   },
+  /**
+   * @desc Auto-switch to the Subscriptions tab when the route hash/query asks for it
+   * (e.g. /billing redirects to /users?tab=subscriptions).
+   */
+  mounted() {
+    this.applyTabFromRoute();
+  },
   methods: {
     roleColor,
+    /**
+     * @desc Resolve a requested tab from the route (?tab= or #subscriptions) and switch
+     * the active tab when the requested tab is currently visible.
+     */
+    applyTabFromRoute() {
+      const requested =
+        this.$route?.query?.tab || (this.$route?.hash || '').replace(/^#/, '') || null;
+      if (!requested) return;
+      if (requested === 'subscriptions' && !this.showSubscriptionsTab) return;
+      if (['profile', 'organizations', 'subscriptions'].includes(requested)) {
+        this.tab = requested;
+      }
+    },
     /**
      * @desc Check whether the given org is the user's active organization.
      * @param {Object} org - Organization object
