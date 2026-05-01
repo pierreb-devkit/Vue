@@ -207,13 +207,15 @@ describe('UserView – showSubscriptionsTab', () => {
     expect(wrapper.vm.showSubscriptionsTab).toBe(false);
   });
 
-  it('is false when meterMode false and no active subscription, even for owners', () => {
+  it('is true when billing is enabled and user is owner, even when meterMode false and no active subscription', () => {
+    // BillingSubscriptionsComponent renders a valid free-plan state; the tab should
+    // not require meterMode or an active subscription to be visible.
     const wrapper = mountForTab({
       serverConfig: { billing: { enabled: true, meterMode: false } },
       subscription: null,
       organizations: [{ id: 'o1', role: 'owner' }],
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
+    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
   });
 });
 

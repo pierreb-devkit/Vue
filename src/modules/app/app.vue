@@ -109,9 +109,11 @@ export default {
         text: '',
       },
       /**
-       * @desc Tracks which `${weekKey}:${level}` pair has already been alerted.
-       * Deduplication guard so the same threshold is only toasted once per billing week.
-       * Format: `"{weekKey}:{level}"` — e.g. `"2026-W18:80"`.
+       * @desc Tracks which `${orgId}:${weekKey}:${level}` tuple has already been alerted.
+       * Deduplication guard so the same threshold is only toasted once per billing week
+       * per organization. Including the org ID prevents cross-org suppression when
+       * the user switches organizations within the same billing week.
+       * Format: `"{orgId}:{weekKey}:{level}"` — e.g. `"org_abc:2026-W18:80"`.
        * @type {Set<string>}
        */
       meterAlertedKeys: new Set(),
@@ -152,6 +154,16 @@ export default {
       return this.billingStore.usageMeter?.weekKey ?? null;
     },
     /**
+     * @desc Active organization ID — included in the meter alert dedupe key so
+     * switching organizations within the same billing week does not suppress
+     * alerts for the newly selected org.
+     * @returns {string}
+     */
+    activeOrgId() {
+      const org = this.authStore.user?.currentOrganization;
+      return (org?._id || org?.id || org) ?? 'global';
+    },
+    /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
      * @returns {Object} CSS style object
      */
@@ -172,9 +184,10 @@ export default {
      */
     meterProgress(newVal) {
       if (!this.meterMode || !this.isLoggedIn) return;
+      const orgId = this.activeOrgId;
       const weekKey = this.meterWeekKey ?? 'unknown';
       if (newVal >= 100) {
-        const key = `${weekKey}:100`;
+        const key = `${orgId}:${weekKey}:100`;
         if (!this.meterAlertedKeys.has(key)) {
           this.meterAlertedKeys.add(key);
           this.meterAlert = {
@@ -184,10 +197,10 @@ export default {
             text: 'Quota reached — extras consumed',
           };
           // Also suppress the 80 dedup so it doesn't fire afterwards
-          this.meterAlertedKeys.add(`${weekKey}:80`);
+          this.meterAlertedKeys.add(`${orgId}:${weekKey}:80`);
         }
       } else if (newVal >= 80) {
-        const key = `${weekKey}:80`;
+        const key = `${orgId}:${weekKey}:80`;
         if (!this.meterAlertedKeys.has(key)) {
           this.meterAlertedKeys.add(key);
           this.meterAlert = {

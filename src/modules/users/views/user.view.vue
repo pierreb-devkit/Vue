@@ -239,16 +239,18 @@ export default {
       return orgs.some((org) => org.role === 'owner' || org.role === 'admin');
     },
     /**
-     * @desc Show the Subscriptions tab when billing is enabled (meterMode OR
-     * legacy active sub) AND the user owns/administrates at least one org.
+     * @desc Show the Subscriptions tab when billing is enabled AND the user
+     * owns/administrates at least one org. Does NOT additionally require
+     * meterMode or an active subscription — BillingSubscriptionsComponent
+     * already renders a valid free-plan state when subscription is null, so
+     * gating on plan status would incorrectly hide the tab for free users on
+     * billing-enabled servers.
      * @returns {boolean}
      */
     showSubscriptionsTab() {
       const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
-      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
       if (!billingEnabled) return false;
-      if (!this.hasOwnerOrAdminRole) return false;
-      return meterMode || this.isPlanActive;
+      return this.hasOwnerOrAdminRole;
     },
   },
   watch: {

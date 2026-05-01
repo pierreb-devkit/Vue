@@ -16,6 +16,19 @@
 -->
 <template>
   <v-container class="py-6 px-0" :style="{ 'max-width': '760px' }">
+    <!-- Pack purchase success banner — surfaces when Stripe redirects back with ?packPurchased=1 -->
+    <v-alert
+      v-if="packPurchasedSuccess"
+      type="success"
+      variant="tonal"
+      closable
+      class="mb-4"
+      @click:close="packPurchasedSuccess = false"
+    >
+      <!-- i18n key: billing.extras.purchaseSuccess -->
+      Pack credited to your balance!
+    </v-alert>
+
     <!-- Loading -->
     <v-row v-if="fetchLoading" justify="center" class="py-10">
       <v-progress-circular indeterminate color="primary" />
@@ -208,6 +221,12 @@ export default {
   data() {
     return {
       portalLoading: false,
+      /**
+       * @desc Shown when Stripe redirects back with ?packPurchased=1.
+       * The /billing page was retired; this component is the new landing point.
+       * @type {boolean}
+       */
+      packPurchasedSuccess: false,
     };
   },
   computed: {
@@ -246,7 +265,9 @@ export default {
     },
   },
   /**
-   * @desc Fetch subscription data and extras ledger on mount.
+   * @desc Fetch subscription data on mount and handle Stripe redirect query params.
+   * The legacy /billing page is retired; this component is now the landing point for
+   * Stripe redirects (success, cancel, packPurchased).
    */
   async mounted() {
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
@@ -261,6 +282,13 @@ export default {
 
     // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
     // no duplicate call needed here.
+
+    // Handle Stripe redirect query params (pack purchase success).
+    if (this.$route?.query?.packPurchased) {
+      this.packPurchasedSuccess = true;
+      // Clear the query param so refreshes don't re-show the banner.
+      this.$router.replace({ path: this.$route.path, query: { ...this.$route.query, packPurchased: undefined } });
+    }
   },
   methods: {
     /**

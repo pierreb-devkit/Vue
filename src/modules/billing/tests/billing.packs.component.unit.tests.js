@@ -13,6 +13,18 @@ vi.mock('../../../lib/helpers/analytics', () => ({
   capture: vi.fn(),
 }));
 
+// ─── Mutable auth store state (hoisted so vi.mock factory can close over it) ─
+
+const authState = vi.hoisted(() => ({
+  isLoggedIn: true,
+  user: { currentOrganization: 'org_test_123' },
+  serverConfig: { organizations: { enabled: true } },
+}));
+
+vi.mock('../../auth/stores/auth.store', () => ({
+  useAuthStore: () => authState,
+}));
+
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
 import { useBillingStore } from '../stores/billing.store';
@@ -42,13 +54,18 @@ const vuetify = createVuetify();
 
 /**
  * @desc Mount BillingPacksComponent with Vuetify + Pinia.
+ * @param {Object} [overrides] — optional auth state overrides
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-function mountPacks() {
+function mountPacks(overrides = {}) {
+  Object.assign(authState, overrides);
   return mount(BillingPacksComponent, {
     global: {
       plugins: [vuetify],
-      mocks: { config: mockConfig },
+      mocks: {
+        config: mockConfig,
+        $router: { push: vi.fn() },
+      },
       stubs: { RouterLink: true },
     },
   });
@@ -139,6 +156,10 @@ describe('BillingPacksComponent — purchase flow', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    // Reset to logged-in state with org for purchase flow tests
+    authState.isLoggedIn = true;
+    authState.user = { currentOrganization: 'org_test_123' };
+    authState.serverConfig = { organizations: { enabled: true } };
     store = useBillingStore();
     store.usageMeter = { packsAvailable: mockPacks };
   });
@@ -188,5 +209,22 @@ describe('BillingPacksComponent — purchase flow', () => {
     }
     resolveCheckout();
     await flushPromises();
+  });
+
+  it('redirects guest to sign-in instead of initiating checkout', async () => {
+    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+    const pushFn = vi.fn();
+    wrapper = mountPacks({
+      isLoggedIn: false,
+      user: null,
+      serverConfig: null,
+    });
+    wrapper.vm.$router = { push: pushFn };
+    await flushPromises();
+    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
+    await buyBtn.trigger('click');
+    await flushPromises();
+    expect(store.createExtrasCheckout).not.toHaveBeenCalled();
+    expect(pushFn).toHaveBeenCalledWith({ path: '/signin', query: { redirect: '/pricing' } });
   });
 });

@@ -77,6 +77,7 @@
  * Module dependencies.
  */
 import { useBillingStore } from '../stores/billing.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import { packs as packsConfig } from '../config/billing.static-content';
 
 /**
@@ -86,12 +87,14 @@ export default {
   name: 'BillingPacksComponent',
 
   /**
-   * @desc Inject the billing store so onBuy can call createExtrasCheckout.
-   * @returns {{ billingStore: Object }}
+   * @desc Inject billing store and auth store. Auth store is used to guard
+   * the purchase flow (same as onSelectPlan in billing.pricing.view.vue).
+   * @returns {{ billingStore: Object, authStore: Object }}
    */
   setup() {
     const billingStore = useBillingStore();
-    return { billingStore };
+    const authStore = useAuthStore();
+    return { billingStore, authStore };
   },
 
   data() {
@@ -121,13 +124,29 @@ export default {
 
   methods: {
     /**
-     * @desc Initiate Stripe checkout for the selected pack. On success Stripe redirects;
-     * if the call fails we surface a banner so the user can retry.
+     * @desc Initiate Stripe checkout for the selected pack.
+     * Reuses the same auth/org guard as onSelectPlan() in billing.pricing.view.vue:
+     * unauthenticated users are redirected to sign-in; logged-in users without a
+     * current organization are redirected to org setup. On success Stripe redirects;
+     * failures surface a user-facing banner for retry.
      * @param {{ packId: string, label: string }} pack
      * @returns {Promise<void>}
      */
     async onBuy(pack) {
       if (!pack?.packId || this.purchasingId) return;
+
+      // Guest → redirect to sign-in with return URL
+      if (!this.authStore.isLoggedIn) {
+        this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
+        return;
+      }
+
+      // Logged-in but no organization → redirect to org setup
+      if (this.authStore.serverConfig?.organizations?.enabled && !this.authStore.user?.currentOrganization) {
+        this.$router.push({ path: '/organization-required' });
+        return;
+      }
+
       this.purchasingId = pack.packId;
       this.purchaseError = null;
       try {
