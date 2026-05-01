@@ -73,6 +73,7 @@ describe('billing.billing.view — meter mode behavior', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('does not create a view-owned polling interval when meterMode is true', async () => {

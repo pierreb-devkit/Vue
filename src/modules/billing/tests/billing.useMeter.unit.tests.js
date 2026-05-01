@@ -79,6 +79,7 @@ describe('useMeter composable', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
     _wrappers.forEach((w) => w.unmount());
     _wrappers.length = 0;
     __resetUseMeterForTests();
