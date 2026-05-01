@@ -93,6 +93,20 @@
       v-model="extrasModalOpen"
       :packs="packsAvailable"
     />
+
+    <v-divider class="my-4" />
+    <v-card-actions class="px-6 pb-6">
+      <v-btn
+        variant="text"
+        color="primary"
+        class="text-none"
+        to="/billing"
+        @click="$emit('update:modelValue', false)"
+      >
+        <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2" />
+        Manage subscription
+      </v-btn>
+    </v-card-actions>
   </v-navigation-drawer>
 </template>
 
