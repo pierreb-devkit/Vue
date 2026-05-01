@@ -170,6 +170,32 @@ describe('BillingMeterDrawerComponent', () => {
     expect(wrapper.vm.extrasModalOpen).toBe(true);
   });
 
+  // ── Manage subscription link ─────────────────────────────────────────────
+
+  it('renders "Manage subscription" button', () => {
+    wrapper = mountComponent({ modelValue: true });
+    expect(wrapper.text()).toContain('Manage subscription');
+  });
+
+  it('"Manage subscription" button has to="/billing"', () => {
+    wrapper = mountComponent({ modelValue: true });
+    // findComponent by name to access Vue props (findAll returns DOMWrappers without .props())
+    const allBtns = wrapper.findAllComponents({ name: 'v-btn' });
+    const btn = allBtns.find((b) => b.text().includes('Manage subscription'));
+    expect(btn).toBeDefined();
+    expect(btn.props('to')).toBe('/billing');
+  });
+
+  it('"Manage subscription" button emits update:modelValue false on click', async () => {
+    wrapper = mountComponent({ modelValue: true });
+    const btn = wrapper.findAll('.v-btn').find((b) => b.text().includes('Manage subscription'));
+    expect(btn).toBeDefined();
+    await btn.trigger('click');
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+    const allEmits = wrapper.emitted('update:modelValue').flat();
+    expect(allEmits).toContain(false);
+  });
+
   // ── packsAvailable ───────────────────────────────────────────────────────
 
   it('sources packsAvailable from usageMeter when available', () => {

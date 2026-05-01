@@ -14,6 +14,8 @@ export const billingEn = {
       progress: '{used} of {quota} units used',
       /** i18n key: billing.usage.exhausted */
       exhausted: 'Quota exhausted',
+      /** i18n key: billing.usage.manageSubscription */
+      manageSubscription: 'Manage subscription',
       bucket: {
         /** i18n key: billing.usage.bucket.scrap */
         scrap: 'Scrape',
