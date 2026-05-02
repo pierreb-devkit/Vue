@@ -163,9 +163,9 @@ describe('BillingMeterProgressComponent', () => {
     expect(wrapper.vm.thresholdColor).toBe('success');
   });
 
-  it('shows overage badge and warning color when overage > 0', () => {
+  it('shows overage badge and error color when overage > 0', () => {
     const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
-    expect(wrapper.vm.thresholdColor).toBe('warning');
+    expect(wrapper.vm.thresholdColor).toBe('error');
     const chip = wrapper.findComponent({ name: 'v-chip' });
     expect(chip.exists()).toBe(true);
     expect(wrapper.text()).toContain('+20 over');

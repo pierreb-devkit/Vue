@@ -40,7 +40,7 @@
       <span>{{ label }}</span>
       <span
         class="font-weight-medium"
-        :class="overage > 0 ? 'text-warning' : ''"
+        :class="overage > 0 ? 'text-error' : ''"
       >{{ clampedProgress }}%</span>
     </div>
 
@@ -50,7 +50,7 @@
       class="d-flex align-center mb-1"
     >
       <v-chip
-        color="warning"
+        color="error"
         size="x-small"
         variant="tonal"
         prepend-icon="fa-solid fa-triangle-exclamation"
@@ -86,11 +86,11 @@
 
     <!-- Summary text -->
     <div class="text-caption text-medium-emphasis mt-1">
+      <span>{{ used }} / {{ quota }}</span>
       <template v-if="overage > 0">
-        <span class="text-warning">{{ netRemainingRaw }} remaining</span>
+        <span class="text-error"> ({{ computedNetRemainingRaw }} remaining)</span>
       </template>
       <template v-else>
-        <span>{{ used }} / {{ quota }}</span>
         <span v-if="extras > 0"> +{{ extras }} extras</span>
       </template>
     </div>
@@ -164,25 +164,41 @@ export default {
   computed: {
     /**
      * @desc Usage percentage clamped to [0, 100].
-     * When in overage the bar is shown at 100% to indicate fully consumed state.
+     * When overage > 0 the bar is pinned to 100% to signal full consumption.
+     * When quota is 0 (undefined quota), returns 0.
      * @returns {number}
      */
     clampedProgress() {
+      if (this.overage > 0) return 100;
       if (this.quota === 0) return 0;
       return Math.max(0, Math.min(100, Math.round((this.used / this.quota) * 100)));
     },
 
     /**
      * @desc Vuetify color token based on usage threshold.
-     * Shifts to warning when in overage (consumed beyond quota).
-     * green <70%, warning 70-90% or overage > 0, error >=90% (no overage).
+     * Overage (used beyond quota) is the most severe state — always error.
+     * green <70%, warning 70-90%, error >=90% or overage > 0.
      * @returns {string}
      */
     thresholdColor() {
-      if (this.overage > 0) return 'warning';
+      if (this.overage > 0) return 'error';
       if (this.clampedProgress >= 90) return 'error';
       if (this.clampedProgress >= 70) return 'warning';
       return 'success';
+    },
+
+    /**
+     * @desc Unclamped net remaining, derived from quota - used + extras when
+     * netRemainingRaw prop is not explicitly provided (default 0 sentinel detection:
+     * if overage > 0 and netRemainingRaw === 0, derive internally to avoid showing
+     * a misleading "0 remaining" on partial prop usage).
+     * @returns {number}
+     */
+    computedNetRemainingRaw() {
+      if (this.overage > 0 && this.netRemainingRaw === 0) {
+        return this.quota - this.used + this.extras;
+      }
+      return this.netRemainingRaw;
     },
 
     /**

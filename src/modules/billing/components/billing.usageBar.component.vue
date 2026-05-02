@@ -76,7 +76,7 @@
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
           class="font-weight-medium"
-          :class="meterOverage > 0 ? 'text-warning' : ''"
+          :class="meterOverage > 0 ? 'text-error' : ''"
         >{{ meterDisplay }}</span>
       </div>
       <BillingMeterProgressComponent
@@ -175,29 +175,27 @@ export default {
   emits: [],
 
   /**
-   * @desc Wires useQuota (always) and useMeter only in meter mode to avoid
-   * unnecessary reactive subscriptions and polling in legacy mode.
-   * pollIntervalMs:0 disables the 30-second setInterval inside useMeter, but
-   * safeRefresh() still fires once on mount to populate the initial meter state.
+   * @desc Wires useQuota (always) and useMeter (always, at top level to satisfy
+   * composition rules). pollIntervalMs:0 disables the 30-second setInterval inside
+   * useMeter; fetchMissingMeterData() still runs immediately during composable
+   * creation to populate initial meter state. Meter values are only consumed by
+   * computed properties when mode === 'meter'.
    * @param {Object} props - Component props
-   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed?: ComputedRef, meterQuota?: ComputedRef, meterExtras?: ComputedRef, meterNetRemainingRaw?: ComputedRef, meterOverage?: ComputedRef, authStore: Object, billingStore: Object }}
+   * @returns {{ usage: Object, limits: Object, usagePercent: Function, meterUsed: ComputedRef, meterQuota: ComputedRef, meterExtras: ComputedRef, meterNetRemainingRaw: ComputedRef, meterOverage: ComputedRef, authStore: Object, billingStore: Object }}
    */
-  setup(props) {
+  setup() {
     const { usage, limits, usagePercent } = useQuota();
     const { isPlanActive } = useBilling();
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
-    if (props.mode === 'meter') {
-      const {
-        used: meterUsed,
-        quota: meterQuota,
-        extras: meterExtras,
-        netRemainingRaw: meterNetRemainingRaw,
-        overage: meterOverage,
-      } = useMeter({ pollIntervalMs: 0 });
-      return { usage, limits, usagePercent, isPlanActive, meterUsed, meterQuota, meterExtras, meterNetRemainingRaw, meterOverage, authStore, billingStore };
-    }
-    return { usage, limits, usagePercent, isPlanActive, authStore, billingStore };
+    const {
+      used: meterUsed,
+      quota: meterQuota,
+      extras: meterExtras,
+      netRemainingRaw: meterNetRemainingRaw,
+      overage: meterOverage,
+    } = useMeter({ pollIntervalMs: 0 });
+    return { usage, limits, usagePercent, isPlanActive, meterUsed, meterQuota, meterExtras, meterNetRemainingRaw, meterOverage, authStore, billingStore };
   },
 
   computed: {

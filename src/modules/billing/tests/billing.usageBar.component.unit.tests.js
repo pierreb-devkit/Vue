@@ -323,10 +323,14 @@ describe('BillingUsageBarComponent', () => {
     store.usageMeter = { meterUsed: 800, meterQuota: 1000, extrasRemaining: 0 };
     const wrapper = mountComponent({ mode: 'meter' });
     expect(wrapper.vm.meterOverage).toBe(0);
-    expect(wrapper.text()).not.toContain('over quota');
+    // Child receives overage=0 — no overage chip should render
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.props('overage')).toBe(0);
+    expect(wrapper.findComponent({ name: 'v-chip' }).exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('over');
   });
 
-  it('shows overage badge and warning color when used exceeds quota (overage > 0)', () => {
+  it('shows overage badge and error color when used exceeds quota (overage > 0)', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();
     store.subscription = { status: 'active', plan: 'starter' };
