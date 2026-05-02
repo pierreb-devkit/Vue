@@ -7,13 +7,16 @@
   USAGE:
   <BillingMeterProgressComponent :used="120" :quota="200" :extras="30" label="Compute" />
   <BillingMeterProgressComponent :used="180" :quota="200" variant="donut" />
+  <BillingMeterProgressComponent :used="220" :quota="200" :overage="20" :net-remaining-raw="-20" />
 
   PROPS:
-  - used     (Number, required) : credits consumed
-  - quota    (Number, required) : included weekly quota
-  - extras   (Number, default 0): extras-pack credits remaining
-  - label    (String, optional) : widget label
-  - variant  ('bar'|'donut', default 'bar') : visual style
+  - used             (Number, required) : credits consumed
+  - quota            (Number, required) : included weekly quota
+  - extras           (Number, default 0): extras-pack credits remaining
+  - overage          (Number, default 0): credits consumed beyond quota (>0 when over)
+  - netRemainingRaw  (Number, default 0): unclamped remaining (can be negative when over quota)
+  - label            (String, optional) : widget label
+  - variant          ('bar'|'donut', default 'bar') : visual style
 
   EVENTS:
   - click : emitted when the widget is interacted with (for drilldown)
@@ -35,7 +38,25 @@
       class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1"
     >
       <span>{{ label }}</span>
-      <span class="font-weight-medium">{{ clampedProgress }}%</span>
+      <span
+        class="font-weight-medium"
+        :class="overage > 0 ? 'text-warning' : ''"
+      >{{ clampedProgress }}%</span>
+    </div>
+
+    <!-- Overage badge -->
+    <div
+      v-if="overage > 0"
+      class="d-flex align-center mb-1"
+    >
+      <v-chip
+        color="warning"
+        size="x-small"
+        variant="tonal"
+        prepend-icon="fa-solid fa-triangle-exclamation"
+      >
+        +{{ overage }} over
+      </v-chip>
     </div>
 
     <!-- Bar variant -->
@@ -65,8 +86,13 @@
 
     <!-- Summary text -->
     <div class="text-caption text-medium-emphasis mt-1">
-      <span>{{ used }} / {{ quota }}</span>
-      <span v-if="extras > 0"> +{{ extras }} extras</span>
+      <template v-if="overage > 0">
+        <span class="text-warning">{{ netRemainingRaw }} remaining</span>
+      </template>
+      <template v-else>
+        <span>{{ used }} / {{ quota }}</span>
+        <span v-if="extras > 0"> +{{ extras }} extras</span>
+      </template>
     </div>
   </div>
 </template>
@@ -101,6 +127,22 @@ export default {
       default: 0,
     },
     /**
+     * @desc Credits consumed beyond the included quota. Positive when over quota.
+     * From useMeter's `overage` export.
+     */
+    overage: {
+      type: Number,
+      default: 0,
+    },
+    /**
+     * @desc Unclamped remaining balance (quota - used + extras). Can be negative.
+     * From useMeter's `netRemainingRaw` export.
+     */
+    netRemainingRaw: {
+      type: Number,
+      default: 0,
+    },
+    /**
      * @desc Optional display label shown above the bar/donut.
      */
     label: {
@@ -122,6 +164,7 @@ export default {
   computed: {
     /**
      * @desc Usage percentage clamped to [0, 100].
+     * When in overage the bar is shown at 100% to indicate fully consumed state.
      * @returns {number}
      */
     clampedProgress() {
@@ -131,10 +174,12 @@ export default {
 
     /**
      * @desc Vuetify color token based on usage threshold.
-     * green <70%, warning 70-90%, error >=90%.
+     * Shifts to warning when in overage (consumed beyond quota).
+     * green <70%, warning 70-90% or overage > 0, error >=90% (no overage).
      * @returns {string}
      */
     thresholdColor() {
+      if (this.overage > 0) return 'warning';
       if (this.clampedProgress >= 90) return 'error';
       if (this.clampedProgress >= 70) return 'warning';
       return 'success';
@@ -146,6 +191,9 @@ export default {
      */
     ariaLabel() {
       const base = this.label ? `${this.label}: ` : '';
+      if (this.overage > 0) {
+        return `${base}${this.used} of ${this.quota} used, ${this.overage} over quota`;
+      }
       return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
     },
   },

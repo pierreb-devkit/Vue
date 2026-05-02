@@ -153,4 +153,22 @@ describe('BillingMeterProgressComponent', () => {
     const labelRow = wrapper.find('.d-flex.justify-space-between');
     expect(labelRow.exists()).toBe(false);
   });
+
+  // ── Overage display ──────────────────────────────────────────────────────
+
+  it('no overage badge when overage is 0 (normal behavior unchanged)', () => {
+    const wrapper = mountComponent({ used: 50, quota: 100, overage: 0, netRemainingRaw: 50 });
+    expect(wrapper.text()).not.toContain('over');
+    expect(wrapper.findComponent({ name: 'v-chip' }).exists()).toBe(false);
+    expect(wrapper.vm.thresholdColor).toBe('success');
+  });
+
+  it('shows overage badge and warning color when overage > 0', () => {
+    const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
+    expect(wrapper.vm.thresholdColor).toBe('warning');
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.exists()).toBe(true);
+    expect(wrapper.text()).toContain('+20 over');
+    expect(wrapper.text()).toContain('-20 remaining');
+  });
 });
