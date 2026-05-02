@@ -313,4 +313,37 @@ describe('BillingUsageBarComponent', () => {
     expect(wrapper.text()).toContain('200');
     expect(wrapper.text()).toContain('1000');
   });
+
+  // ── Meter mode: overage display ──────────────────────────────────────────
+
+  it('no overage badge when used is within quota (overage = 0)', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 800, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.meterOverage).toBe(0);
+    // Child receives overage=0 — no overage chip should render
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.props('overage')).toBe(0);
+    expect(wrapper.findComponent({ name: 'v-chip' }).exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('over');
+  });
+
+  it('shows overage badge and error color when used exceeds quota (overage > 0)', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.meterOverage).toBe(100);
+    expect(wrapper.vm.meterNetRemainingRaw).toBe(-100);
+    // meterDisplay shows negative remaining in header
+    expect(wrapper.text()).toContain('-100');
+    // meterProgress child renders the overage badge
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.exists()).toBe(true);
+    expect(meterProgress.props('overage')).toBe(100);
+    expect(meterProgress.props('netRemainingRaw')).toBe(-100);
+  });
 });
