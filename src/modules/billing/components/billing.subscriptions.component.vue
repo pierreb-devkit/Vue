@@ -491,7 +491,8 @@ export default {
       try {
         await this.billingStore.openPortal();
         this.portalError = null;
-      } catch {
+      } catch (err) {
+        console.error('Failed to open billing portal:', err);
         this.portalError = 'Unable to open the billing portal. Please try again.';
       } finally {
         this.portalLoading = false;
