@@ -148,6 +148,54 @@ describe('auth.signup.view', () => {
       expect(wrapper.vm.signupError).toBe('Email is already taken');
       expect(wrapper.text()).toContain('Email is already taken');
     });
+
+    it('shows API error when response.data is a plain string', async () => {
+      signupMock.mockRejectedValueOnce({ response: { data: 'Service unavailable' } });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Service unavailable');
+    });
+
+    it('shows API error when response.data has an error key', async () => {
+      signupMock.mockRejectedValueOnce({ response: { data: { error: 'Invalid token' } } });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Invalid token');
+    });
+
+    it('shows API errors when response.data.errors is an array with entry.error keys', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { data: { errors: [{ error: 'Email taken' }, { msg: 'Too short' }] } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Email taken Too short');
+    });
+
+    it('shows API errors when response.data.errors contains plain strings', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { data: { errors: ['Password too weak', 'Email invalid'] } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Password too weak Email invalid');
+    });
   });
 
   describe('password visibility toggle', () => {

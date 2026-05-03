@@ -204,6 +204,7 @@ export default {
   },
   /**
    * @desc Fetch billing plans and subscription data on component creation.
+   * @returns {Promise<void>}
    */
   async created() {
     try {

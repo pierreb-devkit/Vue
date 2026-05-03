@@ -76,6 +76,11 @@ export default {
     mode: {
       type: String,
       default: 'subscription',
+      /**
+       * @desc Validate that mode is a known billing mode.
+       * @param {string} value - The mode value to validate.
+       * @returns {boolean} True if value is a supported mode.
+       */
       validator: (value) => ['subscription', 'meter'].includes(value),
     },
   },

@@ -388,7 +388,9 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     expect(wrapper.text()).toContain('Subscription updated successfully. Thank you!');
 
     vi.advanceTimersByTime(100);
-    expect(router.replace).toHaveBeenCalledWith({ query: { tab: 'subscriptions' } });
+    expect(router.replace).toHaveBeenCalledWith({
+      query: { tab: 'subscriptions', success: undefined, type: undefined, packPurchased: undefined },
+    });
   });
 
   it('shows extras success copy when Stripe returns type=extras', async () => {
@@ -401,6 +403,31 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     await flushPromises();
 
     expect(wrapper.text()).toContain('Extra units purchased successfully. Thank you!');
+  });
+
+  it('shows extras success copy when packPurchased=true string is present', async () => {
+    const router = { replace: vi.fn(), push: vi.fn() };
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: true } },
+      routeQuery: { tab: 'subscriptions', packPurchased: 'true' },
+      router,
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Extra units purchased successfully. Thank you!');
+  });
+
+  it('does NOT show success banner when packPurchased=false string is present', async () => {
+    const router = { replace: vi.fn(), push: vi.fn() };
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: true } },
+      routeQuery: { tab: 'subscriptions', packPurchased: 'false' },
+      router,
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain('successfully');
+    expect(router.replace).not.toHaveBeenCalled();
   });
 });
 

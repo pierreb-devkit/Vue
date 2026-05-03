@@ -408,6 +408,7 @@ export default {
    * @desc Fetch subscription data on mount and handle Stripe redirect query params.
    * The legacy /billing page is retired; this component is now the landing point for
    * Stripe redirects (success, cancel, packPurchased).
+   * @returns {Promise<void>}
    */
   async mounted() {
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
@@ -425,6 +426,10 @@ export default {
     // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
     // no duplicate call needed here.
   },
+  /**
+   * @desc Clear pending checkout-success URL cleanup timer on component teardown.
+   * @returns {void}
+   */
   beforeUnmount() {
     if (this.successCleanupTimer) {
       clearTimeout(this.successCleanupTimer);
@@ -437,15 +442,18 @@ export default {
      */
     handleCheckoutSuccessQuery() {
       const query = this.$route?.query || {};
-      const isSuccess = query.success === 'true' || query.packPurchased;
+      const packPurchased = query.packPurchased === true || query.packPurchased === 'true';
+      const isSuccess = query.success === 'true' || packPurchased;
       if (!isSuccess) return;
 
-      this.paymentSuccessMessage = query.type === 'extras' || query.packPurchased
+      this.paymentSuccessMessage = query.type === 'extras' || packPurchased
         ? 'Extra units purchased successfully. Thank you!'
         : 'Subscription updated successfully. Thank you!';
 
       this.successCleanupTimer = setTimeout(() => {
-        this.$router.replace({ query: { tab: 'subscriptions' } });
+        this.$router.replace({
+          query: { ...this.$route.query, success: undefined, type: undefined, packPurchased: undefined, tab: 'subscriptions' },
+        });
       }, 100);
     },
     /**

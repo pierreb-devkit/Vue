@@ -174,6 +174,11 @@ export default {
   components: {
     AuthOrganizationSetupComponent,
   },
+  /**
+   * @desc Initialize signup view reactive state including form fields, OAuth URL,
+   * validation rules, and signupError for API error display.
+   * @returns {Object} Component reactive data.
+   */
   data() {
     const theme = useTheme();
     return {
@@ -338,7 +343,7 @@ export default {
       if (typeof data?.error === 'string' && data.error.trim()) return data.error;
       if (Array.isArray(data?.errors) && data.errors.length > 0) {
         return data.errors
-          .map((entry) => entry?.message || entry?.msg || entry)
+          .map((entry) => entry?.message || entry?.msg || entry?.error || (typeof entry === 'string' ? entry : 'An unknown error occurred'))
           .filter(Boolean)
           .join(' ');
       }
