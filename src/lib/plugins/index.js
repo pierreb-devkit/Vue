@@ -9,6 +9,7 @@ import images from './images';
 import aos from './aos';
 import markdown from './markdown';
 import lodash from './lodash';
+import i18n from './i18n';
 
 /**
  * Exports.
@@ -22,4 +23,5 @@ export default {
   aos,
   markdown,
   lodash,
+  i18n,
 };

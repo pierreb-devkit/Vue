@@ -1,8 +1,8 @@
 <template>
   <v-alert type="info" variant="tonal" prominent class="my-4">
     <template #text>
-      <span v-if="hasUsageInfo">You've used {{ current }} of {{ limit }} {{ displayLabel }}.</span>
-      <span v-else>This feature requires the <strong>{{ requiredPlan }}</strong> plan.</span>
+      <span v-if="hasUsageInfo">{{ $t('billing.upgradePrompt.usageInfo', { current, limit, label: displayLabel }) }}</span>
+      <span v-else>{{ $t('billing.upgradePrompt.requirePlan', { plan: requiredPlan }) }}</span>
     </template>
     <template #append>
       <v-btn
@@ -13,7 +13,7 @@
         class="text-none"
         @click="$emit('buy-pack')"
       >
-        Buy units
+        {{ $t('billing.upgradePrompt.buyUnits') }}
       </v-btn>
       <v-btn
         v-else
@@ -23,7 +23,7 @@
         class="text-none"
         to="/pricing"
       >
-        Upgrade
+        {{ $t('billing.upgradePrompt.upgrade') }}
       </v-btn>
     </template>
   </v-alert>

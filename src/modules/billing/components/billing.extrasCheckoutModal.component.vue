@@ -28,7 +28,7 @@
     <v-card>
       <!-- Title — v-card-title adds dialog landmark semantics for screen readers -->
       <v-card-title class="text-title-medium font-weight-bold pt-5 px-5">
-        Buy extra units
+        {{ $t('billing.extras.modal.title') }}
       </v-card-title>
 
       <!-- Pack radio list -->
@@ -41,7 +41,7 @@
             v-for="pack in packs"
             :key="pack.packId"
             :value="pack.packId"
-            :label="`${pack.label} - $${pack.priceUsd} (+${pack.meterUnits} units)`"
+            :label="`${pack.label} - ${formatPrice(pack.priceUsd)} (${$t('billing.packs.units', { amount: pack.meterUnits })})`"
             class="mb-1"
           />
         </v-radio-group>
@@ -51,7 +51,7 @@
           v-if="packs.length === 0"
           class="text-body-medium text-medium-emphasis py-2"
         >
-          No packs available at this time.
+          {{ $t('billing.extras.modal.noPacksAvailable') }}
         </p>
       </v-card-text>
 
@@ -70,7 +70,6 @@
 
       <!-- Actions -->
       <v-card-actions class="px-5 pb-5 ga-2">
-        <!-- i18n key: billing.extras.cta → Buy units -->
         <v-btn
           color="primary"
           variant="flat"
@@ -79,7 +78,7 @@
           :loading="purchasing"
           @click="onBuy"
         >
-          Buy {{ selectedPackLabel }}
+          {{ $t('billing.packs.purchase', { label: selectedPackLabel }) }}
         </v-btn>
         <v-btn
           variant="text"
@@ -87,7 +86,7 @@
           :disabled="purchasing"
           @click="$emit('update:modelValue', false)"
         >
-          Cancel
+          {{ $t('billing.extras.modal.cancel') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -99,6 +98,7 @@
  * Module dependencies.
  */
 import { useBillingStore } from '../stores/billing.store';
+import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 
 /**
  * Component definition.
@@ -127,13 +127,13 @@ export default {
   emits: ['update:modelValue'],
 
   /**
-   * @desc Injects billingStore directly so only createExtrasCheckout is wired —
-   * no polling side-effect on mount (avoids the safeRefresh triggered by useMeter).
-   * @returns {{ billingStore: Object }}
+   * @desc Injects billingStore and currency formatter.
+   * @returns {{ billingStore: Object, formatPrice: Function }}
    */
   setup() {
     const billingStore = useBillingStore();
-    return { billingStore };
+    const { formatPrice } = useCurrencyFormat();
+    return { billingStore, formatPrice };
   },
 
   data() {
@@ -201,7 +201,7 @@ export default {
         // On success, Stripe redirects — so we only reach here on error
       } catch (err) {
         console.error('Failed to initiate extras checkout:', err);
-        this.purchaseError = 'Unable to start checkout. Please try again.';
+        this.purchaseError = this.$t('billing.pricing.error.checkoutFailed');
       } finally {
         this.purchasing = false;
       }

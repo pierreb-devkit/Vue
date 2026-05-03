@@ -9,13 +9,13 @@
       class="mb-6"
       @click:close="dismissAlert"
     >
-      Checkout was canceled. You can try again whenever you are ready.
+      {{ $t('billing.pricing.cancel.message') }}
     </v-alert>
 
     <!-- Header -->
     <div class="text-center mb-10">
-      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">Pricing</h1>
-      <p class="text-body-large text-medium-emphasis">Choose the plan that fits your needs.</p>
+      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
+      <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
     </div>
 
     <!-- Error state (non-blocking — plans still render from static config) -->
@@ -28,7 +28,7 @@
     >
       {{ error }}
       <template #append>
-        <v-btn variant="text" size="small" @click="retryFetchPlans">Retry</v-btn>
+        <v-btn variant="text" size="small" @click="retryFetchPlans">{{ $t('billing.pricing.error.retry') }}</v-btn>
       </template>
     </v-alert>
 
@@ -50,13 +50,11 @@
         <div class="d-flex align-center mb-3">
           <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
           <span class="text-title-medium font-weight-medium">
-            <!-- i18n key: billing.checkout.error.alreadyActive.title -->
-            Subscription already active
+            {{ $t('billing.checkout.error.alreadyActive.title') }}
           </span>
         </div>
         <p class="text-body-medium text-medium-emphasis mb-6">
-          <!-- i18n key: billing.checkout.error.alreadyActive.message -->
-          You already have an active subscription. Manage it via the Customer Portal.
+          {{ $t('billing.checkout.error.alreadyActive.message') }}
         </p>
         <div class="d-flex ga-3 justify-end">
           <v-btn
@@ -64,7 +62,7 @@
             class="text-none text-body-medium"
             @click="alreadyActiveDialog = false"
           >
-            Close
+            {{ $t('billing.checkout.error.alreadyActive.close') }}
           </v-btn>
           <v-btn
             v-if="alreadyActivePortalUrl"
@@ -75,8 +73,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <!-- i18n key: billing.checkout.error.alreadyActive.cta -->
-            Open Customer Portal
+            {{ $t('billing.checkout.error.alreadyActive.cta') }}
           </v-btn>
         </div>
       </v-card>
@@ -128,15 +125,14 @@
     <!-- Downgrade confirmation dialog -->
     <v-dialog v-model="downgradeDialog" max-width="480" @keydown.esc="cancelDowngrade">
       <v-card>
-        <v-card-title class="text-title-medium font-weight-bold">Confirm plan change</v-card-title>
+        <v-card-title class="text-title-medium font-weight-bold">{{ $t('billing.pricing.downgrade.title') }}</v-card-title>
         <v-card-text class="text-body-medium">
-          You're switching from <strong>{{ currentPlanName }}</strong> to <strong>{{ pendingDowngradePlanName }}</strong>.
-          Stripe will pro-rate the difference. Quota will reset at next billing cycle.
+          {{ $t('billing.pricing.downgrade.message', { from: currentPlanName, to: pendingDowngradePlanName }) }}
         </v-card-text>
         <v-card-actions class="ga-2">
-          <v-btn variant="text" class="text-none" @click="cancelDowngrade">Cancel</v-btn>
+          <v-btn variant="text" class="text-none" @click="cancelDowngrade">{{ $t('billing.pricing.downgrade.cancel') }}</v-btn>
           <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">
-            Continue to checkout
+            {{ $t('billing.pricing.downgrade.confirm') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -246,10 +242,8 @@ export default {
      */
     tabItems() {
       return [
-        // i18n key: billing.pricing.tabs.plans
-        { id: 'plans', label: 'Plans' },
-        // i18n key: billing.pricing.tabs.units
-        { id: 'units', label: 'Units' },
+        { id: 'plans', label: this.$t('billing.pricing.tabs.plans') },
+        { id: 'units', label: this.$t('billing.pricing.tabs.units') },
       ];
     },
     /**
@@ -287,7 +281,7 @@ export default {
       await this.billingStore.fetchPlans();
     } catch (err) {
       console.error('Failed to load pricing plans:', err);
-      this.error = 'Failed to load pricing. Please try again.';
+      this.error = this.$t('billing.pricing.error.loadFailed');
     }
 
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
@@ -332,7 +326,7 @@ export default {
         await this.billingStore.fetchPlans();
       } catch (err) {
         console.error('Failed to load pricing plans:', err);
-        this.error = 'Failed to load pricing. Please try again.';
+        this.error = this.$t('billing.pricing.error.loadFailed');
       }
     },
     /**
@@ -422,7 +416,7 @@ export default {
           return;
         }
         console.error('Failed to start checkout:', err);
-        this.checkoutError = 'Failed to start checkout. Please try again.';
+        this.checkoutError = this.$t('billing.pricing.error.checkoutFailed');
       } finally {
         this.checkoutLoading = false;
       }

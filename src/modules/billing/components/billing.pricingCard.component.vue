@@ -48,7 +48,7 @@
     <!-- Price -->
     <div class="mb-6">
       <template v-if="isFree">
-        <span class="text-display-small font-weight-bold">Free</span>
+        <span class="text-display-small font-weight-bold">{{ $t('billing.pricingCard.free') }}</span>
       </template>
       <template v-else-if="pricesLoading && displayPrice === null">
         <v-skeleton-loader
@@ -57,11 +57,11 @@
         />
       </template>
       <template v-else-if="displayPrice !== null">
-        <span class="text-display-small font-weight-bold">${{ displayPrice }}</span>
-        <span class="text-body-medium text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
+        <span class="text-display-small font-weight-bold">{{ formatPrice(displayPrice) }}</span>
+        <span class="text-body-medium text-medium-emphasis">{{ $t('billing.period.' + (annual ? 'year' : 'month')) }}</span>
       </template>
       <template v-else>
-        <span class="text-title-medium text-medium-emphasis">Pricing unavailable</span>
+        <span class="text-title-medium text-medium-emphasis">{{ $t('billing.pricing.error.pricingUnavailable') }}</span>
       </template>
     </div>
 
@@ -70,7 +70,7 @@
       <template v-if="!current">
         <v-tooltip
           v-if="pricingUnavailable"
-          text="Pricing temporarily unavailable"
+          :text="$t('billing.pricing.error.pricingTemporarilyUnavailable')"
           location="top"
         >
           <template #activator="{ props: tooltipProps }">
@@ -114,7 +114,7 @@
         size="large"
         disabled
       >
-        Current Plan
+        {{ $t('billing.pricingCard.currentPlan') }}
       </v-btn>
     </div>
 
@@ -183,6 +183,7 @@
  * Module dependencies.
  */
 import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
+import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 
 /**
  * Component definition.
@@ -224,6 +225,14 @@ export default {
     },
   },
   emits: ['select'],
+  /**
+   * @desc Inject currency formatter so templates can call formatPrice(amount).
+   * @returns {{ formatPrice: Function }}
+   */
+  setup() {
+    const { formatPrice } = useCurrencyFormat();
+    return { formatPrice };
+  },
   computed: {
     /**
      * @desc Whether the equivalences array contains structured {kind, count, label} objects

@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 const vuetify = createVuetify();
 
@@ -45,7 +49,7 @@ const mountComponent = (props = {}) =>
   mount(BillingPricingCardComponent, {
     props: { plan: freePlan, annual: false, current: false, ...props },
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
       mocks: { config: mockConfig },
       stubs: {
         'v-tooltip': {
@@ -105,14 +109,15 @@ describe('BillingPricingCardComponent', () => {
 
   it('displays monthly price when annual is false', () => {
     const wrapper = mountComponent({ plan: proPlan, annual: false });
-    expect(wrapper.text()).toContain('$29');
-    expect(wrapper.text()).toContain('/ month');
+    // Intl.NumberFormat USD: $29.00
+    expect(wrapper.text()).toContain('$29.00');
+    expect(wrapper.text()).toContain('/month');
   });
 
   it('displays annual price when annual is true', () => {
     const wrapper = mountComponent({ plan: proPlan, annual: true });
-    expect(wrapper.text()).toContain('$290');
-    expect(wrapper.text()).toContain('/ year');
+    expect(wrapper.text()).toContain('$290.00');
+    expect(wrapper.text()).toContain('/year');
   });
 
   it('shows CTA button when not current plan', () => {

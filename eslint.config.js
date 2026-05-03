@@ -51,5 +51,9 @@ export default [
         afterAll: 'readonly',
       },
     },
+    rules: {
+      // Test files use inline defineComponent wrappers — multiple components per file is expected
+      'vue/one-component-per-file': 'off',
+    },
   },
 ];
