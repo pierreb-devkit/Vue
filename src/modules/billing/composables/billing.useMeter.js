@@ -143,6 +143,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
    * double-fetching when the interval poll already covers freshness.
    * @returns {void}
    */
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — composable closure, not a Qwik component
   const handleVisibilityChange = () => {
     if (refreshOnFocus && document.visibilityState === 'visible' && pollIntervalMs === 0) {
       void safeRefresh();

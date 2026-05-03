@@ -51,6 +51,7 @@ export default {
     equivalences: {
       type: Array,
       required: true,
+      // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Vue props validator, not a Qwik component
       validator: (arr) =>
         arr.every(
           (e) =>
