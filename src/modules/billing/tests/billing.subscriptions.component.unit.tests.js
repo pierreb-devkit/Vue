@@ -803,7 +803,8 @@ describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => 
     sessionStorage.clear();
   });
 
-  it('persists polling session to sessionStorage when ?success=true starts polling', async () => {
+  it('persists polling session to sessionStorage with snapshot fields when ?success=true starts polling', async () => {
+    store.subscription = { status: 'active', plan: 'starter', stripeSubscriptionId: 'sub_before' };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
       routeQuery: { success: 'true' },
@@ -815,11 +816,21 @@ describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => 
     const parsed = JSON.parse(raw);
     expect(parsed).toHaveProperty('startedAt');
     expect(typeof parsed.startedAt).toBe('number');
+    // Snapshot fields should be persisted for reliable F5 recovery
+    expect(parsed).toHaveProperty('snapshotId', 'sub_before');
+    expect(parsed).toHaveProperty('snapshotStatus', 'active');
+    expect(parsed).toHaveProperty('snapshotPlan', 'starter');
   });
 
-  it('resumes polling when sessionStorage has a valid recent entry (F5 mid-polling)', async () => {
+  it('resumes polling and restores snapshots from sessionStorage (F5 mid-polling)', async () => {
     // Simulate 4 seconds elapsed — still within the 16s window
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: Date.now() - 4000 }));
+    // Include snapshot fields so baseline is correctly restored
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      startedAt: Date.now() - 4000,
+      snapshotId: 'sub_before_f5',
+      snapshotStatus: 'active',
+      snapshotPlan: 'starter',
+    }));
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
 
     // Mount without ?success query — simulates F5
@@ -833,6 +844,10 @@ describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => 
     expect(wrapper.vm.checkoutProcessing).toBe(true);
     // Poll count should start at 2 (4000ms / 2000ms per poll)
     expect(wrapper.vm.checkoutPollCount).toBe(2);
+    // Snapshots restored from storage — not from null store state
+    expect(wrapper.vm.checkoutPollSnapshotId).toBe('sub_before_f5');
+    expect(wrapper.vm.checkoutPollSnapshotStatus).toBe('active');
+    expect(wrapper.vm.checkoutPollSnapshotPlan).toBe('starter');
   });
 
   it('shows processing banner when polling is resumed after F5', async () => {
@@ -846,6 +861,21 @@ describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => 
     await flushPromises();
 
     expect(wrapper.text()).toContain('Processing your payment');
+  });
+
+  it('does NOT resume polling when sessionStorage contains malformed startedAt', async () => {
+    // Store malformed data with invalid startedAt
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: 'not-a-number' }));
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    // Session key should be cleared after invalid data detected
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
   });
 
   it('does NOT resume polling when sessionStorage entry is expired (F5 after timeout)', async () => {
@@ -864,7 +894,12 @@ describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => 
   });
 
   it('clears sessionStorage on successful subscription activation', async () => {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: Date.now() }));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      startedAt: Date.now(),
+      snapshotId: null,
+      snapshotStatus: null,
+      snapshotPlan: null,
+    }));
     let callCount = 0;
     vi.spyOn(store, 'fetchSubscription').mockImplementation(async () => {
       callCount += 1;
@@ -929,6 +964,9 @@ describe('BillingSubscriptionsComponent — visibilitychange subscription refetc
     await flushPromises();
 
     const initialCallCount = fetchSpy.mock.calls.length;
+
+    // Advance time past the 500ms debounce window to ensure the visibility refetch is not blocked
+    await vi.advanceTimersByTimeAsync(600);
 
     // Simulate tab becoming visible
     Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });

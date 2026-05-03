@@ -553,6 +553,7 @@ export default {
         // Normal load: fetch once and surface errors
         try {
           await this.billingStore.fetchSubscription();
+          this.subscriptionLastFetchedAt = Date.now();
         } catch {
           // subscriptionError is already set in the store; component shows error card
         }
@@ -647,7 +648,12 @@ export default {
       this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
       this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
       this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
-      this.persistCheckoutPollingSession({ startedAt: Date.now() });
+      this.persistCheckoutPollingSession({
+        startedAt: Date.now(),
+        snapshotId: this.checkoutPollSnapshotId,
+        snapshotStatus: this.checkoutPollSnapshotStatus,
+        snapshotPlan: this.checkoutPollSnapshotPlan,
+      });
       this.scheduleQueryCleanup();
       this.pollSubscription();
       return true;
@@ -656,7 +662,8 @@ export default {
     /**
      * @desc Attempt to resume an interrupted checkout polling session after F5 reload.
      * Reads from sessionStorage — clears stale entry when the polling window has expired.
-     * When resumed, the component enters processing state and polls for remaining window time.
+     * When resumed, restores the pre-checkout snapshots from storage so that polling
+     * detects state changes against the original baseline (not the null store state after reload).
      * @returns {boolean} True when polling was successfully resumed
      */
     resumeCheckoutPollingFromSession() {
@@ -670,7 +677,14 @@ export default {
         return false;
       }
 
-      const { startedAt } = stored;
+      const { startedAt, snapshotId, snapshotStatus, snapshotPlan } = stored;
+
+      // Validate startedAt to guard against malformed storage data
+      if (typeof startedAt !== 'number' || Number.isNaN(startedAt)) {
+        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        return false;
+      }
+
       const elapsed = Date.now() - startedAt;
       const remaining = CHECKOUT_POLL_WINDOW_MS - elapsed;
 
@@ -679,13 +693,15 @@ export default {
         return false;
       }
 
-      // Resume: show processing banner and poll for remaining time
+      // Resume: restore baseline snapshots from storage and poll for remaining time.
+      // Using persisted snapshots (not null store state) prevents a false-positive
+      // activation on the first fetch after F5.
       this.checkoutProcessing = true;
       this.checkoutTimeout = false;
       this.checkoutPollCount = Math.floor(elapsed / CHECKOUT_POLL_INTERVAL_MS);
-      this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
-      this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
-      this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
+      this.checkoutPollSnapshotId = snapshotId ?? null;
+      this.checkoutPollSnapshotStatus = snapshotStatus ?? null;
+      this.checkoutPollSnapshotPlan = snapshotPlan ?? null;
       this.pollSubscription();
       return true;
     },
