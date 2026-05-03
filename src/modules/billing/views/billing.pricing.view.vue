@@ -44,6 +44,44 @@
       {{ checkoutError }}
     </v-alert>
 
+    <!-- Bonus: 409 subscription_already_active dialog -->
+    <v-dialog v-model="alreadyActiveDialog" max-width="480">
+      <v-card class="pa-6">
+        <div class="d-flex align-center mb-3">
+          <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
+          <span class="text-title-medium font-weight-medium">
+            <!-- i18n key: billing.checkout.error.alreadyActive.title -->
+            Subscription already active
+          </span>
+        </div>
+        <p class="text-body-medium text-medium-emphasis mb-6">
+          <!-- i18n key: billing.checkout.error.alreadyActive.message -->
+          You already have an active subscription. Manage it via the Customer Portal.
+        </p>
+        <div class="d-flex ga-3 justify-end">
+          <v-btn
+            variant="outlined"
+            class="text-none text-body-medium"
+            @click="alreadyActiveDialog = false"
+          >
+            Close
+          </v-btn>
+          <v-btn
+            v-if="alreadyActivePortalUrl"
+            color="primary"
+            variant="flat"
+            class="text-none text-body-medium"
+            :href="alreadyActivePortalUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <!-- i18n key: billing.checkout.error.alreadyActive.cta -->
+            Open Customer Portal
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
     <!-- Glass tabs (meter mode only) -->
     <div v-if="meterMode" class="d-flex justify-center mb-8">
       <HomeTabsComponent
@@ -154,6 +192,9 @@ export default {
       downgradeDialog: false,
       /** @type {{ planId: string, priceId: string }|null} Pending plan selection awaiting confirmation */
       pendingDowngrade: null,
+      // Bonus: 409 already-active dialog state
+      alreadyActiveDialog: false,
+      alreadyActivePortalUrl: null,
     };
   },
   computed: {
@@ -364,6 +405,22 @@ export default {
           console.error('Rejected non-HTTPS checkout URL');
         }
       } catch (err) {
+        // Bonus: handle 409 subscription_already_active (PR Node-A contract)
+        if (err.code === 'subscription_already_active') {
+          this.alreadyActivePortalUrl = null;
+          if (err.portalUrl) {
+            try {
+              const parsed = new URL(err.portalUrl);
+              if (parsed.protocol === 'https:') {
+                this.alreadyActivePortalUrl = parsed.toString();
+              }
+            } catch {
+              // Invalid URL — link will not be shown
+            }
+          }
+          this.alreadyActiveDialog = true;
+          return;
+        }
         console.error('Failed to start checkout:', err);
         this.checkoutError = 'Failed to start checkout. Please try again.';
       } finally {

@@ -19,6 +19,7 @@ export const useBillingStore = defineStore('billing', {
   state: () => ({
     plans: [],
     subscription: null,
+    subscriptionError: null,
     quota: null,
     /**
      * Legacy global loading flag — remains for backward compat with existing
@@ -64,6 +65,8 @@ export const useBillingStore = defineStore('billing', {
 
     /**
      * @desc Fetch current subscription for the active organization.
+     * Clears subscriptionError on success; sets it on failure so the UI can
+     * show an explicit error state instead of silently falling back to free plan.
      * @returns {Promise<Object>} Resolved subscription object
      */
     async fetchSubscription() {
@@ -72,8 +75,10 @@ export const useBillingStore = defineStore('billing', {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/subscription`);
         this.subscription = res.data.data;
+        this.subscriptionError = null;
         return this.subscription;
       } catch (err) {
+        this.subscriptionError = err.message || 'Failed to load subscription';
         console.error(err);
         throw err;
       } finally {
@@ -102,6 +107,8 @@ export const useBillingStore = defineStore('billing', {
 
     /**
      * @desc Create a Stripe Checkout session and return checkout data.
+     * Throws a structured error with code 'subscription_already_active' and
+     * portalUrl when the backend responds 409 (PR Node-A contract).
      * @param {string} priceId - The Stripe price ID
      * @returns {Promise<Object>} Resolved checkout data with URL
      */
@@ -117,6 +124,12 @@ export const useBillingStore = defineStore('billing', {
         capture('plan_upgraded', { price_id: priceId });
         return res.data.data;
       } catch (err) {
+        if (err.response?.status === 409 && err.response?.data?.code === 'subscription_already_active') {
+          const alreadyActiveError = new Error('subscription_already_active');
+          alreadyActiveError.code = 'subscription_already_active';
+          alreadyActiveError.portalUrl = err.response.data.portalUrl;
+          throw alreadyActiveError;
+        }
         console.error(err);
         throw err;
       } finally {

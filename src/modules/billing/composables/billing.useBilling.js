@@ -12,7 +12,7 @@ export function useBilling() {
   const billingStore = useBillingStore();
 
   const currentPlan = computed(() => billingStore.subscription?.plan || 'free');
-  const isPlanActive = computed(() => billingStore.subscription?.status === 'active');
+  const isPlanActive = computed(() => ['active', 'trialing'].includes(billingStore.subscription?.status));
 
   /**
    * @desc Check whether the current subscription plan matches any of the given plans.

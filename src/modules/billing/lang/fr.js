@@ -15,7 +15,7 @@ export const billingFr = {
       /** i18n key: billing.usage.exhausted */
       exhausted: 'Quota épuisé',
       /** i18n key: billing.usage.manageSubscription */
-      manageSubscription: 'Gérer l’abonnement',
+      manageSubscription: "Gérer l'abonnement",
       bucket: {
         /** i18n key: billing.usage.bucket.scrap */
         scrap: 'Scrape',
@@ -59,7 +59,7 @@ export const billingFr = {
       /** i18n key: billing.subscriptions.empty */
       empty: 'Aucun abonnement actif.',
       /** i18n key: billing.subscriptions.portal */
-      portal: 'Gérer l’abonnement',
+      portal: "Gérer l'abonnement",
       plan: {
         /** i18n key: billing.subscriptions.plan.current */
         current: 'Plan actuel',
@@ -78,6 +78,34 @@ export const billingFr = {
         /** i18n key: billing.subscriptions.cta.upgrade */
         upgrade: 'Passer à un plan supérieur',
       },
+      error: {
+        /** i18n key: billing.subscriptions.error.fetchFailed */
+        fetchFailed: 'Impossible de charger les détails de votre abonnement. Veuillez réessayer.',
+        /** i18n key: billing.subscriptions.error.retry */
+        retry: 'Réessayer',
+      },
+    },
+    checkout: {
+      success: {
+        /** i18n key: billing.checkout.success.processing */
+        processing: 'Traitement de votre paiement...',
+        /** i18n key: billing.checkout.success.synced */
+        synced: 'Abonnement activé avec succès. Merci !',
+        /** i18n key: billing.checkout.success.timeout */
+        timeout: 'Paiement reçu, votre abonnement est en cours de synchronisation. Veuillez rafraîchir dans quelques secondes.',
+        /** i18n key: billing.checkout.success.refresh */
+        refresh: 'Rafraîchir',
+      },
+      error: {
+        alreadyActive: {
+          /** i18n key: billing.checkout.error.alreadyActive.title */
+          title: 'Abonnement déjà actif',
+          /** i18n key: billing.checkout.error.alreadyActive.message */
+          message: 'Vous avez déjà un abonnement actif. Gérez-le via le Portail client.',
+          /** i18n key: billing.checkout.error.alreadyActive.cta */
+          cta: 'Ouvrir le portail client',
+        },
+      },
     },
     pricing: {
       tabs: {
@@ -89,7 +117,7 @@ export const billingFr = {
     },
     packs: {
       /** i18n key: billing.packs.title */
-      title: 'Packs d’unités',
+      title: "Packs d'unités",
       /** i18n key: billing.packs.cta */
       cta: 'Acheter des unités',
       /** i18n key: billing.packs.purchase — interpolate {label} */
