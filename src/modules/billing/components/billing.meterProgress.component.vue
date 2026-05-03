@@ -57,7 +57,7 @@
         variant="tonal"
         prepend-icon="fa-solid fa-triangle-exclamation"
       >
-        +{{ overage }} over
+        {{ $t('billing.meterProgress.over', { count: overage }) }}
       </v-chip>
     </div>
 
@@ -93,10 +93,10 @@
     >
       <span>{{ used }} / {{ quota }}</span>
       <template v-if="overage > 0">
-        <span class="text-error"> ({{ computedNetRemainingRaw }} remaining)</span>
+        <span class="text-error"> {{ $t('billing.meterProgress.remaining', { count: computedNetRemainingRaw }) }}</span>
       </template>
       <template v-else>
-        <span v-if="extras > 0"> +{{ extras }} extras</span>
+        <span v-if="extras > 0"> {{ $t('billing.meterProgress.extras', { count: extras }) }}</span>
       </template>
     </div>
   </div>

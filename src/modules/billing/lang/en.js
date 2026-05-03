@@ -70,6 +70,42 @@ export const billingEn = {
       /** i18n key: billing.equivalences.scrapRun */
       scrapRun: 'operations / week',
     },
+    extrasLedger: {
+      empty: {
+        /** i18n key: billing.extrasLedger.empty.noEntries */
+        noEntries: 'No ledger entries yet',
+      },
+      headers: {
+        /** i18n key: billing.extrasLedger.headers.date */
+        date: 'Date',
+        /** i18n key: billing.extrasLedger.headers.kind */
+        kind: 'Kind',
+        /** i18n key: billing.extrasLedger.headers.amount */
+        amount: 'Amount',
+        /** i18n key: billing.extrasLedger.headers.refHistory */
+        refHistory: 'Ref / History',
+        /** i18n key: billing.extrasLedger.headers.stripeSession */
+        stripeSession: 'Stripe session',
+      },
+    },
+    meterProgress: {
+      /** i18n key: billing.meterProgress.over — interpolate {count} */
+      over: '+{count} over',
+      /** i18n key: billing.meterProgress.remaining — interpolate {count} */
+      remaining: '({count} remaining)',
+      /** i18n key: billing.meterProgress.extras — interpolate {count} */
+      extras: '+{count} extras',
+    },
+    usageBar: {
+      /** i18n key: billing.usageBar.adminLabel — used next to ∞ Admin display */
+      adminLabel: 'Admin',
+      /** i18n key: billing.usageBar.compute — unit label for free-tier display */
+      compute: 'compute',
+      /** i18n key: billing.usageBar.unlimited — legacy mode unlimited label */
+      unlimited: 'Unlimited',
+      /** i18n key: billing.usageBar.remaining — interpolate {count} */
+      remaining: '({count} remaining)',
+    },
     subscriptions: {
       /** i18n key: billing.subscriptions.title */
       title: 'Subscriptions',

@@ -2,9 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import BillingExtrasLedgerComponent from '../components/billing.extrasLedger.component.vue';
+import { billingEn } from '../lang/en.js';
 
 const vuetify = createVuetify();
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 /** Sample ledger entries covering all entry kinds. */
 const SAMPLE_ENTRIES = [
@@ -53,7 +56,7 @@ const SAMPLE_ENTRIES = [
 const mountComponent = (props) =>
   mount(BillingExtrasLedgerComponent, {
     props,
-    global: { plugins: [vuetify] },
+    global: { plugins: [vuetify, i18n] },
     attachTo: document.body,
   });
 
