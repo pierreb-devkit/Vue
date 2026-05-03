@@ -432,6 +432,23 @@ describe('useMeter composable', () => {
     expect(store.fetchExtrasBalance).toHaveBeenCalledTimes(1);
   });
 
+  it('does not refresh on visibilitychange when document is hidden', async () => {
+    mountMeter({ pollIntervalMs: 0, refreshOnFocus: true });
+
+    store.fetchUsageMeter.mockClear();
+    store.fetchExtrasBalance.mockClear();
+
+    // Simulate document becoming hidden (tab switch away)
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(store.fetchUsageMeter).not.toHaveBeenCalled();
+    expect(store.fetchExtrasBalance).not.toHaveBeenCalled();
+
+    // Restore for subsequent tests
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+  });
+
   it('does not refresh on visibilitychange when polling is already active', () => {
     vi.useFakeTimers();
     mountMeter({ pollIntervalMs: 5000, refreshOnFocus: true });

@@ -347,7 +347,7 @@ export default {
     },
     /**
      * @desc Create Stripe Checkout session and redirect.
-     * @param {Object} payload - { planId, priceId }
+     * @param {Object} payload - { priceId }
      * @returns {Promise<void>}
      */
     async proceedCheckout({ priceId }) {
