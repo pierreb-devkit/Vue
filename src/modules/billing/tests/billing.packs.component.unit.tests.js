@@ -27,8 +27,12 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
+import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -61,7 +65,7 @@ function mountPacks(overrides = {}) {
   Object.assign(authState, overrides);
   return mount(BillingPacksComponent, {
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
       mocks: {
         config: mockConfig,
         $router: { push: vi.fn() },
@@ -188,7 +192,7 @@ describe('BillingPacksComponent — purchase flow', () => {
     await flushPromises();
     const alert = wrapper.find('.v-alert');
     expect(alert.exists()).toBe(true);
-    expect(wrapper.text()).toContain('Unable to start checkout. Please try again.');
+    expect(wrapper.text()).toContain('Failed to start checkout. Please try again.');
   });
 
   it('disables all Buy buttons while a purchase is in progress', async () => {

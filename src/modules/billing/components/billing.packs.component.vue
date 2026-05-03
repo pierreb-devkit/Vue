@@ -21,7 +21,7 @@
       v-if="packs.length === 0"
       class="text-body-medium text-medium-emphasis text-center py-10"
     >
-      No unit packs available at this time.
+      {{ $t('billing.packs.noUnitsAvailable') }}
     </p>
 
     <!-- Cards grid -->
@@ -39,9 +39,9 @@
           :loading="purchasingId === pack.packId"
         >
           <p class="text-title-medium font-weight-bold mb-2">{{ pack.label }}</p>
-          <p class="text-display-small font-weight-bold mb-1">${{ pack.priceUsd }}</p>
+          <p class="text-display-small font-weight-bold mb-1">{{ formatPrice(pack.priceUsd) }}</p>
           <p class="text-body-medium text-medium-emphasis mb-4">
-            +{{ pack.meterUnits }} units
+            {{ $t('billing.packs.units', { amount: pack.meterUnits }) }}
           </p>
           <!-- Structured equivalences chips (Phase 3 forward) — opt-in, no breaking change -->
           <!-- Guard: only render chips when equivalences carry the new { kind, count, label } shape -->
@@ -59,7 +59,7 @@
             :loading="purchasingId === pack.packId"
             @click.stop="onBuy(pack)"
           >
-            Buy {{ pack.label }}
+            {{ $t('billing.packs.purchase', { label: pack.label }) }}
           </v-btn>
         </v-card>
       </v-col>
@@ -87,6 +87,7 @@ import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { packs as packsConfig } from '../config/billing.static-content';
 import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
+import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 
 /**
  * Component definition.
@@ -98,14 +99,14 @@ export default {
   },
 
   /**
-   * @desc Inject billing store and auth store. Auth store is used to guard
-   * the purchase flow (same as onSelectPlan in billing.pricing.view.vue).
-   * @returns {{ billingStore: Object, authStore: Object }}
+   * @desc Inject billing store, auth store, and currency formatter.
+   * @returns {{ billingStore: Object, authStore: Object, formatPrice: Function }}
    */
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
-    return { billingStore, authStore };
+    const { formatPrice } = useCurrencyFormat();
+    return { billingStore, authStore, formatPrice };
   },
 
   data() {
@@ -164,7 +165,7 @@ export default {
         await this.billingStore.createExtrasCheckout(pack.packId);
       } catch (err) {
         console.error('Failed to initiate extras checkout:', err);
-        this.purchaseError = 'Unable to start checkout. Please try again.';
+        this.purchaseError = this.$t('billing.pricing.error.checkoutFailed');
       } finally {
         this.purchasingId = null;
       }
