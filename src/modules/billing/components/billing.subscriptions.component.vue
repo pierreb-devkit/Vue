@@ -564,16 +564,7 @@ export default {
     // no duplicate call needed here.
 
     // V5 P2: refresh subscription when tab regains visibility (multi-tab stale state)
-    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Options API method, not a Qwik component
-    this._handleSubscriptionVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      const DEBOUNCE_MS = 500;
-      if (Date.now() - this.subscriptionLastFetchedAt < DEBOUNCE_MS) return;
-      if (this.checkoutProcessing) return; // Don't interrupt active polling
-      this.subscriptionLastFetchedAt = Date.now();
-      this.billingStore.fetchSubscription().catch(() => {});
-    };
-    document.addEventListener('visibilitychange', this._handleSubscriptionVisibilityChange);
+    document.addEventListener('visibilitychange', this.handleSubscriptionVisibilityChange);
   },
   /**
    * @desc Clear pending timers and remove event listeners on component teardown.
@@ -589,9 +580,25 @@ export default {
     if (this.checkoutPollTimer) {
       clearTimeout(this.checkoutPollTimer);
     }
-    document.removeEventListener('visibilitychange', this._handleSubscriptionVisibilityChange);
+    document.removeEventListener('visibilitychange', this.handleSubscriptionVisibilityChange);
   },
   methods: {
+    /**
+     * @desc Handle tab visibility change — refresh subscription when tab becomes visible.
+     * Debounced 500ms to prevent a redundant fetch immediately after mount or a recent poll.
+     * Skipped while checkout polling is active to avoid concurrent fetch interference.
+     * @returns {void}
+     */
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Options API method, not a Qwik component
+    handleSubscriptionVisibilityChange() {
+      if (document.visibilityState !== 'visible') return;
+      const DEBOUNCE_MS = 500;
+      if (Date.now() - this.subscriptionLastFetchedAt < DEBOUNCE_MS) return;
+      if (this.checkoutProcessing) return; // Don't interrupt active polling
+      this.subscriptionLastFetchedAt = Date.now();
+      this.billingStore.fetchSubscription().catch(() => {});
+    },
+
     /**
      * @desc Manually dismiss the payment success banner and clear its auto-dismiss timer.
      * @returns {void}
@@ -635,7 +642,10 @@ export default {
       if (!isSuccess) return false;
 
       if (query.type === 'extras' || packPurchased) {
-        // Extras purchase: no subscription state to poll — show success directly
+        // Extras purchase: no subscription state to poll — show success directly.
+        // Clear any leftover subscription polling session to prevent the resume
+        // path from overriding the extras success banner on next render.
+        this.clearCheckoutPollingSession();
         this.paymentSuccessMessage = this.$t('billing.extras.purchaseSuccess');
         this.scheduleQueryCleanup();
         return false;
@@ -679,13 +689,15 @@ export default {
 
       const { startedAt, snapshotId, snapshotStatus, snapshotPlan } = stored;
 
-      // Validate startedAt to guard against malformed storage data
-      if (typeof startedAt !== 'number' || Number.isNaN(startedAt)) {
+      // Validate startedAt to guard against malformed storage data.
+      // Number.isFinite rejects NaN, Infinity, null, strings, and future timestamps.
+      const now = Date.now();
+      if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > now) {
         sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
         return false;
       }
 
-      const elapsed = Date.now() - startedAt;
+      const elapsed = now - startedAt;
       const remaining = CHECKOUT_POLL_WINDOW_MS - elapsed;
 
       if (remaining <= 0) {

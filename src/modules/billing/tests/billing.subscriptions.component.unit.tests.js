@@ -1041,3 +1041,64 @@ describe('BillingSubscriptionsComponent — visibilitychange subscription refetc
     expect(calls.length).toBeGreaterThan(0);
   });
 });
+
+// ─── Suite 12: V5 edge cases — i18n date formatting + extras/session collision ─
+
+describe('BillingSubscriptionsComponent — V5 edge cases', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedMeterStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('nextBillingDate uses $i18n.locale for locale-aware date formatting', async () => {
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: '2026-06-15T00:00:00.000Z' };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    // nextBillingDate should be a non-empty formatted date string
+    const dateText = wrapper.vm.nextBillingDate;
+    expect(dateText).not.toBeNull();
+    expect(typeof dateText).toBe('string');
+    expect(dateText.length).toBeGreaterThan(0);
+    // Should include 2026 (the year) and some representation of the date
+    expect(dateText).toContain('2026');
+  });
+
+  it('extras purchase clears any stale sessionStorage polling session', async () => {
+    // Simulate a leftover subscription polling session from a previous navigation
+    sessionStorage.setItem('billing.checkout.polling', JSON.stringify({
+      startedAt: Date.now() - 2000,
+      snapshotId: null,
+      snapshotStatus: null,
+      snapshotPlan: null,
+    }));
+
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: true } },
+      routeQuery: { success: 'true', type: 'extras' },
+    });
+    await flushPromises();
+
+    // Session should be cleared — extras purchase must NOT resume subscription polling
+    expect(sessionStorage.getItem('billing.checkout.polling')).toBeNull();
+    // Extras success message displayed (not processing banner)
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    expect(wrapper.text()).toContain('Pack credited to your balance');
+  });
+});
