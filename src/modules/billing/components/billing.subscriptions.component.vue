@@ -16,9 +16,42 @@
 -->
 <template>
   <v-container class="py-6 px-0" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-    <!-- Checkout success banner, surfaced after Stripe redirects back to the subscriptions tab. -->
+    <!-- Checkout success / processing banner -->
     <v-alert
-      v-if="paymentSuccessMessage"
+      v-if="checkoutProcessing"
+      type="info"
+      variant="tonal"
+      class="mb-4"
+      aria-live="polite"
+    >
+      <div class="d-flex align-center ga-3">
+        <v-progress-circular indeterminate size="18" width="2" color="info" />
+        <span>
+          <!-- i18n key: billing.checkout.success.processing -->
+          Processing your payment...
+        </span>
+      </div>
+    </v-alert>
+
+    <v-alert
+      v-else-if="checkoutTimeout"
+      type="warning"
+      variant="tonal"
+      class="mb-4"
+      aria-live="polite"
+    >
+      <!-- i18n key: billing.checkout.success.timeout -->
+      Payment received, your subscription is being synced. Please refresh in a few seconds.
+      <template #append>
+        <v-btn variant="text" size="small" @click="retryFetchSubscription">
+          <!-- i18n key: billing.checkout.success.refresh -->
+          Refresh
+        </v-btn>
+      </template>
+    </v-alert>
+
+    <v-alert
+      v-else-if="paymentSuccessMessage"
       type="success"
       variant="tonal"
       closable
@@ -32,6 +65,35 @@
     <v-row v-if="fetchLoading" justify="center" class="py-10">
       <v-progress-circular indeterminate color="primary" />
     </v-row>
+
+    <!-- P1-1: Subscription fetch error — do NOT show free-plan fallback -->
+    <v-card
+      v-else-if="subscriptionError && !subscription"
+      role="alert"
+      aria-live="assertive"
+      :class="config.vuetify.theme.rounded"
+      class="pa-6 mb-4"
+    >
+      <div class="d-flex align-center mb-4">
+        <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" />
+        <span class="text-title-large font-weight-medium">Subscription unavailable</span>
+      </div>
+      <p class="text-body-medium text-medium-emphasis mb-4">
+        <!-- i18n key: billing.subscription.error.fetchFailed -->
+        Unable to load your subscription details. Please try again.
+      </p>
+      <v-btn
+        color="primary"
+        variant="flat"
+        :class="config.vuetify.theme.rounded"
+        class="text-none text-body-medium"
+        :loading="fetchLoading"
+        @click="retryFetchSubscription"
+      >
+        <!-- i18n key: billing.subscription.error.retry -->
+        Retry
+      </v-btn>
+    </v-card>
 
     <!-- Content -->
     <template v-else>
@@ -204,6 +266,46 @@
       v-model="extrasCheckoutDialog"
       :packs="extrasPacks"
     />
+
+    <!-- Bonus: 409 subscription_already_active dialog -->
+    <v-dialog v-model="alreadyActiveDialog" max-width="480">
+      <v-card :class="config.vuetify.theme.rounded" class="pa-6">
+        <div class="d-flex align-center mb-3">
+          <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
+          <span class="text-title-medium font-weight-medium">
+            <!-- i18n key: billing.checkout.error.alreadyActive.title -->
+            Subscription already active
+          </span>
+        </div>
+        <p class="text-body-medium text-medium-emphasis mb-6">
+          <!-- i18n key: billing.checkout.error.alreadyActive.message -->
+          You already have an active subscription. Manage it via the Customer Portal.
+        </p>
+        <div class="d-flex ga-3 justify-end">
+          <v-btn
+            variant="outlined"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            @click="alreadyActiveDialog = false"
+          >
+            Close
+          </v-btn>
+          <v-btn
+            v-if="alreadyActivePortalUrl"
+            color="primary"
+            variant="flat"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            :href="alreadyActivePortalUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <!-- i18n key: billing.checkout.error.alreadyActive.cta -->
+            Open Customer Portal
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -222,6 +324,11 @@ import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.c
 import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingUsageBarComponent from './billing.usageBar.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
+
+/** Maximum number of polling attempts after checkout success (2s × 8 = 16s max). */
+const CHECKOUT_POLL_MAX = 8;
+/** Interval between polling attempts in milliseconds. */
+const CHECKOUT_POLL_INTERVAL_MS = 2000;
 
 /**
  * Component definition.
@@ -289,6 +396,16 @@ export default {
       paymentSuccessMessage: null,
       successCleanupTimer: null,
       paymentSuccessTimer: null,
+      // P1-2: checkout polling state
+      checkoutProcessing: false,
+      checkoutTimeout: false,
+      checkoutPollTimer: null,
+      checkoutPollCount: 0,
+      checkoutPollSnapshotId: null,
+      checkoutPollSnapshotStatus: null,
+      // Bonus: 409 already-active dialog
+      alreadyActiveDialog: false,
+      alreadyActivePortalUrl: null,
     };
   },
   computed: {
@@ -297,6 +414,13 @@ export default {
     },
     subscription() {
       return this.billingStore.subscription;
+    },
+    /**
+     * @desc Error message from the last fetchSubscription failure (P1-1).
+     * @returns {string|null}
+     */
+    subscriptionError() {
+      return this.billingStore.subscriptionError;
     },
     /**
      * @desc Extras credit ledger data for the paginated history table.
@@ -420,19 +544,22 @@ export default {
     const hasOrg = !!this.authStore.user?.currentOrganization;
     if (!this.authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
 
-    this.handleCheckoutSuccessQuery();
+    const isCheckoutSuccess = this.handleCheckoutSuccessQuery();
 
-    try {
-      await this.billingStore.fetchSubscription();
-    } catch (error) {
-      console.error('Failed to load billing details:', error);
+    if (!isCheckoutSuccess) {
+      // Normal load: fetch once and surface errors
+      try {
+        await this.billingStore.fetchSubscription();
+      } catch {
+        // subscriptionError is already set in the store; component shows error card
+      }
     }
 
     // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
     // no duplicate call needed here.
   },
   /**
-   * @desc Clear pending checkout-success URL cleanup timer on component teardown.
+   * @desc Clear pending timers on component teardown.
    * @returns {void}
    */
   beforeUnmount() {
@@ -441,6 +568,9 @@ export default {
     }
     if (this.paymentSuccessTimer) {
       clearTimeout(this.paymentSuccessTimer);
+    }
+    if (this.checkoutPollTimer) {
+      clearTimeout(this.checkoutPollTimer);
     }
   },
   methods: {
@@ -455,32 +585,101 @@ export default {
       }
       this.paymentSuccessMessage = null;
     },
+
     /**
-     * @desc Show checkout success feedback from Stripe return query params and clean the URL.
-     * @returns {void}
+     * @desc Re-fetch subscription on demand (Retry button / Refresh button).
+     * @returns {Promise<void>}
+     */
+    async retryFetchSubscription() {
+      try {
+        await this.billingStore.fetchSubscription();
+      } catch {
+        // subscriptionError updated in store
+      }
+    },
+
+    /**
+     * @desc Detect ?success=true or ?checkout=success from Stripe redirect and start polling.
+     * Returns true when checkout-success polling is initiated (skips normal single fetch).
+     * @returns {boolean} True when polling was started
      */
     handleCheckoutSuccessQuery() {
       const query = this.$route?.query || {};
       const packPurchased = query.packPurchased === true || query.packPurchased === 'true';
       const isSuccess = query.success === 'true' || packPurchased;
-      if (!isSuccess) return;
+      if (!isSuccess) return false;
 
-      this.paymentSuccessMessage = query.type === 'extras' || packPurchased
-        ? 'Extra units purchased successfully. Thank you!'
-        : 'Subscription updated successfully. Thank you!';
+      if (query.type === 'extras' || packPurchased) {
+        // Extras purchase: no subscription state to poll — show success directly
+        this.paymentSuccessMessage = 'Extra units purchased successfully. Thank you!';
+        this.scheduleQueryCleanup();
+        return false;
+      }
 
-      // Auto-dismiss the success alert after 5 seconds (manual close still works via closable)
-      this.paymentSuccessTimer = setTimeout(() => {
-        this.paymentSuccessMessage = null;
-        this.paymentSuccessTimer = null;
-      }, 5000);
+      // Subscription checkout success: capture pre-poll snapshot and start polling
+      this.checkoutProcessing = true;
+      this.checkoutTimeout = false;
+      this.checkoutPollCount = 0;
+      this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
+      this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
+      this.scheduleQueryCleanup();
+      this.pollSubscription();
+      return true;
+    },
 
+    /**
+     * @desc Poll fetchSubscription until the subscription changes or max attempts reached.
+     * Criteria: stripeSubscriptionId appeared, OR status changed to active/trialing, OR priceId changed.
+     * @returns {void}
+     */
+    pollSubscription() {
+      this.checkoutPollTimer = setTimeout(async () => {
+        try {
+          await this.billingStore.fetchSubscription();
+        } catch {
+          // Keep polling even on transient errors
+        }
+
+        const sub = this.billingStore.subscription;
+        const newId = sub?.stripeSubscriptionId ?? null;
+        const newStatus = sub?.status ?? null;
+
+        const activated =
+          (newId && newId !== this.checkoutPollSnapshotId) ||
+          (['active', 'trialing'].includes(newStatus) && newStatus !== this.checkoutPollSnapshotStatus);
+
+        if (activated) {
+          this.checkoutProcessing = false;
+          this.checkoutTimeout = false;
+          this.paymentSuccessMessage =
+            // i18n key: billing.checkout.success.synced
+            'Subscription activated successfully. Thank you!';
+          return;
+        }
+
+        this.checkoutPollCount += 1;
+        if (this.checkoutPollCount >= CHECKOUT_POLL_MAX) {
+          this.checkoutProcessing = false;
+          this.checkoutTimeout = true;
+          return;
+        }
+
+        this.pollSubscription();
+      }, CHECKOUT_POLL_INTERVAL_MS);
+    },
+
+    /**
+     * @desc Schedule URL query cleanup after success detection.
+     * @returns {void}
+     */
+    scheduleQueryCleanup() {
       this.successCleanupTimer = setTimeout(() => {
         this.$router.replace({
           query: { ...this.$route.query, success: undefined, type: undefined, packPurchased: undefined, tab: 'subscriptions' },
         });
       }, 100);
     },
+
     /**
      * @desc Open the Stripe customer portal.
      * @returns {Promise<void>}
@@ -498,6 +697,7 @@ export default {
         this.portalLoading = false;
       }
     },
+
     /**
      * @desc Handle ledger page change from BillingExtrasLedgerComponent.
      * @param {number} page
@@ -509,6 +709,17 @@ export default {
       } catch (error) {
         console.error('Failed to load ledger page:', error);
       }
+    },
+
+    /**
+     * @desc Show the 409 already-active dialog with a portal URL.
+     * Called by consumers (e.g. pricing view) that catch the structured error.
+     * @param {string} portalUrl - Stripe customer portal URL from the 409 payload
+     * @returns {void}
+     */
+    showAlreadyActiveDialog(portalUrl) {
+      this.alreadyActivePortalUrl = portalUrl || null;
+      this.alreadyActiveDialog = true;
     },
   },
 };
