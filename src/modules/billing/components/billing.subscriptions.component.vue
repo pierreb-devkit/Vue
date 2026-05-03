@@ -643,12 +643,14 @@ export default {
 
       if (query.type === 'extras' || packPurchased) {
         // Extras purchase: no subscription state to poll — show success directly.
-        // Clear any leftover subscription polling session to prevent the resume
-        // path from overriding the extras success banner on next render.
+        // Clear any leftover subscription polling session and return true so that
+        // mounted() skips both resumeCheckoutPollingFromSession() and the normal
+        // fetchSubscription() call, preventing stale polling from overriding the
+        // extras success banner.
         this.clearCheckoutPollingSession();
         this.paymentSuccessMessage = this.$t('billing.extras.purchaseSuccess');
         this.scheduleQueryCleanup();
-        return false;
+        return true;
       }
 
       // Subscription checkout success: capture pre-poll snapshot and start polling

@@ -225,15 +225,25 @@ export default {
     },
 
     /**
-     * @desc Accessible ARIA label summarising the current meter state.
+     * @desc Accessible ARIA label summarising the current meter state (locale-aware).
      * @returns {string}
      */
     ariaLabel() {
       const base = this.label ? `${this.label}: ` : '';
       if (this.overage > 0) {
-        return `${base}${this.used} of ${this.quota} used, ${this.overage} over quota`;
+        return this.$t('billing.meterProgress.ariaOver', {
+          base,
+          used: this.used,
+          quota: this.quota,
+          overage: this.overage,
+        });
       }
-      return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
+      return this.$t('billing.meterProgress.ariaUsed', {
+        base,
+        used: this.used,
+        quota: this.quota,
+        percent: this.clampedProgress,
+      });
     },
   },
 

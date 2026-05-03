@@ -95,6 +95,10 @@ export const billingFr = {
       remaining: '({count} restants)',
       /** i18n key: billing.meterProgress.extras — interpolate {count} */
       extras: '+{count} extras',
+      /** i18n key: billing.meterProgress.ariaOver — interpolate {base}, {used}, {quota}, {overage} */
+      ariaOver: '{base}{used} sur {quota} utilises, {overage} de depassement',
+      /** i18n key: billing.meterProgress.ariaUsed — interpolate {base}, {used}, {quota}, {percent} */
+      ariaUsed: '{base}{used} sur {quota} utilises ({percent}%)',
     },
     usageBar: {
       /** i18n key: billing.usageBar.adminLabel — used next to ∞ Admin display */
