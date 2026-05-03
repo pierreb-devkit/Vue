@@ -317,6 +317,10 @@ import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.c
 const CHECKOUT_POLL_MAX = 8;
 /** Interval between polling attempts in milliseconds. */
 const CHECKOUT_POLL_INTERVAL_MS = 2000;
+/** Total polling window in milliseconds (POLL_MAX × POLL_INTERVAL). */
+const CHECKOUT_POLL_WINDOW_MS = CHECKOUT_POLL_MAX * CHECKOUT_POLL_INTERVAL_MS;
+/** sessionStorage key used to persist polling state across F5 reloads. */
+const CHECKOUT_POLL_SESSION_KEY = 'billing.checkout.polling';
 
 /**
  * Component definition.
@@ -392,6 +396,8 @@ export default {
       checkoutPollSnapshotId: null,
       checkoutPollSnapshotStatus: null,
       checkoutPollSnapshotPlan: null,
+      // V5 P2: visibility-change subscription refresh debounce (timestamp of last fetch)
+      subscriptionLastFetchedAt: 0,
       // Bonus: 409 already-active dialog
       alreadyActiveDialog: false,
       alreadyActivePortalUrl: null,
@@ -509,13 +515,13 @@ export default {
       return null;
     },
     /**
-     * @desc Format the next billing date for display.
+     * @desc Format the next billing date for display using the active i18n locale.
      * @returns {string|null}
      */
     nextBillingDate() {
       const date = this.subscription?.currentPeriodEnd;
       if (!date) return null;
-      return new Date(date).toLocaleDateString(undefined, {
+      return new Date(date).toLocaleDateString(this.$i18n.locale || undefined, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -526,6 +532,10 @@ export default {
    * @desc Fetch subscription data on mount and handle Stripe redirect query params.
    * The legacy /billing page is retired; this component is now the landing point for
    * Stripe redirects (success, cancel, packPurchased).
+   *
+   * F5 recovery (V5 P1): if sessionStorage contains a stale in-progress polling entry
+   * from a previous render and it's still within the polling window, polling is resumed
+   * for the remaining time without requiring the ?success query param to still be present.
    * @returns {Promise<void>}
    */
   async mounted() {
@@ -536,19 +546,36 @@ export default {
     const isCheckoutSuccess = this.handleCheckoutSuccessQuery();
 
     if (!isCheckoutSuccess) {
-      // Normal load: fetch once and surface errors
-      try {
-        await this.billingStore.fetchSubscription();
-      } catch {
-        // subscriptionError is already set in the store; component shows error card
+      // Check for interrupted polling session (F5 during checkout processing)
+      const resumed = this.resumeCheckoutPollingFromSession();
+
+      if (!resumed) {
+        // Normal load: fetch once and surface errors
+        try {
+          await this.billingStore.fetchSubscription();
+        } catch {
+          // subscriptionError is already set in the store; component shows error card
+        }
       }
     }
 
     // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
     // no duplicate call needed here.
+
+    // V5 P2: refresh subscription when tab regains visibility (multi-tab stale state)
+    // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Options API method, not a Qwik component
+    this._handleSubscriptionVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      const DEBOUNCE_MS = 500;
+      if (Date.now() - this.subscriptionLastFetchedAt < DEBOUNCE_MS) return;
+      if (this.checkoutProcessing) return; // Don't interrupt active polling
+      this.subscriptionLastFetchedAt = Date.now();
+      this.billingStore.fetchSubscription().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', this._handleSubscriptionVisibilityChange);
   },
   /**
-   * @desc Clear pending timers on component teardown.
+   * @desc Clear pending timers and remove event listeners on component teardown.
    * @returns {void}
    */
   beforeUnmount() {
@@ -561,6 +588,7 @@ export default {
     if (this.checkoutPollTimer) {
       clearTimeout(this.checkoutPollTimer);
     }
+    document.removeEventListener('visibilitychange', this._handleSubscriptionVisibilityChange);
   },
   methods: {
     /**
@@ -619,9 +647,73 @@ export default {
       this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
       this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
       this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
+      this.persistCheckoutPollingSession({ startedAt: Date.now() });
       this.scheduleQueryCleanup();
       this.pollSubscription();
       return true;
+    },
+
+    /**
+     * @desc Attempt to resume an interrupted checkout polling session after F5 reload.
+     * Reads from sessionStorage — clears stale entry when the polling window has expired.
+     * When resumed, the component enters processing state and polls for remaining window time.
+     * @returns {boolean} True when polling was successfully resumed
+     */
+    resumeCheckoutPollingFromSession() {
+      let stored;
+      try {
+        const raw = sessionStorage.getItem(CHECKOUT_POLL_SESSION_KEY);
+        if (!raw) return false;
+        stored = JSON.parse(raw);
+      } catch {
+        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        return false;
+      }
+
+      const { startedAt } = stored;
+      const elapsed = Date.now() - startedAt;
+      const remaining = CHECKOUT_POLL_WINDOW_MS - elapsed;
+
+      if (remaining <= 0) {
+        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        return false;
+      }
+
+      // Resume: show processing banner and poll for remaining time
+      this.checkoutProcessing = true;
+      this.checkoutTimeout = false;
+      this.checkoutPollCount = Math.floor(elapsed / CHECKOUT_POLL_INTERVAL_MS);
+      this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
+      this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
+      this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
+      this.pollSubscription();
+      return true;
+    },
+
+    /**
+     * @desc Persist checkout polling session to sessionStorage for F5 recovery.
+     * @param {{ startedAt: number }} payload - Session data to persist
+     * @returns {void}
+     */
+    persistCheckoutPollingSession(payload) {
+      try {
+        sessionStorage.setItem(CHECKOUT_POLL_SESSION_KEY, JSON.stringify(payload));
+      } catch {
+        // sessionStorage unavailable (private mode / quota exceeded) — polling continues without persistence
+      }
+    },
+
+    /**
+     * @desc Clear the checkout polling session from sessionStorage.
+     * Called on successful activation or timeout to prevent stale resumption.
+     * @returns {void}
+     */
+    clearCheckoutPollingSession() {
+      try {
+        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+      } catch {
+        // sessionStorage unavailable — nothing to clean up
+      }
     },
 
     /**
@@ -651,6 +743,7 @@ export default {
         if (activated) {
           this.checkoutProcessing = false;
           this.checkoutTimeout = false;
+          this.clearCheckoutPollingSession();
           this.paymentSuccessMessage = this.$t('billing.checkout.success.synced');
           return;
         }
@@ -659,6 +752,7 @@ export default {
         if (this.checkoutPollCount >= CHECKOUT_POLL_MAX) {
           this.checkoutProcessing = false;
           this.checkoutTimeout = true;
+          this.clearCheckoutPollingSession();
           return;
         }
 
