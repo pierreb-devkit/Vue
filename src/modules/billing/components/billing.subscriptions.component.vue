@@ -362,6 +362,7 @@ export default {
         past_due: 'warning',
         canceled: 'error',
         incomplete: 'error',
+        incomplete_expired: 'error',
       };
       return {
         color: colors[status] || 'default',
@@ -375,7 +376,7 @@ export default {
     subscriptionStatusIcon() {
       if (['active', 'trialing'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-check';
       if (this.subscriptionStatus === 'past_due') return 'fa-solid fa-triangle-exclamation';
-      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
+      if (['canceled', 'incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
       return 'fa-solid fa-circle-info';
     },
     /**

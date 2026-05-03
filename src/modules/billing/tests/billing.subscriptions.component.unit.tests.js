@@ -313,6 +313,7 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     ['past_due', 'warning'],
     ['canceled', 'error'],
     ['incomplete', 'error'],
+    ['incomplete_expired', 'error'],
     ['trialing', 'success'],
   ])('renders %s subscription status with %s chip color', async (status, color) => {
     store.subscription = { status, plan: 'starter', currentPeriodEnd: new Date().toISOString() };
@@ -337,6 +338,13 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     expect(wrapper.text()).toContain('Reactivate');
+  });
+
+  it('shows Complete payment action for incomplete_expired status with error color', async () => {
+    store.subscription = { status: 'incomplete_expired', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Complete payment');
   });
 
   it('labels the paid plan upgrade CTA as Change Plan when a higher plan exists', async () => {

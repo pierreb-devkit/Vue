@@ -103,4 +103,24 @@ describe('HomeTabsComponent — syncRouteQuery (D.4)', () => {
       }),
     );
   });
+
+  // ── out-of-range / invalid query values ──────────────────────────────────
+
+  it('does not emit when query tab index exceeds items.length - 1', async () => {
+    const { wrapper } = mountComponent({ syncRouteQuery: 'tab', modelValue: 0 }, { tab: '99' });
+    const emitted = wrapper.emitted('update:modelValue');
+    expect(emitted).toBeFalsy();
+  });
+
+  it('does not emit when query tab index is negative', async () => {
+    const { wrapper } = mountComponent({ syncRouteQuery: 'tab', modelValue: 0 }, { tab: '-1' });
+    const emitted = wrapper.emitted('update:modelValue');
+    expect(emitted).toBeFalsy();
+  });
+
+  it('does not emit when query tab value is a decimal', async () => {
+    const { wrapper } = mountComponent({ syncRouteQuery: 'tab', modelValue: 0 }, { tab: '0.5' });
+    const emitted = wrapper.emitted('update:modelValue');
+    expect(emitted).toBeFalsy();
+  });
 });

@@ -195,7 +195,8 @@ export default {
       const queryValue = this.$route.query[this.syncRouteQuery];
       if (queryValue != null) {
         const numVal = Number(queryValue);
-        if (!Number.isNaN(numVal) && numVal !== this.modelValue) {
+        const maxIdx = this.items.length - 1;
+        if (!Number.isNaN(numVal) && numVal >= 0 && numVal <= maxIdx && Number.isInteger(numVal) && numVal !== this.modelValue) {
           this.$emit('update:modelValue', numVal);
         }
       }

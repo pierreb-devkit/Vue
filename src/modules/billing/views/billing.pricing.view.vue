@@ -277,7 +277,8 @@ export default {
     dismissAlert() {
       this.checkoutCanceled = false;
       if (this.$route.query.canceled) {
-        this.$router.replace({ path: this.$route.path });
+        // Preserve hash (e.g. #units) so the active tab state is reflected in the URL
+        this.$router.replace({ path: this.$route.path, hash: this.$route.hash });
       }
     },
     /**

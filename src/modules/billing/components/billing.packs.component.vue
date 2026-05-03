@@ -44,8 +44,9 @@
             +{{ pack.meterUnits }} units
           </p>
           <!-- Structured equivalences chips (Phase 3 forward) — opt-in, no breaking change -->
+          <!-- Guard: only render chips when equivalences carry the new { kind, count, label } shape -->
           <BillingEquivalencesChipsComponent
-            v-if="pack.equivalences && pack.equivalences.length > 0"
+            v-if="pack.equivalences && pack.equivalences.length > 0 && pack.equivalences[0]?.kind != null"
             :equivalences="pack.equivalences"
             class="mb-4"
           />
