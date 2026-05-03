@@ -234,6 +234,7 @@ export default {
       return (
         Array.isArray(this.equivalences) &&
         this.equivalences.length > 0 &&
+        this.equivalences[0] !== null &&
         typeof this.equivalences[0] === 'object' &&
         this.equivalences[0]?.kind != null
       );

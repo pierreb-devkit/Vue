@@ -23,7 +23,7 @@
       variant="tonal"
       closable
       class="mb-4"
-      @click:close="paymentSuccessMessage = null"
+      @click:close="dismissPaymentSuccess"
     >
       {{ paymentSuccessMessage }}
     </v-alert>
@@ -288,6 +288,7 @@ export default {
       extrasCheckoutDialog: false,
       paymentSuccessMessage: null,
       successCleanupTimer: null,
+      paymentSuccessTimer: null,
     };
   },
   computed: {
@@ -437,8 +438,22 @@ export default {
     if (this.successCleanupTimer) {
       clearTimeout(this.successCleanupTimer);
     }
+    if (this.paymentSuccessTimer) {
+      clearTimeout(this.paymentSuccessTimer);
+    }
   },
   methods: {
+    /**
+     * @desc Manually dismiss the payment success banner and clear its auto-dismiss timer.
+     * @returns {void}
+     */
+    dismissPaymentSuccess() {
+      if (this.paymentSuccessTimer) {
+        clearTimeout(this.paymentSuccessTimer);
+        this.paymentSuccessTimer = null;
+      }
+      this.paymentSuccessMessage = null;
+    },
     /**
      * @desc Show checkout success feedback from Stripe return query params and clean the URL.
      * @returns {void}
@@ -454,8 +469,9 @@ export default {
         : 'Subscription updated successfully. Thank you!';
 
       // Auto-dismiss the success alert after 5 seconds (manual close still works via closable)
-      setTimeout(() => {
+      this.paymentSuccessTimer = setTimeout(() => {
         this.paymentSuccessMessage = null;
+        this.paymentSuccessTimer = null;
       }, 5000);
 
       this.successCleanupTimer = setTimeout(() => {
