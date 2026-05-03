@@ -78,6 +78,34 @@ export const billingEn = {
         /** i18n key: billing.subscriptions.cta.upgrade */
         upgrade: 'Upgrade',
       },
+      error: {
+        /** i18n key: billing.subscription.error.fetchFailed */
+        fetchFailed: 'Unable to load your subscription details. Please try again.',
+        /** i18n key: billing.subscription.error.retry */
+        retry: 'Retry',
+      },
+    },
+    checkout: {
+      success: {
+        /** i18n key: billing.checkout.success.processing */
+        processing: 'Processing your payment...',
+        /** i18n key: billing.checkout.success.synced */
+        synced: 'Subscription activated successfully. Thank you!',
+        /** i18n key: billing.checkout.success.timeout */
+        timeout: 'Payment received, your subscription is being synced. Please refresh in a few seconds.',
+        /** i18n key: billing.checkout.success.refresh */
+        refresh: 'Refresh',
+      },
+      error: {
+        alreadyActive: {
+          /** i18n key: billing.checkout.error.alreadyActive.title */
+          title: 'Subscription already active',
+          /** i18n key: billing.checkout.error.alreadyActive.message */
+          message: 'You already have an active subscription. Manage it via the Customer Portal.',
+          /** i18n key: billing.checkout.error.alreadyActive.cta */
+          cta: 'Open Customer Portal',
+        },
+      },
     },
     pricing: {
       tabs: {
