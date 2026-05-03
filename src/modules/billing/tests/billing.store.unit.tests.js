@@ -28,6 +28,7 @@ describe('Billing Store', () => {
     const store = useBillingStore();
     expect(store.plans).toEqual([]);
     expect(store.subscription).toBeNull();
+    expect(store.subscriptionError).toBeNull();
     expect(store.loading).toBe(false);
     // Per-action in-flight counters — all start at 0
     expect(store.usageMeterRequests).toBe(0);
@@ -91,11 +92,31 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
     });
 
+    it('should clear subscriptionError on success (P1-1)', async () => {
+      const store = useBillingStore();
+      store.subscriptionError = 'previous error';
+      const mockSub = { plan: 'pro', status: 'active' };
+      axios.get.mockResolvedValueOnce({ data: { data: mockSub } });
+      await store.fetchSubscription();
+      expect(store.subscriptionError).toBeNull();
+    });
+
     it('should call correct API endpoint', async () => {
       const store = useBillingStore();
       axios.get.mockResolvedValueOnce({ data: { data: {} } });
       await store.fetchSubscription();
       expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/billing/subscription'));
+    });
+
+    it('should set subscriptionError on failure and keep subscription null (P1-1)', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.get.mockRejectedValueOnce(new Error('Network error'));
+      await expect(store.fetchSubscription()).rejects.toThrow('Network error');
+      expect(store.subscriptionError).toBe('Network error');
+      expect(store.subscription).toBeNull();
+      expect(store.loading).toBe(false);
+      spy.mockRestore();
     });
 
     it('should propagate fetchSubscription error to caller', async () => {
@@ -141,6 +162,38 @@ describe('Billing Store', () => {
       await expect(store.createCheckout('price_123')).rejects.toThrow('Checkout failed');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
+      spy.mockRestore();
+    });
+
+    it('should throw structured error on 409 subscription_already_active (Bonus)', async () => {
+      const store = useBillingStore();
+      const portalUrl = 'https://billing.stripe.com/portal/sess_abc';
+      const axiosError = {
+        response: {
+          status: 409,
+          data: { code: 'subscription_already_active', portalUrl },
+        },
+      };
+      axios.post.mockRejectedValueOnce(axiosError);
+      let caught;
+      try {
+        await store.createCheckout('price_123');
+      } catch (err) {
+        caught = err;
+      }
+      expect(caught).toBeDefined();
+      expect(caught.code).toBe('subscription_already_active');
+      expect(caught.portalUrl).toBe(portalUrl);
+      expect(store.loading).toBe(false);
+    });
+
+    it('should pass through non-409 errors normally (Bonus)', async () => {
+      const store = useBillingStore();
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const axiosError = { response: { status: 500, data: {} } };
+      axios.post.mockRejectedValueOnce(axiosError);
+      await expect(store.createCheckout('price_123')).rejects.toEqual(axiosError);
+      expect(spy).toHaveBeenCalled();
       spy.mockRestore();
     });
   });
