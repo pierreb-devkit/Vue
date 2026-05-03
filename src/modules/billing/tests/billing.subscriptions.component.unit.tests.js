@@ -70,7 +70,13 @@ const vuetify = createVuetify();
 
 const componentStubs = {
   RouterLink: true,
-  billingPlanBadgeComponent: true,
+  BillingPlanBadgeComponent: true,
+  BillingExtrasCheckoutModalComponent: {
+    name: 'BillingExtrasCheckoutModalComponent',
+    props: ['modelValue', 'packs'],
+    emits: ['update:modelValue'],
+    template: '<div class="extras-modal-stub" :data-open="modelValue"><slot /></div>',
+  },
 };
 
 /**
@@ -78,13 +84,22 @@ const componentStubs = {
  * @param {Object} [opts]
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-function mountSubscriptions({ serverConfig = null, isLoggedIn = true } = {}) {
+function mountSubscriptions({
+  serverConfig = null,
+  isLoggedIn = true,
+  routeQuery = {},
+  router = { replace: vi.fn(), push: vi.fn() },
+} = {}) {
   authState.serverConfig = serverConfig;
   authState.isLoggedIn = isLoggedIn;
   return mount(BillingSubscriptionsComponent, {
     global: {
       plugins: [vuetify],
-      mocks: { config: mockConfig },
+      mocks: {
+        config: mockConfig,
+        $route: { path: '/users', query: routeQuery },
+        $router: router,
+      },
       stubs: componentStubs,
     },
   });
@@ -150,12 +165,16 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
     expect(buyBtns.length).toBeGreaterThan(0);
   });
 
-  it('Buy units CTA links to /pricing (no modal)', async () => {
+  it('Buy units CTA opens the inline extras checkout modal', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
     const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('Buy units'));
     expect(buyBtn).toBeDefined();
-    expect(buyBtn.props('to')).toBe('/pricing');
+    await buyBtn.trigger('click');
+    expect(wrapper.vm.extrasCheckoutDialog).toBe(true);
+    const modal = wrapper.findComponent({ name: 'BillingExtrasCheckoutModalComponent' });
+    expect(modal.props('modelValue')).toBe(true);
+    expect(modal.props('packs')).toEqual(mockUsageMeterNormal.packsAvailable);
   });
 
   it('renders informational usage bar in meter mode (no click handler)', async () => {
@@ -257,9 +276,135 @@ describe('BillingSubscriptionsComponent — Manage Subscription', () => {
     await wrapper.vm.manageSubscription();
     expect(store.openPortal).toHaveBeenCalled();
   });
+
+  it('shows a portal error alert when openPortal rejects', async () => {
+    store.openPortal.mockRejectedValueOnce(new Error('Portal failed'));
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    await wrapper.vm.manageSubscription();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Unable to open the billing portal');
+  });
 });
 
-// ─── Suite 4: Ledger pagination ──────────────────────────────────────────────
+// ─── Suite 4: Status chips / paid plan CTA ─────────────────────────────────
+
+describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    vi.spyOn(store, 'openPortal').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it.each([
+    ['active', 'success'],
+    ['past_due', 'warning'],
+    ['canceled', 'error'],
+    ['incomplete', 'error'],
+    ['trialing', 'success'],
+  ])('renders %s subscription status with %s chip color', async (status, color) => {
+    store.subscription = { status, plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.exists()).toBe(true);
+    expect(chip.props('color')).toBe(color);
+    expect(chip.text()).toContain(status.replace(/_/g, ' '));
+  });
+
+  it('shows Update payment method action for past_due status', async () => {
+    store.subscription = { status: 'past_due', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Update payment method');
+  });
+
+  it('shows Reactivate action for canceled status', async () => {
+    store.subscription = { status: 'canceled', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Reactivate');
+  });
+
+  it('labels the paid plan upgrade CTA as Change Plan when a higher plan exists', async () => {
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Change Plan');
+    expect(wrapper.text()).not.toContain('Upgrade');
+  });
+
+  it('hides the paid plan upgrade CTA on the highest plan', async () => {
+    store.subscription = { status: 'active', plan: 'pro', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).not.toContain('Change Plan');
+  });
+});
+
+// ─── Suite 5: Stripe success query handling ────────────────────────────────
+
+describe('BillingSubscriptionsComponent — checkout success query flow', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+  });
+
+  it('shows subscription success alert and cleans the URL query', async () => {
+    const router = { replace: vi.fn(), push: vi.fn() };
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { tab: 'subscriptions', success: 'true' },
+      router,
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Subscription updated successfully. Thank you!');
+
+    vi.advanceTimersByTime(100);
+    expect(router.replace).toHaveBeenCalledWith({ query: { tab: 'subscriptions' } });
+  });
+
+  it('shows extras success copy when Stripe returns type=extras', async () => {
+    const router = { replace: vi.fn(), push: vi.fn() };
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: true } },
+      routeQuery: { tab: 'subscriptions', success: 'true', type: 'extras' },
+      router,
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Extra units purchased successfully. Thank you!');
+  });
+});
+
+// ─── Suite 6: Ledger pagination ──────────────────────────────────────────────
 
 describe('BillingSubscriptionsComponent — ledger pagination', () => {
   let wrapper;

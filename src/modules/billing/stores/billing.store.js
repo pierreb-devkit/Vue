@@ -111,7 +111,7 @@ export const useBillingStore = defineStore('billing', {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/checkout`, {
           priceId,
-          successUrl: `${window.location.origin}/billing?success=true`,
+          successUrl: `${window.location.origin}/users?tab=subscriptions&success=true`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
         capture('plan_upgraded', { price_id: priceId });
@@ -227,8 +227,8 @@ export const useBillingStore = defineStore('billing', {
       this.extrasCheckoutRequests += 1;
       try {
         const api = apiBase();
-        const successUrl = `${window.location.origin}/billing?packPurchased=1`;
-        const cancelUrl = `${window.location.origin}/pricing`;
+        const successUrl = `${window.location.origin}/users?tab=subscriptions&success=true&type=extras`;
+        const cancelUrl = `${window.location.origin}/pricing#units`;
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
           packId,
           successUrl,

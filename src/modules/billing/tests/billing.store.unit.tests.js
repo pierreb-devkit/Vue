@@ -128,7 +128,7 @@ describe('Billing Store', () => {
         expect.stringContaining('/billing/checkout'),
         expect.objectContaining({
           priceId: 'price_abc',
-          successUrl: expect.stringContaining('/billing?success=true'),
+          successUrl: expect.stringContaining('/users?tab=subscriptions&success=true'),
           cancelUrl: expect.stringContaining('/pricing?canceled=true'),
         }),
       );
@@ -420,8 +420,8 @@ describe('Billing Store', () => {
         expect.stringContaining('/billing/extras/checkout'),
         expect.objectContaining({
           packId: 'pack_500',
-          successUrl: 'https://app.example.com/billing?packPurchased=1',
-          cancelUrl: 'https://app.example.com/pricing',
+          successUrl: 'https://app.example.com/users?tab=subscriptions&success=true&type=extras',
+          cancelUrl: 'https://app.example.com/pricing#units',
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);

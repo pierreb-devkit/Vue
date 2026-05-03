@@ -119,7 +119,6 @@ describe('auth.signup.view', () => {
 
     it('does not throw when signup rejects', async () => {
       signupMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
       await flushPromises();
 
@@ -129,7 +128,25 @@ describe('auth.signup.view', () => {
       wrapper.vm.password = 'password123';
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
-      consoleSpy.mockRestore();
+      expect(wrapper.vm.signupError).toBe('Unable to create your account. Please try again.');
+      expect(wrapper.text()).toContain('Unable to create your account');
+    });
+
+    it('shows API signup errors above the form', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 400, data: { message: 'Email is already taken' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupError).toBe('Email is already taken');
+      expect(wrapper.text()).toContain('Email is already taken');
     });
   });
 

@@ -29,7 +29,6 @@
       <!-- Stacked bar -->
       <div
         class="billing-meter-breakdown-chart__bar d-flex rounded overflow-hidden"
-        style="height: 12px"
         role="img"
         :aria-label="stackedBarAriaLabel"
       >
@@ -50,8 +49,8 @@
           class="d-flex align-center ga-1 text-caption"
         >
           <div
+            class="breakdown-legend-dot"
             :class="'bg-' + bucket.color"
-            style="width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0"
           />
           <span class="text-medium-emphasis">{{ bucket.key }}</span>
           <span class="font-weight-medium">{{ bucket.pct }}%</span>
@@ -139,3 +138,16 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.billing-meter-breakdown-chart__bar {
+  height: 0.75rem;
+}
+
+.breakdown-legend-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+</style>

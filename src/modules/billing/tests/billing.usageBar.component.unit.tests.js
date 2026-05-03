@@ -346,4 +346,26 @@ describe('BillingUsageBarComponent', () => {
     expect(meterProgress.props('overage')).toBe(100);
     expect(meterProgress.props('netRemainingRaw')).toBe(-100);
   });
+
+  it('adds aria-live regions for standard meter summary and overage badge', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+
+    expect(wrapper.find('.billing-usage-bar__summary').attributes('aria-live')).toBe('polite');
+    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-live')).toBe('assertive');
+    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-atomic')).toBe('true');
+  });
+
+  it('matches the meter overage snapshot', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+
+    expect(wrapper.find('.billing-usage-bar--meter').html()).toMatchSnapshot();
+  });
 });

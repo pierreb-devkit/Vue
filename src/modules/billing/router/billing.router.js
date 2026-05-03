@@ -23,7 +23,7 @@ export default [
   {
     path: '/billing',
     name: 'Billing',
-    redirect: { path: '/users', query: { tab: 'subscriptions' } },
+    redirect: (to) => ({ path: '/users', query: { ...to.query, tab: 'subscriptions' } }),
     meta: {
       display: false,
       requiresAuth: true,

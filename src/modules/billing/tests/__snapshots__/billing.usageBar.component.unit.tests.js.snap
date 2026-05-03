@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
+"<div data-v-621d4e81="" class="billing-usage-bar billing-usage-bar--meter billing-usage-bar--standard">
+  <!-- Admin display: rainbow gradient, show total consumed with no cap -->
+  <!-- Standard display: current behaviour, with overage indicator when over quota -->
+  <div data-v-621d4e81="" class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite"><span data-v-621d4e81="">Weekly usage</span><span data-v-621d4e81="" class="font-weight-medium text-error">1100 / 1000 (-100 remaining)</span></div>
+  <div data-v-f7f25334="" data-v-621d4e81="" class="billing-meter-progress" aria-label="1100 of 1000 used, 100 over quota">
+    <!-- Label row -->
+    <!--v-if-->
+    <!-- Overage badge -->
+    <div data-v-f7f25334="" class="billing-meter-progress__overage d-flex align-center mb-1" aria-live="assertive" aria-atomic="true"><span data-v-f7f25334="" class="v-chip v-theme--light text-error v-chip--density-default v-chip--size-x-small v-chip--variant-tonal" draggable="false"><!----><span class="v-chip__underlay"></span>
+      <!---->
+      <div class="v-chip__prepend"><i class="fa-solid fa-triangle-exclamation mdi v-icon notranslate v-theme--light v-icon--size-default v-icon--start" aria-hidden="true"></i>
+        <!---->
+      </div>
+      <div class="v-chip__content" data-no-activator=""> +100 over </div>
+      <!---->
+      <!----></span>
+    </div><!-- Bar variant -->
+    <div data-v-f7f25334="" class="v-progress-linear v-progress-linear--rounded v-progress-linear--rounded v-theme--light v-locale--is-ltr" style="top: 0px; height: 10px; --v-progress-linear-height: 10px;" role="progressbar" aria-hidden="false" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+      <!---->
+      <div class="v-progress-linear__background bg-surface-variant" style="opacity: NaN;"></div>
+      <div class="v-progress-linear__buffer bg-surface-variant" style="opacity: NaN; width: 0%;"></div>
+      <transition-stub name="slide-x-transition" appear="false" persisted="false" css="true">
+        <div class="v-progress-linear__determinate bg-error" style="width: 100%;"></div>
+      </transition-stub>
+      <!---->
+    </div><!-- Summary text -->
+    <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1" aria-live="polite"><span data-v-f7f25334="">1100 / 1000</span><span data-v-f7f25334="" class="text-error"> (-100 remaining)</span></div>
+  </div>
+</div>"
+`;

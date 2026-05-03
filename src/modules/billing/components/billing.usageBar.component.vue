@@ -29,22 +29,20 @@
   >
     <!-- Admin display: rainbow gradient, show total consumed with no cap -->
     <template v-if="displayMode === 'admin'">
-      <div class="d-flex justify-space-between text-body-2 mb-1">
+      <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium mb-1" aria-live="polite">
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
-          class="font-weight-medium billing-usage-bar__admin-label"
-          style="background: linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
+          class="font-weight-medium billing-usage-bar__admin-label admin-rainbow admin-rainbow--text"
         >{{ meterUsed != null ? meterUsed : '' }} ∞ Admin</span>
       </div>
       <div
-        class="billing-usage-bar__admin-track"
-        style="height:6px; border-radius:3px; background:linear-gradient(90deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#10b981); opacity:0.6;"
+        class="billing-usage-bar__admin-track admin-rainbow"
       />
     </template>
 
     <!-- Loading display: placeholder skeleton while billing data fetches -->
     <template v-else-if="displayMode === 'loading'">
-      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+      <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span class="font-weight-medium">—</span>
       </div>
@@ -58,7 +56,7 @@
 
     <!-- Free display: 0 / free-tier quota, neutral colour -->
     <template v-else-if="displayMode === 'free'">
-      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+      <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span class="font-weight-medium">0 / {{ freeTierQuota }} compute</span>
       </div>
@@ -72,7 +70,7 @@
 
     <!-- Standard display: current behaviour, with overage indicator when over quota -->
     <template v-else>
-      <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1">
+      <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
           class="font-weight-medium"
@@ -301,3 +299,29 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.admin-rainbow {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--v-theme-warning)),
+    rgb(var(--v-theme-error)),
+    rgb(var(--v-theme-secondary)),
+    rgb(var(--v-theme-info)),
+    rgb(var(--v-theme-success))
+  );
+}
+
+.admin-rainbow--text {
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.billing-usage-bar__admin-track {
+  height: 0.375rem;
+  border-radius: 0.1875rem;
+  opacity: 0.6;
+}
+</style>

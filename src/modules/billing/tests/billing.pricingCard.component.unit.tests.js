@@ -47,6 +47,18 @@ const mountComponent = (props = {}) =>
     global: {
       plugins: [vuetify],
       mocks: { config: mockConfig },
+      stubs: {
+        'v-tooltip': {
+          name: 'v-tooltip',
+          props: ['text', 'location'],
+          template: '<div class="v-tooltip-stub"><slot name="activator" :props="{}" /></div>',
+        },
+        'v-skeleton-loader': {
+          name: 'v-skeleton-loader',
+          props: ['type'],
+          template: '<div class="v-skeleton-loader-stub" />',
+        },
+      },
     },
   });
 
@@ -71,6 +83,23 @@ describe('BillingPricingCardComponent', () => {
     const paidNoPrices = { ...proPlan, monthlyPrice: null, annualPrice: null };
     const wrapper = mountComponent({ plan: paidNoPrices });
     expect(wrapper.text()).toContain('Pricing unavailable');
+  });
+
+  it('shows a price skeleton while Stripe pricing is loading', () => {
+    const paidNoPrices = { ...proPlan, monthlyPrice: null, annualPrice: null };
+    const wrapper = mountComponent({ plan: paidNoPrices, pricesLoading: true });
+    const skeleton = wrapper.findComponent({ name: 'v-skeleton-loader' });
+    expect(skeleton.exists()).toBe(true);
+    expect(skeleton.props('type')).toBe('button');
+    expect(wrapper.text()).not.toContain('Pricing unavailable');
+  });
+
+  it('shows a tooltip when paid pricing is unavailable after loading', () => {
+    const paidNoPrices = { ...proPlan, monthlyPrice: null, annualPrice: null };
+    const wrapper = mountComponent({ plan: paidNoPrices, pricesLoading: false });
+    const tooltip = wrapper.findComponent({ name: 'v-tooltip' });
+    expect(tooltip.exists()).toBe(true);
+    expect(tooltip.props('text')).toBe('Pricing temporarily unavailable');
   });
 
   it('displays monthly price when annual is false', () => {

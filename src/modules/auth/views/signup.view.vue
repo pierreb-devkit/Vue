@@ -10,7 +10,7 @@
           <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Sign in</router-link>
         </template>
         <template v-else-if="signupStep === 'emailVerification'">We sent a verification link to <strong>{{ email }}</strong></template>
-        <template v-else-if="signupStep === 'organizationSetup'">Almost there — join or create your workspace.</template>
+        <template v-else-if="signupStep === 'organizationSetup'">Almost there. Join or create your workspace.</template>
         <template v-else-if="signupStep === 'organizationWelcome'">{{ organizationWelcomeMessage }}</template>
       </p>
 
@@ -103,46 +103,59 @@
       </template>
 
       <!-- Credentials form -->
-      <v-form v-else-if="serverConfig === null || serverConfig?.sign?.up === true" ref="form" v-model="valid">
-        <label class="text-label-large font-weight-medium d-block mb-1">Email address</label>
-        <v-text-field
-          v-model="email"
-          :rules="[rules.required, rules.mail]"
-          placeholder="name@example.com"
-          variant="outlined"
-          density="comfortable"
+      <template v-else-if="serverConfig === null || serverConfig?.sign?.up === true">
+        <v-alert
+          v-if="signupError"
+          type="error"
+          variant="tonal"
+          closable
           class="mb-4"
-          required
-          hide-details="auto"
-        ></v-text-field>
-        <label class="text-label-large font-weight-medium d-block mb-1">Password</label>
-        <v-text-field
-          v-model="password"
-          :type="showPassword ? 'text' : 'password'"
-          :rules="[rules.password]"
-          :append-inner-icon="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
-          placeholder="Create a password"
-          variant="outlined"
-          density="comfortable"
-          class="mb-6"
-          required
-          hide-details="auto"
-          @click:append-inner="showPassword = !showPassword"
-        ></v-text-field>
-        <v-btn
-          :flat="config.vuetify.theme.flat"
-          :disabled="valid !== true"
-          color="primary"
-          variant="flat"
           :class="config.vuetify.theme.rounded"
-          class="text-none text-body-medium"
-          size="large"
-          block
-          @click="validate"
+          @click:close="signupError = null"
         >
-          Continue
-        </v-btn>
-      </v-form>
+          {{ signupError }}
+        </v-alert>
+        <v-form ref="form" v-model="valid">
+          <label class="text-label-large font-weight-medium d-block mb-1">Email address</label>
+          <v-text-field
+            v-model="email"
+            :rules="[rules.required, rules.mail]"
+            placeholder="name@example.com"
+            variant="outlined"
+            density="comfortable"
+            class="mb-4"
+            required
+            hide-details="auto"
+          ></v-text-field>
+          <label class="text-label-large font-weight-medium d-block mb-1">Password</label>
+          <v-text-field
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            :rules="[rules.password]"
+            :append-inner-icon="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
+            placeholder="Create a password"
+            variant="outlined"
+            density="comfortable"
+            class="mb-6"
+            required
+            hide-details="auto"
+            @click:append-inner="showPassword = !showPassword"
+          ></v-text-field>
+          <v-btn
+            :flat="config.vuetify.theme.flat"
+            :disabled="valid !== true"
+            color="primary"
+            variant="flat"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            size="large"
+            block
+            @click="validate"
+          >
+            Continue
+          </v-btn>
+        </v-form>
+      </template>
     </v-card>
   </v-container>
 </template>
@@ -174,6 +187,7 @@ export default {
       resent: false,
       email: '',
       password: '',
+      signupError: null,
       showPassword: false,
       oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
       rules: {
@@ -265,6 +279,7 @@ export default {
      * @returns {Promise<void>}
      */
     async validate() {
+      this.signupError = null;
       const form = await this.$refs.form.validate();
       if (form.valid) {
         const authStore = useAuthStore();
@@ -307,9 +322,27 @@ export default {
             this.$router.push(this.config.sign.route);
           }
         } catch (err) {
-          console.error(err);
+          this.signupError = this.signupErrorMessage(err);
         }
       }
+    },
+    /**
+     * @desc Resolve an API signup failure to a short user-facing message.
+     * @param {Error & { response?: { data?: object|string } }} error
+     * @returns {string}
+     */
+    signupErrorMessage(error) {
+      const data = error?.response?.data;
+      if (typeof data === 'string' && data.trim()) return data;
+      if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+      if (typeof data?.error === 'string' && data.error.trim()) return data.error;
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        return data.errors
+          .map((entry) => entry?.message || entry?.msg || entry)
+          .filter(Boolean)
+          .join(' ');
+      }
+      return 'Unable to create your account. Please try again.';
     },
     /**
      * @desc Handle successful organization creation from the setup component.

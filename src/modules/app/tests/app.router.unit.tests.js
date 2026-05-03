@@ -232,6 +232,22 @@ describe('app.router', () => {
     expect(router.currentRoute.value.query.tab).toBe('subscriptions');
   });
 
+  it('/billing preserves Stripe success query params when redirecting to subscriptions', async () => {
+    mockAuthStore.isLoggedIn = true;
+    mockAuthStore.user = { currentOrganization: 'org1' };
+    mockAbility.rules = [{ action: 'read', subject: 'User' }];
+    mockAbility.can.mockReturnValue(true);
+    const router = getRouter();
+    await router.push('/billing?success=true&type=extras');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe('/users');
+    expect(router.currentRoute.value.query).toEqual({
+      success: 'true',
+      type: 'extras',
+      tab: 'subscriptions',
+    });
+  });
+
   describe('pageview tracking', () => {
     it('should call capturePageview after navigation', async () => {
       const router = getRouter();

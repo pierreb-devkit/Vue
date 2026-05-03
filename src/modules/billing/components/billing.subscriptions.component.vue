@@ -15,18 +15,17 @@
   - none
 -->
 <template>
-  <v-container class="py-6 px-0" :style="{ 'max-width': '760px' }">
-    <!-- Pack purchase success banner — surfaces when Stripe redirects back with ?packPurchased=1 -->
+  <v-container class="py-6 px-0" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+    <!-- Checkout success banner, surfaced after Stripe redirects back to the subscriptions tab. -->
     <v-alert
-      v-if="packPurchasedSuccess"
+      v-if="paymentSuccessMessage"
       type="success"
       variant="tonal"
       closable
       class="mb-4"
-      @click:close="packPurchasedSuccess = false"
+      @click:close="paymentSuccessMessage = null"
     >
-      <!-- i18n key: billing.extras.purchaseSuccess -->
-      Pack credited to your balance!
+      {{ paymentSuccessMessage }}
     </v-alert>
 
     <!-- Loading -->
@@ -40,7 +39,7 @@
       <v-card v-if="!subscription || currentPlan === 'free'" :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
         <div class="d-flex align-center mb-4">
           <span class="text-title-large font-weight-medium mr-3">Current Plan</span>
-          <billingPlanBadgeComponent plan="free" />
+          <BillingPlanBadgeComponent plan="free" />
         </div>
         <p class="text-body-medium mb-6">
           You're on the free plan. Upgrade to unlock more projects, team members, and advanced features.
@@ -59,16 +58,41 @@
       <v-card v-else :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
         <div class="d-flex align-center mb-4">
           <span class="text-title-large font-weight-medium mr-3">Current Plan</span>
-          <billingPlanBadgeComponent :plan="currentPlan" />
+          <BillingPlanBadgeComponent :plan="currentPlan" />
         </div>
 
         <v-list density="compact" class="bg-transparent pa-0 mb-6">
           <v-list-item class="px-0">
             <template #prepend>
-              <v-icon icon="fa-solid fa-circle-check" size="small" color="success" class="mr-3" />
+              <v-icon
+                :icon="subscriptionStatusIcon"
+                size="small"
+                :color="subscriptionStatusMeta.color"
+                class="mr-3"
+              />
             </template>
-            <v-list-item-title class="text-body-medium">
-              Status: <strong class="text-capitalize">{{ subscription.status }}</strong>
+            <v-list-item-title class="billing-subscriptions__status-row text-body-medium">
+              <span>Status:</span>
+              <v-chip
+                class="billing-subscriptions__status-chip text-capitalize"
+                :color="subscriptionStatusMeta.color"
+                variant="tonal"
+                size="small"
+              >
+                {{ subscriptionStatusMeta.label }}
+              </v-chip>
+              <v-btn
+                v-if="subscriptionStatusAction"
+                :color="subscriptionStatusAction.color"
+                variant="tonal"
+                size="small"
+                :class="config.vuetify.theme.rounded"
+                class="text-none text-body-medium"
+                :loading="portalLoading"
+                @click="manageSubscription"
+              >
+                {{ subscriptionStatusAction.label }}
+              </v-btn>
             </v-list-item-title>
           </v-list-item>
           <v-list-item v-if="nextBillingDate" class="px-0">
@@ -80,6 +104,17 @@
             </v-list-item-title>
           </v-list-item>
         </v-list>
+
+        <v-alert
+          v-if="portalError"
+          type="error"
+          variant="tonal"
+          closable
+          class="mb-4"
+          @click:close="portalError = null"
+        >
+          {{ portalError }}
+        </v-alert>
 
         <div class="d-flex ga-3 flex-wrap">
           <v-btn
@@ -93,12 +128,13 @@
             Manage Subscription
           </v-btn>
           <v-btn
+            v-if="canUpgrade"
             variant="outlined"
             :class="config.vuetify.theme.rounded"
             class="text-none text-body-medium"
             to="/pricing"
           >
-            Upgrade
+            Change Plan
           </v-btn>
         </div>
       </v-card>
@@ -119,6 +155,8 @@
             :used="meterUsed"
             :quota="meterQuota"
             :extras="meterExtras"
+            :overage="meterOverage"
+            :net-remaining-raw="meterNetRemainingRaw"
             label=""
           />
         </v-card>
@@ -142,7 +180,7 @@
             variant="flat"
             :class="config.vuetify.theme.rounded"
             class="text-none text-body-medium mb-6"
-            to="/pricing"
+            @click="extrasCheckoutDialog = true"
           >
             Buy units
           </v-btn>
@@ -161,6 +199,11 @@
         </v-card>
       </template>
     </template>
+
+    <BillingExtrasCheckoutModalComponent
+      v-model="extrasCheckoutDialog"
+      :packs="extrasPacks"
+    />
   </v-container>
 </template>
 
@@ -172,11 +215,13 @@ import { computed, watch } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
-import billingPlanBadgeComponent from './billing.planBadge.component.vue';
+import { plans as plansConfig, packs as packsConfig } from '../config/billing.static-content';
+import BillingPlanBadgeComponent from './billing.planBadge.component.vue';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.component.vue';
 import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingUsageBarComponent from './billing.usageBar.component.vue';
+import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
 
 /**
  * Component definition.
@@ -184,11 +229,12 @@ import BillingUsageBarComponent from './billing.usageBar.component.vue';
 export default {
   name: 'BillingSubscriptionsComponent',
   components: {
-    billingPlanBadgeComponent,
+    BillingPlanBadgeComponent,
     BillingMeterProgressComponent,
     BillingMeterBreakdownChartComponent,
     BillingExtrasLedgerComponent,
     BillingUsageBarComponent,
+    BillingExtrasCheckoutModalComponent,
   },
   /**
    * @desc Wires billingStore + authStore + reactive meterMode + useMeter derived refs.
@@ -200,7 +246,14 @@ export default {
     const authStore = useAuthStore();
 
     const meter = useMeter({ pollIntervalMs: 0 });
-    const { used: meterUsed, quota: meterQuota, extras: meterExtras, breakdown: meterBreakdown } = meter;
+    const {
+      used: meterUsed,
+      quota: meterQuota,
+      extras: meterExtras,
+      breakdown: meterBreakdown,
+      overage: meterOverage,
+      netRemainingRaw: meterNetRemainingRaw,
+    } = meter;
 
     const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
 
@@ -216,17 +269,25 @@ export default {
       { immediate: true },
     );
 
-    return { billingStore, authStore, meterMode, meterUsed, meterQuota, meterExtras, meterBreakdown };
+    return {
+      billingStore,
+      authStore,
+      meterMode,
+      meterUsed,
+      meterQuota,
+      meterExtras,
+      meterBreakdown,
+      meterOverage,
+      meterNetRemainingRaw,
+    };
   },
   data() {
     return {
       portalLoading: false,
-      /**
-       * @desc Shown when Stripe redirects back with ?packPurchased=1.
-       * The /billing page was retired; this component is the new landing point.
-       * @type {boolean}
-       */
-      packPurchasedSuccess: false,
+      portalError: null,
+      extrasCheckoutDialog: false,
+      paymentSuccessMessage: null,
+      successCleanupTimer: null,
     };
   },
   computed: {
@@ -249,6 +310,85 @@ export default {
      */
     currentPlan() {
       return this.subscription?.plan || 'free';
+    },
+    /**
+     * @desc Ordered plan IDs from static content, used to decide if a paid plan can move up.
+     * @returns {Array<string>}
+     */
+    availablePlanIds() {
+      const staticIds = plansConfig.map((plan) => plan.id).filter(Boolean);
+      if (staticIds.length > 0) return staticIds;
+      return this.billingStore.plans
+        .map((plan) => plan.planId || plan.name?.toLowerCase())
+        .filter(Boolean);
+    },
+    /**
+     * @desc Whether the current paid plan has a higher plan available.
+     * @returns {boolean}
+     */
+    canUpgrade() {
+      const currentIndex = this.availablePlanIds.indexOf(this.currentPlan);
+      return currentIndex >= 0 && currentIndex < this.availablePlanIds.length - 1;
+    },
+    /**
+     * @desc Available extras packs for the inline checkout modal.
+     * @returns {Array<{packId: string, label: string, priceUsd: number, meterUnits: number}>}
+     */
+    extrasPacks() {
+      const fromStore =
+        this.billingStore.usageMeter?.packsAvailable ??
+        this.billingStore.extrasBalance?.packsAvailable ??
+        null;
+      if (fromStore && fromStore.length > 0) return fromStore;
+      return packsConfig;
+    },
+    /**
+     * @desc Current subscription status normalized to a displayable string.
+     * @returns {string}
+     */
+    subscriptionStatus() {
+      return this.subscription?.status || 'unknown';
+    },
+    /**
+     * @desc Vuetify chip metadata for the current subscription status.
+     * @returns {{ color: string, label: string }}
+     */
+    subscriptionStatusMeta() {
+      const status = this.subscriptionStatus;
+      const colors = {
+        active: 'success',
+        trialing: 'success',
+        past_due: 'warning',
+        canceled: 'error',
+        incomplete: 'error',
+      };
+      return {
+        color: colors[status] || 'default',
+        label: status.replace(/_/g, ' '),
+      };
+    },
+    /**
+     * @desc Font Awesome icon for the current subscription status.
+     * @returns {string}
+     */
+    subscriptionStatusIcon() {
+      if (['active', 'trialing'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-check';
+      if (this.subscriptionStatus === 'past_due') return 'fa-solid fa-triangle-exclamation';
+      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
+      return 'fa-solid fa-circle-info';
+    },
+    /**
+     * @desc Portal action shown for subscription statuses requiring attention.
+     * @returns {{ color: string, label: string }|null}
+     */
+    subscriptionStatusAction() {
+      if (this.subscriptionStatus === 'past_due') {
+        return { color: 'warning', label: 'Update payment method' };
+      }
+      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) {
+        return { color: 'error', label: 'Reactivate' };
+      }
+      return null;
     },
     /**
      * @desc Format the next billing date for display.
@@ -274,6 +414,8 @@ export default {
     const hasOrg = !!this.authStore.user?.currentOrganization;
     if (!this.authStore.isLoggedIn || (orgsEnabled && !hasOrg)) return;
 
+    this.handleCheckoutSuccessQuery();
+
     try {
       await this.billingStore.fetchSubscription();
     } catch (error) {
@@ -282,25 +424,42 @@ export default {
 
     // Note: fetchExtrasLedger is handled by the immediate watcher in setup(),
     // no duplicate call needed here.
-
-    // Handle Stripe redirect query params (pack purchase success).
-    if (this.$route?.query?.packPurchased) {
-      this.packPurchasedSuccess = true;
-      // Clear the query param so refreshes don't re-show the banner.
-      this.$router.replace({ path: this.$route.path, query: { ...this.$route.query, packPurchased: undefined } });
+  },
+  beforeUnmount() {
+    if (this.successCleanupTimer) {
+      clearTimeout(this.successCleanupTimer);
     }
   },
   methods: {
+    /**
+     * @desc Show checkout success feedback from Stripe return query params and clean the URL.
+     * @returns {void}
+     */
+    handleCheckoutSuccessQuery() {
+      const query = this.$route?.query || {};
+      const isSuccess = query.success === 'true' || query.packPurchased;
+      if (!isSuccess) return;
+
+      this.paymentSuccessMessage = query.type === 'extras' || query.packPurchased
+        ? 'Extra units purchased successfully. Thank you!'
+        : 'Subscription updated successfully. Thank you!';
+
+      this.successCleanupTimer = setTimeout(() => {
+        this.$router.replace({ query: { tab: 'subscriptions' } });
+      }, 100);
+    },
     /**
      * @desc Open the Stripe customer portal.
      * @returns {Promise<void>}
      */
     async manageSubscription() {
       this.portalLoading = true;
+      this.portalError = null;
       try {
         await this.billingStore.openPortal();
-      } catch (error) {
-        console.error('Failed to open billing portal:', error);
+        this.portalError = null;
+      } catch {
+        this.portalError = 'Unable to open the billing portal. Please try again.';
       } finally {
         this.portalLoading = false;
       }
@@ -320,3 +479,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.billing-subscriptions__status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+</style>

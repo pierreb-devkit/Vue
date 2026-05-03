@@ -5,7 +5,26 @@
       <span v-else>This feature requires the <strong>{{ requiredPlan }}</strong> plan.</span>
     </template>
     <template #append>
-      <v-btn color="primary" variant="flat" size="small" class="text-none" to="/pricing">Upgrade</v-btn>
+      <v-btn
+        v-if="mode === 'meter'"
+        color="primary"
+        variant="flat"
+        size="small"
+        class="text-none"
+        @click="$emit('buy-pack')"
+      >
+        Buy units
+      </v-btn>
+      <v-btn
+        v-else
+        color="primary"
+        variant="flat"
+        size="small"
+        class="text-none"
+        to="/pricing"
+      >
+        Upgrade
+      </v-btn>
     </template>
   </v-alert>
 </template>
@@ -50,7 +69,17 @@ export default {
       type: String,
       default: '',
     },
+    /**
+     * @desc Billing mode. Meter mode prompts users to buy unit packs instead of
+     * routing them to plan pricing.
+     */
+    mode: {
+      type: String,
+      default: 'subscription',
+      validator: (value) => ['subscription', 'meter'].includes(value),
+    },
   },
+  emits: ['buy-pack'],
   /**
    * @desc Wires useQuota composable and exposes reactive usage and limits maps.
    * @returns {{ usage: Object, limits: Object }}
