@@ -74,6 +74,7 @@ const mountWithDisplayMock = (smAndDown) =>
           template: '<div><slot /></div>',
         },
         'v-card': { template: '<div><slot /></div>' },
+        'v-card-title': { template: '<div><slot /></div>' },
         'v-card-text': { template: '<div><slot /></div>' },
         'v-card-actions': { template: '<div><slot /></div>' },
         'v-radio-group': { template: '<div><slot /></div>' },

@@ -28,7 +28,7 @@
       <span class="text-body-large font-weight-medium" :class="{ 'text-medium-emphasis': !annual }">Annual</span>
       <v-chip v-if="annual" color="success" variant="tonal" size="small">Save 20%</v-chip>
     </div>
-    <div class="text-caption text-medium-emphasis mt-1">Save 20% annually</div>
+    <div v-if="!annual" class="text-caption text-medium-emphasis mt-1">Save 20% annually</div>
   </div>
 </template>
 

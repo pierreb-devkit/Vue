@@ -23,7 +23,7 @@
       variant="tonal"
       closable
       class="mb-4"
-      @click:close="paymentSuccessMessage = null"
+      @click:close="dismissPaymentSuccess"
     >
       {{ paymentSuccessMessage }}
     </v-alert>
@@ -288,6 +288,7 @@ export default {
       extrasCheckoutDialog: false,
       paymentSuccessMessage: null,
       successCleanupTimer: null,
+      paymentSuccessTimer: null,
     };
   },
   computed: {
@@ -361,6 +362,7 @@ export default {
         past_due: 'warning',
         canceled: 'error',
         incomplete: 'error',
+        incomplete_expired: 'error',
       };
       return {
         color: colors[status] || 'default',
@@ -374,7 +376,7 @@ export default {
     subscriptionStatusIcon() {
       if (['active', 'trialing'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-check';
       if (this.subscriptionStatus === 'past_due') return 'fa-solid fa-triangle-exclamation';
-      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
+      if (['canceled', 'incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
       return 'fa-solid fa-circle-info';
     },
     /**
@@ -385,8 +387,11 @@ export default {
       if (this.subscriptionStatus === 'past_due') {
         return { color: 'warning', label: 'Update payment method' };
       }
-      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) {
+      if (this.subscriptionStatus === 'canceled') {
         return { color: 'error', label: 'Reactivate' };
+      }
+      if (['incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) {
+        return { color: 'error', label: 'Complete payment' };
       }
       return null;
     },
@@ -434,8 +439,22 @@ export default {
     if (this.successCleanupTimer) {
       clearTimeout(this.successCleanupTimer);
     }
+    if (this.paymentSuccessTimer) {
+      clearTimeout(this.paymentSuccessTimer);
+    }
   },
   methods: {
+    /**
+     * @desc Manually dismiss the payment success banner and clear its auto-dismiss timer.
+     * @returns {void}
+     */
+    dismissPaymentSuccess() {
+      if (this.paymentSuccessTimer) {
+        clearTimeout(this.paymentSuccessTimer);
+        this.paymentSuccessTimer = null;
+      }
+      this.paymentSuccessMessage = null;
+    },
     /**
      * @desc Show checkout success feedback from Stripe return query params and clean the URL.
      * @returns {void}
@@ -449,6 +468,12 @@ export default {
       this.paymentSuccessMessage = query.type === 'extras' || packPurchased
         ? 'Extra units purchased successfully. Thank you!'
         : 'Subscription updated successfully. Thank you!';
+
+      // Auto-dismiss the success alert after 5 seconds (manual close still works via closable)
+      this.paymentSuccessTimer = setTimeout(() => {
+        this.paymentSuccessMessage = null;
+        this.paymentSuccessTimer = null;
+      }, 5000);
 
       this.successCleanupTimer = setTimeout(() => {
         this.$router.replace({
@@ -466,7 +491,8 @@ export default {
       try {
         await this.billingStore.openPortal();
         this.portalError = null;
-      } catch {
+      } catch (err) {
+        console.error('Failed to open billing portal:', err);
         this.portalError = 'Unable to open the billing portal. Please try again.';
       } finally {
         this.portalLoading = false;

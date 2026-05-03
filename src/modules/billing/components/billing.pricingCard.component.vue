@@ -52,7 +52,7 @@
       </template>
       <template v-else-if="pricesLoading && displayPrice === null">
         <v-skeleton-loader
-          type="button"
+          type="text"
           class="billing-pricing-card__price-skeleton"
         />
       </template>
@@ -118,9 +118,15 @@
       </v-btn>
     </div>
 
-    <!-- Equivalences (meter mode) — rendered when equivalences prop is present -->
+    <!-- Equivalences (meter mode — structured {kind, count, label} objects) -->
+    <BillingEquivalencesChipsComponent
+      v-if="isStructuredEquivalences"
+      :equivalences="equivalences"
+    />
+
+    <!-- Equivalences (meter mode — legacy flat {count, label} list) -->
     <v-list
-      v-if="equivalences && equivalences.length > 0"
+      v-else-if="equivalences && equivalences.length > 0"
       density="compact"
       bg-color="transparent"
       class="pa-0"
@@ -174,10 +180,18 @@
 
 <script>
 /**
+ * Module dependencies.
+ */
+import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
+
+/**
  * Component definition.
  */
 export default {
   name: 'BillingPricingCardComponent',
+  components: {
+    BillingEquivalencesChipsComponent,
+  },
   props: {
     plan: {
       type: Object,
@@ -211,6 +225,20 @@ export default {
   },
   emits: ['select'],
   computed: {
+    /**
+     * @desc Whether the equivalences array contains structured {kind, count, label} objects
+     * (Phase 3 format). Falls back to the legacy flat list when objects lack a `kind` field.
+     * @returns {boolean}
+     */
+    isStructuredEquivalences() {
+      return (
+        Array.isArray(this.equivalences) &&
+        this.equivalences.length > 0 &&
+        this.equivalences[0] !== null &&
+        typeof this.equivalences[0] === 'object' &&
+        this.equivalences[0]?.kind != null
+      );
+    },
     /**
      * @desc Whether this plan is explicitly free (by ID convention).
      * @returns {boolean}

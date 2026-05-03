@@ -421,7 +421,7 @@ describe('Billing Store', () => {
         expect.objectContaining({
           packId: 'pack_500',
           successUrl: 'https://app.example.com/users?tab=subscriptions&success=true&type=extras',
-          cancelUrl: 'https://app.example.com/pricing#units',
+          cancelUrl: 'https://app.example.com/pricing?canceled=true#units',
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);

@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import { computed, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 
 let pollTimer = null;
@@ -35,6 +35,7 @@ function fetchMissingMeterData(billingStore) {
  * Polls the API at a configurable interval and exposes reactive derived state.
  * @param {Object} [opts] - Options
  * @param {number} [opts.pollIntervalMs=30000] - Polling interval in ms; set to 0 to disable
+ * @param {boolean} [opts.refreshOnFocus=true] - Auto-refresh when tab regains visibility (resolves multi-tab stale state)
  * @returns {{
  *   used: import('vue').ComputedRef<number>,
  *   quota: import('vue').ComputedRef<number>,
@@ -49,7 +50,7 @@ function fetchMissingMeterData(billingStore) {
  *   purchasePack: (packId: string) => Promise<void>
  * }}
  */
-export function useMeter({ pollIntervalMs = 30000 } = {}) {
+export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {}) {
   const billingStore = useBillingStore();
   consumerCount += 1;
 
@@ -136,7 +137,29 @@ export function useMeter({ pollIntervalMs = 30000 } = {}) {
     }, pollIntervalMs);
   }
 
+  /**
+   * @desc Handle tab visibility change — refresh when the tab becomes visible again.
+   * Only triggers when polling is disabled (pollIntervalMs === 0) to avoid
+   * double-fetching when the interval poll already covers freshness.
+   * @returns {void}
+   */
+  // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — composable closure, not a Qwik component
+  const handleVisibilityChange = () => {
+    if (refreshOnFocus && document.visibilityState === 'visible' && pollIntervalMs === 0) {
+      void safeRefresh();
+    }
+  };
+
+  onMounted(() => {
+    if (refreshOnFocus) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+  });
+
   onUnmounted(() => {
+    if (refreshOnFocus) {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
     consumerCount -= 1;
     if (consumerCount === 0 && pollTimer !== null) {
       clearInterval(pollTimer);

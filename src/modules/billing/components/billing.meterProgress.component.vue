@@ -106,7 +106,7 @@
 /**
  * Module dependencies.
  */
-import { computed, getCurrentInstance, useAttrs } from 'vue';
+import { computed, getCurrentInstance } from 'vue';
 
 /**
  * Component definition.
@@ -174,12 +174,13 @@ export default {
   /**
    * @desc Detects whether the parent registered a click listener so the widget
    * only exposes button semantics when it is genuinely interactive.
+   * Accesses vnode.props directly because Vue strips declared emit listeners
+   * from $attrs — getCurrentInstance().vnode.props is the only reliable source.
    * @returns {{ hasClickListener: import('vue').ComputedRef<boolean> }}
    */
   setup() {
-    const attrs = useAttrs();
     const instance = getCurrentInstance();
-    const hasClickListener = computed(() => Boolean(attrs.onClick || instance?.vnode?.props?.onClick));
+    const hasClickListener = computed(() => Boolean(instance?.vnode?.props?.onClick));
     return { hasClickListener };
   },
 

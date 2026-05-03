@@ -95,6 +95,16 @@ export default {
        */
       validator: (value) => value === null || ['light', 'dark'].includes(value),
     },
+    /**
+     * @desc When set to a query param name (e.g. 'tab'), the component will:
+     *   1. On mount — read that query param and emit update:modelValue if it differs.
+     *   2. On modelValue change — replace the URL query to keep deep-link in sync.
+     * Leave null (default) to preserve existing behaviour without any router interaction.
+     */
+    syncRouteQuery: {
+      type: String,
+      default: null,
+    },
   },
   emits: ['update:modelValue'],
   data() {
@@ -148,11 +158,18 @@ export default {
     },
   },
   watch: {
-    modelValue() {
+    modelValue(newVal) {
       this.$nextTick(() => {
         this.updateIndicator();
         this.checkOverflow();
       });
+      // Route-query sync (opt-in via syncRouteQuery prop)
+      if (this.syncRouteQuery && this.$route && this.$router) {
+        const current = this.$route.query[this.syncRouteQuery];
+        if (current !== String(newVal)) {
+          this.$router.replace({ query: { ...this.$route.query, [this.syncRouteQuery]: String(newVal) } });
+        }
+      }
     },
     items() {
       this.$nextTick(() => {
@@ -173,6 +190,17 @@ export default {
       this.updateIndicator();
       this.checkOverflow();
     });
+    // Route-query sync on mount — read initial query param and emit if it differs
+    if (this.syncRouteQuery && this.$route) {
+      const queryValue = this.$route.query[this.syncRouteQuery];
+      if (queryValue != null) {
+        const numVal = Number(queryValue);
+        const maxIdx = this.items.length - 1;
+        if (!Number.isNaN(numVal) && numVal >= 0 && numVal <= maxIdx && Number.isInteger(numVal) && numVal !== this.modelValue) {
+          this.$emit('update:modelValue', numVal);
+        }
+      }
+    }
   },
   unmounted() {
     window.removeEventListener('resize', this.updateIndicator);
