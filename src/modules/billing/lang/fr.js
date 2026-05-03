@@ -79,9 +79,9 @@ export const billingFr = {
         upgrade: 'Passer à un plan supérieur',
       },
       error: {
-        /** i18n key: billing.subscription.error.fetchFailed */
+        /** i18n key: billing.subscriptions.error.fetchFailed */
         fetchFailed: 'Impossible de charger les détails de votre abonnement. Veuillez réessayer.',
-        /** i18n key: billing.subscription.error.retry */
+        /** i18n key: billing.subscriptions.error.retry */
         retry: 'Réessayer',
       },
     },

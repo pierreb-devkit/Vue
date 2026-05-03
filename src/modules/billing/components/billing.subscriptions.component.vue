@@ -66,9 +66,11 @@
       <v-progress-circular indeterminate color="primary" />
     </v-row>
 
-    <!-- P1-1: Subscription fetch error — do NOT show free-plan fallback -->
+    <!-- P1-1: Subscription fetch error — do NOT show free-plan fallback.
+         Suppressed while checkout polling/timeout UX is active to prevent
+         transient fetch errors from disrupting the payment flow. -->
     <v-card
-      v-else-if="subscriptionError && !subscription"
+      v-else-if="subscriptionError && !subscription && !checkoutProcessing && !checkoutTimeout"
       role="alert"
       aria-live="assertive"
       :class="config.vuetify.theme.rounded"
@@ -403,6 +405,7 @@ export default {
       checkoutPollCount: 0,
       checkoutPollSnapshotId: null,
       checkoutPollSnapshotStatus: null,
+      checkoutPollSnapshotPlan: null,
       // Bonus: 409 already-active dialog
       alreadyActiveDialog: false,
       alreadyActivePortalUrl: null,
@@ -588,11 +591,20 @@ export default {
 
     /**
      * @desc Re-fetch subscription on demand (Retry button / Refresh button).
+     * When called after a checkout timeout, clears the timeout banner if the
+     * subscription is now active/trialing.
      * @returns {Promise<void>}
      */
     async retryFetchSubscription() {
       try {
-        await this.billingStore.fetchSubscription();
+        const sub = await this.billingStore.fetchSubscription();
+        if (this.checkoutTimeout && ['active', 'trialing'].includes(sub?.status)) {
+          this.checkoutTimeout = false;
+          this.checkoutProcessing = false;
+          this.paymentSuccessMessage =
+            // i18n key: billing.checkout.success.synced
+            'Subscription activated successfully. Thank you!';
+        }
       } catch {
         // subscriptionError updated in store
       }
@@ -622,6 +634,7 @@ export default {
       this.checkoutPollCount = 0;
       this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
       this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
+      this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
       this.scheduleQueryCleanup();
       this.pollSubscription();
       return true;
@@ -629,7 +642,8 @@ export default {
 
     /**
      * @desc Poll fetchSubscription until the subscription changes or max attempts reached.
-     * Criteria: stripeSubscriptionId appeared, OR status changed to active/trialing, OR priceId changed.
+     * Criteria: stripeSubscriptionId appeared, OR status changed to active/trialing,
+     * OR plan changed (covers upgrades that keep the same Stripe sub ID and status).
      * @returns {void}
      */
     pollSubscription() {
@@ -643,10 +657,12 @@ export default {
         const sub = this.billingStore.subscription;
         const newId = sub?.stripeSubscriptionId ?? null;
         const newStatus = sub?.status ?? null;
+        const newPlan = sub?.plan ?? null;
 
         const activated =
           (newId && newId !== this.checkoutPollSnapshotId) ||
-          (['active', 'trialing'].includes(newStatus) && newStatus !== this.checkoutPollSnapshotStatus);
+          (['active', 'trialing'].includes(newStatus) && newStatus !== this.checkoutPollSnapshotStatus) ||
+          (newPlan && newPlan !== this.checkoutPollSnapshotPlan);
 
         if (activated) {
           this.checkoutProcessing = false;
@@ -712,13 +728,24 @@ export default {
     },
 
     /**
-     * @desc Show the 409 already-active dialog with a portal URL.
+     * @desc Show the 409 already-active dialog with a validated portal URL.
+     * Only accepts HTTPS URLs to guard against malformed or compromised payloads.
      * Called by consumers (e.g. pricing view) that catch the structured error.
      * @param {string} portalUrl - Stripe customer portal URL from the 409 payload
      * @returns {void}
      */
     showAlreadyActiveDialog(portalUrl) {
-      this.alreadyActivePortalUrl = portalUrl || null;
+      this.alreadyActivePortalUrl = null;
+      if (portalUrl) {
+        try {
+          const parsed = new URL(portalUrl);
+          if (parsed.protocol === 'https:') {
+            this.alreadyActivePortalUrl = parsed.toString();
+          }
+        } catch {
+          // Invalid URL — link will not be shown
+        }
+      }
       this.alreadyActiveDialog = true;
     },
   },

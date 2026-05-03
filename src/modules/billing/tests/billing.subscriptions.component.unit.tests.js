@@ -641,6 +641,56 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     expect(refreshBtn).toBeDefined();
   });
 
+  it('retryFetchSubscription clears checkoutTimeout when refresh confirms active subscription', async () => {
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { tab: 'subscriptions', success: 'true' },
+    });
+    await flushPromises();
+
+    // Force timeout
+    await vi.advanceTimersByTimeAsync(16000);
+    await flushPromises();
+    expect(wrapper.vm.checkoutTimeout).toBe(true);
+
+    // Manual refresh confirms active sub
+    vi.spyOn(store, 'fetchSubscription').mockImplementation(async () => {
+      store.subscription = { plan: 'starter', status: 'active', stripeSubscriptionId: 'sub_123' };
+      store.subscriptionError = null;
+      return store.subscription;
+    });
+    await wrapper.vm.retryFetchSubscription();
+
+    expect(wrapper.vm.checkoutTimeout).toBe(false);
+    expect(wrapper.vm.paymentSuccessMessage).toContain('Subscription activated successfully');
+  });
+
+  it('plan change detected as activation (upgrade with same stripeSubscriptionId)', async () => {
+    store.subscription = { plan: 'starter', status: 'active', stripeSubscriptionId: 'sub_same' };
+    let callCount = 0;
+    vi.spyOn(store, 'fetchSubscription').mockImplementation(async () => {
+      callCount += 1;
+      if (callCount >= 2) {
+        store.subscription = { plan: 'pro', status: 'active', stripeSubscriptionId: 'sub_same' };
+        store.subscriptionError = null;
+      }
+    });
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { tab: 'subscriptions', success: 'true' },
+    });
+    await flushPromises();
+
+    // 2nd poll detects plan change
+    await vi.advanceTimersByTimeAsync(4000);
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    expect(wrapper.vm.paymentSuccessMessage).toContain('Subscription activated successfully');
+  });
+
   it('extras purchase shows success immediately without subscription polling', async () => {
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
@@ -684,13 +734,29 @@ describe('BillingSubscriptionsComponent — 409 already-active dialog (Bonus)', 
     expect(wrapper.vm.alreadyActiveDialog).toBe(false);
   });
 
-  it('showAlreadyActiveDialog sets alreadyActiveDialog true and stores portalUrl', async () => {
+  it('showAlreadyActiveDialog sets alreadyActiveDialog true and stores valid HTTPS portalUrl', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     const portalUrl = 'https://billing.stripe.com/portal/sess_abc';
     wrapper.vm.showAlreadyActiveDialog(portalUrl);
     expect(wrapper.vm.alreadyActiveDialog).toBe(true);
     expect(wrapper.vm.alreadyActivePortalUrl).toBe(portalUrl);
+  });
+
+  it('showAlreadyActiveDialog rejects non-HTTPS portalUrl', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    wrapper.vm.showAlreadyActiveDialog('http://evil.example.com/portal');
+    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
+    expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
+  });
+
+  it('showAlreadyActiveDialog handles invalid URL gracefully', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    wrapper.vm.showAlreadyActiveDialog('not-a-url');
+    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
+    expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
   });
 
   it('showAlreadyActiveDialog handles missing portalUrl gracefully', async () => {

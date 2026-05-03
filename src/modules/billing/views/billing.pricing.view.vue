@@ -407,7 +407,17 @@ export default {
       } catch (err) {
         // Bonus: handle 409 subscription_already_active (PR Node-A contract)
         if (err.code === 'subscription_already_active') {
-          this.alreadyActivePortalUrl = err.portalUrl || null;
+          this.alreadyActivePortalUrl = null;
+          if (err.portalUrl) {
+            try {
+              const parsed = new URL(err.portalUrl);
+              if (parsed.protocol === 'https:') {
+                this.alreadyActivePortalUrl = parsed.toString();
+              }
+            } catch {
+              // Invalid URL — link will not be shown
+            }
+          }
           this.alreadyActiveDialog = true;
           return;
         }

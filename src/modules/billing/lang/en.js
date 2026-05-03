@@ -79,9 +79,9 @@ export const billingEn = {
         upgrade: 'Upgrade',
       },
       error: {
-        /** i18n key: billing.subscription.error.fetchFailed */
+        /** i18n key: billing.subscriptions.error.fetchFailed */
         fetchFailed: 'Unable to load your subscription details. Please try again.',
-        /** i18n key: billing.subscription.error.retry */
+        /** i18n key: billing.subscriptions.error.retry */
         retry: 'Retry',
       },
     },
