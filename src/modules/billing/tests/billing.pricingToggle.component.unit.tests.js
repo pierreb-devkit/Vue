@@ -2,9 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
+import { billingEn } from '../lang/en.js';
 
 const vuetify = createVuetify();
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 /**
  * Mount the toggle component with Vuetify installed.
@@ -15,7 +18,7 @@ const mountComponent = (props = {}) =>
   mount(BillingPricingToggleComponent, {
     props: { annual: false, ...props },
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
     },
   });
 

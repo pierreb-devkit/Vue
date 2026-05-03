@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 const vuetify = createVuetify();
 
@@ -31,7 +35,7 @@ const mountComponent = (props = {}, { smAndDown = false } = {}) => {
   return mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: false, packs: mockPacks, ...props },
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
       stubs: {
         // v-dialog uses VOverlay which needs visualViewport (not in jsdom)
         'v-dialog': {
@@ -63,6 +67,7 @@ const mountWithDisplayMock = (smAndDown) =>
   mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: true, packs: mockPacks },
     global: {
+      plugins: [i18n],
       mocks: {
         $vuetify: { display: { smAndDown } },
       },
@@ -127,10 +132,10 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     expect(wrapper.text()).toContain('1000 units');
   });
 
-  it('renders pack price in label', () => {
+  it('renders pack price in label (Intl.NumberFormat USD)', () => {
     wrapper = mountComponent({ modelValue: true });
-    expect(wrapper.text()).toContain('$9');
-    expect(wrapper.text()).toContain('$16');
+    expect(wrapper.text()).toContain('$9.00');
+    expect(wrapper.text()).toContain('$16.00');
   });
 
   it('renders unit count in label', () => {
@@ -230,7 +235,7 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     await wrapper.vm.$nextTick(); // let the promise settle
 
     expect(wrapper.vm.purchasing).toBe(false);
-    expect(wrapper.vm.purchaseError).toBe('Unable to start checkout. Please try again.');
+    expect(wrapper.vm.purchaseError).toBe('Failed to start checkout. Please try again.');
     consoleSpy.mockRestore();
   });
 

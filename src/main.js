@@ -35,6 +35,7 @@ app
   .use(plugins.posthog)
   .use(plugins.dayjs)
   .use(plugins.vuetify)
+  .use(plugins.i18n)
 
 // Initialize stores after all plugins are loaded
 initializeStores(routes);

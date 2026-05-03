@@ -27,8 +27,12 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
+import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -94,7 +98,7 @@ function mountSubscriptions({
   authState.isLoggedIn = isLoggedIn;
   return mount(BillingSubscriptionsComponent, {
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
       mocks: {
         config: mockConfig,
         $route: { path: '/users', query: routeQuery },
@@ -414,7 +418,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     });
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Extra units purchased successfully. Thank you!');
+    expect(wrapper.text()).toContain('Pack credited to your balance');
   });
 
   it('shows extras success copy when packPurchased=true string is present', async () => {
@@ -426,7 +430,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     });
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Extra units purchased successfully. Thank you!');
+    expect(wrapper.text()).toContain('Pack credited to your balance');
   });
 
   it('does NOT show success banner when packPurchased=false string is present', async () => {
@@ -702,7 +706,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     // No polling active for extras
     expect(wrapper.vm.checkoutProcessing).toBe(false);
     expect(wrapper.vm.checkoutPollCount).toBe(0);
-    expect(wrapper.vm.paymentSuccessMessage).toContain('Extra units purchased');
+    expect(wrapper.vm.paymentSuccessMessage).toContain('Pack credited to your balance');
   });
 });
 

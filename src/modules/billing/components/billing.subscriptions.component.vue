@@ -26,10 +26,7 @@
     >
       <div class="d-flex align-center ga-3">
         <v-progress-circular indeterminate size="18" width="2" color="info" />
-        <span>
-          <!-- i18n key: billing.checkout.success.processing -->
-          Processing your payment...
-        </span>
+        <span>{{ $t('billing.checkout.success.processing') }}</span>
       </div>
     </v-alert>
 
@@ -40,12 +37,10 @@
       class="mb-4"
       aria-live="polite"
     >
-      <!-- i18n key: billing.checkout.success.timeout -->
-      Payment received, your subscription is being synced. Please refresh in a few seconds.
+      {{ $t('billing.checkout.success.timeout') }}
       <template #append>
         <v-btn variant="text" size="small" @click="retryFetchSubscription">
-          <!-- i18n key: billing.checkout.success.refresh -->
-          Refresh
+          {{ $t('billing.checkout.success.refresh') }}
         </v-btn>
       </template>
     </v-alert>
@@ -78,11 +73,10 @@
     >
       <div class="d-flex align-center mb-4">
         <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" />
-        <span class="text-title-large font-weight-medium">Subscription unavailable</span>
+        <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.unavailable') }}</span>
       </div>
       <p class="text-body-medium text-medium-emphasis mb-4">
-        <!-- i18n key: billing.subscription.error.fetchFailed -->
-        Unable to load your subscription details. Please try again.
+        {{ $t('billing.subscriptions.error.fetchFailed') }}
       </p>
       <v-btn
         color="primary"
@@ -92,8 +86,7 @@
         :loading="fetchLoading"
         @click="retryFetchSubscription"
       >
-        <!-- i18n key: billing.subscription.error.retry -->
-        Retry
+        {{ $t('billing.subscriptions.error.retry') }}
       </v-btn>
     </v-card>
 
@@ -102,11 +95,11 @@
       <!-- ── Current plan card ────────────────────────────────────────── -->
       <v-card v-if="!subscription || currentPlan === 'free'" :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
         <div class="d-flex align-center mb-4">
-          <span class="text-title-large font-weight-medium mr-3">Current Plan</span>
+          <span class="text-title-large font-weight-medium mr-3">{{ $t('billing.subscriptions.plan.current') }}</span>
           <BillingPlanBadgeComponent plan="free" />
         </div>
         <p class="text-body-medium mb-6">
-          You're on the free plan. Upgrade to unlock more projects, team members, and advanced features.
+          {{ $t('billing.subscriptions.plan.free.description') }}
         </p>
         <v-btn
           color="primary"
@@ -115,13 +108,13 @@
           class="text-none text-body-medium"
           to="/pricing"
         >
-          Upgrade
+          {{ $t('billing.subscriptions.cta.upgrade') }}
         </v-btn>
       </v-card>
 
       <v-card v-else :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
         <div class="d-flex align-center mb-4">
-          <span class="text-title-large font-weight-medium mr-3">Current Plan</span>
+          <span class="text-title-large font-weight-medium mr-3">{{ $t('billing.subscriptions.plan.current') }}</span>
           <BillingPlanBadgeComponent :plan="currentPlan" />
         </div>
 
@@ -136,7 +129,7 @@
               />
             </template>
             <v-list-item-title class="billing-subscriptions__status-row text-body-medium">
-              <span>Status:</span>
+              <span>{{ $t('billing.subscriptions.plan.status') }}</span>
               <v-chip
                 class="billing-subscriptions__status-chip text-capitalize"
                 :color="subscriptionStatusMeta.color"
@@ -164,7 +157,7 @@
               <v-icon icon="fa-solid fa-calendar" size="small" class="mr-3" />
             </template>
             <v-list-item-title class="text-body-medium">
-              Next billing date: <strong>{{ nextBillingDate }}</strong>
+              {{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}
             </v-list-item-title>
           </v-list-item>
         </v-list>
@@ -189,7 +182,7 @@
             :loading="portalLoading"
             @click="manageSubscription"
           >
-            Manage Subscription
+            {{ $t('billing.subscriptions.portal') }}
           </v-btn>
           <v-btn
             v-if="canUpgrade"
@@ -198,7 +191,7 @@
             class="text-none text-body-medium"
             to="/pricing"
           >
-            Change Plan
+            {{ $t('billing.subscriptions.changePlan') }}
           </v-btn>
         </div>
       </v-card>
@@ -213,8 +206,7 @@
 
         <!-- Meter progress card -->
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-          <!-- i18n key: billing.usage.weekly -->
-          <p class="text-title-medium font-weight-medium mb-4">Weekly meter</p>
+          <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.weekly') }}</p>
           <BillingMeterProgressComponent
             :used="meterUsed"
             :quota="meterQuota"
@@ -227,17 +219,15 @@
 
         <!-- Breakdown card -->
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-          <!-- i18n key: billing.usage.breakdown -->
-          <p class="text-title-medium font-weight-medium mb-4">Breakdown</p>
+          <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.breakdown') }}</p>
           <BillingMeterBreakdownChartComponent :breakdown="meterBreakdown" />
         </v-card>
 
         <!-- Extras card -->
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-          <!-- i18n key: billing.subscriptions.extras.balance -->
-          <p class="text-title-medium font-weight-medium mb-2">Extra units</p>
+          <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.subscriptions.extras.balance') }}</p>
           <p class="text-body-medium text-medium-emphasis mb-4">
-            {{ meterExtras }} units remaining
+            {{ $t('billing.extras.balance', { units: meterExtras }) }}
           </p>
           <v-btn
             color="primary"
@@ -246,13 +236,12 @@
             class="text-none text-body-medium mb-6"
             @click="extrasCheckoutDialog = true"
           >
-            Buy units
+            {{ $t('billing.extras.cta') }}
           </v-btn>
 
           <!-- Ledger: last 20 entries -->
           <v-divider class="mb-4" />
-          <!-- i18n key: billing.subscriptions.extras.ledger -->
-          <p class="text-body-medium font-weight-medium mb-3">Transaction history</p>
+          <p class="text-body-medium font-weight-medium mb-3">{{ $t('billing.subscriptions.extras.ledger') }}</p>
           <BillingExtrasLedgerComponent
             :entries="extrasLedger.entries"
             :total="extrasLedger.total"
@@ -275,13 +264,11 @@
         <div class="d-flex align-center mb-3">
           <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
           <span class="text-title-medium font-weight-medium">
-            <!-- i18n key: billing.checkout.error.alreadyActive.title -->
-            Subscription already active
+            {{ $t('billing.checkout.error.alreadyActive.title') }}
           </span>
         </div>
         <p class="text-body-medium text-medium-emphasis mb-6">
-          <!-- i18n key: billing.checkout.error.alreadyActive.message -->
-          You already have an active subscription. Manage it via the Customer Portal.
+          {{ $t('billing.checkout.error.alreadyActive.message') }}
         </p>
         <div class="d-flex ga-3 justify-end">
           <v-btn
@@ -290,7 +277,7 @@
             class="text-none text-body-medium"
             @click="alreadyActiveDialog = false"
           >
-            Close
+            {{ $t('billing.checkout.error.alreadyActive.close') }}
           </v-btn>
           <v-btn
             v-if="alreadyActivePortalUrl"
@@ -302,8 +289,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <!-- i18n key: billing.checkout.error.alreadyActive.cta -->
-            Open Customer Portal
+            {{ $t('billing.checkout.error.alreadyActive.cta') }}
           </v-btn>
         </div>
       </v-card>
@@ -512,13 +498,13 @@ export default {
      */
     subscriptionStatusAction() {
       if (this.subscriptionStatus === 'past_due') {
-        return { color: 'warning', label: 'Update payment method' };
+        return { color: 'warning', label: this.$t('billing.subscriptions.status.updatePayment') };
       }
       if (this.subscriptionStatus === 'canceled') {
-        return { color: 'error', label: 'Reactivate' };
+        return { color: 'error', label: this.$t('billing.subscriptions.status.reactivate') };
       }
       if (['incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) {
-        return { color: 'error', label: 'Complete payment' };
+        return { color: 'error', label: this.$t('billing.subscriptions.status.completePayment') };
       }
       return null;
     },
@@ -601,9 +587,7 @@ export default {
         if (this.checkoutTimeout && ['active', 'trialing'].includes(sub?.status)) {
           this.checkoutTimeout = false;
           this.checkoutProcessing = false;
-          this.paymentSuccessMessage =
-            // i18n key: billing.checkout.success.synced
-            'Subscription activated successfully. Thank you!';
+          this.paymentSuccessMessage = this.$t('billing.checkout.success.synced');
         }
       } catch {
         // subscriptionError updated in store
@@ -623,7 +607,7 @@ export default {
 
       if (query.type === 'extras' || packPurchased) {
         // Extras purchase: no subscription state to poll — show success directly
-        this.paymentSuccessMessage = 'Extra units purchased successfully. Thank you!';
+        this.paymentSuccessMessage = this.$t('billing.extras.purchaseSuccess');
         this.scheduleQueryCleanup();
         return false;
       }
@@ -667,9 +651,7 @@ export default {
         if (activated) {
           this.checkoutProcessing = false;
           this.checkoutTimeout = false;
-          this.paymentSuccessMessage =
-            // i18n key: billing.checkout.success.synced
-            'Subscription activated successfully. Thank you!';
+          this.paymentSuccessMessage = this.$t('billing.checkout.success.synced');
           return;
         }
 
@@ -708,7 +690,7 @@ export default {
         this.portalError = null;
       } catch (err) {
         console.error('Failed to open billing portal:', err);
-        this.portalError = 'Unable to open the billing portal. Please try again.';
+        this.portalError = this.$t('billing.subscriptions.error.portalFailed');
       } finally {
         this.portalLoading = false;
       }

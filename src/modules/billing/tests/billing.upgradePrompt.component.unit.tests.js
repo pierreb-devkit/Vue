@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 const vuetify = createVuetify();
 
@@ -21,7 +25,7 @@ const mountComponent = (props, quotaData = null) => {
   return mount(BillingUpgradePrompt, {
     props,
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
       stubs: {
         RouterLink: true,
       },

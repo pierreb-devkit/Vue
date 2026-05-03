@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingUsageBarComponent from '../components/billing.usageBar.component.vue';
+import { billingEn } from '../lang/en.js';
+
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // Prevent axios calls from useMeter polling
 vi.mock('../../../lib/services/axios', () => ({
@@ -37,7 +41,7 @@ const mountComponent = (props, quotaData = null) => {
   return mount(BillingUsageBarComponent, {
     props,
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, i18n],
     },
   });
 };
