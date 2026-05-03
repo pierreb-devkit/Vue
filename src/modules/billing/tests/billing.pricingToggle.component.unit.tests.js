@@ -52,12 +52,22 @@ describe('BillingPricingToggleComponent', () => {
     expect(annualSpan.classes()).not.toContain('text-medium-emphasis');
   });
 
-  it('shows Save 20% chip only when annual is true', () => {
+  it('always shows the annual savings hint', () => {
     const wrapperMonthly = mountComponent({ annual: false });
-    expect(wrapperMonthly.text()).not.toContain('Save 20%');
+    expect(wrapperMonthly.text()).toContain('Save 20% annually');
 
     const wrapperAnnual = mountComponent({ annual: true });
-    expect(wrapperAnnual.text()).toContain('Save 20%');
+    expect(wrapperAnnual.text()).toContain('Save 20% annually');
+  });
+
+  it('shows Save 20% chip only when annual is true', () => {
+    const wrapperMonthly = mountComponent({ annual: false });
+    expect(wrapperMonthly.findComponent({ name: 'v-chip' }).exists()).toBe(false);
+
+    const wrapperAnnual = mountComponent({ annual: true });
+    const chip = wrapperAnnual.findComponent({ name: 'v-chip' });
+    expect(chip.exists()).toBe(true);
+    expect(chip.text()).toContain('Save 20%');
   });
 
   it('emits update:annual when switch is toggled', async () => {

@@ -22,13 +22,14 @@
   <v-dialog
     :model-value="modelValue"
     max-width="480"
+    :fullscreen="$vuetify.display.smAndDown"
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <v-card>
       <!-- Title -->
-      <v-card-title class="text-title-medium font-weight-bold pt-5 px-5">
+      <div class="text-title-medium font-weight-bold pt-5 px-5">
         Buy extra units
-      </v-card-title>
+      </div>
 
       <!-- Pack radio list -->
       <v-card-text class="px-5 pb-2">
@@ -40,7 +41,7 @@
             v-for="pack in packs"
             :key="pack.packId"
             :value="pack.packId"
-            :label="`${pack.label} — $${pack.priceUsd} (+${pack.meterUnits} units)`"
+            :label="`${pack.label} - $${pack.priceUsd} (+${pack.meterUnits} units)`"
             class="mb-1"
           />
         </v-radio-group>
@@ -48,7 +49,7 @@
         <!-- Empty state when no packs available -->
         <p
           v-if="packs.length === 0"
-          class="text-body-2 text-medium-emphasis py-2"
+          class="text-body-medium text-medium-emphasis py-2"
         >
           No packs available at this time.
         </p>

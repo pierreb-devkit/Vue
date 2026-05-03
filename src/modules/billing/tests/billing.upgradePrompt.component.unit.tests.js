@@ -75,6 +75,17 @@ describe('BillingUpgradePrompt', () => {
     expect(btn.props('to')).toBe('/pricing');
   });
 
+  it('emits buy-pack instead of linking to pricing in meter mode', async () => {
+    const wrapper = mountComponent({ requiredPlan: 'pro', mode: 'meter' });
+    const btn = wrapper.findComponent({ name: 'v-btn' });
+    expect(btn.exists()).toBe(true);
+    expect(btn.text()).toContain('Buy units');
+    expect(btn.props('to')).toBeUndefined();
+
+    await btn.trigger('click');
+    expect(wrapper.emitted('buy-pack')).toHaveLength(1);
+  });
+
   it('shows generic message when resource/action set but no quota data', () => {
     const wrapper = mountComponent(
       { requiredPlan: 'pro', resource: 'documents', action: 'create' },

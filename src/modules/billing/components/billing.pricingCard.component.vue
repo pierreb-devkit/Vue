@@ -50,6 +50,12 @@
       <template v-if="isFree">
         <span class="text-display-small font-weight-bold">Free</span>
       </template>
+      <template v-else-if="pricesLoading && displayPrice === null">
+        <v-skeleton-loader
+          type="button"
+          class="billing-pricing-card__price-skeleton"
+        />
+      </template>
       <template v-else-if="displayPrice !== null">
         <span class="text-display-small font-weight-bold">${{ displayPrice }}</span>
         <span class="text-body-medium text-medium-emphasis"> / {{ annual ? 'year' : 'month' }}</span>
@@ -60,32 +66,57 @@
     </div>
 
     <!-- CTA -->
-    <v-btn
-      v-if="!current"
-      block
-      :variant="plan.highlighted ? 'flat' : 'outlined'"
-      :color="plan.highlighted ? 'primary' : undefined"
-      :class="config.vuetify.theme.rounded"
-      class="mb-6 text-none font-weight-bold"
-      size="large"
-      :loading="loading"
-      :disabled="loading || (!isFree && !activePriceId)"
-      @click="$emit('select', { planId: plan.id, priceId: activePriceId })"
-    >
-      {{ plan.cta }}
-    </v-btn>
-    <v-btn
-      v-else
-      block
-      variant="tonal"
-      color="success"
-      :class="config.vuetify.theme.rounded"
-      class="mb-6 text-none font-weight-bold"
-      size="large"
-      disabled
-    >
-      Current Plan
-    </v-btn>
+    <div class="mb-6">
+      <template v-if="!current">
+        <v-tooltip
+          v-if="pricingUnavailable"
+          text="Pricing temporarily unavailable"
+          location="top"
+        >
+          <template #activator="{ props: tooltipProps }">
+            <span v-bind="tooltipProps" class="d-block">
+              <v-btn
+                block
+                :variant="plan.highlighted ? 'flat' : 'outlined'"
+                :color="plan.highlighted ? 'primary' : undefined"
+                :class="config.vuetify.theme.rounded"
+                class="text-none font-weight-bold"
+                size="large"
+                disabled
+              >
+                {{ plan.cta }}
+              </v-btn>
+            </span>
+          </template>
+        </v-tooltip>
+        <v-btn
+          v-else
+          block
+          :variant="plan.highlighted ? 'flat' : 'outlined'"
+          :color="plan.highlighted ? 'primary' : undefined"
+          :class="config.vuetify.theme.rounded"
+          class="text-none font-weight-bold"
+          size="large"
+          :loading="loading"
+          :disabled="ctaDisabled"
+          @click="selectPlan"
+        >
+          {{ plan.cta }}
+        </v-btn>
+      </template>
+      <v-btn
+        v-else
+        block
+        variant="tonal"
+        color="success"
+        :class="config.vuetify.theme.rounded"
+        class="text-none font-weight-bold"
+        size="large"
+        disabled
+      >
+        Current Plan
+      </v-btn>
+    </div>
 
     <!-- Equivalences (meter mode) — rendered when equivalences prop is present -->
     <v-list
@@ -164,6 +195,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    pricesLoading: {
+      type: Boolean,
+      default: false,
+    },
     /**
      * @desc Optional meter-mode equivalences. When provided, renders a bullet list of
      * "~{count} {label}" items instead of the legacy feature list.
@@ -201,6 +236,30 @@ export default {
       if (!this.annual && this.plan.monthlyPrice) return this.plan.monthlyPrice.id;
       return null;
     },
+    /**
+     * @desc Whether paid Stripe pricing failed to resolve after loading finished.
+     * @returns {boolean}
+     */
+    pricingUnavailable() {
+      return !this.pricesLoading && !this.isFree && !this.activePriceId;
+    },
+    /**
+     * @desc Whether the CTA should be disabled.
+     * @returns {boolean}
+     */
+    ctaDisabled() {
+      return this.loading || (!this.isFree && !this.activePriceId);
+    },
+  },
+  methods: {
+    /**
+     * @desc Emit a plan selection when the CTA is actionable.
+     * @returns {void}
+     */
+    selectPlan() {
+      if (this.ctaDisabled) return;
+      this.$emit('select', { planId: this.plan.id, priceId: this.activePriceId });
+    },
   },
 };
 </script>
@@ -218,5 +277,15 @@ export default {
 
 .billing-pricing-card--highlighted {
   border: 2px solid rgb(var(--v-theme-primary));
+}
+
+.billing-pricing-card__price-skeleton {
+  max-width: 8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .billing-pricing-card:hover {
+    transform: none;
+  }
 }
 </style>

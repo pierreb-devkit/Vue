@@ -24,18 +24,18 @@
 <template>
   <div
     class="billing-meter-progress"
-    role="button"
+    :class="{ 'billing-meter-progress--clickable': hasClickListener }"
+    :role="hasClickListener ? 'button' : undefined"
     :aria-label="ariaLabel"
-    tabindex="0"
-    style="cursor: pointer"
-    @click="$emit('click')"
-    @keydown.enter="$emit('click')"
-    @keydown.space.prevent="$emit('click')"
+    :tabindex="hasClickListener ? 0 : undefined"
+    @click="onInteract"
+    @keydown.enter="onInteract"
+    @keydown.space.prevent="onInteract"
   >
     <!-- Label row -->
     <div
       v-if="label"
-      class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-1"
+      class="d-flex justify-space-between text-body-medium text-medium-emphasis mb-1"
     >
       <span>{{ label }}</span>
       <span
@@ -47,7 +47,9 @@
     <!-- Overage badge -->
     <div
       v-if="overage > 0"
-      class="d-flex align-center mb-1"
+      class="billing-meter-progress__overage d-flex align-center mb-1"
+      aria-live="assertive"
+      aria-atomic="true"
     >
       <v-chip
         color="error"
@@ -85,7 +87,10 @@
     </template>
 
     <!-- Summary text -->
-    <div class="text-caption text-medium-emphasis mt-1">
+    <div
+      class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1"
+      aria-live="polite"
+    >
       <span>{{ used }} / {{ quota }}</span>
       <template v-if="overage > 0">
         <span class="text-error"> ({{ computedNetRemainingRaw }} remaining)</span>
@@ -98,6 +103,11 @@
 </template>
 
 <script>
+/**
+ * Module dependencies.
+ */
+import { computed, getCurrentInstance, useAttrs } from 'vue';
+
 /**
  * Component definition.
  */
@@ -161,6 +171,18 @@ export default {
 
   emits: ['click'],
 
+  /**
+   * @desc Detects whether the parent registered a click listener so the widget
+   * only exposes button semantics when it is genuinely interactive.
+   * @returns {{ hasClickListener: import('vue').ComputedRef<boolean> }}
+   */
+  setup() {
+    const attrs = useAttrs();
+    const instance = getCurrentInstance();
+    const hasClickListener = computed(() => Boolean(attrs.onClick || instance?.vnode?.props?.onClick));
+    return { hasClickListener };
+  },
+
   computed: {
     /**
      * @desc Usage percentage clamped to [0, 100].
@@ -213,5 +235,22 @@ export default {
       return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
     },
   },
+
+  methods: {
+    /**
+     * @desc Emit click only when a parent is listening for interactive drilldown.
+     * @returns {void}
+     */
+    onInteract() {
+      if (!this.hasClickListener) return;
+      this.$emit('click');
+    },
+  },
 };
 </script>
+
+<style scoped>
+.billing-meter-progress--clickable {
+  cursor: pointer;
+}
+</style>

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -9,11 +9,13 @@ const vuetify = createVuetify();
 /**
  * Mount BillingMeterProgressComponent with Vuetify and Pinia installed.
  * @param {Object} props - Component props
+ * @param {Object} [attrs] Component listeners/attrs.
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountComponent = (props) =>
+const mountComponent = (props, attrs = {}) =>
   mount(BillingMeterProgressComponent, {
     props,
+    attrs,
     global: { plugins: [vuetify] },
   });
 
@@ -79,22 +81,35 @@ describe('BillingMeterProgressComponent', () => {
   // ── Click event ──────────────────────────────────────────────────────────
 
   it('emits click when the widget is clicked', async () => {
-    const wrapper = mountComponent({ used: 50, quota: 100 });
+    const onClick = vi.fn();
+    const wrapper = mountComponent({ used: 50, quota: 100 }, { onClick });
     await wrapper.find('.billing-meter-progress').trigger('click');
     expect(wrapper.emitted('click')).toHaveLength(1);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('emits click on Enter key', async () => {
-    const wrapper = mountComponent({ used: 50, quota: 100 });
+    const wrapper = mountComponent({ used: 50, quota: 100 }, { onClick: vi.fn() });
     await wrapper.find('.billing-meter-progress').trigger('keydown.enter');
     expect(wrapper.emitted('click')).toHaveLength(1);
   });
 
   // ── A11y attributes ──────────────────────────────────────────────────────
 
-  it('has role=button on root element (interactive widget)', () => {
-    const wrapper = mountComponent({ used: 50, quota: 100 });
+  it('has role=button on root element when an interactive listener is present', () => {
+    const wrapper = mountComponent({ used: 50, quota: 100 }, { onClick: vi.fn() });
     expect(wrapper.find('.billing-meter-progress').attributes('role')).toBe('button');
+  });
+
+  it('does not expose button semantics when no click listener is present', async () => {
+    const wrapper = mountComponent({ used: 50, quota: 100 });
+    const root = wrapper.find('.billing-meter-progress');
+
+    expect(root.attributes('role')).toBeUndefined();
+    expect(root.attributes('tabindex')).toBeUndefined();
+
+    await root.trigger('click');
+    expect(wrapper.emitted('click')).toBeUndefined();
   });
 
   it('includes label in aria-label when label prop is provided', () => {
@@ -170,5 +185,17 @@ describe('BillingMeterProgressComponent', () => {
     expect(chip.exists()).toBe(true);
     expect(wrapper.text()).toContain('+20 over');
     expect(wrapper.text()).toContain('-20 remaining');
+  });
+
+  it('adds aria-live regions for summary and overage updates', () => {
+    const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
+    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('polite');
+    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-live')).toBe('assertive');
+    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-atomic')).toBe('true');
+  });
+
+  it('matches the overage snapshot', () => {
+    const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
+    expect(wrapper.find('.billing-meter-progress').html()).toMatchSnapshot();
   });
 });

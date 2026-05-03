@@ -84,6 +84,7 @@
             :annual="annual"
             :current="isCurrentPlan(plan.id)"
             :loading="checkoutLoading"
+            :prices-loading="loading"
             :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
             @select="onSelectPlan"
           />
@@ -203,6 +204,7 @@ export default {
   },
   /**
    * @desc Fetch billing plans and subscription data on component creation.
+   * @returns {Promise<void>}
    */
   async created() {
     try {
@@ -224,6 +226,7 @@ export default {
     const { success, canceled } = this.$route.query;
     if (success === 'true') this.checkoutSuccess = true;
     if (canceled === 'true') this.checkoutCanceled = true;
+    if (this.$route.hash === '#units') this.activeTab = 1;
   },
   methods: {
     /**

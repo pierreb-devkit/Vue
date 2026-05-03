@@ -4,6 +4,13 @@
 import pricing from '../views/billing.pricing.view.vue';
 
 /**
+ * @desc Redirect legacy /billing route to the subscriptions tab while preserving incoming query params.
+ * @param {import('vue-router').RouteLocationNormalized} to - Incoming route location.
+ * @returns {{ path: string, query: Object }} Redirect target route.
+ */
+const redirectBillingToSubscriptions = (to) => ({ path: '/users', query: { ...to.query, tab: 'subscriptions' } });
+
+/**
  * Router configuration.
  *
  * `/billing` is no longer a stand-alone view: subscriptions live under
@@ -23,7 +30,7 @@ export default [
   {
     path: '/billing',
     name: 'Billing',
-    redirect: { path: '/users', query: { tab: 'subscriptions' } },
+    redirect: redirectBillingToSubscriptions,
     meta: {
       display: false,
       requiresAuth: true,

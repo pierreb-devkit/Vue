@@ -119,7 +119,6 @@ describe('auth.signup.view', () => {
 
     it('does not throw when signup rejects', async () => {
       signupMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
       await flushPromises();
 
@@ -129,7 +128,73 @@ describe('auth.signup.view', () => {
       wrapper.vm.password = 'password123';
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
-      consoleSpy.mockRestore();
+      expect(wrapper.vm.signupError).toBe('Unable to create your account. Please try again.');
+      expect(wrapper.text()).toContain('Unable to create your account');
+    });
+
+    it('shows API signup errors above the form', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 400, data: { message: 'Email is already taken' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupError).toBe('Email is already taken');
+      expect(wrapper.text()).toContain('Email is already taken');
+    });
+
+    it('shows API error when response.data is a plain string', async () => {
+      signupMock.mockRejectedValueOnce({ response: { data: 'Service unavailable' } });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Service unavailable');
+    });
+
+    it('shows API error when response.data has an error key', async () => {
+      signupMock.mockRejectedValueOnce({ response: { data: { error: 'Invalid token' } } });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Invalid token');
+    });
+
+    it('shows API errors when response.data.errors is an array with entry.error keys', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { data: { errors: [{ error: 'Email taken' }, { msg: 'Too short' }] } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Email taken Too short');
+    });
+
+    it('shows API errors when response.data.errors contains plain strings', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { data: { errors: ['Password too weak', 'Email invalid'] } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Password too weak Email invalid');
     });
   });
 

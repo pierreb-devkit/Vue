@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height d-flex align-center justify-center text-center">
     <div>
-      <h1 class="text-h2 font-weight-bold mb-4">{{ notFoundConfig.title }}</h1>
-      <p class="text-body-1 mb-8">{{ notFoundConfig.message }}</p>
+      <h1 class="text-display-medium font-weight-bold mb-4">{{ notFoundConfig.title }}</h1>
+      <p class="text-body-large mb-8">{{ notFoundConfig.message }}</p>
       <v-btn color="primary" :to="{ name: 'Home' }" size="large">{{ notFoundConfig.buttonText }}</v-btn>
     </div>
   </v-container>

@@ -20,10 +20,15 @@ let purchasePackSpy;
  * Spies on billingStore.createExtrasCheckout so purchasePack is directly
  * observable without triggering HTTP calls.
  * @param {Object} props - Component props
+ * @param {Object} opts - Mount options.
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountComponent = (props = {}) =>
-  mount(BillingExtrasCheckoutModalComponent, {
+const mountComponent = (props = {}, { smAndDown = false } = {}) => {
+  window.innerWidth = smAndDown ? 500 : 1200;
+  window.dispatchEvent(new Event('resize'));
+  vuetify.display.update();
+
+  return mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: false, packs: mockPacks, ...props },
     global: {
       plugins: [vuetify],
@@ -31,7 +36,7 @@ const mountComponent = (props = {}) =>
         // v-dialog uses VOverlay which needs visualViewport (not in jsdom)
         'v-dialog': {
           name: 'v-dialog',
-          props: ['modelValue', 'maxWidth'],
+          props: ['modelValue', 'maxWidth', 'fullscreen'],
           emits: ['update:modelValue'],
           template: '<div class="v-dialog-stub" v-bind="$attrs"><slot /></div>',
         },
@@ -45,6 +50,38 @@ const mountComponent = (props = {}) =>
       },
     },
     attachTo: document.body,
+  });
+};
+
+/**
+ * Mount with explicit $vuetify.display mock and fully stubbed Vuetify children.
+ * This keeps the fullscreen prop test independent from jsdom viewport plumbing.
+ * @param {boolean} smAndDown - Mocked mobile breakpoint state.
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
+const mountWithDisplayMock = (smAndDown) =>
+  mount(BillingExtrasCheckoutModalComponent, {
+    props: { modelValue: true, packs: mockPacks },
+    global: {
+      mocks: {
+        $vuetify: { display: { smAndDown } },
+      },
+      stubs: {
+        'v-dialog': {
+          name: 'v-dialog',
+          props: ['modelValue', 'maxWidth', 'fullscreen'],
+          emits: ['update:modelValue'],
+          template: '<div><slot /></div>',
+        },
+        'v-card': { template: '<div><slot /></div>' },
+        'v-card-text': { template: '<div><slot /></div>' },
+        'v-card-actions': { template: '<div><slot /></div>' },
+        'v-radio-group': { template: '<div><slot /></div>' },
+        'v-radio': { props: ['label'], template: '<div>{{ label }}</div>' },
+        'v-alert': { template: '<div><slot /></div>' },
+        'v-btn': { template: '<button><slot /></button>' },
+      },
+    },
   });
 
 describe('BillingExtrasCheckoutModalComponent', () => {
@@ -73,6 +110,14 @@ describe('BillingExtrasCheckoutModalComponent', () => {
   it('passes modelValue to the dialog', () => {
     wrapper = mountComponent({ modelValue: true });
     expect(wrapper.findComponent({ name: 'v-dialog' }).props('modelValue')).toBe(true);
+  });
+
+  it.each([
+    [true, true],
+    [false, false],
+  ])('passes fullscreen=%s to the dialog for smAndDown=%s', (smAndDown, expected) => {
+    wrapper = mountWithDisplayMock(smAndDown);
+    expect(wrapper.findComponent({ name: 'v-dialog' }).props('fullscreen')).toBe(expected);
   });
 
   it('renders pack radio options', () => {

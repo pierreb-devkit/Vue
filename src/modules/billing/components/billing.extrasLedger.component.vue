@@ -64,9 +64,8 @@
         <!-- amount column -->
         <template #[`item.amount`]="{ item }">
           <span
-            class="font-weight-medium"
+            class="billing-extras-ledger__amount font-weight-medium"
             :class="item.amount >= 0 ? 'text-success' : 'text-error'"
-            style="font-family: monospace"
           >
             {{ item.amount >= 0 ? '+' : '' }}{{ item.amount }}
           </span>
@@ -75,8 +74,7 @@
         <!-- refId / historyId column — truncated with native title tooltip -->
         <template #[`item.refId`]="{ item }">
           <span
-            class="text-caption text-truncate"
-            style="max-width: 100px; display: inline-block"
+            class="billing-extras-ledger__truncate text-caption text-truncate"
             :title="item.refId || item.historyId || '—'"
           >
             {{ truncate(item.refId || item.historyId) }}
@@ -86,8 +84,7 @@
         <!-- stripeSessionId column — truncated with native title tooltip -->
         <template #[`item.stripeSessionId`]="{ item }">
           <span
-            class="text-caption text-truncate"
-            style="max-width: 100px; display: inline-block"
+            class="billing-extras-ledger__truncate text-caption text-truncate"
             :title="item.stripeSessionId || '—'"
           >
             {{ truncate(item.stripeSessionId) }}
@@ -223,3 +220,14 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.billing-extras-ledger__amount {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.billing-extras-ledger__truncate {
+  display: inline-block;
+  max-width: 6.25rem;
+}
+</style>
