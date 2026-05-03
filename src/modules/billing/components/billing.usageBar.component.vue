@@ -33,7 +33,7 @@
         <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
         <span
           class="font-weight-medium billing-usage-bar__admin-label admin-rainbow admin-rainbow--text"
-        >{{ meterUsed != null ? meterUsed : '' }} ∞ Admin</span>
+        >{{ meterUsed != null ? meterUsed : '' }} ∞ {{ $t('billing.usageBar.adminLabel') }}</span>
       </div>
       <div
         class="billing-usage-bar__admin-track admin-rainbow"
@@ -58,7 +58,7 @@
     <template v-else-if="displayMode === 'free'">
       <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
         <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
-        <span class="font-weight-medium">0 / {{ freeTierQuota }} compute</span>
+        <span class="font-weight-medium">0 / {{ freeTierQuota }} {{ $t('billing.usageBar.compute') }}</span>
       </div>
       <v-progress-linear
         :model-value="0"
@@ -253,7 +253,7 @@ export default {
      * @returns {string}
      */
     currentDisplay() {
-      if (!this.hasLimit) return 'Unlimited';
+      if (!this.hasLimit) return this.$t('billing.usageBar.unlimited');
       return `${this.current}/${this.limit}`;
     },
 
@@ -291,7 +291,7 @@ export default {
      */
     meterDisplay() {
       if (this.meterOverage > 0) {
-        return `${this.meterUsed} / ${this.meterQuota} (${this.meterNetRemainingRaw} remaining)`;
+        return `${this.meterUsed} / ${this.meterQuota} ${this.$t('billing.usageBar.remaining', { count: this.meterNetRemainingRaw })}`;
       }
       const base = `${this.meterUsed} / ${this.meterQuota}`;
       return this.meterExtras > 0 ? `${base} +${this.meterExtras}` : base;

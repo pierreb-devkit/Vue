@@ -57,7 +57,7 @@
         variant="tonal"
         prepend-icon="fa-solid fa-triangle-exclamation"
       >
-        +{{ overage }} over
+        {{ $t('billing.meterProgress.over', { count: overage }) }}
       </v-chip>
     </div>
 
@@ -93,10 +93,10 @@
     >
       <span>{{ used }} / {{ quota }}</span>
       <template v-if="overage > 0">
-        <span class="text-error"> ({{ computedNetRemainingRaw }} remaining)</span>
+        <span class="text-error"> {{ $t('billing.meterProgress.remaining', { count: computedNetRemainingRaw }) }}</span>
       </template>
       <template v-else>
-        <span v-if="extras > 0"> +{{ extras }} extras</span>
+        <span v-if="extras > 0"> {{ $t('billing.meterProgress.extras', { count: extras }) }}</span>
       </template>
     </div>
   </div>
@@ -225,15 +225,25 @@ export default {
     },
 
     /**
-     * @desc Accessible ARIA label summarising the current meter state.
+     * @desc Accessible ARIA label summarising the current meter state (locale-aware).
      * @returns {string}
      */
     ariaLabel() {
       const base = this.label ? `${this.label}: ` : '';
       if (this.overage > 0) {
-        return `${base}${this.used} of ${this.quota} used, ${this.overage} over quota`;
+        return this.$t('billing.meterProgress.ariaOver', {
+          base,
+          used: this.used,
+          quota: this.quota,
+          overage: this.overage,
+        });
       }
-      return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
+      return this.$t('billing.meterProgress.ariaUsed', {
+        base,
+        used: this.used,
+        quota: this.quota,
+        percent: this.clampedProgress,
+      });
     },
   },
 

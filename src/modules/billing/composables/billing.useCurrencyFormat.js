@@ -24,11 +24,13 @@ export function useCurrencyFormat() {
 
   /**
    * @desc Format a price amount as USD currency string using locale-aware Intl.NumberFormat.
+   * Falls back to 'en-US' when locale is null, undefined, or empty string.
    * @param {number} amount - Price in dollars (major units)
    * @returns {string} Formatted price string (e.g. '$1,299.00')
    */
   function formatPrice(amount) {
-    return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'USD' }).format(amount);
+    const localeStr = locale.value || 'en-US';
+    return new Intl.NumberFormat(localeStr, { style: 'currency', currency: 'USD' }).format(amount);
   }
 
   return { formatPrice };

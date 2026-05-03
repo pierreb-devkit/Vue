@@ -14,7 +14,7 @@ exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
       <div class="v-chip__prepend"><i class="fa-solid fa-triangle-exclamation mdi v-icon notranslate v-theme--light v-icon--size-default v-icon--start" aria-hidden="true"></i>
         <!---->
       </div>
-      <div class="v-chip__content" data-no-activator=""> +100 over </div>
+      <div class="v-chip__content" data-no-activator="">+100 over</div>
       <!---->
       <!----></span>
     </div><!-- Bar variant -->
@@ -27,7 +27,7 @@ exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
       </transition-stub>
       <!---->
     </div><!-- Summary text -->
-    <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1" aria-live="polite"><span data-v-f7f25334="">1100 / 1000</span><span data-v-f7f25334="" class="text-error"> (-100 remaining)</span></div>
+    <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1" aria-live="polite"><span data-v-f7f25334="">1100 / 1000</span><span data-v-f7f25334="" class="text-error">(-100 remaining)</span></div>
   </div>
 </div>"
 `;

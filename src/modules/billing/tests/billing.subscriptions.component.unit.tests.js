@@ -377,6 +377,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     setActivePinia(createPinia());
     vi.useFakeTimers();
     vi.clearAllMocks();
+    sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
@@ -386,6 +387,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     wrapper?.unmount();
     wrapper = null;
     vi.useRealTimers();
+    sessionStorage.clear();
   });
 
   it('shows processing state and cleans the URL query on ?success=true (P1-2 polling flow)', async () => {
@@ -490,6 +492,7 @@ describe('BillingSubscriptionsComponent — subscription fetch error (P1-1)', ()
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     // Simulate a failed fetchSubscription: error set, subscription remains null
@@ -501,6 +504,7 @@ describe('BillingSubscriptionsComponent — subscription fetch error (P1-1)', ()
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
+    sessionStorage.clear();
   });
 
   it('shows error card instead of free-plan fallback when subscriptionError is set', async () => {
@@ -563,6 +567,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     setActivePinia(createPinia());
     vi.useFakeTimers();
     vi.clearAllMocks();
+    sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = null;
@@ -572,6 +577,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     wrapper?.unmount();
     wrapper = null;
     vi.useRealTimers();
+    sessionStorage.clear();
   });
 
   it('shows processing spinner when ?success=true (non-extras)', async () => {
@@ -719,6 +725,7 @@ describe('BillingSubscriptionsComponent — 409 already-active dialog (Bonus)', 
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
@@ -769,5 +776,329 @@ describe('BillingSubscriptionsComponent — 409 already-active dialog (Bonus)', 
     wrapper.vm.showAlreadyActiveDialog(null);
     expect(wrapper.vm.alreadyActiveDialog).toBe(true);
     expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
+  });
+});
+
+// ─── Suite 10: V5 P1 — F5 mid-polling sessionStorage recovery ────────────────
+
+describe('BillingSubscriptionsComponent — F5 polling recovery (V5 P1)', () => {
+  let wrapper;
+  let store;
+  const SESSION_KEY = 'billing.checkout.polling';
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = null;
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('persists polling session to sessionStorage with snapshot fields when ?success=true starts polling', async () => {
+    store.subscription = { status: 'active', plan: 'starter', stripeSubscriptionId: 'sub_before' };
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { success: 'true' },
+    });
+    await flushPromises();
+
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw);
+    expect(parsed).toHaveProperty('startedAt');
+    expect(typeof parsed.startedAt).toBe('number');
+    // Snapshot fields should be persisted for reliable F5 recovery
+    expect(parsed).toHaveProperty('snapshotId', 'sub_before');
+    expect(parsed).toHaveProperty('snapshotStatus', 'active');
+    expect(parsed).toHaveProperty('snapshotPlan', 'starter');
+  });
+
+  it('resumes polling and restores snapshots from sessionStorage (F5 mid-polling)', async () => {
+    // Simulate 4 seconds elapsed — still within the 16s window
+    // Include snapshot fields so baseline is correctly restored
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      startedAt: Date.now() - 4000,
+      snapshotId: 'sub_before_f5',
+      snapshotStatus: 'active',
+      snapshotPlan: 'starter',
+    }));
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    // Mount without ?success query — simulates F5
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    // Should resume processing state
+    expect(wrapper.vm.checkoutProcessing).toBe(true);
+    // Poll count should start at 2 (4000ms / 2000ms per poll)
+    expect(wrapper.vm.checkoutPollCount).toBe(2);
+    // Snapshots restored from storage — not from null store state
+    expect(wrapper.vm.checkoutPollSnapshotId).toBe('sub_before_f5');
+    expect(wrapper.vm.checkoutPollSnapshotStatus).toBe('active');
+    expect(wrapper.vm.checkoutPollSnapshotPlan).toBe('starter');
+  });
+
+  it('shows processing banner when polling is resumed after F5', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: Date.now() - 2000 }));
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Processing your payment');
+  });
+
+  it('does NOT resume polling when sessionStorage contains malformed startedAt', async () => {
+    // Store malformed data with invalid startedAt
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: 'not-a-number' }));
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    // Session key should be cleared after invalid data detected
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  it('does NOT resume polling when sessionStorage entry is expired (F5 after timeout)', async () => {
+    // Simulate 20 seconds elapsed — beyond the 16s window
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ startedAt: Date.now() - 20000 }));
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    // Session key should be cleared
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  it('clears sessionStorage on successful subscription activation', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      startedAt: Date.now(),
+      snapshotId: null,
+      snapshotStatus: null,
+      snapshotPlan: null,
+    }));
+    let callCount = 0;
+    vi.spyOn(store, 'fetchSubscription').mockImplementation(async () => {
+      callCount += 1;
+      if (callCount >= 1) {
+        store.subscription = { plan: 'starter', status: 'active', stripeSubscriptionId: 'sub_new' };
+      }
+    });
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(2000);
+    await flushPromises();
+
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+  });
+
+  it('clears sessionStorage on polling timeout', async () => {
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { success: 'true' },
+    });
+    await flushPromises();
+
+    // Advance 8 × 2s to exhaust polls
+    await vi.advanceTimersByTimeAsync(16000);
+    await flushPromises();
+
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+    expect(wrapper.vm.checkoutTimeout).toBe(true);
+  });
+});
+
+// ─── Suite 11: V5 P2 — subscription store visibility change refetch ───────────
+
+describe('BillingSubscriptionsComponent — visibilitychange subscription refetch (V5 P2)', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+  });
+
+  it('calls fetchSubscription when tab becomes visible', async () => {
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(store.subscription);
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const initialCallCount = fetchSpy.mock.calls.length;
+
+    // Advance time past the 500ms debounce window to ensure the visibility refetch is not blocked
+    await vi.advanceTimersByTimeAsync(600);
+
+    // Simulate tab becoming visible
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(initialCallCount);
+  });
+
+  it('does NOT call fetchSubscription when tab becomes hidden', async () => {
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(store.subscription);
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const initialCallCount = fetchSpy.mock.calls.length;
+
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    expect(fetchSpy.mock.calls.length).toBe(initialCallCount);
+  });
+
+  it('does NOT refetch if already fetched within 500ms debounce', async () => {
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(store.subscription);
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    // Set subscriptionLastFetchedAt to now (simulating fresh fetch)
+    wrapper.vm.subscriptionLastFetchedAt = Date.now();
+
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    // Should not have called again within debounce window
+    const callsAfterDebounce = fetchSpy.mock.calls.length;
+    // Advance past debounce
+    await vi.advanceTimersByTimeAsync(600);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    // Now it should call
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(callsAfterDebounce);
+  });
+
+  it('does NOT refetch when checkout polling is active', async () => {
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    // Simulate active polling
+    wrapper.vm.checkoutProcessing = true;
+
+    const callCount = fetchSpy.mock.calls.length;
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    expect(fetchSpy.mock.calls.length).toBe(callCount);
+  });
+
+  it('removes visibilitychange listener on beforeUnmount', async () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    wrapper.unmount();
+    wrapper = null;
+
+    const calls = removeSpy.mock.calls.filter(([evt]) => evt === 'visibilitychange');
+    expect(calls.length).toBeGreaterThan(0);
+  });
+});
+
+// ─── Suite 12: V5 edge cases — i18n date formatting + extras/session collision ─
+
+describe('BillingSubscriptionsComponent — V5 edge cases', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedMeterStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('nextBillingDate uses $i18n.locale for locale-aware date formatting', async () => {
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: '2026-06-15T00:00:00.000Z' };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    // nextBillingDate should be a non-empty formatted date string
+    const dateText = wrapper.vm.nextBillingDate;
+    expect(dateText).not.toBeNull();
+    expect(typeof dateText).toBe('string');
+    expect(dateText.length).toBeGreaterThan(0);
+    // Should include 2026 (the year) and some representation of the date
+    expect(dateText).toContain('2026');
+  });
+
+  it('extras purchase clears any stale sessionStorage polling session', async () => {
+    // Simulate a leftover subscription polling session from a previous navigation
+    sessionStorage.setItem('billing.checkout.polling', JSON.stringify({
+      startedAt: Date.now() - 2000,
+      snapshotId: null,
+      snapshotStatus: null,
+      snapshotPlan: null,
+    }));
+
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: true } },
+      routeQuery: { success: 'true', type: 'extras' },
+    });
+    await flushPromises();
+
+    // Session should be cleared — extras purchase must NOT resume subscription polling
+    expect(sessionStorage.getItem('billing.checkout.polling')).toBeNull();
+    // Extras success message displayed (not processing banner)
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+    expect(wrapper.text()).toContain('Pack credited to your balance');
   });
 });

@@ -2,12 +2,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { createI18n } from 'vue-i18n';
 import BillingMeterProgressComponent from '../components/billing.meterProgress.component.vue';
+import { billingEn } from '../lang/en.js';
 
 const vuetify = createVuetify();
+const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 /**
- * Mount BillingMeterProgressComponent with Vuetify and Pinia installed.
+ * Mount BillingMeterProgressComponent with Vuetify, Pinia, and i18n installed.
  * @param {Object} props - Component props
  * @param {Object} [attrs] Component listeners/attrs.
  * @returns {import('@vue/test-utils').VueWrapper}
@@ -16,7 +19,7 @@ const mountComponent = (props, attrs = {}) =>
   mount(BillingMeterProgressComponent, {
     props,
     attrs,
-    global: { plugins: [vuetify] },
+    global: { plugins: [vuetify, i18n] },
   });
 
 describe('BillingMeterProgressComponent', () => {

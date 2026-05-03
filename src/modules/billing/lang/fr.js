@@ -70,6 +70,46 @@ export const billingFr = {
       /** i18n key: billing.equivalences.scrapRun */
       scrapRun: 'operations / semaine',
     },
+    extrasLedger: {
+      empty: {
+        /** i18n key: billing.extrasLedger.empty.noEntries */
+        noEntries: 'Aucune entree dans le journal',
+      },
+      headers: {
+        /** i18n key: billing.extrasLedger.headers.date */
+        date: 'Date',
+        /** i18n key: billing.extrasLedger.headers.kind */
+        kind: 'Type',
+        /** i18n key: billing.extrasLedger.headers.amount */
+        amount: 'Montant',
+        /** i18n key: billing.extrasLedger.headers.refHistory */
+        refHistory: 'Ref / Historique',
+        /** i18n key: billing.extrasLedger.headers.stripeSession */
+        stripeSession: 'Session Stripe',
+      },
+    },
+    meterProgress: {
+      /** i18n key: billing.meterProgress.over — interpolate {count} */
+      over: '+{count} depassement',
+      /** i18n key: billing.meterProgress.remaining — interpolate {count} */
+      remaining: '({count} restants)',
+      /** i18n key: billing.meterProgress.extras — interpolate {count} */
+      extras: '+{count} extras',
+      /** i18n key: billing.meterProgress.ariaOver — interpolate {base}, {used}, {quota}, {overage} */
+      ariaOver: '{base}{used} sur {quota} utilises, {overage} de depassement',
+      /** i18n key: billing.meterProgress.ariaUsed — interpolate {base}, {used}, {quota}, {percent} */
+      ariaUsed: '{base}{used} sur {quota} utilises ({percent}%)',
+    },
+    usageBar: {
+      /** i18n key: billing.usageBar.adminLabel — used next to ∞ Admin display */
+      adminLabel: 'Admin',
+      /** i18n key: billing.usageBar.compute — unit label for free-tier display */
+      compute: 'compute',
+      /** i18n key: billing.usageBar.unlimited — legacy mode unlimited label */
+      unlimited: 'Illimite',
+      /** i18n key: billing.usageBar.remaining — interpolate {count} */
+      remaining: '({count} restants)',
+    },
     subscriptions: {
       /** i18n key: billing.subscriptions.title */
       title: 'Abonnements',

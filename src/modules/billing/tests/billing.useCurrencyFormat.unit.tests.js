@@ -96,4 +96,59 @@ describe('useCurrencyFormat', () => {
     const normalized = frFormatted.replace(/\s/g, ' ');
     expect(normalized).toMatch(/1.299,00/);
   });
+
+  // ── V5 P3: null-guard for locale (avoids Intl.NumberFormat throw) ────────
+
+  it('formatPrice falls back to en-US when locale is empty string', () => {
+    const i18n = createI18n({
+      legacy: false,
+      globalInjection: true,
+      locale: 'en',
+      fallbackLocale: 'en',
+      messages: { en: {}, fr: {} },
+    });
+
+    let result;
+    const Wrapper = defineComponent({
+      setup() {
+        result = useCurrencyFormat();
+        return {};
+      },
+      template: '<div />',
+    });
+
+    mount(Wrapper, { global: { plugins: [i18n] } });
+
+    // Force locale to empty string
+    i18n.global.locale.value = '';
+    // Should not throw and should produce a valid USD-formatted string
+    expect(() => result.formatPrice(100)).not.toThrow();
+    expect(result.formatPrice(100)).toContain('$');
+  });
+
+  it('formatPrice falls back to en-US when locale is null-like', () => {
+    const i18n = createI18n({
+      legacy: false,
+      globalInjection: true,
+      locale: 'en',
+      fallbackLocale: 'en',
+      messages: { en: {}, fr: {} },
+    });
+
+    let result;
+    const Wrapper = defineComponent({
+      setup() {
+        result = useCurrencyFormat();
+        return {};
+      },
+      template: '<div />',
+    });
+
+    mount(Wrapper, { global: { plugins: [i18n] } });
+
+    // Simulate null-like locale (type-coerced via || fallback)
+    i18n.global.locale.value = null;
+    expect(() => result.formatPrice(50)).not.toThrow();
+    expect(result.formatPrice(50)).toContain('$');
+  });
 });
