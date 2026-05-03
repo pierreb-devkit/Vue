@@ -174,6 +174,8 @@ export default {
   /**
    * @desc Detects whether the parent registered a click listener so the widget
    * only exposes button semantics when it is genuinely interactive.
+   * Uses both useAttrs().onClick (stable public API) and getCurrentInstance as
+   * a belt-and-suspenders fallback to handle edge cases in different render contexts.
    * @returns {{ hasClickListener: import('vue').ComputedRef<boolean> }}
    */
   setup() {

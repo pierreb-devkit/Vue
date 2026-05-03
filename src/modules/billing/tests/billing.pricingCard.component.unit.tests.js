@@ -85,12 +85,13 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('Pricing unavailable');
   });
 
-  it('shows a price skeleton while Stripe pricing is loading', () => {
+  it('shows a text skeleton while Stripe pricing is loading', () => {
     const paidNoPrices = { ...proPlan, monthlyPrice: null, annualPrice: null };
     const wrapper = mountComponent({ plan: paidNoPrices, pricesLoading: true });
     const skeleton = wrapper.findComponent({ name: 'v-skeleton-loader' });
     expect(skeleton.exists()).toBe(true);
-    expect(skeleton.props('type')).toBe('button');
+    // C.4: type changed from "button" (wrong pill shape) to "text" (correct for price display)
+    expect(skeleton.props('type')).toBe('text');
     expect(wrapper.text()).not.toContain('Pricing unavailable');
   });
 
@@ -202,5 +203,33 @@ describe('BillingPricingCardComponent', () => {
     const wrapper = mountComponent({ plan: proPlan, equivalences: [] });
     expect(wrapper.text()).toContain('Unlimited projects');
     expect(wrapper.text()).not.toContain('~');
+  });
+
+  // ── D.2 Structured equivalences (Phase 3 chips) ───────────────────────────
+
+  it('renders BillingEquivalencesChipsComponent when equivalences are structured objects with kind', () => {
+    const wrapper = mountComponent({
+      plan: proPlan,
+      equivalences: [
+        { kind: 'easy', count: 500, label: 'light ops / week' },
+        { kind: 'hard', count: 50, label: 'heavy ops / week' },
+      ],
+    });
+    const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
+    expect(chipsComp.exists()).toBe(true);
+    // Feature list must be hidden
+    expect(wrapper.text()).not.toContain('Unlimited projects');
+    // Legacy bullet list (with tilde prefix) must be hidden
+    expect(wrapper.text()).not.toContain('~500');
+  });
+
+  it('falls back to legacy bullet list for flat equivalences (backward compat)', () => {
+    const wrapper = mountComponent({
+      plan: proPlan,
+      equivalences: [{ label: 'operations / week', count: 2000 }],
+    });
+    const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
+    expect(chipsComp.exists()).toBe(false);
+    expect(wrapper.text()).toContain('~2000 operations / week');
   });
 });

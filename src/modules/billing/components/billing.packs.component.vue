@@ -40,9 +40,15 @@
         >
           <p class="text-title-medium font-weight-bold mb-2">{{ pack.label }}</p>
           <p class="text-display-small font-weight-bold mb-1">${{ pack.priceUsd }}</p>
-          <p class="text-body-medium text-medium-emphasis mb-6">
+          <p class="text-body-medium text-medium-emphasis mb-4">
             +{{ pack.meterUnits }} units
           </p>
+          <!-- Structured equivalences chips (Phase 3 forward) — opt-in, no breaking change -->
+          <BillingEquivalencesChipsComponent
+            v-if="pack.equivalences && pack.equivalences.length > 0"
+            :equivalences="pack.equivalences"
+            class="mb-4"
+          />
           <v-btn
             color="primary"
             variant="flat"
@@ -79,12 +85,16 @@
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { packs as packsConfig } from '../config/billing.static-content';
+import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
 
 /**
  * Component definition.
  */
 export default {
   name: 'BillingPacksComponent',
+  components: {
+    BillingEquivalencesChipsComponent,
+  },
 
   /**
    * @desc Inject billing store and auth store. Auth store is used to guard
@@ -165,5 +175,9 @@ export default {
 <style scoped>
 .billing-packs__card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .billing-packs__card { transition: none; }
 }
 </style>

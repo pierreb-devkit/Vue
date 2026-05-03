@@ -26,10 +26,10 @@
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <v-card>
-      <!-- Title -->
-      <div class="text-title-medium font-weight-bold pt-5 px-5">
+      <!-- Title — v-card-title adds dialog landmark semantics for screen readers -->
+      <v-card-title class="text-title-medium font-weight-bold pt-5 px-5">
         Buy extra units
-      </div>
+      </v-card-title>
 
       <!-- Pack radio list -->
       <v-card-text class="px-5 pb-2">

@@ -52,12 +52,13 @@ describe('BillingPricingToggleComponent', () => {
     expect(annualSpan.classes()).not.toContain('text-medium-emphasis');
   });
 
-  it('always shows the annual savings hint', () => {
+  it('shows the annual savings hint only when monthly is active (teaser, not redundant with chip)', () => {
+    // C.3: hint is a teaser when monthly — redundant when annual chip is already visible
     const wrapperMonthly = mountComponent({ annual: false });
     expect(wrapperMonthly.text()).toContain('Save 20% annually');
 
     const wrapperAnnual = mountComponent({ annual: true });
-    expect(wrapperAnnual.text()).toContain('Save 20% annually');
+    expect(wrapperAnnual.text()).not.toContain('Save 20% annually');
   });
 
   it('shows Save 20% chip only when annual is true', () => {

@@ -228,7 +228,7 @@ export const useBillingStore = defineStore('billing', {
       try {
         const api = apiBase();
         const successUrl = `${window.location.origin}/users?tab=subscriptions&success=true&type=extras`;
-        const cancelUrl = `${window.location.origin}/pricing#units`;
+        const cancelUrl = `${window.location.origin}/pricing?canceled=true#units`;
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
           packId,
           successUrl,

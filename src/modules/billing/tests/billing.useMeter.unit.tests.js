@@ -403,6 +403,57 @@ describe('useMeter composable', () => {
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
 
+  // ── refreshOnFocus (visibilitychange) ─────────────────────────────────────
+
+  it('adds a visibilitychange listener on mount when refreshOnFocus is true', () => {
+    const addSpy = vi.spyOn(document, 'addEventListener');
+    mountMeter({ pollIntervalMs: 0, refreshOnFocus: true });
+    expect(addSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
+
+  it('does not add a visibilitychange listener when refreshOnFocus is false', () => {
+    const addSpy = vi.spyOn(document, 'addEventListener');
+    mountMeter({ pollIntervalMs: 0, refreshOnFocus: false });
+    const visibilityCalls = addSpy.mock.calls.filter(([event]) => event === 'visibilitychange');
+    expect(visibilityCalls).toHaveLength(0);
+  });
+
+  it('refreshes when tab becomes visible and polling is disabled', async () => {
+    mountMeter({ pollIntervalMs: 0, refreshOnFocus: true });
+
+    store.fetchUsageMeter.mockClear();
+    store.fetchExtrasBalance.mockClear();
+
+    // Simulate document becoming visible
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    expect(store.fetchUsageMeter).toHaveBeenCalledTimes(1);
+    expect(store.fetchExtrasBalance).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh on visibilitychange when polling is already active', () => {
+    vi.useFakeTimers();
+    mountMeter({ pollIntervalMs: 5000, refreshOnFocus: true });
+
+    store.fetchUsageMeter.mockClear();
+    store.fetchExtrasBalance.mockClear();
+
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+
+    // pollIntervalMs > 0 — visibilitychange handler should NOT trigger refresh
+    expect(store.fetchUsageMeter).not.toHaveBeenCalled();
+    expect(store.fetchExtrasBalance).not.toHaveBeenCalled();
+  });
+
+  it('removes the visibilitychange listener on unmount', () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const { wrapper } = mountMeter({ pollIntervalMs: 0, refreshOnFocus: true });
+    wrapper.unmount();
+    expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
+
   // ── purchasePack ───────────────────────────────────────────────────────────
 
   it('purchasePack delegates to store.createExtrasCheckout', async () => {

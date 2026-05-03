@@ -1,16 +1,6 @@
 <template>
   <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-    <!-- Success / cancel alerts -->
-    <v-alert
-      v-if="checkoutSuccess"
-      type="success"
-      variant="tonal"
-      closable
-      class="mb-6"
-      @click:close="dismissAlert"
-    >
-      Payment successful! Your subscription is now active.
-    </v-alert>
+    <!-- Cancel alert — success goes to /users?tab=subscriptions, never back here -->
     <v-alert
       v-if="checkoutCanceled"
       type="info"
@@ -56,7 +46,7 @@
 
     <!-- Glass tabs (meter mode only) -->
     <div v-if="meterMode" class="d-flex justify-center mb-8">
-      <homeTabsComponent
+      <HomeTabsComponent
         :items="tabItems"
         :model-value="activeTab"
         @update:model-value="activeTab = $event"
@@ -67,7 +57,7 @@
     <template v-if="!meterMode || activeTab === 0">
       <!-- Billing toggle -->
       <div class="mb-10">
-        <billingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
+        <BillingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
       </div>
 
       <!-- Plans grid (always rendered from static config; prices fill in asynchronously) -->
@@ -79,7 +69,7 @@
           sm="6"
           md="4"
         >
-          <billingPricingCardComponent
+          <BillingPricingCardComponent
             :plan="plan"
             :annual="annual"
             :current="isCurrentPlan(plan.id)"
@@ -96,6 +86,23 @@
     <template v-if="meterMode && activeTab === 1">
       <BillingPacksComponent />
     </template>
+
+    <!-- Downgrade confirmation dialog -->
+    <v-dialog v-model="downgradeDialog" max-width="480" @keydown.esc="cancelDowngrade">
+      <v-card>
+        <v-card-title class="text-title-medium font-weight-bold">Confirm plan change</v-card-title>
+        <v-card-text class="text-body-medium">
+          You're switching from <strong>{{ currentPlanName }}</strong> to <strong>{{ pendingDowngradePlanName }}</strong>.
+          Stripe will pro-rate the difference. Quota will reset at next billing cycle.
+        </v-card-text>
+        <v-card-actions class="ga-2">
+          <v-btn variant="text" class="text-none" @click="cancelDowngrade">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">
+            Continue to checkout
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -106,10 +113,10 @@
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { plans as plansConfig } from '../config/billing.static-content';
-import billingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
-import billingPricingCardComponent from '../components/billing.pricingCard.component.vue';
+import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
+import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
-import homeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
+import HomeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
 
 
 /**
@@ -118,10 +125,10 @@ import homeTabsComponent from '../../home/components/utils/home.tabs.component.v
 export default {
   name: 'PricingView',
   components: {
-    billingPricingToggleComponent,
-    billingPricingCardComponent,
+    BillingPricingToggleComponent,
+    BillingPricingCardComponent,
     BillingPacksComponent,
-    homeTabsComponent,
+    HomeTabsComponent,
   },
   /**
    * @desc Inject billingStore and authStore once in setup so computed
@@ -137,13 +144,16 @@ export default {
   data() {
     return {
       annual: false,
-      checkoutSuccess: false,
       checkoutCanceled: false,
       checkoutLoading: false,
       checkoutError: null,
       error: null,
       /** @type {number} Active glass tab index — 0=plans, 1=units (meter mode only) */
       activeTab: 0,
+      /** @type {boolean} Whether the downgrade confirmation dialog is open */
+      downgradeDialog: false,
+      /** @type {{ planId: string, priceId: string }|null} Pending plan selection awaiting confirmation */
+      pendingDowngrade: null,
     };
   },
   computed: {
@@ -201,6 +211,31 @@ export default {
         { id: 'units', label: 'Units' },
       ];
     },
+    /**
+     * @desc Ordered plan IDs derived from static config for downgrade detection.
+     * Tier index 0 = lowest (free), last = highest (pro).
+     * @returns {Array<string>}
+     */
+    planTierOrder() {
+      return plansConfig.map((p) => p.id).filter(Boolean);
+    },
+    /**
+     * @desc The name of the pending downgrade target plan (for confirmation dialog copy).
+     * @returns {string}
+     */
+    pendingDowngradePlanName() {
+      if (!this.pendingDowngrade) return '';
+      const plan = this.mergedPlans.find((p) => p.id === this.pendingDowngrade.planId);
+      return plan?.name ?? this.pendingDowngrade.planId;
+    },
+    /**
+     * @desc The name of the current plan (for confirmation dialog copy).
+     * @returns {string}
+     */
+    currentPlanName() {
+      const plan = this.mergedPlans.find((p) => p.id === this.currentPlanId);
+      return plan?.name ?? this.currentPlanId;
+    },
   },
   /**
    * @desc Fetch billing plans and subscription data on component creation.
@@ -222,9 +257,8 @@ export default {
       });
     }
 
-    // Handle Stripe redirect query params
-    const { success, canceled } = this.$route.query;
-    if (success === 'true') this.checkoutSuccess = true;
+    // Handle Stripe redirect query params — success always redirects to /users, never back here
+    const { canceled } = this.$route.query;
     if (canceled === 'true') this.checkoutCanceled = true;
     if (this.$route.hash === '#units') this.activeTab = 1;
   },
@@ -238,12 +272,11 @@ export default {
       return this.currentPlanId === planId;
     },
     /**
-     * @desc Dismiss the success / canceled alert and clean query params.
+     * @desc Dismiss the canceled alert and clean query params.
      */
     dismissAlert() {
-      this.checkoutSuccess = false;
       this.checkoutCanceled = false;
-      if (this.$route.query.success || this.$route.query.canceled) {
+      if (this.$route.query.canceled) {
         this.$router.replace({ path: this.$route.path });
       }
     },
@@ -261,7 +294,7 @@ export default {
       }
     },
     /**
-     * @desc Handle plan selection — validate auth/org, then create checkout session.
+     * @desc Handle plan selection — validate auth/org, detect downgrade, then create checkout session.
      * @param {Object} payload - { planId, priceId }
      * @returns {Promise<void>}
      */
@@ -281,7 +314,42 @@ export default {
       // Free plan -> no checkout needed
       if (!priceId || planId === 'free') return;
 
-      // Paid plan -> create Stripe Checkout session
+      // Downgrade detection — show confirmation dialog before proceeding
+      const targetTier = this.planTierOrder.indexOf(planId);
+      const currentTier = this.planTierOrder.indexOf(this.currentPlanId);
+      if (targetTier !== -1 && currentTier !== -1 && targetTier < currentTier) {
+        this.pendingDowngrade = { planId, priceId };
+        this.downgradeDialog = true;
+        return;
+      }
+
+      await this.proceedCheckout({ planId, priceId });
+    },
+    /**
+     * @desc Confirm the pending downgrade and proceed to checkout.
+     * @returns {Promise<void>}
+     */
+    async confirmDowngrade() {
+      this.downgradeDialog = false;
+      if (!this.pendingDowngrade) return;
+      const payload = this.pendingDowngrade;
+      this.pendingDowngrade = null;
+      await this.proceedCheckout(payload);
+    },
+    /**
+     * @desc Cancel the pending downgrade dialog.
+     * @returns {void}
+     */
+    cancelDowngrade() {
+      this.downgradeDialog = false;
+      this.pendingDowngrade = null;
+    },
+    /**
+     * @desc Create Stripe Checkout session and redirect.
+     * @param {Object} payload - { planId, priceId }
+     * @returns {Promise<void>}
+     */
+    async proceedCheckout({ priceId }) {
       this.checkoutLoading = true;
       try {
         const checkout = await this.billingStore.createCheckout(priceId);

@@ -385,8 +385,11 @@ export default {
       if (this.subscriptionStatus === 'past_due') {
         return { color: 'warning', label: 'Update payment method' };
       }
-      if (['canceled', 'incomplete'].includes(this.subscriptionStatus)) {
+      if (this.subscriptionStatus === 'canceled') {
         return { color: 'error', label: 'Reactivate' };
+      }
+      if (['incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) {
+        return { color: 'error', label: 'Complete payment' };
       }
       return null;
     },
@@ -449,6 +452,11 @@ export default {
       this.paymentSuccessMessage = query.type === 'extras' || packPurchased
         ? 'Extra units purchased successfully. Thank you!'
         : 'Subscription updated successfully. Thank you!';
+
+      // Auto-dismiss the success alert after 5 seconds (manual close still works via closable)
+      setTimeout(() => {
+        this.paymentSuccessMessage = null;
+      }, 5000);
 
       this.successCleanupTimer = setTimeout(() => {
         this.$router.replace({
