@@ -1103,7 +1103,50 @@ describe('BillingSubscriptionsComponent — V5 edge cases', () => {
   });
 });
 
-// ─── Suite 11: V6 P1 — sessionStorage SecurityError in privacy mode ──────────
+// ─── Suite 11: V6 P2 — extras.balance plural rendering ───────────────────────
+
+describe('BillingSubscriptionsComponent — extras.balance pluralization (V6 P2)', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('renders plural form for extras balance > 1 unit', async () => {
+    store.usageMeter = { ...store.usageMeter, extrasRemaining: 50 };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    // 50 units — plural form: "50 units remaining"
+    expect(wrapper.text()).toContain('50 units remaining');
+  });
+
+  it('renders singular form for extras balance = 1 unit', async () => {
+    store.usageMeter = { ...store.usageMeter, extrasRemaining: 1 };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    // 1 unit — singular form: "1 unit remaining"
+    expect(wrapper.text()).toContain('1 unit remaining');
+  });
+
+  it('renders zero form for extras balance = 0 units', async () => {
+    store.usageMeter = { ...store.usageMeter, extrasRemaining: 0 };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    // 0 units — zero form: "no units remaining"
+    expect(wrapper.text()).toContain('no units remaining');
+  });
+});
+
+// ─── Suite 12: V6 P1 — sessionStorage SecurityError in privacy mode ──────────
 
 describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (V6 P1)', () => {
   let wrapper;

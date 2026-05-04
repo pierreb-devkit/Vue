@@ -291,7 +291,7 @@ export default {
      */
     meterDisplay() {
       if (this.meterOverage > 0) {
-        return `${this.meterUsed} / ${this.meterQuota} ${this.$t('billing.usageBar.remaining', this.meterNetRemainingRaw, { count: this.meterNetRemainingRaw })}`;
+        return `${this.meterUsed} / ${this.meterQuota} ${this.$t('billing.usageBar.remaining', { count: this.meterNetRemainingRaw, n: this.meterNetRemainingRaw })}`;
       }
       const base = `${this.meterUsed} / ${this.meterQuota}`;
       return this.meterExtras > 0 ? `${base} +${this.meterExtras}` : base;

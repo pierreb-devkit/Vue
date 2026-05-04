@@ -227,7 +227,7 @@
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
           <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.subscriptions.extras.balance') }}</p>
           <p class="text-body-medium text-medium-emphasis mb-4">
-            {{ $t('billing.extras.balance', meterExtras, { units: meterExtras }) }}
+            {{ $t('billing.extras.balance', { units: meterExtras, n: meterExtras }) }}
           </p>
           <v-btn
             color="primary"

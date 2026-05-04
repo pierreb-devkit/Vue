@@ -93,7 +93,7 @@
     >
       <span>{{ used }} / {{ quota }}</span>
       <template v-if="overage > 0">
-        <span class="text-error"> {{ $t('billing.meterProgress.remaining', computedNetRemainingRaw, { count: computedNetRemainingRaw }) }}</span>
+        <span class="text-error"> {{ $t('billing.meterProgress.remaining', { count: computedNetRemainingRaw, n: computedNetRemainingRaw }) }}</span>
       </template>
       <template v-else>
         <span v-if="extras > 0"> {{ $t('billing.meterProgress.extras', { count: extras }) }}</span>
