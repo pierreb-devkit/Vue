@@ -227,7 +227,7 @@
         <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
           <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.subscriptions.extras.balance') }}</p>
           <p class="text-body-medium text-medium-emphasis mb-4">
-            {{ $t('billing.extras.balance', { units: meterExtras }) }}
+            {{ $t('billing.extras.balance', meterExtras, { units: meterExtras }) }}
           </p>
           <v-btn
             color="primary"
@@ -321,6 +321,20 @@ const CHECKOUT_POLL_INTERVAL_MS = 2000;
 const CHECKOUT_POLL_WINDOW_MS = CHECKOUT_POLL_MAX * CHECKOUT_POLL_INTERVAL_MS;
 /** sessionStorage key used to persist polling state across F5 reloads. */
 const CHECKOUT_POLL_SESSION_KEY = 'billing.checkout.polling';
+
+/**
+ * @desc Best-effort sessionStorage.removeItem — silently ignores SecurityError
+ * thrown in privacy / sandboxed browser contexts where storage is unavailable.
+ * @param {string} key
+ * @returns {void}
+ */
+function safeSessionRemove(key) {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // SecurityError in private/sandboxed mode — nothing to clean up
+  }
+}
 
 /**
  * Component definition.
@@ -685,7 +699,7 @@ export default {
         if (!raw) return false;
         stored = JSON.parse(raw);
       } catch {
-        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
         return false;
       }
 
@@ -695,7 +709,7 @@ export default {
       // Number.isFinite rejects NaN, Infinity, null, strings, and future timestamps.
       const now = Date.now();
       if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > now) {
-        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
         return false;
       }
 
@@ -703,7 +717,7 @@ export default {
       const remaining = CHECKOUT_POLL_WINDOW_MS - elapsed;
 
       if (remaining <= 0) {
-        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
+        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
         return false;
       }
 

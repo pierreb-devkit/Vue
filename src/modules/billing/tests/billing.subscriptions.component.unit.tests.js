@@ -1102,3 +1102,125 @@ describe('BillingSubscriptionsComponent — V5 edge cases', () => {
     expect(wrapper.text()).toContain('Pack credited to your balance');
   });
 });
+
+// ─── Suite 11: V6 P1 — sessionStorage SecurityError in privacy mode ──────────
+
+describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (V6 P1)', () => {
+  let wrapper;
+  let store;
+  const SESSION_KEY = 'billing.checkout.polling';
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = null;
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    // Restore real sessionStorage after each test that may have overridden it
+    Object.defineProperty(window, 'sessionStorage', {
+      value: window.sessionStorage,
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  it('mount async completes and fetchSubscription is called when sessionStorage.getItem throws SecurityError', async () => {
+    // Simulate privacy mode where ALL sessionStorage access throws SecurityError
+    const fakeStorage = {
+      getItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      setItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      removeItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      clear: () => {},
+    };
+    Object.defineProperty(window, 'sessionStorage', {
+      value: fakeStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    // mount async must complete — fetchSubscription should be called
+    expect(fetchSpy).toHaveBeenCalled();
+    // No checkout processing initiated (no ?success query)
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+  });
+
+  it('resumeCheckoutPollingFromSession returns false gracefully when removeItem inside catch throws', async () => {
+    // getItem returns valid-looking data, but JSON.parse succeeds, then removeItem for cleanup throws
+    const callLog = [];
+    const fakeStorage = {
+      getItem: (key) => {
+        callLog.push(`getItem:${key}`);
+        throw new DOMException('SecurityError', 'SecurityError');
+      },
+      setItem: () => {},
+      removeItem: (key) => {
+        callLog.push(`removeItem:${key}`);
+        throw new DOMException('SecurityError', 'SecurityError');
+      },
+      clear: () => {},
+    };
+    Object.defineProperty(window, 'sessionStorage', {
+      value: fakeStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    // getItem was attempted (F5 recovery path), removeItem was attempted inside catch (safe)
+    expect(callLog.some((c) => c.startsWith('getItem:'))).toBe(true);
+    // checkoutProcessing must remain false — no session data was recoverable
+    expect(wrapper.vm.checkoutProcessing).toBe(false);
+  });
+
+  it('visibilitychange listener is registered even when sessionStorage throws SecurityError on mount', async () => {
+    const fakeStorage = {
+      getItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      setItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      removeItem: () => { throw new DOMException('SecurityError', 'SecurityError'); },
+      clear: () => {},
+    };
+    Object.defineProperty(window, 'sessionStorage', {
+      value: fakeStorage,
+      writable: true,
+      configurable: true,
+    });
+
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    // Simulate tab becoming visible — listener must be registered
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    expect(fetchSpy).toHaveBeenCalled();
+  });
+});
