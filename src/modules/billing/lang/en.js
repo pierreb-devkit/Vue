@@ -162,6 +162,10 @@ export const billingEn = {
         reactivate: 'Reactivate',
         /** i18n key: billing.subscriptions.status.completePayment */
         completePayment: 'Complete payment',
+        /** i18n key: billing.subscriptions.status.paused */
+        paused: 'Paused',
+        /** i18n key: billing.subscriptions.status.unpaid */
+        unpaid: 'Unpaid',
       },
     },
     checkout: {

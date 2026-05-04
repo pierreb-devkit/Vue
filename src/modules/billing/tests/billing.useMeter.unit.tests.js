@@ -484,4 +484,43 @@ describe('useMeter composable', () => {
     const { result } = mountMeter({ pollIntervalMs: 0 });
     await expect(result.purchasePack('pack_500')).rejects.toThrow('Checkout failed');
   });
+
+  // ── meterError ─────────────────────────────────────────────────────────────
+
+  it('meterError is null by default', () => {
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.meterError.value).toBeNull();
+  });
+
+  it('meterError is set when initial fetchMissingMeterData fails', async () => {
+    const fetchError = new Error('Network error');
+    store.fetchUsageMeter.mockRejectedValueOnce(fetchError);
+    store.fetchExtrasBalance.mockRejectedValueOnce(fetchError);
+
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    // Allow the rejected promise to settle
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(result.meterError.value).toBeTruthy();
+  });
+
+  it('meterError is set when a polling safeRefresh fails', async () => {
+    vi.useFakeTimers();
+    const { result } = mountMeter({ pollIntervalMs: 5000 });
+
+    const refreshError = new Error('Polling error');
+    store.fetchUsageMeter.mockRejectedValueOnce(refreshError);
+    store.fetchExtrasBalance.mockRejectedValueOnce(refreshError);
+
+    vi.advanceTimersByTime(5000);
+    // Allow microtasks to flush
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(result.meterError.value).toBeTruthy();
+  });
+
+  it('meterError is exposed in the returned object', () => {
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect('meterError' in result).toBe(true);
+  });
 });

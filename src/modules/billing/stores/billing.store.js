@@ -5,6 +5,7 @@ import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { capture } from '../../../lib/helpers/analytics';
+import { validateStripeUrl } from '../lib/stripeRedirect';
 
 /**
  * @desc Build the base API URL from config.
@@ -150,11 +151,7 @@ export const useBillingStore = defineStore('billing', {
         if (!url) {
           throw new Error('Billing portal URL is missing from the API response');
         }
-        const parsed = new URL(url);
-        if (parsed.protocol !== 'https:') {
-          throw new Error('Rejected non-HTTPS portal URL');
-        }
-        window.location.href = parsed.toString();
+        window.location.href = validateStripeUrl(url);
       } catch (err) {
         console.error(err);
         throw err;
@@ -249,11 +246,7 @@ export const useBillingStore = defineStore('billing', {
         });
         const url = res?.data?.data?.url;
         if (!url) throw new Error('Checkout URL missing in response');
-        const parsed = new URL(url);
-        if (parsed.protocol !== 'https:') {
-          throw new Error('Rejected non-HTTPS checkout URL');
-        }
-        window.location.assign(parsed.toString());
+        window.location.assign(validateStripeUrl(url));
       } catch (err) {
         console.error(err);
         throw err;

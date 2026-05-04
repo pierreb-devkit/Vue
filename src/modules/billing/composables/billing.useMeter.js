@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 
 let pollTimer = null;
@@ -46,6 +46,7 @@ function fetchMissingMeterData(billingStore) {
  *   totalRemaining: import('vue').ComputedRef<number>,
  *   netRemainingRaw: import('vue').ComputedRef<number>,
  *   overage: import('vue').ComputedRef<number>,
+ *   meterError: import('vue').Ref<Error|null>,
  *   refresh: () => Promise<[Object, Object]>,
  *   purchasePack: (packId: string) => Promise<void>
  * }}
@@ -53,6 +54,9 @@ function fetchMissingMeterData(billingStore) {
 export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {}) {
   const billingStore = useBillingStore();
   consumerCount += 1;
+
+  /** @type {import('vue').Ref<Error|null>} Last error from a background refresh or initial fetch. */
+  const meterError = ref(null);
 
   /** @type {import('vue').ComputedRef<number>} Meter credits consumed this week */
   const used = computed(() => billingStore.usageMeter?.meterUsed ?? 0);
@@ -126,10 +130,17 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
   const refresh = () =>
     Promise.all([billingStore.fetchUsageMeter(), billingStore.fetchExtrasBalance()]);
 
-  /** @desc Safe wrapper: catches refresh errors to avoid unhandled Promise rejections. */
-  const safeRefresh = () => refresh().catch(() => {});
+  /** @desc Safe wrapper: logs and surfaces refresh errors via meterError ref. */
+  const safeRefresh = () =>
+    refresh().catch((err) => {
+      console.error('[billing.useMeter] refresh failed', err);
+      meterError.value = err;
+    });
 
-  void fetchMissingMeterData(billingStore).catch(() => {});
+  void fetchMissingMeterData(billingStore).catch((err) => {
+    console.error('[billing.useMeter] initial fetch failed', err);
+    meterError.value = err;
+  });
 
   if (pollIntervalMs > 0 && pollTimer === null) {
     pollTimer = setInterval(() => {
@@ -184,6 +195,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
     totalRemaining,
     netRemainingRaw,
     overage,
+    meterError,
     refresh,
     purchasePack,
   };

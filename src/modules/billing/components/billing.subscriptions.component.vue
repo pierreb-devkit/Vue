@@ -407,6 +407,7 @@ export default {
       checkoutTimeout: false,
       checkoutPollTimer: null,
       checkoutPollCount: 0,
+      pollAborted: false,
       checkoutPollSnapshotId: null,
       checkoutPollSnapshotStatus: null,
       checkoutPollSnapshotPlan: null,
@@ -493,9 +494,11 @@ export default {
         active: 'success',
         trialing: 'success',
         past_due: 'warning',
+        paused: 'warning',
         canceled: 'error',
         incomplete: 'error',
         incomplete_expired: 'error',
+        unpaid: 'error',
       };
       return {
         color: colors[status] || 'default',
@@ -509,6 +512,8 @@ export default {
     subscriptionStatusIcon() {
       if (['active', 'trialing'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-check';
       if (this.subscriptionStatus === 'past_due') return 'fa-solid fa-triangle-exclamation';
+      if (this.subscriptionStatus === 'paused') return 'fa-solid fa-pause-circle';
+      if (this.subscriptionStatus === 'unpaid') return 'fa-solid fa-exclamation-triangle';
       if (['canceled', 'incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
       return 'fa-solid fa-circle-info';
     },
@@ -522,6 +527,12 @@ export default {
       }
       if (this.subscriptionStatus === 'canceled') {
         return { color: 'error', label: this.$t('billing.subscriptions.status.reactivate') };
+      }
+      if (this.subscriptionStatus === 'paused') {
+        return { color: 'warning', label: this.$t('billing.subscriptions.status.reactivate') };
+      }
+      if (this.subscriptionStatus === 'unpaid') {
+        return { color: 'error', label: this.$t('billing.subscriptions.status.updatePayment') };
       }
       if (['incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) {
         return { color: 'error', label: this.$t('billing.subscriptions.status.completePayment') };
@@ -594,6 +605,7 @@ export default {
     if (this.checkoutPollTimer) {
       clearTimeout(this.checkoutPollTimer);
     }
+    this.pollAborted = true;
     document.removeEventListener('visibilitychange', this.handleSubscriptionVisibilityChange);
   },
   methods: {
@@ -773,6 +785,8 @@ export default {
         } catch {
           // Keep polling even on transient errors
         }
+
+        if (this.pollAborted) return;
 
         const sub = this.billingStore.subscription;
         const newId = sub?.stripeSubscriptionId ?? null;

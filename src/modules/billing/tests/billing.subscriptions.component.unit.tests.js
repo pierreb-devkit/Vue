@@ -319,6 +319,8 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     ['incomplete', 'error'],
     ['incomplete_expired', 'error'],
     ['trialing', 'success'],
+    ['paused', 'warning'],
+    ['unpaid', 'error'],
   ])('renders %s subscription status with %s chip color', async (status, color) => {
     store.subscription = { status, plan: 'starter', currentPeriodEnd: new Date().toISOString() };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
@@ -349,6 +351,20 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     expect(wrapper.text()).toContain('Complete payment');
+  });
+
+  it('shows Reactivate action for paused status with warning color', async () => {
+    store.subscription = { status: 'paused', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Reactivate');
+  });
+
+  it('shows Update payment method action for unpaid status with error color', async () => {
+    store.subscription = { status: 'unpaid', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Update payment method');
   });
 
   it('labels the paid plan upgrade CTA as Change Plan when a higher plan exists', async () => {
