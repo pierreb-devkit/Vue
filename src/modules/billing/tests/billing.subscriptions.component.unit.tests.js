@@ -1108,7 +1108,6 @@ describe('BillingSubscriptionsComponent — V5 edge cases', () => {
 describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (V6 P1)', () => {
   let wrapper;
   let store;
-  const SESSION_KEY = 'billing.checkout.polling';
 
   beforeEach(() => {
     setActivePinia(createPinia());
