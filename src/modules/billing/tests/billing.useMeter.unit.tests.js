@@ -519,6 +519,32 @@ describe('useMeter composable', () => {
     expect(result.meterError.value).toBeTruthy();
   });
 
+  it('meterError clears to null after a transient failure when next refresh succeeds', async () => {
+    vi.useFakeTimers();
+    const { result } = mountMeter({ pollIntervalMs: 5000 });
+
+    // First poll: both fetches reject
+    const refreshError = new Error('Transient error');
+    store.fetchUsageMeter.mockRejectedValueOnce(refreshError);
+    store.fetchExtrasBalance.mockRejectedValueOnce(refreshError);
+
+    vi.advanceTimersByTime(5000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(result.meterError.value).toBeTruthy();
+
+    // Second poll: fetches succeed
+    store.fetchUsageMeter.mockResolvedValueOnce({});
+    store.fetchExtrasBalance.mockResolvedValueOnce({});
+
+    vi.advanceTimersByTime(5000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(result.meterError.value).toBeNull();
+  });
+
   it('meterError is exposed in the returned object', () => {
     const { result } = mountMeter({ pollIntervalMs: 0 });
     expect('meterError' in result).toBe(true);

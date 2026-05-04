@@ -6,6 +6,9 @@ import { useBillingStore } from '../stores/billing.store';
 
 let pollTimer = null;
 let consumerCount = 0;
+// Shared error ref so the single interval callback can write into it
+// and all consumers receive the same reactive signal.
+const sharedMeterError = ref(null);
 
 /**
  * @desc Fetch meter-backed billing data once when it has not been loaded yet.
@@ -55,8 +58,8 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
   const billingStore = useBillingStore();
   consumerCount += 1;
 
-  /** @type {import('vue').Ref<Error|null>} Last error from a background refresh or initial fetch. */
-  const meterError = ref(null);
+  /** @type {import('vue').Ref<Error|null>} Last error from a background refresh or initial fetch. Shared across all consumers. */
+  const meterError = sharedMeterError; // all consumers share one ref
 
   /** @type {import('vue').ComputedRef<number>} Meter credits consumed this week */
   const used = computed(() => billingStore.usageMeter?.meterUsed ?? 0);
@@ -130,13 +133,19 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
   const refresh = () =>
     Promise.all([billingStore.fetchUsageMeter(), billingStore.fetchExtrasBalance()]);
 
-  /** @desc Safe wrapper: logs and surfaces refresh errors via meterError ref. */
-  const safeRefresh = () =>
-    refresh().catch((err) => {
+  /**
+   * @desc Safe wrapper: clears stale errors before each attempt, then logs and surfaces new errors via meterError ref.
+   * @returns {Promise<void>}
+   */
+  const safeRefresh = () => {
+    meterError.value = null;
+    return refresh().catch((err) => {
       console.error('[billing.useMeter] refresh failed', err);
       meterError.value = err;
     });
+  };
 
+  meterError.value = null;
   void fetchMissingMeterData(billingStore).catch((err) => {
     console.error('[billing.useMeter] initial fetch failed', err);
     meterError.value = err;
@@ -175,6 +184,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
     if (consumerCount === 0 && pollTimer !== null) {
       clearInterval(pollTimer);
       pollTimer = null;
+      sharedMeterError.value = null;
     }
   });
 
@@ -216,4 +226,5 @@ export function __resetUseMeterForTests() {
     pollTimer = null;
   }
   consumerCount = 0;
+  sharedMeterError.value = null;
 }

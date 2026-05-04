@@ -31,6 +31,7 @@ import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
 import { billingEn } from '../lang/en.js';
+import { billingFr } from '../lang/fr.js';
 
 const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
@@ -326,10 +327,14 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
 
+    // i18n-translated statuses use their key label; others fall back to raw replacement
+    const i18nLabels = { paused: 'Paused', unpaid: 'Unpaid' };
+    const expectedLabel = i18nLabels[status] ?? status.replace(/_/g, ' ');
+
     const chip = wrapper.findComponent({ name: 'v-chip' });
     expect(chip.exists()).toBe(true);
     expect(chip.props('color')).toBe(color);
-    expect(chip.text()).toContain(status.replace(/_/g, ' '));
+    expect(chip.text()).toContain(expectedLabel);
   });
 
   it('shows Update payment method action for past_due status', async () => {
@@ -380,6 +385,33 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     expect(wrapper.text()).not.toContain('Change Plan');
+  });
+
+  it('status chip for paused uses FR i18n label "En pause" (not raw replacement)', async () => {
+    const i18nFr = createI18n({
+      legacy: false,
+      globalInjection: true,
+      locale: 'fr',
+      fallbackLocale: 'fr',
+      messages: { fr: { ...billingFr } },
+    });
+    store.subscription = { status: 'paused', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    const wrapperFr = mount(BillingSubscriptionsComponent, {
+      global: {
+        plugins: [vuetify, i18nFr],
+        mocks: {
+          config: mockConfig,
+          $route: { path: '/users', query: {} },
+          $router: { replace: vi.fn(), push: vi.fn() },
+        },
+        stubs: componentStubs,
+      },
+    });
+    await flushPromises();
+    const chip = wrapperFr.findComponent({ name: 'v-chip' });
+    expect(chip.exists()).toBe(true);
+    expect(chip.text()).toContain('En pause');
+    wrapperFr.unmount();
   });
 });
 

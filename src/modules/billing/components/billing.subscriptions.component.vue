@@ -500,9 +500,13 @@ export default {
         incomplete_expired: 'error',
         unpaid: 'error',
       };
+      const labels = {
+        paused: this.$t('billing.subscriptions.status.paused'),
+        unpaid: this.$t('billing.subscriptions.status.unpaid'),
+      };
       return {
         color: colors[status] || 'default',
-        label: status.replace(/_/g, ' '),
+        label: labels[status] || status.replace(/_/g, ' '),
       };
     },
     /**
