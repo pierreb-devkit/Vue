@@ -1290,3 +1290,74 @@ describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (
     expect(fetchSpy.mock.calls.length).toBeGreaterThan(callCountAfterMount);
   });
 });
+
+// ─── Suite N: pollAborted flag ─────────────────────────────────────────────
+
+describe('BillingSubscriptionsComponent — pollAborted abort flag', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('sets pollAborted to true on beforeUnmount', async () => {
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.vm.pollAborted).toBe(false);
+    wrapper.unmount();
+    expect(wrapper.vm.pollAborted).toBe(true);
+    wrapper = null;
+  });
+
+  it('stops pollSubscription recursion when pollAborted is set during an in-flight fetch', async () => {
+    // fetchSubscription never resolves quickly — we control timing
+    let resolveFetch;
+    vi.spyOn(store, 'fetchSubscription').mockImplementation(
+      () => new Promise((resolve) => { resolveFetch = resolve; }),
+    );
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { tab: 'subscriptions', success: 'true' },
+    });
+    await flushPromises();
+
+    // Polling has started — advance past the interval so the setTimeout fires
+    vi.advanceTimersByTime(2000);
+
+    // Unmount while fetchSubscription is still in-flight
+    const vm = wrapper.vm;
+    wrapper.unmount();
+    wrapper = null;
+
+    expect(vm.pollAborted).toBe(true);
+
+    // Resolve the pending fetch — the post-await code should bail via pollAborted
+    const fetchCallCount = store.fetchSubscription.mock.calls.length;
+    resolveFetch({ data: { data: null } });
+    await flushPromises();
+
+    // No additional recursive setTimeout should have been scheduled
+    vi.advanceTimersByTime(10000);
+    // fetchSubscription call count must not grow beyond what was already in-flight
+    expect(store.fetchSubscription.mock.calls.length).toBe(fetchCallCount);
+  });
+});

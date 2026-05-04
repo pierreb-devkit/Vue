@@ -400,12 +400,9 @@ export default {
           this.alreadyActivePortalUrl = null;
           if (err.portalUrl) {
             try {
-              const parsed = new URL(err.portalUrl);
-              if (parsed.protocol === 'https:') {
-                this.alreadyActivePortalUrl = parsed.toString();
-              }
+              this.alreadyActivePortalUrl = validateStripeUrl(err.portalUrl);
             } catch {
-              // Invalid URL — link will not be shown
+              // Invalid or off-whitelist URL — link will not be shown
             }
           }
           this.alreadyActiveDialog = true;
