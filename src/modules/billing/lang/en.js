@@ -43,8 +43,8 @@ export const billingEn = {
     extras: {
       /** i18n key: billing.extras.title */
       title: 'Extra units',
-      /** i18n key: billing.extras.balance — interpolate {units} */
-      balance: '{units} units remaining',
+      /** i18n key: billing.extras.balance — interpolate {units}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
+      balance: 'no units remaining | {units} unit remaining | {units} units remaining',
       /** i18n key: billing.extras.cta */
       cta: 'Buy units',
       /** i18n key: billing.extras.purchaseSuccess */
@@ -91,8 +91,8 @@ export const billingEn = {
     meterProgress: {
       /** i18n key: billing.meterProgress.over — interpolate {count} */
       over: '+{count} over',
-      /** i18n key: billing.meterProgress.remaining — interpolate {count} */
-      remaining: '({count} remaining)',
+      /** i18n key: billing.meterProgress.remaining — interpolate {count}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
+      remaining: '(no remaining) | ({count} remaining) | ({count} remaining)',
       /** i18n key: billing.meterProgress.extras — interpolate {count} */
       extras: '+{count} extras',
       /** i18n key: billing.meterProgress.ariaOver — interpolate {base}, {used}, {quota}, {overage} */
@@ -107,8 +107,8 @@ export const billingEn = {
       compute: 'compute',
       /** i18n key: billing.usageBar.unlimited — legacy mode unlimited label */
       unlimited: 'Unlimited',
-      /** i18n key: billing.usageBar.remaining — interpolate {count} */
-      remaining: '({count} remaining)',
+      /** i18n key: billing.usageBar.remaining — interpolate {count}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
+      remaining: '(no remaining) | ({count} remaining) | ({count} remaining)',
     },
     subscriptions: {
       /** i18n key: billing.subscriptions.title */

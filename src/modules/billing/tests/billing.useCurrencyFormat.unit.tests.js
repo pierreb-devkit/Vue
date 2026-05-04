@@ -151,4 +151,75 @@ describe('useCurrencyFormat', () => {
     expect(() => result.formatPrice(50)).not.toThrow();
     expect(result.formatPrice(50)).toContain('$');
   });
+
+  // ── V6 P2: invalid BCP47 locale fallback ─────────────────────────────────
+
+  it('formatPrice falls back to en-US when locale is an invalid BCP47 tag (RangeError)', () => {
+    const i18n = createI18n({
+      legacy: false,
+      globalInjection: true,
+      locale: 'en',
+      fallbackLocale: 'en',
+      messages: { en: {}, fr: {} },
+    });
+
+    let result;
+    const Wrapper = defineComponent({
+      setup() {
+        result = useCurrencyFormat();
+        return {};
+      },
+      template: '<div />',
+    });
+
+    mount(Wrapper, { global: { plugins: [i18n] } });
+
+    // 'fr-XYZ' is a syntactically valid tag but an unknown region — Intl may or may not throw.
+    // 'not_a_locale' is syntactically invalid and throws RangeError in strict Intl implementations.
+    i18n.global.locale.value = 'not_a_locale';
+    expect(() => result.formatPrice(1299)).not.toThrow();
+    // Should fall back to en-US formatting
+    expect(result.formatPrice(1299)).toBe('$1,299.00');
+  });
+
+  it('formatPrice with valid fr locale stays in FR format', () => {
+    const { result } = mountComposable('fr');
+    const formatted = result.formatPrice(1299);
+    const normalized = formatted.replace(/\s/g, ' ');
+    // Valid locale — should NOT fall back to en-US
+    expect(normalized).toMatch(/1.299,00/);
+    expect(normalized).toMatch(/\$US/i);
+  });
+
+  // ── V6 P3: NaN / non-finite guard ────────────────────────────────────────
+
+  it('formatPrice returns em dash for NaN', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(NaN)).toBe('—');
+  });
+
+  it('formatPrice returns em dash for undefined', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(undefined)).toBe('—');
+  });
+
+  it('formatPrice returns em dash for null', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(null)).toBe('—');
+  });
+
+  it('formatPrice returns em dash for Infinity', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(Infinity)).toBe('—');
+  });
+
+  it('formatPrice formats 0 correctly (zero is a valid price)', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(0)).toBe('$0.00');
+  });
+
+  it('formatPrice formats negative amount correctly', () => {
+    const { result } = mountComposable('en');
+    expect(result.formatPrice(-100)).toBe('-$100.00');
+  });
 });
