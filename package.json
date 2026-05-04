@@ -55,7 +55,7 @@
     "dayjs": "^1.11.20",
     "dompurify": "^3.4.2",
     "lodash-es": "^4.18.1",
-    "marked": "^18.0.2",
+    "marked": "^18.0.3",
     "pinia": "^3.0.4",
     "posthog-js": "^1.372.5",
     "video.js": "^8.23.7",
