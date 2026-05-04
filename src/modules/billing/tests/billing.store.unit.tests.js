@@ -243,7 +243,7 @@ describe('Billing Store', () => {
       const store = useBillingStore();
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.post.mockResolvedValueOnce({ data: { data: { url: 'http://evil.example.com/portal' } } });
-      await expect(store.openPortal()).rejects.toThrow('Rejected non-HTTPS portal URL');
+      await expect(store.openPortal()).rejects.toThrow('Stripe URL must use HTTPS');
       expect(spy).toHaveBeenCalled();
       expect(store.loading).toBe(false);
       spy.mockRestore();
@@ -542,7 +542,7 @@ describe('Billing Store', () => {
         assign: vi.fn(),
       };
 
-      await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Rejected non-HTTPS checkout URL');
+      await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Stripe URL must use HTTPS');
       expect(window.location.assign).not.toHaveBeenCalled();
       expect(spy).toHaveBeenCalled();
       expect(store.extrasCheckoutRequests).toBe(0);

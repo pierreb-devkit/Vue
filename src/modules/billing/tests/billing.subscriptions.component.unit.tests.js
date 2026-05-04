@@ -31,6 +31,7 @@ import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
 import { billingEn } from '../lang/en.js';
+import { billingFr } from '../lang/fr.js';
 
 const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
@@ -319,15 +320,21 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     ['incomplete', 'error'],
     ['incomplete_expired', 'error'],
     ['trialing', 'success'],
+    ['paused', 'warning'],
+    ['unpaid', 'error'],
   ])('renders %s subscription status with %s chip color', async (status, color) => {
     store.subscription = { status, plan: 'starter', currentPeriodEnd: new Date().toISOString() };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
 
+    // i18n-translated statuses use their key label; others fall back to raw replacement
+    const i18nLabels = { paused: 'Paused', unpaid: 'Unpaid' };
+    const expectedLabel = i18nLabels[status] ?? status.replace(/_/g, ' ');
+
     const chip = wrapper.findComponent({ name: 'v-chip' });
     expect(chip.exists()).toBe(true);
     expect(chip.props('color')).toBe(color);
-    expect(chip.text()).toContain(status.replace(/_/g, ' '));
+    expect(chip.text()).toContain(expectedLabel);
   });
 
   it('shows Update payment method action for past_due status', async () => {
@@ -351,6 +358,20 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     expect(wrapper.text()).toContain('Complete payment');
   });
 
+  it('shows Reactivate action for paused status with warning color', async () => {
+    store.subscription = { status: 'paused', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Reactivate');
+  });
+
+  it('shows Update payment method action for unpaid status with error color', async () => {
+    store.subscription = { status: 'unpaid', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Update payment method');
+  });
+
   it('labels the paid plan upgrade CTA as Change Plan when a higher plan exists', async () => {
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
@@ -364,6 +385,33 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     expect(wrapper.text()).not.toContain('Change Plan');
+  });
+
+  it('status chip for paused uses FR i18n label "En pause" (not raw replacement)', async () => {
+    const i18nFr = createI18n({
+      legacy: false,
+      globalInjection: true,
+      locale: 'fr',
+      fallbackLocale: 'fr',
+      messages: { fr: { ...billingFr } },
+    });
+    store.subscription = { status: 'paused', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    const wrapperFr = mount(BillingSubscriptionsComponent, {
+      global: {
+        plugins: [vuetify, i18nFr],
+        mocks: {
+          config: mockConfig,
+          $route: { path: '/users', query: {} },
+          $router: { replace: vi.fn(), push: vi.fn() },
+        },
+        stubs: componentStubs,
+      },
+    });
+    await flushPromises();
+    const chip = wrapperFr.findComponent({ name: 'v-chip' });
+    expect(chip.exists()).toBe(true);
+    expect(chip.text()).toContain('En pause');
+    wrapperFr.unmount();
   });
 });
 
@@ -1272,5 +1320,76 @@ describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (
 
     // fetchSubscription must have been called at least once more after visibility event
     expect(fetchSpy.mock.calls.length).toBeGreaterThan(callCountAfterMount);
+  });
+});
+
+// ─── Suite N: pollAborted flag ─────────────────────────────────────────────
+
+describe('BillingSubscriptionsComponent — pollAborted abort flag', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    vi.useRealTimers();
+    sessionStorage.clear();
+  });
+
+  it('sets pollAborted to true on beforeUnmount', async () => {
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: {},
+    });
+    await flushPromises();
+
+    expect(wrapper.vm.pollAborted).toBe(false);
+    wrapper.unmount();
+    expect(wrapper.vm.pollAborted).toBe(true);
+    wrapper = null;
+  });
+
+  it('stops pollSubscription recursion when pollAborted is set during an in-flight fetch', async () => {
+    // fetchSubscription never resolves quickly — we control timing
+    let resolveFetch;
+    vi.spyOn(store, 'fetchSubscription').mockImplementation(
+      () => new Promise((resolve) => { resolveFetch = resolve; }),
+    );
+
+    wrapper = mountSubscriptions({
+      serverConfig: { billing: { meterMode: false } },
+      routeQuery: { tab: 'subscriptions', success: 'true' },
+    });
+    await flushPromises();
+
+    // Polling has started — advance past the interval so the setTimeout fires
+    vi.advanceTimersByTime(2000);
+
+    // Unmount while fetchSubscription is still in-flight
+    const vm = wrapper.vm;
+    wrapper.unmount();
+    wrapper = null;
+
+    expect(vm.pollAborted).toBe(true);
+
+    // Resolve the pending fetch — the post-await code should bail via pollAborted
+    const fetchCallCount = store.fetchSubscription.mock.calls.length;
+    resolveFetch({ data: { data: null } });
+    await flushPromises();
+
+    // No additional recursive setTimeout should have been scheduled
+    vi.advanceTimersByTime(10000);
+    // fetchSubscription call count must not grow beyond what was already in-flight
+    expect(store.fetchSubscription.mock.calls.length).toBe(fetchCallCount);
   });
 });

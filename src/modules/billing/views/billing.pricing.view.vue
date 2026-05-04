@@ -147,6 +147,7 @@
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { plans as plansConfig } from '../config/billing.static-content';
+import { validateStripeUrl } from '../lib/stripeRedirect';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
@@ -392,24 +393,16 @@ export default {
         if (!checkout?.url) {
           throw new Error('Checkout session did not include a redirect URL.');
         }
-        const parsed = new URL(checkout.url, window.location.origin);
-        if (parsed.protocol === 'https:') {
-          window.location.assign(parsed.toString());
-        } else {
-          console.error('Rejected non-HTTPS checkout URL');
-        }
+        window.location.assign(validateStripeUrl(checkout.url));
       } catch (err) {
         // Bonus: handle 409 subscription_already_active (PR Node-A contract)
         if (err.code === 'subscription_already_active') {
           this.alreadyActivePortalUrl = null;
           if (err.portalUrl) {
             try {
-              const parsed = new URL(err.portalUrl);
-              if (parsed.protocol === 'https:') {
-                this.alreadyActivePortalUrl = parsed.toString();
-              }
+              this.alreadyActivePortalUrl = validateStripeUrl(err.portalUrl);
             } catch {
-              // Invalid URL — link will not be shown
+              // Invalid or off-whitelist URL — link will not be shown
             }
           }
           this.alreadyActiveDialog = true;

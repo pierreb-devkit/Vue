@@ -1,11 +1,14 @@
 /**
  * Module dependencies.
  */
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useBillingStore } from '../stores/billing.store';
 
 let pollTimer = null;
 let consumerCount = 0;
+// Shared error ref so the single interval callback can write into it
+// and all consumers receive the same reactive signal.
+const sharedMeterError = ref(null);
 
 /**
  * @desc Fetch meter-backed billing data once when it has not been loaded yet.
@@ -46,6 +49,7 @@ function fetchMissingMeterData(billingStore) {
  *   totalRemaining: import('vue').ComputedRef<number>,
  *   netRemainingRaw: import('vue').ComputedRef<number>,
  *   overage: import('vue').ComputedRef<number>,
+ *   meterError: import('vue').Ref<Error|null>,
  *   refresh: () => Promise<[Object, Object]>,
  *   purchasePack: (packId: string) => Promise<void>
  * }}
@@ -53,6 +57,9 @@ function fetchMissingMeterData(billingStore) {
 export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {}) {
   const billingStore = useBillingStore();
   consumerCount += 1;
+
+  /** @type {import('vue').Ref<Error|null>} Last error from a background refresh or initial fetch. Shared across all consumers. */
+  const meterError = sharedMeterError; // all consumers share one ref
 
   /** @type {import('vue').ComputedRef<number>} Meter credits consumed this week */
   const used = computed(() => billingStore.usageMeter?.meterUsed ?? 0);
@@ -126,10 +133,23 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
   const refresh = () =>
     Promise.all([billingStore.fetchUsageMeter(), billingStore.fetchExtrasBalance()]);
 
-  /** @desc Safe wrapper: catches refresh errors to avoid unhandled Promise rejections. */
-  const safeRefresh = () => refresh().catch(() => {});
+  /**
+   * @desc Safe wrapper: clears stale errors before each attempt, then logs and surfaces new errors via meterError ref.
+   * @returns {Promise<void>}
+   */
+  const safeRefresh = () => {
+    meterError.value = null;
+    return refresh().catch((err) => {
+      console.error('[billing.useMeter] refresh failed', err);
+      meterError.value = err;
+    });
+  };
 
-  void fetchMissingMeterData(billingStore).catch(() => {});
+  meterError.value = null;
+  void fetchMissingMeterData(billingStore).catch((err) => {
+    console.error('[billing.useMeter] initial fetch failed', err);
+    meterError.value = err;
+  });
 
   if (pollIntervalMs > 0 && pollTimer === null) {
     pollTimer = setInterval(() => {
@@ -164,6 +184,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
     if (consumerCount === 0 && pollTimer !== null) {
       clearInterval(pollTimer);
       pollTimer = null;
+      sharedMeterError.value = null;
     }
   });
 
@@ -184,6 +205,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
     totalRemaining,
     netRemainingRaw,
     overage,
+    meterError,
     refresh,
     purchasePack,
   };
@@ -204,4 +226,5 @@ export function __resetUseMeterForTests() {
     pollTimer = null;
   }
   consumerCount = 0;
+  sharedMeterError.value = null;
 }
