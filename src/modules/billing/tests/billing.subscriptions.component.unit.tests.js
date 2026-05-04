@@ -1108,8 +1108,10 @@ describe('BillingSubscriptionsComponent — V5 edge cases', () => {
 describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (V6 P1)', () => {
   let wrapper;
   let store;
+  let realSessionStorage;
 
   beforeEach(() => {
+    realSessionStorage = window.sessionStorage;
     setActivePinia(createPinia());
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -1122,9 +1124,9 @@ describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (
     wrapper?.unmount();
     wrapper = null;
     vi.useRealTimers();
-    // Restore real sessionStorage after each test that may have overridden it
+    // Restore the real sessionStorage captured before the test
     Object.defineProperty(window, 'sessionStorage', {
-      value: window.sessionStorage,
+      value: realSessionStorage,
       writable: true,
       configurable: true,
     });
@@ -1206,7 +1208,8 @@ describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (
       configurable: true,
     });
 
-    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+    // Spy once — reuse for both mount and visibility assertions
+    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
@@ -1214,12 +1217,17 @@ describe('BillingSubscriptionsComponent — sessionStorage SecurityError guard (
     });
     await flushPromises();
 
+    const callCountAfterMount = fetchSpy.mock.calls.length;
+
+    // Advance past the 500ms debounce window so the visibility refetch is not blocked
+    await vi.advanceTimersByTimeAsync(600);
+
     // Simulate tab becoming visible — listener must be registered
-    const fetchSpy = vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true, configurable: true });
     document.dispatchEvent(new Event('visibilitychange'));
     await flushPromises();
 
-    expect(fetchSpy).toHaveBeenCalled();
+    // fetchSubscription must have been called at least once more after visibility event
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(callCountAfterMount);
   });
 });

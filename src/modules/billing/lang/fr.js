@@ -43,7 +43,7 @@ export const billingFr = {
     extras: {
       /** i18n key: billing.extras.title */
       title: 'Unites supplementaires',
-      /** i18n key: billing.extras.balance — interpolate {units}, pluralized via $tc */
+      /** i18n key: billing.extras.balance — interpolate {units}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
       balance: 'aucune unite restante | {units} unite restante | {units} unites restantes',
       /** i18n key: billing.extras.cta */
       cta: 'Acheter des unites',
@@ -91,7 +91,7 @@ export const billingFr = {
     meterProgress: {
       /** i18n key: billing.meterProgress.over — interpolate {count} */
       over: '+{count} depassement',
-      /** i18n key: billing.meterProgress.remaining — interpolate {count}, pluralized via $tc */
+      /** i18n key: billing.meterProgress.remaining — interpolate {count}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
       remaining: '(aucun restant) | ({count} restant) | ({count} restants)',
       /** i18n key: billing.meterProgress.extras — interpolate {count} */
       extras: '+{count} extras',
@@ -107,7 +107,7 @@ export const billingFr = {
       compute: 'compute',
       /** i18n key: billing.usageBar.unlimited — legacy mode unlimited label */
       unlimited: 'Illimite',
-      /** i18n key: billing.usageBar.remaining — interpolate {count}, pluralized via $tc */
+      /** i18n key: billing.usageBar.remaining — interpolate {count}, pluralized via $t(key, count, namedVars) — vue-i18n v10 Composition API */
       remaining: '(aucun restant) | ({count} restant) | ({count} restants)',
     },
     subscriptions: {
