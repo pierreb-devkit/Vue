@@ -82,4 +82,23 @@ describe('validateStripeUrl', () => {
       'Stripe URL host not allowed: evil.com',
     );
   });
+
+  // ── URL credentials (phishing display tricks) ─────────────────────────────
+
+  it('throws when the URL contains a username (userinfo)', () => {
+    expect(() => validateStripeUrl('https://attacker@checkout.stripe.com/foo')).toThrow(
+      'Stripe URL must not contain credentials',
+    );
+  });
+
+  it('throws when the URL contains username and password', () => {
+    expect(() => validateStripeUrl('https://attacker:pass@billing.stripe.com/portal')).toThrow(
+      'Stripe URL must not contain credentials',
+    );
+  });
+
+  it('still accepts a credential-free URL on a whitelisted host', () => {
+    const url = 'https://checkout.stripe.com/pay/cs_test_clean';
+    expect(validateStripeUrl(url)).toBe(url);
+  });
 });

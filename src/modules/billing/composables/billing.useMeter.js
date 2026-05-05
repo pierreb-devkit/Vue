@@ -145,7 +145,6 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
     });
   };
 
-  meterError.value = null;
   void fetchMissingMeterData(billingStore).catch((err) => {
     console.error('[billing.useMeter] initial fetch failed', err);
     meterError.value = err;

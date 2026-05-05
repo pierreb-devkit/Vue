@@ -29,6 +29,9 @@ export function validateStripeUrl(url) {
   if (parsed.protocol !== 'https:') {
     throw new Error('Stripe URL must use HTTPS');
   }
+  if (parsed.username || parsed.password) {
+    throw new Error('Stripe URL must not contain credentials');
+  }
   if (!ALLOWED_HOSTS.includes(parsed.hostname)) {
     throw new Error(`Stripe URL host not allowed: ${parsed.hostname}`);
   }

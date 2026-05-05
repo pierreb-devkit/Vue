@@ -493,8 +493,8 @@ export default {
     subscriptionStatusIcon() {
       if (['active', 'trialing'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-check';
       if (this.subscriptionStatus === 'past_due') return 'fa-solid fa-triangle-exclamation';
-      if (this.subscriptionStatus === 'paused') return 'fa-solid fa-pause-circle';
-      if (this.subscriptionStatus === 'unpaid') return 'fa-solid fa-exclamation-triangle';
+      if (this.subscriptionStatus === 'paused') return 'fa-solid fa-circle-pause';
+      if (this.subscriptionStatus === 'unpaid') return 'fa-solid fa-triangle-exclamation';
       if (['canceled', 'incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) return 'fa-solid fa-circle-exclamation';
       return 'fa-solid fa-circle-info';
     },

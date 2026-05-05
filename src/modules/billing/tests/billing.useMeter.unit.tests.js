@@ -549,4 +549,23 @@ describe('useMeter composable', () => {
     const { result } = mountMeter({ pollIntervalMs: 0 });
     expect('meterError' in result).toBe(true);
   });
+
+  it('preserves an existing meterError when a new consumer mounts (no unconditional reset)', async () => {
+    // First consumer establishes a baseline; we then simulate an error set by an
+    // earlier failed refresh and assert that mounting a second consumer does NOT
+    // wipe the shared error ref. safeRefresh is the only allowed lifecycle reset.
+    const { result: first } = mountMeter({ pollIntervalMs: 0 });
+    const earlierError = new Error('first consumer error');
+    first.meterError.value = earlierError;
+
+    const { result: second } = mountMeter({ pollIntervalMs: 0 });
+    // Allow microtasks from the second mount's initial fetch to settle
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Both refs are the shared sharedMeterError — second consumer's ref must still
+    // reflect the earlier error, not be reset to null.
+    expect(second.meterError.value).toBe(earlierError);
+    expect(first.meterError.value).toBe(earlierError);
+  });
 });
