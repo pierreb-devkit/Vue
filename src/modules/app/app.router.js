@@ -93,7 +93,7 @@ const getRouter = () => {
       if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
         return '/organization-required';
       }
-      return '/';
+      return config.sign.route;
     }
 
     // Organization membership required: if orgs enabled, user logged in, no org, and not on an exempt page → block
