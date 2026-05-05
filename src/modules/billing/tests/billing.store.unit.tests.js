@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useBillingStore, clearExtrasIntentIds } from '../stores/billing.store';
+import { useBillingStore, clearExtrasIntentIds, clearExtrasIntentId } from '../stores/billing.store';
 import axios from '../../../lib/services/axios';
 
 // Mock axios
@@ -474,7 +474,7 @@ describe('Billing Store', () => {
         expect.objectContaining({
           packId: 'pack_500',
           successUrl: 'https://app.example.com/users?tab=subscriptions&success=true&type=extras',
-          cancelUrl: 'https://app.example.com/pricing?canceled=true#units',
+          cancelUrl: 'https://app.example.com/pricing?canceled=true&type=extras&pack=pack_500#units',
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);
@@ -685,6 +685,43 @@ describe('Billing Store', () => {
       sessionStorage.setItem('unrelated', 'keep-me');
       expect(() => clearExtrasIntentIds()).not.toThrow();
       expect(sessionStorage.getItem('unrelated')).toBe('keep-me');
+    });
+  });
+
+  describe('clearExtrasIntentId (per-pack)', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('removes only the targeted pack key, leaves siblings intact', () => {
+      sessionStorage.setItem('billing.extras.intentId.pack_500', 'uuid-a');
+      sessionStorage.setItem('billing.extras.intentId.pack_2000', 'uuid-b');
+      sessionStorage.setItem('unrelated', 'keep-me');
+
+      clearExtrasIntentId('pack_500');
+
+      expect(sessionStorage.getItem('billing.extras.intentId.pack_500')).toBeNull();
+      expect(sessionStorage.getItem('billing.extras.intentId.pack_2000')).toBe('uuid-b');
+      expect(sessionStorage.getItem('unrelated')).toBe('keep-me');
+    });
+
+    it('is a no-op when packId is empty / undefined', () => {
+      sessionStorage.setItem('billing.extras.intentId.pack_500', 'uuid-a');
+      expect(() => clearExtrasIntentId(undefined)).not.toThrow();
+      expect(() => clearExtrasIntentId('')).not.toThrow();
+      expect(sessionStorage.getItem('billing.extras.intentId.pack_500')).toBe('uuid-a');
+    });
+
+    it('does not throw when sessionStorage.removeItem throws', () => {
+      sessionStorage.setItem('billing.extras.intentId.pack_500', 'uuid-a');
+      const removeSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new Error('SecurityError');
+      });
+      expect(() => clearExtrasIntentId('pack_500')).not.toThrow();
+      removeSpy.mockRestore();
     });
   });
 });

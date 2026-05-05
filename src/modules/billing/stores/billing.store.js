@@ -78,8 +78,9 @@ const resolveExtrasIntentId = (packId) => {
 /**
  * @desc Clear every persisted extras intentId from sessionStorage.
  * Called after a successful extras purchase so subsequent purchases of the
- * same pack get a fresh UUID. Cancelled flows intentionally do NOT clear,
- * allowing the user to retry with the same idempotency key.
+ * same pack get a fresh UUID. Also called when the user returns from a
+ * cancelled Stripe checkout — Stripe's 24h idempotency cache otherwise
+ * replays the previous (potentially expired or stale) session URL on retry.
  * @returns {void}
  */
 export const clearExtrasIntentIds = () => {
@@ -95,6 +96,24 @@ export const clearExtrasIntentIds = () => {
     for (const key of keys) {
       sessionStorage.removeItem(key);
     }
+  } catch {
+    // sessionStorage unavailable — nothing to clean up
+  }
+};
+
+/**
+ * @desc Clear the persisted intentId for a single pack from sessionStorage.
+ * Used on the Stripe cancel-redirect path so a retry of that specific pack
+ * generates a fresh UUID — without touching intent IDs of other packs the
+ * user may have started purchasing in parallel tabs.
+ * @param {string} packId
+ * @returns {void}
+ */
+export const clearExtrasIntentId = (packId) => {
+  if (!packId) return;
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+    sessionStorage.removeItem(extrasIntentKey(packId));
   } catch {
     // sessionStorage unavailable — nothing to clean up
   }
@@ -325,7 +344,11 @@ export const useBillingStore = defineStore('billing', {
       try {
         const api = apiBase();
         const successUrl = `${window.location.origin}/users?tab=subscriptions&success=true&type=extras`;
-        const cancelUrl = `${window.location.origin}/pricing?canceled=true#units`;
+        // type=extras + pack={packId} let the pricing view drop the persisted
+        // intentId on cancel-redirect so the next attempt generates a fresh
+        // UUID — Stripe's 24h idempotency cache would otherwise replay the
+        // previous (possibly expired) session URL.
+        const cancelUrl = `${window.location.origin}/pricing?canceled=true&type=extras&pack=${encodeURIComponent(packId)}#units`;
         const intentId = resolveExtrasIntentId(packId);
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
           packId,
