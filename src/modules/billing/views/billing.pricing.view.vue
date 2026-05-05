@@ -144,7 +144,7 @@
 /**
  * Module dependencies.
  */
-import { useBillingStore } from '../stores/billing.store';
+import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { plans as plansConfig } from '../config/billing.static-content';
 import { validateStripeUrl } from '../lib/stripeRedirect';
@@ -294,8 +294,22 @@ export default {
     }
 
     // Handle Stripe redirect query params — success always redirects to /users, never back here
-    const { canceled } = this.$route.query;
-    if (canceled === 'true') this.checkoutCanceled = true;
+    const { canceled, type, pack } = this.$route.query;
+    if (canceled === 'true') {
+      this.checkoutCanceled = true;
+      // Extras cancel-redirect: drop the persisted per-pack intentId so a retry
+      // generates a fresh UUID. Without this, Stripe's 24h idempotency cache
+      // replays the previous session URL — which may be expired or carry the
+      // stale successUrl/pack from the first attempt.
+      if (type === 'extras') {
+        if (pack) clearExtrasIntentId(pack);
+        else clearExtrasIntentIds();
+        // Strip the cancel-detection params from the URL so a refresh does not
+        // re-clear (no-op anyway) and so the address bar stays clean. Hash is
+        // preserved so the active tab (#units) is reflected.
+        this.$router.replace({ path: this.$route.path, hash: this.$route.hash, query: { canceled: 'true' } });
+      }
+    }
     if (this.$route.hash === '#units') this.activeTab = 1;
   },
   methods: {
