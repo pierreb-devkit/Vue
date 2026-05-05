@@ -198,6 +198,21 @@
 
       <!-- ── Meter mode sections (gated) ──────────────────────────────── -->
       <template v-if="meterMode">
+        <!-- ── Meter polling error ──────────────────────────────── -->
+        <v-alert
+          v-if="meterError"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          closable
+          class="mb-4"
+          :icon="'fa-solid fa-triangle-exclamation'"
+          aria-live="polite"
+          @click:close="meterError = null"
+        >
+          {{ $t('billing.meter.error.refreshFailed') }}
+        </v-alert>
+
         <!-- Usage bar (informational, opt-in here in account context) -->
         <BillingUsageBarComponent
           mode="meter"
@@ -257,43 +272,6 @@
       v-model="extrasCheckoutDialog"
       :packs="extrasPacks"
     />
-
-    <!-- Bonus: 409 subscription_already_active dialog -->
-    <v-dialog v-model="alreadyActiveDialog" max-width="480">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-6">
-        <div class="d-flex align-center mb-3">
-          <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
-          <span class="text-title-medium font-weight-medium">
-            {{ $t('billing.checkout.error.alreadyActive.title') }}
-          </span>
-        </div>
-        <p class="text-body-medium text-medium-emphasis mb-6">
-          {{ $t('billing.checkout.error.alreadyActive.message') }}
-        </p>
-        <div class="d-flex ga-3 justify-end">
-          <v-btn
-            variant="outlined"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            @click="alreadyActiveDialog = false"
-          >
-            {{ $t('billing.checkout.error.alreadyActive.close') }}
-          </v-btn>
-          <v-btn
-            v-if="alreadyActivePortalUrl"
-            color="primary"
-            variant="flat"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            :href="alreadyActivePortalUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {{ $t('billing.checkout.error.alreadyActive.cta') }}
-          </v-btn>
-        </div>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -366,6 +344,7 @@ export default {
       breakdown: meterBreakdown,
       overage: meterOverage,
       netRemainingRaw: meterNetRemainingRaw,
+      meterError,
     } = meter;
 
     const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
@@ -392,6 +371,7 @@ export default {
       meterBreakdown,
       meterOverage,
       meterNetRemainingRaw,
+      meterError,
     };
   },
   data() {
@@ -413,9 +393,6 @@ export default {
       checkoutPollSnapshotPlan: null,
       // V5 P2: visibility-change subscription refresh debounce (timestamp of last fetch)
       subscriptionLastFetchedAt: 0,
-      // Bonus: 409 already-active dialog
-      alreadyActiveDialog: false,
-      alreadyActivePortalUrl: null,
     };
   },
   computed: {
@@ -863,28 +840,6 @@ export default {
       } catch (error) {
         console.error('Failed to load ledger page:', error);
       }
-    },
-
-    /**
-     * @desc Show the 409 already-active dialog with a validated portal URL.
-     * Only accepts HTTPS URLs to guard against malformed or compromised payloads.
-     * Called by consumers (e.g. pricing view) that catch the structured error.
-     * @param {string} portalUrl - Stripe customer portal URL from the 409 payload
-     * @returns {void}
-     */
-    showAlreadyActiveDialog(portalUrl) {
-      this.alreadyActivePortalUrl = null;
-      if (portalUrl) {
-        try {
-          const parsed = new URL(portalUrl);
-          if (parsed.protocol === 'https:') {
-            this.alreadyActivePortalUrl = parsed.toString();
-          }
-        } catch {
-          // Invalid URL — link will not be shown
-        }
-      }
-      this.alreadyActiveDialog = true;
     },
   },
 };

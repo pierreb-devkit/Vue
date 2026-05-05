@@ -764,66 +764,74 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
   });
 });
 
-// ─── Suite 9: Bonus — 409 already-active dialog (showAlreadyActiveDialog) ─────
+// ─── Suite 9: meterError surfacing via v-alert (gated to meterMode) ──────────
 
-describe('BillingSubscriptionsComponent — 409 already-active dialog (Bonus)', () => {
+describe('BillingSubscriptionsComponent — meterError surfacing', () => {
   let wrapper;
   let store;
+  let useMeter;
+  let __resetUseMeterForTests;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
-    // Stub v-dialog to avoid visualViewport errors in jsdom
-    componentStubs['VDialog'] = { name: 'VDialog', template: '<div><slot /></div>', props: ['modelValue'] };
+    // Import via composable so we mutate the shared meterError ref the component consumes.
+    ({ useMeter, __resetUseMeterForTests } = await import('../composables/billing.useMeter.js'));
+    __resetUseMeterForTests();
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
-    delete componentStubs['VDialog'];
+    __resetUseMeterForTests?.();
   });
 
-  it('alreadyActiveDialog is false by default', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+  it('renders v-alert with refreshFailed copy when meterError is set and meterMode is true', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    expect(wrapper.vm.alreadyActiveDialog).toBe(false);
+    // Mutate AFTER mount + initial fetch resolves — fetchMissingMeterData clears
+    // meterError on success, so setting it before mount would be wiped.
+    const { meterError } = useMeter({ pollIntervalMs: 0 });
+    meterError.value = new Error('refresh failed');
+    await flushPromises();
+    const alert = wrapper.find('.v-alert');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain('Could not refresh usage');
   });
 
-  it('showAlreadyActiveDialog sets alreadyActiveDialog true and stores valid HTTPS portalUrl', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+  it('does not render v-alert when meterError is null', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const portalUrl = 'https://billing.stripe.com/portal/sess_abc';
-    wrapper.vm.showAlreadyActiveDialog(portalUrl);
-    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
-    expect(wrapper.vm.alreadyActivePortalUrl).toBe(portalUrl);
+    const { meterError } = useMeter({ pollIntervalMs: 0 });
+    expect(meterError.value).toBeNull();
+    expect(wrapper.find('.v-alert').exists()).toBe(false);
   });
 
-  it('showAlreadyActiveDialog rejects non-HTTPS portalUrl', async () => {
+  it('does not render v-alert when meterError is set but meterMode is false (gated)', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
-    wrapper.vm.showAlreadyActiveDialog('http://evil.example.com/portal');
-    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
-    expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
+    const { meterError } = useMeter({ pollIntervalMs: 0 });
+    meterError.value = new Error('refresh failed');
+    await flushPromises();
+    expect(wrapper.find('.v-alert').exists()).toBe(false);
   });
 
-  it('showAlreadyActiveDialog handles invalid URL gracefully', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+  it('clears meterError on close click and the alert disappears', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    wrapper.vm.showAlreadyActiveDialog('not-a-url');
-    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
-    expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
-  });
-
-  it('showAlreadyActiveDialog handles missing portalUrl gracefully', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    const { meterError } = useMeter({ pollIntervalMs: 0 });
+    meterError.value = new Error('refresh failed');
     await flushPromises();
-    wrapper.vm.showAlreadyActiveDialog(null);
-    expect(wrapper.vm.alreadyActiveDialog).toBe(true);
-    expect(wrapper.vm.alreadyActivePortalUrl).toBeNull();
+    expect(wrapper.find('.v-alert').exists()).toBe(true);
+    // Simulate the v-alert close emit by mutating the bound ref the same way the
+    // template handler does (`meterError = null`).
+    meterError.value = null;
+    await flushPromises();
+    expect(wrapper.find('.v-alert').exists()).toBe(false);
   });
 });
 

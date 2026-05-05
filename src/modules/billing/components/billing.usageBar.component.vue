@@ -192,8 +192,9 @@ export default {
       extras: meterExtras,
       netRemainingRaw: meterNetRemainingRaw,
       overage: meterOverage,
+      meterError,
     } = useMeter({ pollIntervalMs: 0 });
-    return { usage, limits, usagePercent, isPlanActive, meterUsed, meterQuota, meterExtras, meterNetRemainingRaw, meterOverage, authStore, billingStore };
+    return { usage, limits, usagePercent, isPlanActive, meterUsed, meterQuota, meterExtras, meterNetRemainingRaw, meterOverage, meterError, authStore, billingStore };
   },
 
   computed: {
