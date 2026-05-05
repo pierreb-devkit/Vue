@@ -280,7 +280,7 @@
  * Module dependencies.
  */
 import { computed, watch } from 'vue';
-import { useBillingStore } from '../stores/billing.store';
+import { useBillingStore, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
 import { plans as plansConfig, packs as packsConfig } from '../config/billing.static-content';
@@ -655,6 +655,10 @@ export default {
         // fetchSubscription() call, preventing stale polling from overriding the
         // extras success banner.
         this.clearCheckoutPollingSession();
+        // Drop the persisted intentId(s) so a follow-up purchase of the same pack
+        // generates a fresh UUID. Cancelled flows do NOT reach this branch and
+        // intentionally keep the intentId so retries reuse the same idempotency key.
+        clearExtrasIntentIds();
         this.paymentSuccessMessage = this.$t('billing.extras.purchaseSuccess');
         this.scheduleQueryCleanup();
         return true;

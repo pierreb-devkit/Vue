@@ -14,6 +14,117 @@ import { validateStripeUrl } from '../lib/stripeRedirect';
 const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
 /**
+ * @desc sessionStorage key prefix for per-pack extras checkout intent IDs.
+ * One UUID is generated per pack purchase attempt and persists across the
+ * Stripe redirect so that double-clicks (same tab, same session) reuse it
+ * and the backend de-duplicates against a single idempotency key.
+ */
+const EXTRAS_INTENT_STORAGE_PREFIX = 'billing.extras.intentId.';
+
+/**
+ * @desc Build the sessionStorage key for a pack's intent ID.
+ * @param {string} packId
+ * @returns {string}
+ */
+const extrasIntentKey = (packId) => `${EXTRAS_INTENT_STORAGE_PREFIX}${packId}`;
+
+/**
+ * @desc Generate a UUID. Prefer the browser builtin crypto.randomUUID; fall back
+ * to a manual v4-shaped UUID built from getRandomValues when randomUUID is not
+ * exposed (older WebViews). Final fallback uses Math.random — only reached when
+ * neither is available; acceptable because uniqueness here is a single-tab
+ * deduplication concern, not a security one.
+ * @returns {string}
+ */
+const generateIntentId = () => {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      // RFC 4122 v4 markers
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+  } catch {
+    // fall through to Math.random fallback
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+};
+
+/**
+ * @desc Resolve the intentId for an extras checkout attempt.
+ *
+ * Generates a fresh UUID on first attempt for `packId` and persists it in
+ * sessionStorage so a user double-clicking (same tab, same session) reuses the
+ * same idempotency key — even if the second click happens after the first one
+ * redirected to Stripe and the user came back. The backend uses this UUID to
+ * deduplicate the Stripe Checkout session, closing the cross-minute
+ * double-charge window where the previous minute-bucketed fallback could yield
+ * two distinct keys for two clicks straddling a minute boundary.
+ *
+ * sessionStorage failures (private browsing, quota exceeded, missing global)
+ * are intentionally swallowed — the freshly-generated UUID is still used for
+ * the in-flight call. The only effect is losing cross-double-click protection
+ * within that session, which does NOT cause double-charge by itself (the
+ * single attempt already carries a stable idempotency key). This is unrelated
+ * to the silent-catch rule for DB/network errors: storage unavailability is a
+ * non-fatal client-side condition with no actionable signal.
+ *
+ * @param {string} packId
+ * @returns {string} UUID v4 (best effort)
+ */
+const resolveExtrasIntentId = (packId) => {
+  const key = extrasIntentKey(packId);
+  let intentId = null;
+  try {
+    intentId = sessionStorage.getItem(key);
+  } catch {
+    // sessionStorage unavailable (private mode / sandboxed) — fall through to fresh UUID
+  }
+  if (intentId) return intentId;
+  intentId = generateIntentId();
+  try {
+    sessionStorage.setItem(key, intentId);
+  } catch {
+    // Quota exceeded or storage disabled — UUID is still used for this single call
+  }
+  return intentId;
+};
+
+/**
+ * @desc Clear every persisted extras intentId from sessionStorage.
+ * Called after a successful extras purchase so subsequent purchases of the
+ * same pack get a fresh UUID. Cancelled flows intentionally do NOT clear,
+ * allowing the user to retry with the same idempotency key.
+ * @returns {void}
+ */
+export const clearExtrasIntentIds = () => {
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+    const keys = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith(EXTRAS_INTENT_STORAGE_PREFIX)) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    // sessionStorage unavailable — nothing to clean up
+  }
+};
+
+/**
  * Store definition.
  */
 export const useBillingStore = defineStore('billing', {
@@ -239,10 +350,12 @@ export const useBillingStore = defineStore('billing', {
         const api = apiBase();
         const successUrl = `${window.location.origin}/users?tab=subscriptions&success=true&type=extras`;
         const cancelUrl = `${window.location.origin}/pricing?canceled=true#units`;
+        const intentId = resolveExtrasIntentId(packId);
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/extras/checkout`, {
           packId,
           successUrl,
           cancelUrl,
+          intentId,
         });
         const url = res?.data?.data?.url;
         if (!url) throw new Error('Checkout URL missing in response');
