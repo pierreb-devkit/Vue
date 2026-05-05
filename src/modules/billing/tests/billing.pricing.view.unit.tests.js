@@ -86,6 +86,11 @@ function mountPricing({
   });
 }
 
+/**
+ * @desc Seed the billing store with no-op mocks so mounted views don't issue real fetches.
+ * @param {ReturnType<typeof useBillingStore>} store - Billing store instance from useBillingStore()
+ * @returns {void}
+ */
 function seedStore(store) {
   vi.spyOn(store, 'fetchPlans').mockResolvedValue([]);
   vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
@@ -152,6 +157,12 @@ describe('BillingPricingView — Stripe cancel-redirect intentId cleanup', () =>
     expect(sessionStorage.getItem('billing.extras.intentId.pack_500')).toBeNull();
     expect(sessionStorage.getItem('billing.extras.intentId.pack_2000')).toBeNull();
     expect(sessionStorage.getItem('unrelated')).toBe('keep-me');
+    // URL stripped of type, canceled + hash preserved
+    expect(router.replace).toHaveBeenCalledWith({
+      path: '/pricing',
+      hash: '#units',
+      query: { canceled: 'true' },
+    });
     expect(wrapper.vm.checkoutCanceled).toBe(true);
   });
 
