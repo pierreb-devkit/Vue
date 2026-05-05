@@ -40,6 +40,12 @@ export const billingEn = {
       /** i18n key: billing.period.year */
       year: '/year',
     },
+    meter: {
+      error: {
+        /** i18n key: billing.meter.error.refreshFailed */
+        refreshFailed: 'Could not refresh usage. Counters may be out of date. Retrying automatically.',
+      },
+    },
     extras: {
       /** i18n key: billing.extras.title */
       title: 'Extra units',
