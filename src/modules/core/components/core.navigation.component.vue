@@ -30,7 +30,7 @@
         <v-list-item
           class="devkit-logo-item"
           :style="{ color: navColor }"
-          @click="$router.push('/')"
+          to="/"
         >
           <template #prepend>
             <v-img
