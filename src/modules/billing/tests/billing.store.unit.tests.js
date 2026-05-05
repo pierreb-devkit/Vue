@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useBillingStore } from '../stores/billing.store';
+import { useBillingStore, clearExtrasIntentIds } from '../stores/billing.store';
 import axios from '../../../lib/services/axios';
 
 // Mock axios
@@ -559,6 +559,132 @@ describe('Billing Store', () => {
       expect(spy).toHaveBeenCalled();
       expect(store.extrasCheckoutRequests).toBe(0);
       spy.mockRestore();
+    });
+
+    describe('intentId wiring', () => {
+      let originalLocation;
+      beforeEach(() => {
+        sessionStorage.clear();
+        originalLocation = window.location;
+        delete window.location;
+        window.location = {
+          ...originalLocation,
+          origin: 'https://app.example.com',
+          assign: vi.fn(),
+        };
+      });
+      afterEach(() => {
+        window.location = originalLocation;
+        sessionStorage.clear();
+      });
+
+      it('generates a UUID, stores it in sessionStorage and forwards it in the request body', async () => {
+        const store = useBillingStore();
+        axios.post.mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s1' } } });
+
+        await store.createExtrasCheckout('pack_500');
+
+        const body = axios.post.mock.calls[0][1];
+        expect(body.intentId).toEqual(expect.any(String));
+        // RFC 4122 v4-shaped UUID
+        expect(body.intentId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        expect(sessionStorage.getItem('billing.extras.intentId.pack_500')).toBe(body.intentId);
+      });
+
+      it('reuses the persisted intentId on a subsequent call within the same session', async () => {
+        const store = useBillingStore();
+        axios.post
+          .mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s1' } } })
+          .mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s2' } } });
+
+        await store.createExtrasCheckout('pack_500');
+        await store.createExtrasCheckout('pack_500');
+
+        const firstBody = axios.post.mock.calls[0][1];
+        const secondBody = axios.post.mock.calls[1][1];
+        expect(secondBody.intentId).toBe(firstBody.intentId);
+      });
+
+      it('uses distinct intentIds for distinct pack ids', async () => {
+        const store = useBillingStore();
+        axios.post
+          .mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s1' } } })
+          .mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s2' } } });
+
+        await store.createExtrasCheckout('pack_500');
+        await store.createExtrasCheckout('pack_2000');
+
+        const firstBody = axios.post.mock.calls[0][1];
+        const secondBody = axios.post.mock.calls[1][1];
+        expect(secondBody.intentId).not.toBe(firstBody.intentId);
+      });
+
+      it('still generates and sends an intentId when sessionStorage.setItem throws (private browsing / quota)', async () => {
+        const store = useBillingStore();
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+          throw new Error('QuotaExceededError');
+        });
+        axios.post.mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s1' } } });
+
+        await expect(store.createExtrasCheckout('pack_500')).resolves.not.toThrow();
+
+        const body = axios.post.mock.calls[0][1];
+        expect(body.intentId).toEqual(expect.any(String));
+        expect(body.intentId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        setItemSpy.mockRestore();
+      });
+
+      it('still generates and sends an intentId when sessionStorage.getItem throws', async () => {
+        const store = useBillingStore();
+        const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+          throw new Error('SecurityError');
+        });
+        axios.post.mockResolvedValueOnce({ data: { data: { url: 'https://checkout.stripe.com/s1' } } });
+
+        await expect(store.createExtrasCheckout('pack_500')).resolves.not.toThrow();
+
+        const body = axios.post.mock.calls[0][1];
+        expect(body.intentId).toEqual(expect.any(String));
+        getItemSpy.mockRestore();
+      });
+    });
+  });
+
+  describe('clearExtrasIntentIds', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('removes only billing.extras.intentId.* keys from sessionStorage', () => {
+      sessionStorage.setItem('billing.extras.intentId.pack_500', 'uuid-a');
+      sessionStorage.setItem('billing.extras.intentId.pack_2000', 'uuid-b');
+      sessionStorage.setItem('billing.checkout.polling', '{"startedAt":1}');
+      sessionStorage.setItem('unrelated', 'keep-me');
+
+      clearExtrasIntentIds();
+
+      expect(sessionStorage.getItem('billing.extras.intentId.pack_500')).toBeNull();
+      expect(sessionStorage.getItem('billing.extras.intentId.pack_2000')).toBeNull();
+      expect(sessionStorage.getItem('billing.checkout.polling')).toBe('{"startedAt":1}');
+      expect(sessionStorage.getItem('unrelated')).toBe('keep-me');
+    });
+
+    it('does not throw when sessionStorage.removeItem throws', () => {
+      sessionStorage.setItem('billing.extras.intentId.pack_500', 'uuid-a');
+      const removeSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new Error('SecurityError');
+      });
+      expect(() => clearExtrasIntentIds()).not.toThrow();
+      removeSpy.mockRestore();
+    });
+
+    it('is a no-op when no extras intentId keys are stored', () => {
+      sessionStorage.setItem('unrelated', 'keep-me');
+      expect(() => clearExtrasIntentIds()).not.toThrow();
+      expect(sessionStorage.getItem('unrelated')).toBe('keep-me');
     });
   });
 });
