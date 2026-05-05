@@ -193,6 +193,16 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/');
   });
 
+  it('redirects authenticated users away from auth pages to config.sign.route', async () => {
+    mockAuthStore.isLoggedIn = true;
+    mockAuthStore.serverConfig = null;
+    mockAuthStore.user = { currentOrganization: 'org1' };
+    const router = getRouter();
+    await router.push('/signin');
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe(testConfig.sign.route);
+  });
+
   it('allows /pricing without organization (org-exempt)', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.serverConfig = { organizations: { enabled: true } };

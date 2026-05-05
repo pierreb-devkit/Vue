@@ -72,4 +72,5 @@ export default {
     admin: { activated: true },
   },
   cookie: { prefix: 'devkit' },
+  sign: { route: '/', in: true, up: true },
 };
