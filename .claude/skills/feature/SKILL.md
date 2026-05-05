@@ -16,6 +16,8 @@ description: >
 
 ### 1. Identify target module
 
+- Read `CLAUDE.md` for project conventions and stack patterns.
+- Read `ERRORS.md` for known bugs and non-obvious pitfalls to avoid before coding.
 - Which module? Default to **ONE** unless justified.
 - **If the module doesn't exist** → run `/create-module` to scaffold it first, then continue.
 
