@@ -8,12 +8,24 @@
     :class="{ 'devkit-app-bar--float': isFloatMode, 'devkit-app-bar--scrolled': isFloatMode && isScrolled }"
   >
     <v-container :style="{ maxWidth: config.vuetify.theme.maxWidth }" class="d-flex align-center px-4 py-0">
-      <!-- Logo/Title -->
-      <router-link v-if="config.header.logo && config.header.logo.file" to="/">
-        <v-img :src="config.header.logo.file" height="100px" width="100px" class="ml-0 mt-2" inline alt="logo"> </v-img>
+      <!-- Logo/Title lockup -->
+      <router-link
+        v-if="config.header.logo && config.header.logo.file"
+        to="/"
+        class="d-inline-flex align-center mr-4 text-decoration-none"
+        :style="{ color: 'inherit' }"
+      >
+        <v-img
+          :src="config.header.logo.file"
+          :height="config.header.logo.width || '36px'"
+          :width="config.header.logo.width || '36px'"
+          inline
+          alt="logo"
+        />
+        <h1 v-if="config.header.title" class="text-headline-small font-weight-bold ml-2">{{ config.app.title }}</h1>
       </router-link>
-      <router-link v-else-if="config.header.title" to="/" class="text-decoration-none" :style="{ color: 'inherit' }">
-        <h1 class="text-headline-small font-weight-bold mr-4">{{ config.app.title }}</h1>
+      <router-link v-else-if="config.header.title" to="/" class="text-decoration-none mr-4" :style="{ color: 'inherit' }">
+        <h1 class="text-headline-small font-weight-bold">{{ config.app.title }}</h1>
       </router-link>
       <!-- Menu -->
       <span v-for="({ title, url, sublinks }, i) in config.header.links" :key="i" class="hidden-sm-and-down">

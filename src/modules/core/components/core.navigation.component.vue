@@ -28,28 +28,29 @@
       <!-- Logo / drawer on mobile-->
       <v-list :style="listStyle" nav class="pt-4">
         <v-list-item
-          to="/"
+          class="devkit-logo-item"
           :style="{ color: navColor }"
+          @click="$router.push('/')"
         >
           <template #prepend>
             <v-img
-              v-if="config.app.logoFile"
-              :src="config.app.logoFile"
+              v-if="logoFile"
+              :src="logoFile"
               :alt="config.app.title"
-              width="32"
-              height="32"
+              :width="config.header.logo?.width || '32px'"
+              :height="config.header.logo?.width || '32px'"
               class="ms-n1"
               inline
             ></v-img>
             <v-icon
-              v-else-if="config.app.title && !($vuetify.display.mobile && !isGlass)"
+              v-else-if="config.app.icon"
               :style="{ color: navColor, opacity: 1 }"
               :icon="config.app.icon"
               size="large"
               class="ms-n1"
             ></v-icon>
           </template>
-          <v-list-item-title>{{ config.app.title }}</v-list-item-title>
+          <v-list-item-title class="text-headline-small font-weight-bold">{{ config.app.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
       <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
@@ -154,6 +155,13 @@ export default {
       const authStore = useAuthStore();
       if (!authStore.serverConfig?.organizations?.enabled) return true;
       return !!authStore.user?.currentOrganization;
+    },
+    /**
+     * @desc Logo file — header config takes priority, falls back to app.logoFile.
+     * @returns {String|null}
+     */
+    logoFile() {
+      return this.config.header?.logo?.file || this.config.app.logoFile || null;
     },
     /**
      * @desc Whether the liquid glass mode is enabled.
@@ -272,3 +280,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.devkit-logo-item :deep(.v-list-item__overlay) {
+  display: none;
+}
+</style>
