@@ -29,35 +29,11 @@ const EXTRAS_INTENT_STORAGE_PREFIX = 'billing.extras.intentId.';
 const extrasIntentKey = (packId) => `${EXTRAS_INTENT_STORAGE_PREFIX}${packId}`;
 
 /**
- * @desc Generate a UUID. Prefer the browser builtin crypto.randomUUID; fall back
- * to a manual v4-shaped UUID built from getRandomValues when randomUUID is not
- * exposed (older WebViews). Final fallback uses Math.random — only reached when
- * neither is available; acceptable because uniqueness here is a single-tab
- * deduplication concern, not a security one.
+ * @desc Generate a v4 UUID via the browser builtin crypto.randomUUID.
+ * Available in all targeted browsers (Chrome 92+, Firefox 95+, Safari 15.4+).
  * @returns {string}
  */
-const generateIntentId = () => {
-  try {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-      const bytes = new Uint8Array(16);
-      crypto.getRandomValues(bytes);
-      // RFC 4122 v4 markers
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-    }
-  } catch {
-    // fall through to Math.random fallback
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-};
+const generateIntentId = () => crypto.randomUUID();
 
 /**
  * @desc Resolve the intentId for an extras checkout attempt.
