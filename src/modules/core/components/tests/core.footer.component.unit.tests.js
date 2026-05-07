@@ -111,6 +111,39 @@ describe('core.footer.component — registry extras', () => {
     expect(wrapper.text()).not.toContain('Removable');
   });
 
+  it('merges registered extras into existing config-driven section by title (no duplicate column)', () => {
+    const { register } = useFooterExtras();
+    register('legal-module', {
+      title: 'Legal',
+      items: [{ label: 'Cookie settings', icon: 'fa-solid fa-cookie', onClick: vi.fn() }],
+    });
+    const wrapper = mountFooter({
+      footer: {
+        links: [
+          {
+            title: 'Legal',
+            items: [
+              { label: 'Terms of Service', icon: 'fa-solid fa-file-contract', url: '/terms' },
+              { label: 'Privacy Policy', icon: 'fa-solid fa-shield-halved', url: '/privacy' },
+            ],
+          },
+        ],
+      },
+      vuetify: { theme: { flat: false } },
+      legal: {
+        cookieConsent: { enabled: true, privacyPolicyPath: '/privacy' },
+        pages: { enabled: false, routePrefix: '/legal', items: {} },
+      },
+    });
+    const text = wrapper.text();
+    expect(text).toContain('Terms of Service');
+    expect(text).toContain('Privacy Policy');
+    expect(text).toContain('Cookie settings');
+    // Single "Legal" column heading, not two
+    const legalHeadings = wrapper.findAll('.v-card-title').filter((c) => c.text().trim() === 'Legal');
+    expect(legalHeadings.length).toBe(1);
+  });
+
   it('calls item.onClick when item has an onClick callback', async () => {
     const { register } = useFooterExtras();
     const onClick = vi.fn();

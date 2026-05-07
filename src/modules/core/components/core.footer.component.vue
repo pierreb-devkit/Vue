@@ -90,13 +90,28 @@ export default {
     },
     /**
      * @desc Combines the prop-provided footer links with sections registered by
-     * optional modules via `useFooterExtras`. Core has no knowledge of which
-     * modules injected the extras — they register/unregister via lifecycle hooks.
+     * optional modules via `useFooterExtras`. Extras whose title matches an
+     * existing config-driven section are merged into that section (items
+     * appended) rather than added as a new column — preventing duplicate
+     * headings (e.g. two "Legal" columns).
      * @returns {Array}
      */
     allLinks() {
-      const base = this.links || [];
-      return [...base, ...this.extras];
+      const base = (this.links || []).map((s) => ({ ...s, items: [...(s.items || [])] }));
+      const result = [...base];
+      const extras = this.extras || [];
+      for (const extra of extras) {
+        const existingIdx = result.findIndex((s) => s.title === extra.title);
+        if (existingIdx >= 0) {
+          result[existingIdx] = {
+            ...result[existingIdx],
+            items: [...result[existingIdx].items, ...(extra.items || [])],
+          };
+        } else {
+          result.push(extra);
+        }
+      }
+      return result;
     },
   },
   watch: {
