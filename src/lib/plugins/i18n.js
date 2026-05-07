@@ -18,6 +18,8 @@ import { billingEn } from '../../modules/billing/lang/en.js';
 import { billingFr } from '../../modules/billing/lang/fr.js';
 import { usersEn } from '../../modules/users/lang/en.js';
 import { usersFr } from '../../modules/users/lang/fr.js';
+import { legalEn } from '../../modules/legal/lang/en.js';
+import { legalFr } from '../../modules/legal/lang/fr.js';
 
 /**
  * i18n instance — Composition API mode (legacy: false) so both
@@ -30,8 +32,8 @@ const i18n = createI18n({
   locale: 'en',
   fallbackLocale: 'en',
   messages: {
-    en: { ...billingEn, ...usersEn },
-    fr: { ...billingFr, ...usersFr },
+    en: { ...billingEn, ...usersEn, ...legalEn },
+    fr: { ...billingFr, ...usersFr, ...legalFr },
   },
 });
 
