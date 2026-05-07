@@ -16,9 +16,10 @@ import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing from '../billing/router/billing.router';
+import legal from '../legal/router/legal.router';
 
 // Core modules — always mounted
-const coreRoutes = [].concat(home, auth, users);
+const coreRoutes = [].concat(home, auth, users, legal);
 
 /**
  * Admin child modules — routes injected as children of the `/admin` parent
