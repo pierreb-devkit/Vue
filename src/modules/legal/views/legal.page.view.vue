@@ -21,9 +21,9 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLegalPage } from '../composables/useLegalPage';
+import config from '@/config';
 
 const route = useRoute();
-const config = {};
 const page = ref({ title: '', html: '', notFound: false });
 
 const load = async (slug) => {
