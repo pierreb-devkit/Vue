@@ -258,4 +258,13 @@ describe('posthog plugin', () => {
       expect.objectContaining({ persistence: 'memory' }),
     );
   });
+
+  it('initializes posthog with opt_in_site_apps: false (prevents PostHog dashboard cookie banner site app)', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ opt_in_site_apps: false }),
+    );
+  });
 });

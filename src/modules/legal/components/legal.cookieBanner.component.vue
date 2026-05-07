@@ -7,6 +7,7 @@
     multi-line
     :max-width="480"
     color="surface"
+    :style="{ '--v-layout-bottom': '0px' }"
   >
     <div class="text-body-2">
       {{ message }}
