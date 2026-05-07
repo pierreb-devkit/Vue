@@ -15,7 +15,7 @@ This Privacy Policy describes how **{{entity.name}}** ({{entity.legalForm}}, {{e
 - Consent (analytics)
 
 ## 3. Cookies & Consent
-We use a cookie consent banner. Analytics cookies (PostHog) are only set after explicit opt-in. You can revoke at any time via the "Cookie settings" link in the footer.
+We use a cookie consent banner. Analytics cookies (PostHog) are only set after explicit opt-in. You can revoke your consent at any time. If a cookie consent banner is enabled on this site, look for a "Cookie settings" link in the footer; otherwise contact us at {{entity.dpoEmail}} to update your preferences.
 
 ## 4. Your rights (GDPR)
 You may request access, correction, deletion, or portability of your personal data by contacting {{entity.dpoEmail}}.

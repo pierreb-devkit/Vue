@@ -13,7 +13,7 @@ You are responsible for safeguarding your credentials and for all activities und
 You agree not to misuse the service. Prohibited activities include but are not limited to: unauthorized access, scraping in violation of third-party terms, or any unlawful activity.
 
 ## 3. Subscription and billing
-Paid plans are billed in advance. See the [Refund Policy](/legal/refund) for cancellation and refund terms.
+Paid plans are billed in advance. See the [Refund Policy](./refund) for cancellation and refund terms.
 
 ## 4. Termination
 We may suspend or terminate your account for breach of these Terms.

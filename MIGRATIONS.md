@@ -26,7 +26,7 @@ Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or 
 
 ### Action for downstream projects
 
-**Default consumers** (cookieConsent off, pages off): no action. The PostHog plugin change is a no-op until consent flow is enabled. If you ship PostHog in EU without enabling cookie consent, you are non-compliant by default — enable it.
+**Default consumers** (cookieConsent off, pages off): no action required. **Behavior change to be aware of:** PostHog now defaults to opt-out — events are not captured until the user opts in via the consent banner. If you ship PostHog targeting EU users, you must enable the cookie consent flow (see below) to be GDPR-compliant. If you don't enable consent, no events will be captured at all.
 
 **To enable cookie consent** (REQUIRED if you ship PostHog targeting EU users):
 1. Override `legal.cookieConsent.enabled: true`
