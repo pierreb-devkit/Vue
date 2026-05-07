@@ -17,6 +17,7 @@ Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or 
 - `legal.pages.enabled: true` → routes register at `/legal/{slug}`
 
 ### What changed in the stack
+
 - NEW: `src/modules/legal/` (composables, components, view, routes, assets/templates, config, lang)
 - MODIFIED: `src/lib/plugins/posthog.js` — added `opt_out_capturing_by_default: true` + `persistence: 'memory'`. PostHog now waits for explicit opt-in before storing cookies. Existing flag-based features (autocapture/replay/pageleave/etc.) unchanged.
 - MODIFIED: `src/modules/core/components/core.footer.component.vue` — auto-injects a "Legal" section when `legal.cookieConsent.enabled` or any `legal.pages.items[*].enabled` is true. Also fixes a pre-existing bug where the footer was hidden on hard-load (the `$route` watcher didn't fire on initial mount); a `created()` hook now initializes `enabled` from `$route.meta.footer`.
@@ -46,6 +47,7 @@ Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or 
 - Remove the local route entries
 
 ### Why
+
 Stripe KYC requires a legal compliance baseline (ToS, Privacy, Refund, Legal Notice, DPA) + cookie consent for EU. Centralizing in devkit avoids duplicating across downstream projects and gives every new project a working baseline out of the box.
 
 ---
