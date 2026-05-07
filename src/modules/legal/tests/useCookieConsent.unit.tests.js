@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
-import { useCookieConsent, COOKIE_CONSENT_LS_KEY, CONSENT_VERSION } from '../composables/useCookieConsent';
+import { useCookieConsent, COOKIE_CONSENT_LS_KEY, CONSENT_VERSION, __resetCookieConsentForTests } from '../composables/useCookieConsent';
 
+/**
+ * Returns a fresh PostHog mock with all tracked methods.
+ * @returns {{ set_config: vi.Mock, opt_in_capturing: vi.Mock, opt_out_capturing: vi.Mock, reset: vi.Mock, capture: vi.Mock }}
+ */
 const posthogMock = () => ({
   set_config: vi.fn(),
   opt_in_capturing: vi.fn(),
@@ -11,6 +15,12 @@ const posthogMock = () => ({
   capture: vi.fn(),
 });
 
+/**
+ * Mounts a minimal component that calls useCookieConsent in setup and
+ * returns the composable API alongside the wrapper and posthog mock.
+ * @param {object} [posthog] - PostHog mock to inject as $posthog globalProperty
+ * @returns {{ api: object, wrapper: import('@vue/test-utils').VueWrapper, posthog: object }}
+ */
 const mountComposable = (posthog = posthogMock()) => {
   let api;
   const Comp = defineComponent({
@@ -27,6 +37,7 @@ describe('useCookieConsent — storage', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useRealTimers();
+    __resetCookieConsentForTests();
   });
 
   it('reports consentNeeded=true when localStorage is empty', () => {
@@ -41,6 +52,7 @@ describe('useCookieConsent — storage', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: CONSENT_VERSION, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: true }),
     );
+    __resetCookieConsentForTests();
     const { api } = mountComposable();
     expect(api.consentNeeded.value).toBe(false);
     expect(api.consent.value).toEqual({ analytics: true });
@@ -52,6 +64,7 @@ describe('useCookieConsent — storage', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: CONSENT_VERSION, timestamp: '2024-01-01T00:00:00.000Z', expiresAt: past, analytics: true }),
     );
+    __resetCookieConsentForTests();
     const { api } = mountComposable();
     expect(api.consentNeeded.value).toBe(true);
   });
@@ -62,19 +75,24 @@ describe('useCookieConsent — storage', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: 999, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: true }),
     );
+    __resetCookieConsentForTests();
     const { api } = mountComposable();
     expect(api.consentNeeded.value).toBe(true);
   });
 
   it('treats malformed JSON as missing (re-prompts, no throw)', () => {
     localStorage.setItem(COOKIE_CONSENT_LS_KEY, '{not-json');
+    __resetCookieConsentForTests();
     const { api } = mountComposable();
     expect(api.consentNeeded.value).toBe(true);
   });
 });
 
 describe('useCookieConsent — actions', () => {
-  beforeEach(() => { localStorage.clear(); });
+  beforeEach(() => {
+    localStorage.clear();
+    __resetCookieConsentForTests();
+  });
 
   it('accept: writes LS, sets consent, calls posthog set_config + opt_in + capture', () => {
     const { api, posthog } = mountComposable();
@@ -89,7 +107,7 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.capture).toHaveBeenCalledWith('consent_given', { analytics: true });
   });
 
-  it('reject: writes LS, sets consent, calls posthog opt_out + reset', () => {
+  it('reject: writes LS, sets consent, calls posthog opt_out + reset, does NOT call set_config', () => {
     const { api, posthog } = mountComposable();
     api.reject();
     expect(api.consentNeeded.value).toBe(false);
@@ -99,6 +117,7 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.opt_out_capturing).toHaveBeenCalledOnce();
     expect(posthog.reset).toHaveBeenCalledOnce();
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
+    expect(posthog.set_config).not.toHaveBeenCalled();
   });
 
   it('reopenSettings: flips consentNeeded to true without touching posthog or LS', () => {
@@ -107,6 +126,7 @@ describe('useCookieConsent — actions', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: CONSENT_VERSION, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: true }),
     );
+    __resetCookieConsentForTests();
     const { api, posthog } = mountComposable();
     expect(api.consentNeeded.value).toBe(false);
     posthog.set_config.mockClear();
@@ -124,6 +144,7 @@ describe('useCookieConsent — actions', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: CONSENT_VERSION, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: true }),
     );
+    __resetCookieConsentForTests();
     const { posthog } = mountComposable();
     expect(posthog.set_config).toHaveBeenCalledWith({ persistence: 'localStorage+cookie' });
     expect(posthog.opt_in_capturing).toHaveBeenCalledOnce();
@@ -135,6 +156,7 @@ describe('useCookieConsent — actions', () => {
       COOKIE_CONSENT_LS_KEY,
       JSON.stringify({ version: CONSENT_VERSION, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: false }),
     );
+    __resetCookieConsentForTests();
     const { posthog } = mountComposable();
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
     expect(posthog.set_config).not.toHaveBeenCalled();
@@ -149,5 +171,22 @@ describe('useCookieConsent — actions', () => {
     mount(Comp, { global: { config: { globalProperties: {} } } });
     expect(() => api.accept()).not.toThrow();
     expect(() => api.reject()).not.toThrow();
+  });
+
+  it('reopenSettings in one instance updates consentNeeded in a second instance (singleton state)', () => {
+    // Pre-fill LS so first mount has consent
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    localStorage.setItem(
+      COOKIE_CONSENT_LS_KEY,
+      JSON.stringify({ version: CONSENT_VERSION, timestamp: '2026-05-07T00:00:00.000Z', expiresAt: future, analytics: true }),
+    );
+    __resetCookieConsentForTests();
+    const { api: api1 } = mountComposable();
+    const { api: api2 } = mountComposable();
+    expect(api1.consentNeeded.value).toBe(false);
+    expect(api2.consentNeeded.value).toBe(false);
+    api1.reopenSettings();
+    expect(api1.consentNeeded.value).toBe(true);
+    expect(api2.consentNeeded.value).toBe(true);
   });
 });
