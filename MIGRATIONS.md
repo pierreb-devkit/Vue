@@ -54,7 +54,7 @@ Stripe KYC requires a legal compliance baseline (ToS, Privacy, Refund, Legal Not
 
 ### Polish (2026-05-07 QA)
 
-Three follow-up fixes shipped:
+Four follow-up fixes shipped:
 - **Banner auto-hides when no posthog key** — `cookieConsent.enabled: true` without `analytics.posthog.key` is now a console-warned no-op (banner doesn't render). Previous behavior would render a banner whose Accept/Reject buttons silently did nothing.
 - **Banner viewport-anchored** — overrides `--v-layout-bottom: 0px` so the snackbar isn't pushed up by `<v-footer app>`'s height (was rendering mid-page on tall pages).
 - **Footer dedupes by title** — projects with a manual `footer.links` "Legal" section no longer get a duplicate column from the registry; the cookie settings link merges into the existing column.
