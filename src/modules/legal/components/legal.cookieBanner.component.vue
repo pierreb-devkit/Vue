@@ -43,6 +43,13 @@ const getConfig = () =>
   instance?.appContext?.config?.globalProperties?.config ||
   {};
 
+/**
+ * Resolves whether the cookie banner can render.
+ * Returns true only when cookieConsent is enabled in config AND a PostHog
+ * instance is available via $posthog. When PostHog is absent, a console.warn
+ * is emitted and the banner is suppressed (no-op guard).
+ * @returns {boolean} True when the banner should render, false otherwise.
+ */
 const enabled = computed(() => {
   const cfgEnabled = Boolean(getConfig()?.legal?.cookieConsent?.enabled);
   if (!cfgEnabled) return false;
