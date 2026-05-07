@@ -31,6 +31,20 @@ const writeStored = (analytics) => {
   try { localStorage.setItem(COOKIE_CONSENT_LS_KEY, JSON.stringify(payload)); } catch { /* quota / private mode — accept session-only */ }
 };
 
+/**
+ * Vue composable for cookie consent state and PostHog opt-in/out gating.
+ *
+ * Reads/writes localStorage under `cookie_consent_v1` (12-month expiry, version-checked).
+ * On mount, re-applies posthog opt_in if the user previously accepted.
+ *
+ * @returns {{
+ *   consentNeeded: import('vue').Ref<boolean>,
+ *   consent: import('vue').Ref<{analytics: boolean} | null>,
+ *   accept: () => void,
+ *   reject: () => void,
+ *   reopenSettings: () => void
+ * }}
+ */
 export function useCookieConsent() {
   const stored = readStored();
   const consent = ref(stored);
