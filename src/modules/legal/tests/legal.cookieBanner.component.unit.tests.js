@@ -75,6 +75,7 @@ const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal
           name: appName,
           legal: { cookieConsent: { enabled, privacyPolicyPath: privacyPath } },
         },
+        $posthog: { capture: vi.fn(), opt_in_capturing: vi.fn(), opt_out_capturing: vi.fn(), reset: vi.fn(), set_config: vi.fn() },
       },
       stubs: { RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] } },
     },
@@ -152,5 +153,50 @@ describe('legal.cookieBanner.component', () => {
     mountBanner({ appName: 'Devkit' });
     await flushPromises();
     expect(document.body.innerHTML).toContain('Update your cookie preferences for Devkit');
+  });
+
+  it('does not render snackbar when $posthog is not available even if cookieConsent.enabled', async () => {
+    consentNeeded.value = true;
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const wrapper = mount(LegalCookieBanner, {
+      global: {
+        plugins: [vuetify(), i18n()],
+        mocks: {
+          config: {
+            name: 'Trawl',
+            legal: { cookieConsent: { enabled: true, privacyPolicyPath: '/privacy' } },
+          },
+        },
+        stubs: { RouterLink: { template: '<a><slot /></a>', props: ['to'] } },
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(document.body.innerHTML).not.toContain('Accept');
+    wrapper.unmount();
+    document.body.innerHTML = '';
+    consoleSpy.mockRestore();
+  });
+
+  it('renders snackbar when $posthog IS available and cookieConsent.enabled', async () => {
+    consentNeeded.value = true;
+    const wrapper = mount(LegalCookieBanner, {
+      global: {
+        plugins: [vuetify(), i18n()],
+        mocks: {
+          config: {
+            name: 'Trawl',
+            legal: { cookieConsent: { enabled: true, privacyPolicyPath: '/privacy' } },
+          },
+          $posthog: { capture: vi.fn(), opt_in_capturing: vi.fn(), opt_out_capturing: vi.fn(), reset: vi.fn(), set_config: vi.fn() },
+        },
+        stubs: { RouterLink: { template: '<a><slot /></a>', props: ['to'] } },
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(document.body.innerHTML).toContain('Accept');
+    wrapper.unmount();
+    document.body.innerHTML = '';
   });
 });

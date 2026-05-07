@@ -7,6 +7,7 @@
     multi-line
     :max-width="480"
     color="surface"
+    :style="{ '--v-layout-bottom': '0px' }"
   >
     <div class="text-body-2">
       {{ message }}
@@ -42,7 +43,28 @@ const getConfig = () =>
   instance?.appContext?.config?.globalProperties?.config ||
   {};
 
-const enabled = computed(() => Boolean(getConfig()?.legal?.cookieConsent?.enabled));
+/**
+ * Resolves whether the cookie banner can render.
+ * Returns true only when cookieConsent is enabled in config AND a PostHog
+ * instance is available via $posthog. When PostHog is absent, a console.warn
+ * is emitted and the banner is suppressed (no-op guard).
+ * @returns {boolean} True when the banner should render, false otherwise.
+ */
+const enabled = computed(() => {
+  const cfgEnabled = Boolean(getConfig()?.legal?.cookieConsent?.enabled);
+  if (!cfgEnabled) return false;
+  const hasPosthog = Boolean(instance?.proxy?.$posthog || instance?.appContext?.config?.globalProperties?.$posthog);
+  if (!hasPosthog) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[legal.cookieBanner] cookieConsent.enabled is true but $posthog is not available. ' +
+        'The banner will not render. Set analytics.posthog.key to enable PostHog and the consent banner together.',
+      );
+    }
+    return false;
+  }
+  return true;
+});
 const privacyPolicyPath = computed(() => getConfig()?.legal?.cookieConsent?.privacyPolicyPath || '/legal/privacy');
 const appName = computed(() => getConfig()?.name || '');
 

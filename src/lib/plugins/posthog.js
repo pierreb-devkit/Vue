@@ -41,6 +41,7 @@ export default {
 
       opt_out_capturing_by_default: true,
       persistence: 'memory',
+      opt_in_site_apps: false,
 
       autocapture: isEnabled(phConfig.autoCapture),
       capture_pageleave: isEnabled(phConfig.capturePageleave),
