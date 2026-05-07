@@ -77,7 +77,7 @@ describe('legal.cookieBanner.component', () => {
 
   it('does not render snackbar content when consentNeeded is false', async () => {
     consentNeeded.value = false;
-    const wrapper = mountBanner();
+    mountBanner();
     await flushPromises();
     // v-snackbar teleports outside wrapper; query document.body for content
     expect(document.body.innerHTML).not.toContain('Accept');
@@ -113,7 +113,7 @@ describe('legal.cookieBanner.component', () => {
   });
 
   it('renders privacy policy link to configured path', async () => {
-    const wrapper = mountBanner({ privacyPath: '/custom-privacy' });
+    mountBanner({ privacyPath: '/custom-privacy' });
     await flushPromises();
     // v-snackbar teleports; query document.body for the rendered link
     expect(document.body.innerHTML).toContain('Privacy Policy');

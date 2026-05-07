@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent } from 'vue';
 import { useCookieConsent, COOKIE_CONSENT_LS_KEY, CONSENT_VERSION } from '../composables/useCookieConsent';
 
 const posthogMock = () => ({
