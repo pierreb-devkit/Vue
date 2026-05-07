@@ -1,0 +1,45 @@
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
+const defaultSources = import.meta.glob('/src/**/*.md', { query: '?raw', import: 'default' });
+
+/**
+ * Replaces `{{entity.fieldName}}` placeholders in a markdown string with
+ * values from the entity map. Leaves the placeholder literal when the
+ * corresponding field is absent, null, or empty.
+ * @param {string} md - Raw markdown source
+ * @param {Object} entity - Key/value map of entity fields (e.g. name, legalForm)
+ * @returns {string} Markdown with placeholders substituted
+ */
+const substitutePlaceholders = (md, entity) =>
+  md.replace(/\{\{entity\.([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
+    const v = entity?.[key];
+    return v === null || v === undefined || v === '' ? match : String(v);
+  });
+
+const NOT_FOUND = { title: '', html: '', notFound: true };
+
+/**
+ * Resolves a legal page slug to rendered HTML.
+ *
+ * @param {string} slug — page slug (e.g., 'terms', 'privacy')
+ * @param {Object} [options]
+ * @param {Object<string, () => Promise<string>>} [options.sources] — markdown loader map (defaults to import.meta.glob)
+ * @param {Object} [options.config] — devkit config (provides legal.pages.items + entity)
+ * @returns {Promise<{title: string, html: string, notFound: boolean}>}
+ */
+export async function useLegalPage(slug, { sources = defaultSources, config } = {}) {
+  const cfg = config || {};
+  const items = cfg?.legal?.pages?.items || {};
+  const entity = cfg?.legal?.pages?.entity || {};
+  const item = Object.values(items).find((it) => it.slug === slug);
+  if (!item || !item.enabled) return { ...NOT_FOUND };
+  const loader = sources[item.markdownPath];
+  if (!loader) return { ...NOT_FOUND };
+  let raw;
+  try { raw = await loader(); } catch { return { ...NOT_FOUND }; }
+  if (typeof raw !== 'string' || !raw) return { ...NOT_FOUND };
+  const substituted = substitutePlaceholders(raw, entity);
+  const html = DOMPurify.sanitize(marked.parse(substituted));
+  return { title: item.title, html, notFound: false };
+}

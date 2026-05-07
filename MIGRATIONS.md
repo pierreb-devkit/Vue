@@ -4,6 +4,54 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Legal module + cookie consent banner (2026-05-07)
+
+**Non-breaking for default consumers.** New `modules/legal/` ships:
+- Cookie consent banner gating PostHog opt-in (RGPD-compliant)
+- Markdown-driven legal pages renderer (terms, privacy, refund, legal-notice, dpa, aup)
+- 6 baseline templates with `{{entity.*}}` placeholders
+- Footer "Legal" section + "Cookie settings" link (conditional)
+
+Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or downstream override):
+- `legal.cookieConsent.enabled: true` → banner mounts on every public route
+- `legal.pages.enabled: true` → routes register at `/legal/{slug}`
+
+### What changed in the stack
+
+- NEW: `src/modules/legal/` (composables, components, view, routes, assets/templates, config, lang)
+- MODIFIED: `src/lib/plugins/posthog.js` — added `opt_out_capturing_by_default: true` + `persistence: 'memory'`. PostHog now waits for explicit opt-in before storing cookies. Existing flag-based features (autocapture/replay/pageleave/etc.) unchanged.
+- MODIFIED: `src/modules/core/components/core.footer.component.vue` — auto-injects a "Legal" section when `legal.cookieConsent.enabled` or any `legal.pages.items[*].enabled` is true. Also fixes a pre-existing bug where the footer was hidden on hard-load (the `$route` watcher didn't fire on initial mount); a `created()` hook now initializes `enabled` from `$route.meta.footer`.
+- MODIFIED: `src/modules/app/app.vue` — global mount of `<legalCookieBanner />`.
+- MODIFIED: `src/modules/app/app.router.js` — concatenates legal routes (returns empty when `pages.enabled: false`).
+- MODIFIED: `src/lib/plugins/i18n.js` — imports `legalEn` / `legalFr`.
+
+### Action for downstream projects
+
+**Default consumers** (cookieConsent off, pages off): no action required. **Behavior change to be aware of:** PostHog now defaults to opt-out — events are not captured until the user opts in via the consent banner. If you ship PostHog targeting EU users, you must enable the cookie consent flow (see below) to be GDPR-compliant. If you don't enable consent, no events will be captured at all.
+
+**To enable cookie consent** (REQUIRED if you ship PostHog targeting EU users):
+1. Override `legal.cookieConsent.enabled: true`
+2. Set `legal.cookieConsent.privacyPolicyPath` to your privacy URL
+3. Verify banner appears on landing, accept-all sets posthog cookies, reject keeps them clear
+
+**To enable legal pages**:
+1. Either fill `legal.pages.entity.*` (templates substitute placeholders), or
+2. Override `markdownPath` per item to point at your own `.md` (full rewrite — your file under `/src/` anywhere)
+3. Set `legal.pages.enabled: true`
+4. Pages auto-route at `/legal/{slug}` (configurable via `routePrefix`)
+
+**If you have an existing legal pages implementation** (e.g., trawl_vue's `modules/trawl/views/trawl.legal.view.vue`):
+- At next `/update-project`, retire your local view + tests + routes
+- Move (or keep) your `.md` files under `/src/` (any path)
+- Override `markdownPath` per item in your config to point at them
+- Remove the local route entries
+
+### Why
+
+Stripe KYC requires a legal compliance baseline (ToS, Privacy, Refund, Legal Notice, DPA) + cookie consent for EU. Centralizing in devkit avoids duplicating across downstream projects and gives every new project a working baseline out of the box.
+
+---
+
 ## core.pageHeader — breadcrumb slot + canonical 56px height + overflow fix (2026-04-26)
 
 **Non-breaking for default consumers.** The shared

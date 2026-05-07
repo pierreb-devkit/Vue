@@ -240,4 +240,22 @@ describe('posthog plugin', () => {
       );
     });
   });
+
+  it('initializes posthog with opt_out_capturing_by_default: true (RGPD gating)', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ opt_out_capturing_by_default: true }),
+    );
+  });
+
+  it('initializes posthog with persistence: memory (no cookie/LS until consent)', () => {
+    const app = makeApp({ key: 'phc_testkey' });
+    posthogPlugin.install(app);
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ persistence: 'memory' }),
+    );
+  });
 });

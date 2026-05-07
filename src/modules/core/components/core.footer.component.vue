@@ -1,18 +1,18 @@
 <template>
   <v-footer v-if="enabled" class="footer pa-0 align-end" :style="footerStyle" app>
-    <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
+    <v-container v-if="allLinks.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row density="compact" align="center" justify="center">
         <v-col
-          v-for="({ items, title }, i) in links.filter((section) => section.items)"
+          v-for="({ items, title }, i) in allLinks.filter((section) => section.items)"
           :key="i"
           cols="12"
-          :md="12 / links.filter((section) => section.items).length"
+          :md="12 / allLinks.filter((section) => section.items).length"
           class="text-center"
         >
           <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list class="bg-transparent" :style="custom && custom.section ? custom.section : null" density="compact">
-              <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
+              <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="onItemClick(item)">
                 <v-list-item-title>
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
                   <span class="text-onSurface text-high-emphasis text-label-small"> {{ item.label }} </span>
@@ -31,6 +31,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 /**
  * Component definition.
  */
@@ -50,6 +51,15 @@ export default {
       type: Object,
       default: null,
     },
+  },
+  /**
+   * @desc Initialise the footer extras registry so the footer can render
+   * sections injected by optional modules (e.g. legal) without hard-importing them.
+   * @returns {{ extras: import('vue').Ref<Array> }}
+   */
+  setup() {
+    const { extras } = useFooterExtras();
+    return { extras };
   },
   data() {
     const theme = useTheme();
@@ -78,6 +88,16 @@ export default {
         background: bgColor,
       };
     },
+    /**
+     * @desc Combines the prop-provided footer links with sections registered by
+     * optional modules via `useFooterExtras`. Core has no knowledge of which
+     * modules injected the extras — they register/unregister via lifecycle hooks.
+     * @returns {Array}
+     */
+    allLinks() {
+      const base = this.links || [];
+      return [...base, ...this.extras];
+    },
   },
   watch: {
     $route(route) {
@@ -85,12 +105,28 @@ export default {
       else this.enabled = false;
     },
   },
+  created() {
+    const route = this.$route;
+    if (route?.meta?.footer) this.enabled = true;
+  },
   methods: {
     navigate(link) {
       if (link.startsWith('http')) {
         window.open(link, '_blank');
       } else {
         this.$router.push(link);
+      }
+    },
+    /**
+     * @desc Handle footer item click — dispatches `onClick` callback when present
+     * (injected by optional modules), otherwise navigates to `url`.
+     * @param {{ onClick?: Function, url?: string }} item
+     */
+    onItemClick(item) {
+      if (typeof item.onClick === 'function') {
+        item.onClick();
+      } else if (item.url) {
+        this.navigate(item.url);
       }
     },
   },

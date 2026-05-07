@@ -70,6 +70,7 @@ export default {
     organizations: { activated: true },
     analytics: { activated: true },
     admin: { activated: true },
+    legal: { activated: true },
   },
   cookie: { prefix: 'devkit' },
   sign: { route: '/', in: true, up: true },

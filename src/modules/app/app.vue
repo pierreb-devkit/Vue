@@ -36,6 +36,8 @@
     <authPendingRequestBanner />
 
     <organizationsAdminPendingBanner />
+    <legalCookieBanner />
+    <legalFooterSection />
     <v-main class="pb-0" :style="mainStyle">
       <appErrorBoundary>
         <router-view />
@@ -61,6 +63,8 @@ import authEmailBanner from '../auth/components/emailBanner.component.vue';
 import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
 
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
+import legalCookieBanner from '../legal/components/legal.cookieBanner.component.vue';
+import legalFooterSection from '../legal/components/legal.footerSection.component.vue';
 import appErrorBoundary from './components/app.errorBoundary.component.vue';
 
 /**
@@ -76,6 +80,8 @@ export default {
     authPendingRequestBanner,
 
     organizationsAdminPendingBanner,
+    legalCookieBanner,
+    legalFooterSection,
     appErrorBoundary,
   },
   /**
