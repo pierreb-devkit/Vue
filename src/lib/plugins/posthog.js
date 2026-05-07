@@ -39,6 +39,9 @@ export default {
     posthog.init(phConfig.key, {
       api_host: phConfig.host || 'https://us.i.posthog.com',
 
+      opt_out_capturing_by_default: true,
+      persistence: 'memory',
+
       autocapture: isEnabled(phConfig.autoCapture),
       capture_pageleave: isEnabled(phConfig.capturePageleave),
 
