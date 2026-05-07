@@ -3,6 +3,14 @@ import DOMPurify from 'dompurify';
 
 const defaultSources = import.meta.glob('/src/**/*.md', { query: '?raw', import: 'default' });
 
+/**
+ * Replaces `{{entity.fieldName}}` placeholders in a markdown string with
+ * values from the entity map. Leaves the placeholder literal when the
+ * corresponding field is absent, null, or empty.
+ * @param {string} md - Raw markdown source
+ * @param {Object} entity - Key/value map of entity fields (e.g. name, legalForm)
+ * @returns {string} Markdown with placeholders substituted
+ */
 const substitutePlaceholders = (md, entity) =>
   md.replace(/\{\{entity\.([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
     const v = entity?.[key];

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
@@ -28,7 +28,16 @@ vi.mock('../composables/useCookieConsent', () => ({
 
 import LegalCookieBanner from '../components/legal.cookieBanner.component.vue';
 
+/**
+ * Returns a fresh Vuetify instance for each test.
+ * @returns {import('vuetify').Vuetify}
+ */
 const vuetify = () => createVuetify({ components, directives });
+
+/**
+ * Returns a fresh vue-i18n instance with the legal banner message keys.
+ * @returns {import('vue-i18n').I18n}
+ */
 const i18n = () =>
   createI18n({
     legacy: false,
@@ -48,8 +57,16 @@ const i18n = () =>
     },
   });
 
-const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal/privacy' } = {}) =>
-  mount(LegalCookieBanner, {
+let wrapper;
+
+/**
+ * Mounts LegalCookieBanner attached to document.body and tracks the
+ * wrapper so afterEach can unmount it and clear the DOM.
+ * @param {{ enabled?: boolean, appName?: string, privacyPath?: string }} [opts]
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
+const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal/privacy' } = {}) => {
+  wrapper = mount(LegalCookieBanner, {
     attachTo: document.body,
     global: {
       plugins: [vuetify(), i18n()],
@@ -62,6 +79,8 @@ const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal
       stubs: { RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] } },
     },
   });
+  return wrapper;
+};
 
 describe('legal.cookieBanner.component', () => {
   beforeEach(() => {
@@ -69,6 +88,11 @@ describe('legal.cookieBanner.component', () => {
     consent.value = null;
     acceptMock.mockReset();
     rejectMock.mockReset();
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    document.body.innerHTML = '';
   });
 
   it('does not render snackbar when cookieConsent.enabled is false', () => {

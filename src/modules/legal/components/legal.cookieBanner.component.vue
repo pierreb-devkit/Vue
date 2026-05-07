@@ -32,8 +32,11 @@ import { useCookieConsent } from '../composables/useCookieConsent';
 
 const instance = getCurrentInstance();
 
-// Read config lazily inside computed to support both globalProperties (prod)
-// and Vue Test Utils mocks (tests), which are only available after setup.
+/**
+ * Reads the devkit config lazily to support both globalProperties (prod) and
+ * Vue Test Utils mocks (tests), which are only available after setup.
+ * @returns {object} The resolved config object (may be empty).
+ */
 const getConfig = () =>
   instance?.proxy?.config ||
   instance?.appContext?.config?.globalProperties?.config ||
@@ -55,6 +58,17 @@ const message = computed(() => {
   return t('legal.banner.message', { appName: appName.value });
 });
 
+/**
+ * Delegates to the accept() action from useCookieConsent.
+ * Opts PostHog in and persists the user's choice to localStorage.
+ * @returns {void}
+ */
 const onAccept = () => accept();
+
+/**
+ * Delegates to the reject() action from useCookieConsent.
+ * Opts PostHog out and persists the user's choice to localStorage.
+ * @returns {void}
+ */
 const onReject = () => reject();
 </script>

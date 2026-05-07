@@ -21,6 +21,12 @@ const i18n = () =>
     messages: { en: { legal: { pages: { notFound: 'This legal page does not exist.' } } } },
   });
 
+/**
+ * Mounts LegalPageView with a stubbed route param slug and optional config mock.
+ * @param {string} [slug='terms'] - Route param to simulate
+ * @param {object} [config={}] - Config mock injected via Vue Test Utils mocks
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
 const mountView = (slug = 'terms', config = {}) => {
   currentRouteParams = { slug };
   return mount(LegalPageView, {
