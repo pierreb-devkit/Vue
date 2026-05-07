@@ -42,7 +42,21 @@ const getConfig = () =>
   instance?.appContext?.config?.globalProperties?.config ||
   {};
 
-const enabled = computed(() => Boolean(getConfig()?.legal?.cookieConsent?.enabled));
+const enabled = computed(() => {
+  const cfgEnabled = Boolean(getConfig()?.legal?.cookieConsent?.enabled);
+  if (!cfgEnabled) return false;
+  const hasPosthog = Boolean(instance?.proxy?.$posthog || instance?.appContext?.config?.globalProperties?.$posthog);
+  if (!hasPosthog) {
+    if (typeof console !== 'undefined') {
+      console.warn(
+        '[legal.cookieBanner] cookieConsent.enabled is true but $posthog is not available. ' +
+        'The banner will not render. Set analytics.posthog.key to enable PostHog and the consent banner together.',
+      );
+    }
+    return false;
+  }
+  return true;
+});
 const privacyPolicyPath = computed(() => getConfig()?.legal?.cookieConsent?.privacyPolicyPath || '/legal/privacy');
 const appName = computed(() => getConfig()?.name || '');
 

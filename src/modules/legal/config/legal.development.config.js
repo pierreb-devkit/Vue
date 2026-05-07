@@ -1,5 +1,19 @@
 export default {
   legal: {
+    // ============================================================
+    // COOKIE CONSENT — RGPD/GDPR analytics gating
+    // ============================================================
+    // Activates a Vuetify v-snackbar (bottom-right) shown to the user
+    // on first visit. Only Accept persists posthog cookies.
+    //
+    // Prerequisites:
+    // - PostHog MUST be configured (analytics.posthog.key set, e.g.
+    //   via DEVKIT_VUE_analytics_posthog_key build-arg). When the
+    //   key is empty, the banner auto-hides and a console.warn is
+    //   emitted at init time. Enabling cookieConsent without posthog
+    //   is a no-op and should stay disabled.
+    //
+    // Defaults: disabled. Override per project.
     cookieConsent: {
       enabled: false,
       privacyPolicyPath: '/legal/privacy',
