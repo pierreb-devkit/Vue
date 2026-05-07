@@ -78,6 +78,7 @@ export default {
     organizations: { activated: true }, // multi-org membership
     analytics: { activated: true }, // usage analytics
     admin: { activated: true }, // admin panel
+    legal: { activated: true }, // legal pages + cookie consent (routes gated by legal.pages.enabled)
   },
   analytics: {
     posthog: { // PostHog analytics — uncomment host + key to enable

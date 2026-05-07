@@ -19,7 +19,7 @@ import billing from '../billing/router/billing.router';
 import legal from '../legal/router/legal.router';
 
 // Core modules — always mounted
-const coreRoutes = [].concat(home, auth, users, legal);
+const coreRoutes = [].concat(home, auth, users);
 
 /**
  * Admin child modules — routes injected as children of the `/admin` parent
@@ -45,6 +45,7 @@ const optionalModules = [
   { name: 'admin', routes: admin },
   { name: 'tasks', routes: tasks },
   { name: 'billing', routes: billing },
+  { name: 'legal', routes: legal },
 ];
 
 const routes = optionalModules.reduce(
