@@ -1,18 +1,18 @@
 <template>
   <v-footer v-if="enabled" class="footer pa-0 align-end" :style="footerStyle" app>
-    <v-container v-if="links.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
+    <v-container v-if="allLinks.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row density="compact" align="center" justify="center">
         <v-col
-          v-for="({ items, title }, i) in links.filter((section) => section.items)"
+          v-for="({ items, title }, i) in allLinks.filter((section) => section.items)"
           :key="i"
           cols="12"
-          :md="12 / links.filter((section) => section.items).length"
+          :md="12 / allLinks.filter((section) => section.items).length"
           class="text-center"
         >
           <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list class="bg-transparent" :style="custom && custom.section ? custom.section : null" density="compact">
-              <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="navigate(item.url)">
+              <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="onItemClick(item)">
                 <v-list-item-title>
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
                   <span class="text-onSurface text-high-emphasis text-label-small"> {{ item.label }} </span>
@@ -31,6 +31,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { useCookieConsent } from '@/modules/legal/composables/useCookieConsent';
 /**
  * Component definition.
  */
@@ -50,6 +51,10 @@ export default {
       type: Object,
       default: null,
     },
+  },
+  setup() {
+    const { reopenSettings } = useCookieConsent();
+    return { reopenSettings };
   },
   data() {
     const theme = useTheme();
@@ -78,6 +83,44 @@ export default {
         background: bgColor,
       };
     },
+    /**
+     * @desc Build the Legal footer section from config.legal.
+     * Returns null when neither cookieConsent nor pages are enabled.
+     * @returns {{ title: string, items: Array }|null}
+     */
+    legalSection() {
+      const cc = this.config?.legal?.cookieConsent;
+      const pages = this.config?.legal?.pages;
+      const items = [];
+      if (pages?.enabled && pages.items) {
+        Object.values(pages.items)
+          .filter((it) => it.enabled)
+          .forEach((it) => {
+            items.push({
+              label: it.title,
+              icon: 'fa-solid fa-file-lines',
+              url: `${pages.routePrefix || '/legal'}/${it.slug}`,
+            });
+          });
+      }
+      if (cc?.enabled) {
+        items.push({
+          label: this.$t('legal.footer.cookieSettings'),
+          icon: 'fa-solid fa-cookie-bite',
+          action: 'cookieSettings',
+        });
+      }
+      if (items.length === 0) return null;
+      return { title: this.$t('legal.footer.sectionTitle'), items };
+    },
+    /**
+     * @desc Combines the prop-provided footer links with the auto-injected Legal section.
+     * @returns {Array}
+     */
+    allLinks() {
+      const base = this.links || [];
+      return this.legalSection ? [...base, this.legalSection] : base;
+    },
   },
   watch: {
     $route(route) {
@@ -85,12 +128,27 @@ export default {
       else this.enabled = false;
     },
   },
+  created() {
+    const route = this.$route;
+    if (route?.meta?.footer) this.enabled = true;
+  },
   methods: {
     navigate(link) {
       if (link.startsWith('http')) {
         window.open(link, '_blank');
       } else {
         this.$router.push(link);
+      }
+    },
+    /**
+     * @desc Handle footer item click — branches on action type.
+     * @param {{ action?: string, url?: string }} item
+     */
+    onItemClick(item) {
+      if (item.action === 'cookieSettings') {
+        this.reopenSettings();
+      } else if (item.url) {
+        this.navigate(item.url);
       }
     },
   },
