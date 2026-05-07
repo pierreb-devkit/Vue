@@ -14,11 +14,12 @@ if (typeof globalThis.visualViewport === 'undefined') {
 const acceptMock = vi.fn();
 const rejectMock = vi.fn();
 const consentNeeded = ref(true);
+const consent = ref(null);
 
 vi.mock('../composables/useCookieConsent', () => ({
   useCookieConsent: () => ({
     consentNeeded,
-    consent: ref(null),
+    consent,
     accept: acceptMock,
     reject: rejectMock,
     reopenSettings: vi.fn(),
@@ -65,12 +66,12 @@ const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal
 describe('legal.cookieBanner.component', () => {
   beforeEach(() => {
     consentNeeded.value = true;
+    consent.value = null;
     acceptMock.mockReset();
     rejectMock.mockReset();
   });
 
   it('does not render snackbar when cookieConsent.enabled is false', () => {
-    consentNeeded.value = true;
     const wrapper = mountBanner({ enabled: false });
     expect(wrapper.find('.v-snackbar').exists()).toBe(false);
   });
@@ -119,5 +120,13 @@ describe('legal.cookieBanner.component', () => {
     expect(document.body.innerHTML).toContain('Privacy Policy');
     // RouterLink stub renders as <a> without "to" attr; check the path via innerHTML
     expect(document.body.innerHTML).toContain('/custom-privacy');
+  });
+
+  it('renders revokeMessage when consent is not null (banner reopened from footer)', async () => {
+    consentNeeded.value = true;
+    consent.value = { analytics: true };
+    mountBanner({ appName: 'Devkit' });
+    await flushPromises();
+    expect(document.body.innerHTML).toContain('Update your cookie preferences for Devkit');
   });
 });
