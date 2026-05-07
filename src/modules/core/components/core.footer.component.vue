@@ -31,7 +31,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { useCookieConsent } from '@/modules/legal/composables/useCookieConsent';
+import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 /**
  * Component definition.
  */
@@ -52,9 +52,14 @@ export default {
       default: null,
     },
   },
+  /**
+   * @desc Initialise the footer extras registry so the footer can render
+   * sections injected by optional modules (e.g. legal) without hard-importing them.
+   * @returns {{ extras: import('vue').Ref<Array> }}
+   */
   setup() {
-    const { reopenSettings } = useCookieConsent();
-    return { reopenSettings };
+    const { extras } = useFooterExtras();
+    return { extras };
   },
   data() {
     const theme = useTheme();
@@ -84,42 +89,14 @@ export default {
       };
     },
     /**
-     * @desc Build the Legal footer section from config.legal.
-     * Returns null when neither cookieConsent nor pages are enabled.
-     * @returns {{ title: string, items: Array }|null}
-     */
-    legalSection() {
-      const cc = this.config?.legal?.cookieConsent;
-      const pages = this.config?.legal?.pages;
-      const items = [];
-      if (pages?.enabled && pages.items) {
-        Object.values(pages.items)
-          .filter((it) => it.enabled)
-          .forEach((it) => {
-            items.push({
-              label: it.title,
-              icon: 'fa-solid fa-file-lines',
-              url: `${pages.routePrefix || '/legal'}/${it.slug}`,
-            });
-          });
-      }
-      if (cc?.enabled) {
-        items.push({
-          label: this.$t('legal.footer.cookieSettings'),
-          icon: 'fa-solid fa-cookie-bite',
-          action: 'cookieSettings',
-        });
-      }
-      if (items.length === 0) return null;
-      return { title: this.$t('legal.footer.sectionTitle'), items };
-    },
-    /**
-     * @desc Combines the prop-provided footer links with the auto-injected Legal section.
+     * @desc Combines the prop-provided footer links with sections registered by
+     * optional modules via `useFooterExtras`. Core has no knowledge of which
+     * modules injected the extras — they register/unregister via lifecycle hooks.
      * @returns {Array}
      */
     allLinks() {
       const base = this.links || [];
-      return this.legalSection ? [...base, this.legalSection] : base;
+      return [...base, ...this.extras];
     },
   },
   watch: {
@@ -141,12 +118,13 @@ export default {
       }
     },
     /**
-     * @desc Handle footer item click — branches on action type.
-     * @param {{ action?: string, url?: string }} item
+     * @desc Handle footer item click — dispatches `onClick` callback when present
+     * (injected by optional modules), otherwise navigates to `url`.
+     * @param {{ onClick?: Function, url?: string }} item
      */
     onItemClick(item) {
-      if (item.action === 'cookieSettings') {
-        this.reopenSettings();
+      if (typeof item.onClick === 'function') {
+        item.onClick();
       } else if (item.url) {
         this.navigate(item.url);
       }

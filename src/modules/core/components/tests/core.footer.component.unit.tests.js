@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createI18n } from 'vue-i18n';
+import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 
 vi.mock('vuetify', async (importOriginal) => {
   const actual = await importOriginal();
@@ -18,30 +19,33 @@ vi.mock('vuetify', async (importOriginal) => {
 
 import CoreFooter from '../core.footer.component.vue';
 
+/**
+ * Returns a fresh Vuetify instance for each test.
+ * @returns {import('vuetify').Vuetify}
+ */
 const vuetify = () => createVuetify({ components, directives });
+
+/**
+ * Returns a fresh vue-i18n instance with minimal keys.
+ * @returns {import('vue-i18n').I18n}
+ */
 const i18n = () =>
   createI18n({
     legacy: false,
     locale: 'en',
-    messages: {
-      en: {
-        legal: {
-          footer: { sectionTitle: 'Legal', cookieSettings: 'Cookie settings' },
-        },
-      },
-    },
+    messages: { en: {} },
   });
 
-const baseConfig = (overrides = {}) => ({
+const baseConfig = () => ({
   footer: { links: [{ title: 'Help', items: [{ label: 'Docs', icon: 'fa-solid fa-book', url: '/docs' }] }] },
   vuetify: { theme: { flat: false } },
-  legal: {
-    cookieConsent: { enabled: false, privacyPolicyPath: '/legal/privacy' },
-    pages: { enabled: false, routePrefix: '/legal', items: {} },
-    ...overrides,
-  },
 });
 
+/**
+ * Mounts CoreFooter with the given config, simulating an active footer route.
+ * @param {object} config
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
 const mountFooter = (config) =>
   mount(CoreFooter, {
     global: {
@@ -61,63 +65,64 @@ const mountFooter = (config) =>
     },
   });
 
-describe('core.footer.component — Legal section', () => {
+describe('core.footer.component — registry extras', () => {
   beforeEach(() => {
-    localStorage.clear();
+    // Clear any extras registered by previous tests
+    const { extras } = useFooterExtras();
+    extras.value = [];
   });
 
-  it('does not render Legal section when both legal flags are off', () => {
+  afterEach(() => {
+    const { extras } = useFooterExtras();
+    extras.value = [];
+  });
+
+  it('renders only prop links when extras registry is empty', () => {
     const wrapper = mountFooter(baseConfig());
-    expect(wrapper.text()).not.toContain('Legal');
+    expect(wrapper.text()).toContain('Help');
+    expect(wrapper.text()).toContain('Docs');
   });
 
-  it('renders Legal section with Cookie settings only when cookieConsent.enabled and pages.enabled=false', () => {
-    const wrapper = mountFooter(
-      baseConfig({
-        cookieConsent: { enabled: true, privacyPolicyPath: '/legal/privacy' },
-        pages: { enabled: false, routePrefix: '/legal', items: {} },
-      }),
-    );
-    expect(wrapper.text()).toContain('Legal');
-    expect(wrapper.text()).toContain('Cookie settings');
+  it('renders an extra section injected via useFooterExtras().register()', () => {
+    const { register } = useFooterExtras();
+    register('test-module', {
+      title: 'Test Section',
+      items: [{ label: 'Item One', icon: 'fa-solid fa-star', url: '/one' }],
+    });
+    const wrapper = mountFooter(baseConfig());
+    expect(wrapper.text()).toContain('Test Section');
+    expect(wrapper.text()).toContain('Item One');
   });
 
-  it('renders Legal section with enabled pages and no Cookie settings when cookieConsent.enabled=false', () => {
-    const wrapper = mountFooter(
-      baseConfig({
-        cookieConsent: { enabled: false, privacyPolicyPath: '/legal/privacy' },
-        pages: {
-          enabled: true,
-          routePrefix: '/legal',
-          items: {
-            terms:   { enabled: true,  slug: 'terms',   title: 'Terms',   markdownPath: '/p/terms.md' },
-            privacy: { enabled: true,  slug: 'privacy', title: 'Privacy', markdownPath: '/p/privacy.md' },
-            off:     { enabled: false, slug: 'off',     title: 'Off',     markdownPath: '/p/off.md' },
-          },
-        },
-      }),
-    );
-    expect(wrapper.text()).toContain('Legal');
-    expect(wrapper.text()).toContain('Terms');
-    expect(wrapper.text()).toContain('Privacy');
-    expect(wrapper.text()).not.toContain('Off');
-    expect(wrapper.text()).not.toContain('Cookie settings');
+  it('renders multiple extra sections in registration order', () => {
+    const { register } = useFooterExtras();
+    register('section-a', { title: 'Alpha', items: [{ label: 'A', icon: 'fa-solid fa-a', url: '/a' }] });
+    register('section-b', { title: 'Beta', items: [{ label: 'B', icon: 'fa-solid fa-b', url: '/b' }] });
+    const wrapper = mountFooter(baseConfig());
+    expect(wrapper.text()).toContain('Alpha');
+    expect(wrapper.text()).toContain('Beta');
   });
 
-  it('renders both Cookie settings and pages when both flags are on', () => {
-    const wrapper = mountFooter(
-      baseConfig({
-        cookieConsent: { enabled: true, privacyPolicyPath: '/legal/privacy' },
-        pages: {
-          enabled: true,
-          routePrefix: '/legal',
-          items: {
-            terms: { enabled: true, slug: 'terms', title: 'Terms', markdownPath: '/p/terms.md' },
-          },
-        },
-      }),
-    );
-    expect(wrapper.text()).toContain('Cookie settings');
-    expect(wrapper.text()).toContain('Terms');
+  it('does not render an extra section after unregister()', () => {
+    const { register, unregister } = useFooterExtras();
+    register('removable', { title: 'Removable', items: [{ label: 'Gone', icon: 'fa-solid fa-trash', url: '/gone' }] });
+    unregister('removable');
+    const wrapper = mountFooter(baseConfig());
+    expect(wrapper.text()).not.toContain('Removable');
+  });
+
+  it('calls item.onClick when item has an onClick callback', async () => {
+    const { register } = useFooterExtras();
+    const onClick = vi.fn();
+    register('clickable', {
+      title: 'Clickable',
+      items: [{ label: 'Action', icon: 'fa-solid fa-play', onClick }],
+    });
+    const wrapper = mountFooter(baseConfig());
+    const listItems = wrapper.findAllComponents({ name: 'VListItem' });
+    const actionItem = listItems.find((li) => li.text().includes('Action'));
+    expect(actionItem).toBeTruthy();
+    await actionItem.trigger('click');
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });
