@@ -26,8 +26,20 @@ import config from '@/config';
 const route = useRoute();
 const page = ref({ title: '', html: '', notFound: false });
 
+/**
+ * Loads legal page content by slug.
+ * On network or parse failure, falls back to a not-found state so the view
+ * degrades gracefully without an unhandled rejection.
+ * @param {string} slug - The legal page slug (e.g. 'terms', 'privacy')
+ * @returns {Promise<void>}
+ */
 const load = async (slug) => {
-  page.value = await useLegalPage(slug, { config });
+  try {
+    page.value = await useLegalPage(slug, { config });
+  } catch (err) {
+    console.warn('[legal] page load failed', err);
+    page.value = { title: '', html: '', notFound: true };
+  }
 };
 
 watch(() => route.params.slug, (s) => load(s), { immediate: true });
