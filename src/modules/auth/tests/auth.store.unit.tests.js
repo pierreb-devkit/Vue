@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import posthog from 'posthog-js';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
@@ -18,16 +17,6 @@ vi.mock('../../../lib/services/axios', () => ({
   default: {
     post: vi.fn(),
     get: vi.fn(),
-  },
-}));
-
-// Mock posthog-js
-vi.mock('posthog-js', () => ({
-  default: {
-    __loaded: false,
-    identify: vi.fn(),
-    reset: vi.fn(),
-    group: vi.fn(),
   },
 }));
 
@@ -56,11 +45,6 @@ describe('Auth Store', () => {
     axios.post.mockReset();
     axios.get.mockReset();
     mockUpdateAbilities.mockClear();
-    // Reset posthog mocks
-    posthog.__loaded = false;
-    posthog.identify.mockClear();
-    posthog.reset.mockClear();
-    posthog.group.mockClear();
     mockCapture.mockClear();
     mockIdentify.mockClear();
     mockReset.mockClear();
