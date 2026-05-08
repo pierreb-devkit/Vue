@@ -5,6 +5,14 @@ import { createVuetify } from 'vuetify';
 
 // ─── Prevent real HTTP calls ────────────────────────────────────────────────
 
+vi.mock('../config/billing.static-content.js', () => ({
+  packs: [],
+  plans: [],
+  faqs: [],
+  pricingMode: null,
+  default: { billing: { packs: [], plans: [], faqs: [], pricingMode: null } },
+}));
+
 vi.mock('../../../lib/services/axios', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
