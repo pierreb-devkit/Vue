@@ -97,4 +97,42 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(highlighted).toHaveLength(1);
     expect(highlighted[0].text()).toContain('Highlighted');
   });
+
+  it('applies iconColor when provided (Vuetify color name)', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', iconColor: 'success' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    const icon = wrapper.find('.v-icon');
+    expect(icon.exists()).toBe(true);
+    // Vuetify renders color via the `text-success` class for named colors
+    expect(icon.classes()).toContain('text-success');
+  });
+
+  it('applies iconColor when provided (hex string)', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', iconColor: '#ff6b6b' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    const icon = wrapper.find('.v-icon');
+    // Hex colors render as inline style
+    expect(icon.attributes('style') || '').toMatch(/#ff6b6b/i);
+  });
+
+  it('falls back to primary color when iconColor is absent', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    expect(wrapper.find('.v-icon').classes()).toContain('text-primary');
+  });
 });

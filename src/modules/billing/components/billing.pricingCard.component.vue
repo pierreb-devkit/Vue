@@ -29,7 +29,7 @@
 -->
 <template>
   <v-card
-    :class="['billing-pricing-card pa-6', config.vuetify.theme.rounded, { 'billing-pricing-card--highlighted': plan.highlighted }]"
+    :class="['billing-pricing-card', plan.highlighted ? 'pa-6 pt-8' : 'pa-6', config.vuetify.theme.rounded, { 'billing-pricing-card--highlighted': plan.highlighted }]"
     :flat="config.vuetify.theme.flat"
     :elevation="plan.highlighted ? 8 : 1"
     height="100%"
@@ -40,7 +40,7 @@
       color="primary"
       variant="flat"
       size="small"
-      class="billing-pricing-card__badge mb-4"
+      class="billing-pricing-card__badge"
     >
       {{ plan.badge }}
     </v-chip>
@@ -355,7 +355,23 @@ export default {
 .billing-pricing-card {
   display: flex;
   flex-direction: column;
+  position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.billing-pricing-card__badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 0 14px;
+  height: 28px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .billing-pricing-card:hover {

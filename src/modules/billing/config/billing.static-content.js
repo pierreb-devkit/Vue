@@ -88,7 +88,7 @@ export const plans = [
         title: null,
         inheritsFrom: 'free',
         items: [
-          { text: '10 projects', icon: 'fa-solid fa-folder', highlight: true },
+          { text: '10 projects', icon: 'fa-solid fa-folder', highlight: true, iconColor: 'success' },
           { text: '10 team members', icon: 'fa-solid fa-users' },
           { text: 'Email support', icon: 'fa-solid fa-envelope' },
         ],
@@ -116,10 +116,10 @@ export const plans = [
         title: null,
         inheritsFrom: 'starter',
         items: [
-          { text: 'Unlimited projects', icon: 'fa-solid fa-folder', highlight: true },
+          { text: 'Unlimited projects', icon: 'fa-solid fa-folder', highlight: true, iconColor: 'success' },
           { text: 'Unlimited members', icon: 'fa-solid fa-users' },
           { text: 'Priority support', icon: 'fa-solid fa-headset' },
-          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line' },
+          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', iconColor: 'warning' },
         ],
       },
     ],

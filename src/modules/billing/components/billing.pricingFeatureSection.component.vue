@@ -40,7 +40,7 @@
         <template #prepend>
           <v-icon
             :icon="item.icon || 'fa-solid fa-check'"
-            color="primary"
+            :color="item.iconColor || 'primary'"
             size="small"
             class="mr-3"
           ></v-icon>
