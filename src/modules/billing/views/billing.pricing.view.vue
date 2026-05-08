@@ -1,28 +1,116 @@
 <template>
-  <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-    <!-- Cancel + error alerts -->
-    <v-alert
-      v-if="checkoutCanceled"
-      type="info"
-      variant="tonal"
-      closable
-      class="mb-6"
-      @click:close="dismissAlert"
-    >{{ $t('billing.pricing.cancel.message') }}</v-alert>
+  <div>
+    <!-- Alerts above the halo (error states aren't swallowed by coloured bg) -->
+    <v-container class="pt-6" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+      <v-alert
+        v-if="checkoutCanceled"
+        type="info"
+        variant="tonal"
+        closable
+        class="mb-6"
+        @click:close="dismissAlert"
+      >{{ $t('billing.pricing.cancel.message') }}</v-alert>
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
-      <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
-    </div>
+      <v-alert v-if="error" type="warning" variant="tonal" closable class="mb-6">
+        {{ error }}
+        <template #append><v-btn variant="text" size="small" @click="retryFetchPlans">{{ $t('billing.pricing.error.retry') }}</v-btn></template>
+      </v-alert>
+      <v-alert v-if="checkoutError" type="error" variant="tonal" closable class="mb-6" @click:close="checkoutError = null">{{ checkoutError }}</v-alert>
+    </v-container>
 
-    <v-alert v-if="error" type="warning" variant="tonal" closable class="mb-6">
-      {{ error }}
-      <template #append><v-btn variant="text" size="small" @click="retryFetchPlans">{{ $t('billing.pricing.error.retry') }}</v-btn></template>
-    </v-alert>
-    <v-alert v-if="checkoutError" type="error" variant="tonal" closable class="mb-6" @click:close="checkoutError = null">{{ checkoutError }}</v-alert>
+    <!-- Hero + pricing wrapped in animated blur halo -->
+    <homeBlurBackgroundComponent
+      no-margin
+      :background-colors="haloPalette.backgroundColors"
+      :halo-colors="haloPalette.haloColors"
+      :animation-speed="1"
+    >
+      <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+        <!-- Header -->
+        <div class="text-center mb-10">
+          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
+          <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
+        </div>
 
-    <!-- 409 dialog -->
+        <!-- Mode: subscription -->
+        <template v-if="mode === 'subscription'">
+          <BillingPricingToggleComponent
+            v-if="hasPaidPlans"
+            :annual="annual"
+            :max-annual-savings-pct="maxAnnualSavingsPct"
+            class="mb-10"
+            data-test="pricing-toggle"
+            @update:annual="annual = $event"
+          />
+          <v-row justify="center" data-test="pricing-plans-grid">
+            <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
+              <BillingPricingCardComponent
+                :plan="plan"
+                :annual="annual"
+                :current="isCurrentPlan(plan.id)"
+                :loading="checkoutLoading"
+                :prices-loading="loading"
+                :plan-name-map="planNameMap"
+                :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
+                @select="onSelectPlan"
+              />
+            </v-col>
+          </v-row>
+        </template>
+
+        <!-- Mode: packs -->
+        <template v-else-if="mode === 'packs'">
+          <BillingPacksComponent data-test="pricing-packs-grid" />
+        </template>
+
+        <!-- Mode: both-tabs -->
+        <template v-else-if="mode === 'both-tabs'">
+          <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
+            <HomeTabsComponent
+              :items="tabItems"
+              :model-value="activeTab"
+              @update:model-value="activeTab = $event"
+            />
+          </div>
+          <template v-if="activeTab === 0">
+            <BillingPricingToggleComponent
+              v-if="hasPaidPlans"
+              :annual="annual"
+              :max-annual-savings-pct="maxAnnualSavingsPct"
+              class="mb-10"
+              data-test="pricing-toggle"
+              @update:annual="annual = $event"
+            />
+            <v-row justify="center" data-test="pricing-plans-grid">
+              <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
+                <BillingPricingCardComponent
+                  :plan="plan"
+                  :annual="annual"
+                  :current="isCurrentPlan(plan.id)"
+                  :loading="checkoutLoading"
+                  :prices-loading="loading"
+                  :plan-name-map="planNameMap"
+                  :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
+                  @select="onSelectPlan"
+                />
+              </v-col>
+            </v-row>
+          </template>
+          <template v-else-if="activeTab === 1">
+            <BillingPacksComponent data-test="pricing-packs-grid" />
+          </template>
+        </template>
+      </v-container>
+    </homeBlurBackgroundComponent>
+
+    <!-- FAQ on standard background (contrast with halo section) -->
+    <homeFaqComponent
+      v-if="hasFaqs"
+      :setup="faqSetup"
+      data-test="pricing-faq"
+    />
+
+    <!-- Dialogs (Vuetify portals them; top-level placement is fine) -->
     <v-dialog v-model="alreadyActiveDialog" max-width="480">
       <v-card class="pa-6">
         <div class="d-flex align-center mb-3">
@@ -37,83 +125,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- Mode: subscription -->
-    <template v-if="mode === 'subscription'">
-      <BillingPricingToggleComponent
-        v-if="hasPaidPlans"
-        :annual="annual"
-        :max-annual-savings-pct="maxAnnualSavingsPct"
-        class="mb-10"
-        data-test="pricing-toggle"
-        @update:annual="annual = $event"
-      />
-      <v-row justify="center" data-test="pricing-plans-grid">
-        <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
-          <BillingPricingCardComponent
-            :plan="plan"
-            :annual="annual"
-            :current="isCurrentPlan(plan.id)"
-            :loading="checkoutLoading"
-            :prices-loading="loading"
-            :plan-name-map="planNameMap"
-            :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-            @select="onSelectPlan"
-          />
-        </v-col>
-      </v-row>
-    </template>
-
-    <!-- Mode: packs -->
-    <template v-else-if="mode === 'packs'">
-      <BillingPacksComponent data-test="pricing-packs-grid" />
-    </template>
-
-    <!-- Mode: both-tabs -->
-    <template v-else-if="mode === 'both-tabs'">
-      <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
-        <HomeTabsComponent
-          :items="tabItems"
-          :model-value="activeTab"
-          @update:model-value="activeTab = $event"
-        />
-      </div>
-      <template v-if="activeTab === 0">
-        <BillingPricingToggleComponent
-          v-if="hasPaidPlans"
-          :annual="annual"
-          :max-annual-savings-pct="maxAnnualSavingsPct"
-          class="mb-10"
-          data-test="pricing-toggle"
-          @update:annual="annual = $event"
-        />
-        <v-row justify="center" data-test="pricing-plans-grid">
-          <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
-            <BillingPricingCardComponent
-              :plan="plan"
-              :annual="annual"
-              :current="isCurrentPlan(plan.id)"
-              :loading="checkoutLoading"
-              :prices-loading="loading"
-              :plan-name-map="planNameMap"
-              :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-              @select="onSelectPlan"
-            />
-          </v-col>
-        </v-row>
-      </template>
-      <template v-else-if="activeTab === 1">
-        <BillingPacksComponent data-test="pricing-packs-grid" />
-      </template>
-    </template>
-
-    <!-- FAQ (rendered in all modes when faqs are present) -->
-    <homeFaqComponent
-      v-if="hasFaqs"
-      :setup="faqSetup"
-      data-test="pricing-faq"
-    />
-
-    <!-- Downgrade confirmation dialog -->
     <v-dialog v-model="downgradeDialog" max-width="480" @keydown.esc="cancelDowngrade">
       <v-card>
         <v-card-title class="text-title-medium font-weight-bold">{{ $t('billing.pricing.downgrade.title') }}</v-card-title>
@@ -124,10 +135,11 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>
+import { useTheme } from 'vuetify';
 import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
@@ -137,6 +149,7 @@ import BillingPricingCardComponent from '../components/billing.pricingCard.compo
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import homeFaqComponent from '../../home/components/home.faq.component.vue';
 import HomeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
+import homeBlurBackgroundComponent from '../../home/components/utils/home.blur.background.component.vue';
 
 export default {
   name: 'PricingView',
@@ -146,12 +159,14 @@ export default {
     BillingPacksComponent,
     homeFaqComponent,
     HomeTabsComponent,
+    homeBlurBackgroundComponent,
   },
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
     const pricing = usePricing();
-    return { billingStore, authStore, ...pricing };
+    const theme = useTheme();
+    return { billingStore, authStore, ...pricing, theme };
   },
   data() {
     return {
@@ -221,6 +236,23 @@ export default {
      */
     planNameMap() {
       return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
+    },
+    /**
+     * @desc Pick halo palette based on current Vuetify theme (light vs dark).
+     *       Reuses the same brand palettes as home.hero and home.statistics.
+     * @returns {{ backgroundColors: string[], haloColors: string[] }}
+     */
+    haloPalette() {
+      const isDark = this.theme.global.name.value === 'dark';
+      return isDark
+        ? {
+            backgroundColors: ['#0a0a1a', '#1a1a3e', '#2d2d6b', '#3d3d8a', '#2563eb'],
+            haloColors: ['#4f46e5', '#7c3aed', '#2563eb', '#6366f1', '#8b5cf6'],
+          }
+        : {
+            backgroundColors: ['#4a90c2', '#3d7eb0', '#2d6a9e', '#1e5a8c', '#164578'],
+            haloColors: ['#0891b2', '#0ea5e9', '#3b82f6', '#0284c7', '#0369a1'],
+          };
     },
   },
   async created() {

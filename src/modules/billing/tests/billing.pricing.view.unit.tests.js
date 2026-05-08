@@ -95,6 +95,7 @@ const componentStubs = {
   BillingPricingCardComponent: true,
   BillingPacksComponent: true,
   HomeTabsComponent: true,
+  // homeBlurBackgroundComponent is intentionally NOT stubbed so .blur-background renders
 };
 
 /**
@@ -252,6 +253,7 @@ describe('BillingPricingView — mode-aware layout', () => {
     BillingPacksComponent: true,
     HomeTabsComponent: true,
     homeFaqComponent: true,
+    // homeBlurBackgroundComponent is intentionally NOT stubbed so .blur-background renders
   };
 
   /**
@@ -341,5 +343,10 @@ describe('BillingPricingView — mode-aware layout', () => {
   it('does not render FAQ when faqs is empty', async () => {
     wrapper = await mountPricingView({ pricingMode: 'subscription', faqs: [] });
     expect(wrapper.find('[data-test="pricing-faq"]').exists()).toBe(false);
+  });
+
+  it('renders the halo background wrapper around the pricing section', async () => {
+    wrapper = await mountPricingView({ pricingMode: 'subscription' });
+    expect(wrapper.find('.blur-background').exists()).toBe(true);
   });
 });
