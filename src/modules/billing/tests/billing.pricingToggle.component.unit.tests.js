@@ -57,21 +57,21 @@ describe('BillingPricingToggleComponent', () => {
 
   it('shows the annual savings hint only when monthly is active (teaser, not redundant with chip)', () => {
     // C.3: hint is a teaser when monthly — redundant when annual chip is already visible
-    const wrapperMonthly = mountComponent({ annual: false });
-    expect(wrapperMonthly.text()).toContain('Save 20% annually');
+    const wrapperMonthly = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
+    expect(wrapperMonthly.text()).toContain('Switch to annual and save up to 20%');
 
-    const wrapperAnnual = mountComponent({ annual: true });
-    expect(wrapperAnnual.text()).not.toContain('Save 20% annually');
+    const wrapperAnnual = mountComponent({ annual: true, maxAnnualSavingsPct: 20 });
+    expect(wrapperAnnual.text()).not.toContain('Switch to annual and save up to 20%');
   });
 
-  it('shows Save 20% chip only when annual is true', () => {
-    const wrapperMonthly = mountComponent({ annual: false });
+  it('shows Save up to X% chip only when annual is true and savings > 0', () => {
+    const wrapperMonthly = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
     expect(wrapperMonthly.findComponent({ name: 'v-chip' }).exists()).toBe(false);
 
-    const wrapperAnnual = mountComponent({ annual: true });
+    const wrapperAnnual = mountComponent({ annual: true, maxAnnualSavingsPct: 20 });
     const chip = wrapperAnnual.findComponent({ name: 'v-chip' });
     expect(chip.exists()).toBe(true);
-    expect(chip.text()).toContain('Save 20%');
+    expect(chip.text()).toContain('Save up to 20%');
   });
 
   it('emits update:annual when switch is toggled', async () => {
@@ -80,5 +80,22 @@ describe('BillingPricingToggleComponent', () => {
     await vSwitch.vm.$emit('update:modelValue', true);
     expect(wrapper.emitted('update:annual')).toBeTruthy();
     expect(wrapper.emitted('update:annual')[0]).toEqual([true]);
+  });
+
+  it('renders "Save up to X%" chip when annual is selected and maxAnnualSavingsPct > 0', () => {
+    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 25 });
+    const chip = wrapper.find('.v-chip');
+    expect(chip.exists()).toBe(true);
+    expect(chip.text()).toContain('25');
+  });
+
+  it('does not render savings chip when maxAnnualSavingsPct is 0', () => {
+    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 0 });
+    expect(wrapper.find('.v-chip').exists()).toBe(false);
+  });
+
+  it('chip is hidden when annual=false even if savings are non-zero', () => {
+    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 25 });
+    expect(wrapper.find('.v-chip').exists()).toBe(false);
   });
 });
