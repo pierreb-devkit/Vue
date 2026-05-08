@@ -309,4 +309,21 @@ describe('BillingPricingCardComponent', () => {
     const wrapper = mountComponent({ plan, annual: false });
     expect(wrapper.text()).not.toMatch(/17%/);
   });
+
+  it('renders annual savings chip for legacy plans where monthlyPrice/annualPrice are { amount, id } objects', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      // Legacy shape: prices as { amount, id } objects (pre-V2)
+      monthlyPrice: { amount: 39, id: 'price_monthly' },
+      annualPrice: { amount: 390, id: 'price_annual' },
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: true });
+    // 39*12=468, 390 → 17%
+    expect(wrapper.text()).toMatch(/17%/);
+  });
 });

@@ -263,11 +263,23 @@ export default {
     },
     /**
      * @desc Annual savings percentage via pricingMath helper.
-     * Uses plan.monthlyPrice and plan.annualPrice (plain numbers).
+     * Normalises the 3 possible price shapes (PriceObject.amount, Price.amount,
+     * plain number) to plain numbers before delegating to the pure helper,
+     * which only understands numbers.
      * @returns {number} Integer 0-100
      */
     annualSavingsPct() {
-      return computeAnnualSavingsPct(this.plan);
+      // Normalize the 3 possible price shapes to plain numbers before delegating
+      // to the pure helper (which only understands numbers).
+      const monthlyPrice =
+        this.plan.monthlyPriceObject?.amount
+        ?? this.plan.monthlyPrice?.amount
+        ?? (typeof this.plan.monthlyPrice === 'number' ? this.plan.monthlyPrice : 0);
+      const annualPrice =
+        this.plan.annualPriceObject?.amount
+        ?? this.plan.annualPrice?.amount
+        ?? (typeof this.plan.annualPrice === 'number' ? this.plan.annualPrice : 0);
+      return computeAnnualSavingsPct({ monthlyPrice, annualPrice });
     },
     /**
      * @desc Get the price amount to display based on billing interval.
