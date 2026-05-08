@@ -242,6 +242,10 @@ export const billingEn = {
       /** i18n key: billing.pricingCard.currentPlan */
       currentPlan: 'Current Plan',
     },
+    pricingFeatureSection: {
+      /** i18n key: billing.pricingFeatureSection.everythingIn — interpolate {plan} */
+      everythingIn: 'Everything in {plan}, plus',
+    },
     pricingToggle: {
       /** i18n key: billing.pricingToggle.monthly */
       monthly: 'Monthly',
