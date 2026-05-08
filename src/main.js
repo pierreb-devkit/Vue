@@ -11,6 +11,7 @@ import plugins from './lib/plugins';
 import config from './config/index.js';
 import { ability } from './lib/helpers/ability';
 import { captureException } from './lib/helpers/errorTracker.js';
+import { initPostHog } from './lib/services/posthog.js';
 import App from './modules/app/app.vue';
 
 const app = createApp(App);
@@ -39,6 +40,9 @@ app
 
 // Initialize stores after all plugins are loaded
 initializeStores(routes);
+
+// Bootstrap PostHog service (idempotent: no-op if plugin already initialized via config key)
+initPostHog({ enabled: import.meta.env.PROD });
 
 // Wire global error handlers — fan-out to active trackers (Sentry / PostHog)
 // Must be set after plugins so Sentry is already initialised
