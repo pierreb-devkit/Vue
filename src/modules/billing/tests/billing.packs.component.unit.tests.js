@@ -240,3 +240,54 @@ describe('BillingPacksComponent — purchase flow', () => {
     expect(pushFn).toHaveBeenCalledWith({ path: '/signin', query: { redirect: '/pricing' } });
   });
 });
+
+// ─── Suite 4: Feature sections ────────────────────────────────────────────────
+
+describe('BillingPacksComponent — feature sections', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    // Reset auth state for feature section tests
+    authState.isLoggedIn = true;
+    authState.user = { currentOrganization: 'org_test_123' };
+    authState.serverConfig = { organizations: { enabled: true } };
+    store = useBillingStore();
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('renders featureSections when provided on a pack', async () => {
+    const packsWithSections = [
+      {
+        packId: 'pack-with-sections',
+        label: 'With Sections',
+        priceUsd: 25,
+        meterUnits: 20000,
+        featureSections: [
+          { title: null, items: [{ text: 'pack-section-feature' }] },
+        ],
+      },
+    ];
+    store.usageMeter = { packsAvailable: packsWithSections };
+    wrapper = mountPacks();
+    await flushPromises();
+    expect(wrapper.text()).toContain('pack-section-feature');
+  });
+
+  it('does not render featureSections block when pack has none', async () => {
+    const packsWithoutSections = [
+      { packId: 'plain', label: 'Plain', priceUsd: 9, meterUnits: 5000 },
+    ];
+    store.usageMeter = { packsAvailable: packsWithoutSections };
+    wrapper = mountPacks();
+    await flushPromises();
+    // No section component rendered → no class from the section component
+    expect(wrapper.find('.billing-pricing-feature-section').exists()).toBe(false);
+  });
+});

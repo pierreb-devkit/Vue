@@ -16,6 +16,7 @@ import {
   plans as staticPlans,
   packs as staticPacks,
   faqs as staticFaqs,
+  tabs as staticTabs,
 } from '../config/billing.static-content.js';
 import { computeMaxAnnualSavingsPct, resolvePricingMode } from '../lib/pricingMath.js';
 
@@ -26,6 +27,7 @@ import { computeMaxAnnualSavingsPct, resolvePricingMode } from '../lib/pricingMa
  *   plans: import('vue').ComputedRef<Array>,
  *   packs: import('vue').ComputedRef<Array>,
  *   faqs: import('vue').ComputedRef<Array>,
+ *   tabs: import('vue').ComputedRef<{plans?: string, units?: string}>,
  *   maxAnnualSavingsPct: import('vue').ComputedRef<number>,
  *   hasPlans: import('vue').ComputedRef<boolean>,
  *   hasPacks: import('vue').ComputedRef<boolean>,
@@ -83,6 +85,7 @@ export function usePricing() {
 
   const packs = computed(() => staticPacks);
   const faqs = computed(() => staticFaqs);
+  const tabs = computed(() => staticTabs || {});
 
   const hasPlans = computed(() => plans.value.length > 0);
   const hasPacks = computed(() => packs.value.length > 0);
@@ -106,6 +109,7 @@ export function usePricing() {
     plans,
     packs,
     faqs,
+    tabs,
     maxAnnualSavingsPct,
     hasPlans,
     hasPacks,

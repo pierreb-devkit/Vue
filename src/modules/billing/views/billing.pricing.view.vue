@@ -182,8 +182,8 @@ export default {
     },
     tabItems() {
       return [
-        { id: 'plans', label: this.$t('billing.pricing.tabs.plans') },
-        { id: 'units', label: this.$t('billing.pricing.tabs.units') },
+        { id: 'plans', label: this.tabs?.plans || this.$t('billing.pricing.tabs.plans') },
+        { id: 'units', label: this.tabs?.units || this.$t('billing.pricing.tabs.units') },
       ];
     },
     planTierOrder() {

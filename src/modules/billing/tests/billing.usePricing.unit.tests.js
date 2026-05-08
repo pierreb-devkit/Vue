@@ -15,6 +15,7 @@ vi.mock('../config/billing.static-content.js', () => ({
   ],
   packs: [{ packId: 'boost', label: 'Boost', priceUsd: 9, meterUnits: 5000 }],
   faqs: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
+  tabs: { plans: 'My Plans', units: 'My Units' },
 }));
 
 describe('usePricing', () => {
@@ -58,6 +59,12 @@ describe('usePricing', () => {
     expect(result.hasPlans.value).toBe(true);
     expect(result.hasPacks.value).toBe(true);
     expect(result.hasFaqs.value).toBe(true);
+  });
+
+  it('exposes tabs from static-content', () => {
+    const result = usePricing();
+    expect(result.tabs.value.plans).toBe('My Plans');
+    expect(result.tabs.value.units).toBe('My Units');
   });
 
   it('plans array normalises legacy {amount, id} price objects to scalar numbers', () => {

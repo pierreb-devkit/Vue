@@ -134,12 +134,71 @@ export const plans = [
  * Downstream projects override this fully with their own marketing copy and Stripe pack IDs.
  * The devkit demo is safe because each downstream project owns its own static-content.js
  * (it is a downstream-owned file, not synced via /update-stack).
- * @type {Array<{packId: string, label: string, priceUsd: number, meterUnits: number}>}
+ *
+ * Pack shape (extended):
+ *   {
+ *     packId: string,
+ *     label: string,
+ *     priceUsd: number,
+ *     meterUnits: number,
+ *     featureSections?: [{                 // OPTIONAL — same shape as plan featureSections
+ *       title?: string,
+ *       items: [{ text, icon?, iconColor? }]
+ *     }],
+ *   }
+ *
+ * @type {Array<Object>}
  */
 export const packs = [
-  { packId: 'demo_small',  label: 'Small Pack',  priceUsd: 9,  meterUnits: 5000 },
-  { packId: 'demo_medium', label: 'Medium Pack', priceUsd: 25, meterUnits: 20000 },
-  { packId: 'demo_large',  label: 'Large Pack',  priceUsd: 99, meterUnits: 100000 },
+  {
+    packId: 'demo_small',
+    label: 'Small Pack',
+    priceUsd: 9,
+    meterUnits: 5000,
+    featureSections: [
+      {
+        title: null,
+        items: [
+          { text: '~50 typical scrap runs', icon: 'fa-solid fa-spider' },
+          { text: '~20 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
+          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
+        ],
+      },
+    ],
+  },
+  {
+    packId: 'demo_medium',
+    label: 'Medium Pack',
+    priceUsd: 25,
+    meterUnits: 20000,
+    featureSections: [
+      {
+        title: null,
+        items: [
+          { text: '~200 typical scrap runs', icon: 'fa-solid fa-spider' },
+          { text: '~80 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
+          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
+        ],
+      },
+    ],
+  },
+  {
+    packId: 'demo_large',
+    label: 'Large Pack',
+    priceUsd: 99,
+    meterUnits: 100000,
+    featureSections: [
+      {
+        title: null,
+        items: [
+          { text: '~1,000 typical scrap runs', icon: 'fa-solid fa-spider' },
+          { text: '~400 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
+          { text: 'Best value (saves ~10%)', icon: 'fa-solid fa-tag', iconColor: 'success' },
+          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
+        ],
+      },
+    ],
+  },
 ];
 
 /**
@@ -167,6 +226,18 @@ export const faqs = [
 ];
 
 /**
+ * @desc Configurable tab labels (used in 'both-tabs' mode).
+ * Each field is optional — when omitted the view falls back to i18n keys
+ * `billing.pricing.tabs.plans` / `billing.pricing.tabs.units`.
+ * Downstream projects can override either or both labels per project.
+ * @type {{ plans?: string, units?: string }}
+ */
+export const tabs = {
+  plans: 'Plans',
+  units: 'Extras',
+};
+
+/**
  * Exports.
  */
 export default {
@@ -175,5 +246,6 @@ export default {
     plans,
     packs,
     faqs,
+    tabs,
   },
 };
