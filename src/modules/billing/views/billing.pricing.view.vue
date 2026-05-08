@@ -1,33 +1,16 @@
 <template>
   <div>
-    <!-- Alerts above the halo (error states aren't swallowed by coloured bg) -->
-    <v-container class="pt-6" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-      <v-alert
-        v-if="checkoutCanceled"
-        type="info"
-        variant="tonal"
-        closable
-        class="mb-6"
-        @click:close="dismissAlert"
-      >{{ $t('billing.pricing.cancel.message') }}</v-alert>
-
-      <v-alert v-if="error" type="warning" variant="tonal" closable class="mb-6">
-        {{ error }}
-        <template #append><v-btn variant="text" size="small" @click="retryFetchPlans">{{ $t('billing.pricing.error.retry') }}</v-btn></template>
-      </v-alert>
-      <v-alert v-if="checkoutError" type="error" variant="tonal" closable class="mb-6" @click:close="checkoutError = null">{{ checkoutError }}</v-alert>
-    </v-container>
-
     <!-- Hero + pricing wrapped in animated blur halo -->
     <homeBlurBackgroundComponent
       no-margin
+      fit-content
       :background-colors="haloPalette.backgroundColors"
       :halo-colors="haloPalette.haloColors"
       :animation-speed="1"
     >
       <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
         <!-- Header -->
-        <div class="text-center mb-10">
+        <div class="text-center mb-10 billing-pricing__hero">
           <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
           <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
         </div>
@@ -109,6 +92,47 @@
       :setup="faqSetup"
       data-test="pricing-faq"
     />
+
+    <!-- Snackbars (portaled, bottom overlay — no empty container rendered when idle) -->
+    <v-snackbar
+      v-model="checkoutCanceled"
+      color="info"
+      :timeout="6000"
+      location="bottom"
+    >
+      {{ $t('billing.pricing.cancel.message') }}
+      <template #actions>
+        <v-btn variant="text" @click="checkoutCanceled = false">
+          {{ $t('billing.snackbar.close') }}
+        </v-btn>
+      </template>
+    </v-snackbar>
+
+    <v-snackbar
+      :model-value="!!error"
+      color="warning"
+      :timeout="-1"
+      location="bottom"
+      @update:model-value="error = null"
+    >
+      {{ error }}
+      <template #actions>
+        <v-btn variant="text" @click="retryFetchPlans">
+          {{ $t('billing.pricing.error.retry') }}
+        </v-btn>
+        <v-btn icon="fa-solid fa-xmark" variant="text" size="small" @click="error = null" />
+      </template>
+    </v-snackbar>
+
+    <v-snackbar
+      :model-value="!!checkoutError"
+      color="error"
+      :timeout="6000"
+      location="bottom"
+      @update:model-value="checkoutError = null"
+    >
+      {{ checkoutError }}
+    </v-snackbar>
 
     <!-- Dialogs (Vuetify portals them; top-level placement is fine) -->
     <v-dialog v-model="alreadyActiveDialog" max-width="480">
@@ -289,12 +313,6 @@ export default {
     isCurrentPlan(planId) {
       return this.currentPlanId === planId;
     },
-    dismissAlert() {
-      this.checkoutCanceled = false;
-      if (this.$route.query.canceled) {
-        this.$router.replace({ path: this.$route.path, hash: this.$route.hash });
-      }
-    },
     async retryFetchPlans() {
       this.error = null;
       try {
@@ -359,3 +377,11 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Force white text on the hero title/subtitle — halo bg is always dark blue (light + dark mode) */
+.billing-pricing__hero h1,
+.billing-pricing__hero p {
+  color: white !important;
+}
+</style>

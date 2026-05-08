@@ -96,6 +96,8 @@ const componentStubs = {
   BillingPacksComponent: true,
   HomeTabsComponent: true,
   // homeBlurBackgroundComponent is intentionally NOT stubbed so .blur-background renders
+  // VSnackbar uses VOverlay → locationStrategies → visualViewport which is undefined in jsdom
+  VSnackbar: { name: 'VSnackbar', template: '<div />', props: ['modelValue', 'color', 'timeout', 'location'] },
 };
 
 /**
@@ -254,6 +256,8 @@ describe('BillingPricingView — mode-aware layout', () => {
     HomeTabsComponent: true,
     homeFaqComponent: true,
     // homeBlurBackgroundComponent is intentionally NOT stubbed so .blur-background renders
+    // VSnackbar uses VOverlay → locationStrategies → visualViewport which is undefined in jsdom
+    VSnackbar: { name: 'VSnackbar', template: '<div />', props: ['modelValue', 'color', 'timeout', 'location'] },
   };
 
   /**

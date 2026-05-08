@@ -278,6 +278,10 @@ export const billingEn = {
       /** i18n key: billing.packs.noUnitsAvailable */
       noUnitsAvailable: 'No unit packs available at this time.',
     },
+    snackbar: {
+      /** i18n key: billing.snackbar.close */
+      close: 'Close',
+    },
     upgradePrompt: {
       /** i18n key: billing.upgradePrompt.usageInfo — interpolate {current}, {limit}, {label} */
       usageInfo: "You've used {current} of {limit} {label}.",

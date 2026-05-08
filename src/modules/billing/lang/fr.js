@@ -272,6 +272,10 @@ export const billingFr = {
       /** i18n key: billing.packs.noUnitsAvailable */
       noUnitsAvailable: 'Aucun pack disponible pour le moment.',
     },
+    snackbar: {
+      /** i18n key: billing.snackbar.close */
+      close: 'Fermer',
+    },
     upgradePrompt: {
       /** i18n key: billing.upgradePrompt.usageInfo — interpolate {current}, {limit}, {label} */
       usageInfo: 'Vous avez utilisé {current} sur {limit} {label}.',

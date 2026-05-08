@@ -94,6 +94,11 @@ export default {
       type: Boolean,
       default: false,
     },
+    // When true, height is auto (grows with content) instead of fixed vh
+    fitContent: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     const theme = useTheme();
@@ -108,6 +113,7 @@ export default {
       return this.theme.name;
     },
     backgroundHeight() {
+      if (this.fitContent) return 'auto';
       if (this.ratio) return `calc(${100 / this.ratio}vh)`;
       return this.$vuetify?.display?.smAndDown ? '65vh' : '85vh';
     },
@@ -182,6 +188,7 @@ export default {
   position: absolute;
   inset: 0;
   z-index: 0;
+  min-height: 100%;
 }
 
 .blur-sky {

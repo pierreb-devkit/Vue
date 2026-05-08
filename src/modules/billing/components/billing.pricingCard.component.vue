@@ -356,7 +356,14 @@ export default {
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: visible; /* allow "Most Popular" badge to float above card top edge */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Vuetify v-card sets overflow:hidden internally — target its inner wrappers too */
+.billing-pricing-card :deep(.v-card__overlay),
+.billing-pricing-card :deep(.v-card__underlay) {
+  overflow: visible;
 }
 
 .billing-pricing-card__badge {
@@ -378,10 +385,7 @@ export default {
   transform: translateY(-4px);
 }
 
-.billing-pricing-card--highlighted {
-  outline: 2px solid rgb(var(--v-theme-primary));
-  outline-offset: -2px;
-}
+/* Highlighted card: chip badge alone signals "Most Popular" — no outline needed */
 
 .billing-pricing-card__price-skeleton {
   max-width: 8rem;
