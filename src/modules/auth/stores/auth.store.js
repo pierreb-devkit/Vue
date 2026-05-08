@@ -6,7 +6,7 @@ import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
-import { capture, identify, reset } from '../../../lib/helpers/analytics';
+import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -217,7 +217,7 @@ export const useAuthStore = defineStore('auth', {
       updateAbilities([]);
 
       // PostHog reset on signout
-      reset();
+      analyticsReset();
 
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);

@@ -36,7 +36,7 @@ function capturePageview(to) {
 
 /**
  * @desc Associate the current session with a distinct user identity.
- * @param {string} distinctId - Unique user identifier (e.g. user._id).
+ * @param {string | null | undefined} distinctId - Unique user identifier (e.g. user._id). Falsy values are ignored (no-op).
  * @param {Object} [properties={}] - Optional user properties (email, plan, etc.).
  * @returns {void}
  */
