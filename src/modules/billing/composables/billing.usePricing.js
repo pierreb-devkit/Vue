@@ -36,20 +36,41 @@ export function usePricing() {
   const authStore = useAuthStore();
   const billingStore = useBillingStore();
 
+  /**
+   * @desc Normalise a static price field to a scalar number.
+   *       Accepts a plain number, a legacy { amount, id } object, or null/undefined.
+   * @param {number|{amount: number, id: string}|null|undefined} price
+   * @returns {number}
+   */
+  function toAmount(price) {
+    if (price == null) return 0;
+    if (typeof price === 'object') return Number(price.amount) || 0;
+    return Number(price) || 0;
+  }
+
   const plans = computed(() =>
     staticPlans.map((staticPlan) => {
       const stripePlan =
         billingStore.plans.find(
           (p) => p.planId === staticPlan.id || p.name?.toLowerCase() === staticPlan.id,
         ) || {};
+      // Resolve scalar prices — supports both modern number format and legacy { amount, id } objects.
+      const resolvedMonthly =
+        staticPlan.monthlyPrice != null
+          ? toAmount(staticPlan.monthlyPrice)
+          : stripePlan.stripePriceMonthly
+            ? Number(stripePlan.monthlyPrice) || 0
+            : 0;
+      const resolvedAnnual =
+        staticPlan.annualPrice != null
+          ? toAmount(staticPlan.annualPrice)
+          : stripePlan.stripePriceAnnual
+            ? Number(stripePlan.annualPrice) || 0
+            : 0;
       return {
         ...staticPlan,
-        monthlyPrice:
-          staticPlan.monthlyPrice ??
-          (stripePlan.stripePriceMonthly ? stripePlan.monthlyPrice : 0),
-        annualPrice:
-          staticPlan.annualPrice ??
-          (stripePlan.stripePriceAnnual ? stripePlan.annualPrice : 0),
+        monthlyPrice: resolvedMonthly,
+        annualPrice: resolvedAnnual,
         monthlyPriceObject: stripePlan.stripePriceMonthly
           ? { amount: stripePlan.monthlyPrice, id: stripePlan.stripePriceMonthly }
           : null,

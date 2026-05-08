@@ -54,4 +54,19 @@ describe('BillingPricingFAQComponent', () => {
     expect(parsed.mainEntity[0].name).toBe('What is X?');
     expect(parsed.mainEntity[0].acceptedAnswer.text).toBe('X is Y.');
   });
+
+  it('escapes < in JSON-LD output to prevent script-tag breakout', () => {
+    const faqs = [{ id: 'q1', question: 'Safe?', answer: 'Yes </script> safe.' }];
+    const wrapper = mount(BillingPricingFAQComponent, {
+      props: { faqs },
+      global: { plugins: [vuetify, i18n] },
+    });
+    const script = wrapper.find('script[type="application/ld+json"]');
+    // The raw JSON string must not contain a literal '<' (angle-bracket is unicode-escaped).
+    // We check textContent which holds the raw JSON, not outerHTML (which always ends with the tag).
+    expect(script.element.textContent).not.toContain('<');
+    // But parsed value must still round-trip correctly via JSON.parse unicode escape support.
+    const parsed = JSON.parse(script.element.textContent);
+    expect(parsed.mainEntity[0].acceptedAnswer.text).toBe('Yes </script> safe.');
+  });
 });

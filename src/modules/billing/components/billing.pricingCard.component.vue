@@ -158,7 +158,7 @@
         v-for="(section, idx) in plan.featureSections"
         :key="`section-${idx}`"
         :section="section"
-        :parent-plan-name="parentPlanName"
+        :parent-plan-name="planNameMap && section.inheritsFrom ? planNameMap[section.inheritsFrom] || null : parentPlanName"
         class="mb-3"
       />
     </template>
@@ -217,11 +217,18 @@ export default {
      */
     equivalences: { type: Array, default: null },
     /**
-     * @desc Display name of the parent plan, passed to BillingPricingFeatureSectionComponent
-     * for "Everything in {parent}, plus" semantics.
+     * @desc Display name of the parent plan — used as a fallback when planNameMap is absent.
+     *       Kept for backward compat; prefer planNameMap for multi-section plans.
      * @type {string|null}
      */
     parentPlanName: { type: String, default: null },
+    /**
+     * @desc Map of planId → planName for all plans on the page.
+     *       Allows each feature section to resolve its own inheritsFrom independently.
+     *       When absent, falls back to the parentPlanName prop (single-section compat).
+     * @type {Object.<string, string>|null}
+     */
+    planNameMap: { type: Object, default: null },
   },
   emits: ['select'],
   /**

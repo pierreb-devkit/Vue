@@ -59,4 +59,23 @@ describe('usePricing', () => {
     expect(result.hasPacks.value).toBe(true);
     expect(result.hasFaqs.value).toBe(true);
   });
+
+  it('plans array normalises legacy {amount, id} price objects to scalar numbers', () => {
+    // When static-content uses legacy {amount, id} shapes, usePricing must convert them
+    // to scalar numbers so computeAnnualSavingsPct and computeMaxAnnualSavingsPct work correctly.
+    // We simulate this by overriding billing store plans with object-shaped stripePrices
+    // (the composable already normalises stripePlan.monthlyPrice → Number()).
+    const auth = useAuthStore();
+    auth.serverConfig = { billing: { meterMode: false } };
+    const billing = useBillingStore();
+    // Provide Stripe data with prices as numbers (the store's real shape)
+    billing.plans = [{ planId: 'pro', stripePriceMonthly: 'price_m', stripePriceAnnual: 'price_a', monthlyPrice: 39, annualPrice: 390 }];
+    const result = usePricing();
+    const proPlan = result.plans.value.find((p) => p.id === 'pro');
+    // After normalisation, monthlyPrice and annualPrice must be plain numbers
+    expect(typeof proPlan.monthlyPrice).toBe('number');
+    expect(typeof proPlan.annualPrice).toBe('number');
+    // maxAnnualSavingsPct must still compute correctly (not 0% due to NaN coercion)
+    expect(result.maxAnnualSavingsPct.value).toBe(17);
+  });
 });

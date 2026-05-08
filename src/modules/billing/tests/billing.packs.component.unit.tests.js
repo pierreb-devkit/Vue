@@ -213,7 +213,7 @@ describe('BillingPacksComponent — purchase flow', () => {
     wrapper = mountPacks();
     await flushPromises();
     const firstBuyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    firstBuyBtn.trigger('click');
+    await firstBuyBtn.trigger('click');
     await flushPromises();
     const allBtns = wrapper.findAllComponents({ name: 'v-btn' });
     for (const btn of allBtns) {

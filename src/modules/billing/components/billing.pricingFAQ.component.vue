@@ -47,7 +47,9 @@ export default {
   computed: {
     /**
      * @desc Build schema.org FAQPage JSON-LD payload.
-     * @returns {string} stringified JSON
+     *       U+003C is substituted for every literal angle-bracket so that a closing
+     *       script sequence embedded in FAQ text cannot break the injected tag (defense-in-depth).
+     * @returns {string} stringified JSON safe for v-html injection into a script tag
      */
     schemaJson() {
       const payload = {
@@ -62,7 +64,9 @@ export default {
           },
         })),
       };
-      return JSON.stringify(payload);
+      // Escape U+003C so a closing-script sequence in FAQ text cannot break the injected tag.
+      // split+join avoids a literal angle-bracket that would confuse the Vue template parser.
+      return JSON.stringify(payload).split(String.fromCharCode(60)).join('\\u003c');
     },
   },
 };

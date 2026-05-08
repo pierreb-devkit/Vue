@@ -55,7 +55,7 @@
             :current="isCurrentPlan(plan.id)"
             :loading="checkoutLoading"
             :prices-loading="loading"
-            :parent-plan-name="parentNameFor(plan)"
+            :plan-name-map="planNameMap"
             :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
             @select="onSelectPlan"
           />
@@ -94,7 +94,7 @@
               :current="isCurrentPlan(plan.id)"
               :loading="checkoutLoading"
               :prices-loading="loading"
-              :parent-plan-name="parentNameFor(plan)"
+              :plan-name-map="planNameMap"
               :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
               @select="onSelectPlan"
             />
@@ -198,6 +198,15 @@ export default {
       const plan = this.plans.find((p) => p.id === this.currentPlanId);
       return plan?.name ?? this.currentPlanId;
     },
+    /**
+     * @desc Build a flat {planId: planName} map for per-section parent name resolution.
+     *       Passed to BillingPricingCardComponent so each feature section can independently
+     *       resolve its own inheritsFrom plan name.
+     * @returns {Object.<string, string>}
+     */
+    planNameMap() {
+      return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
+    },
   },
   async created() {
     try {
@@ -232,11 +241,6 @@ export default {
   methods: {
     isCurrentPlan(planId) {
       return this.currentPlanId === planId;
-    },
-    parentNameFor(plan) {
-      const inherits = plan.featureSections?.find?.((s) => s.inheritsFrom)?.inheritsFrom;
-      if (!inherits) return null;
-      return this.plans.find((p) => p.id === inherits)?.name ?? null;
     },
     dismissAlert() {
       this.checkoutCanceled = false;

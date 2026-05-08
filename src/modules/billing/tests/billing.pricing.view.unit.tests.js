@@ -39,28 +39,27 @@ const pricingState = vi.hoisted(() => ({
   hasFaqs: false,
 }));
 
-vi.mock('../composables/billing.usePricing.js', () => ({
-  usePricing: () => ({
-    mode: computed(() => pricingState.mode),
-    plans: computed(() => pricingState.plans),
-    packs: computed(() => pricingState.packs),
-    faqs: computed(() => pricingState.faqs),
-    maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
-    hasPlans: computed(() => pricingState.hasPlans),
-    hasPacks: computed(() => pricingState.hasPacks),
-    hasFaqs: computed(() => pricingState.hasFaqs),
-  }),
-  default: () => ({
-    mode: computed(() => pricingState.mode),
-    plans: computed(() => pricingState.plans),
-    packs: computed(() => pricingState.packs),
-    faqs: computed(() => pricingState.faqs),
-    maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
-    hasPlans: computed(() => pricingState.hasPlans),
-    hasPacks: computed(() => pricingState.hasPacks),
-    hasFaqs: computed(() => pricingState.hasFaqs),
-  }),
-}));
+vi.mock('../composables/billing.usePricing.js', () => {
+  /** Shared factory — builds the mocked usePricing return shape from pricingState. */
+  function buildPricingMock() {
+    // Note: `computed` is imported at module scope; `pricingState` is from vi.hoisted().
+    // Both are safely accessible inside the factory because vi.mock runs lazily.
+    return {
+      mode: computed(() => pricingState.mode),
+      plans: computed(() => pricingState.plans),
+      packs: computed(() => pricingState.packs),
+      faqs: computed(() => pricingState.faqs),
+      maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
+      hasPlans: computed(() => pricingState.hasPlans),
+      hasPacks: computed(() => pricingState.hasPacks),
+      hasFaqs: computed(() => pricingState.hasFaqs),
+    };
+  }
+  return {
+    usePricing: () => buildPricingMock(),
+    default: () => buildPricingMock(),
+  };
+});
 
 // ─── Imports (after mocks) ──────────────────────────────────────────────────
 
