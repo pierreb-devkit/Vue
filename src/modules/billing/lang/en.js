@@ -241,6 +241,8 @@ export const billingEn = {
       free: 'Free',
       /** i18n key: billing.pricingCard.currentPlan */
       currentPlan: 'Current Plan',
+      /** i18n key: billing.pricingCard.saveAnnual — interpolate {pct} */
+      saveAnnual: 'Save {pct}% with annual',
     },
     pricingFeatureSection: {
       /** i18n key: billing.pricingFeatureSection.everythingIn — interpolate {plan} */
