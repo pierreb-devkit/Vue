@@ -36,6 +36,7 @@
         <v-card
           :class="config.vuetify.theme.rounded"
           class="billing-packs__card pa-6 d-flex flex-column"
+          height="100%"
           :loading="purchasingId === pack.packId"
         >
           <p class="text-title-medium font-weight-bold mb-2">{{ pack.label }}</p>
@@ -50,6 +51,15 @@
             :equivalences="pack.equivalences"
             class="mb-4"
           />
+          <!-- Sectioned features (when present) -->
+          <template v-if="pack.featureSections && pack.featureSections.length > 0">
+            <BillingPricingFeatureSectionComponent
+              v-for="(section, idx) in pack.featureSections"
+              :key="`pack-section-${idx}`"
+              :section="section"
+              class="mb-2"
+            />
+          </template>
           <v-btn
             color="primary"
             variant="flat"
@@ -87,6 +97,7 @@ import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { packs as packsConfig } from '../config/billing.static-content';
 import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
+import BillingPricingFeatureSectionComponent from './billing.pricingFeatureSection.component.vue';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 
 /**
@@ -96,6 +107,7 @@ export default {
   name: 'BillingPacksComponent',
   components: {
     BillingEquivalencesChipsComponent,
+    BillingPricingFeatureSectionComponent,
   },
 
   /**

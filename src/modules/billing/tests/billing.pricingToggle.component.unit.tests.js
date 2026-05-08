@@ -7,7 +7,24 @@ import BillingPricingToggleComponent from '../components/billing.pricingToggle.c
 import { billingEn } from '../lang/en.js';
 
 const vuetify = createVuetify();
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
+const i18n = createI18n({
+  legacy: false,
+  globalInjection: true,
+  locale: 'en',
+  fallbackLocale: 'en',
+  messages: {
+    en: {
+      ...billingEn,
+      billing: {
+        ...billingEn.billing,
+        pricingToggle: {
+          ...billingEn.billing.pricingToggle,
+          savingsActive: 'Annual saves you {pct}%',
+        },
+      },
+    },
+  },
+});
 
 /**
  * Mount the toggle component with Vuetify installed.
@@ -33,45 +50,65 @@ describe('BillingPricingToggleComponent', () => {
     expect(wrapper.text()).toContain('Annual');
   });
 
-  it('applies text-medium-emphasis to Annual label when annual is false', () => {
-    const wrapper = mountComponent({ annual: false });
-    const spans = wrapper.findAll('span');
-    const monthlySpan = spans.find((s) => s.text() === 'Monthly');
-    const annualSpan = spans.find((s) => s.text() === 'Annual');
-    expect(monthlySpan).toBeDefined();
-    expect(annualSpan).toBeDefined();
-    expect(monthlySpan.classes()).not.toContain('text-medium-emphasis');
-    expect(annualSpan.classes()).toContain('text-medium-emphasis');
-  });
-
-  it('applies text-medium-emphasis to Monthly label when annual is true', () => {
+  it('Monthly label has text-white class and reduced opacity when annual is true', () => {
     const wrapper = mountComponent({ annual: true });
     const spans = wrapper.findAll('span');
     const monthlySpan = spans.find((s) => s.text() === 'Monthly');
-    const annualSpan = spans.find((s) => s.text() === 'Annual');
     expect(monthlySpan).toBeDefined();
+    expect(monthlySpan.classes()).toContain('text-white');
+    // Inactive label should be dimmed via inline style
+    expect(monthlySpan.attributes('style')).toContain('opacity: 0.5');
+  });
+
+  it('Annual label has text-white class and full opacity when annual is true', () => {
+    const wrapper = mountComponent({ annual: true });
+    const spans = wrapper.findAll('span');
+    const annualSpan = spans.find((s) => s.text() === 'Annual');
     expect(annualSpan).toBeDefined();
-    expect(monthlySpan.classes()).toContain('text-medium-emphasis');
-    expect(annualSpan.classes()).not.toContain('text-medium-emphasis');
+    expect(annualSpan.classes()).toContain('text-white');
+    expect(annualSpan.attributes('style')).toContain('opacity: 1');
   });
 
-  it('shows the annual savings hint only when monthly is active (teaser, not redundant with chip)', () => {
-    // C.3: hint is a teaser when monthly — redundant when annual chip is already visible
-    const wrapperMonthly = mountComponent({ annual: false });
-    expect(wrapperMonthly.text()).toContain('Save 20% annually');
-
-    const wrapperAnnual = mountComponent({ annual: true });
-    expect(wrapperAnnual.text()).not.toContain('Save 20% annually');
+  it('Monthly label has full opacity when annual is false (active)', () => {
+    const wrapper = mountComponent({ annual: false });
+    const spans = wrapper.findAll('span');
+    const monthlySpan = spans.find((s) => s.text() === 'Monthly');
+    expect(monthlySpan.attributes('style')).toContain('opacity: 1');
   });
 
-  it('shows Save 20% chip only when annual is true', () => {
-    const wrapperMonthly = mountComponent({ annual: false });
-    expect(wrapperMonthly.findComponent({ name: 'v-chip' }).exists()).toBe(false);
+  it('Annual label has reduced opacity when annual is false (inactive)', () => {
+    const wrapper = mountComponent({ annual: false });
+    const spans = wrapper.findAll('span');
+    const annualSpan = spans.find((s) => s.text() === 'Annual');
+    expect(annualSpan.attributes('style')).toContain('opacity: 0.5');
+  });
 
-    const wrapperAnnual = mountComponent({ annual: true });
-    const chip = wrapperAnnual.findComponent({ name: 'v-chip' });
-    expect(chip.exists()).toBe(true);
-    expect(chip.text()).toContain('Save 20%');
+  it('shows savings teaser copy below toggle when monthly is active (maxAnnualSavingsPct > 0)', () => {
+    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
+    expect(wrapper.text()).toContain('Switch to annual and save up to 20%');
+  });
+
+  it('shows savingsActive copy below toggle when annual is active (maxAnnualSavingsPct > 0)', () => {
+    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 20 });
+    expect(wrapper.text()).toContain('Annual saves you 20%');
+  });
+
+  it('savings caption below is always white when savings are present', () => {
+    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
+    const caption = wrapper.find('.text-white.text-body-small, .text-body-small.text-white');
+    expect(caption.exists()).toBe(true);
+  });
+
+  it('no savings caption rendered when maxAnnualSavingsPct is 0', () => {
+    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 0 });
+    // Should not contain any savings text
+    expect(wrapper.text()).not.toContain('save up to');
+    expect(wrapper.text()).not.toContain('saves you');
+  });
+
+  it('no inline chip is rendered (chip removed in favor of caption below)', () => {
+    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 25 });
+    expect(wrapper.findComponent({ name: 'v-chip' }).exists()).toBe(false);
   });
 
   it('emits update:annual when switch is toggled', async () => {

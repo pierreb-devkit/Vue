@@ -225,6 +225,10 @@ export const billingEn = {
         /** i18n key: billing.pricing.tabs.units */
         units: 'Units',
       },
+      faq: {
+        /** i18n key: billing.pricing.faq.title */
+        title: 'Frequently asked questions',
+      },
       downgrade: {
         /** i18n key: billing.pricing.downgrade.title */
         title: 'Confirm plan change',
@@ -241,6 +245,12 @@ export const billingEn = {
       free: 'Free',
       /** i18n key: billing.pricingCard.currentPlan */
       currentPlan: 'Current Plan',
+      /** i18n key: billing.pricingCard.saveAnnual — interpolate {pct} */
+      saveAnnual: 'Save {pct}% with annual',
+    },
+    pricingFeatureSection: {
+      /** i18n key: billing.pricingFeatureSection.everythingIn — interpolate {plan} */
+      everythingIn: 'Everything in {plan}, plus',
     },
     pricingToggle: {
       /** i18n key: billing.pricingToggle.monthly */
@@ -251,6 +261,12 @@ export const billingEn = {
       save: 'Save 20%',
       /** i18n key: billing.pricingToggle.saveAnnually */
       saveAnnually: 'Save 20% annually',
+      /** i18n key: billing.pricingToggle.saveUpTo — interpolate {pct} */
+      saveUpTo: 'Save up to {pct}%',
+      /** i18n key: billing.pricingToggle.saveAnnuallyDynamic — interpolate {pct} */
+      saveAnnuallyDynamic: 'Switch to annual and save up to {pct}%',
+      /** i18n key: billing.pricingToggle.savingsActive — interpolate {pct} */
+      savingsActive: 'Annual saves you {pct}%',
     },
     packs: {
       /** i18n key: billing.packs.title */
@@ -263,6 +279,10 @@ export const billingEn = {
       units: '+{amount} units',
       /** i18n key: billing.packs.noUnitsAvailable */
       noUnitsAvailable: 'No unit packs available at this time.',
+    },
+    snackbar: {
+      /** i18n key: billing.snackbar.close */
+      close: 'Close',
     },
     upgradePrompt: {
       /** i18n key: billing.upgradePrompt.usageInfo — interpolate {current}, {limit}, {label} */

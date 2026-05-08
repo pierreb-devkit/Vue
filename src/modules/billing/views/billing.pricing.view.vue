@@ -1,180 +1,197 @@
 <template>
-  <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-    <!-- Cancel alert — success goes to /users?tab=subscriptions, never back here -->
-    <v-alert
-      v-if="checkoutCanceled"
-      type="info"
-      variant="tonal"
-      closable
-      class="mb-6"
-      @click:close="dismissAlert"
+  <div>
+    <!-- Hero + pricing wrapped in animated blur halo -->
+    <homeBlurBackgroundComponent
+      no-margin
+      fit-content
+      :background-colors="haloPalette.backgroundColors"
+      :halo-colors="haloPalette.haloColors"
+      :animation-speed="1"
+    >
+      <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+        <!-- Header -->
+        <div class="text-center mb-10">
+          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || $t('billing.pricing.title') }}</h1>
+          <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || $t('billing.pricing.subtitle') }}</p>
+        </div>
+
+        <!-- Mode: subscription -->
+        <template v-if="mode === 'subscription'">
+          <BillingPricingToggleComponent
+            v-if="hasPaidPlans"
+            :annual="annual"
+            :max-annual-savings-pct="maxAnnualSavingsPct"
+            class="mb-10"
+            data-test="pricing-toggle"
+            @update:annual="annual = $event"
+          />
+          <v-row justify="center" data-test="pricing-plans-grid">
+            <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
+              <BillingPricingCardComponent
+                :plan="plan"
+                :annual="annual"
+                :current="isCurrentPlan(plan.id)"
+                :loading="checkoutLoading"
+                :prices-loading="loading"
+                :plan-name-map="planNameMap"
+                :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
+                @select="onSelectPlan"
+              />
+            </v-col>
+          </v-row>
+        </template>
+
+        <!-- Mode: packs -->
+        <template v-else-if="mode === 'packs'">
+          <BillingPacksComponent data-test="pricing-packs-grid" />
+        </template>
+
+        <!-- Mode: both-tabs -->
+        <template v-else-if="mode === 'both-tabs'">
+          <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
+            <HomeTabsComponent
+              :items="tabItems"
+              :model-value="activeTab"
+              color-mode="light"
+              @update:model-value="activeTab = $event"
+            />
+          </div>
+          <template v-if="activeTab === 0">
+            <BillingPricingToggleComponent
+              v-if="hasPaidPlans"
+              :annual="annual"
+              :max-annual-savings-pct="maxAnnualSavingsPct"
+              class="mb-10"
+              data-test="pricing-toggle"
+              @update:annual="annual = $event"
+            />
+            <v-row justify="center" data-test="pricing-plans-grid">
+              <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
+                <BillingPricingCardComponent
+                  :plan="plan"
+                  :annual="annual"
+                  :current="isCurrentPlan(plan.id)"
+                  :loading="checkoutLoading"
+                  :prices-loading="loading"
+                  :plan-name-map="planNameMap"
+                  :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
+                  @select="onSelectPlan"
+                />
+              </v-col>
+            </v-row>
+          </template>
+          <template v-else-if="activeTab === 1">
+            <BillingPacksComponent data-test="pricing-packs-grid" />
+          </template>
+        </template>
+      </v-container>
+    </homeBlurBackgroundComponent>
+
+    <!-- FAQ on standard background (contrast with halo section) -->
+    <homeFaqComponent
+      v-if="hasFaqs"
+      :setup="faqSetup"
+      data-test="pricing-faq"
+    />
+
+    <!-- Snackbars (portaled, top-right — matches stack convention from app.vue) -->
+    <v-snackbar
+      v-model="checkoutCanceled"
+      color="info"
+      :timeout="6000"
+      location="top right"
     >
       {{ $t('billing.pricing.cancel.message') }}
-    </v-alert>
+      <template #actions>
+        <v-btn variant="text" @click="checkoutCanceled = false">
+          {{ $t('billing.snackbar.close') }}
+        </v-btn>
+      </template>
+    </v-snackbar>
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
-      <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
-    </div>
-
-    <!-- Error state (non-blocking — plans still render from static config) -->
-    <v-alert
-      v-if="error"
-      type="warning"
-      variant="tonal"
-      closable
-      class="mb-6"
+    <v-snackbar
+      :model-value="!!error"
+      color="warning"
+      :timeout="-1"
+      location="top right"
+      @update:model-value="error = null"
     >
       {{ error }}
-      <template #append>
-        <v-btn variant="text" size="small" @click="retryFetchPlans">{{ $t('billing.pricing.error.retry') }}</v-btn>
+      <template #actions>
+        <v-btn variant="text" @click="retryFetchPlans">
+          {{ $t('billing.pricing.error.retry') }}
+        </v-btn>
+        <v-btn icon="fa-solid fa-xmark" variant="text" size="small" @click="error = null" />
       </template>
-    </v-alert>
+    </v-snackbar>
 
-    <!-- Checkout error (does not hide plans) -->
-    <v-alert
-      v-if="checkoutError"
-      type="error"
-      variant="tonal"
-      closable
-      class="mb-6"
-      @click:close="checkoutError = null"
+    <v-snackbar
+      :model-value="!!checkoutError"
+      color="error"
+      :timeout="6000"
+      location="top right"
+      @update:model-value="checkoutError = null"
     >
       {{ checkoutError }}
-    </v-alert>
+    </v-snackbar>
 
-    <!-- Bonus: 409 subscription_already_active dialog -->
+    <!-- Dialogs (Vuetify portals them; top-level placement is fine) -->
     <v-dialog v-model="alreadyActiveDialog" max-width="480">
       <v-card class="pa-6">
         <div class="d-flex align-center mb-3">
           <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
-          <span class="text-title-medium font-weight-medium">
-            {{ $t('billing.checkout.error.alreadyActive.title') }}
-          </span>
+          <span class="text-title-medium font-weight-medium">{{ $t('billing.checkout.error.alreadyActive.title') }}</span>
         </div>
-        <p class="text-body-medium text-medium-emphasis mb-6">
-          {{ $t('billing.checkout.error.alreadyActive.message') }}
-        </p>
+        <p class="text-body-medium text-medium-emphasis mb-6">{{ $t('billing.checkout.error.alreadyActive.message') }}</p>
         <div class="d-flex ga-3 justify-end">
-          <v-btn
-            variant="outlined"
-            class="text-none text-body-medium"
-            @click="alreadyActiveDialog = false"
-          >
-            {{ $t('billing.checkout.error.alreadyActive.close') }}
-          </v-btn>
-          <v-btn
-            v-if="alreadyActivePortalUrl"
-            color="primary"
-            variant="flat"
-            class="text-none text-body-medium"
-            :href="alreadyActivePortalUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {{ $t('billing.checkout.error.alreadyActive.cta') }}
-          </v-btn>
+          <v-btn variant="outlined" class="text-none text-body-medium" @click="alreadyActiveDialog = false">{{ $t('billing.checkout.error.alreadyActive.close') }}</v-btn>
+          <v-btn v-if="alreadyActivePortalUrl" color="primary" variant="flat" class="text-none text-body-medium" :href="alreadyActivePortalUrl" target="_blank" rel="noopener noreferrer">{{ $t('billing.checkout.error.alreadyActive.cta') }}</v-btn>
         </div>
       </v-card>
     </v-dialog>
 
-    <!-- Glass tabs (meter mode only) -->
-    <div v-if="meterMode" class="d-flex justify-center mb-8">
-      <HomeTabsComponent
-        :items="tabItems"
-        :model-value="activeTab"
-        @update:model-value="activeTab = $event"
-      />
-    </div>
-
-    <!-- ── Plans tab (default / always shown when meterMode is false) ── -->
-    <template v-if="!meterMode || activeTab === 0">
-      <!-- Billing toggle -->
-      <div class="mb-10">
-        <BillingPricingToggleComponent :annual="annual" @update:annual="annual = $event" />
-      </div>
-
-      <!-- Plans grid (always rendered from static config; prices fill in asynchronously) -->
-      <v-row justify="center">
-        <v-col
-          v-for="plan in mergedPlans"
-          :key="plan.id"
-          cols="12"
-          sm="6"
-          md="4"
-        >
-          <BillingPricingCardComponent
-            :plan="plan"
-            :annual="annual"
-            :current="isCurrentPlan(plan.id)"
-            :loading="checkoutLoading"
-            :prices-loading="loading"
-            :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-            @select="onSelectPlan"
-          />
-        </v-col>
-      </v-row>
-    </template>
-
-    <!-- ── Units tab (meter mode only) ── -->
-    <template v-if="meterMode && activeTab === 1">
-      <BillingPacksComponent />
-    </template>
-
-    <!-- Downgrade confirmation dialog -->
     <v-dialog v-model="downgradeDialog" max-width="480" @keydown.esc="cancelDowngrade">
       <v-card>
         <v-card-title class="text-title-medium font-weight-bold">{{ $t('billing.pricing.downgrade.title') }}</v-card-title>
-        <v-card-text class="text-body-medium">
-          {{ $t('billing.pricing.downgrade.message', { from: currentPlanName, to: pendingDowngradePlanName }) }}
-        </v-card-text>
+        <v-card-text class="text-body-medium">{{ $t('billing.pricing.downgrade.message', { from: currentPlanName, to: pendingDowngradePlanName }) }}</v-card-text>
         <v-card-actions class="ga-2">
           <v-btn variant="text" class="text-none" @click="cancelDowngrade">{{ $t('billing.pricing.downgrade.cancel') }}</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">
-            {{ $t('billing.pricing.downgrade.confirm') }}
-          </v-btn>
+          <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">{{ $t('billing.pricing.downgrade.confirm') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>
-/**
- * Module dependencies.
- */
+import { useTheme } from 'vuetify';
 import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { plans as plansConfig } from '../config/billing.static-content';
+import { usePricing } from '../composables/billing.usePricing.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
+import homeFaqComponent from '../../home/components/home.faq.component.vue';
 import HomeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
+import homeBlurBackgroundComponent from '../../home/components/utils/home.blur.background.component.vue';
 
-
-/**
- * Component definition.
- */
 export default {
   name: 'PricingView',
   components: {
     BillingPricingToggleComponent,
     BillingPricingCardComponent,
     BillingPacksComponent,
+    homeFaqComponent,
     HomeTabsComponent,
+    homeBlurBackgroundComponent,
   },
-  /**
-   * @desc Inject billingStore and authStore once in setup so computed
-   * properties reference this.billingStore / this.authStore instead of
-   * calling the store factory on every evaluation.
-   * @returns {{ billingStore: Object, authStore: Object }}
-   */
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
-    return { billingStore, authStore };
+    const pricing = usePricing();
+    const theme = useTheme();
+    return { billingStore, authStore, ...pricing, theme };
   },
   data() {
     return {
@@ -183,100 +200,88 @@ export default {
       checkoutLoading: false,
       checkoutError: null,
       error: null,
-      /** @type {number} Active glass tab index — 0=plans, 1=units (meter mode only) */
       activeTab: 0,
-      /** @type {boolean} Whether the downgrade confirmation dialog is open */
       downgradeDialog: false,
-      /** @type {{ planId: string, priceId: string }|null} Pending plan selection awaiting confirmation */
       pendingDowngrade: null,
-      // Bonus: 409 already-active dialog state
       alreadyActiveDialog: false,
       alreadyActivePortalUrl: null,
     };
   },
   computed: {
-    /**
-     * @desc Merge static config (features, tagline, badge) with Stripe data (prices).
-     * @returns {Array} Plans array with marketing content and pricing data combined
-     */
-    mergedPlans() {
-      return plansConfig.map((staticPlan) => {
-        const stripePlan = this.billingStore.plans.find(
-          (p) => p.planId === staticPlan.id || p.name?.toLowerCase() === staticPlan.id,
-        ) || {};
-        return {
-          ...staticPlan,
-          monthlyPrice: stripePlan.stripePriceMonthly
-            ? { amount: stripePlan.monthlyPrice, id: stripePlan.stripePriceMonthly }
-            : null,
-          annualPrice: stripePlan.stripePriceAnnual
-            ? { amount: stripePlan.annualPrice, id: stripePlan.stripePriceAnnual }
-            : null,
-        };
-      });
-    },
-    /**
-     * @desc Whether billing data is being loaded.
-     * @returns {boolean} True while loading
-     */
     loading() {
       return this.billingStore.loading;
     },
-    /**
-     * @desc Get the current subscription plan ID if user is logged in.
-     * @returns {string|null} Current plan ID or null
-     */
     currentPlanId() {
       return this.billingStore.subscription?.plan ?? 'free';
     },
-    /**
-     * @desc Whether meter billing mode is active (from server config).
-     * @returns {boolean}
-     */
     meterMode() {
       return this.authStore.serverConfig?.billing?.meterMode === true;
     },
-    /**
-     * @desc Items consumed by HomeTabsComponent (only used when meterMode is true).
-     * Labels sourced from i18n keys billing.pricing.tabs.plans / billing.pricing.tabs.units.
-     * @returns {Array<{id: string, label: string}>}
-     */
+    hasPaidPlans() {
+      return this.plans.some((p) => p.id !== 'free');
+    },
     tabItems() {
       return [
-        { id: 'plans', label: this.$t('billing.pricing.tabs.plans') },
-        { id: 'units', label: this.$t('billing.pricing.tabs.units') },
+        { id: 'plans', label: this.tabs?.plans || this.$t('billing.pricing.tabs.plans') },
+        { id: 'units', label: this.tabs?.units || this.$t('billing.pricing.tabs.units') },
       ];
     },
-    /**
-     * @desc Ordered plan IDs derived from static config for downgrade detection.
-     * Tier index 0 = lowest (free), last = highest (pro).
-     * @returns {Array<string>}
-     */
     planTierOrder() {
-      return plansConfig.map((p) => p.id).filter(Boolean);
+      return this.plans.map((p) => p.id).filter(Boolean);
     },
-    /**
-     * @desc The name of the pending downgrade target plan (for confirmation dialog copy).
-     * @returns {string}
-     */
     pendingDowngradePlanName() {
       if (!this.pendingDowngrade) return '';
-      const plan = this.mergedPlans.find((p) => p.id === this.pendingDowngrade.planId);
+      const plan = this.plans.find((p) => p.id === this.pendingDowngrade.planId);
       return plan?.name ?? this.pendingDowngrade.planId;
     },
-    /**
-     * @desc The name of the current plan (for confirmation dialog copy).
-     * @returns {string}
-     */
     currentPlanName() {
-      const plan = this.mergedPlans.find((p) => p.id === this.currentPlanId);
+      const plan = this.plans.find((p) => p.id === this.currentPlanId);
       return plan?.name ?? this.currentPlanId;
     },
+    /**
+     * @desc Build the setup object expected by HomeFaqComponent from static-content faqs.
+     * @returns {Object}
+     */
+    faqSetup() {
+      return {
+        icon: 'fa-solid fa-circle-question',
+        title: this.faqs?.title || this.$t('billing.pricing.faq.title'),
+        subtitle: this.faqs?.subtitle || null,
+        alignment: 'center',
+        variant: 'default',
+        columns: 1,
+        content: this.faqs?.content || [],
+      };
+    },
+    /**
+     * @desc Build a flat {planId: planName} map for per-section parent name resolution.
+     *       Passed to BillingPricingCardComponent so each feature section can independently
+     *       resolve its own inheritsFrom plan name.
+     * @returns {Object.<string, string>}
+     */
+    planNameMap() {
+      return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
+    },
+    /**
+     * @desc Pick halo palette based on current Vuetify theme (light vs dark).
+     *       Uses config-driven colors when provided; falls back to default brand palettes.
+     * @returns {{ backgroundColors: string[], haloColors: string[] }}
+     */
+    haloPalette() {
+      const isDark = this.theme.global.name.value === 'dark';
+      const fromConfig = isDark ? this.halo?.dark : this.halo?.light;
+      if (fromConfig?.backgroundColors && fromConfig?.haloColors) return fromConfig;
+      return isDark
+        ? {
+            backgroundColors: ['#0a0a1a', '#1a1a3e', '#2d2d6b', '#3d3d8a', '#2563eb'],
+            haloColors: ['#4f46e5', '#7c3aed', '#2563eb', '#6366f1', '#8b5cf6'],
+          }
+        : {
+            backgroundColors: ['#4a90c2', '#3d7eb0', '#2d6a9e', '#1e5a8c', '#164578'],
+            haloColors: ['#0891b2', '#0ea5e9', '#3b82f6', '#0284c7', '#0369a1'],
+          };
+    },
   },
-  /**
-   * @desc Fetch billing plans and subscription data on component creation.
-   * @returns {Promise<void>}
-   */
   async created() {
     try {
       await this.billingStore.fetchPlans();
@@ -293,48 +298,24 @@ export default {
       });
     }
 
-    // Handle Stripe redirect query params — success always redirects to /users, never back here
+    // Handle Stripe redirect query params
     const { canceled, type, pack } = this.$route.query;
     if (canceled === 'true') {
       this.checkoutCanceled = true;
       // Extras cancel-redirect: drop the persisted per-pack intentId so a retry
-      // generates a fresh UUID. Without this, Stripe's 24h idempotency cache
-      // replays the previous session URL — which may be expired or carry the
-      // stale successUrl/pack from the first attempt.
+      // generates a fresh UUID.
       if (type === 'extras') {
         if (pack) clearExtrasIntentId(pack);
         else clearExtrasIntentIds();
-        // Strip the cancel-detection params from the URL so a refresh does not
-        // re-clear (no-op anyway) and so the address bar stays clean. Hash is
-        // preserved so the active tab (#units) is reflected.
         this.$router.replace({ path: this.$route.path, hash: this.$route.hash, query: { canceled: 'true' } });
       }
     }
     if (this.$route.hash === '#units') this.activeTab = 1;
   },
   methods: {
-    /**
-     * @desc Check if a plan is the user's current plan.
-     * @param {string} planId - The plan ID to check
-     * @returns {boolean} True if this is the current plan
-     */
     isCurrentPlan(planId) {
       return this.currentPlanId === planId;
     },
-    /**
-     * @desc Dismiss the canceled alert and clean query params.
-     */
-    dismissAlert() {
-      this.checkoutCanceled = false;
-      if (this.$route.query.canceled) {
-        // Preserve hash (e.g. #units) so the active tab state is reflected in the URL
-        this.$router.replace({ path: this.$route.path, hash: this.$route.hash });
-      }
-    },
-    /**
-     * @desc Retry fetching plans after an error.
-     * @returns {Promise<void>}
-     */
     async retryFetchPlans() {
       this.error = null;
       try {
@@ -344,28 +325,17 @@ export default {
         this.error = this.$t('billing.pricing.error.loadFailed');
       }
     },
-    /**
-     * @desc Handle plan selection — validate auth/org, detect downgrade, then create checkout session.
-     * @param {Object} payload - { planId, priceId }
-     * @returns {Promise<void>}
-     */
     async onSelectPlan({ planId, priceId }) {
-      // Guest -> redirect to sign-in with return URL
       if (!this.authStore.isLoggedIn) {
         this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;
       }
-
-      // Logged-in but no organization -> redirect to org setup
       if (this.authStore.serverConfig?.organizations?.enabled && !this.authStore.user?.currentOrganization) {
         this.$router.push({ path: '/organization-required' });
         return;
       }
-
-      // Free plan -> no checkout needed
       if (!priceId || planId === 'free') return;
 
-      // Downgrade detection — show confirmation dialog before proceeding
       const targetTier = this.planTierOrder.indexOf(planId);
       const currentTier = this.planTierOrder.indexOf(this.currentPlanId);
       if (targetTier !== -1 && currentTier !== -1 && targetTier < currentTier) {
@@ -373,13 +343,8 @@ export default {
         this.downgradeDialog = true;
         return;
       }
-
       await this.proceedCheckout({ planId, priceId });
     },
-    /**
-     * @desc Confirm the pending downgrade and proceed to checkout.
-     * @returns {Promise<void>}
-     */
     async confirmDowngrade() {
       this.downgradeDialog = false;
       if (!this.pendingDowngrade) return;
@@ -387,37 +352,21 @@ export default {
       this.pendingDowngrade = null;
       await this.proceedCheckout(payload);
     },
-    /**
-     * @desc Cancel the pending downgrade dialog.
-     * @returns {void}
-     */
     cancelDowngrade() {
       this.downgradeDialog = false;
       this.pendingDowngrade = null;
     },
-    /**
-     * @desc Create Stripe Checkout session and redirect.
-     * @param {Object} payload - { priceId }
-     * @returns {Promise<void>}
-     */
     async proceedCheckout({ priceId }) {
       this.checkoutLoading = true;
       try {
         const checkout = await this.billingStore.createCheckout(priceId);
-        if (!checkout?.url) {
-          throw new Error('Checkout session did not include a redirect URL.');
-        }
+        if (!checkout?.url) throw new Error('Checkout session did not include a redirect URL.');
         window.location.assign(validateStripeUrl(checkout.url));
       } catch (err) {
-        // Bonus: handle 409 subscription_already_active (PR Node-A contract)
         if (err.code === 'subscription_already_active') {
           this.alreadyActivePortalUrl = null;
           if (err.portalUrl) {
-            try {
-              this.alreadyActivePortalUrl = validateStripeUrl(err.portalUrl);
-            } catch {
-              // Invalid or off-whitelist URL — link will not be shown
-            }
+            try { this.alreadyActivePortalUrl = validateStripeUrl(err.portalUrl); } catch { /* invalid URL — link hidden */ }
           }
           this.alreadyActiveDialog = true;
           return;

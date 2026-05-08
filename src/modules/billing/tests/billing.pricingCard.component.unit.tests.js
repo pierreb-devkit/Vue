@@ -237,4 +237,112 @@ describe('BillingPricingCardComponent', () => {
     expect(chipsComp.exists()).toBe(false);
     expect(wrapper.text()).toContain('~2000 operations / week');
   });
+
+  // ── Task 4.3: featureSections + inline annual savings ─────────────────────
+
+  it('renders featureSections when provided (preferred over flat features)', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 39,
+      annualPrice: 390,
+      monthlyPriceObject: { amount: 39, id: 'price_xxx' },
+      annualPriceObject: { amount: 390, id: 'price_yyy' },
+      features: [{ text: 'flat-feature', included: true }],
+      featureSections: [
+        { title: 'Core', items: [{ text: 'sectioned-feature' }] },
+      ],
+    };
+    const wrapper = mountComponent({ plan, annual: false });
+    expect(wrapper.text()).toContain('sectioned-feature');
+    expect(wrapper.text()).not.toContain('flat-feature');
+  });
+
+  it('falls back to flat features when featureSections is empty array', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 39,
+      annualPrice: 390,
+      features: [{ text: 'flat-feature', included: true }],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: false });
+    expect(wrapper.text()).toContain('flat-feature');
+  });
+
+  it('renders annual savings chip when annual=true and savings > 0', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 39,
+      annualPrice: 390,
+      monthlyPriceObject: { amount: 39, id: 'price_xxx' },
+      annualPriceObject: { amount: 390, id: 'price_yyy' },
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: true });
+    // 39*12=468, 390 → 17%
+    expect(wrapper.text()).toMatch(/17%/);
+  });
+
+  it('does not render annual savings chip when annual=false', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 39,
+      annualPrice: 390,
+      monthlyPriceObject: { amount: 39, id: 'price_xxx' },
+      annualPriceObject: { amount: 390, id: 'price_yyy' },
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: false });
+    expect(wrapper.text()).not.toMatch(/17%/);
+  });
+
+  it('renders annual savings chip for legacy plans where monthlyPrice/annualPrice are { amount, id } objects', () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      // Legacy shape: prices as { amount, id } objects (pre-V2)
+      monthlyPrice: { amount: 39, id: 'price_monthly' },
+      annualPrice: { amount: 390, id: 'price_annual' },
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: true });
+    // 39*12=468, 390 → 17%
+    expect(wrapper.text()).toMatch(/17%/);
+  });
+
+  it('switches displayPrice from monthly to annual when annual prop flips', async () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 19,
+      annualPrice: 190,
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: false });
+    expect(wrapper.text()).toContain('19');
+    await wrapper.setProps({ annual: true });
+    expect(wrapper.text()).toContain('190');
+    // 19*12=228, 190 → 17% savings
+    expect(wrapper.text()).toMatch(/17%/);
+  });
 });

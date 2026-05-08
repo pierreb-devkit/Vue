@@ -5,6 +5,14 @@ import { createVuetify } from 'vuetify';
 
 // ─── Prevent real HTTP calls ────────────────────────────────────────────────
 
+vi.mock('../config/billing.static-content.js', () => ({
+  packs: [],
+  plans: [],
+  faqs: [],
+  pricingMode: null,
+  default: { billing: { packs: [], plans: [], faqs: [], pricingMode: null } },
+}));
+
 vi.mock('../../../lib/services/axios', () => ({
   default: { get: vi.fn(), post: vi.fn() },
 }));
@@ -205,7 +213,7 @@ describe('BillingPacksComponent — purchase flow', () => {
     wrapper = mountPacks();
     await flushPromises();
     const firstBuyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    firstBuyBtn.trigger('click');
+    await firstBuyBtn.trigger('click');
     await flushPromises();
     const allBtns = wrapper.findAllComponents({ name: 'v-btn' });
     for (const btn of allBtns) {
@@ -230,5 +238,56 @@ describe('BillingPacksComponent — purchase flow', () => {
     await flushPromises();
     expect(store.createExtrasCheckout).not.toHaveBeenCalled();
     expect(pushFn).toHaveBeenCalledWith({ path: '/signin', query: { redirect: '/pricing' } });
+  });
+});
+
+// ─── Suite 4: Feature sections ────────────────────────────────────────────────
+
+describe('BillingPacksComponent — feature sections', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    // Reset auth state for feature section tests
+    authState.isLoggedIn = true;
+    authState.user = { currentOrganization: 'org_test_123' };
+    authState.serverConfig = { organizations: { enabled: true } };
+    store = useBillingStore();
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('renders featureSections when provided on a pack', async () => {
+    const packsWithSections = [
+      {
+        packId: 'pack-with-sections',
+        label: 'With Sections',
+        priceUsd: 25,
+        meterUnits: 20000,
+        featureSections: [
+          { title: null, items: [{ text: 'pack-section-feature' }] },
+        ],
+      },
+    ];
+    store.usageMeter = { packsAvailable: packsWithSections };
+    wrapper = mountPacks();
+    await flushPromises();
+    expect(wrapper.text()).toContain('pack-section-feature');
+  });
+
+  it('does not render featureSections block when pack has none', async () => {
+    const packsWithoutSections = [
+      { packId: 'plain', label: 'Plain', priceUsd: 9, meterUnits: 5000 },
+    ];
+    store.usageMeter = { packsAvailable: packsWithoutSections };
+    wrapper = mountPacks();
+    await flushPromises();
+    // No section component rendered → no class from the section component
+    expect(wrapper.find('.billing-pricing-feature-section').exists()).toBe(false);
   });
 });
