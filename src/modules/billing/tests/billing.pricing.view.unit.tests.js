@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { computed } from 'vue';
 
 // ─── Prevent real HTTP calls ────────────────────────────────────────────────
 
@@ -23,6 +24,42 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: () => authState,
+}));
+
+// ─── Mutable usePricing state (controls mode-layout tests) ──────────────────
+
+const pricingState = vi.hoisted(() => ({
+  mode: 'subscription',
+  plans: [{ id: 'free', name: 'Free' }, { id: 'pro', name: 'Pro' }],
+  packs: [],
+  faqs: [],
+  maxAnnualSavingsPct: 0,
+  hasPlans: true,
+  hasPacks: false,
+  hasFaqs: false,
+}));
+
+vi.mock('../composables/billing.usePricing.js', () => ({
+  usePricing: () => ({
+    mode: computed(() => pricingState.mode),
+    plans: computed(() => pricingState.plans),
+    packs: computed(() => pricingState.packs),
+    faqs: computed(() => pricingState.faqs),
+    maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
+    hasPlans: computed(() => pricingState.hasPlans),
+    hasPacks: computed(() => pricingState.hasPacks),
+    hasFaqs: computed(() => pricingState.hasFaqs),
+  }),
+  default: () => ({
+    mode: computed(() => pricingState.mode),
+    plans: computed(() => pricingState.plans),
+    packs: computed(() => pricingState.packs),
+    faqs: computed(() => pricingState.faqs),
+    maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
+    hasPlans: computed(() => pricingState.hasPlans),
+    hasPacks: computed(() => pricingState.hasPacks),
+    hasFaqs: computed(() => pricingState.hasFaqs),
+  }),
 }));
 
 // ─── Imports (after mocks) ──────────────────────────────────────────────────
@@ -198,5 +235,110 @@ describe('BillingPricingView — Stripe cancel-redirect intentId cleanup', () =>
     wrapper = mountPricing({ routeQuery: {}, routeHash: '#units' });
     await flushPromises();
     expect(wrapper.vm.activeTab).toBe(1);
+  });
+});
+
+// ─── Suite: Mode-aware layout ────────────────────────────────────────────────
+
+describe('BillingPricingView — mode-aware layout', () => {
+  let wrapper;
+  let store;
+
+  const componentStubsWithFAQ = {
+    RouterLink: true,
+    BillingPricingToggleComponent: true,
+    BillingPricingCardComponent: true,
+    BillingPacksComponent: true,
+    HomeTabsComponent: true,
+    BillingPricingFAQComponent: true,
+  };
+
+  /**
+   * @desc Mount the view with a given pricingState override.
+   * @param {Object} opts
+   * @param {string} opts.pricingMode - 'subscription' | 'packs' | 'both-tabs'
+   * @param {Array} [opts.faqs] - FAQ entries (controls hasFaqs)
+   * @param {Array} [opts.plans] - Plans array override
+   * @returns {Promise<import('@vue/test-utils').VueWrapper>}
+   */
+  async function mountPricingView({ pricingMode, faqs = [], plans } = {}) {
+    pricingState.mode = pricingMode;
+    pricingState.faqs = faqs;
+    pricingState.hasFaqs = faqs.length > 0;
+    if (plans !== undefined) {
+      pricingState.plans = plans;
+      pricingState.hasPlans = plans.length > 0;
+    } else {
+      pricingState.plans = [{ id: 'free', name: 'Free' }, { id: 'pro', name: 'Pro' }];
+      pricingState.hasPlans = true;
+    }
+    pricingState.packs = pricingMode === 'packs' ? [{ id: 'p1', name: 'Pack 500' }] : [];
+    pricingState.hasPacks = pricingState.packs.length > 0;
+
+    authState.serverConfig = { billing: { meterMode: false } };
+    authState.isLoggedIn = true;
+
+    const w = mount(BillingPricingView, {
+      global: {
+        plugins: [vuetify, i18n],
+        mocks: {
+          config: mockConfig,
+          $route: { path: '/pricing', hash: '', query: {} },
+          $router: { replace: vi.fn(), push: vi.fn() },
+        },
+        stubs: componentStubsWithFAQ,
+      },
+    });
+    await flushPromises();
+    return w;
+  }
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('subscription mode: renders plans grid + toggle, NO packs grid, NO tabs', async () => {
+    wrapper = await mountPricingView({ pricingMode: 'subscription' });
+    expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-toggle"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-packs-grid"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="pricing-tabs"]').exists()).toBe(false);
+  });
+
+  it('packs mode: renders packs grid only, NO plans, NO toggle, NO tabs', async () => {
+    wrapper = await mountPricingView({ pricingMode: 'packs' });
+    expect(wrapper.find('[data-test="pricing-packs-grid"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="pricing-toggle"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="pricing-tabs"]').exists()).toBe(false);
+  });
+
+  it('both-tabs mode: renders glass tabs + plans tab default', async () => {
+    wrapper = await mountPricingView({ pricingMode: 'both-tabs' });
+    expect(wrapper.find('[data-test="pricing-tabs"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(true);
+  });
+
+  it('renders FAQ component when faqs are present', async () => {
+    wrapper = await mountPricingView({
+      pricingMode: 'subscription',
+      faqs: [{ id: 'q1', question: 'Q?', answer: 'A.' }],
+    });
+    expect(wrapper.find('[data-test="pricing-faq"]').exists()).toBe(true);
+  });
+
+  it('does not render FAQ when faqs is empty', async () => {
+    wrapper = await mountPricingView({ pricingMode: 'subscription', faqs: [] });
+    expect(wrapper.find('[data-test="pricing-faq"]').exists()).toBe(false);
   });
 });
