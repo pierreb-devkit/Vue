@@ -35,12 +35,19 @@
       <v-list-item
         v-for="(item, idx) in section.items"
         :key="`${item.text}-${idx}`"
-        :class="['px-0', { 'billing-pricing-feature-section__item--highlight': item.highlight }]"
+        :class="[
+          'px-0',
+          {
+            'billing-pricing-feature-section__item--highlight': item.highlight,
+            'billing-pricing-feature-section__item--disabled': item.enabled === false,
+          },
+        ]"
       >
         <template #prepend>
           <v-icon
             :icon="item.icon || 'fa-solid fa-check'"
-            :color="item.iconColor || 'primary'"
+            :color="item.enabled === false ? undefined : (item.iconColor || 'primary')"
+            :class="{ 'text-disabled': item.enabled === false }"
             size="small"
             class="mr-3"
           ></v-icon>
@@ -95,5 +102,9 @@ export default {
 <style scoped>
 .billing-pricing-feature-section__item--highlight :deep(.v-list-item-title) {
   font-weight: 600;
+}
+
+.billing-pricing-feature-section__item--disabled :deep(.v-list-item-title) {
+  color: rgba(var(--v-theme-on-surface), 0.38);
 }
 </style>

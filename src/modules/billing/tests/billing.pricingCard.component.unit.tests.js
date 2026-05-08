@@ -326,4 +326,23 @@ describe('BillingPricingCardComponent', () => {
     // 39*12=468, 390 → 17%
     expect(wrapper.text()).toMatch(/17%/);
   });
+
+  it('switches displayPrice from monthly to annual when annual prop flips', async () => {
+    const plan = {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 't',
+      cta: 'Go Pro',
+      monthlyPrice: 19,
+      annualPrice: 190,
+      features: [],
+      featureSections: [],
+    };
+    const wrapper = mountComponent({ plan, annual: false });
+    expect(wrapper.text()).toContain('19');
+    await wrapper.setProps({ annual: true });
+    expect(wrapper.text()).toContain('190');
+    // 19*12=228, 190 → 17% savings
+    expect(wrapper.text()).toMatch(/17%/);
+  });
 });

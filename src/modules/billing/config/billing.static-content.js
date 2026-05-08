@@ -20,7 +20,7 @@
  *     featureSections?: [{                 // NEW — preferred structure for V2 cards
  *       title?: string,                    // optional section heading (omit for un-grouped lists)
  *       inheritsFrom?: string,             // plan id — when set, card prefixes section with "Everything in {parentName}, plus"
- *       items: [{ text, icon?, tooltip?, highlight? }]
+ *       items: [{ text, icon?, tooltip?, highlight?, enabled? }]  // enabled defaults to true; false = greyed-out (not missing) for equal-height cards
  *     }],
  *     equivalences?: [...]                 // unchanged
  *   }
@@ -50,6 +50,8 @@ export const plans = [
     highlighted: false,
     badge: null,
     cta: 'Get Started',
+    monthlyPrice: 0,
+    annualPrice: 0,
     features: [
       { text: '1 project', included: true },
       { text: '3 team members', included: true },
@@ -61,8 +63,9 @@ export const plans = [
         title: null,
         items: [
           { text: '1 project', icon: 'fa-solid fa-folder' },
-          { text: '3 team members', icon: 'fa-solid fa-users' },
-          { text: 'Community support', icon: 'fa-solid fa-comments' },
+          { text: '3 team members', icon: 'fa-solid fa-users', enabled: false },
+          { text: 'Email support', icon: 'fa-solid fa-envelope', enabled: false },
+          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', enabled: false },
         ],
       },
     ],
@@ -77,6 +80,8 @@ export const plans = [
     highlighted: false,
     badge: null,
     cta: 'Get Started',
+    monthlyPrice: 19,
+    annualPrice: 190,
     features: [
       { text: '10 projects', included: true },
       { text: '10 team members', included: true },
@@ -91,6 +96,7 @@ export const plans = [
           { text: '10 projects', icon: 'fa-solid fa-folder', highlight: true, iconColor: 'success' },
           { text: '10 team members', icon: 'fa-solid fa-users' },
           { text: 'Email support', icon: 'fa-solid fa-envelope' },
+          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', enabled: false },
         ],
       },
     ],
@@ -105,6 +111,8 @@ export const plans = [
     highlighted: true,
     badge: 'Most Popular',
     cta: 'Get Started',
+    monthlyPrice: 49,
+    annualPrice: 490,
     features: [
       { text: 'Unlimited projects', included: true },
       { text: 'Unlimited members', included: true },

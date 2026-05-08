@@ -135,4 +135,37 @@ describe('BillingPricingFeatureSectionComponent', () => {
     });
     expect(wrapper.find('.v-icon').classes()).toContain('text-primary');
   });
+
+  it('applies disabled class to items with enabled=false', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: {
+          title: null,
+          items: [
+            { text: 'Enabled feature', enabled: true },
+            { text: 'Disabled feature', enabled: false },
+          ],
+        },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    const disabled = wrapper.findAll('.billing-pricing-feature-section__item--disabled');
+    expect(disabled).toHaveLength(1);
+    expect(disabled[0].text()).toContain('Disabled feature');
+  });
+
+  it('treats absent enabled as enabled (default true)', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: {
+          title: null,
+          items: [{ text: 'Default item' }],
+        },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    expect(wrapper.find('.billing-pricing-feature-section__item--disabled').exists()).toBe(false);
+  });
 });

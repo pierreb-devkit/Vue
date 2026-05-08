@@ -49,11 +49,14 @@
         <!-- Mode: both-tabs -->
         <template v-else-if="mode === 'both-tabs'">
           <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
-            <HomeTabsComponent
-              :items="tabItems"
-              :model-value="activeTab"
-              @update:model-value="activeTab = $event"
-            />
+            <div :style="tabsGlassStyle" class="billing-pricing__tabs-glass">
+              <HomeTabsComponent
+                :items="tabItems"
+                :model-value="activeTab"
+                color-mode="light"
+                @update:model-value="activeTab = $event"
+              />
+            </div>
           </div>
           <template v-if="activeTab === 0">
             <BillingPricingToggleComponent
@@ -93,12 +96,12 @@
       data-test="pricing-faq"
     />
 
-    <!-- Snackbars (portaled, bottom overlay — no empty container rendered when idle) -->
+    <!-- Snackbars (portaled, top-right — matches stack convention from app.vue) -->
     <v-snackbar
       v-model="checkoutCanceled"
       color="info"
       :timeout="6000"
-      location="bottom"
+      location="top right"
     >
       {{ $t('billing.pricing.cancel.message') }}
       <template #actions>
@@ -112,7 +115,7 @@
       :model-value="!!error"
       color="warning"
       :timeout="-1"
-      location="bottom"
+      location="top right"
       @update:model-value="error = null"
     >
       {{ error }}
@@ -128,7 +131,7 @@
       :model-value="!!checkoutError"
       color="error"
       :timeout="6000"
-      location="bottom"
+      location="top right"
       @update:model-value="checkoutError = null"
     >
       {{ checkoutError }}
@@ -164,6 +167,7 @@
 
 <script>
 import { useTheme } from 'vuetify';
+import { liquidGlassStyle } from '../../../lib/helpers/theme';
 import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
@@ -260,6 +264,23 @@ export default {
      */
     planNameMap() {
       return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
+    },
+    /**
+     * @desc Glass pill container style for the pricing mode tabs — matches the
+     *       liquid glass look used on the home page capabilities tabs.
+     * @returns {Object} Inline CSS style object
+     */
+    tabsGlassStyle() {
+      return {
+        ...liquidGlassStyle({
+          vuetifyTheme: this.theme,
+          intensity: 0.8,
+          tint: 0.1,
+          variant: 'pill',
+        }),
+        display: 'inline-flex',
+        padding: '6px',
+      };
     },
     /**
      * @desc Pick halo palette based on current Vuetify theme (light vs dark).
