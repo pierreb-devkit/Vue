@@ -14,7 +14,11 @@ vi.mock('../config/billing.static-content.js', () => ({
     { id: 'pro', name: 'Pro', monthlyPrice: 39, annualPrice: 390, features: [], featureSections: [] },
   ],
   packs: [{ packId: 'boost', label: 'Boost', priceUsd: 9, meterUnits: 5000 }],
-  faqs: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
+  faqs: {
+    title: 'Frequently asked questions',
+    subtitle: null,
+    content: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
+  },
   tabs: { plans: 'My Plans', units: 'My Units' },
 }));
 
@@ -31,7 +35,7 @@ describe('usePricing', () => {
     const result = usePricing();
     expect(result.plans.value).toHaveLength(2);
     expect(result.packs.value).toHaveLength(1);
-    expect(result.faqs.value).toHaveLength(1);
+    expect(result.faqs.value.content).toHaveLength(1);
   });
 
   it('mode = subscription when meterMode=false (legacy fallback)', () => {
@@ -59,6 +63,13 @@ describe('usePricing', () => {
     expect(result.hasPlans.value).toBe(true);
     expect(result.hasPacks.value).toBe(true);
     expect(result.hasFaqs.value).toBe(true);
+  });
+
+  it('hasFaqs reflects content array length', () => {
+    const result = usePricing();
+    // mock has content with 1 entry → hasFaqs true
+    expect(result.hasFaqs.value).toBe(true);
+    expect(result.faqs.value.title).toBe('Frequently asked questions');
   });
 
   it('exposes tabs from static-content', () => {

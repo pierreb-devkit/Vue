@@ -107,9 +107,9 @@
     </template>
 
     <!-- FAQ (rendered in all modes when faqs are present) -->
-    <BillingPricingFAQComponent
+    <homeFaqComponent
       v-if="hasFaqs"
-      :faqs="faqs"
+      :setup="faqSetup"
       data-test="pricing-faq"
     />
 
@@ -135,7 +135,7 @@ import { validateStripeUrl } from '../lib/stripeRedirect';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
-import BillingPricingFAQComponent from '../components/billing.pricingFAQ.component.vue';
+import homeFaqComponent from '../../home/components/home.faq.component.vue';
 import HomeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
 
 export default {
@@ -144,7 +144,7 @@ export default {
     BillingPricingToggleComponent,
     BillingPricingCardComponent,
     BillingPacksComponent,
-    BillingPricingFAQComponent,
+    homeFaqComponent,
     HomeTabsComponent,
   },
   setup() {
@@ -197,6 +197,21 @@ export default {
     currentPlanName() {
       const plan = this.plans.find((p) => p.id === this.currentPlanId);
       return plan?.name ?? this.currentPlanId;
+    },
+    /**
+     * @desc Build the setup object expected by HomeFaqComponent from static-content faqs.
+     * @returns {Object}
+     */
+    faqSetup() {
+      return {
+        icon: 'fa-solid fa-circle-question',
+        title: this.faqs?.title || this.$t('billing.pricing.faq.title'),
+        subtitle: this.faqs?.subtitle || null,
+        alignment: 'center',
+        variant: 'default',
+        columns: 1,
+        content: this.faqs?.content || [],
+      };
     },
     /**
      * @desc Build a flat {planId: planName} map for per-section parent name resolution.

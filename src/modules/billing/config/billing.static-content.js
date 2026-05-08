@@ -10,7 +10,7 @@
  *                    When null, mode is derived from server `meterMode` + presence of packs.
  *   - plans        : Plan[]
  *   - packs        : Pack[]
- *   - faqs         : FAQ[]
+ *   - faqs         : { title?: string, subtitle?: string, content: FAQ[] }
  *
  * Plan shape (extended):
  *   {
@@ -202,28 +202,30 @@ export const packs = [
 ];
 
 /**
- * @desc FAQ entries — devkit demo defaults (visual QA for the redesign PR).
- * Downstream projects override fully with their own copy.
- * Rendered as v-expansion-panels accordion + injected into schema.org FAQPage JSON-LD.
- * @type {Array<{id: string, question: string, answer: string}>}
+ * @desc FAQ section content. Title + subtitle are optional (fallback to i18n).
+ * @type {{ title?: string, subtitle?: string, content: Array<{id: string, question: string, answer: string}> }}
  */
-export const faqs = [
-  {
-    id: 'demo-billing-cycle',
-    question: 'When am I billed?',
-    answer: 'Subscriptions are billed at the start of each cycle (monthly or annually). Annual saves you up to 17%.',
-  },
-  {
-    id: 'demo-cancel',
-    question: 'Can I cancel anytime?',
-    answer: 'Yes. Cancel from your account settings — you keep access until the end of the current billing period.',
-  },
-  {
-    id: 'demo-extra-packs',
-    question: 'What are extra packs?',
-    answer: 'One-shot purchases that top up your usage on top of your subscription. They never expire (within 24 months).',
-  },
-];
+export const faqs = {
+  title: 'Frequently asked questions',
+  subtitle: null,
+  content: [
+    {
+      id: 'demo-billing-cycle',
+      question: 'When am I billed?',
+      answer: 'Subscriptions are billed at the start of each cycle (monthly or annually). Annual saves you up to 17%.',
+    },
+    {
+      id: 'demo-cancel',
+      question: 'Can I cancel anytime?',
+      answer: 'Yes. Cancel from your account settings — you keep access until the end of the current billing period.',
+    },
+    {
+      id: 'demo-extra-packs',
+      question: 'What are extra packs?',
+      answer: 'One-shot purchases that top up your usage on top of your subscription. They never expire (within 24 months).',
+    },
+  ],
+};
 
 /**
  * @desc Configurable tab labels (used in 'both-tabs' mode).

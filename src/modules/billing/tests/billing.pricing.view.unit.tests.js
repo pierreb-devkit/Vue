@@ -32,7 +32,7 @@ const pricingState = vi.hoisted(() => ({
   mode: 'subscription',
   plans: [{ id: 'free', name: 'Free' }, { id: 'pro', name: 'Pro' }],
   packs: [],
-  faqs: [],
+  faqs: { title: '', subtitle: null, content: [] },
   tabs: {},
   maxAnnualSavingsPct: 0,
   hasPlans: true,
@@ -251,7 +251,7 @@ describe('BillingPricingView — mode-aware layout', () => {
     BillingPricingCardComponent: true,
     BillingPacksComponent: true,
     HomeTabsComponent: true,
-    BillingPricingFAQComponent: true,
+    homeFaqComponent: true,
   };
 
   /**
@@ -264,7 +264,7 @@ describe('BillingPricingView — mode-aware layout', () => {
    */
   async function mountPricingView({ pricingMode, faqs = [], plans } = {}) {
     pricingState.mode = pricingMode;
-    pricingState.faqs = faqs;
+    pricingState.faqs = { title: '', subtitle: null, content: faqs };
     pricingState.hasFaqs = faqs.length > 0;
     if (plans !== undefined) {
       pricingState.plans = plans;

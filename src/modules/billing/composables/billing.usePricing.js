@@ -26,7 +26,7 @@ import { computeMaxAnnualSavingsPct, resolvePricingMode } from '../lib/pricingMa
  *   mode: import('vue').ComputedRef<'subscription'|'packs'|'both-tabs'>,
  *   plans: import('vue').ComputedRef<Array>,
  *   packs: import('vue').ComputedRef<Array>,
- *   faqs: import('vue').ComputedRef<Array>,
+ *   faqs: import('vue').ComputedRef<{ title?: string, subtitle?: string, content: Array<{id: string, question: string, answer: string}> }>,
  *   tabs: import('vue').ComputedRef<{plans?: string, units?: string}>,
  *   maxAnnualSavingsPct: import('vue').ComputedRef<number>,
  *   hasPlans: import('vue').ComputedRef<boolean>,
@@ -89,7 +89,7 @@ export function usePricing() {
 
   const hasPlans = computed(() => plans.value.length > 0);
   const hasPacks = computed(() => packs.value.length > 0);
-  const hasFaqs = computed(() => faqs.value.length > 0);
+  const hasFaqs = computed(() => Array.isArray(faqs.value?.content) && faqs.value.content.length > 0);
 
   const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
 
