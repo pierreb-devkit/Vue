@@ -219,6 +219,10 @@ export const billingFr = {
         /** i18n key: billing.pricing.tabs.units */
         units: 'Unités',
       },
+      faq: {
+        /** i18n key: billing.pricing.faq.title */
+        title: 'Questions fréquentes',
+      },
       downgrade: {
         /** i18n key: billing.pricing.downgrade.title */
         title: 'Confirmer le changement de plan',
