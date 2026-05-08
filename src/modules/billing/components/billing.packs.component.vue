@@ -36,6 +36,7 @@
         <v-card
           :class="config.vuetify.theme.rounded"
           class="billing-packs__card pa-6 d-flex flex-column"
+          height="100%"
           :loading="purchasingId === pack.packId"
         >
           <p class="text-title-medium font-weight-bold mb-2">{{ pack.label }}</p>

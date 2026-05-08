@@ -68,7 +68,7 @@
 
     <!-- Annual savings chip (inline, only when annual + savings > 0) -->
     <div v-if="annual && annualSavingsPct > 0" class="mb-4">
-      <v-chip color="success" variant="tonal" size="small">
+      <v-chip color="secondary" variant="tonal" size="small">
         {{ $t('billing.pricingCard.saveAnnual', { pct: annualSavingsPct }) }}
       </v-chip>
     </div>
