@@ -60,6 +60,29 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(wrapper.text()).toContain('Everything in Starter, plus');
   });
 
+  it('renders introText when provided (priority over inheritsFrom)', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { introText: 'Get started with:', items: [{ text: 'A' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    expect(wrapper.text()).toContain('Get started with:');
+  });
+
+  it('introText takes priority over inheritsFrom when both are present', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { introText: 'Custom intro', inheritsFrom: 'starter', items: [{ text: 'A' }] },
+        parentPlanName: 'Starter',
+      },
+      global: { plugins: [vuetify, i18n] },
+    });
+    expect(wrapper.text()).toContain('Custom intro');
+    expect(wrapper.text()).not.toContain('Everything in Starter');
+  });
+
   it('renders all items with text + icon when provided', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {

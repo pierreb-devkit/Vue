@@ -259,6 +259,8 @@ export const billingFr = {
       saveUpTo: "Jusqu'à -{pct}%",
       /** i18n key: billing.pricingToggle.saveAnnuallyDynamic — interpolate {pct} */
       saveAnnuallyDynamic: "Passez à l'annuel et économisez jusqu'à {pct}%",
+      /** i18n key: billing.pricingToggle.savingsActive — interpolate {pct} */
+      savingsActive: 'Économie annuelle : {pct}%',
     },
     packs: {
       /** i18n key: billing.packs.title */

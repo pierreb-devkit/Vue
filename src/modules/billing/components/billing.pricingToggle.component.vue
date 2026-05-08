@@ -20,7 +20,7 @@
 <template>
   <div class="text-center">
     <div class="d-flex align-center justify-center ga-3">
-      <span class="text-body-large font-weight-medium" :class="{ 'text-medium-emphasis': annual }">{{ $t('billing.pricingToggle.monthly') }}</span>
+      <span class="text-body-large font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">{{ $t('billing.pricingToggle.monthly') }}</span>
       <v-switch
         :model-value="annual"
         color="primary"
@@ -30,18 +30,10 @@
         :aria-label="$t('billing.pricingToggle.annual')"
         @update:model-value="$emit('update:annual', $event)"
       ></v-switch>
-      <span class="text-body-large font-weight-medium" :class="{ 'text-medium-emphasis': !annual }">{{ $t('billing.pricingToggle.annual') }}</span>
-      <v-chip
-        v-if="annual && maxAnnualSavingsPct > 0"
-        color="success"
-        variant="tonal"
-        size="small"
-      >
-        {{ $t('billing.pricingToggle.saveUpTo', { pct: maxAnnualSavingsPct }) }}
-      </v-chip>
+      <span class="text-body-large font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">{{ $t('billing.pricingToggle.annual') }}</span>
     </div>
-    <div v-if="!annual && maxAnnualSavingsPct > 0" class="text-caption text-medium-emphasis mt-1">
-      {{ $t('billing.pricingToggle.saveAnnuallyDynamic', { pct: maxAnnualSavingsPct }) }}
+    <div v-if="maxAnnualSavingsPct > 0" class="text-body-small text-white mt-2" :style="{ opacity: 0.85 }">
+      {{ annual ? $t('billing.pricingToggle.savingsActive', { pct: maxAnnualSavingsPct }) : $t('billing.pricingToggle.saveAnnuallyDynamic', { pct: maxAnnualSavingsPct }) }}
     </div>
   </div>
 </template>

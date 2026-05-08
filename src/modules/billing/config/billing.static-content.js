@@ -61,6 +61,7 @@ export const plans = [
     featureSections: [
       {
         title: null,
+        introText: 'Get started with:',
         items: [
           { text: '1 project', icon: 'fa-solid fa-folder' },
           { text: '3 team members', icon: 'fa-solid fa-users', enabled: false },
@@ -248,6 +249,22 @@ export const tabs = {
 };
 
 /**
+ * @desc Page header copy. When `null`/absent, falls back to i18n keys
+ * `billing.pricing.title` / `billing.pricing.subtitle`.
+ * @type {{ title?: string|null, subtitle?: string|null }}
+ */
+export const header = {
+  title: null,
+  subtitle: null,
+};
+
+/**
+ * @desc Hero halo colors per theme. When null, the view uses default brand palettes.
+ * @type {{ light?: {backgroundColors: string[], haloColors: string[]}, dark?: {backgroundColors: string[], haloColors: string[]} } | null}
+ */
+export const halo = null;
+
+/**
  * Exports.
  */
 export default {
@@ -257,5 +274,7 @@ export default {
     packs,
     faqs,
     tabs,
+    header,
+    halo,
   },
 };

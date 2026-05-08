@@ -25,10 +25,10 @@
       {{ section.title }}
     </h4>
     <p
-      v-else-if="inheritsHeading"
+      v-else-if="resolvedHeading"
       class="billing-pricing-feature-section__inherits text-body-small text-medium-emphasis mb-2"
     >
-      {{ inheritsHeading }}
+      {{ resolvedHeading }}
     </p>
 
     <v-list density="compact" bg-color="transparent" class="pa-0">
@@ -52,7 +52,7 @@
             class="mr-3"
           ></v-icon>
         </template>
-        <v-list-item-title>
+        <v-list-item-title :class="{ 'text-disabled': item.enabled === false, 'font-weight-semibold': item.highlight }">
           <span>{{ item.text }}</span>
           <v-tooltip v-if="item.tooltip" :text="item.tooltip" location="top">
             <template #activator="{ props: tooltipProps }">
@@ -88,23 +88,19 @@ export default {
   },
   computed: {
     /**
-     * @desc Render "Everything in {parent}, plus" when the section inherits and we have a parent name.
+     * @desc Resolve the section heading with priority:
+     *   1. introText on section (project-owned copy, e.g. "Get started with:")
+     *   2. inheritsFrom + parentPlanName → "Everything in {parent}, plus"
+     *   3. null (no heading rendered)
      * @returns {string|null}
      */
-    inheritsHeading() {
-      if (!this.section.inheritsFrom || !this.parentPlanName) return null;
-      return this.$t('billing.pricingFeatureSection.everythingIn', { plan: this.parentPlanName });
+    resolvedHeading() {
+      if (this.section.introText) return this.section.introText;
+      if (this.section.inheritsFrom && this.parentPlanName) {
+        return this.$t('billing.pricingFeatureSection.everythingIn', { plan: this.parentPlanName });
+      }
+      return null;
     },
   },
 };
 </script>
-
-<style scoped>
-.billing-pricing-feature-section__item--highlight :deep(.v-list-item-title) {
-  font-weight: 600;
-}
-
-.billing-pricing-feature-section__item--disabled :deep(.v-list-item-title) {
-  color: rgba(var(--v-theme-on-surface), 0.38);
-}
-</style>

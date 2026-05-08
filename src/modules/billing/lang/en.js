@@ -265,6 +265,8 @@ export const billingEn = {
       saveUpTo: 'Save up to {pct}%',
       /** i18n key: billing.pricingToggle.saveAnnuallyDynamic — interpolate {pct} */
       saveAnnuallyDynamic: 'Switch to annual and save up to {pct}%',
+      /** i18n key: billing.pricingToggle.savingsActive — interpolate {pct} */
+      savingsActive: 'Annual saves you {pct}%',
     },
     packs: {
       /** i18n key: billing.packs.title */

@@ -10,9 +10,9 @@
     >
       <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
         <!-- Header -->
-        <div class="text-center mb-10 billing-pricing__hero">
-          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3">{{ $t('billing.pricing.title') }}</h1>
-          <p class="text-body-large text-medium-emphasis">{{ $t('billing.pricing.subtitle') }}</p>
+        <div class="text-center mb-10">
+          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || $t('billing.pricing.title') }}</h1>
+          <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || $t('billing.pricing.subtitle') }}</p>
         </div>
 
         <!-- Mode: subscription -->
@@ -49,14 +49,12 @@
         <!-- Mode: both-tabs -->
         <template v-else-if="mode === 'both-tabs'">
           <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
-            <div :style="tabsGlassStyle" class="billing-pricing__tabs-glass">
-              <HomeTabsComponent
-                :items="tabItems"
-                :model-value="activeTab"
-                color-mode="light"
-                @update:model-value="activeTab = $event"
-              />
-            </div>
+            <HomeTabsComponent
+              :items="tabItems"
+              :model-value="activeTab"
+              color-mode="light"
+              @update:model-value="activeTab = $event"
+            />
           </div>
           <template v-if="activeTab === 0">
             <BillingPricingToggleComponent
@@ -167,7 +165,6 @@
 
 <script>
 import { useTheme } from 'vuetify';
-import { liquidGlassStyle } from '../../../lib/helpers/theme';
 import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
@@ -266,29 +263,14 @@ export default {
       return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
     },
     /**
-     * @desc Glass pill container style for the pricing mode tabs — matches the
-     *       liquid glass look used on the home page capabilities tabs.
-     * @returns {Object} Inline CSS style object
-     */
-    tabsGlassStyle() {
-      return {
-        ...liquidGlassStyle({
-          vuetifyTheme: this.theme,
-          intensity: 0.8,
-          tint: 0.1,
-          variant: 'pill',
-        }),
-        display: 'inline-flex',
-        padding: '6px',
-      };
-    },
-    /**
      * @desc Pick halo palette based on current Vuetify theme (light vs dark).
-     *       Reuses the same brand palettes as home.hero and home.statistics.
+     *       Uses config-driven colors when provided; falls back to default brand palettes.
      * @returns {{ backgroundColors: string[], haloColors: string[] }}
      */
     haloPalette() {
       const isDark = this.theme.global.name.value === 'dark';
+      const fromConfig = isDark ? this.halo?.dark : this.halo?.light;
+      if (fromConfig?.backgroundColors && fromConfig?.haloColors) return fromConfig;
       return isDark
         ? {
             backgroundColors: ['#0a0a1a', '#1a1a3e', '#2d2d6b', '#3d3d8a', '#2563eb'],
@@ -398,11 +380,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Force white text on the hero title/subtitle — halo bg is always dark blue (light + dark mode) */
-.billing-pricing__hero h1,
-.billing-pricing__hero p {
-  color: white !important;
-}
-</style>

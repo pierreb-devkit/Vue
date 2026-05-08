@@ -20,6 +20,8 @@ vi.mock('../config/billing.static-content.js', () => ({
     content: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
   },
   tabs: { plans: 'My Plans', units: 'My Units' },
+  header: { title: null, subtitle: null },
+  halo: null,
 }));
 
 describe('usePricing', () => {
@@ -76,6 +78,16 @@ describe('usePricing', () => {
     const result = usePricing();
     expect(result.tabs.value.plans).toBe('My Plans');
     expect(result.tabs.value.units).toBe('My Units');
+  });
+
+  it('exposes header from static-content (null fields)', () => {
+    const result = usePricing();
+    expect(result.header.value).toMatchObject({ title: null, subtitle: null });
+  });
+
+  it('exposes halo from static-content (null when not configured)', () => {
+    const result = usePricing();
+    expect(result.halo.value).toBeNull();
   });
 
   it('plans array normalises legacy {amount, id} price objects to scalar numbers', () => {

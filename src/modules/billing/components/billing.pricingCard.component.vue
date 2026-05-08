@@ -29,7 +29,7 @@
 -->
 <template>
   <v-card
-    :class="['billing-pricing-card', plan.highlighted ? 'pa-6 pt-8' : 'pa-6', config.vuetify.theme.rounded, { 'billing-pricing-card--highlighted': plan.highlighted }]"
+    :class="['billing-pricing-card pa-6', config.vuetify.theme.rounded, { 'billing-pricing-card--highlighted': plan.highlighted }]"
     :flat="config.vuetify.theme.flat"
     :elevation="plan.highlighted ? 8 : 1"
     height="100%"
@@ -368,7 +368,7 @@ export default {
 
 .billing-pricing-card__badge {
   position: absolute;
-  top: -14px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;

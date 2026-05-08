@@ -17,6 +17,8 @@ import {
   packs as staticPacks,
   faqs as staticFaqs,
   tabs as staticTabs,
+  header as staticHeader,
+  halo as staticHalo,
 } from '../config/billing.static-content.js';
 import { computeMaxAnnualSavingsPct, resolvePricingMode } from '../lib/pricingMath.js';
 
@@ -86,6 +88,8 @@ export function usePricing() {
   const packs = computed(() => staticPacks);
   const faqs = computed(() => staticFaqs);
   const tabs = computed(() => staticTabs || {});
+  const header = computed(() => staticHeader || {});
+  const halo = computed(() => staticHalo);
 
   const hasPlans = computed(() => plans.value.length > 0);
   const hasPacks = computed(() => packs.value.length > 0);
@@ -110,6 +114,8 @@ export function usePricing() {
     packs,
     faqs,
     tabs,
+    header,
+    halo,
     maxAnnualSavingsPct,
     hasPlans,
     hasPacks,
