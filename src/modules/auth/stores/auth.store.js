@@ -2,12 +2,11 @@
  * Module dependencies.
  */
 import { defineStore } from 'pinia';
-import posthog from 'posthog-js';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
-import { capture } from '../../../lib/helpers/analytics';
+import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -119,18 +118,16 @@ export const useAuthStore = defineStore('auth', {
 
         coreStore.refreshNav(this.isLoggedIn);
 
-        // PostHog identify on login
-        if (posthog.__loaded) {
-          const u = res.data.user;
-          let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
-          if (!name && u.email) {
-            const deduced = deduceNamesFromEmail(u.email);
-            name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
-          }
-          const identifyProps = { email: u.email };
-          if (name) identifyProps.name = name;
-          posthog.identify(u.id || u._id, identifyProps);
+        // PostHog identify on signin
+        const u = res.data.user;
+        let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+        if (!name && u.email) {
+          const deduced = deduceNamesFromEmail(u.email);
+          name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
         }
+        const identifyProps = { email: u.email };
+        if (name) identifyProps.name = name;
+        identify(u.id || u._id, identifyProps);
       } catch (err) {
         if (err.response && err.response.status === 423) {
           const retryAfter = Number(err.response.data?.retryAfter) || 0;
@@ -181,6 +178,7 @@ export const useAuthStore = defineStore('auth', {
 
         coreStore.refreshNav(this.isLoggedIn);
         capture('signup_completed', { email: res.data.user.email });
+        identify(res.data.user.id || res.data.user._id, { email: res.data.user.email, plan: res.data.user.plan });
         return res.data;
       } catch (err) {
         localStorage.removeItem('token');
@@ -218,8 +216,8 @@ export const useAuthStore = defineStore('auth', {
 
       updateAbilities([]);
 
-      // PostHog reset on logout
-      if (posthog.__loaded) posthog.reset();
+      // PostHog reset on signout
+      analyticsReset();
 
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);

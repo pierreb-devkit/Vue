@@ -35,7 +35,28 @@ function capturePageview(to) {
 }
 
 /**
+ * @desc Associate the current session with a distinct user identity.
+ * @param {string | null | undefined} distinctId - Unique user identifier (e.g. user._id). Falsy values are ignored (no-op).
+ * @param {Object} [properties={}] - Optional user properties (email, plan, etc.).
+ * @returns {void}
+ */
+function identify(distinctId, properties = {}) {
+  if (!isPosthogReady()) return;
+  if (!distinctId) return;
+  posthog.identify(distinctId, properties);
+}
+
+/**
+ * @desc Reset the PostHog session (on signout). Clears the current distinct ID.
+ * @returns {void}
+ */
+function reset() {
+  if (!isPosthogReady()) return;
+  posthog.reset();
+}
+
+/**
  * Exports.
  */
-export { isPosthogReady, capture, capturePageview };
-export default { isPosthogReady, capture, capturePageview };
+export { isPosthogReady, capture, capturePageview, identify, reset };
+export default { isPosthogReady, capture, capturePageview, identify, reset };

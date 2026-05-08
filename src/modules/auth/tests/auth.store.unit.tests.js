@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import posthog from 'posthog-js';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
@@ -21,16 +20,6 @@ vi.mock('../../../lib/services/axios', () => ({
   },
 }));
 
-// Mock posthog-js
-vi.mock('posthog-js', () => ({
-  default: {
-    __loaded: false,
-    identify: vi.fn(),
-    reset: vi.fn(),
-    group: vi.fn(),
-  },
-}));
-
 // Mock ability helper
 const mockUpdateAbilities = vi.fn();
 vi.mock('../../../lib/helpers/ability', () => ({
@@ -39,8 +28,12 @@ vi.mock('../../../lib/helpers/ability', () => ({
 
 // Mock analytics helper
 const mockCapture = vi.fn();
+const mockIdentify = vi.fn();
+const mockReset = vi.fn();
 vi.mock('../../../lib/helpers/analytics', () => ({
   capture: (...args) => mockCapture(...args),
+  identify: (...args) => mockIdentify(...args),
+  reset: (...args) => mockReset(...args),
 }));
 
 describe('Auth Store', () => {
@@ -52,12 +45,9 @@ describe('Auth Store', () => {
     axios.post.mockReset();
     axios.get.mockReset();
     mockUpdateAbilities.mockClear();
-    // Reset posthog mocks
-    posthog.__loaded = false;
-    posthog.identify.mockClear();
-    posthog.reset.mockClear();
-    posthog.group.mockClear();
     mockCapture.mockClear();
+    mockIdentify.mockClear();
+    mockReset.mockClear();
   });
 
   it('should initialize with default state', () => {
@@ -696,8 +686,7 @@ describe('Auth Store', () => {
   });
 
   describe('PostHog analytics', () => {
-    it('should call posthog.identify on signin when posthog is loaded', async () => {
-      posthog.__loaded = true;
+    it('should call identify helper on signin with user data', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
         data: {
@@ -709,49 +698,10 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
-      expect(posthog.identify).toHaveBeenCalledWith('u1', { email: 'test@test.com', name: 'John Doe' });
+      expect(mockIdentify).toHaveBeenCalledWith('u1', { email: 'test@test.com', name: 'John Doe' });
     });
 
-    it('should not call posthog.identify on signin when posthog is not loaded', async () => {
-      posthog.__loaded = false;
-      const authStore = useAuthStore();
-      const mockResponse = {
-        data: {
-          user: { id: 'u1', email: 'test@test.com', roles: ['user'] },
-          tokenExpiresIn: Date.now() + 3600000,
-        },
-      };
-
-      axios.post.mockResolvedValueOnce(mockResponse);
-      await authStore.signin({ email: 'test@test.com', password: 'password' });
-
-      expect(posthog.identify).not.toHaveBeenCalled();
-    });
-
-    it('should call posthog.reset on signout when posthog is loaded', async () => {
-      posthog.__loaded = true;
-      const authStore = useAuthStore();
-      authStore.auth = true;
-      authStore.user = { id: 'u1' };
-
-      await authStore.signout();
-
-      expect(posthog.reset).toHaveBeenCalledOnce();
-    });
-
-    it('should not call posthog.reset on signout when posthog is not loaded', async () => {
-      posthog.__loaded = false;
-      const authStore = useAuthStore();
-      authStore.auth = true;
-      authStore.user = { id: 'u1' };
-
-      await authStore.signout();
-
-      expect(posthog.reset).not.toHaveBeenCalled();
-    });
-
-    it('should handle identify with _id fallback and partial name', async () => {
-      posthog.__loaded = true;
+    it('should call identify helper with _id fallback and partial name', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
         data: {
@@ -763,11 +713,10 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'jane@test.com', password: 'password' });
 
-      expect(posthog.identify).toHaveBeenCalledWith('u2', { email: 'jane@test.com', name: 'Jane' });
+      expect(mockIdentify).toHaveBeenCalledWith('u2', { email: 'jane@test.com', name: 'Jane' });
     });
 
-    it('should deduce name from email when firstName and lastName are missing', async () => {
-      posthog.__loaded = true;
+    it('should deduce name from email when firstName and lastName are missing on signin', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
         data: {
@@ -779,11 +728,10 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'john.doe@test.com', password: 'password' });
 
-      expect(posthog.identify).toHaveBeenCalledWith('u3', { email: 'john.doe@test.com', name: 'John Doe' });
+      expect(mockIdentify).toHaveBeenCalledWith('u3', { email: 'john.doe@test.com', name: 'John Doe' });
     });
 
-    it('should omit name property when name cannot be deduced', async () => {
-      posthog.__loaded = true;
+    it('should omit name property when name cannot be deduced on signin', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
         data: {
@@ -795,7 +743,42 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: '123456@test.com', password: 'password' });
 
-      expect(posthog.identify).toHaveBeenCalledWith('u4', { email: '123456@test.com' });
+      expect(mockIdentify).toHaveBeenCalledWith('u4', { email: '123456@test.com' });
+    });
+
+    it('should call identify helper on signup with user id and email', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: 'u5', email: 'new@test.com', plan: 'free', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(mockIdentify).toHaveBeenCalledWith('u5', { email: 'new@test.com', plan: 'free' });
+    });
+
+    it('should not call identify on signup failure', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockRejectedValueOnce(new Error('Signup failed'));
+      await expect(authStore.signup({ email: 'new@test.com', password: 'password' })).rejects.toThrow('Signup failed');
+
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
+    it('should call reset helper on signout', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      expect(mockReset).toHaveBeenCalledOnce();
     });
   });
 });

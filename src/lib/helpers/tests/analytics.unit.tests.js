@@ -1,21 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockCapture = vi.fn();
+const mockIdentify = vi.fn();
+const mockReset = vi.fn();
 
 vi.mock('posthog-js', () => ({
   default: {
     __loaded: false,
     capture: (...args) => mockCapture(...args),
+    identify: (...args) => mockIdentify(...args),
+    reset: (...args) => mockReset(...args),
   },
 }));
 
 import posthog from 'posthog-js';
-import { isPosthogReady, capture, capturePageview } from '../analytics';
+import { isPosthogReady, capture, capturePageview, identify, reset } from '../analytics';
 
 describe('analytics helper', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     posthog.__loaded = false;
+    mockIdentify.mockClear();
+    mockReset.mockClear();
   });
 
   describe('isPosthogReady', () => {
@@ -70,6 +76,50 @@ describe('analytics helper', () => {
         $current_url: '/tasks',
         title: 'tasks',
       });
+    });
+  });
+
+  describe('identify', () => {
+    it('should not call posthog.identify when posthog is not loaded', () => {
+      identify('user-123', { email: 'test@test.com' });
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
+    it('should not call posthog.identify when distinctId is falsy', () => {
+      posthog.__loaded = true;
+      identify('', { email: 'test@test.com' });
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
+    it('should not call posthog.identify when distinctId is null', () => {
+      posthog.__loaded = true;
+      identify(null);
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
+    it('should call posthog.identify with distinctId and properties when ready', () => {
+      posthog.__loaded = true;
+      identify('user-123', { email: 'test@test.com', plan: 'pro' });
+      expect(mockIdentify).toHaveBeenCalledWith('user-123', { email: 'test@test.com', plan: 'pro' });
+    });
+
+    it('should call posthog.identify with empty properties by default', () => {
+      posthog.__loaded = true;
+      identify('user-123');
+      expect(mockIdentify).toHaveBeenCalledWith('user-123', {});
+    });
+  });
+
+  describe('reset', () => {
+    it('should not call posthog.reset when posthog is not loaded', () => {
+      reset();
+      expect(mockReset).not.toHaveBeenCalled();
+    });
+
+    it('should call posthog.reset when posthog is loaded', () => {
+      posthog.__loaded = true;
+      reset();
+      expect(mockReset).toHaveBeenCalledOnce();
     });
   });
 });
