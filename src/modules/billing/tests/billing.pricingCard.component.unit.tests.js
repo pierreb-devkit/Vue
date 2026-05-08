@@ -5,6 +5,7 @@ import { createVuetify } from 'vuetify';
 import { createI18n } from 'vue-i18n';
 import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
 import { billingEn } from '../lang/en.js';
+import { useAuthStore } from '../../auth/stores/auth.store.js';
 
 const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
@@ -65,6 +66,40 @@ const mountComponent = (props = {}) =>
       },
     },
   });
+
+/**
+ * Mount the pricing card with auth store seeded.
+ * @param {Object} options - { plan, authIsLoggedIn, ...componentProps }
+ * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+ */
+const mountCard = ({ authIsLoggedIn = false, ...props } = {}) => {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  // Seed auth store: isLoggedIn = !!cookieExpire
+  if (authIsLoggedIn) {
+    const auth = useAuthStore();
+    auth.cookieExpire = '2099-01-01';
+  }
+  return mount(BillingPricingCardComponent, {
+    props: { plan: freePlan, annual: false, current: false, ...props },
+    global: {
+      plugins: [pinia, vuetify, i18n],
+      mocks: { config: mockConfig },
+      stubs: {
+        'v-tooltip': {
+          name: 'v-tooltip',
+          props: ['text', 'location'],
+          template: '<div class="v-tooltip-stub"><slot name="activator" :props="{}" /></div>',
+        },
+        'v-skeleton-loader': {
+          name: 'v-skeleton-loader',
+          props: ['type'],
+          template: '<div class="v-skeleton-loader-stub" />',
+        },
+      },
+    },
+  });
+};
 
 describe('BillingPricingCardComponent', () => {
   beforeEach(() => {
@@ -344,5 +379,36 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('190');
     // 19*12=228, 190 → 17% savings
     expect(wrapper.text()).toMatch(/17%/);
+  });
+
+  // ── Task 1.1: auth-aware CTA for Free plan ────────────────────────────────
+
+  it('Free plan + guest → CTA label is "Sign up"', () => {
+    const plan = { id: 'free', name: 'Free', tagline: 't', cta: 'Get Started', features: [], featureSections: [] };
+    const wrapper = mountCard({ plan, authIsLoggedIn: false });
+    expect(wrapper.text()).toContain('Sign up');
+    expect(wrapper.text()).not.toContain('Get Started');
+  });
+
+  it('Free plan + signed-in → CTA label uses plan.cta (default)', () => {
+    const plan = { id: 'free', name: 'Free', tagline: 't', cta: 'Get Started', features: [], featureSections: [] };
+    const wrapper = mountCard({ plan, authIsLoggedIn: true });
+    expect(wrapper.text()).toContain('Get Started');
+  });
+
+  it('Paid plan + guest → CTA label uses plan.cta (NOT "Sign up")', () => {
+    const plan = { id: 'pro', name: 'Pro', tagline: 't', cta: 'Go Pro', features: [], featureSections: [], monthlyPrice: 39, annualPrice: 390 };
+    const wrapper = mountCard({ plan, authIsLoggedIn: false });
+    expect(wrapper.text()).toContain('Go Pro');
+    expect(wrapper.text()).not.toContain('Sign up');
+  });
+
+  it('Free plan + guest click → emits select with intent: "signup"', async () => {
+    const plan = { id: 'free', name: 'Free', tagline: 't', cta: 'Get Started', features: [], featureSections: [] };
+    const wrapper = mountCard({ plan, authIsLoggedIn: false });
+    await wrapper.find('button').trigger('click');
+    const emits = wrapper.emitted('select');
+    expect(emits).toBeTruthy();
+    expect(emits[0][0].intent).toBe('signup');
   });
 });

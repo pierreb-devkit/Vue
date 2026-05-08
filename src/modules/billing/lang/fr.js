@@ -241,6 +241,8 @@ export const billingFr = {
       currentPlan: 'Plan actuel',
       /** i18n key: billing.pricingCard.saveAnnual — interpolate {pct} */
       saveAnnual: '-{pct}% en annuel',
+      /** i18n key: billing.pricingCard.signUpCta */
+      signUpCta: 'Créer un compte',
     },
     pricingFeatureSection: {
       /** i18n key: billing.pricingFeatureSection.everythingIn — interpolate {plan} */

@@ -325,7 +325,17 @@ export default {
         this.error = this.$t('billing.pricing.error.loadFailed');
       }
     },
-    async onSelectPlan({ planId, priceId }) {
+    /**
+     * @desc Handle plan select event from card.
+     * @param {{ planId: string, priceId: string|null, intent?: 'signup' }} payload
+     * @returns {Promise<void>}
+     */
+    async onSelectPlan({ planId, priceId, intent }) {
+      // Free + guest → route to signup
+      if (intent === 'signup') {
+        this.$router.push({ path: '/signup', query: { redirect: '/pricing' } });
+        return;
+      }
       if (!this.authStore.isLoggedIn) {
         this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;

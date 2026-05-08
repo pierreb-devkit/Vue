@@ -93,7 +93,7 @@
                 size="large"
                 disabled
               >
-                {{ plan.cta }}
+                {{ effectiveCtaLabel }}
               </v-btn>
             </span>
           </template>
@@ -110,7 +110,7 @@
           :disabled="ctaDisabled"
           @click="selectPlan"
         >
-          {{ plan.cta }}
+          {{ effectiveCtaLabel }}
         </v-btn>
       </template>
       <v-btn
@@ -194,6 +194,7 @@ import BillingEquivalencesChipsComponent from './billing.equivalencesChips.compo
 import BillingPricingFeatureSectionComponent from './billing.pricingFeatureSection.component.vue';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { computeAnnualSavingsPct } from '../lib/pricingMath.js';
+import { useAuthStore } from '../../auth/stores/auth.store.js';
 
 /**
  * Component definition.
@@ -232,12 +233,13 @@ export default {
   },
   emits: ['select'],
   /**
-   * @desc Inject currency formatter so templates can call formatPrice(amount).
-   * @returns {{ formatPrice: Function }}
+   * @desc Inject currency formatter and auth store.
+   * @returns {{ formatPrice: Function, authStore: Object }}
    */
   setup() {
     const { formatPrice } = useCurrencyFormat();
-    return { formatPrice };
+    const authStore = useAuthStore();
+    return { formatPrice, authStore };
   },
   computed: {
     /**
@@ -253,6 +255,21 @@ export default {
         typeof this.equivalences[0] === 'object' &&
         this.equivalences[0]?.kind != null
       );
+    },
+    /**
+     * @desc Whether the visiting user is a guest (not signed-in).
+     * @returns {boolean}
+     */
+    isGuest() {
+      return !this.authStore.isLoggedIn;
+    },
+    /**
+     * @desc CTA label — Free plan + guest → i18n "Sign up", else plan.cta.
+     * @returns {string}
+     */
+    effectiveCtaLabel() {
+      if (this.isFree && this.isGuest) return this.$t('billing.pricingCard.signUpCta');
+      return this.plan.cta;
     },
     /**
      * @desc Whether this plan is explicitly free (by ID convention).
@@ -332,19 +349,28 @@ export default {
     },
     /**
      * @desc Whether the CTA should be disabled.
+     * Free + guest is always actionable (routes to signup) — never disabled.
      * @returns {boolean}
      */
     ctaDisabled() {
+      // Free + guest is always actionable (routes to signup) — never disabled
+      if (this.isFree && this.isGuest) return false;
       return this.loading || (!this.isFree && !this.activePriceId);
     },
   },
   methods: {
     /**
      * @desc Emit a plan selection when the CTA is actionable.
+     * Free plan + guest → emit different shape so the view can route to /signup.
      * @returns {void}
      */
     selectPlan() {
       if (this.ctaDisabled) return;
+      // Free plan + guest → emit different shape so the view can route to /signup
+      if (this.isFree && this.isGuest) {
+        this.$emit('select', { planId: this.plan.id, priceId: null, intent: 'signup' });
+        return;
+      }
       this.$emit('select', { planId: this.plan.id, priceId: this.activePriceId });
     },
   },
