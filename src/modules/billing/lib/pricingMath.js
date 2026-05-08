@@ -1,5 +1,6 @@
 /**
- * @fileoverview Pure pricing helpers — savings math and mode resolution.
+ * Pure pricing helpers — annual savings math and pricing-mode resolution.
+ *
  * No Vue dependency. Safe to call from composables, components, or SSR contexts.
  */
 
@@ -34,6 +35,12 @@ export function computeMaxAnnualSavingsPct(plans) {
 }
 
 /**
+ * @desc Set of valid pricingMode strings. Module-level to avoid re-allocation per call.
+ * @type {Set<string>}
+ */
+const KNOWN_PRICING_MODES = new Set(['subscription', 'packs', 'both-tabs']);
+
+/**
  * @desc Resolve the effective pricing display mode.
  *
  * When `explicit` is one of the known modes, return it directly.
@@ -50,10 +57,9 @@ export function computeMaxAnnualSavingsPct(plans) {
  * @throws {Error} When `explicit` is provided but not in the known modes set.
  */
 export function resolvePricingMode({ explicit, meterMode, hasPlans, hasPacks }) {
-  const known = new Set(['subscription', 'packs', 'both-tabs']);
   if (explicit) {
-    if (!known.has(explicit)) {
-      throw new Error(`unknown pricingMode: ${explicit}. Expected one of: ${Array.from(known).join(', ')}`);
+    if (!KNOWN_PRICING_MODES.has(explicit)) {
+      throw new Error(`unknown pricingMode: ${explicit}. Expected one of: ${Array.from(KNOWN_PRICING_MODES).join(', ')}`);
     }
     return explicit;
   }
