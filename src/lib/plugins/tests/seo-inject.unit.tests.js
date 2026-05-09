@@ -471,6 +471,92 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('rich SoftwareApplication fields (#4092)', () => {
+    it('includes applicationCategory + operatingSystem when set', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                applicationCategory: 'BusinessApplication',
+                operatingSystem: 'Web',
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"applicationCategory":"BusinessApplication"');
+      expect(out).toContain('"operatingSystem":"Web"');
+    });
+
+    it('serialises offers[] as Offer-typed entries', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                offers: [
+                  { type: 'Offer', price: '0', priceCurrency: 'USD', name: 'Free' },
+                  { type: 'Offer', price: '39', priceCurrency: 'USD', name: 'Growth' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"offers":[{"@type":"Offer","price":"0","priceCurrency":"USD","name":"Free"},{"@type":"Offer","price":"39","priceCurrency":"USD","name":"Growth"}]');
+    });
+
+    it('includes aggregateRating + softwareVersion + screenshot', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                aggregateRating: { ratingValue: '4.8', ratingCount: '120' },
+                softwareVersion: '2.4.0',
+                screenshot: 'https://trawl.me/og.png',
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"120"}');
+      expect(out).toContain('"softwareVersion":"2.4.0"');
+      expect(out).toContain('"screenshot":"https://trawl.me/og.png"');
+    });
+
+    it('omits rich fields when absent (no empty keys)', () => {
+      const config = {
+        app: {
+          title: 'X',
+          url: 'https://x.test',
+          description: 'X',
+          seo: { schemas: [{ type: 'SoftwareApplication' }] },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).not.toContain('"offers"');
+      expect(out).not.toContain('"aggregateRating"');
+      expect(out).not.toContain('"applicationCategory"');
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();

@@ -129,6 +129,35 @@ export function seoInjectPlugin(config) {
           ...(entry.sameAs?.length && { sameAs: entry.sameAs }),
           ...((entry.image || og.image) && { image: entry.image || og.image }),
         };
+
+        // Rich SoftwareApplication-style fields (#4092). Emit when present regardless of @type
+        // to avoid hard-coding a type allow-list that lags schema.org evolution.
+        if (entry.applicationCategory) base.applicationCategory = entry.applicationCategory;
+        if (entry.operatingSystem) base.operatingSystem = entry.operatingSystem;
+        if (entry.softwareVersion) base.softwareVersion = entry.softwareVersion;
+        if (entry.screenshot) base.screenshot = entry.screenshot;
+
+        if (Array.isArray(entry.offers) && entry.offers.length) {
+          base.offers = entry.offers.map((offer) => ({
+            '@type': offer.type || 'Offer',
+            ...(offer.price !== undefined && { price: offer.price }),
+            ...(offer.priceCurrency && { priceCurrency: offer.priceCurrency }),
+            ...(offer.name && { name: offer.name }),
+            ...(offer.priceValidUntil && { priceValidUntil: offer.priceValidUntil }),
+            ...(offer.url && { url: offer.url }),
+          }));
+        }
+
+        if (entry.aggregateRating && typeof entry.aggregateRating === 'object') {
+          base.aggregateRating = {
+            '@type': 'AggregateRating',
+            ...(entry.aggregateRating.ratingValue !== undefined && { ratingValue: entry.aggregateRating.ratingValue }),
+            ...(entry.aggregateRating.ratingCount !== undefined && { ratingCount: entry.aggregateRating.ratingCount }),
+            ...(entry.aggregateRating.bestRating !== undefined && { bestRating: entry.aggregateRating.bestRating }),
+            ...(entry.aggregateRating.worstRating !== undefined && { worstRating: entry.aggregateRating.worstRating }),
+          };
+        }
+
         return base;
       };
 
