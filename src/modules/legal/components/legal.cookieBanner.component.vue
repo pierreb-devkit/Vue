@@ -33,13 +33,16 @@ import { useCookieConsent } from '../composables/useCookieConsent';
 
 const instance = getCurrentInstance();
 
-// Skip render under Puppeteer prerender (UA contains 'HeadlessChrome').
-// Without this, the prerender plugin captures the v-snackbar into the static
-// HTML, then Vue hydrates a SECOND copy at runtime via Vuetify's Teleport →
-// duplicate banner stacked on prod (the prerendered one is non-interactive).
-// UA-based detection is more specific than navigator.webdriver (which JSDOM
-// also sets, breaking unit tests).
 const isMounted = ref(false);
+
+/**
+ * Sets the isMounted flag after hydration, skipping Puppeteer prerender
+ * environments (UA contains 'HeadlessChrome') to prevent v-snackbar from being
+ * captured into static HTML and duplicated on hydration via Vuetify's Teleport.
+ * UA-based detection is more specific than navigator.webdriver (which JSDOM
+ * also sets, breaking unit tests).
+ * @returns {void}
+ */
 onMounted(() => {
   if (typeof navigator !== 'undefined' && /HeadlessChrome/.test(navigator.userAgent || '')) return;
   isMounted.value = true;
