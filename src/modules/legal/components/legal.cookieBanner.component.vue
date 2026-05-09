@@ -104,10 +104,7 @@ const privacyPolicyPath = computed(() => getConfig()?.legal?.cookieConsent?.priv
 const appName = computed(() => getConfig()?.app?.title || getConfig()?.name || '');
 
 const { consentNeeded, consent, accept, reject } = useCookieConsent();
-const visible = computed({
-  get: () => enabled.value && consentNeeded.value,
-  set: () => {},
-});
+const visible = computed(() => enabled.value && consentNeeded.value);
 
 const { t } = useI18n();
 const message = computed(() => {
@@ -115,6 +112,12 @@ const message = computed(() => {
   return t('legal.banner.message', { appName: appName.value });
 });
 
+/**
+ * Computed inline style for the cookie banner panel.
+ * Merges the liquid-glass visual treatment (blur, saturate, tinted surface)
+ * from the shared helper with fixed positioning in the bottom-right corner.
+ * @returns {Record<string, string | number>} CSS style object for the cookie banner panel.
+ */
 const panelStyle = computed(() => ({
   ...liquidGlassStyle({
     vuetifyTheme: theme,
