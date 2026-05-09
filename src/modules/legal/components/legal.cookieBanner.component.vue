@@ -1,6 +1,6 @@
 <template>
   <v-snackbar
-    v-if="enabled"
+    v-if="enabled && isMounted"
     v-model="visible"
     location="bottom right"
     :timeout="-1"
@@ -27,11 +27,14 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance } from 'vue';
+import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCookieConsent } from '../composables/useCookieConsent';
 
 const instance = getCurrentInstance();
+
+const isMounted = ref(false);
+onMounted(() => { isMounted.value = true; });
 
 /**
  * Reads the devkit config lazily to support both globalProperties (prod) and
