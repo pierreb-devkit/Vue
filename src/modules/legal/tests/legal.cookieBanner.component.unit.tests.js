@@ -101,6 +101,18 @@ describe('legal.cookieBanner.component', () => {
     expect(wrapper.find('.v-snackbar').exists()).toBe(false);
   });
 
+  it('renders snackbar after mount completes (isMounted hydration guard lifts on onMounted)', async () => {
+    // The component gates v-snackbar on `isMounted` (set true in onMounted) to prevent
+    // prerender from capturing the teleported snackbar outside #app, which would cause
+    // Vue hydration to mount a second banner alongside the prerendered one.
+    // In the test environment onMounted fires synchronously, so the banner IS visible
+    // immediately after mount — confirming the guard correctly lifts at runtime.
+    const w = mountBanner();
+    await flushPromises();
+    const buttons = w.findAllComponents({ name: 'VBtn' });
+    expect(buttons.some((b) => b.text() === 'Accept')).toBe(true);
+  });
+
   it('does not render snackbar content when consentNeeded is false', async () => {
     consentNeeded.value = false;
     mountBanner();
