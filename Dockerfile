@@ -17,17 +17,22 @@ ARG DEVKIT_VUE_api_host='localhost'
 ARG DEVKIT_VUE_api_port='3000'
 ARG DEVKIT_VUE_api_base='api'
 ARG DEVKIT_VUE_cookie_prefix='waos'
-ARG DEVKIT_VUE_analytics_sentry_dsn=''
-ARG DEVKIT_VUE_analytics_sentry_environment='production'
-ARG DEVKIT_VUE_analytics_posthog_key=''
-ARG DEVKIT_VUE_analytics_posthog_host='https://us.i.posthog.com'
-ARG DEVKIT_VUE_analytics_posthog_errorTracking='false'
-ARG DEVKIT_VUE_analytics_posthog_autoCapture='false'
-ARG DEVKIT_VUE_analytics_posthog_sessionReplay='false'
-ARG DEVKIT_VUE_analytics_posthog_featureFlags='false'
-ARG DEVKIT_VUE_analytics_posthog_surveys='false'
-ARG DEVKIT_VUE_analytics_posthog_webVitals='false'
-ARG DEVKIT_VUE_analytics_posthog_capturePageleave='false'
+# Analytics ARGs: declared without defaults so BuildKit does NOT leak empty
+# strings into process.env at build time. With defaults, BuildKit exposes
+# the ARG as an env var to RUN steps, and generateConfig.js Layer 5
+# (DEVKIT_VUE_* env-var override) silently overrides downstream
+# config-file values with the empty/false defaults. Issue: pierreb-devkit/Vue#4110
+ARG DEVKIT_VUE_analytics_sentry_dsn
+ARG DEVKIT_VUE_analytics_sentry_environment
+ARG DEVKIT_VUE_analytics_posthog_key
+ARG DEVKIT_VUE_analytics_posthog_host
+ARG DEVKIT_VUE_analytics_posthog_errorTracking
+ARG DEVKIT_VUE_analytics_posthog_autoCapture
+ARG DEVKIT_VUE_analytics_posthog_sessionReplay
+ARG DEVKIT_VUE_analytics_posthog_featureFlags
+ARG DEVKIT_VUE_analytics_posthog_surveys
+ARG DEVKIT_VUE_analytics_posthog_webVitals
+ARG DEVKIT_VUE_analytics_posthog_capturePageleave
 
 # Install app dependencies & build
 COPY package*.json ./
