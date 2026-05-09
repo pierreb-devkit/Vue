@@ -34,7 +34,19 @@ import { useCookieConsent } from '../composables/useCookieConsent';
 const instance = getCurrentInstance();
 
 const isMounted = ref(false);
-onMounted(() => { isMounted.value = true; });
+
+/**
+ * Sets the isMounted flag after hydration, skipping Puppeteer prerender
+ * environments (UA contains 'HeadlessChrome') to prevent v-snackbar from being
+ * captured into static HTML and duplicated on hydration via Vuetify's Teleport.
+ * UA-based detection is more specific than navigator.webdriver (which JSDOM
+ * also sets, breaking unit tests).
+ * @returns {void}
+ */
+onMounted(() => {
+  if (typeof navigator !== 'undefined' && /HeadlessChrome/.test(navigator.userAgent || '')) return;
+  isMounted.value = true;
+});
 
 /**
  * Reads the devkit config lazily to support both globalProperties (prod) and
@@ -69,7 +81,7 @@ const enabled = computed(() => {
   return true;
 });
 const privacyPolicyPath = computed(() => getConfig()?.legal?.cookieConsent?.privacyPolicyPath || '/legal/privacy');
-const appName = computed(() => getConfig()?.name || '');
+const appName = computed(() => getConfig()?.app?.title || getConfig()?.name || '');
 
 const { consentNeeded, consent, accept, reject } = useCookieConsent();
 const visible = computed({
