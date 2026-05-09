@@ -46,6 +46,7 @@ const i18n = () =>
       en: {
         legal: {
           banner: {
+            ariaLabel: 'Cookie consent banner',
             message: 'A few cookies help us improve your experience. See our',
             privacyPolicy: 'Privacy Policy',
             accept: 'Sounds good',
@@ -123,7 +124,7 @@ describe('legal.cookieBanner.component', () => {
     expect(document.body.innerHTML).not.toContain('Sounds good');
   });
 
-  it('renders Accept and Reject buttons when enabled and consentNeeded', async () => {
+  it('renders "Sounds good" and "No thanks" buttons when enabled and consentNeeded', async () => {
     const wrapper = mountBanner();
     await flushPromises();
     // Banner teleports outside wrapper; use findAllComponents to traverse VNode tree

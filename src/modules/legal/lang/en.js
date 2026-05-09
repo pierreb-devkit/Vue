@@ -1,6 +1,7 @@
 export const legalEn = {
   legal: {
     banner: {
+      ariaLabel: 'Cookie consent banner',
       message: 'A few cookies help us improve your experience. See our',
       privacyPolicy: 'Privacy Policy',
       accept: 'Sounds good',

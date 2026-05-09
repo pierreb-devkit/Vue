@@ -3,7 +3,8 @@
     <v-slide-y-reverse-transition>
       <v-card
         v-if="visible"
-        role="dialog"
+        role="region"
+        :aria-label="$t('legal.banner.ariaLabel')"
         aria-live="polite"
         elevation="0"
         class="pa-3"
