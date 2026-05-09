@@ -116,20 +116,38 @@ export function seoInjectPlugin(config) {
       if (og.image)
         tags.push(`  <meta name="twitter:image" content="${escapeHtml(og.image)}">`);
 
-      // JSON-LD structured data
-      const schema = seo.schema || {};
-      if (schema.enabled && schema.type) {
-        const jsonLd = {
+      // JSON-LD structured data — supports both legacy single-schema and new multi-schema array
+      const buildJsonLd = (entry) => {
+        if (!entry || !entry.type) return null;
+        const base = {
           '@context': 'https://schema.org',
-          '@type': schema.type,
-          name: schema.name || app.title,
-          url: app.url,
-          description: app.description,
-          ...(schema.jobTitle && { jobTitle: schema.jobTitle }),
-          ...(schema.sameAs?.length && { sameAs: schema.sameAs }),
-          ...(og.image && { image: og.image }),
+          '@type': entry.type,
+          name: entry.name || app.title,
+          url: entry.url || app.url,
+          description: entry.description || app.description,
+          ...(entry.jobTitle && { jobTitle: entry.jobTitle }),
+          ...(entry.sameAs?.length && { sameAs: entry.sameAs }),
+          ...((entry.image || og.image) && { image: entry.image || og.image }),
         };
-        const safeJson = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+        return base;
+      };
+
+      const ldEntries = [];
+      // Legacy single-schema path (back-compat)
+      const legacy = seo.schema || {};
+      if (legacy.enabled && legacy.type) {
+        const built = buildJsonLd(legacy);
+        if (built) ldEntries.push(built);
+      }
+      // New multi-schema path
+      if (Array.isArray(seo.schemas)) {
+        for (const entry of seo.schemas) {
+          const built = buildJsonLd(entry);
+          if (built) ldEntries.push(built);
+        }
+      }
+      for (const ld of ldEntries) {
+        const safeJson = JSON.stringify(ld).replace(/</g, '\\u003c');
         tags.push(`  <script type="application/ld+json">${safeJson}</script>`);
       }
 

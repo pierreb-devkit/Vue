@@ -408,6 +408,69 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('seo.schemas[] multi-schema (#4092)', () => {
+    it('emits one ld+json per entry in seo.schemas', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'Self-driving scrapers',
+          seo: {
+            schemas: [
+              { type: 'Organization', name: 'Trawl' },
+              { type: 'WebSite', name: 'Trawl', url: 'https://trawl.me' },
+            ],
+          },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      const matches = out.match(/<script type="application\/ld\+json">/g) || [];
+      expect(matches.length).toBe(2);
+      expect(out).toContain('"@type":"Organization"');
+      expect(out).toContain('"@type":"WebSite"');
+    });
+
+    it('keeps single seo.schema legacy path when schemas[] is absent (back-compat)', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: { schema: { enabled: true, type: 'SoftwareApplication' } },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toMatch(/<script type="application\/ld\+json">[^<]*"@type":"SoftwareApplication"/);
+    });
+
+    it('emits both legacy schema AND schemas[] when both are configured', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schema: { enabled: true, type: 'WebSite' },
+            schemas: [{ type: 'Organization', name: 'Trawl' }],
+          },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      const matches = out.match(/<script type="application\/ld\+json">/g) || [];
+      expect(matches.length).toBe(2);
+    });
+
+    it('skips a schema entry without a type', () => {
+      const config = { app: { title: 'X', seo: { schemas: [{ name: 'no-type' }] } } };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).not.toContain('<script type="application/ld+json">');
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();
