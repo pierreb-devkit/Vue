@@ -53,6 +53,16 @@ Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/
 - **Post-login redirect**: Set `sign.route` in global config override. Used by signin, signup, and org flows. Default: `/tasks`.
 - **Custom home page**: Replace `home.router.js` with a project-specific router that maps `/` to a custom view. Set `display: false` in route meta to hide from sidenav.
 
+## Stack-managed entry points
+
+- `src/main.js` is **strictly stack-managed**. Downstream projects MUST NOT add side-effect imports here — global CSS, analytics config, sentry tags, plugin bootstrap, etc. — because `/update-stack --theirs` will silently wipe them on the next sync.
+- Downstream-only side effects belong in a project-owned entry:
+  - A project view that always mounts (e.g. `src/modules/{project}/views/{project}.view.vue`).
+  - A project module index imported from a downstream-only file.
+  - A project-scoped barrel imported from a downstream-only `App.vue` slot or layout.
+- If a downstream project has no such entry, the right escape hatch is to create one (issue [pierreb-devkit/Vue#4093](https://github.com/pierreb-devkit/Vue/issues/4093) — option C is reserved for future migration if option A friction grows).
+- This rule applies retroactively: when `/update-stack` reports `src/main.js` as a conflict, the downstream side of the conflict must be moved to a project-only entry, never re-applied as a `--ours` patch.
+
 ## Guardrails
 
 - Never commit secrets (`.env*`, keys, tokens)

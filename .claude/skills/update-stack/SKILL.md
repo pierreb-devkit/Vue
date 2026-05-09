@@ -107,3 +107,24 @@ Read the last entries — they list breaking changes requiring updates in projec
 Diff project modules against `src/modules/tasks` (stack reference). Fix any pattern drift flagged by `ERRORS.md`.
 
 ### 6. `/verify`
+
+---
+
+### Red flag: conflicts in `src/main.js`
+
+`src/main.js` is stack-managed. If `/update-stack` reports a conflict here, do NOT keep the downstream side via `--ours`. Instead:
+
+1. List the downstream-only lines:
+
+   ```bash
+   # Show the actual downstream-only lines that exist locally but not in upstream stack
+   git diff devkit-vue/master..HEAD -- src/main.js
+   # (alternatively, check the conflict markers left by the merge)
+   git log --oneline -- src/main.js | head -10
+   ```
+
+2. Move each downstream-only side-effect (`import './modules/.../foo.css'`, posthog/sentry init, custom plugin install) into a project-owned entry — typically `src/modules/{project}/views/{project}.view.vue` (preferred) or a downstream-only module index imported from there.
+3. Take the upstream version of `src/main.js` (`git checkout --theirs src/main.js`) once the migrations are committed.
+4. Add a regression note to `DOWNSTREAM_PATCHES.md` if the migration is non-obvious.
+
+This protects against the silent visual / analytics regressions seen in `comes-io/trawl_vue#856` (per-card mesh/grain CSS wiped on stack sync).
