@@ -6,7 +6,7 @@ import * as directives from 'vuetify/directives';
 import { ref } from 'vue';
 import { createI18n } from 'vue-i18n';
 
-// v-snackbar uses visualViewport which is not available in happy-dom
+// Vuetify components use visualViewport which is not available in happy-dom
 if (typeof globalThis.visualViewport === 'undefined') {
   globalThis.visualViewport = { addEventListener: vi.fn(), removeEventListener: vi.fn(), width: 1024, height: 768 };
 }
@@ -46,11 +46,12 @@ const i18n = () =>
       en: {
         legal: {
           banner: {
-            message: 'We use analytics cookies to improve {appName}. See our',
+            ariaLabel: 'Cookie consent banner',
+            message: 'A few cookies help us improve your experience. See our',
             privacyPolicy: 'Privacy Policy',
-            accept: 'Accept',
-            reject: 'Reject',
-            revokeMessage: 'Update your cookie preferences for {appName}.',
+            accept: 'Sounds good',
+            reject: 'No thanks',
+            revokeMessage: 'Want to revisit your cookie choices for {appName}?',
           },
         },
       },
@@ -96,45 +97,47 @@ describe('legal.cookieBanner.component', () => {
     document.body.innerHTML = '';
   });
 
-  it('does not render snackbar when cookieConsent.enabled is false', () => {
-    const wrapper = mountBanner({ enabled: false });
-    expect(wrapper.find('.v-snackbar').exists()).toBe(false);
+  it('does not render banner when cookieConsent.enabled is false', async () => {
+    mountBanner({ enabled: false });
+    await flushPromises();
+    const buttons = wrapper.findAllComponents({ name: 'VBtn' });
+    expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(false);
   });
 
-  it('renders snackbar after mount completes (isMounted hydration guard lifts on onMounted)', async () => {
-    // The component gates v-snackbar on `isMounted` (set true in onMounted) to prevent
-    // prerender from capturing the teleported snackbar outside #app, which would cause
+  it('renders banner after mount completes (isMounted hydration guard lifts on onMounted)', async () => {
+    // The component gates the v-card on `isMounted` (set true in onMounted) to prevent
+    // prerender from capturing the teleported banner outside #app, which would cause
     // Vue hydration to mount a second banner alongside the prerendered one.
     // In the test environment onMounted fires synchronously, so the banner IS visible
     // immediately after mount — confirming the guard correctly lifts at runtime.
     const w = mountBanner();
     await flushPromises();
     const buttons = w.findAllComponents({ name: 'VBtn' });
-    expect(buttons.some((b) => b.text() === 'Accept')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(true);
   });
 
-  it('does not render snackbar content when consentNeeded is false', async () => {
+  it('does not render banner content when consentNeeded is false', async () => {
     consentNeeded.value = false;
     mountBanner();
     await flushPromises();
-    // v-snackbar teleports outside wrapper; query document.body for content
-    expect(document.body.innerHTML).not.toContain('Accept');
+    // Banner teleports outside wrapper via <Teleport to="body">; query document.body for content
+    expect(document.body.innerHTML).not.toContain('Sounds good');
   });
 
-  it('renders Accept and Reject buttons when enabled and consentNeeded', async () => {
+  it('renders "Sounds good" and "No thanks" buttons when enabled and consentNeeded', async () => {
     const wrapper = mountBanner();
     await flushPromises();
-    // v-snackbar teleports outside wrapper; use findAllComponents to traverse VNode tree
+    // Banner teleports outside wrapper; use findAllComponents to traverse VNode tree
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    expect(buttons.some((b) => b.text() === 'Accept')).toBe(true);
-    expect(buttons.some((b) => b.text() === 'Reject')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'No thanks')).toBe(true);
   });
 
   it('Accept button calls accept()', async () => {
     const wrapper = mountBanner();
     await flushPromises();
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    const acceptBtn = buttons.find((b) => b.text() === 'Accept');
+    const acceptBtn = buttons.find((b) => b.text() === 'Sounds good');
     expect(acceptBtn).toBeTruthy();
     await acceptBtn.trigger('click');
     expect(acceptMock).toHaveBeenCalledOnce();
@@ -144,7 +147,7 @@ describe('legal.cookieBanner.component', () => {
     const wrapper = mountBanner();
     await flushPromises();
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    const rejectBtn = buttons.find((b) => b.text() === 'Reject');
+    const rejectBtn = buttons.find((b) => b.text() === 'No thanks');
     expect(rejectBtn).toBeTruthy();
     await rejectBtn.trigger('click');
     expect(rejectMock).toHaveBeenCalledOnce();
@@ -153,7 +156,7 @@ describe('legal.cookieBanner.component', () => {
   it('renders privacy policy link to configured path', async () => {
     mountBanner({ privacyPath: '/custom-privacy' });
     await flushPromises();
-    // v-snackbar teleports; query document.body for the rendered link
+    // Banner teleports; query document.body for the rendered link
     expect(document.body.innerHTML).toContain('Privacy Policy');
     // RouterLink stub renders as <a> without "to" attr; check the path via innerHTML
     expect(document.body.innerHTML).toContain('/custom-privacy');
@@ -164,10 +167,10 @@ describe('legal.cookieBanner.component', () => {
     consent.value = { analytics: true };
     mountBanner({ appName: 'Devkit' });
     await flushPromises();
-    expect(document.body.innerHTML).toContain('Update your cookie preferences for Devkit');
+    expect(document.body.innerHTML).toContain('Want to revisit your cookie choices for Devkit');
   });
 
-  it('does not render snackbar when $posthog is not available even if cookieConsent.enabled', async () => {
+  it('does not render banner when $posthog is not available even if cookieConsent.enabled', async () => {
     consentNeeded.value = true;
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const wrapper = mount(LegalCookieBanner, {
@@ -184,13 +187,13 @@ describe('legal.cookieBanner.component', () => {
       attachTo: document.body,
     });
     await flushPromises();
-    expect(document.body.innerHTML).not.toContain('Accept');
+    expect(document.body.innerHTML).not.toContain('Sounds good');
     wrapper.unmount();
     document.body.innerHTML = '';
     consoleSpy.mockRestore();
   });
 
-  it('renders snackbar when $posthog IS available and cookieConsent.enabled', async () => {
+  it('renders banner when $posthog IS available and cookieConsent.enabled', async () => {
     consentNeeded.value = true;
     const wrapper = mount(LegalCookieBanner, {
       global: {
@@ -207,7 +210,7 @@ describe('legal.cookieBanner.component', () => {
       attachTo: document.body,
     });
     await flushPromises();
-    expect(document.body.innerHTML).toContain('Accept');
+    expect(document.body.innerHTML).toContain('Sounds good');
     wrapper.unmount();
     document.body.innerHTML = '';
   });

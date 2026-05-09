@@ -1,11 +1,12 @@
 export const legalFr = {
   legal: {
     banner: {
-      message: "Nous utilisons des cookies d'analyse pour améliorer {appName}. Consultez notre",
+      ariaLabel: 'Bandeau de consentement aux cookies',
+      message: 'Quelques cookies nous aident à améliorer votre expérience. Voir la',
       privacyPolicy: 'Politique de confidentialité',
-      accept: 'Accepter',
-      reject: 'Refuser',
-      revokeMessage: 'Mettez à jour vos préférences de cookies pour {appName}.',
+      accept: 'Ok pour moi',
+      reject: 'Non merci',
+      revokeMessage: 'Envie de revoir vos choix de cookies sur {appName} ?',
     },
     footer: {
       sectionTitle: 'Mentions légales',
