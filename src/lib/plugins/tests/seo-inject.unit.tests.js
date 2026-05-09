@@ -541,6 +541,26 @@ describe('seoInjectPlugin', () => {
       expect(out).toContain('"screenshot":"https://trawl.me/og.png"');
     });
 
+    it('skips non-object offers entries (defensive)', () => {
+      const config = {
+        app: {
+          title: 'X',
+          url: 'https://x.test',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                offers: [null, 'invalid', { type: 'Offer', price: '0' }, undefined],
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"offers":[{"@type":"Offer","price":"0"}]');
+    });
+
     it('omits rich fields when absent (no empty keys)', () => {
       const config = {
         app: {
