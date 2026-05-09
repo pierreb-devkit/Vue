@@ -84,10 +84,10 @@ export function seoInjectPlugin(config) {
       if (app.url)
         tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
 
-      // Theme color
-      const primaryColor = getPrimaryColor(config);
-      if (primaryColor)
-        tags.push(`  <meta name="theme-color" content="${escapeHtml(primaryColor)}">`);
+      // Theme color — explicit override wins over Vuetify primary
+      const themeColor = seo.themeColor || getPrimaryColor(config);
+      if (themeColor)
+        tags.push(`  <meta name="theme-color" content="${escapeHtml(themeColor)}">`);
 
       // Preconnect hints
       const preconnectUrls = seo.preconnect || [];
