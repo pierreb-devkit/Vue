@@ -46,11 +46,11 @@ const i18n = () =>
       en: {
         legal: {
           banner: {
-            message: 'We use analytics cookies to improve {appName}. See our',
+            message: 'A few cookies help us improve your experience. See our',
             privacyPolicy: 'Privacy Policy',
-            accept: 'Accept',
-            reject: 'Reject',
-            revokeMessage: 'Update your cookie preferences for {appName}.',
+            accept: 'Sounds good',
+            reject: 'No thanks',
+            revokeMessage: 'Want to revisit your cookie choices for {appName}?',
           },
         },
       },
@@ -110,7 +110,7 @@ describe('legal.cookieBanner.component', () => {
     const w = mountBanner();
     await flushPromises();
     const buttons = w.findAllComponents({ name: 'VBtn' });
-    expect(buttons.some((b) => b.text() === 'Accept')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(true);
   });
 
   it('does not render snackbar content when consentNeeded is false', async () => {
@@ -118,7 +118,7 @@ describe('legal.cookieBanner.component', () => {
     mountBanner();
     await flushPromises();
     // v-snackbar teleports outside wrapper; query document.body for content
-    expect(document.body.innerHTML).not.toContain('Accept');
+    expect(document.body.innerHTML).not.toContain('Sounds good');
   });
 
   it('renders Accept and Reject buttons when enabled and consentNeeded', async () => {
@@ -126,15 +126,15 @@ describe('legal.cookieBanner.component', () => {
     await flushPromises();
     // v-snackbar teleports outside wrapper; use findAllComponents to traverse VNode tree
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    expect(buttons.some((b) => b.text() === 'Accept')).toBe(true);
-    expect(buttons.some((b) => b.text() === 'Reject')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(true);
+    expect(buttons.some((b) => b.text() === 'No thanks')).toBe(true);
   });
 
   it('Accept button calls accept()', async () => {
     const wrapper = mountBanner();
     await flushPromises();
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    const acceptBtn = buttons.find((b) => b.text() === 'Accept');
+    const acceptBtn = buttons.find((b) => b.text() === 'Sounds good');
     expect(acceptBtn).toBeTruthy();
     await acceptBtn.trigger('click');
     expect(acceptMock).toHaveBeenCalledOnce();
@@ -144,7 +144,7 @@ describe('legal.cookieBanner.component', () => {
     const wrapper = mountBanner();
     await flushPromises();
     const buttons = wrapper.findAllComponents({ name: 'VBtn' });
-    const rejectBtn = buttons.find((b) => b.text() === 'Reject');
+    const rejectBtn = buttons.find((b) => b.text() === 'No thanks');
     expect(rejectBtn).toBeTruthy();
     await rejectBtn.trigger('click');
     expect(rejectMock).toHaveBeenCalledOnce();
@@ -164,7 +164,7 @@ describe('legal.cookieBanner.component', () => {
     consent.value = { analytics: true };
     mountBanner({ appName: 'Devkit' });
     await flushPromises();
-    expect(document.body.innerHTML).toContain('Update your cookie preferences for Devkit');
+    expect(document.body.innerHTML).toContain('Want to revisit your cookie choices for Devkit');
   });
 
   it('does not render snackbar when $posthog is not available even if cookieConsent.enabled', async () => {
@@ -184,7 +184,7 @@ describe('legal.cookieBanner.component', () => {
       attachTo: document.body,
     });
     await flushPromises();
-    expect(document.body.innerHTML).not.toContain('Accept');
+    expect(document.body.innerHTML).not.toContain('Sounds good');
     wrapper.unmount();
     document.body.innerHTML = '';
     consoleSpy.mockRestore();
@@ -207,7 +207,7 @@ describe('legal.cookieBanner.component', () => {
       attachTo: document.body,
     });
     await flushPromises();
-    expect(document.body.innerHTML).toContain('Accept');
+    expect(document.body.innerHTML).toContain('Sounds good');
     wrapper.unmount();
     document.body.innerHTML = '';
   });

@@ -1,44 +1,64 @@
 <template>
-  <v-snackbar
-    v-if="enabled && isMounted"
-    v-model="visible"
-    location="bottom right"
-    :timeout="-1"
-    multi-line
-    :max-width="480"
-    color="surface"
-    :style="{ '--v-layout-bottom': '0px' }"
-  >
-    <div class="text-body-2">
-      {{ message }}
-      <router-link :to="privacyPolicyPath" class="text-primary">
-        {{ $t('legal.banner.privacyPolicy') }}
-      </router-link>
-    </div>
-    <template #actions>
-      <v-btn variant="text" color="primary" @click="onAccept">
-        {{ $t('legal.banner.accept') }}
-      </v-btn>
-      <v-btn variant="text" @click="onReject">
-        {{ $t('legal.banner.reject') }}
-      </v-btn>
-    </template>
-  </v-snackbar>
+  <Teleport v-if="enabled && isMounted" to="body">
+    <v-slide-y-reverse-transition>
+      <v-card
+        v-if="visible"
+        role="dialog"
+        aria-live="polite"
+        elevation="0"
+        class="pa-3"
+        :style="panelStyle"
+      >
+        <p class="text-body-medium ma-0">
+          {{ message }}
+          <router-link
+            :to="privacyPolicyPath"
+            class="text-decoration-underline font-weight-medium text-medium-emphasis"
+          >
+            {{ $t('legal.banner.privacyPolicy') }}
+          </router-link>
+        </p>
+        <div class="d-flex justify-end ga-2 mt-3">
+          <v-btn
+            variant="text"
+            color="on-surface"
+            rounded="pill"
+            size="small"
+            @click="onReject"
+          >
+            {{ $t('legal.banner.reject') }}
+          </v-btn>
+          <v-btn
+            variant="flat"
+            color="primary"
+            rounded="pill"
+            size="small"
+            @click="onAccept"
+          >
+            {{ $t('legal.banner.accept') }}
+          </v-btn>
+        </div>
+      </v-card>
+    </v-slide-y-reverse-transition>
+  </Teleport>
 </template>
 
 <script setup>
 import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useTheme } from 'vuetify';
 import { useCookieConsent } from '../composables/useCookieConsent';
+import { liquidGlassStyle } from '../../../lib/helpers/theme';
 
 const instance = getCurrentInstance();
+const theme = useTheme();
 
 const isMounted = ref(false);
 
 /**
  * Sets the isMounted flag after hydration, skipping Puppeteer prerender
- * environments (UA contains 'HeadlessChrome') to prevent v-snackbar from being
- * captured into static HTML and duplicated on hydration via Vuetify's Teleport.
+ * environments (UA contains 'HeadlessChrome') to prevent the banner from being
+ * captured into static HTML and duplicated on hydration via Vue's Teleport.
  * UA-based detection is more specific than navigator.webdriver (which JSDOM
  * also sets, breaking unit tests).
  * @returns {void}
@@ -94,6 +114,21 @@ const message = computed(() => {
   if (consent.value !== null) return t('legal.banner.revokeMessage', { appName: appName.value });
   return t('legal.banner.message', { appName: appName.value });
 });
+
+const panelStyle = computed(() => ({
+  ...liquidGlassStyle({
+    vuetifyTheme: theme,
+    intensity: 1,
+    tint: 'auto',
+    variant: 'card',
+    border: 'none',
+  }),
+  position: 'fixed',
+  right: 'clamp(12px, 2vw, 24px)',
+  bottom: 'clamp(12px, 2vw, 24px)',
+  zIndex: 2400,
+  maxWidth: 'min(540px, calc(100vw - 24px))',
+}));
 
 /**
  * Delegates to the accept() action from useCookieConsent.

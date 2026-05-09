@@ -1,11 +1,11 @@
 export const legalEn = {
   legal: {
     banner: {
-      message: 'We use analytics cookies to improve {appName}. See our',
+      message: 'A few cookies help us improve your experience. See our',
       privacyPolicy: 'Privacy Policy',
-      accept: 'Accept',
-      reject: 'Reject',
-      revokeMessage: 'Update your cookie preferences for {appName}.',
+      accept: 'Sounds good',
+      reject: 'No thanks',
+      revokeMessage: 'Want to revisit your cookie choices for {appName}?',
     },
     footer: {
       sectionTitle: 'Legal',
