@@ -21,3 +21,4 @@ Use this file as a compact memory of recurring AI mistakes.
 - [2026-03-13] docs: duplicate doc files covering the same topic (e.g. MIGRATION.md + MIGRATIONS.md) -> single file, no duplication
 - [2026-03-15] auth: adding CASL route guard (action/subject) without checking abilities config -> read abilities file first to confirm the ability exists for target roles; deny access by default if no matching ability (do not downgrade to `requiresAuth`)
 - [2026-03-15] pr scope: batching multiple unrelated fixes in one PR -> one fix = one PR to isolate blast radius and reduce iteration loops
+- [2026-05-09] update-stack: adding `import './modules/foo/styles/x.css'` to src/main.js downstream -> moved to project view (`src/modules/{project}/views/{project}.view.vue`). Stack-managed entry; --theirs wipes silently. See pierreb-devkit/Vue#4093.
