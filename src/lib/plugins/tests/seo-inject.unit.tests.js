@@ -421,4 +421,35 @@ describe('seoInjectPlugin', () => {
       expect(() => transform({ app: { title: 'Test' } })).not.toThrow();
     });
   });
+
+  describe('theme-color override (#4092)', () => {
+    it('uses seo.themeColor when present, ignoring vuetify primary', () => {
+      const config = {
+        app: { title: 'X', seo: { themeColor: '#0a0a1a' } },
+        vuetify: { theme: { themes: { light: { colors: { primary: '#e67e22' } } } } },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('<meta name="theme-color" content="#0a0a1a">');
+      expect(out).not.toContain('#e67e22');
+    });
+
+    it('falls back to vuetify primary when seo.themeColor is absent', () => {
+      const config = {
+        app: { title: 'X', seo: {} },
+        vuetify: { theme: { themes: { light: { colors: { primary: '#e67e22' } } } } },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('<meta name="theme-color" content="#e67e22">');
+    });
+
+    it('escapes the override (defence-in-depth)', () => {
+      const config = { app: { title: 'X', seo: { themeColor: '"><script>x</script>' } } };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('&quot;&gt;&lt;script&gt;');
+      expect(out).not.toContain('<script>x');
+    });
+  });
 });
