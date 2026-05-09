@@ -117,7 +117,9 @@ Diff project modules against `src/modules/tasks` (stack reference). Fix any patt
 1. List the downstream-only lines:
 
    ```bash
-   git diff --name-only HEAD..origin/master -- src/main.js
+   # Show the actual downstream-only lines that exist locally but not in upstream stack
+   git diff devkit-vue/master..HEAD -- src/main.js
+   # (alternatively, check the conflict markers left by the merge)
    git log --oneline -- src/main.js | head -10
    ```
 
