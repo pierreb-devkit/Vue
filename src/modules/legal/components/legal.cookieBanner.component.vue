@@ -33,8 +33,17 @@ import { useCookieConsent } from '../composables/useCookieConsent';
 
 const instance = getCurrentInstance();
 
+// Skip render under Puppeteer prerender (UA contains 'HeadlessChrome').
+// Without this, the prerender plugin captures the v-snackbar into the static
+// HTML, then Vue hydrates a SECOND copy at runtime via Vuetify's Teleport →
+// duplicate banner stacked on prod (the prerendered one is non-interactive).
+// UA-based detection is more specific than navigator.webdriver (which JSDOM
+// also sets, breaking unit tests).
 const isMounted = ref(false);
-onMounted(() => { isMounted.value = true; });
+onMounted(() => {
+  if (typeof navigator !== 'undefined' && /HeadlessChrome/.test(navigator.userAgent || '')) return;
+  isMounted.value = true;
+});
 
 /**
  * Reads the devkit config lazily to support both globalProperties (prod) and
@@ -69,7 +78,7 @@ const enabled = computed(() => {
   return true;
 });
 const privacyPolicyPath = computed(() => getConfig()?.legal?.cookieConsent?.privacyPolicyPath || '/legal/privacy');
-const appName = computed(() => getConfig()?.name || '');
+const appName = computed(() => getConfig()?.app?.title || getConfig()?.name || '');
 
 const { consentNeeded, consent, accept, reject } = useCookieConsent();
 const visible = computed({
