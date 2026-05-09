@@ -408,6 +408,175 @@ describe('seoInjectPlugin', () => {
     });
   });
 
+  describe('seo.schemas[] multi-schema (#4092)', () => {
+    it('emits one ld+json per entry in seo.schemas', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'Self-driving scrapers',
+          seo: {
+            schemas: [
+              { type: 'Organization', name: 'Trawl' },
+              { type: 'WebSite', name: 'Trawl', url: 'https://trawl.me' },
+            ],
+          },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      const matches = out.match(/<script type="application\/ld\+json">/g) || [];
+      expect(matches.length).toBe(2);
+      expect(out).toContain('"@type":"Organization"');
+      expect(out).toContain('"@type":"WebSite"');
+    });
+
+    it('keeps single seo.schema legacy path when schemas[] is absent (back-compat)', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: { schema: { enabled: true, type: 'SoftwareApplication' } },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toMatch(/<script type="application\/ld\+json">[^<]*"@type":"SoftwareApplication"/);
+    });
+
+    it('emits both legacy schema AND schemas[] when both are configured', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schema: { enabled: true, type: 'WebSite' },
+            schemas: [{ type: 'Organization', name: 'Trawl' }],
+          },
+        },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      const matches = out.match(/<script type="application\/ld\+json">/g) || [];
+      expect(matches.length).toBe(2);
+    });
+
+    it('skips a schema entry without a type', () => {
+      const config = { app: { title: 'X', seo: { schemas: [{ name: 'no-type' }] } } };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).not.toContain('<script type="application/ld+json">');
+    });
+  });
+
+  describe('rich SoftwareApplication fields (#4092)', () => {
+    it('includes applicationCategory + operatingSystem when set', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                applicationCategory: 'BusinessApplication',
+                operatingSystem: 'Web',
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"applicationCategory":"BusinessApplication"');
+      expect(out).toContain('"operatingSystem":"Web"');
+    });
+
+    it('serialises offers[] as Offer-typed entries', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                offers: [
+                  { type: 'Offer', price: '0', priceCurrency: 'USD', name: 'Free' },
+                  { type: 'Offer', price: '39', priceCurrency: 'USD', name: 'Growth' },
+                ],
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"offers":[{"@type":"Offer","price":"0","priceCurrency":"USD","name":"Free"},{"@type":"Offer","price":"39","priceCurrency":"USD","name":"Growth"}]');
+    });
+
+    it('includes aggregateRating + softwareVersion + screenshot', () => {
+      const config = {
+        app: {
+          title: 'Trawl',
+          url: 'https://trawl.me',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                aggregateRating: { ratingValue: '4.8', ratingCount: '120' },
+                softwareVersion: '2.4.0',
+                screenshot: 'https://trawl.me/og.png',
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"120"}');
+      expect(out).toContain('"softwareVersion":"2.4.0"');
+      expect(out).toContain('"screenshot":"https://trawl.me/og.png"');
+    });
+
+    it('skips non-object offers entries (defensive)', () => {
+      const config = {
+        app: {
+          title: 'X',
+          url: 'https://x.test',
+          description: 'X',
+          seo: {
+            schemas: [
+              {
+                type: 'SoftwareApplication',
+                offers: [null, 'invalid', { type: 'Offer', price: '0' }, undefined],
+              },
+            ],
+          },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('"offers":[{"@type":"Offer","price":"0"}]');
+    });
+
+    it('omits rich fields when absent (no empty keys)', () => {
+      const config = {
+        app: {
+          title: 'X',
+          url: 'https://x.test',
+          description: 'X',
+          seo: { schemas: [{ type: 'SoftwareApplication' }] },
+        },
+      };
+      const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).not.toContain('"offers"');
+      expect(out).not.toContain('"aggregateRating"');
+      expect(out).not.toContain('"applicationCategory"');
+    });
+  });
+
   describe('handles missing config gracefully', () => {
     it('does not throw when config is null', () => {
       expect(() => transform(null)).not.toThrow();
@@ -419,6 +588,37 @@ describe('seoInjectPlugin', () => {
 
     it('does not throw when app.seo is missing', () => {
       expect(() => transform({ app: { title: 'Test' } })).not.toThrow();
+    });
+  });
+
+  describe('theme-color override (#4092)', () => {
+    it('uses seo.themeColor when present, ignoring vuetify primary', () => {
+      const config = {
+        app: { title: 'X', seo: { themeColor: '#0a0a1a' } },
+        vuetify: { theme: { themes: { light: { colors: { primary: '#e67e22' } } } } },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('<meta name="theme-color" content="#0a0a1a">');
+      expect(out).not.toContain('#e67e22');
+    });
+
+    it('falls back to vuetify primary when seo.themeColor is absent', () => {
+      const config = {
+        app: { title: 'X', seo: {} },
+        vuetify: { theme: { themes: { light: { colors: { primary: '#e67e22' } } } } },
+      };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('<meta name="theme-color" content="#e67e22">');
+    });
+
+    it('escapes the override (defence-in-depth)', () => {
+      const config = { app: { title: 'X', seo: { themeColor: '"><script>x</script>' } } };
+      const plugin = seoInjectPlugin(config);
+      const out = plugin.transformIndexHtml('<html><head></head><body></body></html>');
+      expect(out).toContain('&quot;&gt;&lt;script&gt;');
+      expect(out).not.toContain('<script>x');
     });
   });
 });

@@ -84,10 +84,10 @@ export function seoInjectPlugin(config) {
       if (app.url)
         tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
 
-      // Theme color
-      const primaryColor = getPrimaryColor(config);
-      if (primaryColor)
-        tags.push(`  <meta name="theme-color" content="${escapeHtml(primaryColor)}">`);
+      // Theme color — explicit override wins over Vuetify primary
+      const themeColor = seo.themeColor || getPrimaryColor(config);
+      if (themeColor)
+        tags.push(`  <meta name="theme-color" content="${escapeHtml(themeColor)}">`);
 
       // Preconnect hints
       const preconnectUrls = seo.preconnect || [];
@@ -116,20 +116,82 @@ export function seoInjectPlugin(config) {
       if (og.image)
         tags.push(`  <meta name="twitter:image" content="${escapeHtml(og.image)}">`);
 
-      // JSON-LD structured data
-      const schema = seo.schema || {};
-      if (schema.enabled && schema.type) {
-        const jsonLd = {
+      // JSON-LD structured data — supports both legacy single-schema and new multi-schema array
+      /**
+       * Build a single JSON-LD object from a schema entry. Falls back to top-level
+       * `app.title` / `app.url` / `app.description` when the entry omits them.
+       * Rich SoftwareApplication-style fields (applicationCategory, operatingSystem,
+       * offers[], aggregateRating, softwareVersion, screenshot) are folded in when
+       * present, regardless of @type, to avoid a schema.org allow-list that would
+       * lag upstream evolution. Returns null when the entry is falsy or has no `type`.
+       *
+       * @param {object | null} entry - schema entry from `seo.schemas[]` or legacy `seo.schema`
+       * @returns {object | null} JSON-LD object ready to be JSON.stringify'd, or null to skip
+       */
+      const buildJsonLd = (entry) => {
+        if (!entry || !entry.type) return null;
+        const base = {
           '@context': 'https://schema.org',
-          '@type': schema.type,
-          name: schema.name || app.title,
-          url: app.url,
-          description: app.description,
-          ...(schema.jobTitle && { jobTitle: schema.jobTitle }),
-          ...(schema.sameAs?.length && { sameAs: schema.sameAs }),
-          ...(og.image && { image: og.image }),
+          '@type': entry.type,
+          name: entry.name || app.title,
+          url: entry.url || app.url,
+          description: entry.description || app.description,
+          ...(entry.jobTitle && { jobTitle: entry.jobTitle }),
+          ...(entry.sameAs?.length && { sameAs: entry.sameAs }),
+          ...((entry.image || og.image) && { image: entry.image || og.image }),
         };
-        const safeJson = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+
+        // Rich SoftwareApplication-style fields (#4092). Emit when present regardless of @type
+        // to avoid hard-coding a type allow-list that lags schema.org evolution.
+        if (entry.applicationCategory) base.applicationCategory = entry.applicationCategory;
+        if (entry.operatingSystem) base.operatingSystem = entry.operatingSystem;
+        if (entry.softwareVersion) base.softwareVersion = entry.softwareVersion;
+        if (entry.screenshot) base.screenshot = entry.screenshot;
+
+        if (Array.isArray(entry.offers) && entry.offers.length) {
+          // Filter out non-object entries so a misconfigured downstream cannot crash the build.
+          const validOffers = entry.offers.filter((o) => o && typeof o === 'object');
+          if (validOffers.length) {
+            base.offers = validOffers.map((offer) => ({
+              '@type': offer.type || 'Offer',
+              ...(offer.price !== undefined && { price: offer.price }),
+              ...(offer.priceCurrency && { priceCurrency: offer.priceCurrency }),
+              ...(offer.name && { name: offer.name }),
+              ...(offer.priceValidUntil && { priceValidUntil: offer.priceValidUntil }),
+              ...(offer.url && { url: offer.url }),
+            }));
+          }
+        }
+
+        if (entry.aggregateRating && typeof entry.aggregateRating === 'object') {
+          base.aggregateRating = {
+            '@type': 'AggregateRating',
+            ...(entry.aggregateRating.ratingValue !== undefined && { ratingValue: entry.aggregateRating.ratingValue }),
+            ...(entry.aggregateRating.ratingCount !== undefined && { ratingCount: entry.aggregateRating.ratingCount }),
+            ...(entry.aggregateRating.bestRating !== undefined && { bestRating: entry.aggregateRating.bestRating }),
+            ...(entry.aggregateRating.worstRating !== undefined && { worstRating: entry.aggregateRating.worstRating }),
+          };
+        }
+
+        return base;
+      };
+
+      const ldEntries = [];
+      // Legacy single-schema path (back-compat)
+      const legacy = seo.schema || {};
+      if (legacy.enabled && legacy.type) {
+        const built = buildJsonLd(legacy);
+        if (built) ldEntries.push(built);
+      }
+      // New multi-schema path
+      if (Array.isArray(seo.schemas)) {
+        for (const entry of seo.schemas) {
+          const built = buildJsonLd(entry);
+          if (built) ldEntries.push(built);
+        }
+      }
+      for (const ld of ldEntries) {
+        const safeJson = JSON.stringify(ld).replace(/</g, '\\u003c');
         tags.push(`  <script type="application/ld+json">${safeJson}</script>`);
       }
 
