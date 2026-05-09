@@ -138,9 +138,12 @@ const getConfiguration = async () => {
     }
   }
 
-  // 5. DEVKIT_VUE_* env var overrides (final layer)
+  // 5. DEVKIT_VUE_* env var overrides (final layer).
+  // Skip empty-string values: they're typically Dockerfile ARG defaults that
+  // BuildKit leaks into process.env, and treating them as overrides would
+  // silently zero downstream config-file values. See Vue#4110.
   const environmentVars = mapKeys(
-    pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
+    pickBy(process.env, (value, key) => key.startsWith('DEVKIT_VUE_') && value !== ''),
     (_v, k) => k.split('_').slice(2).join('.'),
   );
   const environmentConfigVars = {};
