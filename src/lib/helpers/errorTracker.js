@@ -17,12 +17,17 @@ const isEnabled = (value) => value === true || value === 'true';
  * Capture an exception via PostHog Error Tracking.
  *
  * Active when `config.analytics.posthog.key` is set AND
- * `config.analytics.posthog.errorTracking === true`.
+ * `config.analytics.posthog.errorTracking` is `true` or `'true'`
+ * (boolean or Docker ARG string).
+ *
+ * Non-Error values (string, number, object, null) are normalised into the
+ * PostHog `$exception` payload — callers should prefer passing an Error
+ * instance but any value is accepted.
  *
  * Silent no-op when PostHog is not configured or errorTracking is not opted-in.
  * Never throws — tracker errors must never break the calling code.
  *
- * @param {Error} err - Error to capture
+ * @param {unknown} err - Error or any thrown value to capture
  * @param {Object} [ctx] - Optional extra context attached to the event
  * @returns {void}
  */
