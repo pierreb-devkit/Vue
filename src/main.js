@@ -25,7 +25,6 @@ app.config.globalProperties.routes = routes;
 app
   .use(head)
   .use(pinia)
-  .use(plugins.sentry, { router: appRouter })
   .use(appRouter)
   .use(abilitiesPlugin, ability)
   .use(plugins.aos)
@@ -40,8 +39,7 @@ app
 // Initialize stores after all plugins are loaded
 initializeStores(routes);
 
-// Wire global error handlers — fan-out to active trackers (Sentry / PostHog)
-// Must be set after plugins so Sentry is already initialised
+// Wire global error handlers — fan-out to PostHog Error Tracking
 app.config.errorHandler = (err, instance, info) => {
   const error = err instanceof Error ? err : new Error(String(err));
   const componentName = instance?.$?.type?.name || instance?.$?.type?.__name || instance?.$options?.name;
@@ -55,8 +53,7 @@ app.config.errorHandler = (err, instance, info) => {
 
 app.mount('#app');
 
-// Window-level safety net — Sentry's native onerror/onunhandledrejection are
-// disabled (see plugins/sentry.js) so our fan-out is the single capture path.
+// Window-level safety net — PostHog is the single capture path for global errors.
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     captureException(

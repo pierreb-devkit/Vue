@@ -82,21 +82,15 @@ export default {
   },
   analytics: {
     posthog: { // PostHog analytics — uncomment host + key to enable
-      // host: 'https://app.posthog.com', // PostHog instance URL
-      // key: 'ph_project_api_key', // PostHog project API key
-      errorTracking: false, // opt-in: capture JS exceptions to PostHog
+      // host: 'https://eu.i.posthog.com', // PostHog instance URL
+      // key: 'ph_project_api_key', // PostHog project API key (public-by-design)
+      errorTracking: true, // enable PostHog Error Tracking ($exception events)
       autoCapture: false, // opt-in: auto-capture clicks, inputs, form submissions
       sessionReplay: false, // opt-in: record and replay user sessions (GDPR-sensitive)
       featureFlags: false, // opt-in: fetch and evaluate feature flags
       surveys: false, // opt-in: show in-app PostHog surveys
       webVitals: false, // opt-in: capture Core Web Vitals
       capturePageleave: false, // opt-in: capture page-leave events
-    },
-    sentry: { // Sentry error tracking — set dsn + enabled to activate
-      dsn: '', // Sentry DSN (e.g. 'https://examplePublicKey@o0.ingest.sentry.io/0')
-      environment: 'development', // environment tag sent with events
-      enabled: false, // true to enable Sentry SDK initialization
-      tracesSampleRate: 0.1, // performance tracing sample rate (0–1)
     },
   },
 };

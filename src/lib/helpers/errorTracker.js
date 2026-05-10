@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-import * as Sentry from '@sentry/vue';
 import posthog from 'posthog-js';
 import config from '../../config/index.js';
 
@@ -15,14 +14,12 @@ import config from '../../config/index.js';
 const isEnabled = (value) => value === true || value === 'true';
 
 /**
- * Capture an exception, fanning out to all active trackers.
+ * Capture an exception via PostHog Error Tracking.
  *
- * - Sentry  : active when `config.analytics.sentry.dsn` is set and
- *             `enabled !== false`
- * - PostHog : active when `config.analytics.posthog.key` is set AND
- *             `config.analytics.posthog.errorTracking === true`
+ * Active when `config.analytics.posthog.key` is set AND
+ * `config.analytics.posthog.errorTracking === true`.
  *
- * Silent no-op when neither tracker is configured.
+ * Silent no-op when PostHog is not configured or errorTracking is not opted-in.
  * Never throws — tracker errors must never break the calling code.
  *
  * @param {Error} err - Error to capture
@@ -30,15 +27,7 @@ const isEnabled = (value) => value === true || value === 'true';
  * @returns {void}
  */
 const captureException = (err, ctx = {}) => {
-  // Sentry fan-out
-  try {
-    const sentryConfig = config?.analytics?.sentry;
-    if (sentryConfig?.dsn && sentryConfig?.enabled !== false) {
-      Sentry.captureException(err, { extra: ctx });
-    }
-  } catch { /* tracker must never break caller */ }
-
-  // PostHog fan-out — only when errorTracking is explicitly opted-in
+  // PostHog Error Tracking — only when errorTracking is explicitly opted-in
   try {
     const phConfig = config?.analytics?.posthog;
     if (phConfig?.key && isEnabled(phConfig?.errorTracking)) {

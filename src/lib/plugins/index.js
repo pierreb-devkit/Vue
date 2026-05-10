@@ -3,7 +3,6 @@
  */
 import vuetify from './vuetify';
 import posthog from './posthog';
-import sentry from './sentry';
 import dayjs from './dayjs';
 import images from './images';
 import aos from './aos';
@@ -17,7 +16,6 @@ import i18n from './i18n';
 export default {
   vuetify,
   posthog,
-  sentry,
   dayjs,
   images,
   aos,
