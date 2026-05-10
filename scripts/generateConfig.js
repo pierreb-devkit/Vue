@@ -139,11 +139,19 @@ const getConfiguration = async () => {
   }
 
   // 5. DEVKIT_VUE_* env var overrides (final layer).
-  // Skip empty-string values: they're typically Dockerfile ARG defaults that
-  // BuildKit leaks into process.env, and treating them as overrides would
-  // silently zero downstream config-file values. See Vue#4110.
+  // Empty-string values DO override (intentional clear pattern: workflow build-args
+  // pass `DEVKIT_VUE_X=` to neutralize a config-file default for prod builds, e.g.
+  // a dev port hardcoded in {project}.config.js that should resolve to the prod
+  // ingress URL without a port segment).
+  // The original Vue#4110 bug (empty ARG defaults from Dockerfile leaking into env
+  // and silently zeroing config-file values) is mitigated by dropping ARG defaults
+  // in the upstream Devkit Dockerfile (Vue#4112 part 1) — downstream Dockerfiles
+  // must do the same to stay safe. The earlier defense-in-depth filter
+  // (`value !== ''`) was over-correction: it broke the documented Layer 5 contract
+  // and silently ignored explicit-clear overrides, causing the trawl prod signin
+  // outage on 2026-05-09 (port `:3010` from trawl.config.js could not be cleared).
   const environmentVars = mapKeys(
-    pickBy(process.env, (value, key) => key.startsWith('DEVKIT_VUE_') && value !== ''),
+    pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),
   );
   const environmentConfigVars = {};
