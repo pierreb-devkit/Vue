@@ -289,6 +289,14 @@ export const billingFr = {
       buyUnits: 'Acheter des unités',
       /** i18n key: billing.upgradePrompt.upgrade */
       upgrade: 'Passer à un plan supérieur',
+      /** i18n key: billing.upgradePrompt.postGrantTitle */
+      postGrantTitle: 'Votre crédit de démarrage est épuisé',
+      /** i18n key: billing.upgradePrompt.postGrantBody */
+      postGrantBody: "Vous avez utilisé vos 500 crédits offerts à l'inscription. Achetez un pack Boost pour continuer, ou passez à un abonnement mensuel.",
+      /** i18n key: billing.upgradePrompt.postGrantBuyPack */
+      postGrantBuyPack: 'Acheter un pack Boost — 9 $',
+      /** i18n key: billing.upgradePrompt.postGrantUpgrade */
+      postGrantUpgrade: 'Passer à Growth / Pro',
     },
   },
 };

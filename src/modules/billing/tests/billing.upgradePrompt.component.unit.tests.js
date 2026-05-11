@@ -103,4 +103,110 @@ describe('BillingUpgradePrompt', () => {
     expect(wrapper.text()).toContain('This feature requires the');
     expect(wrapper.text()).not.toContain("You've used");
   });
+
+  describe('post-grant variant (exhaustedAfterGrant)', () => {
+    /**
+     * Mount with billing store pre-seeded with the given state fields.
+     * @param {Object} storeState Fields to set on the billingStore.
+     * @returns {import('@vue/test-utils').VueWrapper}
+     */
+    const mountWithStore = (storeState) => {
+      const store = useBillingStore();
+      Object.assign(store, storeState);
+      return mount(BillingUpgradePrompt, {
+        props: { requiredPlan: 'growth', mode: 'meter' },
+        global: {
+          plugins: [vuetify, i18n],
+          stubs: { RouterLink: true },
+        },
+      });
+    };
+
+    it('renders post-grant copy when exhaustedAfterGrant is true', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      expect(wrapper.text()).toMatch(/signup grant.*depleted|free compute.*used up/i);
+    });
+
+    it('renders Boost pack CTA first (primary) in post-grant variant', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      const packBtn = wrapper.find('[data-test="cta-pack"]');
+      expect(packBtn.exists()).toBe(true);
+      expect(packBtn.text()).toMatch(/boost|pack/i);
+    });
+
+    it('renders secondary upgrade CTA in post-grant variant', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      const upgradeBtn = wrapper.find('[data-test="cta-upgrade"]');
+      expect(upgradeBtn.exists()).toBe(true);
+      expect(upgradeBtn.text()).toMatch(/upgrade/i);
+    });
+
+    it('does not render post-grant variant when plan is not free', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'growth' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+    });
+
+    it('does not render post-grant variant when balance is positive', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 100 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+    });
+
+    it('does not render post-grant variant when no signup_grant entry in ledger', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'pack', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+    });
+
+    it('does not render post-grant variant when subscription is null', () => {
+      const wrapper = mountWithStore({
+        subscription: null,
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+    });
+
+    it('does not render post-grant variant in subscription mode even if exhaustedAfterGrant is true', () => {
+      const store = useBillingStore();
+      Object.assign(store, {
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      // mode='subscription' (default) — post-grant branch must not show, regular prompt must show
+      const wrapper = mount(BillingUpgradePrompt, {
+        props: { requiredPlan: 'growth' }, // mode defaults to 'subscription'
+        global: {
+          plugins: [vuetify, i18n],
+          stubs: { RouterLink: true },
+        },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+      // Regular prompt still shows
+      expect(wrapper.text()).toMatch(/requires the|Upgrade/i);
+    });
+  });
 });

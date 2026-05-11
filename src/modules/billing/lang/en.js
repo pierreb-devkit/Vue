@@ -295,6 +295,14 @@ export const billingEn = {
       buyUnits: 'Buy units',
       /** i18n key: billing.upgradePrompt.upgrade */
       upgrade: 'Upgrade',
+      /** i18n key: billing.upgradePrompt.postGrantTitle */
+      postGrantTitle: 'Your signup grant is depleted',
+      /** i18n key: billing.upgradePrompt.postGrantBody */
+      postGrantBody: 'You used your 500 compute one-shot grant. Buy a Boost pack to keep going, or upgrade for monthly compute.',
+      /** i18n key: billing.upgradePrompt.postGrantBuyPack */
+      postGrantBuyPack: 'Buy Boost pack — $9',
+      /** i18n key: billing.upgradePrompt.postGrantUpgrade */
+      postGrantUpgrade: 'Upgrade Growth / Pro',
     },
   },
 };
