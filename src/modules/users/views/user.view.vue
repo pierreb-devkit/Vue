@@ -177,6 +177,7 @@
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useBilling } from '../../billing/composables/billing.useBilling';
+import { useBillingStore } from '../../billing/stores/billing.store';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -195,15 +196,16 @@ export default {
     BillingSubscriptionsComponent,
   },
   /**
-   * @desc Wires auth, organizations and billing helpers for use across computed
-   * properties and methods.
-   * @returns {{ authStore: Object, organizationsStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   * @desc Wires auth, organizations, billing store and billing helpers for use
+   * across computed properties and methods.
+   * @returns {{ authStore: Object, organizationsStore: Object, billingStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
    */
   setup() {
     const authStore = useAuthStore();
     const organizationsStore = useOrganizationsStore();
+    const billingStore = useBillingStore();
     const { isPlanActive } = useBilling();
-    return { authStore, organizationsStore, isPlanActive };
+    return { authStore, organizationsStore, billingStore, isPlanActive };
   },
   data() {
     return {
@@ -269,6 +271,20 @@ export default {
      */
     showSubscriptionsTab(val) {
       if (val) this.applyTabFromRoute();
+    },
+    /**
+     * @desc Refetch billing subscription whenever the auth state changes.
+     * Without this, the Subscriptions tab condition re-evaluates from a stale
+     * empty billingStore after login and only appears on full page refresh.
+     * Silent catch: UI must still work on servers where billing is disabled.
+     */
+    'authStore.isLoggedIn': {
+      immediate: true,
+      async handler(loggedIn) {
+        if (loggedIn) {
+          await this.billingStore.fetchSubscription().catch(() => {});
+        }
+      },
     },
   },
   /**

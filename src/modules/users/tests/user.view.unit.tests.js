@@ -281,3 +281,87 @@ describe('UserView – tab routing from query/hash', () => {
     expect(wrapper.vm.tab).toBe('profile');
   });
 });
+
+// ── UserView – billing refetch on auth state change ──────────────────────────
+
+describe('UserView – billing refetch on auth state change', () => {
+  let authStore;
+  let billingStore;
+  let organizationsStore;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    authStore = useAuthStore();
+    billingStore = useBillingStore();
+    organizationsStore = useOrganizationsStore();
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
+  });
+
+  it('calls fetchSubscription immediately when isLoggedIn is true at mount', async () => {
+    authStore.cookieExpire = Date.now() + 3600000; // logged in
+    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
+
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    // Flush microtasks so the immediate watcher handler resolves
+    await new Promise((r) => setTimeout(r, 0));
+    expect(billingStore.fetchSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call fetchSubscription when isLoggedIn is false at mount', async () => {
+    authStore.cookieExpire = 0; // logged out
+    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
+
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(billingStore.fetchSubscription).not.toHaveBeenCalled();
+  });
+
+  it('calls fetchSubscription when isLoggedIn transitions from false to true', async () => {
+    authStore.cookieExpire = 0; // start logged out
+    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
+
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(billingStore.fetchSubscription).not.toHaveBeenCalled();
+
+    // Simulate login
+    authStore.cookieExpire = Date.now() + 3600000;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(billingStore.fetchSubscription).toHaveBeenCalledTimes(1);
+  });
+
+  it('swallows fetchSubscription errors silently (no UI hang)', async () => {
+    authStore.cookieExpire = Date.now() + 3600000; // logged in
+    billingStore.fetchSubscription = vi.fn().mockRejectedValue(new Error('Network error'));
+
+    // Should not throw
+    const wrapper = shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 0));
+    // Component is still alive — no uncaught error
+    expect(wrapper.vm).toBeTruthy();
+  });
+});
