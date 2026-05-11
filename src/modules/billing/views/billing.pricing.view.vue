@@ -212,6 +212,7 @@ export default {
       return this.billingStore.loading;
     },
     currentPlanId() {
+      if (!this.authStore.isLoggedIn) return null;
       return this.billingStore.subscription?.plan ?? 'free';
     },
     meterMode() {
