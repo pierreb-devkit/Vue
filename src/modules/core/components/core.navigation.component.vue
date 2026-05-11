@@ -96,6 +96,8 @@
             </v-list-item>
           </v-list>
         </template>
+        <!-- Compute usage gauge — visible only in meter-mode apps -->
+        <billingComputeGauge />
         <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
         <!-- Sign out -->
         <v-list :style="listStyle" nav>
@@ -126,11 +128,19 @@ import { useTheme, useDisplay } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
+// billing module is a devkit core dependency (not optional) — all downstream
+// projects include it. This follows the same pattern as user.view.vue importing
+// BillingSubscriptionsComponent. A consolidated cross-module refactor is tracked
+// as tech debt; this PR does not introduce a new pattern.
+import billingComputeGauge from '../../billing/components/billing.computeGauge.component.vue';
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
+  components: {
+    billingComputeGauge,
+  },
   data() {
     const theme = useTheme();
     return {
