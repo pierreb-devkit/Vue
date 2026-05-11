@@ -273,17 +273,24 @@ export default {
       if (val) this.applyTabFromRoute();
     },
     /**
-     * @desc Refetch billing subscription whenever the auth state changes.
-     * Without this, the Subscriptions tab condition re-evaluates from a stale
-     * empty billingStore after login and only appears on full page refresh.
-     * Silent catch: UI must still work on servers where billing is disabled.
+     * @desc Refetch organizations + billing subscription whenever the auth
+     * state changes. Tab visibility (`showSubscriptionsTab`) depends on both
+     * `hasOwnerOrAdminRole` (organizations) and the billing feature flag, so
+     * a single billing refetch is not enough — the orgs list must also be
+     * hydrated after fresh login or the tab stays hidden.
+     * Silent catch: UI must still work on servers where billing is disabled
+     * or when either fetch transiently fails.
+     * @param {boolean} loggedIn - Auth state after the change.
+     * @returns {Promise<void>}
      */
     'authStore.isLoggedIn': {
       immediate: true,
       async handler(loggedIn) {
-        if (loggedIn) {
-          await this.billingStore.fetchSubscription().catch(() => {});
-        }
+        if (!loggedIn) return;
+        await Promise.all([
+          this.organizationsStore.fetchOrganizations().catch(() => {}),
+          this.billingStore.fetchSubscription().catch(() => {}),
+        ]);
       },
     },
   },
