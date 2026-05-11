@@ -688,6 +688,80 @@ describe('Billing Store', () => {
     });
   });
 
+  describe('exhaustedAfterGrant getter', () => {
+    it('returns true when plan=free, balance<=0, ledger has signup_grant entry', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(true);
+    });
+
+    it('returns true when balance is negative (overdrawn)', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: -5 };
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(true);
+    });
+
+    it('returns false when plan is not free', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'growth' };
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when balance is positive', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: 100 };
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when ledger has no signup_grant entry', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: [{ source: 'pack', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when ledger entries are empty', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: [], total: 0, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when subscription is null', () => {
+      const store = useBillingStore();
+      store.subscription = null;
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when extrasBalance is null', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = null;
+      store.extrasLedger = { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+
+    it('returns false when extrasLedger has no entries (null-safe)', () => {
+      const store = useBillingStore();
+      store.subscription = { plan: 'free' };
+      store.extrasBalance = { balance: 0 };
+      store.extrasLedger = { entries: null, total: 0, page: 1, limit: 20 };
+      expect(store.exhaustedAfterGrant).toBe(false);
+    });
+  });
+
   describe('clearExtrasIntentId (per-pack)', () => {
     beforeEach(() => {
       sessionStorage.clear();

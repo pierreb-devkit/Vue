@@ -150,6 +150,33 @@ export const useBillingStore = defineStore('billing', {
     extrasLedger: { entries: [], total: 0, page: 1, limit: 20 },
   }),
 
+  getters: {
+    /**
+     * @desc Returns true when the current org is on the Free plan AND has exhausted
+     * their one-shot signup grant. Specifically: plan === 'free', extrasBalance <= 0,
+     * AND the extrasLedger has at least one entry with source === 'signup_grant'.
+     *
+     * Used to trigger the post-grant upgrade modal variant instead of the regular
+     * meter-exhaustion prompt.
+     *
+     * Returns false when any required state is absent (null-safe).
+     * @param {Object} state Pinia store state
+     * @returns {boolean}
+     */
+    exhaustedAfterGrant: (state) => {
+      if (!state.subscription) return false;
+      if (state.subscription.plan !== 'free') return false;
+      if (!state.extrasBalance) return false;
+      const balance = state.extrasBalance.balance ?? 0;
+      if (balance > 0) return false;
+      // Optional chaining: extrasLedger is initialized to {entries:[]} in devkit state, but
+      // downstream projects may override the store shape, so guard defensively.
+      const entries = state.extrasLedger?.entries;
+      if (!Array.isArray(entries) || entries.length === 0) return false;
+      return entries.some((e) => e.source === 'signup_grant');
+    },
+  },
+
   actions: {
     /**
      * @desc Fetch available billing plans (public).

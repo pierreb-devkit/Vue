@@ -112,6 +112,22 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('For pros');
   });
 
+  it('renders plan.badge chip when badge is set (e.g. "500 compute @ signup" for Free)', () => {
+    const planWithBadge = { ...freePlan, badge: '500 compute @ signup' };
+    const wrapper = mountComponent({ plan: planWithBadge });
+    expect(wrapper.text()).toContain('500 compute @ signup');
+  });
+
+  it('does not render badge chip when plan.badge is absent', () => {
+    const wrapper = mountComponent({ plan: freePlan });
+    // freePlan has no badge — chip must be absent
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    // The annual savings chip spacer div is rendered but there's no badge chip
+    // We verify by checking the text doesn't contain any badge content
+    expect(wrapper.text()).not.toContain('500 compute @ signup');
+    expect(wrapper.text()).not.toContain('Most Popular');
+  });
+
   it('displays "Free" for free plan when displayPrice is null', () => {
     const wrapper = mountComponent({ plan: freePlan });
     expect(wrapper.text()).toContain('Free');

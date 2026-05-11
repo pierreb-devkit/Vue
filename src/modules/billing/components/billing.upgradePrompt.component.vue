@@ -1,5 +1,39 @@
 <template>
-  <v-alert type="info" variant="tonal" prominent class="my-4">
+  <!-- Post-grant variant: signup grant is depleted (Free plan, balance = 0, ledger has signup_grant entry) -->
+  <div v-if="exhaustedAfterGrant" class="my-4">
+    <v-alert type="info" variant="tonal" prominent>
+      <template #text>
+        <p class="font-weight-bold mb-1">{{ $t('billing.upgradePrompt.postGrantTitle') }}</p>
+        <p>{{ $t('billing.upgradePrompt.postGrantBody') }}</p>
+      </template>
+      <template #append>
+        <div class="d-flex flex-column ga-2">
+          <v-btn
+            data-test="cta-pack"
+            color="primary"
+            variant="flat"
+            size="small"
+            class="text-none"
+            @click="$emit('buy-pack')"
+          >
+            {{ $t('billing.upgradePrompt.postGrantBuyPack') }}
+          </v-btn>
+          <v-btn
+            data-test="cta-upgrade"
+            variant="text"
+            size="small"
+            class="text-none"
+            to="/pricing"
+          >
+            {{ $t('billing.upgradePrompt.postGrantUpgrade') }}
+          </v-btn>
+        </div>
+      </template>
+    </v-alert>
+  </div>
+
+  <!-- Default / meter variant -->
+  <v-alert v-else type="info" variant="tonal" prominent class="my-4">
     <template #text>
       <span v-if="hasUsageInfo">{{ $t('billing.upgradePrompt.usageInfo', { current, limit, label: displayLabel }) }}</span>
       <span v-else>{{ $t('billing.upgradePrompt.requirePlan', { plan: requiredPlan }) }}</span>
@@ -34,6 +68,7 @@
  * Module dependencies.
  */
 import { useQuota } from '../composables/billing.useQuota';
+import { useBillingStore } from '../stores/billing.store.js';
 
 /**
  * Component definition.
@@ -86,14 +121,23 @@ export default {
   },
   emits: ['buy-pack'],
   /**
-   * @desc Wires useQuota composable and exposes reactive usage and limits maps.
-   * @returns {{ usage: Object, limits: Object }}
+   * @desc Wires useQuota composable and billing store for exhaustedAfterGrant detection.
+   * @returns {{ usage: Object, limits: Object, billingStore: Object }}
    */
   setup() {
     const { usage, limits } = useQuota();
-    return { usage, limits };
+    const billingStore = useBillingStore();
+    return { usage, limits, billingStore };
   },
   computed: {
+    /**
+     * @desc Whether the current user has exhausted their one-shot Free-tier signup grant.
+     * Delegates to the billing store getter for reactivity.
+     * @returns {boolean}
+     */
+    exhaustedAfterGrant() {
+      return this.billingStore.exhaustedAfterGrant;
+    },
     /**
      * @desc Quota key derived from resource and action.
      * @returns {string}
