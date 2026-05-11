@@ -3,6 +3,7 @@
     <!-- Hero + pricing wrapped in animated blur halo -->
     <homeBlurBackgroundComponent
       no-margin
+      full-bleed
       fit-content
       :background-colors="haloPalette.backgroundColors"
       :halo-colors="haloPalette.haloColors"
@@ -212,6 +213,7 @@ export default {
       return this.billingStore.loading;
     },
     currentPlanId() {
+      if (!this.authStore.isLoggedIn) return null;
       return this.billingStore.subscription?.plan ?? 'free';
     },
     meterMode() {

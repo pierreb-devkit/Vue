@@ -127,18 +127,19 @@
       </v-btn>
     </div>
 
-    <!-- Equivalences (meter mode — structured) -->
+    <!-- Equivalences (meter mode — structured) — renders ABOVE features when present -->
     <BillingEquivalencesChipsComponent
       v-if="isStructuredEquivalences"
       :equivalences="equivalences"
+      class="mb-3"
     />
 
-    <!-- Equivalences (meter mode — legacy flat) -->
+    <!-- Equivalences (meter mode — legacy flat) — renders ABOVE features when present -->
     <v-list
       v-else-if="equivalences && equivalences.length > 0"
       density="compact"
       bg-color="transparent"
-      class="pa-0"
+      class="pa-0 mb-3"
     >
       <v-list-item
         v-for="equiv in equivalences"
@@ -152,8 +153,8 @@
       </v-list-item>
     </v-list>
 
-    <!-- Sectioned features (preferred when present and non-empty) -->
-    <template v-else-if="hasSections">
+    <!-- Sectioned features (always renders when sections present, independent of equivalences) -->
+    <template v-if="hasSections">
       <BillingPricingFeatureSectionComponent
         v-for="(section, idx) in plan.featureSections"
         :key="`section-${idx}`"
@@ -163,8 +164,8 @@
       />
     </template>
 
-    <!-- Flat features (backward-compat) -->
-    <v-list v-else density="compact" bg-color="transparent" class="pa-0">
+    <!-- Flat features (backward-compat — only when no sections) -->
+    <v-list v-else-if="plan.features && plan.features.length > 0" density="compact" bg-color="transparent" class="pa-0">
       <v-list-item
         v-for="feature in plan.features"
         :key="feature.text"

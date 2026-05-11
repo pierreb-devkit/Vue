@@ -104,3 +104,15 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Allow feature/pack item text to wrap — Vuetify default v-list-item-title
+   has white-space: nowrap + text-overflow: ellipsis which truncates substantive
+   descriptions like "Stacks on top of subscription quota" into "… q…". */
+.billing-pricing-feature-section :deep(.v-list-item-title) {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.4;
+}
+</style>

@@ -22,6 +22,8 @@
   - backgroundColors (Array): 5 colors for gradient background
   - haloColors (Array): 5 colors for animated halos
   - noMargin (Boolean): If true, removes the -65px top margin (for non-banner usage)
+  - fitContent (Boolean): If true, height is auto (grows with content) instead of fixed vh
+  - fullBleed (Boolean): If true, breaks out of parent width to fill full viewport — use on pages with a v-navigation-drawer offset (signed-in layout)
 
   CONFIG EXAMPLE:
   blur: {
@@ -37,7 +39,7 @@
   }
 -->
 <template>
-  <div class="blur-background" :class="[themeName, { 'no-margin': noMargin }]">
+  <div class="blur-background" :class="[themeName, { 'no-margin': noMargin, 'full-bleed': fullBleed }]">
     <!-- Background layers -->
     <div class="blur-bg">
       <!-- Base gradient layer -->
@@ -96,6 +98,11 @@ export default {
     },
     // When true, height is auto (grows with content) instead of fixed vh
     fitContent: {
+      type: Boolean,
+      default: false,
+    },
+    // Break out of v-main width to fill full viewport (signed-in layout with nav drawer)
+    fullBleed: {
       type: Boolean,
       default: false,
     },
@@ -182,6 +189,18 @@ export default {
 
 .blur-background.no-margin {
   margin-top: 0;
+}
+
+/* full-bleed: break out of parent v-main width so the halo fills the
+   full viewport even when a Vuetify v-navigation-drawer offsets the
+   layout (signed-in users on routes that share the app shell).
+   calc(100vw - (100vw - 100%)) avoids the scrollbar-width inclusion
+   that plain 100vw produces, preventing a horizontal overflow. */
+.blur-background.full-bleed {
+  width: calc(100vw - (100vw - 100%));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .blur-bg {

@@ -358,3 +358,49 @@ describe('BillingPricingView — mode-aware layout', () => {
     expect(wrapper.find('.blur-background').exists()).toBe(true);
   });
 });
+
+// ─── Suite: currentPlanId guest guard ────────────────────────────────────────
+
+describe('BillingPricingView — currentPlanId guest guard', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('returns null when not logged in', async () => {
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+    expect(wrapper.vm.currentPlanId).toBeNull();
+    expect(wrapper.vm.isCurrentPlan('free')).toBe(false);
+  });
+
+  it('returns subscription.plan when logged in with a subscription', async () => {
+    wrapper = mountPricing({ isLoggedIn: true });
+    await flushPromises();
+    store.subscription = { plan: 'growth' };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.currentPlanId).toBe('growth');
+    expect(wrapper.vm.isCurrentPlan('growth')).toBe(true);
+  });
+
+  it('returns "free" when logged in but subscription has no plan', async () => {
+    wrapper = mountPricing({ isLoggedIn: true });
+    await flushPromises();
+    store.subscription = undefined;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.currentPlanId).toBe('free');
+    expect(wrapper.vm.isCurrentPlan('free')).toBe(true);
+  });
+});
