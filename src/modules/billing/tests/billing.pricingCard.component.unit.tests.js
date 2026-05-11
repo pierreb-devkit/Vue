@@ -218,13 +218,14 @@ describe('BillingPricingCardComponent', () => {
     expect(wrapper.text()).toContain('~500 autofixes / week');
   });
 
-  it('hides feature list when equivalences are provided', () => {
+  it('renders feature list alongside equivalences (additive — flat features show when no featureSections)', () => {
+    // proPlan has flat features but no featureSections → v-else-if flat features fires even when equivalences present
     const wrapper = mountComponent({
       plan: proPlan,
       equivalences: [{ label: 'operations / week', count: 2000 }],
     });
-    expect(wrapper.text()).not.toContain('Unlimited projects');
-    expect(wrapper.text()).not.toContain('Priority support');
+    expect(wrapper.text()).toContain('Unlimited projects');
+    expect(wrapper.text()).toContain('Priority support');
   });
 
   it('shows feature list when equivalences prop is null (backward compat)', () => {
@@ -257,9 +258,9 @@ describe('BillingPricingCardComponent', () => {
     });
     const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
     expect(chipsComp.exists()).toBe(true);
-    // Feature list must be hidden
-    expect(wrapper.text()).not.toContain('Unlimited projects');
-    // Legacy bullet list (with tilde prefix) must be hidden
+    // Flat features render additively (proPlan has no featureSections, so v-else-if flat list fires)
+    expect(wrapper.text()).toContain('Unlimited projects');
+    // Legacy bullet list (with tilde prefix) must be hidden — chips component is used instead
     expect(wrapper.text()).not.toContain('~500');
   });
 
@@ -410,5 +411,86 @@ describe('BillingPricingCardComponent', () => {
     const emits = wrapper.emitted('select');
     expect(emits).toBeTruthy();
     expect(emits[0][0].intent).toBe('signup');
+  });
+
+  // ── Bug fix: equivalences + featureSections additive rendering ────────────
+
+  describe('equivalences + featureSections additive rendering', () => {
+    it('renders BOTH equivalences chips AND feature sections when both present', () => {
+      const plan = {
+        id: 'pro',
+        name: 'Pro',
+        tagline: 't',
+        cta: 'Go Pro',
+        monthlyPrice: 39,
+        annualPrice: 390,
+        features: [{ text: 'flat-feature', included: true }],
+        featureSections: [
+          { title: 'Core', items: [{ text: 'sectioned-feature' }] },
+        ],
+      };
+      const wrapper = mountComponent({
+        plan,
+        equivalences: [
+          { kind: 'easy', count: 1600, label: 'scrap runs / week' },
+        ],
+      });
+      // Equivalences chips component renders
+      const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
+      expect(chipsComp.exists()).toBe(true);
+      // Feature section renders (independent of equivalences)
+      const sectionComp = wrapper.findComponent({ name: 'BillingPricingFeatureSectionComponent' });
+      expect(sectionComp.exists()).toBe(true);
+      // Sectioned feature text is present
+      expect(wrapper.text()).toContain('sectioned-feature');
+      // Flat features do NOT render (featureSections takes precedence via v-if/v-else-if)
+      expect(wrapper.text()).not.toContain('flat-feature');
+    });
+
+    it('renders ONLY feature sections when equivalences is null', () => {
+      const plan = {
+        id: 'pro',
+        name: 'Pro',
+        tagline: 't',
+        cta: 'Go Pro',
+        monthlyPrice: 39,
+        annualPrice: 390,
+        features: [{ text: 'flat-feature', included: true }],
+        featureSections: [
+          { title: 'Core', items: [{ text: 'sectioned-feature' }] },
+        ],
+      };
+      const wrapper = mountComponent({ plan, equivalences: null });
+      // No chips component
+      const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
+      expect(chipsComp.exists()).toBe(false);
+      // Feature section renders
+      const sectionComp = wrapper.findComponent({ name: 'BillingPricingFeatureSectionComponent' });
+      expect(sectionComp.exists()).toBe(true);
+      expect(wrapper.text()).toContain('sectioned-feature');
+    });
+
+    it('renders ONLY equivalences chips when plan has no featureSections and no flat features', () => {
+      const plan = {
+        id: 'pro',
+        name: 'Pro',
+        tagline: 't',
+        cta: 'Go Pro',
+        monthlyPrice: 39,
+        annualPrice: 390,
+        features: [],
+        featureSections: [],
+      };
+      const wrapper = mountComponent({
+        plan,
+        equivalences: [{ kind: 'easy', count: 800, label: 'ops / week' }],
+      });
+      // Chips component renders
+      const chipsComp = wrapper.findComponent({ name: 'BillingEquivalencesChipsComponent' });
+      expect(chipsComp.exists()).toBe(true);
+      // No feature section (empty featureSections)
+      const sectionComp = wrapper.findComponent({ name: 'BillingPricingFeatureSectionComponent' });
+      expect(sectionComp.exists()).toBe(false);
+    });
   });
 });
