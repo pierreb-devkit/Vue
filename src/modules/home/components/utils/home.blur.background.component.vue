@@ -37,7 +37,7 @@
   }
 -->
 <template>
-  <div class="blur-background" :class="[themeName, { 'no-margin': noMargin }]">
+  <div class="blur-background" :class="[themeName, { 'no-margin': noMargin, 'full-bleed': fullBleed }]">
     <!-- Background layers -->
     <div class="blur-bg">
       <!-- Base gradient layer -->
@@ -96,6 +96,11 @@ export default {
     },
     // When true, height is auto (grows with content) instead of fixed vh
     fitContent: {
+      type: Boolean,
+      default: false,
+    },
+    // Break out of v-main width to fill full viewport (signed-in layout with nav drawer)
+    fullBleed: {
       type: Boolean,
       default: false,
     },
@@ -182,6 +187,16 @@ export default {
 
 .blur-background.no-margin {
   margin-top: 0;
+}
+
+/* full-bleed: break out of parent v-main width so the halo fills the
+   full viewport even when a Vuetify v-navigation-drawer offsets the
+   layout (signed-in users on routes that share the app shell). */
+.blur-background.full-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .blur-bg {

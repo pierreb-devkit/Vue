@@ -3,6 +3,7 @@
     <!-- Hero + pricing wrapped in animated blur halo -->
     <homeBlurBackgroundComponent
       no-margin
+      full-bleed
       fit-content
       :background-colors="haloPalette.backgroundColors"
       :halo-colors="haloPalette.haloColors"
