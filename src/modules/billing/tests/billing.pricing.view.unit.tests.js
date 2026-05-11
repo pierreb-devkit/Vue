@@ -394,4 +394,13 @@ describe('BillingPricingView — currentPlanId guest guard', () => {
     expect(wrapper.vm.currentPlanId).toBe('growth');
     expect(wrapper.vm.isCurrentPlan('growth')).toBe(true);
   });
+
+  it('returns "free" when logged in but subscription has no plan', async () => {
+    wrapper = mountPricing({ isLoggedIn: true });
+    await flushPromises();
+    store.subscription = undefined;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.currentPlanId).toBe('free');
+    expect(wrapper.vm.isCurrentPlan('free')).toBe(true);
+  });
 });
