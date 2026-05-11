@@ -1,6 +1,6 @@
 <template>
-  <!-- Post-grant variant: signup grant is depleted (Free plan, balance = 0, ledger has signup_grant entry) -->
-  <div v-if="exhaustedAfterGrant" class="my-4">
+  <!-- Post-grant variant: signup grant is depleted in meter mode (Free plan, balance = 0, ledger has signup_grant entry) -->
+  <div v-if="exhaustedAfterGrant && mode === 'meter'" class="my-4">
     <v-alert type="info" variant="tonal" prominent>
       <template #text>
         <p class="font-weight-bold mb-1">{{ $t('billing.upgradePrompt.postGrantTitle') }}</p>
@@ -132,7 +132,8 @@ export default {
   computed: {
     /**
      * @desc Whether the current user has exhausted their one-shot Free-tier signup grant.
-     * Delegates to the billing store getter for reactivity.
+     * Delegates to the billing store getter for reactivity. Only rendered in meter mode
+     * (subscription mode is for feature-gating by plan, not meter exhaustion).
      * @returns {boolean}
      */
     exhaustedAfterGrant() {

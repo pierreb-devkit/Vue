@@ -188,5 +188,25 @@ describe('BillingUpgradePrompt', () => {
       });
       expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
     });
+
+    it('does not render post-grant variant in subscription mode even if exhaustedAfterGrant is true', () => {
+      const store = useBillingStore();
+      Object.assign(store, {
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      // mode='subscription' (default) — post-grant branch must not show, regular prompt must show
+      const wrapper = mount(BillingUpgradePrompt, {
+        props: { requiredPlan: 'growth' }, // mode defaults to 'subscription'
+        global: {
+          plugins: [vuetify, i18n],
+          stubs: { RouterLink: true },
+        },
+      });
+      expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
+      // Regular prompt still shows
+      expect(wrapper.text()).toMatch(/requires the|Upgrade/i);
+    });
   });
 });
