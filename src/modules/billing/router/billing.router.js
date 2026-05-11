@@ -25,6 +25,7 @@ export default [
     meta: {
       display: false,
       footer: true,
+      marketing: true, // suppresses v-navigation-drawer for signed-in users (no drawer offset on full-bleed hero)
     },
   },
   {

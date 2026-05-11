@@ -30,7 +30,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <devkitNav v-if="isLoggedIn" />
+    <devkitNav v-if="isLoggedIn && !$route.meta.marketing" />
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
     <authPendingRequestBanner />
