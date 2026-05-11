@@ -168,7 +168,6 @@
           <v-icon icon="fa-solid fa-calendar" size="x-small" aria-hidden="true" />
           <span>{{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}</span>
         </div>
-        <div v-else class="mb-6" />
 
         <!-- Portal error -->
         <v-alert
@@ -183,7 +182,7 @@
         </v-alert>
 
         <!-- CTAs -->
-        <div class="d-flex ga-3 flex-wrap">
+        <div class="d-flex ga-3 flex-wrap" :class="!nextBillingDate && !portalError ? 'mt-6' : ''">
           <v-btn
             color="primary"
             variant="flat"
@@ -882,22 +881,22 @@ export default {
 <style scoped>
 /* Plan card: accent left-border on paid plans */
 .billing-subscriptions__plan-card--paid {
-  border: 1px solid rgb(var(--v-theme-on-surface) / 0.08);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
 
 /* Free plan card: standard border, no accent */
 .billing-subscriptions__plan-card--free {
-  border: 1px solid rgb(var(--v-theme-on-surface) / 0.08);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
 /* Error card: error-tinted border */
 .billing-subscriptions__error-card {
-  border: 1px solid rgb(var(--v-theme-error) / 0.2);
+  border: 1px solid rgba(var(--v-theme-error), 0.2);
 }
 
 /* Meter section cards: consistent surface border */
 .billing-subscriptions .v-card:not(.billing-subscriptions__plan-card):not(.billing-subscriptions__error-card) {
-  border: 1px solid rgb(var(--v-theme-on-surface) / 0.08);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
