@@ -15,8 +15,9 @@
   - none
 -->
 <template>
-  <v-container class="py-6 px-0" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
-    <!-- Checkout success / processing banner -->
+  <v-container class="billing-subscriptions py-6 px-0" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+
+    <!-- ── Status banners ────────────────────────────────────────────────── -->
     <v-alert
       v-if="checkoutProcessing"
       type="info"
@@ -56,23 +57,22 @@
       {{ paymentSuccessMessage }}
     </v-alert>
 
-    <!-- Loading -->
+    <!-- ── Loading ──────────────────────────────────────────────────────── -->
     <v-row v-if="fetchLoading" justify="center" class="py-10">
       <v-progress-circular indeterminate color="primary" />
     </v-row>
 
-    <!-- P1-1: Subscription fetch error — do NOT show free-plan fallback.
-         Suppressed while checkout polling/timeout UX is active to prevent
-         transient fetch errors from disrupting the payment flow. -->
+    <!-- ── P1-1: Subscription fetch error ─────────────────────────────── -->
     <v-card
       v-else-if="subscriptionError && !subscription && !checkoutProcessing && !checkoutTimeout"
       role="alert"
       aria-live="assertive"
       :class="config.vuetify.theme.rounded"
-      class="pa-6 mb-4"
+      class="billing-subscriptions__error-card pa-6 mb-4"
+      elevation="0"
     >
-      <div class="d-flex align-center mb-4">
-        <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" />
+      <div class="d-flex align-center mb-3">
+        <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" aria-hidden="true" />
         <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.unavailable') }}</span>
       </div>
       <p class="text-body-medium text-medium-emphasis mb-4">
@@ -90,15 +90,23 @@
       </v-btn>
     </v-card>
 
-    <!-- Content -->
+    <!-- ── Main content ─────────────────────────────────────────────────── -->
     <template v-else>
-      <!-- ── Current plan card ────────────────────────────────────────── -->
-      <v-card v-if="!subscription || currentPlan === 'free'" :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-        <div class="d-flex align-center mb-4">
-          <span class="text-title-large font-weight-medium mr-3">{{ $t('billing.subscriptions.plan.current') }}</span>
-          <BillingPlanBadgeComponent plan="free" />
+
+      <!-- ── Plan summary card (free) ──────────────────────────────────── -->
+      <v-card
+        v-if="!subscription || currentPlan === 'free'"
+        :class="config.vuetify.theme.rounded"
+        class="billing-subscriptions__plan-card billing-subscriptions__plan-card--free pa-6 mb-4"
+        elevation="0"
+      >
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+          <div class="d-flex align-center ga-3">
+            <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.plan.current') }}</span>
+            <BillingPlanBadgeComponent plan="free" />
+          </div>
         </div>
-        <p class="text-body-medium mb-6">
+        <p class="text-body-medium text-medium-emphasis mb-6">
           {{ $t('billing.subscriptions.plan.free.description') }}
         </p>
         <v-btn
@@ -112,56 +120,56 @@
         </v-btn>
       </v-card>
 
-      <v-card v-else :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-        <div class="d-flex align-center mb-4">
-          <span class="text-title-large font-weight-medium mr-3">{{ $t('billing.subscriptions.plan.current') }}</span>
-          <BillingPlanBadgeComponent :plan="currentPlan" />
+      <!-- ── Plan summary card (paid) ───────────────────────────────────── -->
+      <v-card
+        v-else
+        :class="config.vuetify.theme.rounded"
+        class="billing-subscriptions__plan-card billing-subscriptions__plan-card--paid pa-6 mb-4"
+        elevation="0"
+      >
+        <!-- Header row: plan name + badge left, status chip + action right -->
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+          <div class="d-flex align-center ga-3">
+            <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.plan.current') }}</span>
+            <BillingPlanBadgeComponent :plan="currentPlan" />
+          </div>
+          <div class="d-flex align-center ga-2">
+            <v-icon
+              :icon="subscriptionStatusIcon"
+              size="x-small"
+              :color="subscriptionStatusMeta.color"
+              aria-hidden="true"
+            />
+            <v-chip
+              :color="subscriptionStatusMeta.color"
+              variant="tonal"
+              size="small"
+              class="text-capitalize"
+            >
+              {{ subscriptionStatusMeta.label }}
+            </v-chip>
+            <v-btn
+              v-if="subscriptionStatusAction"
+              :color="subscriptionStatusAction.color"
+              variant="tonal"
+              size="small"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              :loading="portalLoading"
+              @click="manageSubscription"
+            >
+              {{ subscriptionStatusAction.label }}
+            </v-btn>
+          </div>
         </div>
 
-        <v-list density="compact" class="bg-transparent pa-0 mb-6">
-          <v-list-item class="px-0">
-            <template #prepend>
-              <v-icon
-                :icon="subscriptionStatusIcon"
-                size="small"
-                :color="subscriptionStatusMeta.color"
-                class="mr-3"
-              />
-            </template>
-            <v-list-item-title class="billing-subscriptions__status-row text-body-medium">
-              <span>{{ $t('billing.subscriptions.plan.status') }}</span>
-              <v-chip
-                class="billing-subscriptions__status-chip text-capitalize"
-                :color="subscriptionStatusMeta.color"
-                variant="tonal"
-                size="small"
-              >
-                {{ subscriptionStatusMeta.label }}
-              </v-chip>
-              <v-btn
-                v-if="subscriptionStatusAction"
-                :color="subscriptionStatusAction.color"
-                variant="tonal"
-                size="small"
-                :class="config.vuetify.theme.rounded"
-                class="text-none text-body-medium"
-                :loading="portalLoading"
-                @click="manageSubscription"
-              >
-                {{ subscriptionStatusAction.label }}
-              </v-btn>
-            </v-list-item-title>
-          </v-list-item>
-          <v-list-item v-if="nextBillingDate" class="px-0">
-            <template #prepend>
-              <v-icon icon="fa-solid fa-calendar" size="small" class="mr-3" />
-            </template>
-            <v-list-item-title class="text-body-medium">
-              {{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}
-            </v-list-item-title>
-          </v-list-item>
-        </v-list>
+        <!-- Next billing date -->
+        <div v-if="nextBillingDate" class="d-flex align-center ga-2 mb-6 text-body-medium text-medium-emphasis">
+          <v-icon icon="fa-solid fa-calendar" size="x-small" aria-hidden="true" />
+          <span>{{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}</span>
+        </div>
 
+        <!-- Portal error -->
         <v-alert
           v-if="portalError"
           type="error"
@@ -173,7 +181,8 @@
           {{ portalError }}
         </v-alert>
 
-        <div class="d-flex ga-3 flex-wrap">
+        <!-- CTAs -->
+        <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !nextBillingDate && !portalError }">
           <v-btn
             color="primary"
             variant="flat"
@@ -198,7 +207,8 @@
 
       <!-- ── Meter mode sections (gated) ──────────────────────────────── -->
       <template v-if="meterMode">
-        <!-- ── Meter polling error ──────────────────────────────── -->
+
+        <!-- Meter polling error -->
         <v-alert
           v-if="meterError"
           type="warning"
@@ -213,15 +223,18 @@
           {{ $t('billing.meter.error.refreshFailed') }}
         </v-alert>
 
-        <!-- Usage bar (informational, opt-in here in account context) -->
-        <BillingUsageBarComponent
-          mode="meter"
-          class="mb-4"
-        />
-
-        <!-- Meter progress card -->
-        <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
+        <!-- ── Usage overview card (UsageBar + MeterProgress merged) ─────── -->
+        <v-card
+          :class="config.vuetify.theme.rounded"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
+          elevation="0"
+        >
           <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.weekly') }}</p>
+          <BillingUsageBarComponent
+            mode="meter"
+            class="mb-4"
+          />
+          <v-divider class="mb-4" />
           <BillingMeterProgressComponent
             :used="meterUsed"
             :quota="meterQuota"
@@ -232,18 +245,33 @@
           />
         </v-card>
 
-        <!-- Breakdown card -->
-        <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
+        <!-- ── Breakdown card ─────────────────────────────────────────────── -->
+        <v-card
+          :class="config.vuetify.theme.rounded"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
+          elevation="0"
+        >
           <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.breakdown') }}</p>
           <BillingMeterBreakdownChartComponent :breakdown="meterBreakdown" />
         </v-card>
 
-        <!-- Extras card -->
-        <v-card :class="config.vuetify.theme.rounded" class="pa-6 mb-4">
-          <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.subscriptions.extras.balance') }}</p>
-          <p class="text-body-medium text-medium-emphasis mb-4">
-            {{ $t('billing.extras.balance', { units: meterExtras, n: meterExtras }) }}
-          </p>
+        <!-- ── Extras card ────────────────────────────────────────────────── -->
+        <v-card
+          :class="config.vuetify.theme.rounded"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
+          elevation="0"
+        >
+          <!-- Header row: title + balance chip inline -->
+          <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+            <p class="text-title-medium font-weight-medium mb-0">{{ $t('billing.subscriptions.extras.balance') }}</p>
+            <v-chip
+              variant="tonal"
+              color="primary"
+              size="small"
+            >
+              {{ $t('billing.extras.balance', { units: meterExtras, n: meterExtras }) }}
+            </v-chip>
+          </div>
           <v-btn
             color="primary"
             variant="flat"
@@ -265,6 +293,7 @@
             @update:page="onLedgerPageChange"
           />
         </v-card>
+
       </template>
     </template>
 
@@ -850,10 +879,24 @@ export default {
 </script>
 
 <style scoped>
-.billing-subscriptions__status-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+/* Plan card: accent left-border on paid plans */
+.billing-subscriptions__plan-card--paid {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-left: 3px solid rgb(var(--v-theme-primary));
+}
+
+/* Free plan card: standard border, no accent */
+.billing-subscriptions__plan-card--free {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+/* Error card: error-tinted border */
+.billing-subscriptions__error-card {
+  border: 1px solid rgba(var(--v-theme-error), 0.2);
+}
+
+/* Meter section cards: consistent surface border */
+.billing-subscriptions__meter-card {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
