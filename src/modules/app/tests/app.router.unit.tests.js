@@ -228,6 +228,13 @@ describe('app.router', () => {
     expect(router.currentRoute.value.meta.marketing).toBe(true);
   });
 
+  it('app routes (/, /scraps-equivalent) do NOT have meta.marketing', async () => {
+    const router = getRouter();
+    await router.push('/');
+    await router.isReady();
+    expect(router.currentRoute.value.meta.marketing).toBeFalsy();
+  });
+
   it('/billing redirects to /signin when not logged in (via /users requiresAuth)', async () => {
     mockAuthStore.isLoggedIn = false;
     const router = getRouter();
