@@ -182,7 +182,7 @@
         </v-alert>
 
         <!-- CTAs -->
-        <div class="d-flex ga-3 flex-wrap" :class="!nextBillingDate && !portalError ? 'mt-6' : ''">
+        <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !nextBillingDate && !portalError }">
           <v-btn
             color="primary"
             variant="flat"
