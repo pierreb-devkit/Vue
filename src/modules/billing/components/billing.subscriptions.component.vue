@@ -226,7 +226,7 @@
         <!-- ── Usage overview card (UsageBar + MeterProgress merged) ─────── -->
         <v-card
           :class="config.vuetify.theme.rounded"
-          class="pa-6 mb-4"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
           elevation="0"
         >
           <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.weekly') }}</p>
@@ -248,7 +248,7 @@
         <!-- ── Breakdown card ─────────────────────────────────────────────── -->
         <v-card
           :class="config.vuetify.theme.rounded"
-          class="pa-6 mb-4"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
           elevation="0"
         >
           <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.breakdown') }}</p>
@@ -258,7 +258,7 @@
         <!-- ── Extras card ────────────────────────────────────────────────── -->
         <v-card
           :class="config.vuetify.theme.rounded"
-          class="pa-6 mb-4"
+          class="billing-subscriptions__meter-card pa-6 mb-4"
           elevation="0"
         >
           <!-- Header row: title + balance chip inline -->
@@ -896,7 +896,7 @@ export default {
 }
 
 /* Meter section cards: consistent surface border */
-.billing-subscriptions .v-card:not(.billing-subscriptions__plan-card):not(.billing-subscriptions__error-card) {
+.billing-subscriptions__meter-card {
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 </style>
