@@ -221,6 +221,13 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/pricing');
   });
 
+  it('/pricing has meta.marketing true (renders outside app shell — no drawer)', async () => {
+    const router = getRouter();
+    await router.push('/pricing');
+    await router.isReady();
+    expect(router.currentRoute.value.meta.marketing).toBe(true);
+  });
+
   it('/billing redirects to /signin when not logged in (via /users requiresAuth)', async () => {
     mockAuthStore.isLoggedIn = false;
     const router = getRouter();

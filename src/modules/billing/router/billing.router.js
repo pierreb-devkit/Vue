@@ -25,6 +25,7 @@ export default [
     meta: {
       display: false,
       footer: true,
+      marketing: true, // renders outside app shell (no drawer) — same treatment as /signin, /signup
     },
   },
   {
