@@ -413,6 +413,23 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     expect(chip.text()).toContain('En pause');
     wrapperFr.unmount();
   });
+
+  it('paid plan card has billing-subscriptions__plan-card--paid CSS class (primary accent border)', async () => {
+    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    // The paid plan card carries the BEM modifier class used by the primary left-border accent rule
+    expect(wrapper.find('.billing-subscriptions__plan-card--paid').exists()).toBe(true);
+    expect(wrapper.find('.billing-subscriptions__plan-card--free').exists()).toBe(false);
+  });
+
+  it('free plan card has billing-subscriptions__plan-card--free CSS class (no accent border)', async () => {
+    store.subscription = null;
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.find('.billing-subscriptions__plan-card--free').exists()).toBe(true);
+    expect(wrapper.find('.billing-subscriptions__plan-card--paid').exists()).toBe(false);
+  });
 });
 
 // ─── Suite 5: Stripe success query handling ────────────────────────────────

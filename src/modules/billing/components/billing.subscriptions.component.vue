@@ -138,6 +138,7 @@
               :icon="subscriptionStatusIcon"
               size="x-small"
               :color="subscriptionStatusMeta.color"
+              aria-hidden="true"
             />
             <v-chip
               :color="subscriptionStatusMeta.color"
@@ -164,7 +165,7 @@
 
         <!-- Next billing date -->
         <div v-if="nextBillingDate" class="d-flex align-center ga-2 mb-6 text-body-medium text-medium-emphasis">
-          <v-icon icon="fa-solid fa-calendar" size="x-small" />
+          <v-icon icon="fa-solid fa-calendar" size="x-small" aria-hidden="true" />
           <span>{{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}</span>
         </div>
         <div v-else class="mb-6" />
@@ -262,7 +263,7 @@
           elevation="0"
         >
           <!-- Header row: title + balance chip inline -->
-          <div class="d-flex align-center justify-space-between mb-4">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
             <p class="text-title-medium font-weight-medium mb-0">{{ $t('billing.subscriptions.extras.balance') }}</p>
             <v-chip
               variant="tonal"
