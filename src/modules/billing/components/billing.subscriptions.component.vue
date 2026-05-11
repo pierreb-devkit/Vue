@@ -72,7 +72,7 @@
       elevation="0"
     >
       <div class="d-flex align-center mb-3">
-        <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" />
+        <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" aria-hidden="true" />
         <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.unavailable') }}</span>
       </div>
       <p class="text-body-medium text-medium-emphasis mb-4">
