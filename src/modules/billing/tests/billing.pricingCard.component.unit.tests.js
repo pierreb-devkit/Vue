@@ -120,10 +120,7 @@ describe('BillingPricingCardComponent', () => {
 
   it('does not render badge chip when plan.badge is absent', () => {
     const wrapper = mountComponent({ plan: freePlan });
-    // freePlan has no badge — chip must be absent
-    const chip = wrapper.findComponent({ name: 'v-chip' });
-    // The annual savings chip spacer div is rendered but there's no badge chip
-    // We verify by checking the text doesn't contain any badge content
+    // freePlan has no badge — verify by checking the text doesn't contain any badge content
     expect(wrapper.text()).not.toContain('500 compute @ signup');
     expect(wrapper.text()).not.toContain('Most Popular');
   });
