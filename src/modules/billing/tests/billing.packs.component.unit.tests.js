@@ -3,7 +3,9 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-// ─── Prevent real HTTP calls ────────────────────────────────────────────────
+// ─── Static-content mock ─────────────────────────────────────────────────────
+// packs exposed as a live-array so per-suite tests can splice() test data in.
+// Component imports `packs as packsConfig` — same reference, mutations are seen.
 
 vi.mock('../config/billing.static-content.js', () => ({
   packs: [],
@@ -38,7 +40,9 @@ vi.mock('../../auth/stores/auth.store', () => ({
 import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
+import BillingCardComponent from '../components/billing.card.component.vue';
 import { billingEn } from '../lang/en.js';
+import * as staticContent from '../config/billing.static-content.js';
 
 const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
@@ -55,9 +59,41 @@ const mockConfig = {
   vuetify: { theme: { rounded: '', flat: true } },
 };
 
-const mockPacks = [
-  { packId: 'pack_500', label: '500 units', priceUsd: 9, meterUnits: 500 },
-  { packId: 'pack_1000', label: '1000 units', priceUsd: 16, meterUnits: 1000 },
+/**
+ * @desc V4 unified pack shape — mirrors trawl static-content contract.
+ * Fields: id, title, subtitle, price, cta (string), info, features, badge, highlight.
+ * meta carries Stripe-specific raw values (not used by the component renderer).
+ * @type {Array<Object>}
+ */
+const mockPacksV4 = [
+  {
+    id: 'pack_starter',
+    title: 'Starter',
+    subtitle: 'Quick top-up',
+    highlight: false,
+    badge: null,
+    price: { amount: '$9.00', period: null },
+    cta: 'Buy Starter',
+    info: '5,000 compute',
+    features: [
+      { icon: 'fa-solid fa-check', color: 'primary', text: '~40 easy scraps' },
+    ],
+    meta: { packId: 'pack_starter', priceUsd: 9, meterUnits: 5000 },
+  },
+  {
+    id: 'pack_power',
+    title: 'Power',
+    subtitle: 'For sustained work',
+    highlight: true,
+    badge: 'Best Value',
+    price: { amount: '$25.00', period: null },
+    cta: 'Buy Power',
+    info: '20,000 compute',
+    features: [
+      { icon: 'fa-solid fa-check', color: 'primary', text: '~160 easy scraps' },
+    ],
+    meta: { packId: 'pack_power', priceUsd: 25, meterUnits: 20000 },
+  },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -66,6 +102,7 @@ const vuetify = createVuetify();
 
 /**
  * @desc Mount BillingPacksComponent with Vuetify + Pinia.
+ * Resets authState to logged-in-with-org baseline, then applies overrides.
  * @param {Object} [overrides] — optional auth state overrides
  * @returns {import('@vue/test-utils').VueWrapper}
  */
@@ -96,7 +133,7 @@ describe('BillingPacksComponent — empty state', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
-    // Store has no packs data
+    // packsConfig mocked to [] — empty state
   });
 
   afterEach(() => {
@@ -104,63 +141,103 @@ describe('BillingPacksComponent — empty state', () => {
     wrapper = null;
   });
 
-  it('renders empty state message when no packs are available', async () => {
+  it('renders empty state message when packsConfig is empty', async () => {
     wrapper = mountPacks();
     await flushPromises();
     expect(wrapper.text()).toContain('No unit packs available at this time.');
   });
+
+  it('does not render any BillingCardComponent when packsConfig is empty', async () => {
+    wrapper = mountPacks();
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    expect(cards.length).toBe(0);
+  });
 });
 
-// ─── Suite 2: Pack cards rendering ───────────────────────────────────────────
+// ─── Suite 2: BillingCardComponent rendering ─────────────────────────────────
 
-describe('BillingPacksComponent — pack cards', () => {
+describe('BillingPacksComponent — BillingCardComponent rendering', () => {
   let wrapper;
-  let store;
 
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
-    store = useBillingStore();
+    // Inject V4 packs into the live mock array (seen by component's packsConfig)
+    staticContent.packs.splice(0, staticContent.packs.length, ...mockPacksV4);
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
+    staticContent.packs.splice(0);
   });
 
-  it('renders pack cards from billingStore.usageMeter.packsAvailable', async () => {
-    store.usageMeter = { packsAvailable: mockPacks };
+  it('renders one BillingCardComponent per pack in packsConfig', async () => {
     wrapper = mountPacks();
     await flushPromises();
-    expect(wrapper.text()).toContain('500 units');
-    expect(wrapper.text()).toContain('1000 units');
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    expect(cards.length).toBe(mockPacksV4.length);
   });
 
-  it('renders pack cards from billingStore.extrasBalance.packsAvailable when usageMeter is null', async () => {
-    store.usageMeter = null;
-    store.extrasBalance = { balance: 0, packsAvailable: mockPacks };
+  it('passes a fully-resolved item prop to each BillingCardComponent', async () => {
     wrapper = mountPacks();
     await flushPromises();
-    expect(wrapper.text()).toContain('500 units');
-    expect(wrapper.text()).toContain('1000 units');
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    for (const card of cards) {
+      const item = card.props('item');
+      expect(item).toBeDefined();
+      // Required V4 fields
+      expect(typeof item.id).toBe('string');
+      expect(typeof item.title).toBe('string');
+      expect(typeof item.subtitle).toBe('string');
+      expect(item.price).toMatchObject({ amount: expect.any(String) });
+      // cta is resolved from string → object by resolvedItems
+      expect(item.cta).toMatchObject({
+        label: expect.any(String),
+        variant: expect.any(String),
+        disabled: expect.any(Boolean),
+        loading: expect.any(Boolean),
+      });
+    }
   });
 
-  it('renders price and unit count for each pack', async () => {
-    store.usageMeter = { packsAvailable: mockPacks };
+  it('item.cta.label derives from the static-content pack cta string', async () => {
     wrapper = mountPacks();
     await flushPromises();
-    expect(wrapper.text()).toContain('$9');
-    expect(wrapper.text()).toContain('+500 units');
-    expect(wrapper.text()).toContain('$16');
-    expect(wrapper.text()).toContain('+1000 units');
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    expect(cards[0].props('item').cta.label).toBe('Buy Starter');
+    expect(cards[1].props('item').cta.label).toBe('Buy Power');
   });
 
-  it('renders a Buy button for each pack', async () => {
-    store.usageMeter = { packsAvailable: mockPacks };
+  it('highlighted pack gets flat+primary cta; non-highlighted gets outlined+null', async () => {
     wrapper = mountPacks();
     await flushPromises();
-    const buyBtns = wrapper.findAllComponents({ name: 'v-btn' }).filter((b) => b.text().includes('Buy'));
-    expect(buyBtns.length).toBe(mockPacks.length);
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    // pack_starter: highlight false → outlined, null color
+    expect(cards[0].props('item').cta.variant).toBe('outlined');
+    expect(cards[0].props('item').cta.color).toBeNull();
+    // pack_power: highlight true → flat, primary color
+    expect(cards[1].props('item').cta.variant).toBe('flat');
+    expect(cards[1].props('item').cta.color).toBe('primary');
+  });
+
+  it('resolvedItems always comes from static-content, never from store', async () => {
+    // Populate store with different items to confirm they are not rendered
+    const store = useBillingStore();
+    store.usageMeter = {
+      packsAvailable: [
+        { id: 'store_only', title: 'Store Only', price: { amount: '$99.00', period: null }, cta: 'Store CTA', highlight: false, badge: null, info: null, features: [] },
+      ],
+    };
+    wrapper = mountPacks();
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    expect(cards.length).toBe(mockPacksV4.length);
+    const renderedIds = cards.map((c) => c.props('item').id);
+    expect(renderedIds).toContain('pack_starter');
+    expect(renderedIds).toContain('pack_power');
+    expect(renderedIds).not.toContain('store_only');
   });
 });
 
@@ -173,42 +250,38 @@ describe('BillingPacksComponent — purchase flow', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
-    // Reset to logged-in state with org for purchase flow tests
-    authState.isLoggedIn = true;
-    authState.user = { currentOrganization: 'org_test_123' };
-    authState.serverConfig = { organizations: { enabled: true } };
     store = useBillingStore();
-    store.usageMeter = { packsAvailable: mockPacks };
+    staticContent.packs.splice(0, staticContent.packs.length, ...mockPacksV4);
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
+    staticContent.packs.splice(0);
   });
 
-  it('calls createExtrasCheckout with the correct packId on Buy click (happy path)', async () => {
+  it('calls createExtrasCheckout with pack.id on cta-click (happy path)', async () => {
     vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
     wrapper = mountPacks();
     await flushPromises();
-    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    await buyBtn.trigger('click');
+    // Emit cta-click directly on the BillingCardComponent child
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
-    expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_500');
+    expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_starter');
   });
 
-  it('does NOT render inline purchaseError alert on checkout failure (centralized snackbar)', async () => {
+  it('does NOT render inline purchaseError alert (errors handled by centralized snackbar)', async () => {
     vi.spyOn(store, 'createExtrasCheckout').mockRejectedValue(new Error('Network error'));
     wrapper = mountPacks();
     await flushPromises();
-    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    await buyBtn.trigger('click');
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
-    // Error surfaced via centralized snackbar — no inline v-alert rendered
     expect(wrapper.find('.v-alert').exists()).toBe(false);
-    expect(wrapper.text()).not.toContain('Failed to start checkout. Please try again.');
   });
 
-  it('disables all Buy buttons while a purchase is in progress', async () => {
+  it('sets cta.loading=true on the purchasing card and cta.disabled=true on all others', async () => {
     let resolveCheckout;
     vi.spyOn(store, 'createExtrasCheckout').mockReturnValue(
       new Promise((resolve) => {
@@ -217,82 +290,61 @@ describe('BillingPacksComponent — purchase flow', () => {
     );
     wrapper = mountPacks();
     await flushPromises();
-    const firstBuyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    await firstBuyBtn.trigger('click');
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
-    const allBtns = wrapper.findAllComponents({ name: 'v-btn' });
-    for (const btn of allBtns) {
-      expect(btn.props('disabled')).toBe(true);
-    }
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    // Purchasing card: loading=true, disabled=false (it has the spinner, not greyed out)
+    expect(cards[0].props('item').cta.loading).toBe(true);
+    expect(cards[0].props('item').cta.disabled).toBe(false);
+    // Other cards: loading=false, disabled=true (greyed out while another is in progress)
+    expect(cards[1].props('item').cta.loading).toBe(false);
+    expect(cards[1].props('item').cta.disabled).toBe(true);
     resolveCheckout();
     await flushPromises();
   });
 
-  it('redirects guest to sign-in instead of initiating checkout', async () => {
+  it('clears purchasingId after checkout resolves (all cards re-enabled)', async () => {
+    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+    wrapper = mountPacks();
+    await flushPromises();
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    for (const card of cards) {
+      expect(card.props('item').cta.disabled).toBe(false);
+      expect(card.props('item').cta.loading).toBe(false);
+    }
+  });
+
+  it('redirects guest to /signin instead of initiating checkout', async () => {
     vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
     const pushFn = vi.fn();
-    wrapper = mountPacks({
-      isLoggedIn: false,
-      user: null,
-      serverConfig: null,
-    });
+    wrapper = mountPacks({ isLoggedIn: false, user: null, serverConfig: null });
     wrapper.vm.$router = { push: pushFn };
     await flushPromises();
-    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
-    await buyBtn.trigger('click');
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
     expect(store.createExtrasCheckout).not.toHaveBeenCalled();
     expect(pushFn).toHaveBeenCalledWith({ path: '/signin', query: { redirect: '/pricing' } });
   });
-});
 
-// ─── Suite 4: Feature sections ────────────────────────────────────────────────
-
-describe('BillingPacksComponent — feature sections', () => {
-  let wrapper;
-  let store;
-
-  beforeEach(() => {
-    setActivePinia(createPinia());
-    vi.clearAllMocks();
-    // Reset auth state for feature section tests
-    authState.isLoggedIn = true;
-    authState.user = { currentOrganization: 'org_test_123' };
-    authState.serverConfig = { organizations: { enabled: true } };
-    store = useBillingStore();
-  });
-
-  afterEach(() => {
-    wrapper?.unmount();
-    wrapper = null;
-  });
-
-  it('renders featureSections when provided on a pack', async () => {
-    const packsWithSections = [
-      {
-        packId: 'pack-with-sections',
-        label: 'With Sections',
-        priceUsd: 25,
-        meterUnits: 20000,
-        featureSections: [
-          { title: null, items: [{ text: 'pack-section-feature' }] },
-        ],
-      },
-    ];
-    store.usageMeter = { packsAvailable: packsWithSections };
-    wrapper = mountPacks();
+  it('redirects logged-in user without org to /organization-required', async () => {
+    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+    const pushFn = vi.fn();
+    wrapper = mountPacks({
+      isLoggedIn: true,
+      user: { currentOrganization: null },
+      serverConfig: { organizations: { enabled: true } },
+    });
+    wrapper.vm.$router = { push: pushFn };
     await flushPromises();
-    expect(wrapper.text()).toContain('pack-section-feature');
-  });
-
-  it('does not render featureSections block when pack has none', async () => {
-    const packsWithoutSections = [
-      { packId: 'plain', label: 'Plain', priceUsd: 9, meterUnits: 5000 },
-    ];
-    store.usageMeter = { packsAvailable: packsWithoutSections };
-    wrapper = mountPacks();
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
-    // No section component rendered → no class from the section component
-    expect(wrapper.find('.billing-pricing-feature-section').exists()).toBe(false);
+    expect(store.createExtrasCheckout).not.toHaveBeenCalled();
+    expect(pushFn).toHaveBeenCalledWith({ path: '/organization-required' });
   });
 });
