@@ -13,6 +13,16 @@ export const usersFr = {
       /** i18n key: users.tabs.subscriptions */
       subscriptions: 'Abonnements',
     },
+    deleteAccount: {
+      /** i18n key: users.deleteAccount.title */
+      title: 'Supprimer le compte',
+      /** i18n key: users.deleteAccount.warning */
+      warning: 'Supprimez définitivement votre compte, vos données et la propriété de votre organisation. Cette action est irréversible.',
+      /** i18n key: users.deleteAccount.cta */
+      cta: 'Supprimer le compte',
+      /** i18n key: users.deleteAccount.confirmLabel */
+      confirmLabel: 'Tapez DELETE pour confirmer',
+    },
   },
 };
 

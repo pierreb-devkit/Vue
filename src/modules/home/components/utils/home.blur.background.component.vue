@@ -194,13 +194,11 @@ export default {
 /* full-bleed: break out of parent v-main width so the halo fills the
    full viewport even when a Vuetify v-navigation-drawer offsets the
    layout (signed-in users on routes that share the app shell).
-   calc(100vw - (100vw - 100%)) avoids the scrollbar-width inclusion
-   that plain 100vw produces, preventing a horizontal overflow. */
+   Compensates for --v-layout-left injected by v-main. */
 .blur-background.full-bleed {
-  width: calc(100vw - (100vw - 100%));
+  width: 100vw;
   position: relative;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-left: calc(-1 * var(--v-layout-left, 0px));
 }
 
 .blur-bg {
