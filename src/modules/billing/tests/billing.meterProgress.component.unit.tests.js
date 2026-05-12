@@ -197,13 +197,20 @@ describe('BillingMeterProgressComponent', () => {
     expect(summary.text()).toContain('100%');
   });
 
-  it('adds aria-live regions for summary and overage updates', () => {
+  it('summary row carries the assertive aria-live announcement when in overage', () => {
     const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
-    // Task 4: summary is assertive when in overage (merged into one region)
-    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('assertive');
-    // Hidden overage div still exists for backward compat (aria-live assertive + aria-atomic)
-    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-live')).toBe('assertive');
-    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-atomic')).toBe('true');
+    // Task 4: a single summary aria-live region announces overage state changes
+    // (the previously empty overage div had no content and was removed to avoid
+    // dual assertive regions racing each other in assistive tech).
+    const summary = wrapper.find('.billing-meter-progress__summary');
+    expect(summary.attributes('aria-live')).toBe('assertive');
+    // Summary text carries the % primary value and overage tooltip is reachable
+    expect(summary.text()).toContain('100%');
+  });
+
+  it('summary aria-live is polite (non-interrupting) when not in overage', () => {
+    const wrapper = mountComponent({ used: 50, quota: 100 });
+    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('polite');
   });
 
   it('matches the overage snapshot', () => {

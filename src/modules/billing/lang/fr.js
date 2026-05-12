@@ -95,6 +95,8 @@ export const billingFr = {
       remaining: '(aucun restant) | ({count} restant) | ({count} restants)',
       /** i18n key: billing.meterProgress.extras — interpolate {count} */
       extras: '+{count} extras',
+      /** i18n key: billing.meterProgress.overDetail — interpolate {overage} — shown in tooltip when in overage */
+      overDetail: 'dépassement de {overage} compute',
       /** i18n key: billing.meterProgress.ariaOver — interpolate {base}, {used}, {quota}, {overage} */
       ariaOver: '{base}{used} sur {quota} utilisés, {overage} de dépassement',
       /** i18n key: billing.meterProgress.ariaUsed — interpolate {base}, {used}, {quota}, {percent} */

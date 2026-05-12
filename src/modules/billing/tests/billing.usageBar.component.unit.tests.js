@@ -356,16 +356,18 @@ describe('BillingUsageBarComponent', () => {
     expect(meterProgress.props('netRemainingRaw')).toBe(-100);
   });
 
-  it('adds aria-live regions for standard meter summary and overage badge', () => {
+  it('adds aria-live regions for standard meter summary and overage announcement', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();
     store.subscription = { status: 'active', plan: 'starter' };
     store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
     const wrapper = mountComponent({ mode: 'meter' });
 
+    // Task 4: usage-bar summary stays polite; the meterProgress child summary
+    // turns assertive when in overage. Single assertive region (no empty
+    // duplicate overage div) avoids dual-region race in assistive tech.
     expect(wrapper.find('.billing-usage-bar__summary').attributes('aria-live')).toBe('polite');
-    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-live')).toBe('assertive');
-    expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-atomic')).toBe('true');
+    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('assertive');
   });
 
   it('matches the meter overage snapshot', () => {
