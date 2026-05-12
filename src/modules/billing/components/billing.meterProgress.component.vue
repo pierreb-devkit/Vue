@@ -4,6 +4,18 @@
   Compact meter usage widget (bar or donut variant).
   Emits `click` for parent-driven drilldown (e.g. open a usage drawer).
 
+  DISPLAY CONTRACT (Task 4 — T5/T6 consumers):
+  - % is always the primary visible value (summary row + donut center).
+  - Raw compute units (used / quota) are surfaced ONLY via tooltip on hover/focus,
+    and ONLY when overage > 0 (overflow state). In normal state there is no tooltip.
+  - Extras badge (+N compute) renders inline in summary when extras > 0 and not in overage.
+  - Overage state: error-colored % + exclamation icon that activates the raw-units tooltip.
+
+  STABLE API for T5 (BillingNavComputeGaugeComponent) and T6 (billing.subscriptions.component.vue):
+  - Props are unchanged; callers continue passing used/quota/extras/overage/netRemainingRaw/label/variant.
+  - clampedProgress (Number 0-100) is accessible for parent reads.
+  - thresholdColor ('success'|'warning'|'error') is accessible for parent reads.
+
   USAGE:
   <BillingMeterProgressComponent :used="120" :quota="200" :extras="30" label="Compute" />
   <BillingMeterProgressComponent :used="180" :quota="200" variant="donut" />
@@ -44,22 +56,13 @@
       >{{ clampedProgress }}%</span>
     </div>
 
-    <!-- Overage badge -->
+    <!-- Overage ARIA signal (visually hidden, aria-live region for assistive tech) -->
     <div
       v-if="overage > 0"
       class="billing-meter-progress__overage d-flex align-center mb-1"
       aria-live="assertive"
       aria-atomic="true"
-    >
-      <v-chip
-        color="error"
-        size="x-small"
-        variant="tonal"
-        prepend-icon="fa-solid fa-triangle-exclamation"
-      >
-        {{ $t('billing.meterProgress.over', { count: overage }) }}
-      </v-chip>
-    </div>
+    />
 
     <!-- Bar variant -->
     <template v-if="variant === 'bar'">
@@ -86,18 +89,49 @@
       </div>
     </template>
 
-    <!-- Summary text -->
+    <!-- Summary text: % is primary, compute units in tooltip on overflow only -->
     <div
-      class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1"
-      aria-live="polite"
+      class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1 d-flex align-center ga-1"
+      :aria-live="overage > 0 ? 'assertive' : 'polite'"
     >
-      <span>{{ used }} / {{ quota }}</span>
-      <template v-if="overage > 0">
-        <span class="text-error"> {{ $t('billing.meterProgress.remaining', { count: computedNetRemainingRaw, n: computedNetRemainingRaw }) }}</span>
-      </template>
-      <template v-else>
-        <span v-if="extras > 0"> {{ $t('billing.meterProgress.extras', { count: extras }) }}</span>
-      </template>
+      <!-- Primary value: always percentage -->
+      <span
+        class="font-weight-medium"
+        :class="overage > 0 ? 'text-error' : ''"
+      >
+        {{ clampedProgress }}%
+      </span>
+
+      <!-- Compute detail tooltip — shown only when in overage (overflow state) -->
+      <v-tooltip
+        v-if="overage > 0"
+        :text="`${used} / ${quota} ${$t('billing.meterProgress.overDetail', { overage })}`"
+        location="top"
+      >
+        <template #activator="{ props: tp }">
+          <v-icon
+            v-bind="tp"
+            icon="fa-solid fa-circle-exclamation"
+            color="error"
+            size="x-small"
+            tabindex="0"
+            role="img"
+            :aria-label="$t('billing.meterProgress.ariaOver', { base: '', used, quota, overage })"
+            style="cursor: help"
+          />
+        </template>
+      </v-tooltip>
+
+      <!-- Extras badge when present and not in overage -->
+      <v-chip
+        v-else-if="extras > 0"
+        size="x-small"
+        color="info"
+        variant="tonal"
+        class="ml-1"
+      >
+        +{{ extras }} {{ $t('billing.usageBar.compute') }}
+      </v-chip>
     </div>
   </div>
 </template>

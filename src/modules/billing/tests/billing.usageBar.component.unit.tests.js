@@ -184,27 +184,30 @@ describe('BillingUsageBarComponent', () => {
     expect(meterRoot.exists()).toBe(true);
   });
 
-  it('displays used / quota text in meter mode (standard)', () => {
+  it('displays % in summary header in meter mode (standard) — not raw units', () => {
     const store = useBillingStore();
     store.subscription = { status: 'active', plan: 'starter' };
     store.usageMeter = { meterUsed: 300, meterQuota: 1000 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
-    expect(wrapper.text()).toContain('300');
-    expect(wrapper.text()).toContain('1000');
+    // Task 4: meterDisplay is now "30%" — raw units in tooltip only
+    expect(wrapper.vm.meterDisplay).toBe('30%');
+    expect(wrapper.text()).toContain('30%');
+    expect(wrapper.text()).not.toContain('300 / 1000');
   });
 
-  it('appends +extras to meter display when extras > 0', () => {
+  it('meterDisplay returns % string (extras handled by child component chip)', () => {
     const store = useBillingStore();
     store.usageMeter = { meterUsed: 300, meterQuota: 1000, extrasRemaining: 75 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
-    expect(wrapper.vm.meterDisplay).toContain('+75');
+    // Task 4: extras are no longer part of meterDisplay string — child renders the chip
+    expect(wrapper.vm.meterDisplay).toBe('30%');
   });
 
-  it('does not append +extras when extras is 0', () => {
+  it('meterDisplay returns "0%" when quota is 0', () => {
     const store = useBillingStore();
-    store.usageMeter = { meterUsed: 300, meterQuota: 1000, extrasRemaining: 0 };
+    store.usageMeter = { meterUsed: 0, meterQuota: 0, extrasRemaining: 0 };
     const wrapper = mountComponent({ resource: '', action: '', mode: 'meter' });
-    expect(wrapper.vm.meterDisplay).not.toContain('+');
+    expect(wrapper.vm.meterDisplay).toBe('0%');
   });
 
   it('does not emit open-drawer on click in meter mode (informational only)', async () => {
@@ -308,14 +311,15 @@ describe('BillingUsageBarComponent', () => {
     expect(wrapper.vm.displayMode).toBe('standard');
   });
 
-  it('standard display shows used / quota via meterDisplay', () => {
+  it('standard display shows % via meterDisplay (not raw used/quota)', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();
     store.subscription = { status: 'active', plan: 'starter' };
     store.usageMeter = { meterUsed: 200, meterQuota: 1000, extrasRemaining: 0 };
     const wrapper = mountComponent({ mode: 'meter' });
-    expect(wrapper.text()).toContain('200');
-    expect(wrapper.text()).toContain('1000');
+    // Task 4: summary header shows % not raw units
+    expect(wrapper.text()).toContain('20%');
+    expect(wrapper.text()).not.toContain('200 / 1000');
   });
 
   // ── Meter mode: overage display ──────────────────────────────────────────
@@ -334,7 +338,7 @@ describe('BillingUsageBarComponent', () => {
     expect(wrapper.text()).not.toContain('over');
   });
 
-  it('shows overage badge and error color when used exceeds quota (overage > 0)', () => {
+  it('shows error color when used exceeds quota (overage > 0), % primary in header', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();
     store.subscription = { status: 'active', plan: 'starter' };
@@ -342,9 +346,10 @@ describe('BillingUsageBarComponent', () => {
     const wrapper = mountComponent({ mode: 'meter' });
     expect(wrapper.vm.meterOverage).toBe(100);
     expect(wrapper.vm.meterNetRemainingRaw).toBe(-100);
-    // meterDisplay shows negative remaining in header
-    expect(wrapper.text()).toContain('-100');
-    // meterProgress child renders the overage badge
+    // Task 4: meterDisplay is "100%" — raw units are in the child tooltip only
+    expect(wrapper.vm.meterDisplay).toBe('100%');
+    expect(wrapper.text()).toContain('100%');
+    // meterProgress child receives correct overage props
     const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
     expect(meterProgress.exists()).toBe(true);
     expect(meterProgress.props('overage')).toBe(100);
@@ -371,5 +376,47 @@ describe('BillingUsageBarComponent', () => {
     const wrapper = mountComponent({ mode: 'meter' });
 
     expect(wrapper.find('.billing-usage-bar--meter').html()).toMatchSnapshot();
+  });
+
+  // ── Meter mode: % primary display (Task 4) ────────────────────────────────
+
+  it('standard meter mode shows % in summary header, not raw units', async () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'growth' };
+    store.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    await wrapper.vm.$nextTick();
+
+    // meterDisplay should now return '%' string, not raw units
+    expect(wrapper.vm.meterDisplay).toBe('50%');
+    const summary = wrapper.find('.billing-usage-bar__summary');
+    expect(summary.text()).toContain('50%');
+    expect(summary.text()).not.toContain('800 / 1600');
+  });
+
+  it('standard meter mode shows 0% when used=0', async () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'growth' };
+    store.usageMeter = { meterUsed: 0, meterQuota: 1600, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.meterDisplay).toBe('0%');
+  });
+
+  it('standard meter mode shows 100% when in overage', async () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'growth' };
+    store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.meterDisplay).toBe('100%');
+    // Raw units should not be in the summary header
+    const summary = wrapper.find('.billing-usage-bar__summary');
+    expect(summary.text()).not.toContain('1100 / 1000');
   });
 });

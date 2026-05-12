@@ -142,20 +142,23 @@ describe('BillingMeterProgressComponent', () => {
 
   // ── Extras display ───────────────────────────────────────────────────────
 
-  it('shows extras credits in summary text when extras > 0', () => {
+  it('shows extras credits in summary text when extras > 0 (as "+N compute" chip)', () => {
     const wrapper = mountComponent({ used: 50, quota: 100, extras: 30 });
-    expect(wrapper.text()).toContain('+30 extras');
+    // Task 4: extras shown as "+30 compute" chip (not "+30 extras" anymore)
+    expect(wrapper.text()).toContain('+30 compute');
   });
 
-  it('does not show extras text when extras is 0', () => {
+  it('does not show extras chip when extras is 0', () => {
     const wrapper = mountComponent({ used: 50, quota: 100, extras: 0 });
     expect(wrapper.text()).not.toContain('extras');
+    expect(wrapper.text()).not.toContain('compute');
   });
 
-  it('shows used/quota in summary text', () => {
+  it('shows percentage in summary text (not raw used/quota)', () => {
     const wrapper = mountComponent({ used: 50, quota: 100 });
-    expect(wrapper.text()).toContain('50');
-    expect(wrapper.text()).toContain('100');
+    // Task 4: primary value is % — summary shows "50%", not raw "50 / 100"
+    expect(wrapper.text()).toContain('50%');
+    expect(wrapper.text()).not.toContain('50 / 100');
   });
 
   // ── Label ────────────────────────────────────────────────────────────────
@@ -181,18 +184,24 @@ describe('BillingMeterProgressComponent', () => {
     expect(wrapper.vm.thresholdColor).toBe('success');
   });
 
-  it('shows overage badge and error color when overage > 0', () => {
+  it('shows error color and tooltip icon when overage > 0 (no chip in summary)', () => {
     const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
     expect(wrapper.vm.thresholdColor).toBe('error');
-    const chip = wrapper.findComponent({ name: 'v-chip' });
-    expect(chip.exists()).toBe(true);
-    expect(wrapper.text()).toContain('+20 over');
-    expect(wrapper.text()).toContain('-20 remaining');
+    // Task 4: no v-chip in the summary anymore — tooltip replaces it
+    const summary = wrapper.find('.billing-meter-progress__summary');
+    expect(summary.text()).not.toContain('+20 over');
+    // Tooltip icon must exist in overflow state
+    const tooltip = wrapper.findComponent({ name: 'v-tooltip' });
+    expect(tooltip.exists()).toBe(true);
+    // Summary % is error-colored and shows 100%
+    expect(summary.text()).toContain('100%');
   });
 
   it('adds aria-live regions for summary and overage updates', () => {
     const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
-    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('polite');
+    // Task 4: summary is assertive when in overage (merged into one region)
+    expect(wrapper.find('.billing-meter-progress__summary').attributes('aria-live')).toBe('assertive');
+    // Hidden overage div still exists for backward compat (aria-live assertive + aria-atomic)
     expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-live')).toBe('assertive');
     expect(wrapper.find('.billing-meter-progress__overage').attributes('aria-atomic')).toBe('true');
   });
@@ -200,5 +209,48 @@ describe('BillingMeterProgressComponent', () => {
   it('matches the overage snapshot', () => {
     const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
     expect(wrapper.find('.billing-meter-progress').html()).toMatchSnapshot();
+  });
+
+  // ── % primary display (Task 4) ────────────────────────────────────────────
+
+  describe('% primary display', () => {
+    it('shows "62%" as the primary summary text when used=62 quota=100', async () => {
+      const wrapper = mountComponent({ used: 62, quota: 100, label: 'Compute' });
+      await wrapper.vm.$nextTick();
+      // Primary value in summary row must show the percentage
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      expect(summary.text()).toContain('62%');
+      // Raw compute units must NOT appear inline (only in tooltip)
+      expect(summary.text()).not.toContain('62 / 100');
+    });
+
+    it('does not show raw compute units in summary when not in overage', async () => {
+      const wrapper = mountComponent({ used: 46, quota: 1600 });
+      await wrapper.vm.$nextTick();
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      // 46/1600 = 2.875 → rounds to 3%
+      expect(summary.text()).toContain('3%');
+      expect(summary.text()).not.toContain('46 / 1600');
+    });
+
+    it('shows tooltip with compute units when overage > 0', async () => {
+      const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20, label: 'Compute' });
+      await wrapper.vm.$nextTick();
+      // Tooltip activator (v-icon) must exist when in overage
+      const tooltipEl = wrapper.findComponent({ name: 'v-tooltip' });
+      expect(tooltipEl.exists()).toBe(true);
+      // tooltip text prop must contain the raw compute breakdown
+      const tooltipText = tooltipEl.props('text');
+      expect(tooltipText).toContain('120 / 100');
+    });
+
+    it('does NOT show overage chip in summary (replaced by tooltip icon)', async () => {
+      const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
+      await wrapper.vm.$nextTick();
+      // Old behavior: v-chip with "+20 over" was in the summary; new: only tooltip icon
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      // The chip for overage details should be gone from summary (only tooltip icon remains)
+      expect(summary.text()).not.toContain('+20 over');
+    });
   });
 });
