@@ -71,4 +71,30 @@ describe('HomeBlurBackgroundComponent', () => {
       expect(wrapper.find(`.halo-${i}`).exists()).toBe(true);
     }
   });
+
+  it('applies full-bleed class when fullBleed prop is true', () => {
+    const wrapper = mountComponent({ fullBleed: true });
+    expect(wrapper.find('.blur-background').classes()).toContain('full-bleed');
+  });
+
+  it('does not apply full-bleed class by default', () => {
+    const wrapper = mountComponent();
+    expect(wrapper.find('.blur-background').classes()).not.toContain('full-bleed');
+  });
+
+  it('full-bleed CSS uses 100vw width and margin-left offset for --v-layout-left', () => {
+    // Verify the component exposes the fullBleed prop and that the CSS class is conditionally applied.
+    // The actual CSS rules (.blur-background.full-bleed { width: 100vw; margin-left: calc(-1 * var(--v-layout-left, 0px)) })
+    // are scoped and cannot be read at runtime via getComputedStyle in jsdom — assert prop binding.
+    const wrapper = mountComponent({ fullBleed: true });
+    // fullBleed prop is accepted
+    expect(wrapper.props('fullBleed')).toBe(true);
+    // .full-bleed class is applied, which in production CSS sets width:100vw and margin-left correction
+    expect(wrapper.find('.blur-background.full-bleed').exists()).toBe(true);
+  });
+
+  it('when fullBleed is false, .full-bleed class is absent (no unexpected layout shift)', () => {
+    const wrapper = mountComponent({ fullBleed: false });
+    expect(wrapper.find('.blur-background.full-bleed').exists()).toBe(false);
+  });
 });

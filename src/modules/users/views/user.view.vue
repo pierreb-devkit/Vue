@@ -32,6 +32,15 @@
             <v-window-item value="profile">
               <div class="pa-6">
                 <userProfileComponent :user="user" :organizations="organizations" @save="updateProfile" @avatar-uploaded="onAvatarUploaded" />
+
+                <!-- Danger zone -->
+                <v-card variant="outlined" color="error" class="mt-6">
+                  <v-card-title class="text-title-medium font-weight-medium">{{ $t('users.deleteAccount.title') }}</v-card-title>
+                  <v-card-text class="text-body-small text-medium-emphasis">{{ $t('users.deleteAccount.warning') }}</v-card-text>
+                  <v-card-actions>
+                    <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">{{ $t('users.deleteAccount.cta') }}</v-btn>
+                  </v-card-actions>
+                </v-card>
               </div>
             </v-window-item>
             <!-- Organizations tab -->
@@ -95,34 +104,12 @@
               </div>
             </v-window-item>
             <!-- Subscriptions tab — visible to org owners/admins, gated for billing-enabled servers -->
-            <v-window-item v-if="showSubscriptionsTab" value="subscriptions">
-              <div class="pa-6">
-                <BillingSubscriptionsComponent />
-              </div>
+            <v-window-item v-if="showSubscriptionsTab" value="subscriptions" class="pa-0">
+              <BillingSubscriptionsComponent />
             </v-window-item>
           </v-window>
         </v-card>
 
-        <!-- Danger zone -->
-        <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
-          <div class="d-flex align-center flex-wrap ga-4">
-            <div class="flex-grow-1">
-              <h3 class="text-title-medium font-weight-medium mb-1">Delete Account</h3>
-              <p class="text-body-small text-medium-emphasis mb-0">
-                Permanently delete your account, data, and organization ownership. This cannot be undone.
-              </p>
-            </div>
-            <v-btn
-              color="error"
-              variant="tonal"
-              :class="config.vuetify.theme.rounded"
-              class="text-none text-body-medium"
-              @click="confirmDeleteAccount = true"
-            >
-              Delete Account
-            </v-btn>
-          </div>
-        </v-card>
       </v-col>
     </v-row>
 
@@ -144,12 +131,12 @@
     <!-- Delete account dialog -->
     <v-dialog v-model="confirmDeleteAccount" max-width="440">
       <v-card :class="config.vuetify.theme.rounded" class="pa-4">
-        <v-card-title class="text-title-large font-weight-medium text-error">Delete Account</v-card-title>
+        <v-card-title class="text-title-large font-weight-medium text-error">{{ $t('users.deleteAccount.title') }}</v-card-title>
         <v-card-text class="text-body-medium">
-          This action is irreversible. Your account, all your data, and any organization you are the sole owner of will be permanently deleted.
+          {{ $t('users.deleteAccount.warning') }}
           <v-text-field
             v-model="deleteConfirmInput"
-            label="Type DELETE to confirm"
+            :label="$t('users.deleteAccount.confirmLabel')"
             variant="outlined"
             density="compact"
             class="mt-4"
@@ -166,7 +153,7 @@
             class="text-none text-body-medium"
             :disabled="deleteConfirmInput !== 'DELETE'"
             @click="deleteAccount"
-          >Delete my account</v-btn>
+          >{{ $t('users.deleteAccount.cta') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
