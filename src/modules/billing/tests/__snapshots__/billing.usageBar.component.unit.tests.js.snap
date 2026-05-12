@@ -8,8 +8,7 @@ exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
   <div data-v-f7f25334="" data-v-621d4e81="" class="billing-meter-progress" aria-label="1100 of 1000 used, 100 over quota">
     <!-- Label row -->
     <!--v-if-->
-    <!-- Overage ARIA signal (visually hidden, aria-live region for assistive tech) -->
-    <div data-v-f7f25334="" class="billing-meter-progress__overage d-flex align-center mb-1" aria-live="assertive" aria-atomic="true"></div><!-- Bar variant -->
+    <!-- Bar variant -->
     <div data-v-f7f25334="" class="v-progress-linear v-progress-linear--rounded v-progress-linear--rounded v-theme--light v-locale--is-ltr" style="top: 0px; height: 10px; --v-progress-linear-height: 10px;" role="progressbar" aria-hidden="false" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
       <!---->
       <div class="v-progress-linear__background bg-surface-variant" style="opacity: NaN;"></div>

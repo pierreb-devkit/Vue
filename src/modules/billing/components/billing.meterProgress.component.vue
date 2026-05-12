@@ -56,14 +56,6 @@
       >{{ clampedProgress }}%</span>
     </div>
 
-    <!-- Overage ARIA signal (visually hidden, aria-live region for assistive tech) -->
-    <div
-      v-if="overage > 0"
-      class="billing-meter-progress__overage d-flex align-center mb-1"
-      aria-live="assertive"
-      aria-atomic="true"
-    />
-
     <!-- Bar variant -->
     <template v-if="variant === 'bar'">
       <v-progress-linear
