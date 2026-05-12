@@ -370,13 +370,14 @@ describe('UserView – billing refetch on auth state change', () => {
 
 describe('UserView – serverConfig watcher activates subs tab', () => {
   let authStore;
-  let billingStore;
   let organizationsStore;
 
   beforeEach(() => {
     setActivePinia(createPinia());
     authStore = useAuthStore();
-    billingStore = useBillingStore();
+    // billing store is initialized in the component's setup chain via useBillingStore();
+    // we only need to drive serverConfig + organizations from this test suite.
+    useBillingStore();
     organizationsStore = useOrganizationsStore();
     organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
   });
