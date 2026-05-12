@@ -492,13 +492,16 @@ describe('UserView – subscriptions tab is full-width (pa-0)', () => {
     authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
     organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
 
-    // Use a stub that exposes its class attribute so we can assert pa-0
+    // Capture attrs on each v-window-item instance so we can assert the
+    // subscriptions one has class="pa-0" and does not wrap BillingSubscriptionsComponent
+    // in an extra pa-6 div.
+    // Note: do NOT declare 'value' as a prop — keep it in $attrs so it's accessible.
     const capturedAttrs = {};
     const windowItemStub = {
       template: '<div><slot /></div>',
-      props: ['value'],
+      inheritAttrs: false,
       created() {
-        if (this.$attrs.value === 'subscriptions' || this.$attrs.class?.includes('pa-0')) {
+        if (this.$attrs.value === 'subscriptions') {
           Object.assign(capturedAttrs, this.$attrs);
         }
       },
@@ -514,15 +517,10 @@ describe('UserView – subscriptions tab is full-width (pa-0)', () => {
       },
     });
 
-    // The component renders v-window-item with value="subscriptions" and class="pa-0"
-    // Verify via the component's template — the subscriptions window item has class pa-0
-    const html = wrapper.html();
-    // The stub renders all v-window-items; check the component $el tree has the right attrs set
-    // We verify by inspecting the component options directly (template-based assertion)
     expect(wrapper.vm.showSubscriptionsTab).toBe(true);
-    // The subscriptions v-window-item must NOT be wrapped in a pa-6 div
-    // Verify by checking the component renders BillingSubscriptionsComponent directly (no wrapper div with pa-6)
-    expect(html).not.toMatch(/class="pa-6"[\s\S]*?BillingSubscriptionsComponent/);
+    // The subscriptions v-window-item must have value="subscriptions" and class="pa-0"
+    expect(capturedAttrs.value).toBe('subscriptions');
+    expect(capturedAttrs.class).toBe('pa-0');
   });
 });
 
@@ -556,14 +554,62 @@ describe('UserView – delete account danger zone', () => {
     expect(wrapper.vm.confirmDeleteAccount).toBe(true);
   });
 
-  it('confirm button is disabled when deleteConfirmInput is not DELETE', () => {
-    wrapper.vm.deleteConfirmInput = 'DELET';
-    expect(wrapper.vm.deleteConfirmInput !== 'DELETE').toBe(true);
+  it('confirm button is disabled when deleteConfirmInput is not DELETE', async () => {
+    // Use a full-stubs setup that captures the :disabled binding from the confirm v-btn
+    // The confirm button has :disabled="deleteConfirmInput !== 'DELETE'"
+    const capturedDisabledValues = [];
+    const vBtnStub = {
+      template: '<button :disabled="disabled" v-bind="$attrs"><slot /></button>',
+      props: { disabled: { type: Boolean, default: false } },
+      created() {
+        // Capture only the btn that has a disabled binding (the confirm btn)
+        if (Object.prototype.hasOwnProperty.call(this.$props, 'disabled')) {
+          capturedDisabledValues.push(this.$props);
+        }
+      },
+    };
+
+    const w = shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: { ...sharedStubs, 'v-btn': vBtnStub },
+      },
+    });
+
+    w.vm.deleteConfirmInput = 'DELET';
+    await w.vm.$nextTick();
+
+    // The confirm button binding: :disabled="deleteConfirmInput !== 'DELETE'"
+    expect(w.vm.deleteConfirmInput !== 'DELETE').toBe(true);
+    // Verify the rendered confirm button has disabled attribute
+    const confirmBtn = w.findAll('button').find((b) => b.attributes('disabled') !== undefined || b.element.disabled);
+    // If stubs render a standard <button>, check DOM disabled state
+    const buttons = w.findAll('button[disabled]');
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('confirm button is enabled when deleteConfirmInput equals DELETE', () => {
-    wrapper.vm.deleteConfirmInput = 'DELETE';
-    expect(wrapper.vm.deleteConfirmInput === 'DELETE').toBe(true);
+  it('confirm button is enabled when deleteConfirmInput equals DELETE', async () => {
+    const w = shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: {
+          ...sharedStubs,
+          'v-btn': {
+            template: '<button :disabled="disabled" v-bind="$attrs"><slot /></button>',
+            props: { disabled: { type: Boolean, default: false } },
+          },
+        },
+      },
+    });
+
+    w.vm.deleteConfirmInput = 'DELETE';
+    await w.vm.$nextTick();
+
+    // :disabled="deleteConfirmInput !== 'DELETE'" → false when input === 'DELETE'
+    expect(w.vm.deleteConfirmInput === 'DELETE').toBe(true);
+    // No buttons should have disabled when input is DELETE
+    const disabledButtons = w.findAll('button[disabled]');
+    expect(disabledButtons.length).toBe(0);
   });
 
   it('deleteAccount method calls axios.delete and redirects to /signin on success', async () => {
