@@ -273,6 +273,16 @@ export default {
       if (val) this.applyTabFromRoute();
     },
     /**
+     * @desc Re-apply the route tab when serverConfig arrives or changes.
+     * Fixes the race where `showSubscriptionsTab` was already true (orgs cached)
+     * but serverConfig hadn't populated yet — no false→true flip on
+     * `showSubscriptionsTab` occurs, so only this watcher catches the update.
+     * Also handles serverConfig refresh (re-fetch) without a full page reload.
+     */
+    'authStore.serverConfig'() {
+      this.applyTabFromRoute();
+    },
+    /**
      * @desc Refetch organizations + billing subscription whenever the auth
      * state changes. Tab visibility (`showSubscriptionsTab`) depends on both
      * `hasOwnerOrAdminRole` (organizations) and the billing feature flag, so
