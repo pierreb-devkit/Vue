@@ -226,6 +226,41 @@ describe('core.navigation.component — template rendering', () => {
   });
 });
 
+describe('core.navigation.component — compute gauge slot', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    coreStoreState.nav = [];
+    coreStoreState.navBottom = [];
+  });
+
+  it('meterMode computed returns false when serverConfig has no billing.meterMode', () => {
+    // The global mock returns serverConfig: { organizations: { enabled: false } }
+    // — no billing key → meterMode must be false
+    const wrapper = mountNav();
+    expect(wrapper.vm.meterMode).toBe(false);
+  });
+
+  it('isRail returns false when config.vuetify.theme.navigation.drawer.rail is false', () => {
+    const wrapper = mountNav();
+    expect(wrapper.vm.isRail).toBe(false);
+  });
+
+  it('isRail reflects the drawer rail config — false when rail=false', () => {
+    // Default mountNav has rail: false in config — isRail must be false
+    const wrapper = mountNav();
+    // isRail = !$vuetify.display.mobile && !!config.navigation.drawer.rail
+    // $vuetify.display.mobile = false (mocked), rail = false → isRail = false
+    expect(wrapper.vm.isRail).toBe(false);
+  });
+
+  it('does not render BillingNavComputeGaugeComponent when meterMode is false', () => {
+    // Global auth mock has no billing.meterMode — gauge must be absent
+    const wrapper = mountNav();
+    const gauge = wrapper.findComponent({ name: 'BillingNavComputeGaugeComponent' });
+    expect(gauge.exists()).toBe(false);
+  });
+});
+
 describe('core.navigation.component — sidenav logo', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
