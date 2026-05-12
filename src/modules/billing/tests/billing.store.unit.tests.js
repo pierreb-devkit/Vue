@@ -207,26 +207,19 @@ describe('Billing Store', () => {
         loadingDuringPortal = store.loading;
         return Promise.resolve({ data: { data: { url: portalUrl } } });
       });
-      const originalLocation = window.location;
-      delete window.location;
-      window.location = { ...originalLocation, href: '' };
       await store.openPortal();
       expect(loadingDuringPortal).toBe(true);
       expect(store.loading).toBe(false);
-      window.location = originalLocation;
     });
 
-    it('should call portal endpoint and redirect', async () => {
+    it('should call portal endpoint and return the validated URL', async () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session456';
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
-      const originalLocation = window.location;
-      delete window.location;
-      window.location = { ...originalLocation, href: '' };
-      await store.openPortal();
-      expect(window.location.href).toBe(portalUrl);
+      const result = await store.openPortal();
+      // openPortal returns the URL — caller is responsible for window.open
+      expect(result).toBe(portalUrl);
       expect(store.loading).toBe(false);
-      window.location = originalLocation;
     });
 
     it('should throw when portal URL is missing from API response', async () => {
@@ -263,16 +256,22 @@ describe('Billing Store', () => {
       const store = useBillingStore();
       const portalUrl = 'https://billing.stripe.com/session/test_123';
       axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
-      const originalLocation = window.location;
-      delete window.location;
-      window.location = { ...originalLocation, href: '' };
       await store.openPortal();
       // Second argument must be {} (empty object), not undefined
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/portal'),
         {},
       );
-      window.location = originalLocation;
+    });
+
+    it('does NOT mutate window.location (caller is responsible for navigation)', async () => {
+      const store = useBillingStore();
+      const portalUrl = 'https://billing.stripe.com/session/no_redirect';
+      axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
+      const hrefBefore = window.location.href;
+      await store.openPortal();
+      // window.location.href must not have changed
+      expect(window.location.href).toBe(hrefBefore);
     });
   });
 

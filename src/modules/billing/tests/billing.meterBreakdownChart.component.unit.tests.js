@@ -131,24 +131,51 @@ describe('BillingMeterBreakdownChartComponent', () => {
     expect(colorD2).toBe(colorD1);
   });
 
-  // ── Rendering ─────────────────────────────────────────────────────────────
+  // ── Linear bar rendering (new v-progress-linear design) ──────────────────
 
-  it('renders the stacked bar when there are active buckets', () => {
-    const wrapper = mountComponent({ breakdown: { scrap: 100, autofix: 50 } });
-    const bar = wrapper.find('.billing-meter-breakdown-chart__bar');
-    expect(bar.exists()).toBe(true);
+  it('renders one v-progress-linear per non-zero bucket', () => {
+    const wrapper = mountComponent({ breakdown: { scrap: 100, autofix: 50, wizard: 0 } });
+    const bars = wrapper.findAllComponents({ name: 'v-progress-linear' });
+    // Only scrap and autofix are non-zero → 2 bars
+    expect(bars).toHaveLength(2);
   });
 
-  it('renders legend entries for active buckets', () => {
+  it('v-progress-linear bars have height="10" and rounded props', () => {
     const wrapper = mountComponent({ breakdown: { scrap: 100, autofix: 50 } });
-    const legend = wrapper.find('.billing-meter-breakdown-chart__legend');
-    expect(legend.exists()).toBe(true);
-    expect(legend.text()).toContain('scrap');
-    expect(legend.text()).toContain('autofix');
+    const bars = wrapper.findAllComponents({ name: 'v-progress-linear' });
+    for (const bar of bars) {
+      expect(bar.props('height')).toBe('10');
+      expect(bar.props('rounded')).toBe(true);
+    }
   });
 
-  it('does not render zero-value bucket in legend', () => {
+  it('v-progress-linear bars have bg-color="surface-variant"', () => {
+    const wrapper = mountComponent({ breakdown: { scrap: 100 } });
+    const bar = wrapper.findComponent({ name: 'v-progress-linear' });
+    expect(bar.props('bgColor')).toBe('surface-variant');
+  });
+
+  it('renders bucket label and percentage above each bar', () => {
+    const wrapper = mountComponent({ breakdown: { scrap: 100, autofix: 100 } });
+    const text = wrapper.text();
+    // Both keys visible
+    expect(text).toContain('scrap');
+    expect(text).toContain('autofix');
+    // Percentages (50% each for equal split)
+    expect(text).toContain('50%');
+  });
+
+  it('does not render zero-value bucket bar or label', () => {
     const wrapper = mountComponent({ breakdown: { scrap: 100, autofix: 0 } });
-    expect(wrapper.find('.billing-meter-breakdown-chart__legend').text()).not.toContain('autofix');
+    // autofix is zero → not in active buckets → no label rendered
+    expect(wrapper.text()).not.toContain('autofix');
+    // Only 1 bar for scrap
+    expect(wrapper.findAllComponents({ name: 'v-progress-linear' })).toHaveLength(1);
+  });
+
+  it('does not render any bar when all buckets are zero', () => {
+    const wrapper = mountComponent({ breakdown: { scrap: 0 } });
+    expect(wrapper.findAllComponents({ name: 'v-progress-linear' })).toHaveLength(0);
+    expect(wrapper.text()).toContain('No usage data');
   });
 });

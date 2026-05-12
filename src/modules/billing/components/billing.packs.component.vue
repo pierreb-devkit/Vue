@@ -11,6 +11,9 @@
   On click → calls `billingStore.createExtrasCheckout(packId)` which initiates a
   Stripe Checkout session and redirects the user.
 
+  Purchase errors are surfaced via the centralized snackbar (lib/services/axios.js
+  interceptor) — no inline error alert rendered here.
+
   USAGE:
   <BillingPacksComponent />
 -->
@@ -74,18 +77,6 @@
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- Purchase error -->
-    <v-alert
-      v-if="purchaseError"
-      type="error"
-      variant="tonal"
-      class="mt-4"
-      closable
-      @click:close="purchaseError = null"
-    >
-      {{ purchaseError }}
-    </v-alert>
   </div>
 </template>
 
@@ -125,8 +116,6 @@ export default {
     return {
       /** @type {string|null} packId currently being purchased (drives loading state) */
       purchasingId: null,
-      /** @type {string|null} User-facing error when checkout initiation fails */
-      purchaseError: null,
     };
   },
 
@@ -152,7 +141,8 @@ export default {
      * Reuses the same auth/org guard as onSelectPlan() in billing.pricing.view.vue:
      * unauthenticated users are redirected to sign-in; logged-in users without a
      * current organization are redirected to org setup. On success Stripe redirects;
-     * failures surface a user-facing banner for retry.
+     * failures are surfaced via the centralized snackbar (lib/services/axios.js
+     * interceptor) — no inline error alert.
      * @param {{ packId: string, label: string }} pack
      * @returns {Promise<void>}
      */
@@ -172,12 +162,12 @@ export default {
       }
 
       this.purchasingId = pack.packId;
-      this.purchaseError = null;
       try {
         await this.billingStore.createExtrasCheckout(pack.packId);
       } catch (err) {
+        // Centralized snackbar (lib/services/axios.js interceptor) surfaces
+        // backend error.description automatically. Console log for debug only.
         console.error('Failed to initiate extras checkout:', err);
-        this.purchaseError = this.$t('billing.pricing.error.checkoutFailed');
       } finally {
         this.purchasingId = null;
       }

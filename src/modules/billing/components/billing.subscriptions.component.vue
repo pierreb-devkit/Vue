@@ -15,7 +15,7 @@
   - none
 -->
 <template>
-  <v-container class="billing-subscriptions py-6 px-0" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+  <v-container class="billing-subscriptions py-6 px-6" style="max-width: none; width: 100%;">
 
     <!-- ── Status banners ────────────────────────────────────────────────── -->
     <v-alert
@@ -173,20 +173,8 @@
               <span>{{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}</span>
             </div>
 
-            <!-- Portal error -->
-            <v-alert
-              v-if="portalError"
-              type="error"
-              variant="tonal"
-              closable
-              class="mb-4"
-              @click:close="portalError = null"
-            >
-              {{ portalError }}
-            </v-alert>
-
-            <!-- CTAs -->
-            <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !nextBillingDate && !portalError }">
+            <!-- CTAs (portal error surfaced via centralized snackbar — see lib/services/axios.js) -->
+            <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !nextBillingDate }">
               <v-btn
                 color="primary"
                 variant="flat"
@@ -212,34 +200,21 @@
           <!-- ── Meter section (single bar — no duplicate) ──────────────── -->
           <template v-if="meterMode">
 
-            <!-- Meter polling error -->
-            <v-alert
-              v-if="meterError"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              closable
-              class="mb-4"
-              :icon="'fa-solid fa-triangle-exclamation'"
-              aria-live="polite"
-              @click:close="meterError = null"
-            >
-              {{ $t('billing.meter.error.refreshFailed') }}
-            </v-alert>
+            <!-- Meter polling error surfaced via centralized snackbar (lib/services/axios.js) -->
 
             <!-- ── Usage meter card (T4 % bar — single source, no BillingUsageBarComponent) -->
             <v-card
               :class="config.vuetify.theme.rounded"
-              class="billing-subscriptions__meter-card pa-6 mb-4"
+              class="billing-subscriptions__meter-card px-6 py-3 mb-0"
               elevation="0"
             >
-              <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.weekly') }}</p>
+              <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.usage.weekly') }}</p>
               <BillingMeterProgressComponent
                 :used="meterUsed"
-                :quota="meterQuota"
-                :extras="meterExtras"
-                :overage="meterOverage"
-                :net-remaining-raw="meterNetRemainingRaw"
+                :quota="combinedPool"
+                :extras="0"
+                :overage="0"
+                :net-remaining-raw="combinedPool - meterUsed"
                 label=""
               />
             </v-card>
@@ -247,10 +222,10 @@
             <!-- ── Breakdown card ─────────────────────────────────────────── -->
             <v-card
               :class="config.vuetify.theme.rounded"
-              class="billing-subscriptions__meter-card--breakdown pa-6 mb-4"
+              class="billing-subscriptions__meter-card--breakdown px-6 py-3 mb-0"
               elevation="0"
             >
-              <p class="text-title-medium font-weight-medium mb-4">{{ $t('billing.usage.breakdown') }}</p>
+              <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.usage.breakdown') }}</p>
               <BillingMeterBreakdownChartComponent :breakdown="meterBreakdown" />
             </v-card>
 
@@ -379,7 +354,6 @@ export default {
       breakdown: meterBreakdown,
       overage: meterOverage,
       netRemainingRaw: meterNetRemainingRaw,
-      meterError,
     } = meter;
 
     const meterMode = computed(() => authStore.serverConfig?.billing?.meterMode === true);
@@ -406,13 +380,11 @@ export default {
       meterBreakdown,
       meterOverage,
       meterNetRemainingRaw,
-      meterError,
     };
   },
   data() {
     return {
       portalLoading: false,
-      portalError: null,
       extrasCheckoutDialog: false,
       paymentSuccessMessage: null,
       successCleanupTimer: null,
@@ -431,6 +403,15 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc Combined compute pool = subscription quota + extras + already-used.
+     * Used as denominator for "Weekly compute" % so Free plan (quota=0) doesn't
+     * false-alarm 100% red. Matches the sidenav gauge formula.
+     * @returns {number}
+     */
+    combinedPool() {
+      return this.meterQuota + this.meterExtras + this.meterUsed;
+    },
     fetchLoading() {
       return this.billingStore.loading;
     },
@@ -851,18 +832,17 @@ export default {
     },
 
     /**
-     * @desc Open the Stripe customer portal.
+     * @desc Open the Stripe customer portal in a new tab.
      * @returns {Promise<void>}
      */
     async manageSubscription() {
       this.portalLoading = true;
-      this.portalError = null;
       try {
-        await this.billingStore.openPortal();
-        this.portalError = null;
+        const url = await this.billingStore.openPortal();
+        if (url) window.open(url, '_blank', 'noopener,noreferrer');
       } catch (err) {
+        // Centralized snackbar (lib/services/axios.js) surfaces backend error.
         console.error('Failed to open billing portal:', err);
-        this.portalError = this.$t('billing.subscriptions.error.portalFailed');
       } finally {
         this.portalLoading = false;
       }

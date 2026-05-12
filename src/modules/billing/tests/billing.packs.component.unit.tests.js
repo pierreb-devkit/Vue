@@ -70,7 +70,12 @@ const vuetify = createVuetify();
  * @returns {import('@vue/test-utils').VueWrapper}
  */
 function mountPacks(overrides = {}) {
-  Object.assign(authState, overrides);
+  Object.assign(authState, {
+    isLoggedIn: true,
+    user: { currentOrganization: 'org_test_123' },
+    serverConfig: { organizations: { enabled: true } },
+    ...overrides,
+  });
   return mount(BillingPacksComponent, {
     global: {
       plugins: [vuetify, i18n],
@@ -191,16 +196,16 @@ describe('BillingPacksComponent — purchase flow', () => {
     expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_500');
   });
 
-  it('shows an error banner when createExtrasCheckout rejects (failure path)', async () => {
+  it('does NOT render inline purchaseError alert on checkout failure (centralized snackbar)', async () => {
     vi.spyOn(store, 'createExtrasCheckout').mockRejectedValue(new Error('Network error'));
     wrapper = mountPacks();
     await flushPromises();
     const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('500 units'));
     await buyBtn.trigger('click');
     await flushPromises();
-    const alert = wrapper.find('.v-alert');
-    expect(alert.exists()).toBe(true);
-    expect(wrapper.text()).toContain('Failed to start checkout. Please try again.');
+    // Error surfaced via centralized snackbar — no inline v-alert rendered
+    expect(wrapper.find('.v-alert').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('Failed to start checkout. Please try again.');
   });
 
   it('disables all Buy buttons while a purchase is in progress', async () => {
