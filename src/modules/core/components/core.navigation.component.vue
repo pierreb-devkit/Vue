@@ -96,8 +96,10 @@
             </v-list-item>
           </v-list>
         </template>
-        <!-- Compute usage gauge — visible only in meter-mode apps -->
-        <billingComputeGauge />
+        <!-- Compute gauge: button-shape above sign-out row (meterMode only) -->
+        <v-list v-if="meterMode" :style="listStyle" nav class="py-0">
+          <BillingNavComputeGaugeComponent :rail="isRail" />
+        </v-list>
         <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
         <!-- Sign out -->
         <v-list :style="listStyle" nav>
@@ -132,14 +134,14 @@ import { liquidGlassStyle } from '../../../lib/helpers/theme';
 // projects include it. This follows the same pattern as user.view.vue importing
 // BillingSubscriptionsComponent. A consolidated cross-module refactor is tracked
 // as tech debt; this PR does not introduce a new pattern.
-import billingComputeGauge from '../../billing/components/billing.computeGauge.component.vue';
+import BillingNavComputeGaugeComponent from '../../billing/components/billing.navComputeGauge.component.vue';
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
   components: {
-    billingComputeGauge,
+    BillingNavComputeGaugeComponent,
   },
   data() {
     const theme = useTheme();
@@ -165,6 +167,22 @@ export default {
       const authStore = useAuthStore();
       if (!authStore.serverConfig?.organizations?.enabled) return true;
       return !!authStore.user?.currentOrganization;
+    },
+    /**
+     * @desc Whether the app is in meter mode (compute billing active).
+     * @returns {Boolean}
+     */
+    meterMode() {
+      const authStore = useAuthStore();
+      return authStore.serverConfig?.billing?.meterMode === true;
+    },
+    /**
+     * @desc Whether the navigation drawer is in rail (collapsed icon-only) mode.
+     * True when not on mobile and the drawer rail config is enabled.
+     * @returns {Boolean}
+     */
+    isRail() {
+      return !this.$vuetify.display.mobile && !!this.config.vuetify.theme.navigation.drawer.rail;
     },
     /**
      * @desc Logo file — header config takes priority, falls back to app.logoFile.
