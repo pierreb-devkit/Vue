@@ -1,0 +1,188 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import { createVuetify } from 'vuetify';
+import BillingCardComponent from '../components/billing.card.component.vue';
+
+const vuetify = createVuetify();
+
+const mockConfig = {
+  vuetify: { theme: { rounded: 'rounded-lg', flat: false } },
+};
+
+/**
+ * Minimal valid item factory — caller overrides fields as needed.
+ * @param {Object} overrides
+ * @returns {Object}
+ */
+function makeItem(overrides = {}) {
+  return {
+    id: 'free',
+    title: 'Free',
+    subtitle: 'For starters',
+    price: { amount: 'FREE', period: null, chip: null },
+    cta: { label: 'Get started', variant: 'outlined', color: null, disabled: false, loading: false, to: null },
+    info: null,
+    features: [],
+    badge: null,
+    highlight: false,
+    ...overrides,
+  };
+}
+
+/**
+ * Mount BillingCardComponent with Vuetify + config mock.
+ * @param {Object} item
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
+const mountComponent = (item) =>
+  mount(BillingCardComponent, {
+    props: { item },
+    global: {
+      plugins: [vuetify],
+      mocks: { config: mockConfig },
+    },
+  });
+
+describe('BillingCardComponent', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  // ── Renders basic fields ──────────────────────────────────────────────────
+
+  it('renders title', () => {
+    const wrapper = mountComponent(makeItem({ title: 'Growth' }));
+    expect(wrapper.text()).toContain('Growth');
+  });
+
+  it('renders subtitle', () => {
+    const wrapper = mountComponent(makeItem({ subtitle: 'For growing teams' }));
+    expect(wrapper.text()).toContain('For growing teams');
+  });
+
+  it('renders price.amount', () => {
+    const wrapper = mountComponent(makeItem({ price: { amount: '$39', period: '/month', chip: null } }));
+    expect(wrapper.text()).toContain('$39');
+  });
+
+  it('renders price.period when present', () => {
+    const wrapper = mountComponent(makeItem({ price: { amount: '$39', period: '/month', chip: null } }));
+    expect(wrapper.text()).toContain('/month');
+  });
+
+  it('does not render price.period span when period is null', () => {
+    const wrapper = mountComponent(makeItem({ price: { amount: 'FREE', period: null, chip: null } }));
+    // period span uses v-if — text should not show any period string
+    expect(wrapper.text()).not.toContain('/month');
+    expect(wrapper.text()).not.toContain('/year');
+  });
+
+  it('renders CTA label', () => {
+    const wrapper = mountComponent(makeItem({ cta: { label: 'Upgrade now', variant: 'flat', color: 'primary', disabled: false, loading: false, to: null } }));
+    expect(wrapper.text()).toContain('Upgrade now');
+  });
+
+  it('renders info line when present', () => {
+    const wrapper = mountComponent(makeItem({ info: 'Ops-eval: 200 scraps / month' }));
+    expect(wrapper.text()).toContain('Ops-eval: 200 scraps / month');
+  });
+
+  it('does not render info paragraph when info is null', () => {
+    const wrapper = mountComponent(makeItem({ info: null }));
+    // No `p` with that class should exist unless it contains text
+    const infoEl = wrapper.find('p');
+    if (infoEl.exists()) {
+      expect(infoEl.text().trim()).toBe('For starters'); // subtitle only
+    }
+  });
+
+  it('renders features list items', () => {
+    const item = makeItem({
+      features: [
+        { icon: 'fa-solid fa-check', color: 'primary', text: 'Unlimited projects' },
+        { icon: 'fa-solid fa-check', color: 'success', text: 'Priority support' },
+      ],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.text()).toContain('Unlimited projects');
+    expect(wrapper.text()).toContain('Priority support');
+  });
+
+  // ── Badge ─────────────────────────────────────────────────────────────────
+
+  it('renders badge chip with .billing-card__badge class when item.badge is truthy', () => {
+    const wrapper = mountComponent(makeItem({ badge: 'MOST POPULAR' }));
+    expect(wrapper.find('.billing-card__badge').exists()).toBe(true);
+    expect(wrapper.find('.billing-card__badge').text()).toContain('MOST POPULAR');
+  });
+
+  it('does not render badge chip when item.badge is null', () => {
+    const wrapper = mountComponent(makeItem({ badge: null }));
+    expect(wrapper.find('.billing-card__badge').exists()).toBe(false);
+  });
+
+  // ── CTA: emit cta-click ───────────────────────────────────────────────────
+
+  it('emits cta-click with { id } when CTA button is clicked and not disabled', async () => {
+    const item = makeItem({ id: 'growth', cta: { label: 'Upgrade', variant: 'flat', color: 'primary', disabled: false, loading: false, to: null } });
+    const wrapper = mountComponent(item);
+    await wrapper.find('button').trigger('click');
+    expect(wrapper.emitted('cta-click')).toBeTruthy();
+    expect(wrapper.emitted('cta-click')[0]).toEqual([{ id: 'growth' }]);
+  });
+
+  it('does NOT emit cta-click when cta.disabled is true', async () => {
+    const item = makeItem({ id: 'pro', cta: { label: 'Current Plan', variant: 'tonal', color: 'success', disabled: true, loading: false, to: null } });
+    const wrapper = mountComponent(item);
+    // Programmatically call onCtaClick to test guard (disabled btn blocks native click)
+    await wrapper.vm.onCtaClick();
+    expect(wrapper.emitted('cta-click')).toBeFalsy();
+  });
+
+  // ── price.chip (annual savings) ───────────────────────────────────────────
+
+  it('renders price.chip as a tonal v-chip when present', () => {
+    const item = makeItem({
+      price: {
+        amount: '$33',
+        period: '/month',
+        chip: { text: 'Save 15%', color: 'success' },
+      },
+    });
+    const wrapper = mountComponent(item);
+    // Find the chip that is NOT the badge
+    const chips = wrapper.findAllComponents({ name: 'VChip' });
+    const priceChip = chips.find((c) => c.text() === 'Save 15%');
+    expect(priceChip).toBeDefined();
+    expect(priceChip.props('variant')).toBe('tonal');
+  });
+
+  it('does not render price.chip when chip is null', () => {
+    const wrapper = mountComponent(makeItem({ price: { amount: '$39', period: '/month', chip: null } }));
+    const chips = wrapper.findAllComponents({ name: 'VChip' });
+    // No chip should be rendered (badge is also null by default)
+    expect(chips.length).toBe(0);
+  });
+
+  // ── feature icon + color ──────────────────────────────────────────────────
+
+  it('applies feature.icon and feature.color to list item icons', () => {
+    const item = makeItem({
+      features: [{ icon: 'fa-solid fa-bolt', color: 'warning', text: 'Fast execution' }],
+    });
+    const wrapper = mountComponent(item);
+    const icon = wrapper.findComponent({ name: 'VIcon' });
+    expect(icon.props('icon')).toBe('fa-solid fa-bolt');
+    expect(icon.props('color')).toBe('warning');
+  });
+
+  it('falls back to fa-solid fa-check icon when feature.icon is absent', () => {
+    const item = makeItem({
+      features: [{ text: 'Basic feature' }],
+    });
+    const wrapper = mountComponent(item);
+    const icon = wrapper.findComponent({ name: 'VIcon' });
+    expect(icon.props('icon')).toBe('fa-solid fa-check');
+  });
+});

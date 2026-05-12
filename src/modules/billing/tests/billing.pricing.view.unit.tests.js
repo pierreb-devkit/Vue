@@ -67,6 +67,14 @@ vi.mock('../composables/billing.usePricing.js', () => {
   };
 });
 
+// ─── useCurrencyFormat mock (new view uses formatPrice) ─────────────────────
+
+vi.mock('../composables/billing.useCurrencyFormat.js', () => ({
+  useCurrencyFormat: () => ({
+    formatPrice: (amount) => `$${amount}`,
+  }),
+}));
+
 // ─── Imports (after mocks) ──────────────────────────────────────────────────
 
 import { createI18n } from 'vue-i18n';
@@ -96,7 +104,7 @@ const vuetify = createVuetify();
 const componentStubs = {
   RouterLink: true,
   BillingPricingToggleComponent: true,
-  BillingPricingCardComponent: true,
+  BillingCardComponent: true,
   BillingPacksComponent: true,
   HomeTabsComponent: true,
   // homeBlurBackgroundComponent is intentionally NOT stubbed so .blur-background renders
@@ -255,7 +263,7 @@ describe('BillingPricingView — mode-aware layout', () => {
   const componentStubsWithFAQ = {
     RouterLink: true,
     BillingPricingToggleComponent: true,
-    BillingPricingCardComponent: true,
+    BillingCardComponent: true,
     BillingPacksComponent: true,
     HomeTabsComponent: true,
     homeFaqComponent: true,
@@ -402,5 +410,167 @@ describe('BillingPricingView — currentPlanId guest guard', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.currentPlanId).toBe('free');
     expect(wrapper.vm.isCurrentPlan('free')).toBe(true);
+  });
+});
+
+// ─── Suite: resolvedPlanItems — BillingCardComponent unified schema ───────────
+
+describe('BillingPricingView — resolvedPlanItems (V4 unified schema)', () => {
+  let wrapper;
+  let store;
+
+  const plansWithPrices = [
+    {
+      id: 'free',
+      title: 'Free',
+      subtitle: 'For starters',
+      price: { amount: 'FREE', period: null },
+      highlight: false,
+      badge: null,
+      cta: 'Get started',
+      features: [],
+      info: null,
+    },
+    {
+      id: 'growth',
+      title: 'Growth',
+      subtitle: 'For growing teams',
+      price: { amount: '$39', period: '/month' },
+      highlight: true,
+      badge: 'MOST POPULAR',
+      cta: 'Upgrade',
+      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Unlimited scraps' }],
+      info: null,
+      meta: { monthlyPrice: 39, annualPrice: 390 },
+    },
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'subscription';
+    pricingState.plans = plansWithPrices;
+    pricingState.hasPlans = true;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('resolvedPlanItems uses BillingCardComponent schema (id, title, subtitle, price, cta, features, badge)', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    const items = wrapper.vm.resolvedPlanItems;
+    expect(items).toHaveLength(2);
+    const growth = items.find((i) => i.id === 'growth');
+    expect(growth).toBeDefined();
+    expect(growth.title).toBe('Growth');
+    expect(growth.subtitle).toBe('For growing teams');
+    expect(growth.badge).toBe('MOST POPULAR');
+    expect(growth.cta).toBeDefined();
+    expect(growth.price).toBeDefined();
+    expect(Array.isArray(growth.features)).toBe(true);
+  });
+
+  it('price.chip is set when annual=true and annualSavingsPct > 0', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    // Activate annual toggle
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+    const items = wrapper.vm.resolvedPlanItems;
+    const growth = items.find((i) => i.id === 'growth');
+    // meta.monthlyPrice=39, meta.annualPrice=390 → savings pct = round((39-390/12)/39*100) = round((39-32.5)/39*100) ≈ 17
+    expect(growth.price.chip).not.toBeNull();
+    expect(growth.price.chip.color).toBe('success');
+    expect(growth.price.chip.text).toMatch(/Save \d+%/);
+  });
+
+  it('price.chip is null when annual=false', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = false;
+    await wrapper.vm.$nextTick();
+    const items = wrapper.vm.resolvedPlanItems;
+    const growth = items.find((i) => i.id === 'growth');
+    expect(growth.price.chip).toBeNull();
+  });
+
+  it('free plan always has price.chip null (no annual savings)', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+    const items = wrapper.vm.resolvedPlanItems;
+    const free = items.find((i) => i.id === 'free');
+    expect(free.price.chip).toBeNull();
+  });
+});
+
+// ─── Suite: both-tabs toggle disabled when Extras tab active ─────────────────
+
+describe('BillingPricingView — both-tabs: toggle :disabled when activeTab === 1', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'both-tabs';
+    pricingState.plans = [{ id: 'free', title: 'Free', subtitle: '', cta: 'Start', features: [], badge: null, highlight: false }, { id: 'pro', title: 'Pro', subtitle: '', cta: 'Upgrade', features: [], badge: null, highlight: false }];
+    pricingState.hasPlans = true;
+    pricingState.hasPacks = true;
+    pricingState.packs = [{ id: 'p1' }];
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('toggle is rendered with :disabled=false when activeTab === 0 (plans)', async () => {
+    wrapper = mount(BillingPricingView, {
+      global: {
+        plugins: [vuetify, i18n],
+        mocks: { config: mockConfig, $route: { path: '/pricing', hash: '', query: {} }, $router: { replace: vi.fn(), push: vi.fn() } },
+        stubs: componentStubs,
+      },
+    });
+    await flushPromises();
+    wrapper.vm.activeTab = 0;
+    await wrapper.vm.$nextTick();
+    const toggle = wrapper.findComponent({ name: 'BillingPricingToggleComponent' });
+    // :disabled="activeTab === 1" → false when activeTab is 0
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.props('disabled')).toBe(false);
+  });
+
+  it('toggle is rendered with :disabled=true when activeTab === 1 (extras)', async () => {
+    wrapper = mount(BillingPricingView, {
+      global: {
+        plugins: [vuetify, i18n],
+        mocks: { config: mockConfig, $route: { path: '/pricing', hash: '', query: {} }, $router: { replace: vi.fn(), push: vi.fn() } },
+        stubs: componentStubs,
+      },
+    });
+    await flushPromises();
+    wrapper.vm.activeTab = 1;
+    await wrapper.vm.$nextTick();
+    const toggle = wrapper.findComponent({ name: 'BillingPricingToggleComponent' });
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.props('disabled')).toBe(true);
   });
 });
