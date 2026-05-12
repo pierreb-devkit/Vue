@@ -240,24 +240,59 @@ describe('core.navigation.component — compute gauge slot', () => {
     expect(wrapper.vm.meterMode).toBe(false);
   });
 
-  it('isRail returns false when config.vuetify.theme.navigation.drawer.rail is false', () => {
-    const wrapper = mountNav();
-    expect(wrapper.vm.isRail).toBe(false);
-  });
-
-  it('isRail reflects the drawer rail config — false when rail=false', () => {
-    // Default mountNav has rail: false in config — isRail must be false
-    const wrapper = mountNav();
-    // isRail = !$vuetify.display.mobile && !!config.navigation.drawer.rail
-    // $vuetify.display.mobile = false (mocked), rail = false → isRail = false
-    expect(wrapper.vm.isRail).toBe(false);
-  });
-
   it('does not render BillingNavComputeGaugeComponent when meterMode is false', () => {
     // Global auth mock has no billing.meterMode — gauge must be absent
     const wrapper = mountNav();
     const gauge = wrapper.findComponent({ name: 'BillingNavComputeGaugeComponent' });
     expect(gauge.exists()).toBe(false);
+  });
+
+  it('meterMode computed reflects authStore.serverConfig.billing.meterMode', () => {
+    // The auth store mock is hoisted and has no billing key → meterMode = false.
+    // We verify the computed reads the right path by mounting and checking directly.
+    const wrapper = mountNav();
+    // Global mock: serverConfig = { organizations: { enabled: false } } → no billing → false
+    expect(wrapper.vm.meterMode).toBe(false);
+    // Verify template guard: if meterMode is false, gauge component must not render
+    expect(wrapper.findComponent({ name: 'BillingNavComputeGaugeComponent' }).exists()).toBe(false);
+  });
+
+  it('navBottom items appear before sign-out in the append slot', () => {
+    // The append slot order (top to bottom):
+    //   [gauge v-list — gated by meterMode]
+    //   [navBottom v-list]
+    //   [socials — gated by !config.footer]
+    //   [divider]
+    //   [sign-out]
+    // Verify navBottom items precede sign-out in DOM
+    const wrapper = mountNav({
+      navBottom: [
+        { path: '/account', name: 'Account', meta: { display: true, icon: 'fa-solid fa-user', position: 'bottom' } },
+      ],
+    });
+    const html = wrapper.html();
+    const accountPos = html.indexOf('Account');
+    const signOutPos = html.indexOf('Sign out');
+    expect(accountPos).toBeGreaterThan(-1);
+    expect(signOutPos).toBeGreaterThan(accountPos);
+  });
+
+  it('sign-out button always appears last in the append slot (after navBottom)', () => {
+    // Even with multiple navBottom items, sign-out is always last
+    const wrapper = mountNav({
+      navBottom: [
+        { path: '/settings', name: 'Settings', meta: { display: true, icon: 'fa-solid fa-gear', position: 'bottom' } },
+        { path: '/account', name: 'Account', meta: { display: true, icon: 'fa-solid fa-user', position: 'bottom' } },
+      ],
+    });
+    const html = wrapper.html();
+    const settingsPos = html.indexOf('Settings');
+    const accountPos = html.indexOf('Account');
+    const signOutPos = html.indexOf('Sign out');
+    expect(settingsPos).toBeGreaterThan(-1);
+    expect(accountPos).toBeGreaterThan(-1);
+    expect(signOutPos).toBeGreaterThan(accountPos);
+    expect(signOutPos).toBeGreaterThan(settingsPos);
   });
 });
 

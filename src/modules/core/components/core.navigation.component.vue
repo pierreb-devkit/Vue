@@ -71,7 +71,11 @@
       </v-list>
       <!-- Bottom section -->
       <template #append>
-        <!-- Bottom nav items -->
+        <!-- Compute gauge: ABOVE account row (meterMode only) -->
+        <v-list v-if="meterMode" :style="listStyle" nav class="py-0">
+          <BillingNavComputeGaugeComponent />
+        </v-list>
+        <!-- Bottom nav items (account row lives here) -->
         <v-list v-if="navBottom.length" :style="listStyle" nav>
           <v-list-item v-for="item in navBottom" :key="item.path" v-bind="navItemBind(item)">
             <template #prepend>
@@ -96,10 +100,6 @@
             </v-list-item>
           </v-list>
         </template>
-        <!-- Compute gauge: button-shape above sign-out row (meterMode only) -->
-        <v-list v-if="meterMode" :style="listStyle" nav class="py-0">
-          <BillingNavComputeGaugeComponent :rail="isRail" />
-        </v-list>
         <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
         <!-- Sign out -->
         <v-list :style="listStyle" nav>
