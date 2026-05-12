@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -10,14 +10,12 @@ const vuetify = createVuetify();
 
 /**
  * Mount BillingNavComputeGaugeComponent with Vuetify + Pinia installed.
- * @param {Object} [opts]
- * @param {boolean} [opts.rail=false] - mirror of drawer rail prop
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountComponent = ({ rail = false } = {}) =>
+const mountComponent = () =>
   mount(BillingNavComputeGaugeComponent, {
-    props: { rail },
     global: { plugins: [vuetify] },
+    attachTo: document.body,
   });
 
 describe('BillingNavComputeGaugeComponent', () => {
@@ -25,219 +23,311 @@ describe('BillingNavComputeGaugeComponent', () => {
     setActivePinia(createPinia());
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   // ── Visibility gate ──────────────────────────────────────────────────────
 
   it('hides when user is not logged in', () => {
     const authStore = useAuthStore();
-    const billingStore = useBillingStore();
     // cookieExpire = 0 → isLoggedIn = false
     authStore.cookieExpire = 0;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 5, meterQuota: 10, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.find('.billing-nav-gauge').exists()).toBe(false);
+    expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(false);
   });
 
   it('hides when meterMode is false', () => {
     const authStore = useAuthStore();
-    const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: false } };
-    billingStore.usageMeter = { meterUsed: 5, meterQuota: 10, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.find('.billing-nav-gauge').exists()).toBe(false);
+    expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(false);
   });
 
-  it('hides when meterMode is true but usageMeter is null', () => {
+  it('shows when logged in and meterMode is true', () => {
     const authStore = useAuthStore();
-    const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = null;
 
     const wrapper = mountComponent();
-    expect(wrapper.find('.billing-nav-gauge').exists()).toBe(false);
+    expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(true);
   });
 
-  // ── Button shape + gauge bar ─────────────────────────────────────────────
+  // ── v-progress-circular in #prepend slot ─────────────────────────────────
 
-  it('renders as a v-list-item (button-shape) when meterMode is active', () => {
+  it('renders v-progress-circular in the prepend slot', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, weekResetAt: null };
+    billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.findComponent({ name: 'VListItem' }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'VProgressCircular' }).exists()).toBe(true);
+    // No v-progress-linear (the old component used that)
+    expect(wrapper.findComponent({ name: 'VProgressLinear' }).exists()).toBe(false);
   });
 
-  it('renders a progress bar (not a FA icon) as the prepend slot content', () => {
+  it('shows "X% used" in v-list-item-title when usageMeter is available', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, weekResetAt: null };
+    // totalQuota = meterQuota + extrasRemaining + meterUsed = 800 + 0 + 800 = 1600
+    // pctUsed = 800 / 1600 = 50%
+    billingStore.usageMeter = { meterUsed: 800, meterQuota: 800, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.findComponent({ name: 'VProgressLinear' }).exists()).toBe(true);
-    // No raw FA icon — gauge bar replaces the icon slot
-    expect(wrapper.html()).not.toContain('fa-solid');
+    expect(wrapper.text()).toContain('50% used');
   });
 
-  it('navigates to /users?tab=subscriptions on click (locked interaction)', () => {
+  it('shows "—" in v-list-item-title when usageMeter is null', () => {
     const authStore = useAuthStore();
-    const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, weekResetAt: null };
 
     const wrapper = mountComponent();
-    const listItem = wrapper.findComponent({ name: 'VListItem' });
-    expect(listItem.props('to')).toBe('/users?tab=subscriptions');
+    expect(wrapper.text()).toContain('—');
   });
 
-  // ── Expanded state ───────────────────────────────────────────────────────
+  // ── pctUsed formula: includes extrasRemaining ────────────────────────────
 
-  it('shows % and reset label when not in rail mode (expanded)', () => {
+  it('computes pctUsed = meterUsed / (meterQuota + extrasRemaining + meterUsed)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, weekResetAt: '2026-05-19T00:00:00.000Z' };
-
-    const wrapper = mountComponent({ rail: false });
-    expect(wrapper.text()).toContain('50%');
-    // Reset label must contain "resets"
-    expect(wrapper.text()).toContain('resets');
-  });
-
-  it('does NOT show raw compute units inline (% only — no "X / Y" pattern)', () => {
-    const authStore = useAuthStore();
-    const billingStore = useBillingStore();
-    authStore.cookieExpire = Date.now() + 86400000;
-    authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, weekResetAt: null };
-
-    const wrapper = mountComponent({ rail: false });
-    // Must show 50% but NOT "800 / 1600"
-    expect(wrapper.text()).toContain('50%');
-    expect(wrapper.text()).not.toContain('800');
-    expect(wrapper.text()).not.toContain('1600');
-  });
-
-  // ── Collapsed (rail) state ───────────────────────────────────────────────
-
-  it('hides text content in rail mode (gauge bar only)', () => {
-    const authStore = useAuthStore();
-    const billingStore = useBillingStore();
-    authStore.cookieExpire = Date.now() + 86400000;
-    authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, weekResetAt: '2026-05-19T00:00:00.000Z' };
-
-    const wrapper = mountComponent({ rail: true });
-    // Text slots are not rendered in rail mode
-    expect(wrapper.findComponent({ name: 'VListItemTitle' }).exists()).toBe(false);
-    expect(wrapper.findComponent({ name: 'VListItemSubtitle' }).exists()).toBe(false);
-    // But the gauge bar must still exist
-    expect(wrapper.findComponent({ name: 'VProgressLinear' }).exists()).toBe(true);
-  });
-
-  // ── Percentage calculation ───────────────────────────────────────────────
-
-  it('computes 50% for meterUsed=800, meterQuota=1600', () => {
-    const authStore = useAuthStore();
-    const billingStore = useBillingStore();
-    authStore.cookieExpire = Date.now() + 86400000;
-    authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, weekResetAt: null };
+    // totalQuota = 1600 + 400 + 800 = 2800 → pct = 800/2800 = 28.57 → round = 29
+    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 400, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.pct).toBe(50);
+    expect(wrapper.vm.pctUsed).toBe(29);
   });
 
-  it('clamps pct to 100 when meterUsed exceeds meterQuota', () => {
+  it('returns pctUsed=0 when totalQuota=0 (division-by-zero guard)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 200, meterQuota: 100, weekResetAt: null };
+    billingStore.usageMeter = { meterUsed: 0, meterQuota: 0, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.pct).toBe(100);
+    expect(wrapper.vm.pctUsed).toBe(0);
   });
 
-  it('returns pct=0 when meterQuota is 0 (division-by-zero guard)', () => {
+  it('verifies pctUsed formula: meterUsed=200, meterQuota=50, extras=0 → 80%', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 0, meterQuota: 0, weekResetAt: null };
+    // totalQuota = 50 + 0 + 200 = 250, pct = 200/250 = 80%
+    billingStore.usageMeter = { meterUsed: 200, meterQuota: 50, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.pct).toBe(0);
+    expect(wrapper.vm.pctUsed).toBe(80);
   });
 
-  // ── Color thresholds ─────────────────────────────────────────────────────
-
-  it('uses success color when usage is below 80%', () => {
+  it('returns pctUsed=50 for meterUsed=800, meterQuota=800, extrasRemaining=0', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, weekResetAt: null };
+    // totalQuota = 800 + 0 + 800 = 1600, pct = 800/1600 = 50%
+    billingStore.usageMeter = { meterUsed: 800, meterQuota: 800, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.thresholdColor).toBe('success');
+    expect(wrapper.vm.pctUsed).toBe(50);
   });
 
-  it('uses warning color when usage is at 80%', () => {
+  // ── iconColor thresholds ─────────────────────────────────────────────────
+
+  it('iconColor = "success" when pctUsed <= 50', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 80, meterQuota: 100, weekResetAt: null };
+    billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.thresholdColor).toBe('warning');
+    // pctUsed = 50/150 = 33% → success
+    expect(wrapper.vm.iconColor).toBe('success');
   });
 
-  it('uses error color when usage is at or above 100%', () => {
+  it('iconColor = "warning" when pctUsed is between 51% and 75%', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 100, meterQuota: 100, weekResetAt: null };
+    // Need pctUsed in (50, 75] — use extrasRemaining=0, meterUsed=65, meterQuota=35
+    // totalQuota = 35 + 0 + 65 = 100, pct = 65% → warning
+    billingStore.usageMeter = { meterUsed: 65, meterQuota: 35, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.thresholdColor).toBe('error');
+    expect(wrapper.vm.iconColor).toBe('warning');
   });
 
-  // ── Reset date formatting ────────────────────────────────────────────────
-
-  it('returns null resetLabel when weekResetAt is null', () => {
+  it('iconColor = "error" when pctUsed > 75', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 10, meterQuota: 100, weekResetAt: null };
+    // meterUsed=90, meterQuota=10, extras=0 → totalQuota=100, pct=90% → error
+    billingStore.usageMeter = { meterUsed: 90, meterQuota: 10, extrasRemaining: 0, weekResetAt: null };
 
     const wrapper = mountComponent();
-    expect(wrapper.vm.resetLabel).toBeNull();
+    expect(wrapper.vm.iconColor).toBe('error');
   });
 
-  it('returns a non-null resetLabel starting with "resets" when weekResetAt is set', () => {
+  // ── resetLabel with nextMondayIso fallback ───────────────────────────────
+
+  it('resetLabel uses weekResetAt when provided', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 10, meterQuota: 100, weekResetAt: '2026-05-19T00:00:00.000Z' };
+    billingStore.usageMeter = {
+      meterUsed: 10, meterQuota: 100, extrasRemaining: 0,
+      weekResetAt: '2026-05-19T00:00:00.000Z',
+    };
 
     const wrapper = mountComponent();
     expect(wrapper.vm.resetLabel).not.toBeNull();
     expect(wrapper.vm.resetLabel).toMatch(/^resets /);
     expect(wrapper.vm.resetLabel.length).toBeGreaterThan('resets '.length);
+  });
+
+  it('resetLabel falls back to nextMondayIso() when weekResetAt is null', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 10, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
+
+    const wrapper = mountComponent();
+    // Must NOT be null — nextMondayIso provides a fallback
+    expect(wrapper.vm.resetLabel).not.toBeNull();
+    expect(wrapper.vm.resetLabel).toMatch(/^resets /);
+  });
+
+  it('resetLabel falls back to nextMondayIso() when usageMeter is null', () => {
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+
+    const wrapper = mountComponent();
+    // usageMeter is null → weekResetAt falls back to nextMondayIso()
+    expect(wrapper.vm.resetLabel).not.toBeNull();
+    expect(wrapper.vm.resetLabel).toMatch(/^resets /);
+  });
+
+  // ── nextMondayIso helper ─────────────────────────────────────────────────
+
+  it('nextMondayIso() returns a valid ISO string at 00:00 UTC', () => {
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+
+    const wrapper = mountComponent();
+    const iso = wrapper.vm.nextMondayIso();
+
+    expect(typeof iso).toBe('string');
+    const d = new Date(iso);
+    expect(Number.isNaN(d.getTime())).toBe(false);
+    // Must be a Monday (UTCDay === 1)
+    expect(d.getUTCDay()).toBe(1);
+    // Must be at midnight UTC
+    expect(d.getUTCHours()).toBe(0);
+    expect(d.getUTCMinutes()).toBe(0);
+    expect(d.getUTCSeconds()).toBe(0);
+    // Must be in the future
+    expect(d.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  // ── Auto-fetch on mount + window.focus listener ──────────────────────────
+
+  it('calls billingStore.fetchUsageMeter on mount', async () => {
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+
+    const billingStore = useBillingStore();
+    billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
+
+    mountComponent();
+    expect(billingStore.fetchUsageMeter).toHaveBeenCalledTimes(1);
+  });
+
+  it('installs a window.focus listener on mount that calls fetchUsageMeter', async () => {
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+
+    const billingStore = useBillingStore();
+    billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
+
+    mountComponent();
+    // Simulate window focus
+    window.dispatchEvent(new Event('focus'));
+    expect(billingStore.fetchUsageMeter).toHaveBeenCalledTimes(2);
+  });
+
+  it('removes window.focus listener on unmount', async () => {
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+
+    const billingStore = useBillingStore();
+    billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
+
+    const wrapper = mountComponent();
+    wrapper.unmount();
+
+    // Focus after unmount should NOT call fetchUsageMeter again
+    const callsBefore = billingStore.fetchUsageMeter.mock.calls.length;
+    window.dispatchEvent(new Event('focus'));
+    expect(billingStore.fetchUsageMeter.mock.calls.length).toBe(callsBefore);
+  });
+
+  // ── Tooltip content: usedDisplay / totalDisplay ──────────────────────────
+
+  it('usedDisplay formats meterUsed as a localized number string', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 1234, meterQuota: 5000, extrasRemaining: 0, weekResetAt: null };
+
+    const wrapper = mountComponent();
+    expect(wrapper.vm.usedDisplay).toBe((1234).toLocaleString());
+  });
+
+  it('totalDisplay formats totalQuota as a localized number string', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 1000, meterQuota: 4000, extrasRemaining: 500, weekResetAt: null };
+    // totalQuota = 4000 + 500 + 1000 = 5500
+
+    const wrapper = mountComponent();
+    expect(wrapper.vm.totalDisplay).toBe((5500).toLocaleString());
+  });
+
+  // ── click navigation ─────────────────────────────────────────────────────
+
+  it('v-list-item links to /users?tab=subscriptions', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
+
+    const wrapper = mountComponent();
+    const listItem = wrapper.findComponent({ name: 'VListItem' });
+    expect(listItem.props('to')).toEqual({ path: '/users', query: { tab: 'subscriptions' } });
   });
 });
