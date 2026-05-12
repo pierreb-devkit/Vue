@@ -134,10 +134,16 @@ export default {
     /**
      * @desc Emit cta-click with the item id. Parent handles routing/checkout action.
      * Skip when CTA is disabled to avoid ghost clicks on v-btn click-through.
+     * Skip when cta.to is set: v-btn binds router-link via :to and handles navigation
+     * natively. Emitting in that case would trigger duplicate navigation from the
+     * parent's @cta-click handler (which may push to a different target URL —
+     * observed bug: free+guest plan with cta.to='/signup' double-navigated and
+     * dropped the redirect query param).
      * @returns {void}
      */
     onCtaClick() {
       if (this.item.cta.disabled) return;
+      if (this.item.cta.to) return;
       this.$emit('cta-click', { id: this.item.id });
     },
   },

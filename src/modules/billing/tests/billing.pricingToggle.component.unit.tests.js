@@ -65,33 +65,26 @@ describe('BillingPricingToggleComponent', () => {
 
   it('does not render a savings caption below the toggle (savings moved to price.chip on card)', () => {
     // V4 design: savings info is shown as a chip on the card (price.chip), not as a caption below the toggle.
-    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
-    expect(wrapper.text()).not.toContain('Switch to annual and save up to 20%');
+    const wrapper = mountComponent({ annual: false });
+    expect(wrapper.text()).not.toContain('Switch to annual and save up to');
     expect(wrapper.text()).not.toContain('Annual saves you');
   });
 
   it('does not render savings caption when annual is active (savings are shown on card chip)', () => {
-    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 20 });
+    const wrapper = mountComponent({ annual: true });
     // Caption div has been removed — savings info lives on BillingCardComponent price.chip
     expect(wrapper.text()).not.toContain('Annual saves you');
   });
 
-  it('no separate savings caption element rendered regardless of maxAnnualSavingsPct', () => {
-    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 20 });
+  it('no separate text-body-small caption element rendered (toggle is caption-free in V4)', () => {
+    const wrapper = mountComponent({ annual: false });
     // text-body-small savings div was removed in V4 — toggle is now caption-free
     const caption = wrapper.find('.text-body-small');
     expect(caption.exists()).toBe(false);
   });
 
-  it('no savings caption rendered when maxAnnualSavingsPct is 0', () => {
-    const wrapper = mountComponent({ annual: false, maxAnnualSavingsPct: 0 });
-    // Should not contain any savings text
-    expect(wrapper.text()).not.toContain('save up to');
-    expect(wrapper.text()).not.toContain('saves you');
-  });
-
-  it('no inline chip is rendered (chip removed in favor of caption below)', () => {
-    const wrapper = mountComponent({ annual: true, maxAnnualSavingsPct: 25 });
+  it('no inline v-chip is rendered in the toggle (savings live on card chip instead)', () => {
+    const wrapper = mountComponent({ annual: true });
     expect(wrapper.findComponent({ name: 'v-chip' }).exists()).toBe(false);
   });
 

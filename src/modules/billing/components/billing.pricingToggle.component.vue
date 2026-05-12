@@ -1,18 +1,19 @@
 <!--
   BillingPricingToggleComponent
   =============================
-  Toggle switch between Monthly and Annual billing intervals, with auto-computed savings chip.
+  Toggle switch between Monthly and Annual billing intervals.
+  Savings info lives on each BillingCardComponent (item.price.chip) — the toggle
+  no longer renders a caption.
 
   USAGE:
   <billingPricingToggleComponent
     :annual="false"
-    :max-annual-savings-pct="17"
+    :disabled="false"
     @update:annual="annual = $event" />
 
   PROPS:
-  - annual                (Boolean): Whether annual billing is selected
-  - maxAnnualSavingsPct   (Number) : Maximum savings % across plans, used to render the chip copy.
-                                     0 = no chip rendered.
+  - annual   (Boolean): Whether annual billing is selected
+  - disabled (Boolean): Disable the toggle (e.g. on Extras tab where billing period doesn't apply)
 
   EVENTS:
   - update:annual (Boolean): Emitted when the toggle changes
@@ -46,14 +47,6 @@ export default {
     annual: {
       type: Boolean,
       default: false,
-    },
-    /**
-     * @desc Maximum annual savings % across all plans on the page.
-     * 0 means no plan offers an annual discount → chip is hidden.
-     */
-    maxAnnualSavingsPct: {
-      type: Number,
-      default: 0,
     },
     /** @desc Disable the toggle (e.g. on Extras tab where billing period doesn't apply). */
     disabled: {

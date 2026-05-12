@@ -140,6 +140,16 @@ describe('BillingCardComponent', () => {
     expect(wrapper.emitted('cta-click')).toBeFalsy();
   });
 
+  it('does NOT emit cta-click when cta.to is set (router-link handles navigation — avoid double-nav)', async () => {
+    const item = makeItem({ id: 'free', cta: { label: 'Sign up', variant: 'outlined', color: null, disabled: false, loading: false, to: '/signup' } });
+    const wrapper = mountComponent(item);
+    // Programmatically call onCtaClick — when cta.to is present, v-btn's :to binds a
+    // router-link that handles navigation natively; emitting would trigger a duplicate
+    // $router.push in the parent's @cta-click handler with a possibly divergent URL.
+    await wrapper.vm.onCtaClick();
+    expect(wrapper.emitted('cta-click')).toBeFalsy();
+  });
+
   // ── price.chip (annual savings) ───────────────────────────────────────────
 
   it('renders price.chip as a tonal v-chip when present', () => {
