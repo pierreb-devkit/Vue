@@ -156,12 +156,12 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
     expect(wrapper.find('.billing-meter-breakdown-chart').exists()).toBe(true);
   });
 
-  it('renders meter usage values', async () => {
+  it('renders meter usage values against combinedPool denominator', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    // Task 4: primary display is %, raw units are in aria-label / tooltip only
-    // 120 / 500 = 24%
-    expect(wrapper.text()).toContain('24%');
+    // combinedPool = meterQuota(500) + meterExtras(50) + meterUsed(120) = 670
+    // used(120) / combinedPool(670) = ~18%
+    expect(wrapper.text()).toContain('18%');
   });
 
   it('renders "Buy compute extras" CTA in meter mode (T6 redesign: /pricing#units redirect)', async () => {
@@ -262,7 +262,7 @@ describe('BillingSubscriptionsComponent — Manage Subscription', () => {
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
-    vi.spyOn(store, 'openPortal').mockResolvedValue(undefined);
+    vi.spyOn(store, 'openPortal').mockResolvedValue('https://billing.stripe.com/session/test');
   });
 
   afterEach(() => {
@@ -283,7 +283,23 @@ describe('BillingSubscriptionsComponent — Manage Subscription', () => {
     expect(store.openPortal).toHaveBeenCalled();
   });
 
-  it('shows a portal error alert when openPortal rejects', async () => {
+  it('manageSubscription calls window.open with the URL from openPortal', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    await wrapper.vm.manageSubscription();
+    await flushPromises();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://billing.stripe.com/session/test',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    openSpy.mockRestore();
+  });
+
+  it('does NOT render inline portal error alert when openPortal rejects (centralized snackbar handles it)', async () => {
     store.openPortal.mockRejectedValueOnce(new Error('Portal failed'));
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
@@ -291,7 +307,8 @@ describe('BillingSubscriptionsComponent — Manage Subscription', () => {
     await wrapper.vm.manageSubscription();
     await flushPromises();
 
-    expect(wrapper.text()).toContain('Unable to open the billing portal');
+    // Error is surfaced via centralized snackbar — no inline alert in this component
+    expect(wrapper.text()).not.toContain('Unable to open the billing portal');
   });
 });
 
@@ -782,74 +799,52 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
   });
 });
 
-// ─── Suite 9: meterError surfacing via v-alert (gated to meterMode) ──────────
+// ─── Suite 9: meterError — centralized snackbar (no inline v-alert) ──────────
+// meterError is now surfaced via lib/services/axios.js interceptor → centralized snackbar.
+// The subscriptions component no longer renders an inline v-alert for meter errors.
 
-describe('BillingSubscriptionsComponent — meterError surfacing', () => {
+describe('BillingSubscriptionsComponent — meterError (centralized snackbar, no inline alert)', () => {
   let wrapper;
   let store;
-  let useMeter;
-  let __resetUseMeterForTests;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     sessionStorage.clear();
     store = useBillingStore();
     seedMeterStore(store);
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
-    // Import via composable so we mutate the shared meterError ref the component consumes.
-    ({ useMeter, __resetUseMeterForTests } = await import('../composables/billing.useMeter.js'));
-    __resetUseMeterForTests();
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
-    __resetUseMeterForTests?.();
   });
 
-  it('renders v-alert with refreshFailed copy when meterError is set and meterMode is true', async () => {
+  it('does NOT render inline meter error alert (meterError surfaced via centralized snackbar)', async () => {
+    // Even when meter fetch fails, no inline v-alert appears in this component.
+    vi.spyOn(store, 'fetchUsageMeter').mockRejectedValueOnce(new Error('meter fetch failed'));
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    // Mutate AFTER mount + initial fetch resolves — fetchMissingMeterData clears
-    // meterError on success, so setting it before mount would be wiped.
-    const { meterError } = useMeter({ pollIntervalMs: 0 });
-    meterError.value = new Error('refresh failed');
-    await flushPromises();
-    const alert = wrapper.find('.v-alert');
-    expect(alert.exists()).toBe(true);
-    expect(alert.text()).toContain('Could not refresh usage');
+    // Only status-banner alerts are acceptable (checkoutProcessing/timeout/paymentSuccess)
+    // No "Could not refresh usage" inline alert
+    expect(wrapper.text()).not.toContain('Could not refresh usage');
   });
 
-  it('does not render v-alert when meterError is null', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
-    await flushPromises();
-    const { meterError } = useMeter({ pollIntervalMs: 0 });
-    expect(meterError.value).toBeNull();
-    expect(wrapper.find('.v-alert').exists()).toBe(false);
-  });
-
-  it('does not render v-alert when meterError is set but meterMode is false (gated)', async () => {
+  it('does NOT render inline v-alert on meter error in meterMode=false', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
-    const { meterError } = useMeter({ pollIntervalMs: 0 });
-    meterError.value = new Error('refresh failed');
-    await flushPromises();
-    expect(wrapper.find('.v-alert').exists()).toBe(false);
+    // No meter-related alert should render in legacy mode
+    expect(wrapper.text()).not.toContain('Could not refresh usage');
   });
 
-  it('clears meterError on close click and the alert disappears', async () => {
+  it('combinedPool computed equals meterQuota + meterExtras + meterUsed', async () => {
+    // useMeter returns values seeded from billingStore.usageMeter
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const { meterError } = useMeter({ pollIntervalMs: 0 });
-    meterError.value = new Error('refresh failed');
-    await flushPromises();
-    expect(wrapper.find('.v-alert').exists()).toBe(true);
-    // Simulate the v-alert close emit by mutating the bound ref the same way the
-    // template handler does (`meterError = null`).
-    meterError.value = null;
-    await flushPromises();
-    expect(wrapper.find('.v-alert').exists()).toBe(false);
+    // mockUsageMeterNormal: meterUsed=120, meterQuota=500, extrasRemaining=50
+    // combinedPool = 500 + 50 + 120 = 670
+    expect(wrapper.vm.combinedPool).toBe(670);
   });
 });
 

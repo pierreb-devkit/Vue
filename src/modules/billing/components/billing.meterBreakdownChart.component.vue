@@ -1,62 +1,37 @@
 <!--
   BillingMeterBreakdownChartComponent
-  =====================================
-  Horizontal stacked-bar showing per-bucket meter usage.
-  Buckets with 0 value are not rendered. Colors cycle through
-  Vuetify theme tokens for deterministic visual mapping.
+  ====================================
+  Per-bucket compute consumption — one v-progress-linear per bucket, same
+  height/rounded/bg-color as the Weekly compute bar for visual consistency.
 
   USAGE:
-  <BillingMeterBreakdownChartComponent :breakdown="{ scrap: 100, autofix: 50, wizard: 200 }" />
-  <BillingMeterBreakdownChartComponent :breakdown="breakdown" :total="500" />
-
-  PROPS:
-  - breakdown (Object, required) : map of bucket → credit count (e.g. { scrap: 100, autofix: 50 })
-  - total     (Number, optional) : override total; defaults to sum of breakdown values
-
-  SLOTS: none
+  <BillingMeterBreakdownChartComponent :breakdown="{ scrap: 60, autofix: 40 }" />
 -->
 <template>
   <div class="billing-meter-breakdown-chart">
-    <!-- Empty state -->
     <div
       v-if="activeBuckets.length === 0"
       class="text-caption text-medium-emphasis text-center py-2"
+      :aria-label="ariaLabel"
     >
       No usage data
     </div>
 
-    <template v-else>
-      <!-- Stacked bar -->
-      <div
-        class="billing-meter-breakdown-chart__bar d-flex rounded overflow-hidden"
-        role="img"
-        :aria-label="stackedBarAriaLabel"
-      >
-        <div
-          v-for="bucket in activeBuckets"
-          :key="bucket.key"
-          :class="'bg-' + bucket.color"
-          :style="{ width: bucket.pct + '%' }"
-          :title="`${bucket.key}: ${bucket.value} (${bucket.pct}%)`"
-        />
-      </div>
-
-      <!-- Legend -->
-      <div class="billing-meter-breakdown-chart__legend d-flex flex-wrap ga-2 mt-2">
-        <div
-          v-for="bucket in activeBuckets"
-          :key="bucket.key"
-          class="d-flex align-center ga-1 text-caption"
-        >
-          <div
-            class="breakdown-legend-dot"
-            :class="'bg-' + bucket.color"
-          />
-          <span class="text-medium-emphasis">{{ bucket.key }}</span>
+    <div v-else :aria-label="ariaLabel">
+      <div v-for="bucket in activeBuckets" :key="bucket.key" class="mb-2">
+        <div class="d-flex justify-space-between text-caption text-medium-emphasis mb-1">
+          <span>{{ bucket.key }}</span>
           <span class="font-weight-medium">{{ bucket.pct }}%</span>
         </div>
+        <v-progress-linear
+          :model-value="bucket.pct"
+          :color="bucket.color"
+          rounded
+          height="10"
+          bg-color="surface-variant"
+        />
       </div>
-    </template>
+    </div>
   </div>
 </template>
 
@@ -64,17 +39,12 @@
 /** Ordered palette of Vuetify theme color tokens used for buckets. */
 const PALETTE = ['primary', 'secondary', 'info', 'warning', 'success', 'error'];
 
-/**
- * Component definition.
- */
 export default {
   name: 'BillingMeterBreakdownChartComponent',
 
   props: {
     /**
      * @desc Per-bucket credit consumption map.
-     * Keys are bucket names (e.g. 'scrap', 'autofix'); values are credit counts.
-     * Buckets with value 0 are filtered out.
      * @type {Object.<string, number>}
      */
     breakdown: {
@@ -83,8 +53,6 @@ export default {
     },
     /**
      * @desc Optional total override. Defaults to sum of all breakdown values.
-     * Useful when the parent wants percentages relative to a quota rather than
-     * the sum of visible buckets.
      */
     total: {
       type: Number,
@@ -93,27 +61,14 @@ export default {
   },
 
   computed: {
-    /**
-     * @desc Effective total: prop override or sum of all breakdown values.
-     * @returns {number}
-     */
     effectiveTotal() {
       if (this.total !== null && this.total > 0) return this.total;
       return Object.values(this.breakdown).reduce((sum, v) => sum + (v || 0), 0);
     },
 
-    /**
-     * @desc Non-zero buckets enriched with color assignment and percentage.
-     * Color is assigned by stable index position in the sorted key list across
-     * ALL provided bucket names (zero or not), so the palette is deterministic
-     * for a given set of bucket names — toggling a zero bucket never shifts the
-     * colors of other buckets.
-     * @returns {Array<{ key: string, value: number, pct: number, color: string }>}
-     */
     activeBuckets() {
       const total = this.effectiveTotal;
       if (total === 0) return [];
-
       const allKeys = Object.keys(this.breakdown).sort();
       return allKeys
         .map((key) => ({ key, value: this.breakdown[key] || 0, paletteIdx: allKeys.indexOf(key) }))
@@ -126,28 +81,10 @@ export default {
         }));
     },
 
-    /**
-     * @desc ARIA label describing the stacked bar contents.
-     * @returns {string}
-     */
-    stackedBarAriaLabel() {
+    ariaLabel() {
       if (this.activeBuckets.length === 0) return 'No usage data';
-      const parts = this.activeBuckets.map((b) => `${b.key} ${b.pct}%`).join(', ');
-      return `Meter usage breakdown: ${parts}`;
+      return `Meter usage breakdown: ${this.activeBuckets.map((b) => `${b.key} ${b.pct}%`).join(', ')}`;
     },
   },
 };
 </script>
-
-<style scoped>
-.billing-meter-breakdown-chart__bar {
-  height: 0.75rem;
-}
-
-.breakdown-legend-dot {
-  width: 0.625rem;
-  height: 0.625rem;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-</style>

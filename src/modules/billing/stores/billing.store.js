@@ -272,8 +272,9 @@ export const useBillingStore = defineStore('billing', {
     },
 
     /**
-     * @desc Open Stripe Customer Portal by redirecting to the portal URL.
-     * @returns {Promise<void>}
+     * @desc Fetch the Stripe Customer Portal URL and return it.
+     * Caller decides the redirect target (new tab vs same tab).
+     * @returns {Promise<string>} Validated Stripe portal URL
      */
     async openPortal() {
       this.loading = true;
@@ -284,7 +285,7 @@ export const useBillingStore = defineStore('billing', {
         if (!url) {
           throw new Error('Billing portal URL is missing from the API response');
         }
-        window.location.href = validateStripeUrl(url);
+        return validateStripeUrl(url);
       } catch (err) {
         console.error(err);
         throw err;
