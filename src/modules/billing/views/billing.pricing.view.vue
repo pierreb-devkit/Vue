@@ -55,7 +55,6 @@
             :annual="annual"
             :disabled="activeTab === 1"
             class="mb-8"
-            density="compact"
             data-test="pricing-toggle"
             @update:annual="annual = $event"
           />
