@@ -6,6 +6,14 @@ import { useAuthStore } from '../../auth/stores/auth.store.js';
 import { useBillingStore } from '../stores/billing.store.js';
 import BillingNavComputeGaugeComponent from '../components/billing.navComputeGauge.component.vue';
 
+// Prevent real HTTP calls — billing store uses axios from this service
+vi.mock('../../../lib/services/axios', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({ data: { data: null } }),
+    post: vi.fn().mockResolvedValue({ data: { data: null } }),
+  },
+}));
+
 const vuetify = createVuetify();
 
 /**
