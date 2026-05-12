@@ -27,16 +27,10 @@
             @update:annual="annual = $event"
           />
           <v-row justify="center" data-test="pricing-plans-grid">
-            <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
-              <BillingPricingCardComponent
-                :plan="plan"
-                :annual="annual"
-                :current="isCurrentPlan(plan.id)"
-                :loading="checkoutLoading"
-                :prices-loading="loading"
-                :plan-name-map="planNameMap"
-                :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-                @select="onSelectPlan"
+            <v-col v-for="item in resolvedPlanItems" :key="item.id" cols="12" sm="6" md="4">
+              <BillingCardComponent
+                :item="item"
+                @cta-click="onCtaClick"
               />
             </v-col>
           </v-row>
@@ -49,7 +43,7 @@
 
         <!-- Mode: both-tabs -->
         <template v-else-if="mode === 'both-tabs'">
-          <div class="d-flex justify-center mb-8" data-test="pricing-tabs">
+          <div class="d-flex justify-center mb-6" data-test="pricing-tabs">
             <HomeTabsComponent
               :items="tabItems"
               :model-value="activeTab"
@@ -57,26 +51,22 @@
               @update:model-value="activeTab = $event"
             />
           </div>
+          <BillingPricingToggleComponent
+            v-if="hasPaidPlans"
+            :annual="annual"
+            :max-annual-savings-pct="maxAnnualSavingsPct"
+            :disabled="activeTab === 1"
+            class="mb-8"
+            density="compact"
+            data-test="pricing-toggle"
+            @update:annual="annual = $event"
+          />
           <template v-if="activeTab === 0">
-            <BillingPricingToggleComponent
-              v-if="hasPaidPlans"
-              :annual="annual"
-              :max-annual-savings-pct="maxAnnualSavingsPct"
-              class="mb-10"
-              data-test="pricing-toggle"
-              @update:annual="annual = $event"
-            />
             <v-row justify="center" data-test="pricing-plans-grid">
-              <v-col v-for="plan in plans" :key="plan.id" cols="12" sm="6" md="4">
-                <BillingPricingCardComponent
-                  :plan="plan"
-                  :annual="annual"
-                  :current="isCurrentPlan(plan.id)"
-                  :loading="checkoutLoading"
-                  :prices-loading="loading"
-                  :plan-name-map="planNameMap"
-                  :equivalences="meterMode && plan.equivalences && plan.equivalences.length > 0 ? plan.equivalences : null"
-                  @select="onSelectPlan"
+              <v-col v-for="item in resolvedPlanItems" :key="item.id" cols="12" sm="6" md="4">
+                <BillingCardComponent
+                  :item="item"
+                  @cta-click="onCtaClick"
                 />
               </v-col>
             </v-row>
@@ -169,9 +159,11 @@ import { useTheme } from 'vuetify';
 import { useBillingStore, clearExtrasIntentId, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
+import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
+import { computeAnnualSavingsPct } from '../lib/pricingMath.js';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
-import BillingPricingCardComponent from '../components/billing.pricingCard.component.vue';
+import BillingCardComponent from '../components/billing.card.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import homeFaqComponent from '../../home/components/home.faq.component.vue';
 import HomeTabsComponent from '../../home/components/utils/home.tabs.component.vue';
@@ -181,7 +173,7 @@ export default {
   name: 'PricingView',
   components: {
     BillingPricingToggleComponent,
-    BillingPricingCardComponent,
+    BillingCardComponent,
     BillingPacksComponent,
     homeFaqComponent,
     HomeTabsComponent,
@@ -191,8 +183,9 @@ export default {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
     const pricing = usePricing();
+    const { formatPrice } = useCurrencyFormat();
     const theme = useTheme();
-    return { billingStore, authStore, ...pricing, theme };
+    return { billingStore, authStore, ...pricing, formatPrice, theme };
   },
   data() {
     return {
@@ -234,12 +227,130 @@ export default {
     pendingDowngradePlanName() {
       if (!this.pendingDowngrade) return '';
       const plan = this.plans.find((p) => p.id === this.pendingDowngrade.planId);
-      return plan?.name ?? this.pendingDowngrade.planId;
+      return plan?.title ?? this.pendingDowngrade.planId;
     },
     currentPlanName() {
       const plan = this.plans.find((p) => p.id === this.currentPlanId);
-      return plan?.name ?? this.currentPlanId;
+      return plan?.title ?? this.currentPlanId;
     },
+    /**
+     * @desc Whether the user is a guest (not signed-in).
+     * @returns {boolean}
+     */
+    isGuest() {
+      return !this.authStore.isLoggedIn;
+    },
+
+    /**
+     * @desc Build fully-resolved BillingCardComponent items from plans (V4 unified schema).
+     * This is the single place where auth state + subscription state + Stripe prices
+     * are combined into a flat item object the card can render without any internal logic.
+     *
+     * V4 plans carry `title`, `subtitle`, `price`, `highlight` directly.
+     * Raw Stripe prices (annualPriceObject / monthlyPriceObject) from usePricing()
+     * override the static-content price when available (billing interval aware).
+     * @returns {Array<Object>}
+     */
+    resolvedPlanItems() {
+      return this.plans.map((plan) => {
+        const isFree = plan.id === 'free';
+        const isCurrent = this.isCurrentPlan(plan.id);
+
+        // Raw Stripe price from usePricing() composable (may be absent for free plan)
+        const activePriceId = this.annual
+          ? (plan.annualPriceObject?.id ?? plan.annualPrice?.id ?? null)
+          : (plan.monthlyPriceObject?.id ?? plan.monthlyPrice?.id ?? null);
+
+        // Resolve price display — Stripe objects override static-content amounts
+        let priceAmount;
+        let pricePeriod = null;
+        if (isFree) {
+          priceAmount = this.$t('billing.pricingCard.free');
+        } else {
+          // meta.monthlyPrice / meta.annualPrice are raw numbers (V4); fall back to legacy fields
+          const metaMonthly = plan.meta?.monthlyPrice ?? plan.monthlyPrice ?? null;
+          const metaAnnual = plan.meta?.annualPrice ?? plan.annualPrice ?? null;
+          const displayAmt = this.annual
+            ? (plan.annualPriceObject?.amount ?? plan.annualPrice?.amount ?? (typeof metaAnnual === 'number' && metaAnnual > 0 ? metaAnnual : null))
+            : (plan.monthlyPriceObject?.amount ?? plan.monthlyPrice?.amount ?? (typeof metaMonthly === 'number' && metaMonthly > 0 ? metaMonthly : null));
+          if (displayAmt != null) {
+            priceAmount = this.formatPrice(displayAmt);
+            pricePeriod = this.$t('billing.period.' + (this.annual ? 'year' : 'month'));
+          } else {
+            priceAmount = this.$t('billing.pricing.error.pricingUnavailable');
+          }
+        }
+
+        // Resolve CTA
+        const pricingUnavailable = !this.loading && !isFree && !activePriceId;
+        let ctaLabel, ctaVariant, ctaColor, ctaDisabled, ctaTo;
+
+        if (isCurrent) {
+          ctaLabel = this.$t('billing.pricingCard.currentPlan');
+          ctaVariant = 'tonal';
+          ctaColor = 'success';
+          ctaDisabled = true;
+          ctaTo = null;
+        } else if (isFree && this.isGuest) {
+          ctaLabel = this.$t('billing.pricingCard.signUpCta');
+          ctaVariant = 'outlined';
+          ctaColor = null;
+          ctaDisabled = false;
+          ctaTo = '/signup';
+        } else {
+          ctaLabel = plan.cta;
+          ctaVariant = plan.highlight ? 'flat' : 'outlined';
+          ctaColor = plan.highlight ? 'primary' : null;
+          ctaDisabled = pricingUnavailable || this.checkoutLoading || (!isFree && !activePriceId);
+          ctaTo = null;
+        }
+
+        // Annual savings info chip
+        const annualSavingsPct = (() => {
+          const metaM = plan.meta?.monthlyPrice ?? null;
+          const metaA = plan.meta?.annualPrice ?? null;
+          const mp = plan.monthlyPriceObject?.amount ?? plan.monthlyPrice?.amount ?? (typeof metaM === 'number' ? metaM : 0);
+          const ap = plan.annualPriceObject?.amount ?? plan.annualPrice?.amount ?? (typeof metaA === 'number' ? metaA : 0);
+          return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
+        })();
+        const savingsNote = this.annual && annualSavingsPct > 0
+          ? this.$t('billing.pricingCard.saveAnnual', { pct: annualSavingsPct })
+          : null;
+
+        // Equivalences for meter mode — passed as subtitle when present
+        const equivalences = this.meterMode && plan.equivalences?.length > 0 ? plan.equivalences : null;
+
+        // Savings chip — shown next to price on annual when discount > 0
+        const priceChip = (this.annual && annualSavingsPct > 0)
+          ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
+          : null;
+
+        return {
+          id: plan.id,
+          title: plan.title,
+          subtitle: plan.subtitle,
+          price: { amount: priceAmount, period: pricePeriod, chip: priceChip },
+          cta: {
+            label: ctaLabel,
+            variant: ctaVariant,
+            color: ctaColor,
+            disabled: ctaDisabled,
+            loading: !isCurrent && this.checkoutLoading,
+            to: ctaTo,
+          },
+          info: plan.info || null,
+          features: plan.features || [],
+          badge: plan.badge || null,
+          highlight: !!plan.highlight,
+          // Extended fields the view may use internally (not consumed by card)
+          _activePriceId: activePriceId,
+          _pricingUnavailable: pricingUnavailable,
+          _savingsNote: savingsNote,
+          _equivalences: equivalences,
+        };
+      });
+    },
+
     /**
      * @desc Build the setup object expected by HomeFaqComponent from static-content faqs.
      * @returns {Object}
@@ -254,15 +365,6 @@ export default {
         columns: 1,
         content: this.faqs?.content || [],
       };
-    },
-    /**
-     * @desc Build a flat {planId: planName} map for per-section parent name resolution.
-     *       Passed to BillingPricingCardComponent so each feature section can independently
-     *       resolve its own inheritsFrom plan name.
-     * @returns {Object.<string, string>}
-     */
-    planNameMap() {
-      return Object.fromEntries(this.plans.filter((p) => p.id && p.name).map((p) => [p.id, p.name]));
     },
     /**
      * @desc Pick halo palette based on current Vuetify theme (light vs dark).
@@ -328,13 +430,20 @@ export default {
       }
     },
     /**
-     * @desc Handle plan select event from card.
-     * @param {{ planId: string, priceId: string|null, intent?: 'signup' }} payload
+     * @desc Handle CTA click from BillingCardComponent.
+     * Resolves active priceId from the computed resolvedPlanItems list.
+     * @param {{ id: string }} payload
      * @returns {Promise<void>}
      */
-    async onSelectPlan({ planId, priceId, intent }) {
-      // Free + guest → route to signup
-      if (intent === 'signup') {
+    async onCtaClick({ id: planId }) {
+      const resolvedItem = this.resolvedPlanItems.find((item) => item.id === planId);
+      if (!resolvedItem) return;
+
+      const { _activePriceId: priceId } = resolvedItem;
+
+      // Free + guest — CTA has `to: '/signup'` so router-link handles navigation;
+      // if click fires anyway (e.g. programmatic), guard here too.
+      if (planId === 'free' && this.isGuest) {
         this.$router.push({ path: '/signup', query: { redirect: '/pricing' } });
         return;
       }

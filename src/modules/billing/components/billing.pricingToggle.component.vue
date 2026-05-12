@@ -19,21 +19,19 @@
 -->
 <template>
   <div class="text-center">
-    <div class="d-flex align-center justify-center ga-3">
-      <span class="text-body-large font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">{{ $t('billing.pricingToggle.monthly') }}</span>
+    <div class="d-flex align-center justify-center ga-2" :style="{ opacity: disabled ? 0.4 : 1 }">
+      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">{{ $t('billing.pricingToggle.monthly') }}</span>
       <v-switch
         :model-value="annual"
         color="primary"
         hide-details
         density="compact"
         inset
+        :disabled="disabled"
         :aria-label="$t('billing.pricingToggle.annual')"
         @update:model-value="$emit('update:annual', $event)"
       ></v-switch>
-      <span class="text-body-large font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">{{ $t('billing.pricingToggle.annual') }}</span>
-    </div>
-    <div v-if="maxAnnualSavingsPct > 0" class="text-body-small text-white mt-2" :style="{ opacity: 0.85 }">
-      {{ annual ? $t('billing.pricingToggle.savingsActive', { pct: maxAnnualSavingsPct }) : $t('billing.pricingToggle.saveAnnuallyDynamic', { pct: maxAnnualSavingsPct }) }}
+      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">{{ $t('billing.pricingToggle.annual') }}</span>
     </div>
   </div>
 </template>
@@ -56,6 +54,11 @@ export default {
     maxAnnualSavingsPct: {
       type: Number,
       default: 0,
+    },
+    /** @desc Disable the toggle (e.g. on Extras tab where billing period doesn't apply). */
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['update:annual'],
