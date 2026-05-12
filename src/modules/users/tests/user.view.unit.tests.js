@@ -581,8 +581,6 @@ describe('UserView – delete account danger zone', () => {
 
     // The confirm button binding: :disabled="deleteConfirmInput !== 'DELETE'"
     expect(w.vm.deleteConfirmInput !== 'DELETE').toBe(true);
-    // Verify the rendered confirm button has disabled attribute
-    const confirmBtn = w.findAll('button').find((b) => b.attributes('disabled') !== undefined || b.element.disabled);
     // If stubs render a standard <button>, check DOM disabled state
     const buttons = w.findAll('button[disabled]');
     expect(buttons.length).toBeGreaterThanOrEqual(1);
