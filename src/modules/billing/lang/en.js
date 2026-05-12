@@ -150,6 +150,8 @@ export const billingEn = {
         balance: 'Extra units',
         /** i18n key: billing.subscriptions.extras.ledger */
         ledger: 'Transaction history',
+        /** i18n key: billing.subscriptions.extras.buyExtra — CTA redirecting to /pricing#units */
+        buyExtra: 'Buy compute extras',
       },
       cta: {
         /** i18n key: billing.subscriptions.cta.upgrade */

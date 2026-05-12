@@ -164,32 +164,32 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
     expect(wrapper.text()).toContain('24%');
   });
 
-  it('renders Buy units CTA in meter mode', async () => {
+  it('renders "Buy compute extras" CTA in meter mode (T6 redesign: /pricing#units redirect)', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const buyBtns = wrapper.findAll('.v-btn').filter((b) => b.text().includes('Buy units'));
+    const buyBtns = wrapper.findAllComponents({ name: 'v-btn' }).filter((b) => b.text().includes('Buy compute extras'));
     expect(buyBtns.length).toBeGreaterThan(0);
   });
 
-  it('Buy units CTA opens the inline extras checkout modal', async () => {
+  it('"Buy compute extras" CTA navigates to /pricing#units (not opens modal) — T6 redesign', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('Buy units'));
+    const buyBtn = wrapper.findAllComponents({ name: 'v-btn' }).find((b) => b.text().includes('Buy compute extras'));
     expect(buyBtn).toBeDefined();
-    await buyBtn.trigger('click');
-    expect(wrapper.vm.extrasCheckoutDialog).toBe(true);
-    const modal = wrapper.findComponent({ name: 'BillingExtrasCheckoutModalComponent' });
-    expect(modal.props('modelValue')).toBe(true);
-    expect(modal.props('packs')).toEqual(mockUsageMeterNormal.packsAvailable);
+    // Must have `to="/pricing#units"` prop — never opens the inline checkout modal
+    const toProp = buyBtn?.props('to') ?? buyBtn?.attributes('to');
+    expect(String(toProp)).toContain('/pricing');
+    expect(String(toProp)).toContain('#units');
+    // Dialog must remain closed — this is not a modal trigger
+    expect(wrapper.vm.extrasCheckoutDialog).toBe(false);
   });
 
-  it('renders informational usage bar in meter mode (no click handler)', async () => {
+  it('does NOT render BillingUsageBarComponent in meter mode (T6: single bar only)', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    const meterBar = wrapper.find('.billing-usage-bar--meter');
-    expect(meterBar.exists()).toBe(true);
-    // Bar is informational — no role=button, no cursor pointer
-    expect(meterBar.attributes('role')).toBeUndefined();
+    // T6 drops BillingUsageBarComponent — only BillingMeterProgressComponent remains
+    const usageBars = wrapper.findAllComponents({ name: 'BillingUsageBarComponent' });
+    expect(usageBars.length).toBe(0);
   });
 
   it('fetches extras ledger when meterMode is true', async () => {
@@ -1417,5 +1417,75 @@ describe('BillingSubscriptionsComponent — pollAborted abort flag', () => {
     vi.advanceTimersByTime(10000);
     // fetchSubscription call count must not grow beyond what was already in-flight
     expect(store.fetchSubscription.mock.calls.length).toBe(fetchCallCount);
+  });
+});
+
+// ─── Suite T6: 2-column layout + drop dup bar + CTA redirect ─────────────────
+
+describe('BillingSubscriptionsComponent — T6: 2-col layout, single meter bar, CTA to /pricing#units', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = { status: 'active', plan: 'growth', currentPeriodEnd: new Date().toISOString() };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('renders two v-col children inside the meter mode section (2-col layout)', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    const cols = wrapper.findAllComponents({ name: 'v-col' });
+    expect(cols.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders only one meter component — no duplicate bar (BillingUsageBarComponent dropped)', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    // After 2-col redesign: only BillingMeterProgressComponent remains; BillingUsageBarComponent is removed
+    const usageBars = wrapper.findAllComponents({ name: 'BillingUsageBarComponent' });
+    const meterProgress = wrapper.findAllComponents({ name: 'BillingMeterProgressComponent' });
+    // Either usageBar OR meterProgress, not both — total must be ≤ 1
+    expect(usageBars.length + meterProgress.length).toBeLessThanOrEqual(1);
+  });
+
+  it('CTA "Buy compute extras" button navigates to /pricing#units (not a modal trigger)', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    // Find btn that contains "extra" or "compute" keyword in its text
+    const buyCtaBtn = wrapper.findAllComponents({ name: 'v-btn' })
+      .find((b) => b.text().toLowerCase().includes('extra') || b.text().toLowerCase().includes('buy compute'));
+    expect(buyCtaBtn).toBeDefined();
+    // Must use router `to` prop (not @click modal), pointing to /pricing#units
+    const toProp = buyCtaBtn?.props('to') ?? buyCtaBtn?.attributes('to');
+    expect(toProp).toContain('/pricing');
+    expect(String(toProp)).toContain('#units');
+  });
+
+  it('does NOT open extrasCheckoutDialog when clicking the buy-compute CTA', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    expect(wrapper.vm.extrasCheckoutDialog).toBe(false);
+    // CTA is a router link, not a click handler — dialog stays false
+    const buyCtaBtn = wrapper.findAllComponents({ name: 'v-btn' })
+      .find((b) => b.text().toLowerCase().includes('extra') || b.text().toLowerCase().includes('buy compute'));
+    if (buyCtaBtn) await buyCtaBtn.trigger('click');
+    await flushPromises();
+    expect(wrapper.vm.extrasCheckoutDialog).toBe(false);
+  });
+
+  it('billing-subscriptions__meter-card count is exactly 1 (single bar card, no dup card)', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    const meterCards = wrapper.findAll('.billing-subscriptions__meter-card');
+    // Left col has 1 meter card; extras is in right col with its own class
+    expect(meterCards.length).toBe(1);
   });
 });
