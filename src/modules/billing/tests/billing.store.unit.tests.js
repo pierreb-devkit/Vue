@@ -258,6 +258,22 @@ describe('Billing Store', () => {
       expect(store.loading).toBe(false);
       spy.mockRestore();
     });
+
+    it('sends an empty object body to POST /portal (not undefined)', async () => {
+      const store = useBillingStore();
+      const portalUrl = 'https://billing.stripe.com/session/test_123';
+      axios.post.mockResolvedValueOnce({ data: { data: { url: portalUrl } } });
+      const originalLocation = window.location;
+      delete window.location;
+      window.location = { ...originalLocation, href: '' };
+      await store.openPortal();
+      // Second argument must be {} (empty object), not undefined
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/portal'),
+        {},
+      );
+      window.location = originalLocation;
+    });
   });
 
   describe('fetchUsageMeter', () => {
