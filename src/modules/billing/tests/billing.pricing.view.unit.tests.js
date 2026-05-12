@@ -30,7 +30,11 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 const pricingState = vi.hoisted(() => ({
   mode: 'subscription',
-  plans: [{ id: 'free', name: 'Free' }, { id: 'pro', name: 'Pro' }],
+  // V4 schema — title/subtitle/highlight (matches static-content & BillingCardComponent contract).
+  plans: [
+    { id: 'free', title: 'Free', subtitle: 'For starters', highlight: false, badge: null, cta: 'Get started', features: [] },
+    { id: 'pro', title: 'Pro', subtitle: 'For pros', highlight: false, badge: null, cta: 'Upgrade', features: [] },
+  ],
   packs: [],
   faqs: { title: '', subtitle: null, content: [] },
   tabs: {},
@@ -284,7 +288,11 @@ describe('BillingPricingView — mode-aware layout', () => {
       pricingState.plans = plans;
       pricingState.hasPlans = plans.length > 0;
     } else {
-      pricingState.plans = [{ id: 'free', name: 'Free' }, { id: 'pro', name: 'Pro' }];
+      // V4 schema — title/subtitle/highlight (matches static-content & BillingCardComponent contract).
+      pricingState.plans = [
+        { id: 'free', title: 'Free', subtitle: 'For starters', highlight: false, badge: null, cta: 'Get started', features: [] },
+        { id: 'pro', title: 'Pro', subtitle: 'For pros', highlight: false, badge: null, cta: 'Upgrade', features: [] },
+      ];
       pricingState.hasPlans = true;
     }
     pricingState.packs = pricingMode === 'packs' ? [{ id: 'p1', name: 'Pack 500' }] : [];

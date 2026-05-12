@@ -10,28 +10,33 @@
   USAGE (pack — from billing.packs.component.vue):
   <BillingCardComponent :item="resolvedPackItem" @cta-click="onCtaClick" />
 
-  ITEM SCHEMA:
+  ITEM SCHEMA (fully resolved — parent transforms static-content plan/pack into this):
     id        : string
     title     : string                   — large card heading
     subtitle  : string                   — 1-liner below title
-    price     : { amount: string, period: string|null }
+    price     : { amount: string, period: string|null, chip?: { text: string, color?: string } }
                   e.g. { amount: 'FREE', period: null }
-                  e.g. { amount: '$39', period: '/month' }
+                  e.g. { amount: '$39', period: '/month', chip: { text: 'Save 17%', color: 'success' } }
     cta       : {
-                  label    : string,
+                  label    : string,                          — resolved label (parent picks "Sign up" / "Current Plan" / etc.)
                   variant  : 'elevated'|'outlined'|'flat'|'tonal',
                   color    : string|null,
                   disabled : boolean,
                   loading  : boolean,
-                  to       : string|null,   — router-link target (free plan signup)
+                  to       : string|RouteLocationRaw|null,    — router-link target (v-btn :to passes through). Object form preserves query params.
                 }
+                Note: static-content plans carry `cta` as a plain string (the label).
+                The parent (e.g. billing.pricing.view.vue resolvedPlanItems) expands it
+                into this object — the name collision between the two layers is intentional
+                but worth flagging for downstream overrides.
     info      : string|null              — ops-eval line, shown between CTA and features
     features  : [{ icon: string, color: string, text: string }]
     badge     : string|null              — e.g. 'MOST POPULAR'
     highlight : boolean                  — elevated card variant
 
   EVENTS:
-  - cta-click ({ id }): emitted on CTA click (parent handles routing/checkout)
+  - cta-click ({ id }): emitted on CTA click. Skipped when cta.disabled OR cta.to is set
+                        (router-link owns navigation in the latter case — see onCtaClick).
 -->
 <template>
   <v-card

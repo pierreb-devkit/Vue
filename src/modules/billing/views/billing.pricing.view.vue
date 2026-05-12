@@ -207,9 +207,6 @@ export default {
       if (!this.authStore.isLoggedIn) return null;
       return this.billingStore.subscription?.plan ?? 'free';
     },
-    meterMode() {
-      return this.authStore.serverConfig?.billing?.meterMode === true;
-    },
     hasPaidPlans() {
       return this.plans.some((p) => p.id !== 'free');
     },
@@ -296,7 +293,11 @@ export default {
           ctaVariant = 'outlined';
           ctaColor = null;
           ctaDisabled = false;
-          ctaTo = '/signup';
+          // Preserve the `redirect` query param so the user lands back on the pricing
+          // page after signup. v-btn's :to accepts the same shape as $router.push().
+          // The card skips its cta-click emit when cta.to is set (router-link owns
+          // the navigation), so the view's onCtaClick fallback is intentionally bypassed.
+          ctaTo = { path: '/signup', query: { redirect: '/pricing' } };
         } else {
           ctaLabel = plan.cta;
           ctaVariant = plan.highlight ? 'flat' : 'outlined';
