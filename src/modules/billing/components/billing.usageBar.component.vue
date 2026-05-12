@@ -287,15 +287,17 @@ export default {
 
     /**
      * @desc Usage summary text shown in standard meter mode.
-     * When in overage shows the negative net remaining; otherwise "{used} / {quota} +{extras}".
-     * @returns {string}
+     * Task 4 (% primary display): always returns a percentage string.
+     * Raw compute units are surfaced by BillingMeterProgressComponent's
+     * overflow tooltip — not duplicated here.
+     * Consumed by T5 (BillingNavComputeGaugeComponent) and T6 (billing.subscriptions.component.vue)
+     * which read the % value from the summary span.
+     * @returns {string} e.g. "50%" or "100%"
      */
     meterDisplay() {
-      if (this.meterOverage > 0) {
-        return `${this.meterUsed} / ${this.meterQuota} ${this.$t('billing.usageBar.remaining', { count: this.meterNetRemainingRaw, n: this.meterNetRemainingRaw })}`;
-      }
-      const base = `${this.meterUsed} / ${this.meterQuota}`;
-      return this.meterExtras > 0 ? `${base} +${this.meterExtras}` : base;
+      if (this.meterQuota <= 0) return '0%';
+      const pct = Math.max(0, Math.min(100, Math.round((this.meterUsed / this.meterQuota) * 100)));
+      return `${pct}%`;
     },
   },
 };

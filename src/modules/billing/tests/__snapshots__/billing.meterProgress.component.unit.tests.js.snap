@@ -4,16 +4,8 @@ exports[`BillingMeterProgressComponent > matches the overage snapshot 1`] = `
 "<div data-v-f7f25334="" class="billing-meter-progress" aria-label="120 of 100 used, 20 over quota">
   <!-- Label row -->
   <!--v-if-->
-  <!-- Overage badge -->
-  <div data-v-f7f25334="" class="billing-meter-progress__overage d-flex align-center mb-1" aria-live="assertive" aria-atomic="true"><span data-v-f7f25334="" class="v-chip v-theme--light text-error v-chip--density-default v-chip--size-x-small v-chip--variant-tonal" draggable="false"><!----><span class="v-chip__underlay"></span>
-    <!---->
-    <div class="v-chip__prepend"><i class="fa-solid fa-triangle-exclamation mdi v-icon notranslate v-theme--light v-icon--size-default v-icon--start" aria-hidden="true"></i>
-      <!---->
-    </div>
-    <div class="v-chip__content" data-no-activator="">+20 over</div>
-    <!---->
-    <!----></span>
-  </div><!-- Bar variant -->
+  <!-- Overage ARIA signal (visually hidden, aria-live region for assistive tech) -->
+  <div data-v-f7f25334="" class="billing-meter-progress__overage d-flex align-center mb-1" aria-live="assertive" aria-atomic="true"></div><!-- Bar variant -->
   <div data-v-f7f25334="" class="v-progress-linear v-progress-linear--rounded v-progress-linear--rounded v-theme--light v-locale--is-ltr" style="top: 0px; height: 10px; --v-progress-linear-height: 10px;" role="progressbar" aria-hidden="false" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
     <!---->
     <div class="v-progress-linear__background bg-surface-variant" style="opacity: NaN;"></div>
@@ -22,7 +14,11 @@ exports[`BillingMeterProgressComponent > matches the overage snapshot 1`] = `
       <div class="v-progress-linear__determinate bg-error" style="width: 100%;"></div>
     </transition-stub>
     <!---->
-  </div><!-- Summary text -->
-  <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1" aria-live="polite"><span data-v-f7f25334="">120 / 100</span><span data-v-f7f25334="" class="text-error">(-20 remaining)</span></div>
+  </div><!-- Summary text: % is primary, compute units in tooltip on overflow only -->
+  <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1 d-flex align-center ga-1" aria-live="assertive">
+    <!-- Primary value: always percentage --><span data-v-f7f25334="" class="font-weight-medium text-error">100% </span><!-- Compute detail tooltip — shown only when in overage (overflow state) --><i data-v-f7f25334="" class="fa-solid fa-circle-exclamation mdi v-icon notranslate v-theme--light v-icon--size-x-small text-error" style="cursor: help;" role="img" aria-hidden="true" tabindex="0" aria-describedby="v-tooltip-v-0" aria-label="120 of 100 used, 20 over quota"></i>
+    <!--teleport start-->
+    <!--teleport end-->
+  </div>
 </div>"
 `;

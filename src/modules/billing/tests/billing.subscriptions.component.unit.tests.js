@@ -159,8 +159,9 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
   it('renders meter usage values', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    expect(wrapper.text()).toContain('120');
-    expect(wrapper.text()).toContain('500');
+    // Task 4: primary display is %, raw units are in aria-label / tooltip only
+    // 120 / 500 = 24%
+    expect(wrapper.text()).toContain('24%');
   });
 
   it('renders Buy units CTA in meter mode', async () => {
