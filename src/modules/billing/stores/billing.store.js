@@ -279,7 +279,7 @@ export const useBillingStore = defineStore('billing', {
       this.loading = true;
       try {
         const api = apiBase();
-        const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`);
+        const res = await axios.post(`${api}/${config.api.endPoints.billing}/portal`, {});
         const url = res?.data?.data?.url;
         if (!url) {
           throw new Error('Billing portal URL is missing from the API response');
