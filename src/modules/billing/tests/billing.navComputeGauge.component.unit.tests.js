@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -18,6 +18,7 @@ const vuetify = createVuetify();
 
 /**
  * Mount BillingNavComputeGaugeComponent with Vuetify + Pinia installed.
+ * Returns the wrapper; always call wrapper.unmount() or use the afterEach cleanup.
  * @returns {import('@vue/test-utils').VueWrapper}
  */
 const mountComponent = () =>
@@ -27,11 +28,19 @@ const mountComponent = () =>
   });
 
 describe('BillingNavComputeGaugeComponent', () => {
+  let wrapper;
+
   beforeEach(() => {
     setActivePinia(createPinia());
+    wrapper = null;
   });
 
   afterEach(() => {
+    // Unmount to remove window.focus listener and avoid cross-test leaks
+    if (wrapper) {
+      wrapper.unmount();
+      wrapper = null;
+    }
     vi.restoreAllMocks();
   });
 
@@ -43,7 +52,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.cookieExpire = 0;
     authStore.serverConfig = { billing: { meterMode: true } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(false);
   });
 
@@ -52,7 +61,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: false } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(false);
   });
 
@@ -61,7 +70,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'VTooltip' }).exists()).toBe(true);
   });
 
@@ -74,7 +83,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.findComponent({ name: 'VProgressCircular' }).exists()).toBe(true);
     // No v-progress-linear (the old component used that)
     expect(wrapper.findComponent({ name: 'VProgressLinear' }).exists()).toBe(false);
@@ -85,11 +94,11 @@ describe('BillingNavComputeGaugeComponent', () => {
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = meterQuota + extrasRemaining + meterUsed = 800 + 0 + 800 = 1600
-    // pctUsed = 800 / 1600 = 50%
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 800, extrasRemaining: 0, weekResetAt: null };
+    // totalQuota = meterQuota + extrasRemaining = 1600 + 0 = 1600
+    // pctUsed = meterUsed / totalQuota = 800 / 1600 = 50%
+    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.text()).toContain('50% used');
   });
 
@@ -98,22 +107,22 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.text()).toContain('—');
   });
 
-  // ── pctUsed formula: includes extrasRemaining ────────────────────────────
+  // ── pctUsed formula: meterUsed / (meterQuota + extrasRemaining) ──────────
 
-  it('computes pctUsed = meterUsed / (meterQuota + extrasRemaining + meterUsed)', () => {
+  it('computes pctUsed = meterUsed / (meterQuota + extrasRemaining)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 1600 + 400 + 800 = 2800 → pct = 800/2800 = 28.57 → round = 29
+    // totalQuota = 1600 + 400 = 2000, pct = 800 / 2000 = 40%
     billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 400, weekResetAt: null };
 
-    const wrapper = mountComponent();
-    expect(wrapper.vm.pctUsed).toBe(29);
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(40);
   });
 
   it('returns pctUsed=0 when totalQuota=0 (division-by-zero guard)', () => {
@@ -123,70 +132,69 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 0, meterQuota: 0, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(0);
   });
 
-  it('verifies pctUsed formula: meterUsed=200, meterQuota=50, extras=0 → 80%', () => {
+  it('clamps pctUsed to 100 when meterUsed exceeds totalQuota', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 50 + 0 + 200 = 250, pct = 200/250 = 80%
+    // totalQuota = 50 + 0 = 50, meterUsed = 200 → pct = 200/50 = 400% → clamp to 100
     billingStore.usageMeter = { meterUsed: 200, meterQuota: 50, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
-    expect(wrapper.vm.pctUsed).toBe(80);
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(100);
   });
 
-  it('returns pctUsed=50 for meterUsed=800, meterQuota=800, extrasRemaining=0', () => {
+  it('returns pctUsed=50 for meterUsed=800, meterQuota=1600, extrasRemaining=0', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 800 + 0 + 800 = 1600, pct = 800/1600 = 50%
-    billingStore.usageMeter = { meterUsed: 800, meterQuota: 800, extrasRemaining: 0, weekResetAt: null };
+    // totalQuota = 1600 + 0 = 1600, pct = 800/1600 = 50%
+    billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(50);
   });
 
-  // ── iconColor thresholds ─────────────────────────────────────────────────
+  // ── iconColor thresholds (matches billing.computeGauge: 80% / 100%) ──────
 
-  it('iconColor = "success" when pctUsed <= 50', () => {
+  it('iconColor = "success" when pctUsed < 80%', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
+    // totalQuota = 100, meterUsed = 50 → pct = 50% → success
     billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
-    // pctUsed = 50/150 = 33% → success
+    wrapper = mountComponent();
     expect(wrapper.vm.iconColor).toBe('success');
   });
 
-  it('iconColor = "warning" when pctUsed is between 51% and 75%', () => {
+  it('iconColor = "warning" when pctUsed is 80%', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // Need pctUsed in (50, 75] — use extrasRemaining=0, meterUsed=65, meterQuota=35
-    // totalQuota = 35 + 0 + 65 = 100, pct = 65% → warning
-    billingStore.usageMeter = { meterUsed: 65, meterQuota: 35, extrasRemaining: 0, weekResetAt: null };
+    // totalQuota = 100, meterUsed = 80 → pct = 80% → warning
+    billingStore.usageMeter = { meterUsed: 80, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.iconColor).toBe('warning');
   });
 
-  it('iconColor = "error" when pctUsed > 75', () => {
+  it('iconColor = "error" when pctUsed is 100% (at cap)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // meterUsed=90, meterQuota=10, extras=0 → totalQuota=100, pct=90% → error
-    billingStore.usageMeter = { meterUsed: 90, meterQuota: 10, extrasRemaining: 0, weekResetAt: null };
+    // totalQuota = 100, meterUsed = 100 → pct = 100% → error
+    billingStore.usageMeter = { meterUsed: 100, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.iconColor).toBe('error');
   });
 
@@ -202,7 +210,7 @@ describe('BillingNavComputeGaugeComponent', () => {
       weekResetAt: '2026-05-19T00:00:00.000Z',
     };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.resetLabel).not.toBeNull();
     expect(wrapper.vm.resetLabel).toMatch(/^resets /);
     expect(wrapper.vm.resetLabel.length).toBeGreaterThan('resets '.length);
@@ -215,7 +223,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 10, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     // Must NOT be null — nextMondayIso provides a fallback
     expect(wrapper.vm.resetLabel).not.toBeNull();
     expect(wrapper.vm.resetLabel).toMatch(/^resets /);
@@ -226,7 +234,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     // usageMeter is null → weekResetAt falls back to nextMondayIso()
     expect(wrapper.vm.resetLabel).not.toBeNull();
     expect(wrapper.vm.resetLabel).toMatch(/^resets /);
@@ -234,12 +242,12 @@ describe('BillingNavComputeGaugeComponent', () => {
 
   // ── nextMondayIso helper ─────────────────────────────────────────────────
 
-  it('nextMondayIso() returns a valid ISO string at 00:00 UTC', () => {
+  it('nextMondayIso() returns a valid ISO string at 00:00 UTC on a Monday', () => {
     const authStore = useAuthStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     const iso = wrapper.vm.nextMondayIso();
 
     expect(typeof iso).toBe('string');
@@ -265,7 +273,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     const billingStore = useBillingStore();
     billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
 
-    mountComponent();
+    wrapper = mountComponent();
     expect(billingStore.fetchUsageMeter).toHaveBeenCalledTimes(1);
   });
 
@@ -277,7 +285,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     const billingStore = useBillingStore();
     billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
 
-    mountComponent();
+    wrapper = mountComponent();
     // Simulate window focus
     window.dispatchEvent(new Event('focus'));
     expect(billingStore.fetchUsageMeter).toHaveBeenCalledTimes(2);
@@ -291,8 +299,10 @@ describe('BillingNavComputeGaugeComponent', () => {
     const billingStore = useBillingStore();
     billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
 
-    const wrapper = mountComponent();
-    wrapper.unmount();
+    const w = mountComponent();
+    w.unmount();
+    // wrapper is already unmounted — set to null so afterEach doesn't double-unmount
+    wrapper = null;
 
     // Focus after unmount should NOT call fetchUsageMeter again
     const callsBefore = billingStore.fetchUsageMeter.mock.calls.length;
@@ -309,20 +319,20 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 1234, meterQuota: 5000, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     expect(wrapper.vm.usedDisplay).toBe((1234).toLocaleString());
   });
 
-  it('totalDisplay formats totalQuota as a localized number string', () => {
+  it('totalDisplay formats totalQuota (meterQuota + extrasRemaining) as localized string', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 1000, meterQuota: 4000, extrasRemaining: 500, weekResetAt: null };
-    // totalQuota = 4000 + 500 + 1000 = 5500
+    // totalQuota = 4000 + 500 = 4500 (meterUsed excluded)
 
-    const wrapper = mountComponent();
-    expect(wrapper.vm.totalDisplay).toBe((5500).toLocaleString());
+    wrapper = mountComponent();
+    expect(wrapper.vm.totalDisplay).toBe((4500).toLocaleString());
   });
 
   // ── click navigation ─────────────────────────────────────────────────────
@@ -334,7 +344,7 @@ describe('BillingNavComputeGaugeComponent', () => {
     authStore.serverConfig = { billing: { meterMode: true } };
     billingStore.usageMeter = { meterUsed: 400, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
-    const wrapper = mountComponent();
+    wrapper = mountComponent();
     const listItem = wrapper.findComponent({ name: 'VListItem' });
     expect(listItem.props('to')).toEqual({ path: '/users', query: { tab: 'subscriptions' } });
   });

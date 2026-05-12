@@ -64,10 +64,15 @@ export default {
       return this.usageMeter?.meterUsed ?? 0;
     },
 
+    /**
+     * @desc Total available compute quota: base allocation + extras purchased.
+     * Excludes meterUsed (consumed units); consistent with billing.computeGauge.component.
+     * @returns {number}
+     */
     totalQuota() {
       if (!this.usageMeter) return 0;
-      const { meterUsed = 0, meterQuota = 0, extrasRemaining = 0 } = this.usageMeter;
-      return meterQuota + extrasRemaining + meterUsed;
+      const { meterQuota = 0, extrasRemaining = 0 } = this.usageMeter;
+      return meterQuota + extrasRemaining;
     },
 
     pctUsed() {
@@ -75,10 +80,15 @@ export default {
       return Math.max(0, Math.min(100, Math.round((this.meterUsed / this.totalQuota) * 100)));
     },
 
+    /**
+     * @desc Vuetify color token based on usage threshold.
+     * Matches billing.computeGauge.component thresholds.
+     * @returns {string}
+     */
     iconColor() {
-      if (this.pctUsed <= 50) return 'success';
-      if (this.pctUsed <= 75) return 'warning';
-      return 'error';
+      if (this.pctUsed >= 100) return 'error';
+      if (this.pctUsed >= 80) return 'warning';
+      return 'success';
     },
 
     usedDisplay() {
@@ -116,6 +126,12 @@ export default {
   },
 
   methods: {
+    /**
+     * @desc Returns the ISO 8601 string for the next Monday at 00:00 UTC.
+     * Used as a fallback reset date when `weekResetAt` is not set on the meter doc.
+     * Always returns a future date (minimum 1 day ahead when today is Monday).
+     * @returns {string} ISO 8601 UTC string, e.g. "2026-05-18T00:00:00.000Z"
+     */
     nextMondayIso() {
       const d = new Date();
       const day = d.getUTCDay();
