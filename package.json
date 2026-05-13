@@ -64,7 +64,7 @@
     "vuetify": "^4.0.7"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.3",
+    "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^20.5.3",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.60.0",
