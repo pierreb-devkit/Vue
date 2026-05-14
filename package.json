@@ -50,7 +50,7 @@
     "@tryghost/content-api": "^1.12.8",
     "@unhead/vue": "^3.1.0",
     "aos": "^2.3.4",
-    "axios": "^1.16.0",
+    "axios": "^1.16.1",
     "dayjs": "^1.11.20",
     "dompurify": "^3.4.2",
     "lodash-es": "^4.18.1",
