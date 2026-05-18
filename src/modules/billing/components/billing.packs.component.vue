@@ -51,7 +51,8 @@
  */
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { packs as packsConfig } from '../config/billing.static-content';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
+const { packs: packsConfig } = resolveStaticContent();
 import BillingCardComponent from './billing.card.component.vue';
 
 /**
