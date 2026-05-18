@@ -4,15 +4,21 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 // ─── Static-content mock ─────────────────────────────────────────────────────
-// packs exposed as a live-array so per-suite tests can splice() test data in.
-// Component imports `packs as packsConfig` — same reference, mutations are seen.
+// livePacks is a hoisted live-array so per-suite tests can splice() test data in.
+// resolveStaticContent() returns { packs: livePacks } — same reference, mutations are seen.
 
-vi.mock('../config/billing.static-content.js', () => ({
-  packs: [],
-  plans: [],
-  faqs: [],
-  pricingMode: null,
-  default: { billing: { packs: [], plans: [], faqs: [], pricingMode: null } },
+const livePacks = vi.hoisted(() => []);
+
+vi.mock('../lib/billing.resolveStaticContent.js', () => ({
+  resolveStaticContent: () => ({
+    packs: livePacks,
+    plans: [],
+    faqs: [],
+    pricingMode: null,
+    tabs: null,
+    header: null,
+    halo: null,
+  }),
 }));
 
 vi.mock('../../../lib/services/axios', () => ({
@@ -42,8 +48,6 @@ import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
 import { billingEn } from '../lang/en.js';
-import * as staticContent from '../config/billing.static-content.js';
-
 const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -164,13 +168,13 @@ describe('BillingPacksComponent — BillingCardComponent rendering', () => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     // Inject V4 packs into the live mock array (seen by component's packsConfig)
-    staticContent.packs.splice(0, staticContent.packs.length, ...mockPacksV4);
+    livePacks.splice(0, livePacks.length, ...mockPacksV4);
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
-    staticContent.packs.splice(0);
+    livePacks.splice(0);
   });
 
   it('renders one BillingCardComponent per pack in packsConfig', async () => {
@@ -251,13 +255,13 @@ describe('BillingPacksComponent — purchase flow', () => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
     store = useBillingStore();
-    staticContent.packs.splice(0, staticContent.packs.length, ...mockPacksV4);
+    livePacks.splice(0, livePacks.length, ...mockPacksV4);
   });
 
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
-    staticContent.packs.splice(0);
+    livePacks.splice(0);
   });
 
   it('calls createExtrasCheckout with pack.id on cta-click (happy path)', async () => {
