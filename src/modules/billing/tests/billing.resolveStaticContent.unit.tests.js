@@ -6,6 +6,10 @@ vi.mock('../../../lib/services/config.js', () => ({ default: {} }));
 import configMock from '../../../lib/services/config.js';
 import * as devkitDefaults from '../config/billing.static-content.js';
 
+/**
+ * @desc Reset modules and re-import the resolver so config mock changes take effect.
+ * @returns {Promise<typeof import('../lib/billing.resolveStaticContent.js')>}
+ */
 async function load() {
   vi.resetModules();
   return import('../lib/billing.resolveStaticContent.js');
@@ -62,5 +66,13 @@ describe('billing.resolveStaticContent', () => {
     const r = resolveStaticContent();
     expect(r.tabs).toBeNull(); // downstream explicit null wins
     expect(r.plans).toEqual(devkitDefaults.plans); // absent key still falls back
+  });
+
+  it('structural keys (plans, packs) set to null fall back to devkit defaults (crash-safe)', async () => {
+    configMock.billing = { staticContent: { plans: null, packs: null } };
+    const { resolveStaticContent } = await load();
+    const r = resolveStaticContent();
+    expect(r.plans).toEqual(devkitDefaults.plans); // null → devkit default, not null
+    expect(r.packs).toEqual(devkitDefaults.packs); // null → devkit default, not null
   });
 });

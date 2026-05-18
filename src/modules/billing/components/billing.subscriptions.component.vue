@@ -296,12 +296,13 @@ import { useBillingStore, clearExtrasIntentIds } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
-const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
 import BillingPlanBadgeComponent from './billing.planBadge.component.vue';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.component.vue';
 import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
+
+const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
 
 /** Maximum number of polling attempts after checkout success (2s × 8 = 16s max). */
 const CHECKOUT_POLL_MAX = 8;
