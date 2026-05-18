@@ -7,21 +7,23 @@ import { useAuthStore } from '../../auth/stores/auth.store.js';
 import { useBillingStore } from '../stores/billing.store.js';
 import { usePricing } from '../composables/billing.usePricing.js';
 
-vi.mock('../config/billing.static-content.js', () => ({
-  pricingMode: null,
-  plans: [
-    { id: 'free', name: 'Free', monthlyPrice: 0, annualPrice: 0, features: [], featureSections: [] },
-    { id: 'pro', name: 'Pro', monthlyPrice: 39, annualPrice: 390, features: [], featureSections: [] },
-  ],
-  packs: [{ packId: 'boost', label: 'Boost', priceUsd: 9, meterUnits: 5000 }],
-  faqs: {
-    title: 'Frequently asked questions',
-    subtitle: null,
-    content: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
-  },
-  tabs: { plans: 'My Plans', units: 'My Units' },
-  header: { title: null, subtitle: null },
-  halo: null,
+vi.mock('../lib/billing.resolveStaticContent.js', () => ({
+  resolveStaticContent: () => ({
+    pricingMode: null,
+    plans: [
+      { id: 'free', name: 'Free', monthlyPrice: 0, annualPrice: 0, features: [], featureSections: [] },
+      { id: 'pro', name: 'Pro', monthlyPrice: 39, annualPrice: 390, features: [], featureSections: [] },
+    ],
+    packs: [{ packId: 'boost', label: 'Boost', priceUsd: 9, meterUnits: 5000 }],
+    faqs: {
+      title: 'Frequently asked questions',
+      subtitle: null,
+      content: [{ id: 'q1', question: 'What is X?', answer: 'X is Y.' }],
+    },
+    tabs: { plans: 'My Plans', units: 'My Units' },
+    header: { title: null, subtitle: null },
+    halo: null,
+  }),
 }));
 
 describe('usePricing', () => {

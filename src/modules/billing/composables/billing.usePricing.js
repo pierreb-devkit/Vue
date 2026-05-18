@@ -11,16 +11,18 @@
 import { computed } from 'vue';
 import { useAuthStore } from '../../auth/stores/auth.store.js';
 import { useBillingStore } from '../stores/billing.store.js';
-import {
-  pricingMode as staticPricingMode,
-  plans as staticPlans,
-  packs as staticPacks,
-  faqs as staticFaqs,
-  tabs as staticTabs,
-  header as staticHeader,
-  halo as staticHalo,
-} from '../config/billing.static-content.js';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import { computeMaxAnnualSavingsPct, resolvePricingMode } from '../lib/pricingMath.js';
+
+const {
+  pricingMode: staticPricingMode,
+  plans: staticPlans,
+  packs: staticPacks,
+  faqs: staticFaqs,
+  tabs: staticTabs,
+  header: staticHeader,
+  halo: staticHalo,
+} = resolveStaticContent();
 
 /**
  * @desc Compose pricing-page state from static config + server config + billing store.
