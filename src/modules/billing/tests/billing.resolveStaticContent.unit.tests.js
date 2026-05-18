@@ -45,6 +45,7 @@ describe('billing.resolveStaticContent', () => {
     expect(r.pricingMode).toBe('subscription');
     expect(r.plans[0].id).toBe('x');
     expect(r.header.title).toBe('H');
+    expect(r.halo).toBeNull();
   });
 
   it('per-key fallback: missing keys in override fall back to devkit defaults', async () => {
@@ -53,5 +54,13 @@ describe('billing.resolveStaticContent', () => {
     const r = resolveStaticContent();
     expect(r.pricingMode).toBe('packs');
     expect(r.plans).toEqual(devkitDefaults.plans); // fell back
+  });
+
+  it('explicit null in config wins over a non-null devkit default (presence beats nullish)', async () => {
+    configMock.billing = { staticContent: { tabs: null } };
+    const { resolveStaticContent } = await load();
+    const r = resolveStaticContent();
+    expect(r.tabs).toBeNull(); // downstream explicit null wins
+    expect(r.plans).toEqual(devkitDefaults.plans); // absent key still falls back
   });
 });

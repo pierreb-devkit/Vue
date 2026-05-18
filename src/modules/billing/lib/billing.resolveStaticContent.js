@@ -2,9 +2,9 @@
 /**
  * Resolver — single source of truth for billing marketing content.
  *
- * Resolution order, per key:
- *   1. config.billing.staticContent[key]  (downstream project config)
- *   2. devkit billing.static-content.js    (generic default / fallback)
+ * Resolution order, per key — present in config (even if `null`) wins; absent → devkit default:
+ *   1. config.billing.staticContent[key]  (downstream project config — wins even when null)
+ *   2. devkit billing.static-content.js    (generic default / fallback, only when key is absent)
  *
  * Downstream projects customize pricing purely via project config
  * (src/config/defaults/<project>.config.js -> config.billing.staticContent).
@@ -29,14 +29,12 @@ import {
 export function resolveStaticContent() {
   const o = config?.billing?.staticContent ?? {};
   return {
-    pricingMode: o.pricingMode ?? dPricingMode,
-    plans: o.plans ?? dPlans,
-    packs: o.packs ?? dPacks,
-    faqs: o.faqs ?? dFaqs,
-    tabs: o.tabs ?? dTabs,
-    header: o.header ?? dHeader,
-    halo: o.halo ?? dHalo,
+    pricingMode: 'pricingMode' in o ? o.pricingMode : dPricingMode,
+    plans: 'plans' in o ? o.plans : dPlans,
+    packs: 'packs' in o ? o.packs : dPacks,
+    faqs: 'faqs' in o ? o.faqs : dFaqs,
+    tabs: 'tabs' in o ? o.tabs : dTabs,
+    header: 'header' in o ? o.header : dHeader,
+    halo: 'halo' in o ? o.halo : dHalo,
   };
 }
-
-export default { resolveStaticContent };
