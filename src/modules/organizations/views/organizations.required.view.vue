@@ -1,9 +1,9 @@
 <template>
   <v-container style="max-width: 520px">
     <v-card class="mt-10 pa-8 pa-sm-10" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-      <h3 class="text-headline-small font-weight-bold text-center">Organization Required</h3>
+      <h3 class="text-headline-small font-weight-bold text-center">No workspace found</h3>
       <p class="text-body-medium text-medium-emphasis text-center mt-1 mb-6">
-        You need to belong to an organization to access the application.
+        You are not a member of any workspace. Create one or ask for an invitation.
       </p>
 
       <!-- Email verification gate -->

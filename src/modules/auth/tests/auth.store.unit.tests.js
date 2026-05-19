@@ -666,6 +666,201 @@ describe('Auth Store', () => {
     });
   });
 
+  describe('suggestedJoin', () => {
+    it('should initialize suggestedJoin as null', () => {
+      const authStore = useAuthStore();
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('setSuggestedJoin sets state', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      expect(authStore.suggestedJoin).toEqual({ orgId: 'o1', orgName: 'Acme' });
+    });
+
+    it('dismissSuggestedJoin clears state', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      authStore.dismissSuggestedJoin();
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('dismissSuggestedJoin removes persisted localStorage key', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      authStore.dismissSuggestedJoin();
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('clearSuggestedJoinIfMember clears when orgId matches', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      authStore.clearSuggestedJoinIfMember('o1');
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('clearSuggestedJoinIfMember does NOT clear when orgId differs', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      authStore.clearSuggestedJoinIfMember('o2');
+      expect(authStore.suggestedJoin).toEqual({ orgId: 'o1', orgName: 'Acme' });
+    });
+
+    it('clearSuggestedJoinIfMember is a no-op when suggestedJoin is null', () => {
+      const authStore = useAuthStore();
+      expect(() => authStore.clearSuggestedJoinIfMember('o1')).not.toThrow();
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('signout clears suggestedJoin', async () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('signout removes suggestedJoin from localStorage', async () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('signup with suggestedJoin in response sets state', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+          suggestedJoin: { orgId: 'org-x', orgName: 'Org X' },
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(authStore.suggestedJoin).toEqual({ orgId: 'org-x', orgName: 'Org X' });
+    });
+
+    it('signup without suggestedJoin in response leaves state null', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('signup with null suggestedJoin in response leaves state null', async () => {
+      const authStore = useAuthStore();
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+          suggestedJoin: null,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('setSuggestedJoin persists to localStorage', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      const stored = JSON.parse(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`));
+      expect(stored).toEqual({ orgId: 'o1', orgName: 'Acme' });
+    });
+
+    it('initFromStorage restores suggestedJoin from localStorage', () => {
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify({ orgId: 'o1', orgName: 'Acme' }));
+      const authStore = useAuthStore();
+      authStore.initFromStorage();
+      expect(authStore.suggestedJoin).toEqual({ orgId: 'o1', orgName: 'Acme' });
+    });
+
+    it('initFromStorage does not throw on corrupt suggestedJoin, leaves state null, removes bad key', () => {
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, '{not valid json{{');
+      const authStore = useAuthStore();
+      expect(() => authStore.initFromStorage()).not.toThrow();
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('setSuggestedJoin ignores non-object payloads and does not touch state or localStorage', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin('garbage');
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+
+      authStore.setSuggestedJoin(true);
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+
+      authStore.setSuggestedJoin(null);
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('setSuggestedJoin still works correctly for valid object payloads', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
+      expect(authStore.suggestedJoin).toEqual({ orgId: 'o1', orgName: 'Acme' });
+      const stored = JSON.parse(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`));
+      expect(stored).toEqual({ orgId: 'o1', orgName: 'Acme' });
+    });
+
+    it('setSuggestedJoin ignores arrays even though they pass typeof object', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin(['o1', 'Acme']);
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('setSuggestedJoin ignores objects missing orgId or orgName string fields', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1' }); // missing orgName
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgName: 'Acme' }); // missing orgId
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgId: 42, orgName: 'Acme' }); // non-string orgId
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgId: '', orgName: 'Acme' }); // empty orgId
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('initFromStorage drops malformed-but-parseable localStorage values (array/missing fields) and removes the key', () => {
+      // Valid JSON but wrong shape — should not restore state
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify(['o1', 'Acme']));
+      const authStore = useAuthStore();
+      authStore.initFromStorage();
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('initFromStorage drops object missing required string fields and removes the key', () => {
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify({ orgId: 'o1' }));
+      const authStore = useAuthStore();
+      authStore.initFromStorage();
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+  });
+
   describe('resendVerification', () => {
     it('should call resend-verification endpoint and return response data', async () => {
       const authStore = useAuthStore();
