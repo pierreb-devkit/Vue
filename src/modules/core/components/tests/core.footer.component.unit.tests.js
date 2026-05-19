@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import { createI18n } from 'vue-i18n';
 import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 
 vi.mock('vuetify', async (importOriginal) => {
@@ -25,17 +24,6 @@ import CoreFooter from '../core.footer.component.vue';
  */
 const vuetify = () => createVuetify({ components, directives });
 
-/**
- * Returns a fresh vue-i18n instance with minimal keys.
- * @returns {import('vue-i18n').I18n}
- */
-const i18n = () =>
-  createI18n({
-    legacy: false,
-    locale: 'en',
-    messages: { en: {} },
-  });
-
 const baseConfig = () => ({
   footer: { links: [{ title: 'Help', items: [{ label: 'Docs', icon: 'fa-solid fa-book', url: '/docs' }] }] },
   vuetify: { theme: { flat: false } },
@@ -49,7 +37,7 @@ const baseConfig = () => ({
 const mountFooter = (config) =>
   mount(CoreFooter, {
     global: {
-      plugins: [vuetify(), i18n()],
+      plugins: [vuetify()],
       mocks: {
         config,
         $route: { path: '/', meta: { footer: true } },
