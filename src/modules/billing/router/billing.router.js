@@ -22,7 +22,7 @@ const redirectBillingToSubscriptions = (to) => ({ path: '/users', query: { ...to
 export const organizationRoutes = [
   {
     path: 'billing',
-    name: 'Organization Billing',
+    name: 'Account Organization Billing',
     component: () => import('../components/billing.subscriptions.component.vue'),
     meta: {
       display: false,
