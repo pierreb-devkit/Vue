@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { resolveSurfaceTabs } from '@/lib/helpers/surface-tabs';
 
+defineOptions({ name: 'CoreSurfaceTabBar' });
+
 /**
  * SurfaceTabBar — a cosmetic tab strip that renders only the tabs allowed by
  * reactive CASL. Filtering is done via `resolveSurfaceTabs`, which validates

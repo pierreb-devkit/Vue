@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import SurfaceTabBar from '../SurfaceTabBar.vue';
+import SurfaceTabBar from '../core.surfaceTabBar.component.vue';
 
 // biome-ignore lint/correctness/useQwikValidLexicalScope: false positive — Qwik rule does not apply in a Vue/Vitest context
 const makeVuetify = () => createVuetify({ components, directives });
