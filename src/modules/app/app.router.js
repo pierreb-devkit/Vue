@@ -6,12 +6,12 @@ import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
 import { isModuleActive } from '../../lib/helpers/modules';
-import { injectAdminChildren } from '../../lib/helpers/router';
+import { injectAdminChildren, injectModuleChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
-import organizations from '../organizations/router/organizations.router';
+import organizations, { ORG_PARENT_PATH } from '../organizations/router/organizations.router';
 import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
@@ -38,6 +38,19 @@ const coreRoutes = [].concat(home, auth, users);
  */
 const adminChildModules = [];
 injectAdminChildren(admin, adminChildModules, isModuleActive);
+
+/**
+ * Organization-settings child modules — routes injected as children of the
+ * `/users/organizations/:organizationId` parent route via `injectModuleChildren`.
+ * Base devkit ships this empty; PR (c) and downstream projects populate it
+ * (e.g. a billing-settings tab rendered inside the org detail layout).
+ *
+ * Each module's router file should export routes with **relative** paths
+ * (e.g. `'billing'` rather than `'/users/organizations/:organizationId/billing'`)
+ * so they resolve under the org parent.
+ */
+const organizationChildModules = [];
+injectModuleChildren(organizations, organizationChildModules, isModuleActive, ORG_PARENT_PATH);
 
 // Optional modules — mounted only when activated
 const optionalModules = [

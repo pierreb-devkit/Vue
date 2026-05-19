@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { injectAdminChildren } from '../router';
+import { injectAdminChildren, injectModuleChildren } from '../router';
 
 /**
  * Build a fresh admin route array for each test so mutations don't leak.
@@ -183,5 +183,100 @@ describe('injectAdminChildren', () => {
     const injected = admin[0].children.find((r) => r.name === 'Admin Secret');
     expect(injected.meta.action).toBe('manage');
     expect(injected.meta.subject).toBe('UserAdmin');
+  });
+});
+
+/**
+ * injectModuleChildren — generalized form.
+ *
+ * Signature: injectModuleChildren(routes, childModules, isModuleActive, parentPath, callerName)
+ *  - parentPath defaults to '/admin' for back-compat with injectAdminChildren.
+ *  - callerName defaults to 'injectModuleChildren'; injectAdminChildren passes
+ *    'injectAdminChildren' so dev-mode warnings identify the wrapper correctly.
+ *
+ * These tests verify the same contracts as injectAdminChildren to confirm
+ * the wrapper delegates faithfully, plus additional cases for custom parentPath.
+ */
+describe('injectModuleChildren', () => {
+  it('appends each active module\'s valid routes to the parent', () => {
+    const admin = makeAdminRoutes();
+    injectModuleChildren(admin, [{ name: 'costs', routes: costsRoutes }], () => true);
+    expect(admin[0].children.some((r) => r.name === 'Admin Costs')).toBe(true);
+  });
+
+  it('skips inactive modules', () => {
+    const admin = makeAdminRoutes();
+    const before = admin[0].children.length;
+    injectModuleChildren(admin, [{ name: 'disabled-mod', routes: costsRoutes }], (name) => name !== 'disabled-mod');
+    expect(admin[0].children.length).toBe(before);
+  });
+
+  it('returns the same routes reference (chaining)', () => {
+    const admin = makeAdminRoutes();
+    const result = injectModuleChildren(admin, [], () => true);
+    expect(result).toBe(admin);
+  });
+
+  it('accepts a custom parentPath to target a non-admin parent', () => {
+    const routes = [
+      {
+        path: '/org',
+        component: { name: 'OrgLayout' },
+        children: [],
+      },
+    ];
+    const billingRoutes = [{ path: 'billing', name: 'Billing', component: { name: 'Billing' } }];
+    injectModuleChildren(routes, [{ name: 'billing', routes: billingRoutes }], () => true, '/org');
+    expect(routes[0].children.some((r) => r.name === 'Billing')).toBe(true);
+  });
+
+  it('is a no-op when parentPath is not found', () => {
+    const admin = makeAdminRoutes();
+    const before = admin[0].children.length;
+    injectModuleChildren(admin, [{ name: 'costs', routes: costsRoutes }], () => true, '/nonexistent');
+    expect(admin[0].children.length).toBe(before);
+  });
+
+  it('filters invalid routes just like injectAdminChildren', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    const bad = [
+      { path: '/abs/bad', name: 'Abs', component: { name: 'Abs' } },
+      { path: 'ok', name: 'Ok', component: { name: 'Ok' } },
+    ];
+    injectModuleChildren(admin, [{ name: 'mixed', routes: bad }], () => true);
+    const names = admin[0].children.map((r) => r.name);
+    expect(names).toContain('Ok');
+    expect(names).not.toContain('Abs');
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('warn message names the parent path and mentions "use a relative path"', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const routes = [
+      {
+        path: '/org',
+        component: { name: 'OrgLayout' },
+        children: [],
+      },
+    ];
+    const bad = [
+      { path: '/org/absolute', name: 'AbsOrg', component: { name: 'AbsOrg' } },
+      { path: 'relative', name: 'RelOrg', component: { name: 'RelOrg' } },
+    ];
+    injectModuleChildren(routes, [{ name: 'org-mod', routes: bad }], () => true, '/org');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('/org'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('use a relative path'));
+    consoleWarnSpy.mockRestore();
+  });
+});
+
+describe('injectAdminChildren (back-compat wrapper)', () => {
+  it('delegates identically to injectModuleChildren for /admin parent', () => {
+    const admin1 = makeAdminRoutes();
+    const admin2 = makeAdminRoutes();
+    injectModuleChildren(admin1, [{ name: 'knowledge', routes: knowledgeRoutes }], () => true);
+    injectAdminChildren(admin2, [{ name: 'knowledge', routes: knowledgeRoutes }], () => true);
+    expect(admin1[0].children).toEqual(admin2[0].children);
   });
 });
