@@ -4,7 +4,7 @@
       <v-card
         v-if="visible"
         role="region"
-        :aria-label="$t('legal.banner.ariaLabel')"
+        aria-label="Cookie consent banner"
         aria-live="polite"
         elevation="0"
         class="pa-3"
@@ -16,7 +16,7 @@
             :to="privacyPolicyPath"
             class="text-decoration-underline font-weight-medium text-medium-emphasis"
           >
-            {{ $t('legal.banner.privacyPolicy') }}
+            Privacy Policy
           </router-link>
         </p>
         <div class="d-flex justify-end ga-2 mt-3">
@@ -27,7 +27,7 @@
             size="small"
             @click="onReject"
           >
-            {{ $t('legal.banner.reject') }}
+            No thanks
           </v-btn>
           <v-btn
             variant="flat"
@@ -36,7 +36,7 @@
             size="small"
             @click="onAccept"
           >
-            {{ $t('legal.banner.accept') }}
+            Sounds good
           </v-btn>
         </div>
       </v-card>
@@ -46,7 +46,6 @@
 
 <script setup>
 import { computed, getCurrentInstance, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useTheme } from 'vuetify';
 import { useCookieConsent } from '../composables/useCookieConsent';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
@@ -107,10 +106,9 @@ const appName = computed(() => getConfig()?.app?.title || getConfig()?.name || '
 const { consentNeeded, consent, accept, reject } = useCookieConsent();
 const visible = computed(() => enabled.value && consentNeeded.value);
 
-const { t } = useI18n();
 const message = computed(() => {
-  if (consent.value !== null) return t('legal.banner.revokeMessage', { appName: appName.value });
-  return t('legal.banner.message', { appName: appName.value });
+  if (consent.value !== null) return `Want to revisit your cookie choices for ${appName.value}?`;
+  return 'A few cookies help us improve your experience. See our';
 });
 
 /**

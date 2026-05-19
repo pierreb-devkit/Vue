@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { createI18n } from 'vue-i18n';
 import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 
 const reopenSettingsMock = vi.fn();
@@ -18,23 +17,6 @@ vi.mock('../composables/useCookieConsent', () => ({
 import LegalFooterSection from '../components/legal.footerSection.component.vue';
 
 /**
- * Returns a fresh vue-i18n instance with legal footer keys.
- * @returns {import('vue-i18n').I18n}
- */
-const i18n = () =>
-  createI18n({
-    legacy: false,
-    locale: 'en',
-    messages: {
-      en: {
-        legal: {
-          footer: { sectionTitle: 'Legal', cookieSettings: 'Cookie settings' },
-        },
-      },
-    },
-  });
-
-/**
  * Mounts LegalFooterSection with the given config mock.
  * @param {object} config - Config to inject as globalProperty
  * @returns {import('@vue/test-utils').VueWrapper}
@@ -42,7 +24,6 @@ const i18n = () =>
 const mountSection = (config = {}) =>
   mount(LegalFooterSection, {
     global: {
-      plugins: [i18n()],
       config: { globalProperties: { config } },
     },
   });

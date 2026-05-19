@@ -4,7 +4,7 @@
       <v-col cols="12" md="10" lg="9">
         <template v-if="page.notFound">
           <v-alert type="warning" variant="tonal">
-            {{ $t('legal.pages.notFound') }}
+            This legal page does not exist.
           </v-alert>
         </template>
         <template v-else>
