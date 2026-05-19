@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import adminRoutes from '../router/admin.router';
 import { injectAdminChildren } from '../../../lib/helpers/router';
+import { isValidTab } from '../../../lib/helpers/surface-tabs';
 
 describe('admin.router (structure)', () => {
   it('should export a single parent route at /admin with a children array', () => {
@@ -197,5 +198,92 @@ describe('admin.router (integration with vue-router)', () => {
     expect(router.currentRoute.value.name).toBe('Admin Users');
     expect(router.currentRoute.value.matched.length).toBe(2);
     expect(router.currentRoute.value.matched[0].name).toBe('Admin');
+  });
+});
+
+/**
+ * Trawl-shape regression guard.
+ *
+ * Trawl's app.router calls injectAdminChildren with adminChildModules of shape
+ *   [{ name, routes }]
+ * where each route looks like:
+ *   { path: 'costs', name: 'Admin Costs', component: () => import(...),
+ *     meta: { display: false, action: 'manage', subject: 'UserAdmin' } }
+ * and config.admin.tabs entries look like:
+ *   { value: 'costs', label: 'Costs', icon: 'fa-solid fa-coins', route: 'costs' }
+ *
+ * This test suite is characterization-only: the behaviour is already correct after
+ * the B1–B4 refactor; these assertions guard against future regressions.
+ */
+describe('admin.router (Trawl-shape regression)', () => {
+  /**
+   * Canonical Trawl-shaped child module: exactly the shape Trawl ships.
+   */
+  const trawlAdminChildModules = [
+    {
+      name: 'costs',
+      routes: [
+        {
+          path: 'costs',
+          name: 'Admin Costs',
+          component: () => Promise.resolve({}),
+          meta: { display: false, action: 'manage', subject: 'UserAdmin' },
+        },
+      ],
+    },
+  ];
+
+  /**
+   * Canonical Trawl-shaped tab descriptor for the same surface.
+   */
+  const trawlCostsTab = { value: 'costs', label: 'Costs', icon: 'fa-solid fa-coins', route: 'costs' };
+
+  it('injects the costs route under /admin with meta intact (action, subject, display)', () => {
+    const routes = cloneRoutes();
+    injectAdminChildren(routes, trawlAdminChildModules, () => true);
+    const parent = routes[0];
+    const injected = parent.children.find((r) => r.name === 'Admin Costs');
+
+    // Assertion 1: route appears under the /admin parent
+    expect(injected).toBeDefined();
+    expect(parent.path).toBe('/admin');
+
+    // Assertion 2: path and name pass through isValidChildRoute unmodified
+    expect(injected.path).toBe('costs');
+    expect(injected.name).toBe('Admin Costs');
+
+    // Assertion 3: full meta preserved (display:false + CASL pair)
+    expect(injected.meta.action).toBe('manage');
+    expect(injected.meta.subject).toBe('UserAdmin');
+    expect(injected.meta.display).toBe(false);
+  });
+
+  it('Trawl costs tab descriptor passes isValidTab', () => {
+    // Assertion 4: Trawl-shaped config.admin.tabs entry is valid per hoisted isValidTab
+    expect(isValidTab(trawlCostsTab)).toBe(true);
+  });
+
+  it('does NOT inject the costs module when it is inactive', () => {
+    const routes = cloneRoutes();
+    injectAdminChildren(routes, trawlAdminChildModules, (name) => name !== 'costs');
+    const parent = routes[0];
+    const injected = parent.children.find((r) => r.name === 'Admin Costs');
+
+    // Inactive module must not appear in the parent children array
+    expect(injected).toBeUndefined();
+  });
+
+  it('resolves /admin/costs in vue-router when the costs module is active', async () => {
+    const routes = cloneRoutes();
+    injectAdminChildren(routes, trawlAdminChildModules, () => true);
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', name: 'Home', component: { template: '<div />' } }, ...routes],
+    });
+    await router.push('/admin/costs');
+    const matched = router.currentRoute.value.matched;
+    expect(matched.length).toBe(2);
+    expect(matched[0].path).toBe('/admin');
+    expect(matched[1].name).toBe('Admin Costs');
   });
 });

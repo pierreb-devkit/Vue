@@ -46,7 +46,7 @@ describe('SurfaceTabBar — CASL filtering', () => {
   it('renders only CASL-allowed tabs and re-filters reactively when ability changes (no remount)', async () => {
     const wrapper = mountBar({
       tabs,
-      can: (a, s) => false,
+      can: () => false,
       basePath: '/users/organizations/1',
     });
 
