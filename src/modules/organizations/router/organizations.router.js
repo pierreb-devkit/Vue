@@ -38,6 +38,9 @@ export default [
       action: 'read',
       subject: 'Organization',
     },
+    // Injection point for downstream modules (e.g. billing settings tab).
+    // PR (c) / downstream projects populate this via organizationChildModules.
+    children: [],
   },
   {
     path: '/invite',

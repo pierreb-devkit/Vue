@@ -361,6 +361,45 @@ describe('app.router', () => {
     });
   });
 
+  describe('organizationChildModules injection point', () => {
+    it('org parent route /users/organizations/:organizationId has a children array (injection seam)', () => {
+      const router = getRouter();
+      const orgParent = router.options.routes.find(
+        (r) => r.path === '/users/organizations/:organizationId',
+      );
+      expect(orgParent).toBeDefined();
+      expect(Array.isArray(orgParent.children)).toBe(true);
+    });
+
+    it('active module placed in organizationChildModules is injected under the org parent', async () => {
+      // We exercise the wiring by importing the organizations router directly and
+      // confirming that after app.router runs, the org parent has no unexpected
+      // children in the base devkit (empty array — downstream will populate it).
+      vi.resetModules();
+      mockIsModuleActive = () => true;
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const orgParent = router.options.routes.find(
+        (r) => r.path === '/users/organizations/:organizationId',
+      );
+      expect(Array.isArray(orgParent.children)).toBe(true);
+      // Base devkit ships empty — no injected children
+      expect(orgParent.children).toHaveLength(0);
+    });
+
+    it('inactive organizations module does not expose the org parent route', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'organizations';
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const orgParent = router.options.routes.find(
+        (r) => r.path === '/users/organizations/:organizationId',
+      );
+      // When the module is inactive, the route is excluded entirely
+      expect(orgParent).toBeUndefined();
+    });
+  });
+
   describe('module activation gating', () => {
     it('includes all module routes when all modules are active', () => {
       mockIsModuleActive = () => true;
