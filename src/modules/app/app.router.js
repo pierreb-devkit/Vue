@@ -11,7 +11,7 @@ import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
-import organizations from '../organizations/router/organizations.router';
+import organizations, { ORG_PARENT_PATH } from '../organizations/router/organizations.router';
 import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
@@ -50,7 +50,7 @@ injectAdminChildren(admin, adminChildModules, isModuleActive);
  * so they resolve under the org parent.
  */
 const organizationChildModules = [];
-injectModuleChildren(organizations, organizationChildModules, isModuleActive, '/users/organizations/:organizationId');
+injectModuleChildren(organizations, organizationChildModules, isModuleActive, ORG_PARENT_PATH);
 
 // Optional modules — mounted only when activated
 const optionalModules = [

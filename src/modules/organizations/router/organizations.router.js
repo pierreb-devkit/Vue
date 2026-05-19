@@ -7,6 +7,14 @@ import organization from '../views/organization.view.vue';
 import invite from '../views/invite.view.vue';
 
 /**
+ * Parent route path for the organization detail page.
+ * Used as the injection point for downstream child modules (e.g. billing
+ * settings tab) via `injectModuleChildren`. Exported as a constant so
+ * app.router.js and tests share a single source of truth — no silent drift.
+ */
+export const ORG_PARENT_PATH = '/users/organizations/:organizationId';
+
+/**
  * Router configuration.
  */
 export default [
@@ -30,7 +38,7 @@ export default [
     },
   },
   {
-    path: '/users/organizations/:organizationId',
+    path: ORG_PARENT_PATH,
     name: 'Account Organization',
     component: organization,
     meta: {

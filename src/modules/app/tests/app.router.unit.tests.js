@@ -371,7 +371,7 @@ describe('app.router', () => {
       expect(Array.isArray(orgParent.children)).toBe(true);
     });
 
-    it('active module placed in organizationChildModules is injected under the org parent', async () => {
+    it('org parent children array stays empty in base devkit even when organizations module is active', async () => {
       // We exercise the wiring by importing the organizations router directly and
       // confirming that after app.router runs, the org parent has no unexpected
       // children in the base devkit (empty array — downstream will populate it).
@@ -385,6 +385,72 @@ describe('app.router', () => {
       expect(Array.isArray(orgParent.children)).toBe(true);
       // Base devkit ships empty — no injected children
       expect(orgParent.children).toHaveLength(0);
+    });
+
+    it('a child module in organizationChildModules is injected under the org parent (ORG_PARENT_PATH)', async () => {
+      vi.resetModules();
+      mockIsModuleActive = () => true;
+
+      // Import ORG_PARENT_PATH from the real module (after resetModules) so that
+      // the assertion uses the constant itself — guards FIX 1 from regressing.
+      const { ORG_PARENT_PATH: orgParentPath } = await import('../../organizations/router/organizations.router');
+
+      // Fake child route with a relative path + component (required by isValidChildRoute).
+      const fakeChildRoute = { path: 'billing', name: 'FakeBilling', component: { template: '<div />' } };
+
+      // Reset modules again so app.router.js picks up the mocks below.
+      vi.resetModules();
+
+      // Mock the organizations router so its default export includes only the org
+      // parent route with the injection seam (empty children array).
+      vi.doMock('../../organizations/router/organizations.router', () => ({
+        ORG_PARENT_PATH: orgParentPath,
+        default: [
+          {
+            path: orgParentPath,
+            name: 'Account Organization',
+            component: { template: '<div />' },
+            meta: { display: false, action: 'read', subject: 'Organization' },
+            children: [],
+          },
+        ],
+      }));
+
+      // Intercept injectModuleChildren for the org surface and substitute our fake
+      // child module — exercises the injection path end-to-end with real helper logic.
+      vi.doMock('../../../lib/helpers/router', async (importOriginal) => {
+        const original = await importOriginal();
+        return {
+          ...original,
+          injectModuleChildren: (routes, childModules, isActive, parentPath) => {
+            if (parentPath === orgParentPath) {
+              return original.injectModuleChildren(
+                routes,
+                [{ name: 'fake-billing', routes: [fakeChildRoute] }],
+                () => true,
+                parentPath,
+              );
+            }
+            return original.injectModuleChildren(routes, childModules, isActive, parentPath);
+          },
+        };
+      });
+
+      const mod = await setupRouterModule();
+      const router = mod.default();
+
+      // The org parent must be found via ORG_PARENT_PATH — not a hardcoded string.
+      const orgParent = router.options.routes.find((r) => r.path === orgParentPath);
+      expect(orgParent).toBeDefined();
+      expect(Array.isArray(orgParent.children)).toBe(true);
+      // The fake child module's route must appear under the org parent.
+      const injected = orgParent.children.find((c) => c.path === fakeChildRoute.path);
+      expect(injected).toBeDefined();
+      expect(injected.name).toBe(fakeChildRoute.name);
+
+      // Remove test-local mocks so they don't bleed into subsequent tests.
+      vi.doUnmock('../../organizations/router/organizations.router');
+      vi.doUnmock('../../../lib/helpers/router');
     });
 
     it('inactive organizations module does not expose the org parent route', async () => {
