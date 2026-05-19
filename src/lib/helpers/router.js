@@ -21,10 +21,11 @@
  *
  * @param {unknown} route - Route record to validate.
  * @param {string} moduleName - Owning module name (for warnings).
+ * @param {string} parentPath - Path of the parent route being injected into (for warnings).
  * @param {string} callerName - Name of the calling function (for warnings).
  * @returns {boolean} True if the route is safe to inject.
  */
-const isValidChildRoute = (route, moduleName, callerName = 'injectModuleChildren') => {
+const isValidChildRoute = (route, moduleName, parentPath, callerName = 'injectModuleChildren') => {
   if (!route || typeof route !== 'object') return false;
   if (typeof route.path !== 'string' || route.path.length === 0) {
     if (import.meta.env?.MODE !== 'production') {
@@ -34,7 +35,7 @@ const isValidChildRoute = (route, moduleName, callerName = 'injectModuleChildren
   }
   if (route.path.startsWith('/')) {
     if (import.meta.env?.MODE !== 'production') {
-      console.warn(`[${callerName}] "${moduleName}": absolute path "${route.path}" cannot be an admin child — use a relative path`);
+      console.warn(`[${callerName}] "${moduleName}": absolute path "${route.path}" cannot be a child of "${parentPath}" — use a relative path`);
     }
     return false;
   }
@@ -86,7 +87,7 @@ export const injectModuleChildren = (routes, childModules, isModuleActive, paren
   for (const mod of childModules) {
     if (!mod || !mod.name || !Array.isArray(mod.routes)) continue;
     if (typeof isModuleActive === 'function' && !isModuleActive(mod.name)) continue;
-    const validRoutes = mod.routes.filter((r) => isValidChildRoute(r, mod.name, 'injectModuleChildren'));
+    const validRoutes = mod.routes.filter((r) => isValidChildRoute(r, mod.name, parentPath));
     parent.children.push(...validRoutes);
   }
   return routes;

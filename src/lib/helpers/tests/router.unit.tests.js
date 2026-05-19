@@ -249,6 +249,25 @@ describe('injectModuleChildren', () => {
     expect(names).not.toContain('Abs');
     consoleWarnSpy.mockRestore();
   });
+
+  it('warn message names the parent path and mentions "use a relative path"', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const routes = [
+      {
+        path: '/org',
+        component: { name: 'OrgLayout' },
+        children: [],
+      },
+    ];
+    const bad = [
+      { path: '/org/absolute', name: 'AbsOrg', component: { name: 'AbsOrg' } },
+      { path: 'relative', name: 'RelOrg', component: { name: 'RelOrg' } },
+    ];
+    injectModuleChildren(routes, [{ name: 'org-mod', routes: bad }], () => true, '/org');
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('/org'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('use a relative path'));
+    consoleWarnSpy.mockRestore();
+  });
 });
 
 describe('injectAdminChildren (back-compat wrapper)', () => {
