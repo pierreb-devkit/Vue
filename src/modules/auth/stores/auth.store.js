@@ -70,7 +70,12 @@ export const useAuthStore = defineStore('auth', {
     initFromStorage() {
       this.cookieExpire = localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0;
       const rawSuggestedJoin = localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`);
-      this.suggestedJoin = rawSuggestedJoin ? JSON.parse(rawSuggestedJoin) : null;
+      try {
+        this.suggestedJoin = rawSuggestedJoin ? JSON.parse(rawSuggestedJoin) : null;
+      } catch {
+        this.suggestedJoin = null;
+        localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
+      }
     },
 
     /**
@@ -161,6 +166,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {void}
      */
     setSuggestedJoin(payload) {
+      if (!payload || typeof payload !== 'object') return;
       this.suggestedJoin = payload;
       localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify(payload));
     },
