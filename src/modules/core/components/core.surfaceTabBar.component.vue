@@ -36,11 +36,32 @@ const props = defineProps({
 });
 
 const visibleTabs = computed(() => resolveSurfaceTabs(props.tabs, props.can));
+
+/**
+ * Resolve a tab descriptor to a concrete absolute path.
+ * If the route is already absolute (legacy /admin/... passthrough), use it
+ * as-is to avoid double-slash when basePath has a trailing slash or when the
+ * route was injected with a leading slash.
+ * @param {string} route - The tab's route field.
+ * @returns {string}
+ */
+function tabTo(route) {
+  // Absolute-route passthrough: legacy routes injected with a leading slash
+  // are used verbatim so basePath is not prepended (avoids double-slash).
+  if (route.startsWith('/')) return route;
+  return `${props.basePath.replace(/\/$/, '')}/${route}`;
+}
 </script>
 
 <template>
   <v-tabs>
-    <v-tab v-for="t in visibleTabs" :key="t.value" :to="`${basePath}/${t.route}`">
+    <v-tab
+      v-for="t in visibleTabs"
+      :key="t.value"
+      :to="tabTo(t.route)"
+      :value="tabTo(t.route)"
+      class="text-none text-body-medium"
+    >
       <v-icon v-if="t.icon" :icon="t.icon" class="mr-2" />
       {{ t.label }}
     </v-tab>

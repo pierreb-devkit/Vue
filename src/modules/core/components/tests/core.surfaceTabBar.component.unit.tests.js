@@ -10,12 +10,15 @@ const makeVuetify = () => createVuetify({ components, directives });
 
 /**
  * A stub for VTab that renders a plain anchor so we can assert text content
- * without wiring up vue-router. The component under test is purely presentational
- * (CASL filtering); routing behaviour is not in scope here.
+ * and href/path composition without wiring up vue-router. The component under
+ * test is purely presentational (CASL filtering + path join); routing behaviour
+ * is not in scope here. `to` is declared as a prop so Vue binds it explicitly
+ * rather than forwarding it through $attrs as a DOM attribute — this lets us
+ * assert the resolved path via `attributes('href')`.
  * @type {object}
  */
 const VTabStub = {
-  template: '<a class="v-tab-stub" v-bind="$attrs"><slot /></a>',
+  template: '<a class="v-tab-stub" :href="to"><slot /></a>',
   props: ['to'],
 };
 
@@ -96,5 +99,35 @@ describe('SurfaceTabBar — CASL filtering', () => {
     const wrapper = mountBar({ tabs, can: () => true, basePath: '/org/1' });
     // "General" tab has no icon; "Billing" tab has no icon
     expect(wrapper.findComponent({ name: 'VIcon' }).exists()).toBe(false);
+  });
+});
+
+describe('SurfaceTabBar — path composition', () => {
+  it('(a) normal relative tab resolves href to basePath + route', () => {
+    const wrapper = mountBar({
+      tabs: [{ value: 'general', label: 'General', route: 'general' }],
+      can: () => true,
+      basePath: '/users/organizations/1',
+    });
+    expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/users/organizations/1/general');
+  });
+
+  it('(b) basePath with trailing slash + relative route → no double slash', () => {
+    const wrapper = mountBar({
+      tabs: [{ value: 'general', label: 'General', route: 'general' }],
+      can: () => true,
+      basePath: '/users/organizations/1/',
+    });
+    expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/users/organizations/1/general');
+  });
+
+  it('(c) legacy absolute route is passed through verbatim without prepending basePath', () => {
+    const wrapper = mountBar({
+      // resolveSurfaceTabs accepts legacy absolute routes (/admin/...) that pass isValidTab
+      tabs: [{ value: 'admin-x', label: 'AdminX', route: '/admin/x' }],
+      can: () => true,
+      basePath: '/users/organizations/1',
+    });
+    expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/admin/x');
   });
 });
