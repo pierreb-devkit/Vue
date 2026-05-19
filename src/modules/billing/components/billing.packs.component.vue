@@ -24,7 +24,7 @@
       v-if="resolvedItems.length === 0"
       class="text-body-medium text-medium-emphasis text-center py-10"
     >
-      {{ $t('billing.packs.noUnitsAvailable') }}
+      No unit packs available at this time.
     </p>
 
     <!-- Cards grid — uses unified BillingCardComponent -->

@@ -97,7 +97,7 @@ export default {
     resolvedHeading() {
       if (this.section.introText) return this.section.introText;
       if (this.section.inheritsFrom && this.parentPlanName) {
-        return this.$t('billing.pricingFeatureSection.everythingIn', { plan: this.parentPlanName });
+        return `Everything in ${this.parentPlanName}, plus`;
       }
       return null;
     },

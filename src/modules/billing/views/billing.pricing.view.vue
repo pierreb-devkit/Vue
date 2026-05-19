@@ -12,8 +12,8 @@
       <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
         <!-- Header -->
         <div class="text-center mb-10">
-          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || $t('billing.pricing.title') }}</h1>
-          <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || $t('billing.pricing.subtitle') }}</p>
+          <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || 'Pricing' }}</h1>
+          <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || 'Choose the plan that fits your needs.' }}</p>
         </div>
 
         <!-- Mode: subscription -->
@@ -92,10 +92,10 @@
       :timeout="6000"
       location="top right"
     >
-      {{ $t('billing.pricing.cancel.message') }}
+      Checkout was canceled. You can try again whenever you are ready.
       <template #actions>
         <v-btn variant="text" @click="checkoutCanceled = false">
-          {{ $t('billing.snackbar.close') }}
+          Close
         </v-btn>
       </template>
     </v-snackbar>
@@ -110,7 +110,7 @@
       {{ error }}
       <template #actions>
         <v-btn variant="text" @click="retryFetchPlans">
-          {{ $t('billing.pricing.error.retry') }}
+          Retry
         </v-btn>
         <v-btn icon="fa-solid fa-xmark" variant="text" size="small" @click="error = null" />
       </template>
@@ -131,23 +131,23 @@
       <v-card class="pa-6">
         <div class="d-flex align-center mb-3">
           <v-icon icon="fa-solid fa-circle-check" color="success" size="small" class="mr-2" />
-          <span class="text-title-medium font-weight-medium">{{ $t('billing.checkout.error.alreadyActive.title') }}</span>
+          <span class="text-title-medium font-weight-medium">Subscription already active</span>
         </div>
-        <p class="text-body-medium text-medium-emphasis mb-6">{{ $t('billing.checkout.error.alreadyActive.message') }}</p>
+        <p class="text-body-medium text-medium-emphasis mb-6">You already have an active subscription. Manage it via the Customer Portal.</p>
         <div class="d-flex ga-3 justify-end">
-          <v-btn variant="outlined" class="text-none text-body-medium" @click="alreadyActiveDialog = false">{{ $t('billing.checkout.error.alreadyActive.close') }}</v-btn>
-          <v-btn v-if="alreadyActivePortalUrl" color="primary" variant="flat" class="text-none text-body-medium" :href="alreadyActivePortalUrl" target="_blank" rel="noopener noreferrer">{{ $t('billing.checkout.error.alreadyActive.cta') }}</v-btn>
+          <v-btn variant="outlined" class="text-none text-body-medium" @click="alreadyActiveDialog = false">Close</v-btn>
+          <v-btn v-if="alreadyActivePortalUrl" color="primary" variant="flat" class="text-none text-body-medium" :href="alreadyActivePortalUrl" target="_blank" rel="noopener noreferrer">Open Customer Portal</v-btn>
         </div>
       </v-card>
     </v-dialog>
 
     <v-dialog v-model="downgradeDialog" max-width="480" @keydown.esc="cancelDowngrade">
       <v-card>
-        <v-card-title class="text-title-medium font-weight-bold">{{ $t('billing.pricing.downgrade.title') }}</v-card-title>
-        <v-card-text class="text-body-medium">{{ $t('billing.pricing.downgrade.message', { from: currentPlanName, to: pendingDowngradePlanName }) }}</v-card-text>
+        <v-card-title class="text-title-medium font-weight-bold">Confirm plan change</v-card-title>
+        <v-card-text class="text-body-medium">{{ `You're switching from ${currentPlanName} to ${pendingDowngradePlanName}. Stripe will pro-rate the difference. Quota will reset at next billing cycle.` }}</v-card-text>
         <v-card-actions class="ga-2">
-          <v-btn variant="text" class="text-none" @click="cancelDowngrade">{{ $t('billing.pricing.downgrade.cancel') }}</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">{{ $t('billing.pricing.downgrade.confirm') }}</v-btn>
+          <v-btn variant="text" class="text-none" @click="cancelDowngrade">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" class="text-none" :loading="checkoutLoading" @click="confirmDowngrade">Continue to checkout</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -217,8 +217,8 @@ export default {
     },
     tabItems() {
       return [
-        { id: 'plans', label: this.tabs?.plans || this.$t('billing.pricing.tabs.plans') },
-        { id: 'units', label: this.tabs?.units || this.$t('billing.pricing.tabs.units') },
+        { id: 'plans', label: this.tabs?.plans || 'Plans' },
+        { id: 'units', label: this.tabs?.units || 'Units' },
       ];
     },
     planTierOrder() {
@@ -265,7 +265,7 @@ export default {
         let priceAmount;
         let pricePeriod = null;
         if (isFree) {
-          priceAmount = this.$t('billing.pricingCard.free');
+          priceAmount = 'Free';
         } else {
           // meta.monthlyPrice / meta.annualPrice are raw numbers (V4); fall back to legacy fields
           const metaMonthly = plan.meta?.monthlyPrice ?? plan.monthlyPrice ?? null;
@@ -275,9 +275,9 @@ export default {
             : (plan.monthlyPriceObject?.amount ?? plan.monthlyPrice?.amount ?? (typeof metaMonthly === 'number' && metaMonthly > 0 ? metaMonthly : null));
           if (displayAmt != null) {
             priceAmount = this.formatPrice(displayAmt);
-            pricePeriod = this.$t('billing.period.' + (this.annual ? 'year' : 'month'));
+            pricePeriod = this.annual ? '/year' : '/month';
           } else {
-            priceAmount = this.$t('billing.pricing.error.pricingUnavailable');
+            priceAmount = 'Pricing unavailable';
           }
         }
 
@@ -286,13 +286,13 @@ export default {
         let ctaLabel, ctaVariant, ctaColor, ctaDisabled, ctaTo;
 
         if (isCurrent) {
-          ctaLabel = this.$t('billing.pricingCard.currentPlan');
+          ctaLabel = 'Current Plan';
           ctaVariant = 'tonal';
           ctaColor = 'success';
           ctaDisabled = true;
           ctaTo = null;
         } else if (isFree && this.isGuest) {
-          ctaLabel = this.$t('billing.pricingCard.signUpCta');
+          ctaLabel = 'Sign up';
           ctaVariant = 'outlined';
           ctaColor = null;
           ctaDisabled = false;
@@ -314,7 +314,7 @@ export default {
           return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
         })();
         const savingsNote = this.annual && annualSavingsPct > 0
-          ? this.$t('billing.pricingCard.saveAnnual', { pct: annualSavingsPct })
+          ? `Save ${annualSavingsPct}% with annual`
           : null;
 
         // Equivalences for meter mode — passed as subtitle when present
@@ -358,7 +358,7 @@ export default {
     faqSetup() {
       return {
         icon: 'fa-solid fa-circle-question',
-        title: this.faqs?.title || this.$t('billing.pricing.faq.title'),
+        title: this.faqs?.title || 'Frequently asked questions',
         subtitle: this.faqs?.subtitle || null,
         alignment: 'center',
         variant: 'default',
@@ -391,7 +391,7 @@ export default {
       await this.billingStore.fetchPlans();
     } catch (err) {
       console.error('Failed to load pricing plans:', err);
-      this.error = this.$t('billing.pricing.error.loadFailed');
+      this.error = 'Failed to load pricing. Please try again.';
     }
 
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
@@ -426,7 +426,7 @@ export default {
         await this.billingStore.fetchPlans();
       } catch (err) {
         console.error('Failed to load pricing plans:', err);
-        this.error = this.$t('billing.pricing.error.loadFailed');
+        this.error = 'Failed to load pricing. Please try again.';
       }
     },
     /**
@@ -493,7 +493,7 @@ export default {
           return;
         }
         console.error('Failed to start checkout:', err);
-        this.checkoutError = this.$t('billing.pricing.error.checkoutFailed');
+        this.checkoutError = 'Failed to start checkout. Please try again.';
       } finally {
         this.checkoutLoading = false;
       }

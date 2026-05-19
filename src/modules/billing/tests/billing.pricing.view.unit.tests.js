@@ -77,12 +77,8 @@ vi.mock('../composables/billing.useCurrencyFormat.js', () => ({
 
 // ─── Imports (after mocks) ──────────────────────────────────────────────────
 
-import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingPricingView from '../views/billing.pricing.view.vue';
-import { billingEn } from '../lang/en.js';
-
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -128,7 +124,7 @@ function mountPricing({
   authState.isLoggedIn = isLoggedIn;
   return mount(BillingPricingView, {
     global: {
-      plugins: [vuetify, i18n],
+      plugins: [vuetify],
       mocks: {
         config: mockConfig,
         $route: { path: '/pricing', hash: routeHash, query: routeQuery },
@@ -299,7 +295,7 @@ describe('BillingPricingView — mode-aware layout', () => {
 
     const w = mount(BillingPricingView, {
       global: {
-        plugins: [vuetify, i18n],
+        plugins: [vuetify],
         mocks: {
           config: mockConfig,
           $route: { path: '/pricing', hash: '', query: {} },
@@ -544,7 +540,7 @@ describe('BillingPricingView — both-tabs: toggle :disabled when activeTab === 
   it('toggle is rendered with :disabled=false when activeTab === 0 (plans)', async () => {
     wrapper = mount(BillingPricingView, {
       global: {
-        plugins: [vuetify, i18n],
+        plugins: [vuetify],
         mocks: { config: mockConfig, $route: { path: '/pricing', hash: '', query: {} }, $router: { replace: vi.fn(), push: vi.fn() } },
         stubs: componentStubs,
       },
@@ -561,7 +557,7 @@ describe('BillingPricingView — both-tabs: toggle :disabled when activeTab === 
   it('toggle is rendered with :disabled=true when activeTab === 1 (extras)', async () => {
     wrapper = mount(BillingPricingView, {
       global: {
-        plugins: [vuetify, i18n],
+        plugins: [vuetify],
         mocks: { config: mockConfig, $route: { path: '/pricing', hash: '', query: {} }, $router: { replace: vi.fn(), push: vi.fn() } },
         stubs: componentStubs,
       },

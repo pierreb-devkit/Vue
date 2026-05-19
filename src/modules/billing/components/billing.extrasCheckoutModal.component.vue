@@ -28,7 +28,7 @@
     <v-card>
       <!-- Title — v-card-title adds dialog landmark semantics for screen readers -->
       <v-card-title class="text-title-medium font-weight-bold pt-5 px-5">
-        {{ $t('billing.extras.modal.title') }}
+        Buy extra units
       </v-card-title>
 
       <!-- Pack radio list -->
@@ -41,7 +41,7 @@
             v-for="pack in packs"
             :key="pack.packId"
             :value="pack.packId"
-            :label="`${pack.label} - ${formatPrice(pack.priceUsd)} (${$t('billing.packs.units', { amount: pack.meterUnits })})`"
+            :label="`${pack.label} - ${formatPrice(pack.priceUsd)} (+${pack.meterUnits} units)`"
             class="mb-1"
           />
         </v-radio-group>
@@ -51,7 +51,7 @@
           v-if="packs.length === 0"
           class="text-body-medium text-medium-emphasis py-2"
         >
-          {{ $t('billing.extras.modal.noPacksAvailable') }}
+          No packs available at this time.
         </p>
       </v-card-text>
 
@@ -78,7 +78,7 @@
           :loading="purchasing"
           @click="onBuy"
         >
-          {{ $t('billing.packs.purchase', { label: selectedPackLabel }) }}
+          {{ `Buy ${selectedPackLabel}` }}
         </v-btn>
         <v-btn
           variant="text"
@@ -86,7 +86,7 @@
           :disabled="purchasing"
           @click="$emit('update:modelValue', false)"
         >
-          {{ $t('billing.extras.modal.cancel') }}
+          Cancel
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -201,7 +201,7 @@ export default {
         // On success, Stripe redirects — so we only reach here on error
       } catch (err) {
         console.error('Failed to initiate extras checkout:', err);
-        this.purchaseError = this.$t('billing.pricing.error.checkoutFailed');
+        this.purchaseError = 'Failed to start checkout. Please try again.';
       } finally {
         this.purchasing = false;
       }

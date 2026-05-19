@@ -3,8 +3,8 @@
   <div v-if="exhaustedAfterGrant && mode === 'meter'" class="my-4">
     <v-alert type="info" variant="tonal" prominent>
       <template #text>
-        <p class="font-weight-bold mb-1">{{ $t('billing.upgradePrompt.postGrantTitle') }}</p>
-        <p>{{ $t('billing.upgradePrompt.postGrantBody') }}</p>
+        <p class="font-weight-bold mb-1">Your signup grant is depleted</p>
+        <p>You used your 500 compute one-shot grant. Buy a Boost pack to keep going, or upgrade for monthly compute.</p>
       </template>
       <template #append>
         <div class="d-flex flex-column ga-2">
@@ -16,7 +16,7 @@
             class="text-none"
             @click="$emit('buy-pack')"
           >
-            {{ $t('billing.upgradePrompt.postGrantBuyPack') }}
+            Buy Boost pack — $9
           </v-btn>
           <v-btn
             data-test="cta-upgrade"
@@ -25,7 +25,7 @@
             class="text-none"
             to="/pricing"
           >
-            {{ $t('billing.upgradePrompt.postGrantUpgrade') }}
+            Upgrade Growth / Pro
           </v-btn>
         </div>
       </template>
@@ -35,8 +35,8 @@
   <!-- Default / meter variant -->
   <v-alert v-else type="info" variant="tonal" prominent class="my-4">
     <template #text>
-      <span v-if="hasUsageInfo">{{ $t('billing.upgradePrompt.usageInfo', { current, limit, label: displayLabel }) }}</span>
-      <span v-else>{{ $t('billing.upgradePrompt.requirePlan', { plan: requiredPlan }) }}</span>
+      <span v-if="hasUsageInfo">{{ `You've used ${current} of ${limit} ${displayLabel}.` }}</span>
+      <span v-else>{{ `This feature requires the ${requiredPlan} plan.` }}</span>
     </template>
     <template #append>
       <v-btn
@@ -47,7 +47,7 @@
         class="text-none"
         @click="$emit('buy-pack')"
       >
-        {{ $t('billing.upgradePrompt.buyUnits') }}
+        Buy units
       </v-btn>
       <v-btn
         v-else
@@ -57,7 +57,7 @@
         class="text-none"
         to="/pricing"
       >
-        {{ $t('billing.upgradePrompt.upgrade') }}
+        Upgrade
       </v-btn>
     </template>
   </v-alert>

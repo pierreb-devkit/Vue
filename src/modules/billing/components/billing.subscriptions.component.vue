@@ -27,7 +27,7 @@
     >
       <div class="d-flex align-center ga-3">
         <v-progress-circular indeterminate size="18" width="2" color="info" />
-        <span>{{ $t('billing.checkout.success.processing') }}</span>
+        <span>Processing your payment...</span>
       </div>
     </v-alert>
 
@@ -38,10 +38,10 @@
       class="mb-4"
       aria-live="polite"
     >
-      {{ $t('billing.checkout.success.timeout') }}
+      Payment received, your subscription is being synced. Please refresh in a few seconds.
       <template #append>
         <v-btn variant="text" size="small" @click="retryFetchSubscription">
-          {{ $t('billing.checkout.success.refresh') }}
+          Refresh
         </v-btn>
       </template>
     </v-alert>
@@ -73,10 +73,10 @@
     >
       <div class="d-flex align-center mb-3">
         <v-icon icon="fa-solid fa-triangle-exclamation" color="error" size="small" class="mr-3" aria-hidden="true" />
-        <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.unavailable') }}</span>
+        <span class="text-title-large font-weight-medium">Subscription unavailable</span>
       </div>
       <p class="text-body-medium text-medium-emphasis mb-4">
-        {{ $t('billing.subscriptions.error.fetchFailed') }}
+        Unable to load your subscription details. Please try again.
       </p>
       <v-btn
         color="primary"
@@ -86,7 +86,7 @@
         :loading="fetchLoading"
         @click="retryFetchSubscription"
       >
-        {{ $t('billing.subscriptions.error.retry') }}
+        Retry
       </v-btn>
     </v-card>
 
@@ -106,12 +106,12 @@
           >
             <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
               <div class="d-flex align-center ga-3">
-                <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.plan.current') }}</span>
+                <span class="text-title-large font-weight-medium">Current Plan</span>
                 <BillingPlanBadgeComponent plan="free" />
               </div>
             </div>
             <p class="text-body-medium text-medium-emphasis mb-6">
-              {{ $t('billing.subscriptions.plan.free.description') }}
+              You're on the free plan. Upgrade to unlock more projects, team members, and advanced features.
             </p>
             <v-btn
               color="primary"
@@ -120,7 +120,7 @@
               class="text-none text-body-medium"
               to="/pricing"
             >
-              {{ $t('billing.subscriptions.cta.upgrade') }}
+              Upgrade
             </v-btn>
           </v-card>
 
@@ -134,7 +134,7 @@
             <!-- Header row: plan name + badge left, status chip + action right -->
             <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
               <div class="d-flex align-center ga-3">
-                <span class="text-title-large font-weight-medium">{{ $t('billing.subscriptions.plan.current') }}</span>
+                <span class="text-title-large font-weight-medium">Current Plan</span>
                 <BillingPlanBadgeComponent :plan="currentPlan" />
               </div>
               <div class="d-flex align-center ga-2">
@@ -170,7 +170,7 @@
             <!-- Next billing date -->
             <div v-if="nextBillingDate" class="d-flex align-center ga-2 mb-6 text-body-medium text-medium-emphasis">
               <v-icon icon="fa-solid fa-calendar" size="x-small" aria-hidden="true" />
-              <span>{{ $t('billing.subscriptions.plan.nextBilling', { date: nextBillingDate }) }}</span>
+              <span>{{ `Next billing date: ${nextBillingDate}` }}</span>
             </div>
 
             <!-- CTAs (portal error surfaced via centralized snackbar — see lib/services/axios.js) -->
@@ -183,7 +183,7 @@
                 :loading="portalLoading"
                 @click="manageSubscription"
               >
-                {{ $t('billing.subscriptions.portal') }}
+                Manage Subscription
               </v-btn>
               <v-btn
                 v-if="canUpgrade"
@@ -192,7 +192,7 @@
                 class="text-none text-body-medium"
                 to="/pricing"
               >
-                {{ $t('billing.subscriptions.changePlan') }}
+                Change Plan
               </v-btn>
             </div>
           </v-card>
@@ -208,7 +208,7 @@
               class="billing-subscriptions__meter-card px-6 py-3 mb-0"
               elevation="0"
             >
-              <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.usage.weekly') }}</p>
+              <p class="text-title-medium font-weight-medium mb-2">Weekly meter</p>
               <BillingMeterProgressComponent
                 :used="meterUsed"
                 :quota="combinedPool"
@@ -225,7 +225,7 @@
               class="billing-subscriptions__meter-card--breakdown px-6 py-3 mb-0"
               elevation="0"
             >
-              <p class="text-title-medium font-weight-medium mb-2">{{ $t('billing.usage.breakdown') }}</p>
+              <p class="text-title-medium font-weight-medium mb-2">Breakdown</p>
               <BillingMeterBreakdownChartComponent :breakdown="meterBreakdown" />
             </v-card>
 
@@ -243,13 +243,13 @@
           >
             <!-- Header row: title + balance chip inline -->
             <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
-              <p class="text-title-medium font-weight-medium mb-0">{{ $t('billing.subscriptions.extras.balance') }}</p>
+              <p class="text-title-medium font-weight-medium mb-0">Extra units</p>
               <v-chip
                 variant="tonal"
                 color="primary"
                 size="small"
               >
-                {{ $t('billing.extras.balance', { units: meterExtras, n: meterExtras }) }}
+                {{ meterExtras === 0 ? 'no units remaining' : meterExtras === 1 ? `${meterExtras} unit remaining` : `${meterExtras} units remaining` }}
               </v-chip>
             </div>
             <!-- CTA: /pricing#units — single source of truth for pack pricing (feedback #7) -->
@@ -260,12 +260,12 @@
               class="text-none text-body-medium mb-6"
               to="/pricing#units"
             >
-              {{ $t('billing.subscriptions.extras.buyExtra') }}
+              Buy compute extras
             </v-btn>
 
             <!-- Ledger: last 20 entries -->
             <v-divider class="mb-4" />
-            <p class="text-body-medium font-weight-medium mb-3">{{ $t('billing.subscriptions.extras.ledger') }}</p>
+            <p class="text-body-medium font-weight-medium mb-3">Transaction history</p>
             <BillingExtrasLedgerComponent
               :entries="extrasLedger.entries"
               :total="extrasLedger.total"
@@ -496,8 +496,8 @@ export default {
         unpaid: 'error',
       };
       const labels = {
-        paused: this.$t('billing.subscriptions.status.paused'),
-        unpaid: this.$t('billing.subscriptions.status.unpaid'),
+        paused: 'Paused',
+        unpaid: 'Unpaid',
       };
       return {
         color: colors[status] || 'default',
@@ -522,30 +522,30 @@ export default {
      */
     subscriptionStatusAction() {
       if (this.subscriptionStatus === 'past_due') {
-        return { color: 'warning', label: this.$t('billing.subscriptions.status.updatePayment') };
+        return { color: 'warning', label: 'Update payment method' };
       }
       if (this.subscriptionStatus === 'canceled') {
-        return { color: 'error', label: this.$t('billing.subscriptions.status.reactivate') };
+        return { color: 'error', label: 'Reactivate' };
       }
       if (this.subscriptionStatus === 'paused') {
-        return { color: 'warning', label: this.$t('billing.subscriptions.status.reactivate') };
+        return { color: 'warning', label: 'Reactivate' };
       }
       if (this.subscriptionStatus === 'unpaid') {
-        return { color: 'error', label: this.$t('billing.subscriptions.status.updatePayment') };
+        return { color: 'error', label: 'Update payment method' };
       }
       if (['incomplete', 'incomplete_expired'].includes(this.subscriptionStatus)) {
-        return { color: 'error', label: this.$t('billing.subscriptions.status.completePayment') };
+        return { color: 'error', label: 'Complete payment' };
       }
       return null;
     },
     /**
-     * @desc Format the next billing date for display using the active i18n locale.
+     * @desc Format the next billing date for display (en-US).
      * @returns {string|null}
      */
     nextBillingDate() {
       const date = this.subscription?.currentPeriodEnd;
       if (!date) return null;
-      return new Date(date).toLocaleDateString(this.$i18n.locale || undefined, {
+      return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -648,7 +648,7 @@ export default {
         if (this.checkoutTimeout && ['active', 'trialing'].includes(sub?.status)) {
           this.checkoutTimeout = false;
           this.checkoutProcessing = false;
-          this.paymentSuccessMessage = this.$t('billing.checkout.success.synced');
+          this.paymentSuccessMessage = 'Subscription activated successfully. Thank you!';
         }
       } catch {
         // subscriptionError updated in store
@@ -677,7 +677,7 @@ export default {
         // generates a fresh UUID. Cancelled flows do NOT reach this branch and
         // intentionally keep the intentId so retries reuse the same idempotency key.
         clearExtrasIntentIds();
-        this.paymentSuccessMessage = this.$t('billing.extras.purchaseSuccess');
+        this.paymentSuccessMessage = 'Pack credited to your balance';
         this.scheduleQueryCleanup();
         return true;
       }
@@ -805,7 +805,7 @@ export default {
           this.checkoutProcessing = false;
           this.checkoutTimeout = false;
           this.clearCheckoutPollingSession();
-          this.paymentSuccessMessage = this.$t('billing.checkout.success.synced');
+          this.paymentSuccessMessage = 'Subscription activated successfully. Thank you!';
           return;
         }
 

@@ -4,23 +4,9 @@
 import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
-import { createI18n } from 'vue-i18n';
 import BillingPricingFeatureSectionComponent from '../components/billing.pricingFeatureSection.component.vue';
 
 const vuetify = createVuetify();
-const i18n = createI18n({
-  legacy: false,
-  locale: 'en',
-  messages: {
-    en: {
-      billing: {
-        pricingFeatureSection: {
-          everythingIn: 'Everything in {plan}, plus',
-        },
-      },
-    },
-  },
-});
 
 describe('BillingPricingFeatureSectionComponent', () => {
   it('renders title when provided', () => {
@@ -29,7 +15,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { title: 'Core', items: [{ text: 'A' }, { text: 'B' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.text()).toContain('Core');
   });
@@ -40,7 +26,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { title: null, items: [{ text: 'A' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.find('.billing-pricing-feature-section__title').exists()).toBe(false);
   });
@@ -55,7 +41,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         },
         parentPlanName: 'Starter',
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.text()).toContain('Everything in Starter, plus');
   });
@@ -66,7 +52,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { introText: 'Get started with:', items: [{ text: 'A' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.text()).toContain('Get started with:');
   });
@@ -77,7 +63,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { introText: 'Custom intro', inheritsFrom: 'starter', items: [{ text: 'A' }] },
         parentPlanName: 'Starter',
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.text()).toContain('Custom intro');
     expect(wrapper.text()).not.toContain('Everything in Starter');
@@ -95,7 +81,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.text()).toContain('A');
     expect(wrapper.text()).toContain('B');
@@ -114,7 +100,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     const highlighted = wrapper.findAll('.billing-pricing-feature-section__item--highlight');
     expect(highlighted).toHaveLength(1);
@@ -127,7 +113,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { title: null, items: [{ text: 'A', iconColor: 'success' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     const icon = wrapper.find('.v-icon');
     expect(icon.exists()).toBe(true);
@@ -141,7 +127,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { title: null, items: [{ text: 'A', iconColor: '#ff6b6b' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     const icon = wrapper.find('.v-icon');
     // Hex colors render as inline style
@@ -154,7 +140,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         section: { title: null, items: [{ text: 'A' }] },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.find('.v-icon').classes()).toContain('text-primary');
   });
@@ -171,7 +157,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     const disabled = wrapper.findAll('.billing-pricing-feature-section__item--disabled');
     expect(disabled).toHaveLength(1);
@@ -187,7 +173,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
         },
         parentPlanName: null,
       },
-      global: { plugins: [vuetify, i18n] },
+      global: { plugins: [vuetify] },
     });
     expect(wrapper.find('.billing-pricing-feature-section__item--disabled').exists()).toBe(false);
   });

@@ -43,12 +43,9 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
-import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
-import { billingEn } from '../lang/en.js';
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -119,7 +116,7 @@ function mountPacks(overrides = {}) {
   });
   return mount(BillingPacksComponent, {
     global: {
-      plugins: [vuetify, i18n],
+      plugins: [vuetify],
       mocks: {
         config: mockConfig,
         $router: { push: vi.fn() },
