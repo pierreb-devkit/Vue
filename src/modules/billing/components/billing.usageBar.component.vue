@@ -30,10 +30,10 @@
     <!-- Admin display: rainbow gradient, show total consumed with no cap -->
     <template v-if="displayMode === 'admin'">
       <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium mb-1" aria-live="polite">
-        <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
           class="font-weight-medium billing-usage-bar__admin-label admin-rainbow admin-rainbow--text"
-        >{{ meterUsed != null ? meterUsed : '' }} ∞ {{ $t('billing.usageBar.adminLabel') }}</span>
+        >{{ meterUsed != null ? meterUsed : '' }} ∞ Admin</span>
       </div>
       <div
         class="billing-usage-bar__admin-track admin-rainbow"
@@ -43,7 +43,7 @@
     <!-- Loading display: placeholder skeleton while billing data fetches -->
     <template v-else-if="displayMode === 'loading'">
       <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
-        <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span class="font-weight-medium">—</span>
       </div>
       <v-progress-linear
@@ -57,8 +57,8 @@
     <!-- Free display: 0 / free-tier quota, neutral colour -->
     <template v-else-if="displayMode === 'free'">
       <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
-        <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
-        <span class="font-weight-medium">0 / {{ freeTierQuota }} {{ $t('billing.usageBar.compute') }}</span>
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
+        <span class="font-weight-medium">0 / {{ freeTierQuota }} compute</span>
       </div>
       <v-progress-linear
         :model-value="0"
@@ -71,7 +71,7 @@
     <!-- Standard display: current behaviour, with overage indicator when over quota -->
     <template v-else>
       <div class="billing-usage-bar__summary d-flex justify-space-between text-body-medium text-medium-emphasis mb-1" aria-live="polite">
-        <span>{{ displayLabel || $t('billing.usage.weeklyUsage') }}</span>
+        <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
           class="font-weight-medium"
           :class="meterOverage > 0 ? 'text-error' : ''"
@@ -254,7 +254,7 @@ export default {
      * @returns {string}
      */
     currentDisplay() {
-      if (!this.hasLimit) return this.$t('billing.usageBar.unlimited');
+      if (!this.hasLimit) return 'Unlimited';
       return `${this.current}/${this.limit}`;
     },
 

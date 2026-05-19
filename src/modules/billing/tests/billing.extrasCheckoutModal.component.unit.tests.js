@@ -2,12 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
-import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
-import { billingEn } from '../lang/en.js';
-
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 const vuetify = createVuetify();
 
@@ -35,7 +31,7 @@ const mountComponent = (props = {}, { smAndDown = false } = {}) => {
   return mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: false, packs: mockPacks, ...props },
     global: {
-      plugins: [vuetify, i18n],
+      plugins: [vuetify],
       stubs: {
         // v-dialog uses VOverlay which needs visualViewport (not in jsdom)
         'v-dialog': {
@@ -67,7 +63,6 @@ const mountWithDisplayMock = (smAndDown) =>
   mount(BillingExtrasCheckoutModalComponent, {
     props: { modelValue: true, packs: mockPacks },
     global: {
-      plugins: [i18n],
       mocks: {
         $vuetify: { display: { smAndDown } },
       },

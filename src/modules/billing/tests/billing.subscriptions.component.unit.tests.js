@@ -27,13 +27,8 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
-import { createI18n } from 'vue-i18n';
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
-import { billingEn } from '../lang/en.js';
-import { billingFr } from '../lang/fr.js';
-
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -99,7 +94,7 @@ function mountSubscriptions({
   authState.isLoggedIn = isLoggedIn;
   return mount(BillingSubscriptionsComponent, {
     global: {
-      plugins: [vuetify, i18n],
+      plugins: [vuetify],
       mocks: {
         config: mockConfig,
         $route: { path: '/users', query: routeQuery },
@@ -405,18 +400,11 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     expect(wrapper.text()).not.toContain('Change Plan');
   });
 
-  it('status chip for paused uses FR i18n label "En pause" (not raw replacement)', async () => {
-    const i18nFr = createI18n({
-      legacy: false,
-      globalInjection: true,
-      locale: 'fr',
-      fallbackLocale: 'fr',
-      messages: { fr: { ...billingFr } },
-    });
+  it('status chip for paused shows inlined English label "Paused"', async () => {
     store.subscription = { status: 'paused', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
-    const wrapperFr = mount(BillingSubscriptionsComponent, {
+    const wrapperPaused = mount(BillingSubscriptionsComponent, {
       global: {
-        plugins: [vuetify, i18nFr],
+        plugins: [vuetify],
         mocks: {
           config: mockConfig,
           $route: { path: '/users', query: {} },
@@ -426,10 +414,10 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
       },
     });
     await flushPromises();
-    const chip = wrapperFr.findComponent({ name: 'v-chip' });
+    const chip = wrapperPaused.findComponent({ name: 'v-chip' });
     expect(chip.exists()).toBe(true);
-    expect(chip.text()).toContain('En pause');
-    wrapperFr.unmount();
+    expect(chip.text()).toContain('Paused');
+    wrapperPaused.unmount();
   });
 
   it('paid plan card has billing-subscriptions__plan-card--paid CSS class (primary accent border)', async () => {
@@ -1133,17 +1121,17 @@ describe('BillingSubscriptionsComponent — V5 edge cases', () => {
     sessionStorage.clear();
   });
 
-  it('nextBillingDate uses $i18n.locale for locale-aware date formatting', async () => {
+  it('nextBillingDate formats date in en-US locale', async () => {
     store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: '2026-06-15T00:00:00.000Z' };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
 
-    // nextBillingDate should be a non-empty formatted date string
+    // nextBillingDate is fixed to en-US locale formatting
     const dateText = wrapper.vm.nextBillingDate;
     expect(dateText).not.toBeNull();
     expect(typeof dateText).toBe('string');
     expect(dateText.length).toBeGreaterThan(0);
-    // Should include 2026 (the year) and some representation of the date
+    // en-US formatting includes 2026 and recognizable month/day representation
     expect(dateText).toContain('2026');
   });
 

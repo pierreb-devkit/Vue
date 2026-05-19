@@ -2,30 +2,25 @@
  * billing.useCurrencyFormat
  * =========================
  * Composable for formatting monetary amounts using Intl.NumberFormat.
- * Currency is hardcoded to USD — no multi-currency support.
+ * Currency is hardcoded to USD / en-US — no multi-currency or locale support.
  *
  * USAGE:
  *   const { formatPrice } = useCurrencyFormat()
- *   formatPrice(1299) // '$1,299.00' (en) or '1 299,00 $US' (fr)
+ *   formatPrice(1299) // '$1,299.00'
  *
  * NOTE: `amount` is expected in major units (dollars), not cents.
  */
 
-/**
- * Module dependencies.
- */
-import { useI18n } from 'vue-i18n';
+const CURRENCY = 'USD';
+const LOCALE = 'en-US';
+const fmt = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY });
 
 /**
  * @returns {{ formatPrice: (amount: number) => string }}
  */
 export function useCurrencyFormat() {
-  const { locale } = useI18n();
-
   /**
-   * @desc Format a price amount as USD currency string using locale-aware Intl.NumberFormat.
-   * Falls back to 'en-US' when locale is null, undefined, empty, or an invalid BCP47 tag
-   * (RangeError from Intl.NumberFormat is caught and retried with 'en-US').
+   * @desc Format a price amount as USD currency string using fixed en-US locale.
    * Returns '—' for non-finite inputs (NaN, Infinity, undefined, null) — defensive only,
    * callers are expected to pass valid dollar amounts.
    * @param {number} amount - Price in dollars (major units)
@@ -35,12 +30,7 @@ export function useCurrencyFormat() {
     if (typeof amount !== 'number' || !Number.isFinite(amount)) {
       return '—'; // em dash — non-finite amount is not a valid price
     }
-    const localeStr = locale.value || 'en-US';
-    try {
-      return new Intl.NumberFormat(localeStr, { style: 'currency', currency: 'USD' }).format(amount);
-    } catch {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    }
+    return fmt.format(amount);
   }
 
   return { formatPrice };

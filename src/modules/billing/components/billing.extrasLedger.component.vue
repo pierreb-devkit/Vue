@@ -30,7 +30,7 @@
       v-if="entries.length === 0"
       class="text-caption text-medium-emphasis text-center py-6"
     >
-      {{ $t('billing.extrasLedger.empty.noEntries') }}
+      No ledger entries yet
     </div>
 
     <template v-else>
@@ -157,17 +157,16 @@ export default {
 
   computed: {
     /**
-     * @desc Reactive table headers using i18n for localised column titles.
-     * Defined as computed (not data) so $t is available and re-evaluates on locale change.
+     * @desc Table headers with inlined English column titles.
      * @returns {Array<{title: string, key: string, sortable: boolean, align?: string}>}
      */
     headers() {
       return [
-        { title: this.$t('billing.extrasLedger.headers.date'), key: 'at', sortable: false },
-        { title: this.$t('billing.extrasLedger.headers.kind'), key: 'kind', sortable: false },
-        { title: this.$t('billing.extrasLedger.headers.amount'), key: 'amount', sortable: false, align: 'end' },
-        { title: this.$t('billing.extrasLedger.headers.refHistory'), key: 'refId', sortable: false },
-        { title: this.$t('billing.extrasLedger.headers.stripeSession'), key: 'stripeSessionId', sortable: false },
+        { title: 'Date', key: 'at', sortable: false },
+        { title: 'Kind', key: 'kind', sortable: false },
+        { title: 'Amount', key: 'amount', sortable: false, align: 'end' },
+        { title: 'Ref / History', key: 'refId', sortable: false },
+        { title: 'Stripe session', key: 'stripeSessionId', sortable: false },
       ];
     },
 
@@ -183,15 +182,14 @@ export default {
 
   methods: {
     /**
-     * @desc Format an ISO date string to a human-readable local date+time.
-     * Uses the active i18n locale for locale-aware formatting.
+     * @desc Format an ISO date string to a human-readable local date+time (en-US).
      * @param {string} value - ISO 8601 date string
      * @returns {string}
      */
     formatDate(value) {
       if (!value) return '—';
       try {
-        return new Date(value).toLocaleString(this.$i18n.locale || undefined, {
+        return new Date(value).toLocaleString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',

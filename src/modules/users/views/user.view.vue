@@ -35,10 +35,10 @@
 
                 <!-- Danger zone -->
                 <v-card variant="outlined" color="error" class="mt-6">
-                  <v-card-title class="text-title-medium font-weight-medium">{{ $t('users.deleteAccount.title') }}</v-card-title>
-                  <v-card-text class="text-body-small text-medium-emphasis">{{ $t('users.deleteAccount.warning') }}</v-card-text>
+                  <v-card-title class="text-title-medium font-weight-medium">Delete account</v-card-title>
+                  <v-card-text class="text-body-small text-medium-emphasis">Permanently delete your account, data, and organization ownership. This cannot be undone.</v-card-text>
                   <v-card-actions>
-                    <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">{{ $t('users.deleteAccount.cta') }}</v-btn>
+                    <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">Delete account</v-btn>
                   </v-card-actions>
                 </v-card>
               </div>
@@ -131,12 +131,12 @@
     <!-- Delete account dialog -->
     <v-dialog v-model="confirmDeleteAccount" max-width="440">
       <v-card :class="config.vuetify.theme.rounded" class="pa-4">
-        <v-card-title class="text-title-large font-weight-medium text-error">{{ $t('users.deleteAccount.title') }}</v-card-title>
+        <v-card-title class="text-title-large font-weight-medium text-error">Delete account</v-card-title>
         <v-card-text class="text-body-medium">
-          {{ $t('users.deleteAccount.warning') }}
+          Permanently delete your account, data, and organization ownership. This cannot be undone.
           <v-text-field
             v-model="deleteConfirmInput"
-            :label="$t('users.deleteAccount.confirmLabel')"
+            label="Type DELETE to confirm"
             variant="outlined"
             density="compact"
             class="mt-4"
@@ -153,7 +153,7 @@
             class="text-none text-body-medium"
             :disabled="deleteConfirmInput !== 'DELETE'"
             @click="deleteAccount"
-          >{{ $t('users.deleteAccount.cta') }}</v-btn>
+          >Delete account</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

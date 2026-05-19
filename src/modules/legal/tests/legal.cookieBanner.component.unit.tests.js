@@ -4,8 +4,6 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { ref } from 'vue';
-import { createI18n } from 'vue-i18n';
-
 // Vuetify components use visualViewport which is not available in happy-dom
 if (typeof globalThis.visualViewport === 'undefined') {
   globalThis.visualViewport = { addEventListener: vi.fn(), removeEventListener: vi.fn(), width: 1024, height: 768 };
@@ -34,30 +32,6 @@ import LegalCookieBanner from '../components/legal.cookieBanner.component.vue';
  */
 const vuetify = () => createVuetify({ components, directives });
 
-/**
- * Returns a fresh vue-i18n instance with the legal banner message keys.
- * @returns {import('vue-i18n').I18n}
- */
-const i18n = () =>
-  createI18n({
-    legacy: false,
-    locale: 'en',
-    messages: {
-      en: {
-        legal: {
-          banner: {
-            ariaLabel: 'Cookie consent banner',
-            message: 'A few cookies help us improve your experience. See our',
-            privacyPolicy: 'Privacy Policy',
-            accept: 'Sounds good',
-            reject: 'No thanks',
-            revokeMessage: 'Want to revisit your cookie choices for {appName}?',
-          },
-        },
-      },
-    },
-  });
-
 let wrapper;
 
 /**
@@ -70,7 +44,7 @@ const mountBanner = ({ enabled = true, appName = 'Devkit', privacyPath = '/legal
   wrapper = mount(LegalCookieBanner, {
     attachTo: document.body,
     global: {
-      plugins: [vuetify(), i18n()],
+      plugins: [vuetify()],
       mocks: {
         config: {
           name: appName,
@@ -175,7 +149,7 @@ describe('legal.cookieBanner.component', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const wrapper = mount(LegalCookieBanner, {
       global: {
-        plugins: [vuetify(), i18n()],
+        plugins: [vuetify()],
         mocks: {
           config: {
             name: 'Trawl',
@@ -197,7 +171,7 @@ describe('legal.cookieBanner.component', () => {
     consentNeeded.value = true;
     const wrapper = mount(LegalCookieBanner, {
       global: {
-        plugins: [vuetify(), i18n()],
+        plugins: [vuetify()],
         mocks: {
           config: {
             name: 'Trawl',

@@ -3,8 +3,6 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import { createI18n } from 'vue-i18n';
-
 let currentRouteParams = { slug: 'terms' };
 vi.mock('vue-router', () => ({ useRoute: () => ({ params: currentRouteParams }) }));
 
@@ -14,12 +12,6 @@ import LegalPageView from '../views/legal.page.view.vue';
 import { useLegalPage as useLegalPageMock } from '../composables/useLegalPage';
 
 const vuetify = () => createVuetify({ components, directives });
-const i18n = () =>
-  createI18n({
-    legacy: false,
-    locale: 'en',
-    messages: { en: { legal: { pages: { notFound: 'This legal page does not exist.' } } } },
-  });
 
 /**
  * Mounts LegalPageView with a stubbed route param slug and optional config mock.
@@ -31,7 +23,7 @@ const mountView = (slug = 'terms', config = {}) => {
   currentRouteParams = { slug };
   return mount(LegalPageView, {
     global: {
-      plugins: [vuetify(), i18n()],
+      plugins: [vuetify()],
       mocks: { config },
     },
   });

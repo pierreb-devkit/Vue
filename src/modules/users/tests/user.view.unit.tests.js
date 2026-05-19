@@ -647,19 +647,10 @@ describe('UserView – delete account danger zone', () => {
     expect(w.vm.deleteConfirmInput).toBe('');
   });
 
-  it('i18n keys for deleteAccount are present in en.js', async () => {
-    const { usersEn } = await import('../lang/en.js');
-    expect(usersEn.users.deleteAccount.title).toBeTruthy();
-    expect(usersEn.users.deleteAccount.warning).toBeTruthy();
-    expect(usersEn.users.deleteAccount.cta).toBeTruthy();
-    expect(usersEn.users.deleteAccount.confirmLabel).toBeTruthy();
-  });
-
-  it('i18n keys for deleteAccount are present in fr.js', async () => {
-    const { usersFr } = await import('../lang/fr.js');
-    expect(usersFr.users.deleteAccount.title).toBeTruthy();
-    expect(usersFr.users.deleteAccount.warning).toBeTruthy();
-    expect(usersFr.users.deleteAccount.cta).toBeTruthy();
-    expect(usersFr.users.deleteAccount.confirmLabel).toBeTruthy();
+  it('deleteAccount strings are inlined in user.view.vue', () => {
+    const html = wrapper.html();
+    expect(html).toContain('Delete account');
+    expect(html).toContain('Permanently delete your account, data, and organization ownership. This cannot be undone.');
+    expect(html).toContain('Type DELETE to confirm');
   });
 });

@@ -20,7 +20,7 @@
 <template>
   <div class="text-center">
     <div class="d-flex align-center justify-center ga-2" :style="{ opacity: disabled ? 0.4 : 1 }">
-      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">{{ $t('billing.pricingToggle.monthly') }}</span>
+      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">Monthly</span>
       <v-switch
         :model-value="annual"
         color="primary"
@@ -28,10 +28,10 @@
         density="compact"
         inset
         :disabled="disabled"
-        :aria-label="$t('billing.pricingToggle.annual')"
+        aria-label="Annual"
         @update:model-value="$emit('update:annual', $event)"
       ></v-switch>
-      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">{{ $t('billing.pricingToggle.annual') }}</span>
+      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">Annual</span>
     </div>
   </div>
 </template>

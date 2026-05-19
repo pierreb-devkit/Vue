@@ -3,12 +3,10 @@
 
 <script setup>
 import { computed, watch, onUnmounted, getCurrentInstance } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useCookieConsent } from '../composables/useCookieConsent';
 import { useFooterExtras } from '@/lib/composables/useFooterExtras';
 
 const SECTION_ID = 'legal';
-const { t } = useI18n();
 const instance = getCurrentInstance();
 const config = computed(() => instance?.proxy?.config || instance?.appContext?.config?.globalProperties?.config || {});
 const { reopenSettings } = useCookieConsent();
@@ -17,7 +15,7 @@ const { register, unregister } = useFooterExtras();
 /**
  * Derives the legal footer section from config.
  * Returns null when neither cookieConsent nor pages are enabled.
- * @type {import('vue').ComputedRef<{title: string, items: Array}|null>}
+ * @returns {import('vue').ComputedRef<{title: string, items: Array}|null>} Footer section or null when no legal items are enabled.
  */
 const section = computed(() => {
   const cc = config.value?.legal?.cookieConsent;
@@ -38,14 +36,14 @@ const section = computed(() => {
 
   if (cc?.enabled) {
     items.push({
-      label: t('legal.footer.cookieSettings'),
+      label: 'Cookie settings',
       icon: 'fa-solid fa-cookie-bite',
       onClick: reopenSettings,
     });
   }
 
   if (items.length === 0) return null;
-  return { title: t('legal.footer.sectionTitle'), items };
+  return { title: 'Legal', items };
 });
 
 watch(

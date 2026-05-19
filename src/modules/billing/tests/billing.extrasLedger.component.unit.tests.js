@@ -2,12 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
-import { createI18n } from 'vue-i18n';
 import BillingExtrasLedgerComponent from '../components/billing.extrasLedger.component.vue';
-import { billingEn } from '../lang/en.js';
 
 const vuetify = createVuetify();
-const i18n = createI18n({ legacy: false, globalInjection: true, locale: 'en', fallbackLocale: 'en', messages: { en: { ...billingEn } } });
 
 /** Sample ledger entries covering all entry kinds. */
 const SAMPLE_ENTRIES = [
@@ -49,7 +46,7 @@ const SAMPLE_ENTRIES = [
 ];
 
 /**
- * Mount BillingExtrasLedgerComponent with Vuetify and i18n installed.
+ * Mount BillingExtrasLedgerComponent with Vuetify installed.
  * Pinia is activated separately via setActivePinia in beforeEach (not as a plugin).
  * @param {Object} props - Component props
  * @returns {import('@vue/test-utils').VueWrapper}
@@ -57,7 +54,7 @@ const SAMPLE_ENTRIES = [
 const mountComponent = (props) =>
   mount(BillingExtrasLedgerComponent, {
     props,
-    global: { plugins: [vuetify, i18n] },
+    global: { plugins: [vuetify] },
     attachTo: document.body,
   });
 

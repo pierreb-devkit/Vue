@@ -97,7 +97,7 @@
       <!-- Compute detail tooltip — shown only when in overage (overflow state) -->
       <v-tooltip
         v-if="overage > 0"
-        :text="`${used} / ${quota} ${$t('billing.meterProgress.overDetail', { overage })}`"
+        :text="`${used} / ${quota} over by ${overage} compute`"
         location="top"
       >
         <template #activator="{ props: tp }">
@@ -108,7 +108,7 @@
             size="x-small"
             tabindex="0"
             role="img"
-            :aria-label="$t('billing.meterProgress.ariaOver', { base: '', used, quota, overage })"
+            :aria-label="`${used} of ${quota} used, ${overage} over quota`"
             style="cursor: help"
           />
         </template>
@@ -122,7 +122,7 @@
         variant="tonal"
         class="ml-1"
       >
-        +{{ extras }} {{ $t('billing.usageBar.compute') }}
+        +{{ extras }} compute
       </v-chip>
     </div>
   </div>
@@ -257,19 +257,9 @@ export default {
     ariaLabel() {
       const base = this.label ? `${this.label}: ` : '';
       if (this.overage > 0) {
-        return this.$t('billing.meterProgress.ariaOver', {
-          base,
-          used: this.used,
-          quota: this.quota,
-          overage: this.overage,
-        });
+        return `${base}${this.used} of ${this.quota} used, ${this.overage} over quota`;
       }
-      return this.$t('billing.meterProgress.ariaUsed', {
-        base,
-        used: this.used,
-        quota: this.quota,
-        percent: this.clampedProgress,
-      });
+      return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
     },
   },
 
