@@ -15,7 +15,7 @@ const { register, unregister } = useFooterExtras();
 /**
  * Derives the legal footer section from config.
  * Returns null when neither cookieConsent nor pages are enabled.
- * @type {import('vue').ComputedRef<{title: string, items: Array}|null>}
+ * @returns {import('vue').ComputedRef<{title: string, items: Array}|null>} Footer section or null when no legal items are enabled.
  */
 const section = computed(() => {
   const cc = config.value?.legal?.cookieConsent;

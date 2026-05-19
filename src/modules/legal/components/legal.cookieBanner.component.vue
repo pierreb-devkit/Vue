@@ -106,6 +106,10 @@ const appName = computed(() => getConfig()?.app?.title || getConfig()?.name || '
 const { consentNeeded, consent, accept, reject } = useCookieConsent();
 const visible = computed(() => enabled.value && consentNeeded.value);
 
+/**
+ * Builds the cookie-banner body copy based on current consent state.
+ * @returns {string} Descriptive message shown in the cookie consent banner.
+ */
 const message = computed(() => {
   if (consent.value !== null) return `Want to revisit your cookie choices for ${appName.value}?`;
   return 'A few cookies help us improve your experience. See our';

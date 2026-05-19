@@ -7,7 +7,7 @@ import BillingMeterProgressComponent from '../components/billing.meterProgress.c
 const vuetify = createVuetify();
 
 /**
- * Mount BillingMeterProgressComponent with Vuetify, Pinia, and i18n installed.
+ * Mount BillingMeterProgressComponent with Vuetify and Pinia active.
  * @param {Object} props - Component props
  * @param {Object} [attrs] Component listeners/attrs.
  * @returns {import('@vue/test-utils').VueWrapper}

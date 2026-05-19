@@ -46,7 +46,7 @@ const SAMPLE_ENTRIES = [
 ];
 
 /**
- * Mount BillingExtrasLedgerComponent with Vuetify and i18n installed.
+ * Mount BillingExtrasLedgerComponent with Vuetify installed.
  * Pinia is activated separately via setActivePinia in beforeEach (not as a plugin).
  * @param {Object} props - Component props
  * @returns {import('@vue/test-utils').VueWrapper}

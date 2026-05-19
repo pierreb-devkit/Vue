@@ -648,8 +648,9 @@ describe('UserView – delete account danger zone', () => {
   });
 
   it('deleteAccount strings are inlined in user.view.vue', () => {
-    expect('Delete account').toBeTruthy();
-    expect('Permanently delete your account, data, and organization ownership. This cannot be undone.').toBeTruthy();
-    expect('Type DELETE to confirm').toBeTruthy();
+    const html = wrapper.html();
+    expect(html).toContain('Delete account');
+    expect(html).toContain('Permanently delete your account, data, and organization ownership. This cannot be undone.');
+    expect(html).toContain('Type DELETE to confirm');
   });
 });
