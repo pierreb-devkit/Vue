@@ -56,6 +56,8 @@ export const useAuthStore = defineStore('auth', {
       locked: false,
       retryAfter: 0,
     },
+    /** @type {{ orgId: string, orgName: string } | null} */
+    suggestedJoin: null,
   }),
 
   getters: {
@@ -67,6 +69,8 @@ export const useAuthStore = defineStore('auth', {
     // Initialize from localStorage
     initFromStorage() {
       this.cookieExpire = localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0;
+      const rawSuggestedJoin = localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`);
+      this.suggestedJoin = rawSuggestedJoin ? JSON.parse(rawSuggestedJoin) : null;
     },
 
     /**
@@ -152,6 +156,36 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
+     * @desc Set the suggestedJoin state and persist client-side.
+     * @param {{ orgId: string, orgName: string }} payload
+     * @returns {void}
+     */
+    setSuggestedJoin(payload) {
+      this.suggestedJoin = payload;
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify(payload));
+    },
+
+    /**
+     * @desc Dismiss the suggested-join banner: clear state and persistence.
+     * @returns {void}
+     */
+    dismissSuggestedJoin() {
+      this.suggestedJoin = null;
+      localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
+    },
+
+    /**
+     * @desc Clear suggestedJoin if the user just joined the suggested org.
+     * @param {string} orgId - The org the user became a member of.
+     * @returns {void}
+     */
+    clearSuggestedJoinIfMember(orgId) {
+      if (this.suggestedJoin?.orgId === orgId) {
+        this.dismissSuggestedJoin();
+      }
+    },
+
+    /**
      * @desc Sign up a new user and update auth state.
      * @param {Object} params - Signup payload (email, password, firstName, lastName)
      * @returns {Promise<Object|undefined>} Signup response data containing user, and optionally organization or organizationSetupRequired
@@ -175,6 +209,10 @@ export const useAuthStore = defineStore('auth', {
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
+
+        if (res.data.suggestedJoin) {
+          this.setSuggestedJoin(res.data.suggestedJoin);
+        }
 
         coreStore.refreshNav(this.isLoggedIn);
         capture('signup_completed', { email: res.data.user.email });
@@ -213,6 +251,7 @@ export const useAuthStore = defineStore('auth', {
       this.cookieExpire = 0;
       this.user = null;
       this.pendingRequests = [];
+      this.suggestedJoin = null;
 
       updateAbilities([]);
 
@@ -222,6 +261,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
       localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
+      localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
 
       coreStore.refreshNav(false);
     },
