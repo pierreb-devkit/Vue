@@ -174,22 +174,40 @@ export default {
      * legacy `/admin/*` absolute-path case — so the admin surface keeps its
      * full diagnostic output without polluting the pure helper.
      *
+     * The warn conditions and message strings below are intentionally kept
+     * byte-identical to the original inline `isValidTab` (pre-B2 hoist).
+     * This guard mirrors `isValidTab`'s internal guard and must stay in sync
+     * with the branch order in surface-tabs.js (canary for future editors).
+     *
      * @param {unknown} tab - Raw entry from `config.admin.tabs`.
      * @returns {boolean} True if the tab should render.
      */
     isValidTab(tab) {
       const valid = isValidTab(tab);
       if (import.meta.env?.MODE !== 'production') {
+        // Re-derive route for warn-message routing — mirrors isValidTab's internal guard.
         const route = tab && typeof tab === 'object' ? tab.route : undefined;
-        if (valid && typeof route === 'string' && route.startsWith('/admin/')) {
-          // Accepted legacy route — warn to prompt migration.
-          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
-        } else if (!valid) {
+        if (!valid) {
           if (typeof route === 'string') {
-            console.warn(`[admin] Invalid tab route filtered: "${route}"`);
-          } else {
-            console.warn('[admin] Invalid tab descriptor filtered (missing value, label, or route).');
+            // Reproduce the THREE distinct original warn messages in the same priority order.
+            if (/\s/.test(route) || route.includes('?') || route.includes('#')) {
+              console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+            } else if (route === '' || route === '/' || route === '.' || route === '..') {
+              console.warn(`[admin] Empty or dot tab route filtered: "${route}"`);
+            } else {
+              const segments = route.split('/');
+              if (segments.some((seg) => seg === '..' || seg === '.')) {
+                console.warn(`[admin] Path-traversal tab route filtered: "${route}"`);
+              } else {
+                // Absolute path outside /admin/ — falls through all accept checks.
+                console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+              }
+            }
           }
+          // Non-string route (missing value/label/route) — no route string to echo, silent in dev too.
+        } else if (typeof route === 'string' && route.startsWith('/admin/')) {
+          // Accepted legacy route — warn to prompt migration (verbatim original message).
+          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
         }
       }
       return valid;

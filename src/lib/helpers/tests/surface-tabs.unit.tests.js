@@ -106,6 +106,13 @@ describe('isValidTab', () => {
   it('rejects /admin itself (no trailing slash child)', () => {
     expect(isValidTab({ value: 'x', label: 'X', route: '/admin' })).toBe(false);
   });
+
+  // ── legacy /admin/ edge case ─────────────────────────────────────────────
+  it('accepts /admin/ (trailing slash, no child segment) — matches legacy admin behavior', () => {
+    // The original admin.layout.vue accepted any route starting with '/admin/',
+    // including '/admin/' itself. Byte-identical parity requires this stays true.
+    expect(isValidTab({ value: 'x', label: 'X', route: '/admin/' })).toBe(true);
+  });
 });
 
 /**
@@ -114,6 +121,16 @@ describe('isValidTab', () => {
  */
 describe('resolveSurfaceTabs', () => {
   const can = (action, subject) => action === 'manage' && subject === 'Organization';
+
+  // ── can guard ────────────────────────────────────────────────────────────
+  it('throws TypeError when can is undefined', () => {
+    expect(() => resolveSurfaceTabs([], undefined)).toThrow(TypeError);
+    expect(() => resolveSurfaceTabs([], undefined)).toThrow('[resolveSurfaceTabs] can must be a function');
+  });
+
+  it('throws TypeError when can is not a function (e.g. null)', () => {
+    expect(() => resolveSurfaceTabs([], null)).toThrow(TypeError);
+  });
 
   it('filters out invalid tabs', () => {
     const tabs = [

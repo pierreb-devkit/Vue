@@ -63,10 +63,11 @@ export function isValidTab(tab) {
  * `useAbility()`.
  *
  * @param {Array<unknown>|null|undefined} tabs - Raw tabs from config.
- * @param {(action: string, subject: string) => boolean} can - CASL predicate.
+ * @param {(action: string, subject: string) => boolean} can - Required. CASL predicate from `useAbility()`. Must be a function.
  * @returns {Array<object>} Validated + permitted tabs.
  */
 export function resolveSurfaceTabs(tabs, can) {
+  if (typeof can !== 'function') throw new TypeError('[resolveSurfaceTabs] can must be a function');
   return (tabs || [])
     .filter(isValidTab)
     .filter((t) => (t.action && t.subject ? can(t.action, t.subject) : true));
