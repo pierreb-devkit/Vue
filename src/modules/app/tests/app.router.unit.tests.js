@@ -377,10 +377,9 @@ describe('app.router', () => {
       expect(Array.isArray(orgParent.children)).toBe(true);
     });
 
-    it('org parent children array stays empty in base devkit even when organizations module is active', async () => {
-      // We exercise the wiring by importing the organizations router directly and
-      // confirming that after app.router runs, the org parent has no unexpected
-      // children in the base devkit (empty array — downstream will populate it).
+    it('org parent children array contains the billing route when billing module is active', async () => {
+      // C2: billing is now wired into organizationChildModules. When billing is active,
+      // the org parent's children array must contain the injected billing child route.
       vi.resetModules();
       mockIsModuleActive = () => true;
       const mod = await setupRouterModule();
@@ -389,8 +388,26 @@ describe('app.router', () => {
         (r) => r.path === '/users/organizations/:organizationId',
       );
       expect(Array.isArray(orgParent.children)).toBe(true);
-      // Base devkit ships empty — no injected children
-      expect(orgParent.children).toHaveLength(0);
+      // C2 injects billing — expect at least the billing child
+      const billingChild = orgParent.children.find((c) => c.path === 'billing');
+      expect(billingChild).toBeDefined();
+      expect(billingChild.name).toBe('Account Organization Billing');
+    });
+
+    it('billing route is NOT injected under org parent when billing module is inactive', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'billing';
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const orgParent = router.options.routes.find(
+        (r) => r.path === '/users/organizations/:organizationId',
+      );
+      // Org module is active, so parent exists
+      expect(orgParent).toBeDefined();
+      expect(Array.isArray(orgParent.children)).toBe(true);
+      // Billing inactive → not injected under org parent
+      const billingChild = orgParent.children.find((c) => c.path === 'billing');
+      expect(billingChild).toBeUndefined();
     });
 
     it('a child module in organizationChildModules is injected under the org parent (ORG_PARENT_PATH)', async () => {

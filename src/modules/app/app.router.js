@@ -15,7 +15,7 @@ import organizations, { ORG_PARENT_PATH } from '../organizations/router/organiza
 import admin from '../admin/router/admin.router';
 import users from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
-import billing from '../billing/router/billing.router';
+import billing, { organizationRoutes as billingOrganizationRoutes } from '../billing/router/billing.router';
 import legal from '../legal/router/legal.router';
 
 // Core modules — always mounted
@@ -49,7 +49,9 @@ injectAdminChildren(admin, adminChildModules, isModuleActive);
  * (e.g. `'billing'` rather than `'/users/organizations/:organizationId/billing'`)
  * so they resolve under the org parent.
  */
-const organizationChildModules = [];
+const organizationChildModules = [
+  { name: 'billing', routes: billingOrganizationRoutes },
+];
 injectModuleChildren(organizations, organizationChildModules, isModuleActive, ORG_PARENT_PATH);
 
 // Optional modules — mounted only when activated
