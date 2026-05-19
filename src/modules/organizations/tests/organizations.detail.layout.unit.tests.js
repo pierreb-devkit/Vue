@@ -7,15 +7,16 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 
 /**
  * Mutable ref used by the useRoute mock so individual tests can control
- * the organizationId param without reinstalling the mock.
+ * the organizationId param and path without reinstalling the mock.
  */
 let mockRouteParams = { organizationId: 'abc123' };
+let mockRoutePath = '/users/organizations/abc123';
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    useRoute: () => ({ params: mockRouteParams }),
+    useRoute: () => ({ params: mockRouteParams, path: mockRoutePath }),
   };
 });
 
@@ -84,17 +85,19 @@ const baseStubs = {
 
 /**
  * Mount the layout component with a mocked $route providing the organizationId.
- * Also sets the module-level `mockRouteParams` so `useRoute()` returns the
- * correct params in the component's setup().
+ * Also sets the module-level `mockRouteParams`/`mockRoutePath` so `useRoute()` returns the
+ * correct params and path in the component's setup().
  * @param {string} [orgId]
+ * @param {string} [routePath] - Full route path (default: user org path)
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-function mountLayout(orgId = 'abc123') {
+function mountLayout(orgId = 'abc123', routePath = null) {
   mockRouteParams = { organizationId: orgId };
+  mockRoutePath = routePath || `/users/organizations/${orgId}`;
   return shallowMount(OrganizationDetailComponent, {
     global: {
       mocks: {
-        $route: { params: { organizationId: orgId } },
+        $route: { params: { organizationId: orgId }, path: mockRoutePath },
         $router: { push: vi.fn() },
         config: {
           vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
@@ -176,6 +179,41 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     const w2 = mountLayout('org-222');
     expect(w1.vm.basePath).toBe('/users/organizations/org-111');
     expect(w2.vm.basePath).toBe('/users/organizations/org-222');
+  });
+
+  // ── FIX 2: route-aware basePath (user vs admin context) ──────────────────
+
+  it('basePath returns /users/organizations/{id} when route is under /users', () => {
+    const wrapper = mountLayout('abc123', '/users/organizations/abc123');
+    expect(wrapper.vm.basePath).toBe('/users/organizations/abc123');
+  });
+
+  it('basePath returns /admin/organizations/{id} when route is under /admin', () => {
+    const wrapper = mountLayout('abc123', '/admin/organizations/abc123');
+    expect(wrapper.vm.basePath).toBe('/admin/organizations/abc123');
+  });
+
+  it('admin basePath uses the resolved org ID, not the pattern', () => {
+    const wrapper = mountLayout('org-xyz', '/admin/organizations/org-xyz');
+    expect(wrapper.vm.basePath).toBe('/admin/organizations/org-xyz');
+    expect(wrapper.vm.basePath).not.toContain(':organizationId');
+  });
+
+  it('passes admin basePath to CoreSurfaceTabBar in admin context', () => {
+    const wrapper = mountLayout('org-xyz', '/admin/organizations/org-xyz');
+    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
+    expect(tabBar.props('basePath')).toBe('/admin/organizations/org-xyz');
+  });
+
+  // ── FIX 1: no inert beforeRouteLeave on the layout ───────────────────────
+
+  it('layout does NOT have a beforeRouteLeave option (guard moved to general tab)', () => {
+    // The layout's beforeRouteLeave was inert (no $refs.generalTabRef from router-view).
+    // It has been removed; the guard now lives in organization.general.tab.vue.
+    const wrapper = mountLayout();
+    // Vue exposes beforeRouteLeave via component options, not the vm instance.
+    // Verify the component options do not define beforeRouteLeave.
+    expect(wrapper.vm.$options.beforeRouteLeave).toBeUndefined();
   });
 });
 
@@ -289,6 +327,59 @@ describe('organization.general.tab.vue — 6 native sections (C3)', () => {
   it('accepts organizationId as a required prop', () => {
     const wrapper = mountGeneralTab('test-org-id');
     expect(wrapper.vm.organizationId).toBe('test-org-id');
+  });
+
+  // ── FIX 1: in-component beforeRouteLeave guard ────────────────────────────
+
+  it('has a beforeRouteLeave option on the general-tab component', () => {
+    const wrapper = mountGeneralTab();
+    expect(typeof wrapper.vm.$options.beforeRouteLeave).toBe('function');
+  });
+
+  it('beforeRouteLeave returns false (cancels navigation) when dirty is true and user cancels', () => {
+    const wrapper = mountGeneralTab();
+    // Simulate dirty state
+    wrapper.vm.dirty = true;
+
+    // Stub window.confirm — jsdom does not implement it
+    const confirmStub = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirmStub);
+
+    const result = wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm);
+    expect(confirmStub).toHaveBeenCalledWith('You have unsaved changes. Are you sure you want to leave?');
+    expect(result).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('beforeRouteLeave allows navigation when dirty is true and user confirms', () => {
+    const wrapper = mountGeneralTab();
+    wrapper.vm.dirty = true;
+
+    const confirmStub = vi.fn(() => true);
+    vi.stubGlobal('confirm', confirmStub);
+
+    const result = wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm);
+    expect(confirmStub).toHaveBeenCalledWith('You have unsaved changes. Are you sure you want to leave?');
+    // Returns undefined (not false) → navigation proceeds
+    expect(result).toBeUndefined();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('beforeRouteLeave does NOT prompt and allows navigation when dirty is false', () => {
+    const wrapper = mountGeneralTab();
+    // dirty starts as false
+    expect(wrapper.vm.dirty).toBe(false);
+
+    const confirmStub = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirmStub);
+
+    const result = wrapper.vm.$options.beforeRouteLeave.call(wrapper.vm);
+    expect(confirmStub).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
+
+    vi.unstubAllGlobals();
   });
 });
 

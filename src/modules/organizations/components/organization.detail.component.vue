@@ -111,21 +111,10 @@ export default {
       await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
     }
   },
-  /**
-   * @desc Guard against navigating away with unsaved changes.
-   *       Checks the active general-tab child's `dirty` state when available.
-   */
-  beforeRouteLeave() {
-    const generalTabChild = this.$refs.generalTabRef;
-    if (generalTabChild && generalTabChild.dirty) {
-      const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-      if (!answer) return false;
-    }
-  },
   computed: {
     /**
      * @desc Resolves the organization ID from the current route params (user
-     *       path) or the prop (admin path, passed from admin.organization.view).
+     *       path) or the prop (admin path, passed via route props from admin.router).
      *       Route params take precedence when present.
      * @returns {string|null}
      */
@@ -146,11 +135,15 @@ export default {
     /**
      * @desc RESOLVED base path for CoreSurfaceTabBar — uses the actual
      *       organizationId value, never the raw `:organizationId` pattern.
+     *       Route-aware: admin routes → `/admin/organizations/{id}`,
+     *       user routes → `/users/organizations/{id}`.
      *       Example: `/users/organizations/abc123`
      * @returns {string}
      */
     basePath() {
-      return `/users/organizations/${this.resolvedOrganizationId}`;
+      const isAdmin = this.route && this.route.path && this.route.path.startsWith('/admin');
+      const prefix = isAdmin ? '/admin/organizations' : '/users/organizations';
+      return `${prefix}/${this.resolvedOrganizationId}`;
     },
     /**
      * @desc Bound CASL predicate passed to CoreSurfaceTabBar.
