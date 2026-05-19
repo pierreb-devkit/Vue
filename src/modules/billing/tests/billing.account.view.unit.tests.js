@@ -73,14 +73,19 @@ describe('BillingAccountView – single manageable org → redirect', () => {
     organizationsStore.organizations = [{ id: orgId, name: 'Acme', role: 'owner' }];
     authStore.serverConfig = { billing: { enabled: true } };
 
-    shallowMount(BillingAccountView, {
+    const wrapper = shallowMount(BillingAccountView, {
       global: {
         mocks: sharedMocks({ replace: routerReplace }),
         stubs: sharedStubs,
       },
     });
 
-    // Flush microtasks so mounted() / immediate-watch resolves
+    // Redirect decision is synchronous (created()), so redirecting=true from first render.
+    // The "ask admin" read-only card must NEVER appear — not even on first tick.
+    expect(wrapper.html()).not.toContain('Ask your organization admin');
+    expect(wrapper.vm.redirecting).toBe(true);
+
+    // Flush microtasks — router.replace already fired synchronously in created()
     await new Promise((r) => setTimeout(r, 0));
 
     expect(routerReplace).toHaveBeenCalledWith(`/users/organizations/${orgId}/billing`);
@@ -279,8 +284,8 @@ describe('BillingAccountView – non-admin / no manageable org → read-only', (
     });
 
     const html = wrapper.html();
-    // Must contain a message directing user to contact their admin
-    expect(html.toLowerCase()).toMatch(/admin|organization admin/);
+    // Must contain the exact "ask admin" message
+    expect(html).toContain('Ask your organization admin to manage billing and subscription settings.');
   });
 
   it('shows read-only state when organization list is empty', async () => {

@@ -89,12 +89,13 @@ export default {
     },
   },
   /**
-   * @desc On mount: if exactly one manageable org exists, immediately redirect
-   * to that org's billing page. The user should never land on this selector
-   * for single-org scenarios.
-   * @returns {Promise<void>}
+   * @desc In created(): if exactly one manageable org exists, set redirecting=true
+   * synchronously so the first rendered frame shows the spinner, never the
+   * "ask admin" read-only card. The org store is already hydrated at route
+   * entry by the global org-required beforeEach guard.
+   * The actual router.replace fires here as well so the navigation is immediate.
    */
-  async mounted() {
+  created() {
     if (this.manageableOrgs.length === 1) {
       const org = this.manageableOrgs[0];
       const orgId = org.id || org._id;
