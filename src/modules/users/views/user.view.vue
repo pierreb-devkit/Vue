@@ -235,6 +235,7 @@ export default {
   },
   /**
    * @desc Apply tab from query/hash on first render.
+   * @returns {void}
    */
   mounted() {
     this.applyTabFromRoute();
@@ -244,6 +245,7 @@ export default {
     /**
      * @desc Resolve a requested tab from the route (?tab= or #...) and switch
      * the active tab when the requested tab is one of the available tabs.
+     * @returns {void}
      */
     applyTabFromRoute() {
       const requested =

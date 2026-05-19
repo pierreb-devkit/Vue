@@ -87,6 +87,11 @@ export default [
             path: '',
             name: 'Admin Organization General',
             component: organizationGeneralTab,
+            /**
+             * Maps route params to props for the admin organization general tab.
+             * @param {import('vue-router').RouteLocationNormalizedLoaded} route
+             * @returns {{ organizationId: string | string[] }}
+             */
             props: (route) => ({
               organizationId: route.params.organizationId,
             }),

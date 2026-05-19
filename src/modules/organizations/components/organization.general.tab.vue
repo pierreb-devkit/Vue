@@ -217,10 +217,18 @@ export default {
   props: {
     organizationId: { type: String, required: true },
   },
+  /**
+   * @desc Provides auth store access for reactive role descriptions.
+   * @returns {{ authStore: Object }}
+   */
   setup() {
     const authStore = useAuthStore();
     return { authStore };
   },
+  /**
+   * @desc Component local state for form validation, pending requests, and invite flow.
+   * @returns {{ valid: boolean, dirty: boolean, pendingRequests: Array, requestActionLoading: string|null, inviteEmail: string, inviteValid: boolean, inviteLoading: boolean, inviteLink: string|null, copied: boolean, rules: Object }}
+   */
   data() {
     return {
       valid: false,
@@ -273,6 +281,21 @@ export default {
       },
     },
   },
+  watch: {
+    /**
+     * @desc Reload pending requests when the organization changes (component instance reuse).
+     * Clears stale data before fetching for the new organization.
+     * @returns {Promise<void>}
+     */
+    async organizationId() {
+      this.pendingRequests = [];
+      if (this.organizationId) await this.loadPendingRequests();
+    },
+  },
+  /**
+   * @desc Load pending join requests on initial mount.
+   * @returns {Promise<void>}
+   */
   async created() {
     if (this.organizationId) {
       await this.loadPendingRequests();
@@ -280,6 +303,10 @@ export default {
   },
   methods: {
     roleColor,
+    /**
+     * @desc Save updated organization name and description.
+     * @returns {Promise<void>}
+     */
     async update() {
       const form = await this.$refs.form.validate();
       if (form.valid) {
@@ -295,6 +322,10 @@ export default {
         }
       }
     },
+    /**
+     * @desc Fetch pending join requests for the current organization.
+     * @returns {Promise<void>}
+     */
     async loadPendingRequests() {
       const organizationsStore = useOrganizationsStore();
       try {
@@ -303,6 +334,11 @@ export default {
         // User may not have permission — ignore
       }
     },
+    /**
+     * @desc Approve a pending join request and refresh the member list.
+     * @param {Object} request - The pending request object with `_id` or `id`
+     * @returns {Promise<void>}
+     */
     async approveRequest(request) {
       const requestId = request._id || request.id;
       this.requestActionLoading = requestId;
@@ -317,6 +353,10 @@ export default {
         this.requestActionLoading = null;
       }
     },
+    /**
+     * @desc Validate the invite form and send a membership invite email.
+     * @returns {Promise<void>}
+     */
     async sendInvite() {
       const form = await this.$refs.inviteForm.validate();
       if (!form.valid) return;
@@ -366,6 +406,11 @@ export default {
         // fallback: select text manually
       }
     },
+    /**
+     * @desc Reject a pending join request and remove it from the local list.
+     * @param {Object} request - The pending request object with `_id` or `id`
+     * @returns {Promise<void>}
+     */
     async rejectRequest(request) {
       const requestId = request._id || request.id;
       this.requestActionLoading = requestId;

@@ -29,7 +29,7 @@ describe('organizations module config — organizations.tabs', () => {
   });
 
   it('billing tab descriptor has all required fields (value, label, icon, route)', () => {
-    const billingTab = organizationsDefaultConfig.organizations.tabs[0];
+    const billingTab = organizationsDefaultConfig.organizations.tabs.find((t) => t.value === 'billing');
     expect(billingTab).toMatchObject({
       value: 'billing',
       label: 'Billing',
@@ -39,13 +39,13 @@ describe('organizations module config — organizations.tabs', () => {
   });
 
   it('billing tab descriptor carries the CASL pair (action + subject) for resolveSurfaceTabs', () => {
-    const billingTab = organizationsDefaultConfig.organizations.tabs[0];
+    const billingTab = organizationsDefaultConfig.organizations.tabs.find((t) => t.value === 'billing');
     expect(billingTab.action).toBe('manage');
     expect(billingTab.subject).toBe('Organization');
   });
 
   it('billing descriptor passes isValidTab validation', () => {
-    const billingTab = organizationsDefaultConfig.organizations.tabs[0];
+    const billingTab = organizationsDefaultConfig.organizations.tabs.find((t) => t.value === 'billing');
     expect(isValidTab(billingTab)).toBe(true);
   });
 

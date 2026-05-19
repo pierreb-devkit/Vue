@@ -71,6 +71,10 @@ export default {
     const organizationsStore = useOrganizationsStore();
     return { organizationsStore };
   },
+  /**
+   * @desc Component local state.
+   * @returns {{ redirecting: boolean }}
+   */
   data() {
     return {
       /** @type {boolean} True while an auto-redirect to a single org's billing is in flight. */
@@ -89,11 +93,10 @@ export default {
     },
   },
   /**
-   * @desc In created(): if exactly one manageable org exists, set redirecting=true
-   * synchronously so the first rendered frame shows the spinner, never the
-   * "ask admin" read-only card. The org store is already hydrated at route
-   * entry by the global org-required beforeEach guard.
-   * The actual router.replace fires here as well so the navigation is immediate.
+   * @desc Auto-redirect to a single manageable org's billing page on mount.
+   * Sets `redirecting` before the first render so the spinner shows immediately.
+   * Requires the org store to be pre-hydrated by the global beforeEach guard.
+   * @returns {void}
    */
   created() {
     if (this.manageableOrgs.length === 1) {

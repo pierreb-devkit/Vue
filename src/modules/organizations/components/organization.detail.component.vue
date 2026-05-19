@@ -152,6 +152,23 @@ export default {
       return (action, subjectName) => ability.can(action, subjectName);
     },
   },
+  watch: {
+    /**
+     * @desc Re-fetch organization when the route param changes (component instance reuse).
+     * @returns {Promise<void>}
+     */
+    async resolvedOrganizationId() {
+      const organizationsStore = useOrganizationsStore();
+      organizationsStore.resetOrganization();
+      if (this.resolvedOrganizationId) {
+        await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
+      }
+    },
+  },
+  /**
+   * @desc Fetch the organization on initial mount so the header and tab bar have data.
+   * @returns {Promise<void>}
+   */
   async created() {
     const organizationsStore = useOrganizationsStore();
     organizationsStore.resetOrganization();
@@ -160,6 +177,10 @@ export default {
     }
   },
   methods: {
+    /**
+     * @desc Delete the viewed organization after confirmation and navigate back.
+     * @returns {Promise<void>}
+     */
     async remove() {
       const organizationsStore = useOrganizationsStore();
       try {

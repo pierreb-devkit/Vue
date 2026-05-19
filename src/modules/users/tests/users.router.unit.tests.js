@@ -25,6 +25,9 @@ describe('users.router', () => {
 
 describe('users.router – C5 legacy ?tab=subscriptions alias', () => {
   /** Pull the beforeEnter guard from the /users route. */
+  /** @desc Pull the beforeEnter guard from the /users route.
+   * @returns {import('vue-router').RouteRecordRaw|undefined}
+   */
   const getUsersRoute = () => usersRoutes.find((r) => r.path === '/users');
 
   it('/users route has a beforeEnter guard (C5 legacy alias)', () => {

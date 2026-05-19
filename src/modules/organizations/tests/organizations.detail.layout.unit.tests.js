@@ -277,6 +277,11 @@ const generalTabStubs = {
   'v-dialog': { template: '<div><slot /></div>' },
 };
 
+/**
+ * @desc Mount OrganizationGeneralTab in isolation for unit tests.
+ * @param {string} [orgId='abc123'] - Organization ID to pass as prop
+ * @returns {import('@vue/test-utils').VueWrapper}
+ */
 function mountGeneralTab(orgId = 'abc123') {
   return shallowMount(OrganizationGeneralTab, {
     props: { organizationId: orgId },
