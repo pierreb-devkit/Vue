@@ -203,6 +203,17 @@ export default {
   components: {
     organizationsMembersComponent,
   },
+  /**
+   * @desc Guard against navigating away from this tab with unsaved changes.
+   *       Mirrors the original guard from organization.view.vue (pre-C3).
+   * @returns {boolean|undefined} false to cancel navigation, undefined to allow
+   */
+  beforeRouteLeave() {
+    if (this.dirty) {
+      const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+      if (!answer) return false;
+    }
+  },
   props: {
     organizationId: { type: String, required: true },
   },
@@ -261,17 +272,6 @@ export default {
         }
       },
     },
-  },
-  /**
-   * @desc Guard against navigating away from this tab with unsaved changes.
-   *       Mirrors the original guard from organization.view.vue (pre-C3).
-   * @returns {boolean|undefined} false to cancel navigation, undefined to allow
-   */
-  beforeRouteLeave() {
-    if (this.dirty) {
-      const answer = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-      if (!answer) return false;
-    }
   },
   async created() {
     if (this.organizationId) {

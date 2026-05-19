@@ -147,9 +147,6 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     // the container div that also contains page-header-stub and surface-tab-bar-stub).
     const wrapper = mountLayout();
     const html = wrapper.html();
-    // Find positions: container stub wraps header + tabbar only
-    const containerStart = html.indexOf('<div>'); // outermost div (root)
-    const innerContainerHtml = html.slice(containerStart);
     // The router-view-stub should appear AFTER the closing tag of the inner container
     // that holds the tab bar. A simple structural check: router-view-stub must not
     // appear between page-header-stub and surface-tab-bar-stub's enclosing div.

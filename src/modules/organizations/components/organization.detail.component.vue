@@ -108,13 +108,6 @@ export default {
       deleteConfirmName: '',
     };
   },
-  async created() {
-    const organizationsStore = useOrganizationsStore();
-    organizationsStore.resetOrganization();
-    if (this.resolvedOrganizationId) {
-      await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
-    }
-  },
   computed: {
     /**
      * @desc Resolves the organization ID from `route.params.organizationId`
@@ -158,6 +151,13 @@ export default {
     abilityCan() {
       return (action, subjectName) => ability.can(action, subjectName);
     },
+  },
+  async created() {
+    const organizationsStore = useOrganizationsStore();
+    organizationsStore.resetOrganization();
+    if (this.resolvedOrganizationId) {
+      await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
+    }
   },
   methods: {
     async remove() {
