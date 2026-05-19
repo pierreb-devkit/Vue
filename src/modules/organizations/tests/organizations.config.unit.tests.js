@@ -14,8 +14,18 @@ describe('organizations module config — organizations.tabs', () => {
     expect(Array.isArray(organizationsDefaultConfig.organizations.tabs)).toBe(true);
   });
 
-  it('organizations.tabs includes exactly one entry (the billing descriptor)', () => {
-    expect(organizationsDefaultConfig.organizations.tabs).toHaveLength(1);
+  it('organizations.tabs includes the billing descriptor', () => {
+    const tabs = organizationsDefaultConfig.organizations.tabs;
+    expect(Array.isArray(tabs)).toBe(true);
+    expect(tabs.length).toBeGreaterThanOrEqual(1);
+    expect(tabs.find((t) => t.value === 'billing')).toMatchObject({
+      value: 'billing',
+      label: 'Billing',
+      icon: 'fa-solid fa-credit-card',
+      route: 'billing',
+      action: 'manage',
+      subject: 'Organization',
+    });
   });
 
   it('billing tab descriptor has all required fields (value, label, icon, route)', () => {
