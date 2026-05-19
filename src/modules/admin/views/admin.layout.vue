@@ -54,6 +54,7 @@
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import { useAdminStore } from '../stores/admin.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { isValidTab } from '@/lib/helpers/surface-tabs';
 
 /**
  * Built-in admin tabs.
@@ -167,46 +168,31 @@ export default {
     },
     /**
      * @desc Validate a single tab descriptor (shared by `extraTabs`).
+     *
+     * Delegates to the shared `isValidTab` helper from `surface-tabs.js` and
+     * emits dev-mode warnings — both for rejected entries and for the accepted
+     * legacy `/admin/*` absolute-path case — so the admin surface keeps its
+     * full diagnostic output without polluting the pure helper.
+     *
      * @param {unknown} tab - Raw entry from `config.admin.tabs`.
      * @returns {boolean} True if the tab should render.
      */
     isValidTab(tab) {
-      if (!tab || typeof tab !== 'object' || !tab.value || !tab.label || !tab.route) return false;
-      if (typeof tab.route !== 'string') return false;
-      const route = tab.route;
-      // Reject whitespace, query, fragment, or traversal segments.
-      if (/\s/.test(route) || route.includes('?') || route.includes('#')) {
-        if (import.meta.env?.MODE !== 'production') {
-          console.warn(`[admin] Invalid tab route filtered: "${route}"`);
-        }
-        return false;
-      }
-      if (route === '' || route === '/' || route === '.' || route === '..') {
-        if (import.meta.env?.MODE !== 'production') {
-          console.warn(`[admin] Empty or dot tab route filtered: "${route}"`);
-        }
-        return false;
-      }
-      const segments = route.split('/');
-      if (segments.some((seg) => seg === '..' || seg === '.')) {
-        if (import.meta.env?.MODE !== 'production') {
-          console.warn(`[admin] Path-traversal tab route filtered: "${route}"`);
-        }
-        return false;
-      }
-      // Relative path (preferred).
-      if (!route.startsWith('/')) return true;
-      // Absolute path — only legacy `/admin/*` is allowed (with a warning).
-      if (route.startsWith('/admin/')) {
-        if (import.meta.env?.MODE !== 'production') {
-          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
-        }
-        return true;
-      }
+      const valid = isValidTab(tab);
       if (import.meta.env?.MODE !== 'production') {
-        console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+        const route = tab && typeof tab === 'object' ? tab.route : undefined;
+        if (valid && typeof route === 'string' && route.startsWith('/admin/')) {
+          // Accepted legacy route — warn to prompt migration.
+          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
+        } else if (!valid) {
+          if (typeof route === 'string') {
+            console.warn(`[admin] Invalid tab route filtered: "${route}"`);
+          } else {
+            console.warn('[admin] Invalid tab descriptor filtered (missing value, label, or route).');
+          }
+        }
       }
-      return false;
+      return valid;
     },
     /**
      * @desc Resolve a tab descriptor to a concrete absolute path.
