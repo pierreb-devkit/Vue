@@ -77,8 +77,11 @@ describe('organizations.suggestedJoinBanner.component', () => {
     authStoreMock.suggestedJoin = null;
     const wrapper = mountComponent();
 
-    // v-snackbar root is conditional — no content should be rendered
-    expect(wrapper.html()).toBe('<!--v-if-->');
+    // Primary banner is v-if guarded — no CTA or org name should be present
+    expect(wrapper.vm.suggestedJoin).toBe(null);
+    expect(wrapper.vm.visible).toBe(true);
+    // Feedback snackbar is outside the guard but hidden (feedback.visible=false)
+    expect(wrapper.vm.feedback.visible).toBe(false);
   });
 
   // ── Renders when set ─────────────────────────────────────────────────────

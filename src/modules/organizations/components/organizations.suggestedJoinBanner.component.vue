@@ -1,39 +1,38 @@
 <template>
-  <template v-if="suggestedJoin">
-    <v-snackbar
-      v-model="visible"
-      location="top right"
-      color="info"
-      :timeout="-1"
-      multi-line
-    >
-      <span class="text-body-medium">
-        <v-icon icon="fa-solid fa-building" size="small" class="mr-1" />
-        There may already be a workspace for <strong>{{ suggestedJoin.orgName }}</strong>. Request access?
-      </span>
-      <template #actions>
-        <v-btn
-          variant="text"
-          size="small"
-          class="text-none"
-          :loading="loading"
-          @click="requestAccess"
-        >
-          Request access
-        </v-btn>
-        <v-btn variant="text" size="small" icon="$close" :disabled="loading" @click="dismiss" />
-      </template>
-    </v-snackbar>
+  <v-snackbar
+    v-if="suggestedJoin"
+    v-model="visible"
+    location="top right"
+    color="info"
+    :timeout="-1"
+    multi-line
+  >
+    <span class="text-body-medium">
+      <v-icon icon="fa-solid fa-building" size="small" class="mr-1" />
+      There may already be a workspace for <strong>{{ suggestedJoin.orgName }}</strong>. Request access?
+    </span>
+    <template #actions>
+      <v-btn
+        variant="text"
+        size="small"
+        class="text-none"
+        :loading="loading"
+        @click="requestAccess"
+      >
+        Request access
+      </v-btn>
+      <v-btn variant="text" size="small" icon="$close" :disabled="loading" @click="dismiss" />
+    </template>
+  </v-snackbar>
 
-    <v-snackbar
-      v-model="feedback.visible"
-      location="top right"
-      :color="feedback.color"
-      :timeout="4000"
-    >
-      {{ feedback.text }}
-    </v-snackbar>
-  </template>
+  <v-snackbar
+    v-model="feedback.visible"
+    location="top right"
+    :color="feedback.color"
+    :timeout="4000"
+  >
+    {{ feedback.text }}
+  </v-snackbar>
 </template>
 
 <script>

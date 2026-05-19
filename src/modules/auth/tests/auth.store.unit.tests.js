@@ -823,6 +823,42 @@ describe('Auth Store', () => {
       const stored = JSON.parse(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`));
       expect(stored).toEqual({ orgId: 'o1', orgName: 'Acme' });
     });
+
+    it('setSuggestedJoin ignores arrays even though they pass typeof object', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin(['o1', 'Acme']);
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('setSuggestedJoin ignores objects missing orgId or orgName string fields', () => {
+      const authStore = useAuthStore();
+      authStore.setSuggestedJoin({ orgId: 'o1' }); // missing orgName
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgName: 'Acme' }); // missing orgId
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgId: 42, orgName: 'Acme' }); // non-string orgId
+      expect(authStore.suggestedJoin).toBe(null);
+      authStore.setSuggestedJoin({ orgId: '', orgName: 'Acme' }); // empty orgId
+      expect(authStore.suggestedJoin).toBe(null);
+    });
+
+    it('initFromStorage drops malformed-but-parseable localStorage values (array/missing fields) and removes the key', () => {
+      // Valid JSON but wrong shape — should not restore state
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify(['o1', 'Acme']));
+      const authStore = useAuthStore();
+      authStore.initFromStorage();
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
+
+    it('initFromStorage drops object missing required string fields and removes the key', () => {
+      localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify({ orgId: 'o1' }));
+      const authStore = useAuthStore();
+      authStore.initFromStorage();
+      expect(authStore.suggestedJoin).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
+    });
   });
 
   describe('resendVerification', () => {

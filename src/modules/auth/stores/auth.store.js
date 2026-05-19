@@ -71,7 +71,10 @@ export const useAuthStore = defineStore('auth', {
       this.cookieExpire = localStorage.getItem(`${config.cookie.prefix}CookieExpire`) || 0;
       const rawSuggestedJoin = localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`);
       try {
-        this.suggestedJoin = rawSuggestedJoin ? JSON.parse(rawSuggestedJoin) : null;
+        const parsed = rawSuggestedJoin ? JSON.parse(rawSuggestedJoin) : null;
+        const isValid = parsed && typeof parsed === 'object' && !Array.isArray(parsed) && typeof parsed.orgId === 'string' && parsed.orgId && typeof parsed.orgName === 'string' && parsed.orgName;
+        this.suggestedJoin = isValid ? parsed : null;
+        if (rawSuggestedJoin && !isValid) localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
       } catch {
         this.suggestedJoin = null;
         localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
@@ -166,7 +169,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {void}
      */
     setSuggestedJoin(payload) {
-      if (!payload || typeof payload !== 'object') return;
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload) || typeof payload.orgId !== 'string' || !payload.orgId || typeof payload.orgName !== 'string' || !payload.orgName) return;
       this.suggestedJoin = payload;
       localStorage.setItem(`${config.cookie.prefix}SuggestedJoin`, JSON.stringify(payload));
     },
