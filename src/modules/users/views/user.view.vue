@@ -17,14 +17,6 @@
               <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
               Organizations
             </v-tab>
-            <v-tab
-              v-if="showSubscriptionsTab"
-              value="subscriptions"
-              class="text-none text-body-medium"
-            >
-              <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2"></v-icon>
-              Subscriptions
-            </v-tab>
           </v-tabs>
           <v-divider></v-divider>
           <v-window v-model="tab">
@@ -103,10 +95,6 @@
                 </div>
               </div>
             </v-window-item>
-            <!-- Subscriptions tab — visible to org owners/admins, gated for billing-enabled servers -->
-            <v-window-item v-if="showSubscriptionsTab" value="subscriptions" class="pa-0">
-              <BillingSubscriptionsComponent />
-            </v-window-item>
           </v-window>
         </v-card>
 
@@ -163,15 +151,12 @@
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
-import { useBilling } from '../../billing/composables/billing.useBilling';
-import { useBillingStore } from '../../billing/stores/billing.store';
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import userProfileComponent from '../components/user.profile.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
-import BillingSubscriptionsComponent from '../../billing/components/billing.subscriptions.component.vue';
 
 export default {
   name: 'UserView',
@@ -180,19 +165,15 @@ export default {
     userProfileComponent,
     organizationsSwitcherComponent,
     orgAvatarComponent,
-    BillingSubscriptionsComponent,
   },
   /**
-   * @desc Wires auth, organizations, billing store and billing helpers for use
-   * across computed properties and methods.
-   * @returns {{ authStore: Object, organizationsStore: Object, billingStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   * @desc Wires auth and organizations store for use across computed properties and methods.
+   * @returns {{ authStore: Object, organizationsStore: Object }}
    */
   setup() {
     const authStore = useAuthStore();
     const organizationsStore = useOrganizationsStore();
-    const billingStore = useBillingStore();
-    const { isPlanActive } = useBilling();
-    return { authStore, organizationsStore, billingStore, isPlanActive };
+    return { authStore, organizationsStore };
   },
   data() {
     return {
@@ -218,29 +199,6 @@ export default {
       const id = this.authStore.user?.currentOrganization;
       return id?._id || id?.id || id;
     },
-    /**
-     * @desc Whether the user owns / administrates at least one organization.
-     * Drives Subscriptions tab visibility — only owners/admins see/manage billing.
-     * @returns {boolean}
-     */
-    hasOwnerOrAdminRole() {
-      const orgs = this.organizations || [];
-      return orgs.some((org) => org.role === 'owner' || org.role === 'admin');
-    },
-    /**
-     * @desc Show the Subscriptions tab when billing is enabled AND the user
-     * owns/administrates at least one org. Does NOT additionally require
-     * meterMode or an active subscription — BillingSubscriptionsComponent
-     * already renders a valid free-plan state when subscription is null, so
-     * gating on plan status would incorrectly hide the tab for free users on
-     * billing-enabled servers.
-     * @returns {boolean}
-     */
-    showSubscriptionsTab() {
-      const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
-      if (!billingEnabled) return false;
-      return this.hasOwnerOrAdminRole;
-    },
   },
   watch: {
     '$route.query.tab'() {
@@ -250,33 +208,9 @@ export default {
       this.applyTabFromRoute();
     },
     /**
-     * @desc Re-apply the route tab when showSubscriptionsTab flips to true.
-     * Fixes the async race: mounted() calls applyTabFromRoute() before
-     * fetchOrganizations() resolves, so showSubscriptionsTab is still false
-     * and ?tab=subscriptions is silently ignored. Re-applying once the tab
-     * becomes visible ensures the redirect from /billing lands correctly.
-     */
-    showSubscriptionsTab(val) {
-      if (val) this.applyTabFromRoute();
-    },
-    /**
-     * @desc Re-apply the route tab when serverConfig arrives or changes.
-     * Fixes the race where `showSubscriptionsTab` was already true (orgs cached)
-     * but serverConfig hadn't populated yet — no false→true flip on
-     * `showSubscriptionsTab` occurs, so only this watcher catches the update.
-     * Also handles serverConfig refresh (re-fetch) without a full page reload.
-     */
-    'authStore.serverConfig'() {
-      this.applyTabFromRoute();
-    },
-    /**
-     * @desc Refetch organizations + billing subscription whenever the auth
-     * state changes. Tab visibility (`showSubscriptionsTab`) depends on both
-     * `hasOwnerOrAdminRole` (organizations) and the billing feature flag, so
-     * a single billing refetch is not enough — the orgs list must also be
-     * hydrated after fresh login or the tab stays hidden.
-     * Silent catch: UI must still work on servers where billing is disabled
-     * or when either fetch transiently fails.
+     * @desc Refetch organizations whenever the auth state changes so the
+     * organizations tab stays hydrated after fresh login.
+     * Silent catch: UI must still work when fetches transiently fail.
      * @param {boolean} loggedIn - Auth state after the change.
      * @returns {Promise<void>}
      */
@@ -284,10 +218,7 @@ export default {
       immediate: true,
       async handler(loggedIn) {
         if (!loggedIn) return;
-        await Promise.all([
-          this.organizationsStore.fetchOrganizations().catch(() => {}),
-          this.billingStore.fetchSubscription().catch(() => {}),
-        ]);
+        await this.organizationsStore.fetchOrganizations().catch(() => {});
       },
     },
   },
@@ -303,8 +234,8 @@ export default {
     }
   },
   /**
-   * @desc Auto-switch to the Subscriptions tab when the route hash/query asks for it
-   * (e.g. /billing redirects to /users?tab=subscriptions).
+   * @desc Apply tab from query/hash on first render.
+   * @returns {void}
    */
   mounted() {
     this.applyTabFromRoute();
@@ -312,15 +243,15 @@ export default {
   methods: {
     roleColor,
     /**
-     * @desc Resolve a requested tab from the route (?tab= or #subscriptions) and switch
-     * the active tab when the requested tab is currently visible.
+     * @desc Resolve a requested tab from the route (?tab= or #...) and switch
+     * the active tab when the requested tab is one of the available tabs.
+     * @returns {void}
      */
     applyTabFromRoute() {
       const requested =
         this.$route?.query?.tab || (this.$route?.hash || '').replace(/^#/, '') || null;
       if (!requested) return;
-      if (requested === 'subscriptions' && !this.showSubscriptionsTab) return;
-      if (['profile', 'organizations', 'subscriptions'].includes(requested)) {
+      if (['profile', 'organizations'].includes(requested)) {
         this.tab = requested;
       }
     },

@@ -7,7 +7,7 @@
 
   Hover tooltip exposes the precise figures: "X / Y compute · resets <day>".
 
-  Click → navigates to /users?tab=subscriptions.
+  Click → navigates to /users/billing.
   Auto-fetches on mount + on window.focus.
 
   Gate: hidden when not logged in or meterMode false.
@@ -17,7 +17,7 @@
     <template #activator="{ props: tooltipProps }">
       <v-list-item
         v-bind="tooltipProps"
-        :to="{ path: '/users', query: { tab: 'subscriptions' } }"
+        :to="'/users/billing'"
         :aria-label="`Compute usage: ${usageMeter ? pctUsed + '% used' : '—'}`"
       >
         <template #prepend>

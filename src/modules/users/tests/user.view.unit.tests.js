@@ -3,7 +3,6 @@ import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { useBillingStore } from '../../billing/stores/billing.store';
 import UserView from '../views/user.view.vue';
 import axios from '../../../lib/services/axios';
 
@@ -35,7 +34,6 @@ const sharedStubs = {
   userProfileComponent: true,
   organizationsSwitcherComponent: true,
   orgAvatarComponent: true,
-  BillingSubscriptionsComponent: true,
   'v-container': { template: '<div><slot /></div>' },
   'v-row': { template: '<div><slot /></div>' },
   'v-col': { template: '<div><slot /></div>' },
@@ -135,89 +133,88 @@ describe('UserView – leaveOrg redirect behaviour', () => {
   });
 });
 
-// ── UserView – showSubscriptionsTab computed ─────────────────────────────────
+// ── UserView – C4 decoupling: no billing / subscriptions tab ─────────────────
 
-describe('UserView – showSubscriptionsTab', () => {
-  let authStore;
-  let billingStore;
-  let organizationsStore;
-
-  /**
-   * @desc Helper to mount UserView for showSubscriptionsTab tests.
-   * @param {Object} opts
-   * @param {Object} [opts.serverConfig]
-   * @param {Object|null} [opts.subscription]
-   * @param {Array} [opts.organizations]
-   * @returns {import('@vue/test-utils').VueWrapper}
-   */
-  const mountForTab = ({ serverConfig = null, subscription = null, organizations = [] } = {}) => {
-    authStore.serverConfig = serverConfig;
-    billingStore.subscription = subscription;
-    organizationsStore.organizations = organizations;
-
-    return shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks(),
-        stubs: sharedStubs,
-      },
-    });
-  };
-
+describe('UserView – C4 decoupling: billing tab removed', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    authStore = useAuthStore();
-    billingStore = useBillingStore();
-    organizationsStore = useOrganizationsStore();
+    const organizationsStore = useOrganizationsStore();
     organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
   });
 
-  it('is true when billing enabled, meterMode true, and user is owner of an org', () => {
-    const wrapper = mountForTab({
-      serverConfig: { billing: { enabled: true, meterMode: true } },
-      organizations: [{ id: 'o1', role: 'owner' }],
+  it('does not expose showSubscriptionsTab computed', () => {
+    const wrapper = shallowMount(UserView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
+    expect(wrapper.vm.showSubscriptionsTab).toBeUndefined();
   });
 
-  it('is true when billing enabled, user has active subscription, and is admin', () => {
-    const wrapper = mountForTab({
-      serverConfig: { billing: { enabled: true, meterMode: false } },
-      subscription: { status: 'active', plan: 'starter' },
-      organizations: [{ id: 'o1', role: 'admin' }],
+  it('does not expose hasOwnerOrAdminRole computed', () => {
+    const wrapper = shallowMount(UserView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
+    expect(wrapper.vm.hasOwnerOrAdminRole).toBeUndefined();
   });
 
-  it('is false when user has only member-role orgs (no owner/admin)', () => {
-    const wrapper = mountForTab({
-      serverConfig: { billing: { enabled: true, meterMode: true } },
-      organizations: [{ id: 'o1', role: 'member' }],
+  it('does not render a subscriptions tab in the template', () => {
+    const authStore = useAuthStore();
+    const organizationsStore = useOrganizationsStore();
+    authStore.serverConfig = { billing: { enabled: true } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner', name: 'Acme' }];
+
+    // Use a v-tab stub that captures its slot content so we can check for absence
+    const tabContents = [];
+    const vTabStub = {
+      template: '<div><slot /></div>',
+      created() { tabContents.push(this.$slots?.default?.()?.[0]?.children || ''); },
+    };
+
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: { ...sharedStubs, 'v-tab': vTabStub },
+      },
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
+
+    // No tab content should contain 'Subscriptions' or 'subscriptions'
+    const allContent = tabContents.join('').toLowerCase();
+    expect(allContent).not.toContain('subscriptions');
   });
 
-  it('is false when billing is disabled', () => {
-    const wrapper = mountForTab({
-      serverConfig: { billing: { enabled: false, meterMode: true } },
-      organizations: [{ id: 'o1', role: 'owner' }],
+  it('does not import or render BillingSubscriptionsComponent', () => {
+    // Register a sentinel stub — if user.view still imports and renders it, it would appear
+    const wrapper = shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: {
+          ...sharedStubs,
+          BillingSubscriptionsComponent: { template: '<div data-billing-sentinel />' },
+        },
+      },
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
+    expect(wrapper.html()).not.toContain('data-billing-sentinel');
   });
 
-  it('is false when billing not configured', () => {
-    const wrapper = mountForTab({ serverConfig: null, organizations: [{ id: 'o1', role: 'owner' }] });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(false);
-  });
+  it('only exposes profile and organizations tabs', () => {
+    const capturedValues = [];
+    const vTabStub = {
+      template: '<div><slot /></div>',
+      inheritAttrs: false,
+      created() {
+        if (this.$attrs.value) capturedValues.push(this.$attrs.value);
+      },
+    };
 
-  it('is true when billing is enabled and user is owner, even when meterMode false and no active subscription', () => {
-    // BillingSubscriptionsComponent renders a valid free-plan state; the tab should
-    // not require meterMode or an active subscription to be visible.
-    const wrapper = mountForTab({
-      serverConfig: { billing: { enabled: true, meterMode: false } },
-      subscription: null,
-      organizations: [{ id: 'o1', role: 'owner' }],
+    shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: { ...sharedStubs, 'v-tab': vTabStub },
+      },
     });
-    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
+
+    expect(capturedValues).toContain('profile');
+    expect(capturedValues).toContain('organizations');
+    expect(capturedValues).not.toContain('subscriptions');
   });
 });
 
@@ -225,13 +222,11 @@ describe('UserView – showSubscriptionsTab', () => {
 
 describe('UserView – tab routing from query/hash', () => {
   let authStore;
-  let billingStore;
   let organizationsStore;
 
   beforeEach(() => {
     setActivePinia(createPinia());
     authStore = useAuthStore();
-    billingStore = useBillingStore();
     organizationsStore = useOrganizationsStore();
     organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
   });
@@ -249,59 +244,53 @@ describe('UserView – tab routing from query/hash', () => {
       },
     });
 
-  it('switches to subscriptions tab when ?tab=subscriptions and tab is visible', async () => {
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-    billingStore.subscription = { status: 'active', plan: 'starter' };
-
-    const wrapper = mountWithRoute({ query: { tab: 'subscriptions' }, hash: '' });
-    // mounted hook applies the tab
-    expect(wrapper.vm.tab).toBe('subscriptions');
-  });
-
-  it('falls back to profile when ?tab=subscriptions but tab is not visible', async () => {
-    authStore.serverConfig = { billing: { enabled: false } };
+  it('switches to organizations tab when ?tab=organizations', async () => {
+    authStore.serverConfig = { billing: { enabled: true } };
     organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
 
-    const wrapper = mountWithRoute({ query: { tab: 'subscriptions' }, hash: '' });
-    expect(wrapper.vm.tab).toBe('profile');
-  });
-
-  it('switches to subscriptions tab when #subscriptions hash and tab is visible', async () => {
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    const wrapper = mountWithRoute({ query: {}, hash: '#subscriptions' });
-    expect(wrapper.vm.tab).toBe('subscriptions');
+    const wrapper = mountWithRoute({ query: { tab: 'organizations' }, hash: '' });
+    expect(wrapper.vm.tab).toBe('organizations');
   });
 
   it('keeps default profile tab when neither query nor hash is set', async () => {
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
+    authStore.serverConfig = { billing: { enabled: true } };
     organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
 
     const wrapper = mountWithRoute({ query: {}, hash: '' });
     expect(wrapper.vm.tab).toBe('profile');
   });
+
+  it('ignores ?tab=subscriptions (subscriptions tab removed) and stays on profile', async () => {
+    // After C4, there is no subscriptions tab — the request must be silently ignored
+    authStore.serverConfig = { billing: { enabled: true } };
+    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
+
+    const wrapper = mountWithRoute({ query: { tab: 'subscriptions' }, hash: '' });
+    expect(wrapper.vm.tab).toBe('profile');
+  });
+
+  it('switches to profile tab when ?tab=profile', async () => {
+    const wrapper = mountWithRoute({ query: { tab: 'profile' }, hash: '' });
+    expect(wrapper.vm.tab).toBe('profile');
+  });
 });
 
-// ── UserView – billing refetch on auth state change ──────────────────────────
+// ── UserView – organizations refetch on auth state change ────────────────────
 
-describe('UserView – billing refetch on auth state change', () => {
+describe('UserView – organizations refetch on auth state change', () => {
   let authStore;
-  let billingStore;
   let organizationsStore;
 
   beforeEach(() => {
     setActivePinia(createPinia());
     authStore = useAuthStore();
-    billingStore = useBillingStore();
     organizationsStore = useOrganizationsStore();
     organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
   });
 
-  it('calls fetchSubscription immediately when isLoggedIn is true at mount', async () => {
+  it('calls fetchOrganizations immediately when isLoggedIn is true at mount', async () => {
     authStore.cookieExpire = Date.now() + 3600000; // logged in
-    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
 
     shallowMount(UserView, {
       global: {
@@ -312,12 +301,13 @@ describe('UserView – billing refetch on auth state change', () => {
 
     // Flush microtasks so the immediate watcher handler resolves
     await new Promise((r) => setTimeout(r, 0));
-    expect(billingStore.fetchSubscription).toHaveBeenCalledTimes(1);
+    expect(organizationsStore.fetchOrganizations).toHaveBeenCalled();
   });
 
-  it('does not call fetchSubscription when isLoggedIn is false at mount', async () => {
+  it('does not call fetchOrganizations from watcher when isLoggedIn is false at mount', async () => {
     authStore.cookieExpire = 0; // logged out
-    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
+    const fetchOrgsSpy = vi.fn().mockResolvedValue([]);
+    organizationsStore.fetchOrganizations = fetchOrgsSpy;
 
     shallowMount(UserView, {
       global: {
@@ -327,200 +317,18 @@ describe('UserView – billing refetch on auth state change', () => {
     });
 
     await new Promise((r) => setTimeout(r, 0));
-    expect(billingStore.fetchSubscription).not.toHaveBeenCalled();
+    // The created() hook always calls fetchOrganizations once; the watcher must NOT call it
+    // a second time when not logged in. Total = 1 (from created), not 2.
+    expect(fetchOrgsSpy.mock.calls.length).toBeLessThanOrEqual(1);
   });
 
-  it('calls fetchSubscription when isLoggedIn transitions from false to true', async () => {
-    authStore.cookieExpire = 0; // start logged out
-    billingStore.fetchSubscription = vi.fn().mockResolvedValue(null);
-
-    shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks(),
-        stubs: sharedStubs,
-      },
-    });
-
-    await new Promise((r) => setTimeout(r, 0));
-    expect(billingStore.fetchSubscription).not.toHaveBeenCalled();
-
-    // Simulate login
-    authStore.cookieExpire = Date.now() + 3600000;
-    await new Promise((r) => setTimeout(r, 0));
-    expect(billingStore.fetchSubscription).toHaveBeenCalledTimes(1);
-  });
-
-  it('swallows fetchSubscription errors silently (no UI hang)', async () => {
+  it('does NOT have a billingStore.fetchSubscription call (billing decoupled)', async () => {
+    // Ensure user.view no longer touches any billingStore
     authStore.cookieExpire = Date.now() + 3600000; // logged in
-    billingStore.fetchSubscription = vi.fn().mockRejectedValue(new Error('Network error'));
 
-    // Should not throw
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks(),
-        stubs: sharedStubs,
-      },
-    });
-
-    await new Promise((r) => setTimeout(r, 0));
-    // Component is still alive — no uncaught error
-    expect(wrapper.vm).toBeTruthy();
-  });
-});
-
-// ── UserView – serverConfig watcher re-applies tab (Bug #1 subs tab race) ────
-
-describe('UserView – serverConfig watcher activates subs tab', () => {
-  let authStore;
-  let organizationsStore;
-
-  beforeEach(() => {
-    setActivePinia(createPinia());
-    authStore = useAuthStore();
-    // billing store is initialized in the component's setup chain via useBillingStore();
-    // we only need to drive serverConfig + organizations from this test suite.
-    useBillingStore();
-    organizationsStore = useOrganizationsStore();
-    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
-  });
-
-  it('activates subscriptions tab from ?tab=subscriptions when serverConfig.billing arrives after mount', async () => {
-    // At mount: serverConfig is null → showSubscriptionsTab is false → applyTabFromRoute() is a no-op
-    authStore.serverConfig = null;
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks({ push: vi.fn() }, { query: { tab: 'subscriptions' }, hash: '' }),
-        stubs: sharedStubs,
-      },
-    });
-
-    // Tab must NOT be set yet — billing config not available
-    expect(wrapper.vm.tab).toBe('profile');
-
-    // Simulate serverConfig arriving after mount (auth store server config fetch resolves)
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    await new Promise((r) => setTimeout(r, 0));
-
-    // Watcher on serverConfig must have re-called applyTabFromRoute() → tab flips
-    expect(wrapper.vm.tab).toBe('subscriptions');
-  });
-
-  it('re-applies tab when serverConfig refreshes but showSubscriptionsTab was already true (no false→true flip)', async () => {
-    // Start with billing enabled (showSubscriptionsTab already true) but tab not yet set
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    // Mount WITHOUT a route tab query so tab stays on 'profile'
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks({ push: vi.fn() }, { query: {}, hash: '' }),
-        stubs: sharedStubs,
-      },
-    });
-
-    expect(wrapper.vm.tab).toBe('profile');
-
-    // Now simulate a serverConfig refresh arriving — billing still enabled.
-    // showSubscriptionsTab stays true (no false→true transition), so the
-    // showSubscriptionsTab watcher will NOT fire. Only the serverConfig watcher
-    // would call applyTabFromRoute() — but since no tab is in the route, the
-    // result is the same (profile stays). This validates the watcher runs without error.
-    authStore.serverConfig = { billing: { enabled: true, meterMode: false } };
-    await new Promise((r) => setTimeout(r, 0));
-
-    // No route tab → still profile
-    expect(wrapper.vm.tab).toBe('profile');
-
-    // Now explicitly verify the watcher exists by checking the component's $options.watch
-    expect(wrapper.vm.$options.watch).toHaveProperty('authStore.serverConfig');
-  });
-
-  it('does not change tab when serverConfig arrives but billing is disabled', async () => {
-    authStore.serverConfig = null;
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks({ push: vi.fn() }, { query: { tab: 'subscriptions' }, hash: '' }),
-        stubs: sharedStubs,
-      },
-    });
-
-    expect(wrapper.vm.tab).toBe('profile');
-
-    // serverConfig arrives but billing disabled
-    authStore.serverConfig = { billing: { enabled: false } };
-    await new Promise((r) => setTimeout(r, 0));
-
-    expect(wrapper.vm.tab).toBe('profile');
-  });
-
-  it('does not change tab when serverConfig arrives but route has no tab query', async () => {
-    authStore.serverConfig = null;
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks({ push: vi.fn() }, { query: {}, hash: '' }),
-        stubs: sharedStubs,
-      },
-    });
-
-    expect(wrapper.vm.tab).toBe('profile');
-
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    await new Promise((r) => setTimeout(r, 0));
-
-    expect(wrapper.vm.tab).toBe('profile');
-  });
-});
-
-// ── UserView – subscriptions tab full-width (pa-0) ───────────────────────────
-
-describe('UserView – subscriptions tab is full-width (pa-0)', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia());
-    const organizationsStore = useOrganizationsStore();
-    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
-  });
-
-  it('v-window-item for subscriptions has class pa-0 (no padding wrapper)', () => {
-    const authStore = useAuthStore();
-    const organizationsStore = useOrganizationsStore();
-    authStore.serverConfig = { billing: { enabled: true, meterMode: true } };
-    organizationsStore.organizations = [{ id: 'o1', role: 'owner' }];
-
-    // Capture attrs on each v-window-item instance so we can assert the
-    // subscriptions one has class="pa-0" and does not wrap BillingSubscriptionsComponent
-    // in an extra pa-6 div.
-    // Note: do NOT declare 'value' as a prop — keep it in $attrs so it's accessible.
-    const capturedAttrs = {};
-    const windowItemStub = {
-      template: '<div><slot /></div>',
-      inheritAttrs: false,
-      created() {
-        if (this.$attrs.value === 'subscriptions') {
-          Object.assign(capturedAttrs, this.$attrs);
-        }
-      },
-    };
-
-    const wrapper = shallowMount(UserView, {
-      global: {
-        mocks: sharedMocks(),
-        stubs: {
-          ...sharedStubs,
-          'v-window-item': windowItemStub,
-        },
-      },
-    });
-
-    expect(wrapper.vm.showSubscriptionsTab).toBe(true);
-    // The subscriptions v-window-item must have value="subscriptions" and class="pa-0"
-    expect(capturedAttrs.value).toBe('subscriptions');
-    expect(capturedAttrs.class).toBe('pa-0');
+    // If user.view still imports billingStore and calls fetchSubscription, this would
+    // require a mock; its absence means the view is cleanly decoupled.
+    expect(Object.keys(UserView.components || {})).not.toContain('BillingSubscriptionsComponent');
   });
 });
 

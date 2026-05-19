@@ -337,7 +337,7 @@ describe('BillingNavComputeGaugeComponent', () => {
 
   // ── click navigation ─────────────────────────────────────────────────────
 
-  it('v-list-item links to /users?tab=subscriptions', () => {
+  it('v-list-item links to /users/billing', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
@@ -346,6 +346,6 @@ describe('BillingNavComputeGaugeComponent', () => {
 
     wrapper = mountComponent();
     const listItem = wrapper.findComponent({ name: 'VListItem' });
-    expect(listItem.props('to')).toEqual({ path: '/users', query: { tab: 'subscriptions' } });
+    expect(listItem.props('to')).toBe('/users/billing');
   });
 });

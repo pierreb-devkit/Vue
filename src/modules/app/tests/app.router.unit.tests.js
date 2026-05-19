@@ -250,7 +250,7 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/signin');
   });
 
-  it('/billing redirects to /users?tab=subscriptions when logged in', async () => {
+  it('/billing redirects to /users/billing (account billing view) when logged in', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: 'org1' };
     mockAbility.rules = [{ action: 'read', subject: 'User' }];
@@ -258,11 +258,10 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/billing');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/users');
-    expect(router.currentRoute.value.query.tab).toBe('subscriptions');
+    expect(router.currentRoute.value.path).toBe('/users/billing');
   });
 
-  it('/billing preserves Stripe success query params when redirecting to subscriptions', async () => {
+  it('/billing preserves Stripe query params when redirecting to /users/billing', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: 'org1' };
     mockAbility.rules = [{ action: 'read', subject: 'User' }];
@@ -270,11 +269,10 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/billing?success=true&type=extras');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/users');
+    expect(router.currentRoute.value.path).toBe('/users/billing');
     expect(router.currentRoute.value.query).toEqual({
       success: 'true',
       type: 'extras',
-      tab: 'subscriptions',
     });
   });
 
@@ -377,10 +375,9 @@ describe('app.router', () => {
       expect(Array.isArray(orgParent.children)).toBe(true);
     });
 
-    it('org parent children array stays empty in base devkit even when organizations module is active', async () => {
-      // We exercise the wiring by importing the organizations router directly and
-      // confirming that after app.router runs, the org parent has no unexpected
-      // children in the base devkit (empty array — downstream will populate it).
+    it('org parent children array contains the billing route when billing module is active', async () => {
+      // C2: billing is now wired into organizationChildModules. When billing is active,
+      // the org parent's children array must contain the injected billing child route.
       vi.resetModules();
       mockIsModuleActive = () => true;
       const mod = await setupRouterModule();
@@ -389,8 +386,26 @@ describe('app.router', () => {
         (r) => r.path === '/users/organizations/:organizationId',
       );
       expect(Array.isArray(orgParent.children)).toBe(true);
-      // Base devkit ships empty — no injected children
-      expect(orgParent.children).toHaveLength(0);
+      // C2 injects billing — expect at least the billing child
+      const billingChild = orgParent.children.find((c) => c.path === 'billing');
+      expect(billingChild).toBeDefined();
+      expect(billingChild.name).toBe('Account Organization Billing');
+    });
+
+    it('billing route is NOT injected under org parent when billing module is inactive', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'billing';
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const orgParent = router.options.routes.find(
+        (r) => r.path === '/users/organizations/:organizationId',
+      );
+      // Org module is active, so parent exists
+      expect(orgParent).toBeDefined();
+      expect(Array.isArray(orgParent.children)).toBe(true);
+      // Billing inactive → not injected under org parent
+      const billingChild = orgParent.children.find((c) => c.path === 'billing');
+      expect(billingChild).toBeUndefined();
     });
 
     it('a child module in organizationChildModules is injected under the org parent (ORG_PARENT_PATH)', async () => {

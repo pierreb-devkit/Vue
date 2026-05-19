@@ -1,239 +1,42 @@
 <template>
-  <v-container fluid>
-    <!-- Header -->
-    <PageHeader
-      :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
-    >
-      <template #avatar>
-        <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
-      </template>
-      <template #actions>
-        <v-btn
-          v-if="viewedOrganization && canManage"
-          color="error"
-          variant="tonal"
-          class="text-none text-body-medium mr-2"
-          :class="config.vuetify.theme.rounded"
-          @click="confirmDelete = true"
-        >
-          <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
-          Delete
-        </v-btn>
-      </template>
-    </PageHeader>
-
-    <!-- Content -->
-    <v-row class="pa-2">
-      <!-- Organization details -->
-      <v-col cols="12" md="4">
-        <v-card
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6"
-        >
-          <h3 class="text-title-medium font-weight-medium mb-4">Details</h3>
-          <v-form ref="form" v-model="valid">
-            <label class="text-label-large font-weight-medium d-block mb-1">Organization Name</label>
-            <v-text-field
-              v-model="name"
-              placeholder="Acme Inc."
-              :rules="[rules.required]"
-              variant="outlined"
-              density="comfortable"
-              :readonly="!canManage"
-              hide-details="auto"
-              class="mb-4"
-            ></v-text-field>
-            <label class="text-label-large font-weight-medium d-block mb-1">Description</label>
-            <v-textarea
-              v-model="description"
-              placeholder="What does this organization do?"
-              variant="outlined"
-              density="comfortable"
-              :readonly="!canManage"
-              rows="3"
-              hide-details="auto"
-              class="mb-6"
-            ></v-textarea>
-            <v-btn
-              v-if="canManage"
-              :disabled="!dirty || !valid"
-              color="primary"
-              variant="flat"
-              :class="config.vuetify.theme.rounded"
-              class="text-none text-body-medium"
-              block
-              @click="update"
-            >
-              Save Changes
-            </v-btn>
-          </v-form>
-        </v-card>
-
-        <!-- Billing & Plan shortcut (shown when billing is enabled for the org) -->
-        <v-card
-          v-if="showBillingLink"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6 mt-4 d-flex align-center justify-space-between flex-wrap ga-3"
-        >
-          <div>
-            <h3 class="text-title-small font-weight-medium mb-1">Billing &amp; Plan</h3>
-            <p class="text-body-small text-medium-emphasis mb-0">Manage subscription and usage.</p>
-          </div>
+  <div>
+    <!-- Layout chrome: header + tab bar, guttered with their own container -->
+    <v-container fluid>
+      <!-- Header -->
+      <PageHeader
+        :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
+      >
+        <template #avatar>
+          <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
+        </template>
+        <template #actions>
           <v-btn
-            color="primary"
+            v-if="viewedOrganization && canManage"
+            color="error"
             variant="tonal"
+            class="text-none text-body-medium mr-2"
             :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            to="/billing"
+            @click="confirmDelete = true"
           >
-            <v-icon icon="fa-solid fa-credit-card" size="small" class="mr-2" />
-            Manage subscription
+            <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
+            Delete
           </v-btn>
-        </v-card>
+        </template>
+      </PageHeader>
 
-        <v-card
-          v-if="Object.keys(roleDescriptions).length > 0"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6 mt-4"
-        >
-          <h3 class="text-title-medium font-weight-medium mb-4">Roles & Permissions</h3>
-          <v-list density="compact" class="bg-transparent">
-            <div v-for="(desc, role) in roleDescriptions" :key="role" class="d-flex align-start ga-3 mb-3">
-              <v-chip :color="roleColor(role)" variant="tonal" size="small" class="text-capitalize" style="min-width: 70px; justify-content: center;">{{ role }}</v-chip>
-              <span class="text-body-small text-medium-emphasis">{{ desc }}</span>
-            </div>
-          </v-list>
-        </v-card>
-      </v-col>
+      <!-- Tab bar (config-driven, CASL-gated) -->
+      <CoreSurfaceTabBar
+        :tabs="config.organizations.tabs"
+        :can="abilityCan"
+        :base-path="basePath"
+      />
+    </v-container>
 
-      <!-- Members section -->
-      <v-col cols="12" md="8">
-        <organizationsMembersComponent
-          v-if="viewedOrganization"
-          :organization-id="organizationId"
-        />
+    <!-- Active child route renders outside the layout container so each child's
+         own root <v-container> provides exactly one gutter (no double-nesting). -->
+    <router-view />
 
-        <!-- Invite member (owner/admin only) -->
-        <v-card
-          v-if="canManage"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6 mb-4 mt-4"
-        >
-          <h3 class="text-title-medium font-weight-medium mb-4">Invite Member</h3>
-          <v-form ref="inviteForm" v-model="inviteValid" @submit.prevent="sendInvite">
-            <div class="d-flex ga-2 flex-column flex-sm-row align-end">
-              <div class="flex-grow-1">
-                <label class="text-label-large font-weight-medium d-block mb-1">Email address</label>
-                <v-text-field
-                  v-model="inviteEmail"
-                  placeholder="colleague@example.com"
-                  type="email"
-                  :rules="[rules.required, rules.email]"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details="auto"
-                ></v-text-field>
-              </div>
-              <v-btn
-                color="primary"
-                variant="flat"
-                :class="config.vuetify.theme.rounded"
-                class="text-none text-body-medium"
-                :disabled="!inviteValid"
-                :loading="inviteLoading"
-                style="min-height: 48px;"
-                :block="$vuetify.display.xs"
-                @click="sendInvite"
-              >
-                Send Invite
-              </v-btn>
-            </div>
-          </v-form>
-          <v-alert v-if="inviteLink" type="info" variant="tonal" class="mt-2" closable @click:close="inviteLink = null">
-            <span class="text-body-small">Invite link (share manually if no email was sent):</span>
-            <div class="d-flex align-center mt-1 ga-2">
-              <code class="text-body-small flex-grow-1 text-truncate">{{ inviteLink }}</code>
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                :icon="copied ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
-                :color="copied ? 'success' : 'default'"
-                @click="copyInviteLink"
-              ></v-btn>
-            </div>
-          </v-alert>
-        </v-card>
-
-        <!-- Pending join requests (owner/admin only) -->
-        <v-card
-          v-if="canManage && pendingRequests.length > 0"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6 mt-4"
-        >
-          <h3 class="text-title-medium font-weight-medium mb-4">
-            Pending Join Requests
-            <v-chip size="small" color="warning" class="ml-2">{{ pendingRequests.length }}</v-chip>
-          </h3>
-          <v-list lines="two">
-            <v-list-item
-              v-for="request in pendingRequests"
-              :key="request._id || request.id"
-            >
-              <template #prepend>
-                <v-avatar color="secondary" size="36">
-                  <span class="text-white text-body-small font-weight-bold">
-                    {{ (request.userId?.firstName || request.userId?.email || '?').charAt(0).toUpperCase() }}
-                  </span>
-                </v-avatar>
-              </template>
-              <v-list-item-title class="text-body-medium font-weight-medium">
-                {{ request.userId?.firstName }} {{ request.userId?.lastName }}
-              </v-list-item-title>
-              <v-list-item-subtitle class="text-body-small">
-                {{ request.userId?.email }}
-                <span class="text-medium-emphasis ml-2">{{ formatTimeAgo(request.createdAt) }}</span>
-              </v-list-item-subtitle>
-              <template #append>
-                <v-btn
-                  color="success"
-                  variant="tonal"
-                  size="small"
-                  :class="config.vuetify.theme.rounded"
-                  class="text-none mr-2"
-                  :loading="requestActionLoading === (request._id || request.id)"
-                  @click="approveRequest(request)"
-                >
-                  Approve
-                </v-btn>
-                <v-btn
-                  color="error"
-                  variant="tonal"
-                  size="small"
-                  :class="config.vuetify.theme.rounded"
-                  class="text-none"
-                  :loading="requestActionLoading === (request._id || request.id)"
-                  @click="rejectRequest(request)"
-                >
-                  Reject
-                </v-btn>
-              </template>
-            </v-list-item>
-          </v-list>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Delete confirmation dialog -->
+    <!-- Delete confirmation dialog (layout-level: visible from any tab) -->
     <v-dialog v-model="confirmDelete" max-width="440">
       <v-card :class="config.vuetify.theme.rounded" class="pa-4">
         <v-card-title class="text-title-large font-weight-medium">Delete Organization</v-card-title>
@@ -268,223 +71,125 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>
 import { subject } from '@casl/ability';
+import { useRoute } from 'vue-router';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
-import { useAuthStore } from '../../auth/stores/auth.store';
-import { useBilling } from '../../billing/composables/billing.useBilling';
-import roleColor from '../../../lib/helpers/roleColor';
-import organizationsMembersComponent from './organizations.members.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
+import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
 
 export default {
   name: 'OrganizationDetailComponent',
   components: {
-    organizationsMembersComponent,
     PageHeader,
     orgAvatarComponent,
+    CoreSurfaceTabBar,
   },
   props: {
-    organizationId: { type: String, required: true },
+    organizationId: { type: String, default: null },
     backRoute: { type: String, default: '/users' },
   },
   /**
-   * @desc Wires auth and billing helpers for use in computed properties.
-   * @returns {{ authStore: Object, isPlanActive: import('vue').ComputedRef<boolean> }}
+   * @desc Wires route access for reactive basePath computation.
+   * @returns {{ route: import('vue-router').RouteLocationNormalizedLoaded }}
    */
   setup() {
-    const authStore = useAuthStore();
-    const { isPlanActive } = useBilling();
-    return { authStore, isPlanActive };
+    const route = useRoute();
+    return { route };
   },
   data() {
     return {
-      valid: false,
-      dirty: false,
       confirmDelete: false,
       deleteConfirmName: '',
-      pendingRequests: [],
-      requestActionLoading: null,
-      inviteEmail: '',
-      inviteValid: false,
-      inviteLoading: false,
-      inviteLink: null,
-      copied: false,
-      rules: {
-        required: (v) => !!v || 'Required',
-        email: (v) => /\S+@\S+\.\S+/.test(v) || 'Valid email required',
-      },
     };
   },
   computed: {
-    viewedOrganization() {
-      const organizationsStore = useOrganizationsStore();
-      return organizationsStore.viewedOrganization;
+    /**
+     * @desc Resolves the organization ID from `route.params.organizationId`
+     *       (present on both user and admin routes) or falls back to the
+     *       `organizationId` prop (a static fallback; admin route props only
+     *       supply `backRoute`, not the ID). Route params take precedence.
+     * @returns {string|null}
+     */
+    resolvedOrganizationId() {
+      return (this.route && this.route.params && this.route.params.organizationId)
+        || this.organizationId
+        || null;
     },
-    roleDescriptions() {
-      return this.authStore.serverConfig?.organizations?.roleDescriptions || {};
+    viewedOrganization() {
+      return useOrganizationsStore().viewedOrganization;
     },
     canManage() {
       if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('update', subject('Organization', { _id: this.organizationId }));
+        return ability.can('update', subject('Organization', { _id: this.resolvedOrganizationId }));
       }
       return false;
     },
     /**
-     * @desc Show the billing link when billing is enabled (meterMode or active subscription).
-     * Only visible to org owners/admins who can already manage the org.
-     * @returns {boolean}
+     * @desc RESOLVED base path for CoreSurfaceTabBar — uses the actual
+     *       organizationId value, never the raw `:organizationId` pattern.
+     *       Route-aware: admin routes → `/admin/organizations/{id}`,
+     *       user routes → `/users/organizations/{id}`.
+     *       Example: `/users/organizations/abc123`
+     * @returns {string}
      */
-    showBillingLink() {
-      if (!this.canManage) return false;
-      const billingEnabled = this.authStore.serverConfig?.billing?.enabled === true;
-      const meterMode = this.authStore.serverConfig?.billing?.meterMode === true;
-      return billingEnabled && (meterMode || this.isPlanActive);
+    basePath() {
+      const isAdmin = this.route && this.route.path && this.route.path.startsWith('/admin');
+      const prefix = isAdmin ? '/admin/organizations' : '/users/organizations';
+      return `${prefix}/${this.resolvedOrganizationId}`;
     },
-    name: {
-      get() { return this.viewedOrganization ? this.viewedOrganization.name : ''; },
-      set(value) {
-        const organizationsStore = useOrganizationsStore();
-        if (organizationsStore.viewedOrganization) {
-          organizationsStore.viewedOrganization.name = value;
-          this.dirty = true;
-        }
-      },
-    },
-    description: {
-      get() { return this.viewedOrganization ? this.viewedOrganization.description : ''; },
-      set(value) {
-        const organizationsStore = useOrganizationsStore();
-        if (organizationsStore.viewedOrganization) {
-          organizationsStore.viewedOrganization.description = value;
-          this.dirty = true;
-        }
-      },
+    /**
+     * @desc Bound CASL predicate passed to CoreSurfaceTabBar.
+     *       Re-evaluates whenever the reactive `ability` instance updates.
+     * @returns {Function}
+     */
+    abilityCan() {
+      return (action, subjectName) => ability.can(action, subjectName);
     },
   },
+  watch: {
+    /**
+     * @desc Re-fetch organization when the route param changes (component instance reuse).
+     * @returns {Promise<void>}
+     */
+    async resolvedOrganizationId() {
+      const organizationsStore = useOrganizationsStore();
+      organizationsStore.resetOrganization();
+      if (this.resolvedOrganizationId) {
+        await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
+      }
+    },
+  },
+  /**
+   * @desc Fetch the organization on initial mount so the header and tab bar have data.
+   * @returns {Promise<void>}
+   */
   async created() {
     const organizationsStore = useOrganizationsStore();
     organizationsStore.resetOrganization();
-    if (this.organizationId) {
-      await organizationsStore.fetchOrganization(this.organizationId);
-      await this.loadPendingRequests();
+    if (this.resolvedOrganizationId) {
+      await organizationsStore.fetchOrganization(this.resolvedOrganizationId);
     }
   },
   methods: {
-    roleColor,
-    async update() {
-      const form = await this.$refs.form.validate();
-      if (form.valid) {
-        const organizationsStore = useOrganizationsStore();
-        try {
-          await organizationsStore.updateOrganization(this.organizationId, {
-            name: this.name,
-            description: this.description,
-          });
-          this.dirty = false;
-        } catch {
-          // interceptor handles snackbar
-        }
-      }
-    },
+    /**
+     * @desc Delete the viewed organization after confirmation and navigate back.
+     * @returns {Promise<void>}
+     */
     async remove() {
       const organizationsStore = useOrganizationsStore();
       try {
-        await organizationsStore.deleteOrganization(this.organizationId);
+        await organizationsStore.deleteOrganization(this.resolvedOrganizationId);
         this.confirmDelete = false;
         this.deleteConfirmName = '';
         this.$router.push(this.backRoute);
       } catch {
         // interceptor handles snackbar
-      }
-    },
-    async loadPendingRequests() {
-      const organizationsStore = useOrganizationsStore();
-      try {
-        this.pendingRequests = await organizationsStore.fetchPendingRequests(this.organizationId);
-      } catch {
-        // User may not have permission — ignore
-      }
-    },
-    async approveRequest(request) {
-      const requestId = request._id || request.id;
-      this.requestActionLoading = requestId;
-      const organizationsStore = useOrganizationsStore();
-      try {
-        await organizationsStore.approveRequest(this.organizationId, requestId);
-        this.pendingRequests = this.pendingRequests.filter((r) => (r._id || r.id) !== requestId);
-        await organizationsStore.fetchMembers(this.organizationId);
-      } catch {
-        // interceptor handles snackbar
-      } finally {
-        this.requestActionLoading = null;
-      }
-    },
-    async sendInvite() {
-      const form = await this.$refs.inviteForm.validate();
-      if (!form.valid) return;
-      this.inviteLoading = true;
-      const organizationsStore = useOrganizationsStore();
-      try {
-        const result = await organizationsStore.inviteMember(this.organizationId, this.inviteEmail);
-        const front = `${this.config.api.protocol}://${this.config.api.host}`;
-        this.inviteLink = `${front}/invite?token=${result.inviteToken}`;
-        this.inviteEmail = '';
-        this.$refs.inviteForm.reset();
-      } catch {
-        // interceptor handles snackbar
-      } finally {
-        this.inviteLoading = false;
-      }
-    },
-    /**
-     * @desc Format a date as a relative time string.
-     * @param {string|Date} date - The date to format
-     * @returns {string} Relative time string (e.g. "5m ago", "2d ago")
-     */
-    formatTimeAgo(date) {
-      if (!date) return '';
-      const now = new Date();
-      const then = new Date(date);
-      const diffMs = now - then;
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return 'just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 30) return `${diffDays}d ago`;
-      return `${Math.floor(diffDays / 30)}mo ago`;
-    },
-    /**
-     * @desc Copy the invite link to clipboard.
-     * @returns {Promise<void>}
-     */
-    async copyInviteLink() {
-      try {
-        await navigator.clipboard.writeText(this.inviteLink);
-        this.copied = true;
-        setTimeout(() => { this.copied = false; }, 2000);
-      } catch {
-        // fallback: select text manually
-      }
-    },
-    async rejectRequest(request) {
-      const requestId = request._id || request.id;
-      this.requestActionLoading = requestId;
-      const organizationsStore = useOrganizationsStore();
-      try {
-        await organizationsStore.rejectRequest(this.organizationId, requestId);
-        this.pendingRequests = this.pendingRequests.filter((r) => (r._id || r.id) !== requestId);
-      } catch {
-        // interceptor handles snackbar
-      } finally {
-        this.requestActionLoading = null;
       }
     },
   },
