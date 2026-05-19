@@ -7,7 +7,8 @@ import adminOrganizations from '../views/admin.organizations.view.vue';
 import adminReadiness from '../views/admin.readiness.view.vue';
 import adminActivity from '../views/admin.activity.view.vue';
 import adminUser from '../views/admin.user.view.vue';
-import adminOrganization from '../views/admin.organization.view.vue';
+import organizationLayout from '../../organizations/components/organization.detail.component.vue';
+import organizationGeneralTab from '../../organizations/components/organization.general.tab.vue';
 
 /**
  * Router configuration.
@@ -24,6 +25,10 @@ import adminOrganization from '../views/admin.organization.view.vue';
  * Downstream modules that contribute an "admin tab" must register their
  * routes via the `injectAdminChildren` helper in `@/lib/helpers/router`
  * with **relative** paths (e.g. `'knowledge'`, not `'/admin/knowledge'`).
+ *
+ * C3 note: Admin Organization reuses the shared `organizationLayout` +
+ * `organizationGeneralTab` components. The layout receives `backRoute="/admin"`
+ * via route props so the delete action redirects back to the admin section.
  */
 export default [
   {
@@ -69,11 +74,28 @@ export default [
       {
         path: 'organizations/:organizationId',
         name: 'Admin Organization',
-        component: adminOrganization,
+        component: organizationLayout,
+        props: { backRoute: '/admin' },
         meta: {
           display: false,
           action: 'manage', subject: 'UserAdmin',
         },
+        // Default child: reuses the shared general-tab so admin org detail
+        // renders the same sections (Details, Roles, Members, Invite, Pending).
+        children: [
+          {
+            path: '',
+            name: 'Admin Organization General',
+            component: organizationGeneralTab,
+            props: (route) => ({
+              organizationId: route.params.organizationId,
+            }),
+            meta: {
+              display: false,
+              action: 'manage', subject: 'UserAdmin',
+            },
+          },
+        ],
       },
       {
         path: 'readiness',

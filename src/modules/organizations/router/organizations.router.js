@@ -3,7 +3,8 @@
  */
 import organizationRequired from '../views/organizations.required.view.vue';
 import organizationCreate from '../views/organization.create.view.vue';
-import organization from '../views/organization.view.vue';
+import organizationLayout from '../components/organization.detail.component.vue';
+import organizationGeneralTab from '../components/organization.general.tab.vue';
 import invite from '../views/invite.view.vue';
 
 /**
@@ -40,15 +41,28 @@ export default [
   {
     path: ORG_PARENT_PATH,
     name: 'Account Organization',
-    component: organization,
+    component: organizationLayout,
     meta: {
       display: false,
       action: 'read',
       subject: 'Organization',
     },
-    // Injection point for downstream modules (e.g. billing settings tab).
-    // PR (c) / downstream projects populate this via organizationChildModules.
-    children: [],
+    // Default child: native org-settings sections (Details, Roles, Members,
+    // Invite, Pending Requests). Downstream child modules (e.g. billing)
+    // are injected via organizationChildModules in app.router.js.
+    children: [
+      {
+        path: '',
+        name: 'Account Organization General',
+        component: organizationGeneralTab,
+        props: (route) => ({ organizationId: route.params.organizationId }),
+        meta: {
+          display: false,
+          action: 'read',
+          subject: 'Organization',
+        },
+      },
+    ],
   },
   {
     path: '/invite',

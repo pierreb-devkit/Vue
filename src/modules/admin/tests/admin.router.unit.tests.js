@@ -119,11 +119,18 @@ describe('admin.router (integration with vue-router)', () => {
     expect(router.currentRoute.value.params.id).toBe('abc123');
   });
 
-  it('should resolve /admin/organizations/:organizationId', async () => {
+  it('should resolve /admin/organizations/:organizationId to the general tab default child', async () => {
     const router = buildRouter();
     await router.push('/admin/organizations/org42');
-    expect(router.currentRoute.value.name).toBe('Admin Organization');
+    // C3: Admin Organization now has a default child (general tab).
+    // The leaf route name is 'Admin Organization General'.
+    expect(router.currentRoute.value.name).toBe('Admin Organization General');
     expect(router.currentRoute.value.params.organizationId).toBe('org42');
+    // The matched array: /admin → Admin Organization → Admin Organization General
+    const matched = router.currentRoute.value.matched;
+    expect(matched.length).toBe(3);
+    expect(matched[1].name).toBe('Admin Organization');
+    expect(matched[2].name).toBe('Admin Organization General');
   });
 
   it('should deep-link to an injected child route (e.g. /admin/knowledge)', async () => {
