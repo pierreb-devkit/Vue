@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import testConfig from '../../../config/defaults/test.config.js';
 
+// Mirror the constant from organizations.router so tests don't hardcode the string
+// while avoiding a top-level SFC import (which would conflict with vi.mock hoisting).
+// If ORG_PARENT_PATH ever changes, the injection test (which imports the real constant
+// inside the test body) will catch the drift before these assertions silently pass.
+const ORG_PARENT_PATH = '/users/organizations/:organizationId';
+
 let mockIsModuleActive = () => true;
 vi.mock('../../../lib/helpers/modules', () => ({
   isModuleActive: (...args) => mockIsModuleActive(...args),
@@ -362,10 +368,10 @@ describe('app.router', () => {
   });
 
   describe('organizationChildModules injection point', () => {
-    it('org parent route /users/organizations/:organizationId has a children array (injection seam)', () => {
+    it('org parent route ORG_PARENT_PATH has a children array (injection seam)', () => {
       const router = getRouter();
       const orgParent = router.options.routes.find(
-        (r) => r.path === '/users/organizations/:organizationId',
+        (r) => r.path === ORG_PARENT_PATH,
       );
       expect(orgParent).toBeDefined();
       expect(Array.isArray(orgParent.children)).toBe(true);
@@ -436,21 +442,23 @@ describe('app.router', () => {
         };
       });
 
-      const mod = await setupRouterModule();
-      const router = mod.default();
+      try {
+        const mod = await setupRouterModule();
+        const router = mod.default();
 
-      // The org parent must be found via ORG_PARENT_PATH — not a hardcoded string.
-      const orgParent = router.options.routes.find((r) => r.path === orgParentPath);
-      expect(orgParent).toBeDefined();
-      expect(Array.isArray(orgParent.children)).toBe(true);
-      // The fake child module's route must appear under the org parent.
-      const injected = orgParent.children.find((c) => c.path === fakeChildRoute.path);
-      expect(injected).toBeDefined();
-      expect(injected.name).toBe(fakeChildRoute.name);
-
-      // Remove test-local mocks so they don't bleed into subsequent tests.
-      vi.doUnmock('../../organizations/router/organizations.router');
-      vi.doUnmock('../../../lib/helpers/router');
+        // The org parent must be found via ORG_PARENT_PATH — not a hardcoded string.
+        const orgParent = router.options.routes.find((r) => r.path === orgParentPath);
+        expect(orgParent).toBeDefined();
+        expect(Array.isArray(orgParent.children)).toBe(true);
+        // The fake child module's route must appear under the org parent.
+        const injected = orgParent.children.find((c) => c.path === fakeChildRoute.path);
+        expect(injected).toBeDefined();
+        expect(injected.name).toBe(fakeChildRoute.name);
+      } finally {
+        // Always remove test-local mocks so they don't bleed into subsequent tests.
+        vi.doUnmock('../../organizations/router/organizations.router');
+        vi.doUnmock('../../../lib/helpers/router');
+      }
     });
 
     it('inactive organizations module does not expose the org parent route', async () => {
@@ -459,7 +467,7 @@ describe('app.router', () => {
       const mod = await setupRouterModule();
       const router = mod.default();
       const orgParent = router.options.routes.find(
-        (r) => r.path === '/users/organizations/:organizationId',
+        (r) => r.path === ORG_PARENT_PATH,
       );
       // When the module is inactive, the route is excluded entirely
       expect(orgParent).toBeUndefined();

@@ -189,12 +189,13 @@ describe('injectAdminChildren', () => {
 /**
  * injectModuleChildren — generalized form.
  *
- * Signature: injectModuleChildren(routes, childModules, isModuleActive)
- * Works identically to injectAdminChildren but finds the parent by the
- * caller-supplied `parentPath` param (defaults to '/admin' for back-compat).
+ * Signature: injectModuleChildren(routes, childModules, isModuleActive, parentPath, callerName)
+ *  - parentPath defaults to '/admin' for back-compat with injectAdminChildren.
+ *  - callerName defaults to 'injectModuleChildren'; injectAdminChildren passes
+ *    'injectAdminChildren' so dev-mode warnings identify the wrapper correctly.
  *
  * These tests verify the same contracts as injectAdminChildren to confirm
- * the wrapper delegates faithfully.
+ * the wrapper delegates faithfully, plus additional cases for custom parentPath.
  */
 describe('injectModuleChildren', () => {
   it('appends each active module\'s valid routes to the parent', () => {
