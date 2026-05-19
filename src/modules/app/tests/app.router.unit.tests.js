@@ -250,7 +250,7 @@ describe('app.router', () => {
     expect(router.currentRoute.value.path).toBe('/signin');
   });
 
-  it('/billing redirects to /users?tab=subscriptions when logged in', async () => {
+  it('/billing redirects to /users/billing (account billing view) when logged in', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: 'org1' };
     mockAbility.rules = [{ action: 'read', subject: 'User' }];
@@ -258,11 +258,10 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/billing');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/users');
-    expect(router.currentRoute.value.query.tab).toBe('subscriptions');
+    expect(router.currentRoute.value.path).toBe('/users/billing');
   });
 
-  it('/billing preserves Stripe success query params when redirecting to subscriptions', async () => {
+  it('/billing preserves Stripe query params when redirecting to /users/billing', async () => {
     mockAuthStore.isLoggedIn = true;
     mockAuthStore.user = { currentOrganization: 'org1' };
     mockAbility.rules = [{ action: 'read', subject: 'User' }];
@@ -270,11 +269,10 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/billing?success=true&type=extras');
     await router.isReady();
-    expect(router.currentRoute.value.path).toBe('/users');
+    expect(router.currentRoute.value.path).toBe('/users/billing');
     expect(router.currentRoute.value.query).toEqual({
       success: 'true',
       type: 'extras',
-      tab: 'subscriptions',
     });
   });
 
