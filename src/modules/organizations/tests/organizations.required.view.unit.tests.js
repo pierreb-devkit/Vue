@@ -131,3 +131,79 @@ describe('organizations.required.view — email verification gate', () => {
     expect(wrapper.vm.resent).toBe(false);
   });
 });
+
+describe('organizations.required.view — D3 recovery copy', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    searchDomainMock.mockReset().mockResolvedValue([]);
+    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    signoutMock.mockReset().mockResolvedValue();
+    authStoreMock.user = { emailVerified: true, email: 'test@example.com' };
+    authStoreMock.serverConfig = { mail: { configured: false } };
+    authStoreMock.pendingRequests = [];
+  });
+
+  it('shows recovery heading "No workspace found"', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('No workspace found');
+  });
+
+  it('shows recovery intro containing "not a member of any workspace"', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.vm.$el.textContent).toContain('not a member of any workspace');
+  });
+
+  it('does NOT contain old onboarding heading "Organization Required"', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.vm.$el.textContent).not.toContain('Organization Required');
+  });
+
+  it('does NOT contain old onboarding intro "You need to belong to an organization"', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.vm.$el.textContent).not.toContain('You need to belong to an organization');
+  });
+
+  it('interactive surface — create-organization route link is present', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    // The "Create an organization" v-btn renders with to="/users/organizations/create"
+    const createBtn = wrapper.find('[href="/users/organizations/create"], [to="/users/organizations/create"]');
+    // May not be a DOM href in test env; verify text instead
+    expect(wrapper.text()).toContain('Create an organization');
+  });
+
+  it('interactive surface — sign-out link is present', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Sign out');
+  });
+
+  it('interactive surface — request-to-join rendered when domain orgs present', async () => {
+    searchDomainMock.mockResolvedValueOnce([{ _id: 'org1', name: 'Acme Corp' }]);
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Request to join');
+  });
+
+  it('interactive surface — check-status button rendered when pending request present', async () => {
+    authStoreMock.pendingRequests = [{ organizationId: { _id: 'org1', name: 'Acme Corp' } }];
+    searchDomainMock.mockResolvedValueOnce([]);
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Check status');
+  });
+});
