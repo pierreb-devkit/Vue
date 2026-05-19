@@ -68,7 +68,7 @@ export function isValidTab(tab) {
  */
 export function resolveSurfaceTabs(tabs, can) {
   if (typeof can !== 'function') throw new TypeError('[resolveSurfaceTabs] can must be a function');
-  return (tabs || [])
+  return (Array.isArray(tabs) ? tabs : [])
     .filter(isValidTab)
     .filter((t) => (t.action && t.subject ? can(t.action, t.subject) : true));
 }

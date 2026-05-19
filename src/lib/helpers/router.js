@@ -78,16 +78,18 @@ const isValidChildRoute = (route, moduleName, parentPath, callerName = 'injectMo
  *   as active and injected unconditionally.
  * @param {string} [parentPath='/admin'] - The `path` of the parent route to
  *   inject into. Defaults to `'/admin'` for back-compat with injectAdminChildren.
+ * @param {string} [callerName='injectModuleChildren'] - Name of the calling function
+ *   included in dev-mode warnings so diagnostics identify the right entry point.
  * @returns {Array<object>} The same `routes` reference (mutated) for chaining.
  */
-export const injectModuleChildren = (routes, childModules, isModuleActive, parentPath = '/admin') => {
+export const injectModuleChildren = (routes, childModules, isModuleActive, parentPath = '/admin', callerName = 'injectModuleChildren') => {
   if (!Array.isArray(routes) || !Array.isArray(childModules)) return routes;
   const parent = routes.find((r) => r && r.path === parentPath && Array.isArray(r.children));
   if (!parent) return routes;
   for (const mod of childModules) {
     if (!mod || !mod.name || !Array.isArray(mod.routes)) continue;
     if (typeof isModuleActive === 'function' && !isModuleActive(mod.name)) continue;
-    const validRoutes = mod.routes.filter((r) => isValidChildRoute(r, mod.name, parentPath));
+    const validRoutes = mod.routes.filter((r) => isValidChildRoute(r, mod.name, parentPath, callerName));
     parent.children.push(...validRoutes);
   }
   return routes;
@@ -105,10 +107,12 @@ export const injectModuleChildren = (routes, childModules, isModuleActive, paren
  * @param {(name: string) => boolean} [isModuleActive] - Optional module
  *   activation predicate. When omitted, all provided modules are treated
  *   as active and injected unconditionally.
+ * @param {string} [callerName='injectAdminChildren'] - Caller name forwarded to
+ *   {@link injectModuleChildren} so dev-mode warnings identify the admin wrapper.
  * @returns {Array<object>} The same `adminRoutes` reference (mutated) for chaining.
  */
-export const injectAdminChildren = (adminRoutes, adminChildModules, isModuleActive) =>
-  injectModuleChildren(adminRoutes, adminChildModules, isModuleActive, '/admin');
+export const injectAdminChildren = (adminRoutes, adminChildModules, isModuleActive, callerName = 'injectAdminChildren') =>
+  injectModuleChildren(adminRoutes, adminChildModules, isModuleActive, '/admin', callerName);
 
 /**
  * Exports.

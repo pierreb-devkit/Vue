@@ -169,6 +169,10 @@ describe('resolveSurfaceTabs', () => {
     expect(resolveSurfaceTabs(undefined, can)).toEqual([]);
   });
 
+  it('handles a truthy non-array tabs input gracefully (e.g. plain object)', () => {
+    expect(resolveSurfaceTabs({}, can)).toEqual([]);
+  });
+
   it('filters invalid + CASL-denied in one pass', () => {
     const tabs = [
       { value: 'billing', label: 'Billing', route: 'billing', action: 'manage', subject: 'Organization' },
