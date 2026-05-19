@@ -112,21 +112,33 @@ describe('organizations.suggestedJoinBanner.component', () => {
   });
 
   // ── Benign rejection matrix ───────────────────────────────────────────────
+  // Uses the REAL backend error strings (capitalized as thrown by the Node service).
+  // Sources: organizations.membership.service.js L160, L161, L165;
+  //          organizations.controller.js L211 (404).
 
   it.each([
     [
-      'Already a member',
-      makeAxiosError(409, 'Already a member'),
+      'already a member (same-org active)',
+      // membership.service.js L160: 'Already a member of this organization'
+      makeAxiosError(422, 'Already a member of this organization'),
       "You're already a member of that workspace.",
     ],
     [
-      'A pending request already exists',
-      makeAxiosError(409, 'A pending request already exists'),
+      'same-org pending request exists',
+      // membership.service.js L161: 'A pending request already exists'
+      makeAxiosError(422, 'A pending request already exists'),
+      'Request already sent. Awaiting approval.',
+    ],
+    [
+      'cross-org one-pending cap',
+      // membership.service.js L165: 'You already have a pending request. Please wait...'
+      makeAxiosError(422, 'You already have a pending request. Please wait for it to be reviewed before requesting to join another organization.'),
       'Request already sent. Awaiting approval.',
     ],
     [
       'org not found / 404',
-      makeAxiosError(404, 'Organization not found'),
+      // organizations.controller.js L211: 'No Organization with that identifier has been found'
+      makeAxiosError(404, 'No Organization with that identifier has been found'),
       'That workspace no longer exists.',
     ],
   ])(
@@ -208,6 +220,29 @@ describe('organizations.suggestedJoinBanner.component', () => {
     await flushPromises();
 
     expect(wrapper.vm.loading).toBe(false);
+  });
+
+  // ── Double-submit guard ───────────────────────────────────────────────────
+
+  it('concurrent double-click calls createJoinRequest exactly once', async () => {
+    // Vuetify 4 v-btn :loading does NOT block @click — guard must be in code.
+    authStoreMock.suggestedJoin = { orgId: 'org1', orgName: 'Acme Corp' };
+    let resolveRequest;
+    createJoinRequestMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      }),
+    );
+
+    const wrapper = mountComponent();
+    // Fire two concurrent calls without awaiting the first
+    const first = wrapper.vm.requestAccess();
+    const second = wrapper.vm.requestAccess(); // mid-flight, loading=true → no-op
+    resolveRequest({});
+    await Promise.all([first, second]);
+    await flushPromises();
+
+    expect(createJoinRequestMock).toHaveBeenCalledTimes(1);
   });
 
   // ── No-op guard ───────────────────────────────────────────────────────────

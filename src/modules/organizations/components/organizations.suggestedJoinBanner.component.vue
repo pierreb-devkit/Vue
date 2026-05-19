@@ -21,7 +21,7 @@
         >
           Request access
         </v-btn>
-        <v-btn variant="text" size="small" icon="$close" @click="dismiss" />
+        <v-btn variant="text" size="small" icon="$close" :disabled="loading" @click="dismiss" />
       </template>
     </v-snackbar>
 
@@ -46,13 +46,17 @@ import { useOrganizationsStore } from '../stores/organizations.store';
 /**
  * Benign terminal error messages returned by the backend.
  * These are NOT product errors — they indicate a resolved or pre-existing state.
+ * Each entry is a lowercased substring of the real backend message string (source shown).
  * @type {string[]}
  */
 const BENIGN_MESSAGES = [
+  // organizations.membership.service.js L160: 'Already a member of this organization'
   'already a member',
+  // organizations.membership.service.js L161: 'A pending request already exists'
   'a pending request already exists',
-  'pending request already exists',
-  'organization not found',
+  // organizations.membership.service.js L165: 'You already have a pending request. Please wait for it to be reviewed before requesting to join another organization.'
+  'you already have a pending request',
+  // 404 is handled by the status fast-path in isBenign() — no string entry needed
 ];
 
 /**
@@ -77,13 +81,16 @@ function isBenign(err) {
 function benignMessage(err) {
   const status = err?.response?.status;
   const desc = (err?.response?.data?.description || '').toLowerCase();
-  if (status === 404 || desc.includes('organization not found')) {
+  // organizations.controller.js L211: 404 → 'No Organization with that identifier has been found'
+  if (status === 404) {
     return 'That workspace no longer exists.';
   }
+  // organizations.membership.service.js L160: 'Already a member of this organization'
   if (desc.includes('already a member')) {
     return "You're already a member of that workspace.";
   }
-  // pending request / one-pending-cap
+  // L161: 'A pending request already exists'
+  // L165: 'You already have a pending request...' (cross-org one-pending cap)
   return 'Request already sent. Awaiting approval.';
 }
 
@@ -94,6 +101,8 @@ export default {
   name: 'OrganizationsSuggestedJoinBanner',
 
   data: () => ({
+    // visible:true is correct — the component only mounts when suggestedJoin is non-null
+    // (guarded by outer v-if in app.vue); safe for a future v-if→v-show refactor.
     visible: true,
     loading: false,
     feedback: {
@@ -122,7 +131,8 @@ export default {
      * @returns {Promise<void>}
      */
     async requestAccess() {
-      if (!this.suggestedJoin) return;
+      // Double-submit guard: v-btn :loading does NOT block @click in Vuetify 4.
+      if (!this.suggestedJoin || this.loading) return;
       this.loading = true;
       const organizationsStore = useOrganizationsStore();
       try {
