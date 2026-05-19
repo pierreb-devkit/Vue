@@ -199,7 +199,6 @@ export default {
           this.meterAlert = {
             visible: true,
             color: 'error',
-            // i18n key: billing.alerts.threshold100
             text: 'Quota reached — extras consumed',
           };
           // Also suppress the 80 dedup so it doesn't fire afterwards
@@ -212,7 +211,6 @@ export default {
           this.meterAlert = {
             visible: true,
             color: 'warning',
-            // i18n key: billing.alerts.threshold80
             text: "You've used 80% of your weekly quota",
           };
         }
