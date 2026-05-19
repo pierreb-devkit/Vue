@@ -176,7 +176,6 @@ describe('organizations.required.view — D3 recovery copy', () => {
     await flushPromises();
 
     // The "Create an organization" v-btn renders with to="/users/organizations/create"
-    const createBtn = wrapper.find('[href="/users/organizations/create"], [to="/users/organizations/create"]');
     // May not be a DOM href in test env; verify text instead
     expect(wrapper.text()).toContain('Create an organization');
   });
