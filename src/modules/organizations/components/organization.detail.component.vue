@@ -1,35 +1,39 @@
 <template>
-  <v-container fluid>
-    <!-- Header -->
-    <PageHeader
-      :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
-    >
-      <template #avatar>
-        <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
-      </template>
-      <template #actions>
-        <v-btn
-          v-if="viewedOrganization && canManage"
-          color="error"
-          variant="tonal"
-          class="text-none text-body-medium mr-2"
-          :class="config.vuetify.theme.rounded"
-          @click="confirmDelete = true"
-        >
-          <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
-          Delete
-        </v-btn>
-      </template>
-    </PageHeader>
+  <div>
+    <!-- Layout chrome: header + tab bar, guttered with their own container -->
+    <v-container fluid>
+      <!-- Header -->
+      <PageHeader
+        :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
+      >
+        <template #avatar>
+          <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
+        </template>
+        <template #actions>
+          <v-btn
+            v-if="viewedOrganization && canManage"
+            color="error"
+            variant="tonal"
+            class="text-none text-body-medium mr-2"
+            :class="config.vuetify.theme.rounded"
+            @click="confirmDelete = true"
+          >
+            <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>
+            Delete
+          </v-btn>
+        </template>
+      </PageHeader>
 
-    <!-- Tab bar (config-driven, CASL-gated) -->
-    <CoreSurfaceTabBar
-      :tabs="config.organizations.tabs"
-      :can="abilityCan"
-      :base-path="basePath"
-    />
+      <!-- Tab bar (config-driven, CASL-gated) -->
+      <CoreSurfaceTabBar
+        :tabs="config.organizations.tabs"
+        :can="abilityCan"
+        :base-path="basePath"
+      />
+    </v-container>
 
-    <!-- Active child route (general tab, billing tab, …) -->
+    <!-- Active child route renders outside the layout container so each child's
+         own root <v-container> provides exactly one gutter (no double-nesting). -->
     <router-view />
 
     <!-- Delete confirmation dialog (layout-level: visible from any tab) -->
@@ -67,7 +71,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>
@@ -113,9 +117,10 @@ export default {
   },
   computed: {
     /**
-     * @desc Resolves the organization ID from the current route params (user
-     *       path) or the prop (admin path, passed via route props from admin.router).
-     *       Route params take precedence when present.
+     * @desc Resolves the organization ID from `route.params.organizationId`
+     *       (present on both user and admin routes) or falls back to the
+     *       `organizationId` prop (a static fallback; admin route props only
+     *       supply `backRoute`, not the ID). Route params take precedence.
      * @returns {string|null}
      */
     resolvedOrganizationId() {
