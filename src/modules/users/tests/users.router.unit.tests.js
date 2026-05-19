@@ -38,7 +38,9 @@ describe('users.router – C5 legacy ?tab=subscriptions alias', () => {
 
     const result = route.beforeEnter(to);
 
-    expect(result).toEqual({ path: '/users/billing', query: {} });
+    // Guard uses spread-omit form: { ...to.query, tab: undefined }. Vue Router drops
+    // undefined-valued keys from the final URL; the raw return object retains tab: undefined.
+    expect(result).toEqual({ path: '/users/billing', query: { tab: undefined } });
   });
 
   it('?tab=subscriptions with additional query params → /users/billing (preserves extra params, drops tab)', () => {
@@ -47,7 +49,8 @@ describe('users.router – C5 legacy ?tab=subscriptions alias', () => {
 
     const result = route.beforeEnter(to);
 
-    expect(result).toEqual({ path: '/users/billing', query: { foo: 'bar' } });
+    // tab is set to undefined (Vue Router drops it from URL); extra params are preserved.
+    expect(result).toEqual({ path: '/users/billing', query: { foo: 'bar', tab: undefined } });
   });
 
   it('trailing-slash variant /users/?tab=subscriptions redirects the same way', () => {
@@ -59,7 +62,7 @@ describe('users.router – C5 legacy ?tab=subscriptions alias', () => {
 
     const result = route.beforeEnter(to);
 
-    expect(result).toEqual({ path: '/users/billing', query: {} });
+    expect(result).toEqual({ path: '/users/billing', query: { tab: undefined } });
   });
 
   it('Stripe callback params (success, type) are preserved when tab=subscriptions is present', () => {
