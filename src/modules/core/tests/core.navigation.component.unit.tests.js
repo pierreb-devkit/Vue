@@ -18,14 +18,17 @@ vi.mock('vuetify', async (importOriginal) => {
   };
 });
 
-// Mock auth store — report logged in + org so the drawer actually renders
+// Mock auth store — report logged in + org so the drawer actually renders.
+// authStoreState is a mutable hoisted object so individual tests can override
+// serverConfig (e.g. to enable billing.meterMode) without re-mocking.
+const authStoreState = vi.hoisted(() => ({
+  isLoggedIn: true,
+  user: { currentOrganization: { _id: 'org1', name: 'Org' } },
+  serverConfig: { organizations: { enabled: false } },
+  signout: vi.fn(),
+}));
 vi.mock('../../auth/stores/auth.store', () => ({
-  useAuthStore: () => ({
-    isLoggedIn: true,
-    user: { currentOrganization: { _id: 'org1', name: 'Org' } },
-    serverConfig: { organizations: { enabled: false } },
-    signout: vi.fn(),
-  }),
+  useAuthStore: () => authStoreState,
 }));
 
 // Mock core store — we inject our own nav + navBottom arrays per test
@@ -64,10 +67,11 @@ const makeConfig = (overrides = {}) => ({
  * @param {Object} opts
  * @param {Array}  opts.nav - items for the main nav list
  * @param {Array}  opts.navBottom - items for the bottom nav list
+ * @param {Object} [opts.stubsOverride] - additional stubs merged after defaults (e.g. to replace the gauge stub)
  * @param {Object} [opts.configOverrides] - partial config overrides (e.g. { app: { logoFile: '/logo.svg' } })
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountNav = ({ nav = [], navBottom = [], configOverrides = {} } = {}) => {
+const mountNav = ({ nav = [], navBottom = [], stubsOverride = {}, configOverrides = {} } = {}) => {
   coreStoreState.nav = nav;
   coreStoreState.navBottom = navBottom;
   const vuetify = createVuetify({ components, directives });
@@ -82,6 +86,9 @@ const mountNav = ({ nav = [], navBottom = [], configOverrides = {} } = {}) => {
         'router-link': { template: '<a><slot /></a>' },
         // Stub v-navigation-drawer to a plain wrapper — the real one needs a <v-layout> ancestor
         'v-navigation-drawer': { template: '<div class="v-navigation-drawer"><slot /><slot name="append" /></div>' },
+        // Stub the gauge to prevent it from auto-fetching billing data on mount
+        BillingNavComputeGaugeComponent: { template: '<div class="stub-billing-nav-compute-gauge" />' },
+        ...stubsOverride,
       },
     },
   });
@@ -92,6 +99,7 @@ describe('core.navigation.component — navItemBind', () => {
     setActivePinia(createPinia());
     coreStoreState.nav = [];
     coreStoreState.navBottom = [];
+    authStoreState.serverConfig = { organizations: { enabled: false } };
   });
 
   it('returns { to } for a regular internal route', () => {
@@ -143,6 +151,7 @@ describe('core.navigation.component — navItemBind', () => {
 describe('core.navigation.component — template rendering', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    authStoreState.serverConfig = { organizations: { enabled: false } };
   });
 
   it('renders a regular nav item as a router-link (no href attribute)', () => {
@@ -231,6 +240,8 @@ describe('core.navigation.component — compute gauge slot', () => {
     setActivePinia(createPinia());
     coreStoreState.nav = [];
     coreStoreState.navBottom = [];
+    // Reset auth state to default (no billing) so tests are independent
+    authStoreState.serverConfig = { organizations: { enabled: false } };
   });
 
   it('meterMode computed returns false when serverConfig has no billing.meterMode', () => {
@@ -294,11 +305,27 @@ describe('core.navigation.component — compute gauge slot', () => {
     expect(signOutPos).toBeGreaterThan(accountPos);
     expect(signOutPos).toBeGreaterThan(settingsPos);
   });
+
+  it('renders stubbed BillingNavComputeGaugeComponent when meterMode is true', () => {
+    // Override auth state so meterMode resolves to true for this test only.
+    // The try/finally below resets it immediately so the override cannot leak
+    // into subsequent tests/describes even if mountNav() ever throws.
+    const defaultServerConfig = { organizations: { enabled: false } };
+    authStoreState.serverConfig = { organizations: { enabled: false }, billing: { meterMode: true } };
+    try {
+      const wrapper = mountNav();
+      expect(wrapper.vm.meterMode).toBe(true);
+      expect(wrapper.find('.stub-billing-nav-compute-gauge').exists()).toBe(true);
+    } finally {
+      authStoreState.serverConfig = defaultServerConfig;
+    }
+  });
 });
 
 describe('core.navigation.component — sidenav logo', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    authStoreState.serverConfig = { organizations: { enabled: false } };
   });
 
   it('renders a v-img when config.app.logoFile is set', () => {
