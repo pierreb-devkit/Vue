@@ -46,6 +46,31 @@ export default [
       position: 'bottom',
       requiresAuth: true,
     },
+    children: [
+      {
+        // bare /users → /users/profile (default child)
+        path: '',
+        redirect: { name: 'Account Profile' },
+      },
+      {
+        path: 'profile',
+        name: 'Account Profile',
+        component: () => import('../views/user.profile.view.vue'),
+        meta: {
+          display: false,
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'organizations',
+        name: 'Account Organizations',
+        component: () => import('../views/user.organizations.view.vue'),
+        meta: {
+          display: false,
+          requiresAuth: true,
+        },
+      },
+    ],
   },
   {
     path: '/users/:id',

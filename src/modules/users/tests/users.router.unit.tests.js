@@ -120,3 +120,41 @@ describe('users.router – C4 /billing redirect regression', () => {
     expect(billingAccountRoute).toBeUndefined();
   });
 });
+
+describe('users.router – Gamma: Account child routes (route-driven tabs)', () => {
+  /** @returns {import('vue-router').RouteRecordRaw|undefined} */
+  const getAccountRoute = () => usersRoutes.find((r) => r.path === '/users');
+
+  it('Account route has children array', () => {
+    const route = getAccountRoute();
+    expect(Array.isArray(route.children)).toBe(true);
+    expect(route.children.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('bare path "" child redirects to Account Profile', () => {
+    const route = getAccountRoute();
+    const bareChild = route.children.find((c) => c.path === '');
+    expect(bareChild).toBeDefined();
+    expect(bareChild.redirect).toEqual({ name: 'Account Profile' });
+  });
+
+  it('Account Profile child has path "profile" and requires auth (no CASL — matches pre-Gamma)', () => {
+    const route = getAccountRoute();
+    const profile = route.children.find((c) => c.name === 'Account Profile');
+    expect(profile).toBeDefined();
+    expect(profile.path).toBe('profile');
+    expect(profile.meta.requiresAuth).toBe(true);
+    expect(profile.meta.action).toBeUndefined();
+    expect(profile.meta.subject).toBeUndefined();
+  });
+
+  it('Account Organizations child has path "organizations" and requires auth (no CASL — matches pre-Gamma)', () => {
+    const route = getAccountRoute();
+    const orgs = route.children.find((c) => c.name === 'Account Organizations');
+    expect(orgs).toBeDefined();
+    expect(orgs.path).toBe('organizations');
+    expect(orgs.meta.requiresAuth).toBe(true);
+    expect(orgs.meta.action).toBeUndefined();
+    expect(orgs.meta.subject).toBeUndefined();
+  });
+});

@@ -297,12 +297,12 @@ test.describe('Organization Domain Join E2E', () => {
   test('approved member — no Manage button on account page', async ({ page }) => {
     test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, memberEmail, password);
-    await page.goto('/users');
-    await page.waitForLoadState('domcontentloaded');
-
-    // Click the Organizations tab
-    const orgTab = page.getByRole('tab', { name: /organizations/i });
-    await orgTab.click({ timeout: 10000 });
+    // Gamma refactor: Organizations is its own routed view at /users/organizations
+    // (no longer a tab inside /users) — navigate directly instead of clicking a tab.
+    // networkidle (vs domcontentloaded) waits for the fetchOrganizations() XHR
+    // initiated in the view's created() hook to complete before assertions.
+    await page.goto('/users/organizations');
+    await page.waitForLoadState('networkidle');
 
     // Wait for the domain org list item to appear
     const domainOrgItem = page.locator('.v-list-item', { hasText: `DomainOrg${timestamp}` });
