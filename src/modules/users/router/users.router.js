@@ -45,8 +45,6 @@ export default [
       order: 10, // sidenav sort order within bottom section (lower = first)
       position: 'bottom',
       requiresAuth: true,
-      action: 'read',
-      subject: 'User',
     },
     children: [
       {
@@ -60,8 +58,7 @@ export default [
         component: () => import('../views/user.profile.view.vue'),
         meta: {
           display: false,
-          action: 'read',
-          subject: 'User',
+          requiresAuth: true,
         },
       },
       {
@@ -70,8 +67,7 @@ export default [
         component: () => import('../views/user.organizations.view.vue'),
         meta: {
           display: false,
-          action: 'read',
-          subject: 'User',
+          requiresAuth: true,
         },
       },
     ],
