@@ -32,7 +32,11 @@ const password = 'E2eTestPass99xyz';
 let orgId;
 
 /**
- * @desc Check whether the Node API backend is reachable.
+ * @desc Check whether the Node API backend is reachable at the transport level.
+ * Reachability = a response came back at all (any HTTP status). A 4xx/5xx means
+ * the backend IS running and answered — so we should NOT skip the suite; we
+ * should let the test exercise the real code path. Only network/connection
+ * errors (request.get throws) indicate the backend is genuinely unreachable.
  * @param {import('@playwright/test').APIRequestContext} request
  * @returns {Promise<boolean>}
  */
@@ -40,11 +44,35 @@ async function isApiAvailable(request) {
   try {
     // Use the fully-configured API URL (honors api.protocol/host/port/base) so
     // we don't false-negative on projects that customize `config.api.base`.
-    const res = await request.get(API_URL);
-    return res.ok();
+    await request.get(API_URL);
+    return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * @desc Predicate for `page.waitForURL` — true once the SPA has left the auth /
+ * onboarding limbo (signup wizard, signin, or organization-required). Used by
+ * every post-auth navigation wait in this suite; the post-auth destination
+ * varies by env (test=`/`, dev=`/tasks`) so we assert by EXCLUSION instead.
+ * @param {URL} url
+ * @returns {boolean}
+ */
+function isPostSignupRoute(url) {
+  const p = url.pathname;
+  return !p.includes('/signup') && !p.includes('/signin') && !p.includes('/organization-required');
+}
+
+/**
+ * @desc Seed the `suggestedJoin` localStorage entry on every page-load in a
+ * Playwright context. Used to replicate what the signup flow stores so the
+ * banner renders deterministically on subsequent signin tests.
+ * @param {[string, string, string]} args - [storageKey, orgId, orgName]
+ * @returns {void}
+ */
+function seedSuggestedJoinLocalStorage([key, id, name]) {
+  window.localStorage.setItem(key, JSON.stringify({ orgId: id, orgName: name }));
 }
 
 /**
@@ -131,9 +159,10 @@ test.describe('Organization Domain Join E2E', () => {
 
     // Proceed to the app to complete signup (required so member has a session for later tests)
     await page.getByRole('button', { name: 'Get Started', exact: true }).click();
-    // CI test env has config.sign.route='/' (devkit test default); local dev has '/tasks'.
-    // Accept either by asserting we've left the signup wizard.
-    await page.waitForURL((url) => !url.pathname.includes('/signup') && !url.pathname.includes('/organization-required'), { timeout: 15000 });
+    // Post-auth destination varies by env (test=`/`, dev=`/tasks`) — use the
+    // env-agnostic `isPostSignupRoute` helper (defined at module top) to assert
+    // by exclusion (left signup/signin/organization-required).
+    await page.waitForURL(isPostSignupRoute, { timeout: 15000 });
   });
 
   /**
@@ -147,11 +176,13 @@ test.describe('Organization Domain Join E2E', () => {
     await signin(page, memberEmail, password);
 
     // D5: member has currentOrganization → router sends to /tasks, NOT /organization-required
-    // CI test env has config.sign.route='/' (devkit test default); local dev has '/tasks'.
-    // Accept either by asserting we've left the signup wizard.
-    await page.waitForURL((url) => !url.pathname.includes('/signup') && !url.pathname.includes('/organization-required'), { timeout: 15000 });
-    // Post-auth route varies by env (test='/' vs dev='/tasks'); assert NOT on signup/required.
+    // Post-auth destination varies by env (test=`/`, dev=`/tasks`) — use the
+    // env-agnostic `isPostSignupRoute` helper (defined at module top) to assert
+    // by exclusion (left signup/signin/organization-required).
+    await page.waitForURL(isPostSignupRoute, { timeout: 15000 });
+    // Post-auth route varies by env (test='/' vs dev='/tasks'); assert by exclusion.
     expect(page.url()).not.toContain('/signup');
+    expect(page.url()).not.toContain('/signin');
     expect(page.url()).not.toContain('/organization-required');
   });
 
@@ -169,12 +200,14 @@ test.describe('Organization Domain Join E2E', () => {
     // Navigate to signup (simulating refresh — user is already logged in)
     await page.goto('/signup');
     // D5: member has currentOrganization → redirected to /tasks, NOT /organization-required
-    // CI test env has config.sign.route='/' (devkit test default); local dev has '/tasks'.
-    // Accept either by asserting we've left the signup wizard.
-    await page.waitForURL((url) => !url.pathname.includes('/signup') && !url.pathname.includes('/organization-required'), { timeout: 15000 });
+    // Post-auth destination varies by env (test=`/`, dev=`/tasks`) — use the
+    // env-agnostic `isPostSignupRoute` helper (defined at module top) to assert
+    // by exclusion (left signup/signin/organization-required).
+    await page.waitForURL(isPostSignupRoute, { timeout: 15000 });
 
-    // Post-auth route varies by env (test='/' vs dev='/tasks'); assert NOT on signup/required.
+    // Post-auth route varies by env (test='/' vs dev='/tasks'); assert by exclusion.
     expect(page.url()).not.toContain('/signup');
+    expect(page.url()).not.toContain('/signin');
     expect(page.url()).not.toContain('/organization-required');
   });
 
@@ -198,17 +231,13 @@ test.describe('Organization Domain Join E2E', () => {
     // COOKIE_PREFIX is sourced from the same config the SPA reads, so the key matches
     // even if a project overrides `config.cookie.prefix`.
     const storageKey = `${COOKIE_PREFIX}SuggestedJoin`;
-    await page.context().addInitScript(
-      ([key, id, name]) => {
-        window.localStorage.setItem(key, JSON.stringify({ orgId: id, orgName: name }));
-      },
-      [storageKey, orgId, `DomainOrg${timestamp}`],
-    );
+    await page.context().addInitScript(seedSuggestedJoinLocalStorage, [storageKey, orgId, `DomainOrg${timestamp}`]);
 
     await signin(page, memberEmail, password);
-    // CI test env has config.sign.route='/' (devkit test default); local dev has '/tasks'.
-    // Accept either by asserting we've left the signup wizard.
-    await page.waitForURL((url) => !url.pathname.includes('/signup') && !url.pathname.includes('/organization-required'), { timeout: 15000 });
+    // Post-auth destination varies by env (test=`/`, dev=`/tasks`) — use the
+    // env-agnostic `isPostSignupRoute` helper (defined at module top) to assert
+    // by exclusion (left signup/signin/organization-required).
+    await page.waitForURL(isPostSignupRoute, { timeout: 15000 });
 
     // suggestedJoin snackbar banner must be visible (top-right v-snackbar)
     // Banner text: "There may already be a workspace for {orgName}. Request access?"
