@@ -1,15 +1,18 @@
 <template>
   <div
     v-if="show"
-    class="compute-gauge px-4 py-2"
+    class="compute-gauge compute-gauge-activator px-4 py-2"
     :class="{ expanded: isExpanded }"
     tabindex="0"
     role="region"
     aria-label="Compute usage"
-    @mouseenter="isExpanded = true"
-    @mouseleave="isExpanded = false"
+    aria-haspopup="true"
+    :aria-expanded="isExpanded ? 'true' : 'false'"
+    @mouseenter="!isTouchDevice && (isExpanded = true)"
+    @mouseleave="!isTouchDevice && (isExpanded = false)"
     @focus="isExpanded = true"
     @blur="isExpanded = false"
+    @touchstart.passive="onTouchActivate"
   >
     <div class="d-flex align-center justify-space-between mb-1">
       <span id="compute-gauge-label" class="text-label-small text-medium-emphasis">Compute</span>
@@ -45,8 +48,22 @@ import { ref, computed } from 'vue';
 import { useBillingStore } from '../stores/billing.store.js';
 import { useAuthStore } from '../../auth/stores/auth.store.js';
 
-/** @desc Expands the detail line — triggered by hover OR keyboard focus. */
+/** @desc Expands the detail line — triggered by hover, keyboard focus, OR touch tap. */
 const isExpanded = ref(false);
+
+/**
+ * @desc True when the primary input is touch (hover: none media query).
+ * Used to disable hover-expand on touch devices in favour of tap-toggle.
+ * @returns {boolean}
+ */
+const isTouchDevice = computed(() => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia?.('(hover: none)').matches === true;
+});
+
+/** @desc Toggles expansion on tap for touch-only users. */
+const onTouchActivate = () => { isExpanded.value = !isExpanded.value; };
+
 const billingStore = useBillingStore();
 const authStore = useAuthStore();
 

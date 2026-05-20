@@ -158,4 +158,40 @@ describe('BillingComputeGaugeComponent', () => {
     expect(wrapper.vm.progressPercent).toBe(100);
     expect(wrapper.vm.barColor).toBe('error');
   });
+
+  // ── a11y + touch ─────────────────────────────────────────────────────────
+
+  describe('a11y + touch', () => {
+    const setupVisible = () => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, weekResetAt: null };
+    };
+
+    it('aria-expanded defaults to "false" on the activator element', () => {
+      setupVisible();
+      const wrapper = mountComponent();
+      const activator = wrapper.find('.compute-gauge-activator');
+      expect(activator.attributes('aria-expanded')).toBe('false');
+    });
+
+    it('touchstart event sets tooltip-active state → aria-expanded becomes "true"', async () => {
+      setupVisible();
+      const wrapper = mountComponent();
+      const activator = wrapper.find('.compute-gauge-activator');
+      await activator.trigger('touchstart');
+      expect(activator.attributes('aria-expanded')).toBe('true');
+    });
+
+    it('second touchstart toggles aria-expanded back to "false"', async () => {
+      setupVisible();
+      const wrapper = mountComponent();
+      const activator = wrapper.find('.compute-gauge-activator');
+      await activator.trigger('touchstart');
+      await activator.trigger('touchstart');
+      expect(activator.attributes('aria-expanded')).toBe('false');
+    });
+  });
 });

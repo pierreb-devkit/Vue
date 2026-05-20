@@ -348,4 +348,57 @@ describe('BillingNavComputeGaugeComponent', () => {
     const listItem = wrapper.findComponent({ name: 'VListItem' });
     expect(listItem.props('to')).toBe('/users/billing');
   });
+
+  // ── a11y + touch ─────────────────────────────────────────────────────────
+
+  describe('a11y + touch', () => {
+    // jsdom does not implement window.visualViewport; Vuetify's VOverlay uses it
+    // when the tooltip opens. Stub it so tests that toggle tooltipOpen don't crash.
+    beforeEach(() => {
+      if (!window.visualViewport) {
+        Object.defineProperty(window, 'visualViewport', {
+          configurable: true,
+          value: { width: 1024, height: 768, offsetTop: 0, offsetLeft: 0, addEventListener: () => {}, removeEventListener: () => {} },
+        });
+      }
+    });
+
+    afterEach(() => {
+      // Clean up stub between tests to keep other suites unaffected
+      if (window.visualViewport) {
+        Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
+      }
+    });
+
+    const setupVisible = () => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
+    };
+
+    it('aria-expanded defaults to "false" on the activator (v-list-item)', () => {
+      setupVisible();
+      wrapper = mountComponent();
+      const listItem = wrapper.findComponent({ name: 'VListItem' });
+      expect(listItem.attributes('aria-expanded')).toBe('false');
+    });
+
+    it('onTouchActivate toggles tooltipOpen from false to true', () => {
+      setupVisible();
+      wrapper = mountComponent();
+      expect(wrapper.vm.tooltipOpen).toBe(false);
+      wrapper.vm.onTouchActivate();
+      expect(wrapper.vm.tooltipOpen).toBe(true);
+    });
+
+    it('second onTouchActivate call toggles tooltipOpen back to false', () => {
+      setupVisible();
+      wrapper = mountComponent();
+      wrapper.vm.onTouchActivate();
+      wrapper.vm.onTouchActivate();
+      expect(wrapper.vm.tooltipOpen).toBe(false);
+    });
+  });
 });

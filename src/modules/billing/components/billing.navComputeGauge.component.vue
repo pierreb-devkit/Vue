@@ -13,12 +13,15 @@
   Gate: hidden when not logged in or meterMode false.
 -->
 <template>
-  <v-tooltip v-if="show" location="end" :open-delay="200">
+  <v-tooltip v-if="show" v-model="tooltipOpen" location="end" :open-delay="200" :open-on-hover="!isTouchDevice" :open-on-click="false">
     <template #activator="{ props: tooltipProps }">
       <v-list-item
         v-bind="tooltipProps"
         :to="'/users/billing'"
         :aria-label="`Compute usage: ${usageMeter ? pctUsed + '% used' : '—'}`"
+        aria-haspopup="true"
+        :aria-expanded="tooltipOpen ? 'true' : 'false'"
+        @touchstart.passive="onTouchActivate"
       >
         <template #prepend>
           <v-progress-circular
@@ -50,7 +53,24 @@ export default {
     return { billingStore, authStore };
   },
 
+  data() {
+    return {
+      /** @desc Controls tooltip visibility — bound via v-model to v-tooltip. */
+      tooltipOpen: false,
+    };
+  },
+
   computed: {
+    /**
+     * @desc True when the primary input is touch (hover: none media query).
+     * Used to gate open-on-hover on the tooltip.
+     * @returns {boolean}
+     */
+    isTouchDevice() {
+      if (typeof window === 'undefined') return false;
+      return window.matchMedia?.('(hover: none)').matches === true;
+    },
+
     show() {
       if (!this.authStore.isLoggedIn) return false;
       return this.authStore.serverConfig?.billing?.meterMode === true;
@@ -126,6 +146,9 @@ export default {
   },
 
   methods: {
+    /** @desc Toggles tooltip open/closed on tap for touch-only users. */
+    onTouchActivate() { this.tooltipOpen = !this.tooltipOpen; },
+
     /**
      * @desc Returns the ISO 8601 string for the next Monday at 00:00 UTC.
      * Used as a fallback reset date when `weekResetAt` is not set on the meter doc.
