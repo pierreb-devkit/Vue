@@ -33,6 +33,7 @@ const rawApiPort = _config?.api?.port;
 const parsedApiPort = typeof rawApiPort === 'number' ? rawApiPort : Number.parseInt(rawApiPort, 10);
 const apiPort = Number.isNaN(parsedApiPort) ? 3000 : parsedApiPort;
 const apiBase = _config?.api?.base ?? 'api';
+const cookiePrefix = _config?.cookie?.prefix ?? 'devkit';
 
 /** @type {string} Vue dev-server base URL, e.g. `http://localhost:8080` */
 export const BASE_URL = `http://localhost:${port}`;
@@ -42,6 +43,9 @@ export const API_URL = `${apiProtocol}://${apiHost}:${apiPort}/${apiBase}`;
 
 /** @type {string} API origin without path, e.g. `http://localhost:3000` */
 export const API_ORIGIN = `${apiProtocol}://${apiHost}:${apiPort}`;
+
+/** @type {string} Cookie/localStorage key prefix (matches client `config.cookie.prefix`), e.g. `devkit` */
+export const COOKIE_PREFIX = cookiePrefix;
 
 /** @type {number} Vue dev-server port */
 export { port };
