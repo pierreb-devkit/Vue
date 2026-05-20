@@ -196,25 +196,20 @@ describe('UserView – C4 decoupling: billing tab removed', () => {
   });
 
   it('only exposes profile and organizations tabs', () => {
-    const capturedValues = [];
-    const vTabStub = {
-      template: '<div><slot /></div>',
-      inheritAttrs: false,
-      created() {
-        if (this.$attrs.value) capturedValues.push(this.$attrs.value);
-      },
-    };
-
-    shallowMount(UserView, {
+    // After C1.2 refactor, tabs are declared via tabsConfig (consumed by PageTabs).
+    // v-tab elements no longer appear directly in user.view.vue, so we inspect
+    // tabsConfig to verify the exposed set of tabs.
+    const wrapper = shallowMount(UserView, {
       global: {
         mocks: sharedMocks(),
-        stubs: { ...sharedStubs, 'v-tab': vTabStub },
+        stubs: sharedStubs,
       },
     });
 
-    expect(capturedValues).toContain('profile');
-    expect(capturedValues).toContain('organizations');
-    expect(capturedValues).not.toContain('subscriptions');
+    const tabValues = wrapper.vm.tabsConfig.map((t) => t.value);
+    expect(tabValues).toContain('profile');
+    expect(tabValues).toContain('organizations');
+    expect(tabValues).not.toContain('subscriptions');
   });
 });
 
@@ -329,6 +324,59 @@ describe('UserView – organizations refetch on auth state change', () => {
     // If user.view still imports billingStore and calls fetchSubscription, this would
     // require a mock; its absence means the view is cleanly decoupled.
     expect(Object.keys(UserView.components || {})).not.toContain('BillingSubscriptionsComponent');
+  });
+});
+
+// ── UserView – C1.2: PageTabs integration ────────────────────────────────────
+
+describe('UserView – renders PageTabs with profile + organizations entries', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    const organizationsStore = useOrganizationsStore();
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
+  });
+
+  it('renders a [data-test="page-tabs"] element via PageTabs', async () => {
+    const PageTabsStub = {
+      template: '<div data-test="page-tabs"><slot /></div>',
+      inheritAttrs: false,
+    };
+
+    const wrapper = shallowMount(UserView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: { ...sharedStubs, PageTabs: PageTabsStub },
+      },
+    });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="page-tabs"]').exists()).toBe(true);
+  });
+
+  it('tabsConfig includes profile and organizations entries', () => {
+    const wrapper = shallowMount(UserView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    const config = wrapper.vm.tabsConfig;
+    expect(Array.isArray(config)).toBe(true);
+    const values = config.map((t) => t.value);
+    expect(values).toContain('profile');
+    expect(values).toContain('organizations');
+  });
+
+  it('tabsConfig profile entry has correct label', () => {
+    const wrapper = shallowMount(UserView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    const profile = wrapper.vm.tabsConfig.find((t) => t.value === 'profile');
+    expect(profile?.label).toBe('Profile');
+  });
+
+  it('tabsConfig organizations entry has correct label', () => {
+    const wrapper = shallowMount(UserView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    const orgs = wrapper.vm.tabsConfig.find((t) => t.value === 'organizations');
+    expect(orgs?.label).toBe('Organizations');
   });
 });
 

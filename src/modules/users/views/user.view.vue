@@ -7,97 +7,79 @@
     </PageHeader>
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-          <v-tabs v-model="tab" color="primary">
-            <v-tab value="profile" class="text-none text-body-medium">
-              <v-icon icon="fa-solid fa-id-card" size="small" class="mr-2"></v-icon>
-              Profile
-            </v-tab>
-            <v-tab value="organizations" class="text-none text-body-medium">
-              <v-icon icon="fa-solid fa-building" size="small" class="mr-2"></v-icon>
-              Organizations
-            </v-tab>
-          </v-tabs>
-          <v-divider></v-divider>
-          <v-window v-model="tab">
-            <!-- Profile tab -->
-            <v-window-item value="profile">
-              <div class="pa-6">
-                <userProfileComponent :user="user" :organizations="organizations" @save="updateProfile" @avatar-uploaded="onAvatarUploaded" />
+        <PageTabs v-model="tab" :tabs="tabsConfig">
+          <template #profile>
+            <userProfileComponent
+              :user="user"
+              :organizations="organizations"
+              @save="updateProfile"
+              @avatar-uploaded="onAvatarUploaded"
+            />
 
-                <!-- Danger zone -->
-                <v-card variant="outlined" color="error" class="mt-6">
-                  <v-card-title class="text-title-medium font-weight-medium">Delete account</v-card-title>
-                  <v-card-text class="text-body-small text-medium-emphasis">Permanently delete your account, data, and organization ownership. This cannot be undone.</v-card-text>
-                  <v-card-actions>
-                    <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">Delete account</v-btn>
-                  </v-card-actions>
-                </v-card>
-              </div>
-            </v-window-item>
-            <!-- Organizations tab -->
-            <v-window-item value="organizations">
-              <div class="pa-6">
-                <v-list v-if="organizations && organizations.length" lines="two" class="pa-0 bg-transparent">
-                  <template v-for="(org, i) in organizations" :key="org.id || org._id">
-                    <v-list-item
-                      :to="org.role === 'owner' || org.role === 'admin' ? `/users/organizations/${org.id || org._id}` : undefined"
-                      :class="config.vuetify.theme.rounded"
-                      class="pa-4"
-                    >
-                      <template #prepend>
-                        <orgAvatarComponent :org="org" :size="40" class="mr-4" />
-                      </template>
-                      <v-list-item-title class="text-body-large font-weight-medium">{{ org.name }}</v-list-item-title>
-                      <v-list-item-subtitle v-if="org.description" class="text-body-small">{{ org.description }}</v-list-item-subtitle>
-                      <template #append>
-                        <div class="d-flex align-center ga-2">
-                          <v-chip v-if="org.role" size="small" :color="roleColor(org.role)" variant="tonal" class="text-capitalize">{{
-                            org.role
-                          }}</v-chip>
-                          <v-chip v-if="isActiveOrg(org)" size="small" color="success" variant="flat">Active</v-chip>
-                          <v-btn
-                            v-if="org.role !== 'owner'"
-                            color="error"
-                            variant="text"
-                            size="small"
-                            class="text-none"
-                            @click.stop.prevent="confirmLeave(org)"
-                          >
-                            Leave
-                          </v-btn>
-                          <v-icon
-                            v-if="org.role === 'owner' || org.role === 'admin'"
-                            icon="fa-solid fa-chevron-right"
-                            size="small"
-                            color="medium-emphasis"
-                          ></v-icon>
-                        </div>
-                      </template>
-                    </v-list-item>
-                    <v-divider v-if="i < organizations.length - 1"></v-divider>
-                  </template>
-                </v-list>
-                <v-btn
-                  color="primary"
-                  variant="tonal"
+            <!-- Danger zone -->
+            <v-card variant="outlined" color="error" class="mt-6">
+              <v-card-title class="text-title-medium font-weight-medium">Delete account</v-card-title>
+              <v-card-text class="text-body-small text-medium-emphasis">Permanently delete your account, data, and organization ownership. This cannot be undone.</v-card-text>
+              <v-card-actions>
+                <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">Delete account</v-btn>
+              </v-card-actions>
+            </v-card>
+          </template>
+
+          <template #organizations>
+            <v-list v-if="organizations && organizations.length" lines="two" class="pa-0 bg-transparent">
+              <template v-for="(org, i) in organizations" :key="org.id || org._id">
+                <v-list-item
+                  :to="org.role === 'owner' || org.role === 'admin' ? `/users/organizations/${org.id || org._id}` : undefined"
                   :class="config.vuetify.theme.rounded"
-                  class="text-none text-body-medium mt-4"
-                  to="/users/organizations/create"
-                  block
+                  class="pa-4"
                 >
-                  <v-icon icon="fa-solid fa-plus" size="small" class="mr-2"></v-icon>
-                  New Organization
-                </v-btn>
-                <div v-if="!organizations || !organizations.length" class="text-center text-medium-emphasis pa-8">
-                  <v-icon icon="fa-solid fa-building" size="x-large" class="mb-4 text-medium-emphasis"></v-icon>
-                  <p class="text-body-medium">No organizations yet.</p>
-                </div>
-              </div>
-            </v-window-item>
-          </v-window>
-        </v-card>
-
+                  <template #prepend>
+                    <orgAvatarComponent :org="org" :size="40" class="mr-4" />
+                  </template>
+                  <v-list-item-title class="text-body-large font-weight-medium">{{ org.name }}</v-list-item-title>
+                  <v-list-item-subtitle v-if="org.description" class="text-body-small">{{ org.description }}</v-list-item-subtitle>
+                  <template #append>
+                    <div class="d-flex align-center ga-2">
+                      <v-chip v-if="org.role" size="small" :color="roleColor(org.role)" variant="tonal" class="text-capitalize">{{ org.role }}</v-chip>
+                      <v-chip v-if="isActiveOrg(org)" size="small" color="success" variant="flat">Active</v-chip>
+                      <v-btn
+                        v-if="org.role !== 'owner'"
+                        color="error"
+                        variant="text"
+                        size="small"
+                        class="text-none"
+                        @click.stop.prevent="confirmLeave(org)"
+                      >Leave</v-btn>
+                      <v-icon
+                        v-if="org.role === 'owner' || org.role === 'admin'"
+                        icon="fa-solid fa-chevron-right"
+                        size="small"
+                        color="medium-emphasis"
+                      ></v-icon>
+                    </div>
+                  </template>
+                </v-list-item>
+                <v-divider v-if="i < organizations.length - 1"></v-divider>
+              </template>
+            </v-list>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium mt-4"
+              to="/users/organizations/create"
+              block
+            >
+              <v-icon icon="fa-solid fa-plus" size="small" class="mr-2"></v-icon>
+              New Organization
+            </v-btn>
+            <div v-if="!organizations || !organizations.length" class="text-center text-medium-emphasis pa-8">
+              <v-icon icon="fa-solid fa-building" size="x-large" class="mb-4 text-medium-emphasis"></v-icon>
+              <p class="text-body-medium">No organizations yet.</p>
+            </div>
+          </template>
+        </PageTabs>
       </v-col>
     </v-row>
 
@@ -154,6 +136,7 @@ import { useOrganizationsStore } from '../../organizations/stores/organizations.
 import axios from '../../../lib/services/axios';
 import roleColor from '../../../lib/helpers/roleColor';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import PageTabs from '../../core/components/core.pageTabs.component.vue';
 import userProfileComponent from '../components/user.profile.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
@@ -162,6 +145,7 @@ export default {
   name: 'UserView',
   components: {
     PageHeader,
+    PageTabs,
     userProfileComponent,
     organizationsSwitcherComponent,
     orgAvatarComponent,
@@ -198,6 +182,16 @@ export default {
     currentOrganizationId() {
       const id = this.authStore.user?.currentOrganization;
       return id?._id || id?.id || id;
+    },
+    /**
+     * @desc Tab definitions for the Account page.
+     * @returns {Array<{value: string, label: string, icon: string}>}
+     */
+    tabsConfig() {
+      return [
+        { value: 'profile', label: 'Profile', icon: 'fa-solid fa-id-card' },
+        { value: 'organizations', label: 'Organizations', icon: 'fa-solid fa-building' },
+      ];
     },
   },
   watch: {
