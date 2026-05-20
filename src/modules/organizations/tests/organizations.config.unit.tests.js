@@ -49,11 +49,11 @@ describe('organizations module config — organizations.tabs', () => {
     expect(isValidTab(billingTab)).toBe(true);
   });
 
-  it('resolveSurfaceTabs returns billing tab when can("manage","Organization") is true', () => {
+  it('resolveSurfaceTabs returns both Organization + Billing tabs when can() is true', () => {
     const tabs = organizationsDefaultConfig.organizations.tabs;
     const result = resolveSurfaceTabs(tabs, () => true);
-    // Both organization (read) and billing (manage) are visible when can() always returns true
-    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result).toHaveLength(2);
+    expect(result.find((t) => t.value === 'organization')).toBeDefined();
     expect(result.find((t) => t.value === 'billing')).toBeDefined();
   });
 
