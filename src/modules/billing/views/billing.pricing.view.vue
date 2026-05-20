@@ -21,7 +21,6 @@
           <BillingPricingToggleComponent
             v-if="hasPaidPlans"
             :annual="annual"
-            :max-annual-savings-pct="maxAnnualSavingsPct"
             class="mb-10"
             data-test="pricing-toggle"
             @update:annual="annual = $event"
@@ -54,10 +53,8 @@
           <BillingPricingToggleComponent
             v-if="hasPaidPlans"
             :annual="annual"
-            :max-annual-savings-pct="maxAnnualSavingsPct"
             :disabled="activeTab === 1"
             class="mb-8"
-            density="compact"
             data-test="pricing-toggle"
             @update:annual="annual = $event"
           />
@@ -209,9 +206,6 @@ export default {
       if (!this.authStore.isLoggedIn) return null;
       return this.billingStore.subscription?.plan ?? 'free';
     },
-    meterMode() {
-      return this.authStore.serverConfig?.billing?.meterMode === true;
-    },
     hasPaidPlans() {
       return this.plans.some((p) => p.id !== 'free');
     },
@@ -261,18 +255,20 @@ export default {
           ? (plan.annualPriceObject?.id ?? plan.annualPrice?.id ?? null)
           : (plan.monthlyPriceObject?.id ?? plan.monthlyPrice?.id ?? null);
 
-        // Resolve price display — Stripe objects override static-content amounts
+        // Resolve price display — Stripe price objects (when present) override static-content amounts.
+        // Supports BOTH plan shapes:
+        //  - V4 (Trawl downstream): plan.meta.{monthlyPrice,annualPrice} (raw numbers)
+        //  - Devkit (post usePricing normalization): plan.{monthlyPrice,annualPrice} (raw numbers)
         let priceAmount;
         let pricePeriod = null;
         if (isFree) {
           priceAmount = 'Free';
         } else {
-          // meta.monthlyPrice / meta.annualPrice are raw numbers (V4); fall back to legacy fields
-          const metaMonthly = plan.meta?.monthlyPrice ?? plan.monthlyPrice ?? null;
-          const metaAnnual = plan.meta?.annualPrice ?? plan.annualPrice ?? null;
+          const staticMonthly = (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : null) ?? plan.meta?.monthlyPrice ?? null;
+          const staticAnnual = (typeof plan.annualPrice === 'number' ? plan.annualPrice : null) ?? plan.meta?.annualPrice ?? null;
           const displayAmt = this.annual
-            ? (plan.annualPriceObject?.amount ?? plan.annualPrice?.amount ?? (typeof metaAnnual === 'number' && metaAnnual > 0 ? metaAnnual : null))
-            : (plan.monthlyPriceObject?.amount ?? plan.monthlyPrice?.amount ?? (typeof metaMonthly === 'number' && metaMonthly > 0 ? metaMonthly : null));
+            ? (plan.annualPriceObject?.amount ?? (typeof staticAnnual === 'number' && staticAnnual > 0 ? staticAnnual : null))
+            : (plan.monthlyPriceObject?.amount ?? (typeof staticMonthly === 'number' && staticMonthly > 0 ? staticMonthly : null));
           if (displayAmt != null) {
             priceAmount = this.formatPrice(displayAmt);
             pricePeriod = this.annual ? '/year' : '/month';
@@ -296,7 +292,11 @@ export default {
           ctaVariant = 'outlined';
           ctaColor = null;
           ctaDisabled = false;
-          ctaTo = '/signup';
+          // Preserve the `redirect` query param so the user lands back on the pricing
+          // page after signup. v-btn's :to accepts the same shape as $router.push().
+          // The card skips its cta-click emit when cta.to is set (router-link owns
+          // the navigation), so the view's onCtaClick fallback is intentionally bypassed.
+          ctaTo = { path: '/signup', query: { redirect: '/pricing' } };
         } else {
           ctaLabel = plan.cta;
           ctaVariant = plan.highlight ? 'flat' : 'outlined';
@@ -305,22 +305,17 @@ export default {
           ctaTo = null;
         }
 
-        // Annual savings info chip
+        // Annual savings — rendered as a tonal chip next to the price on annual when discount > 0.
+        // Supports BOTH plan shapes:
+        //  - V4 (Trawl downstream): plan.meta.monthlyPrice / plan.meta.annualPrice (raw numbers)
+        //  - Devkit (post usePricing normalization): plan.monthlyPrice / plan.annualPrice (raw numbers)
         const annualSavingsPct = (() => {
           const metaM = plan.meta?.monthlyPrice ?? null;
           const metaA = plan.meta?.annualPrice ?? null;
-          const mp = plan.monthlyPriceObject?.amount ?? plan.monthlyPrice?.amount ?? (typeof metaM === 'number' ? metaM : 0);
-          const ap = plan.annualPriceObject?.amount ?? plan.annualPrice?.amount ?? (typeof metaA === 'number' ? metaA : 0);
+          const mp = plan.monthlyPriceObject?.amount ?? (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : (typeof metaM === 'number' ? metaM : 0));
+          const ap = plan.annualPriceObject?.amount ?? (typeof plan.annualPrice === 'number' ? plan.annualPrice : (typeof metaA === 'number' ? metaA : 0));
           return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
         })();
-        const savingsNote = this.annual && annualSavingsPct > 0
-          ? `Save ${annualSavingsPct}% with annual`
-          : null;
-
-        // Equivalences for meter mode — passed as subtitle when present
-        const equivalences = this.meterMode && plan.equivalences?.length > 0 ? plan.equivalences : null;
-
-        // Savings chip — shown next to price on annual when discount > 0
         const priceChip = (this.annual && annualSavingsPct > 0)
           ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
           : null;
@@ -342,11 +337,8 @@ export default {
           features: plan.features || [],
           badge: plan.badge || null,
           highlight: !!plan.highlight,
-          // Extended fields the view may use internally (not consumed by card)
+          // Internal field — view's onCtaClick resolves priceId from here, not consumed by card.
           _activePriceId: activePriceId,
-          _pricingUnavailable: pricingUnavailable,
-          _savingsNote: savingsNote,
-          _equivalences: equivalences,
         };
       });
     },

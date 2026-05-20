@@ -12,17 +12,13 @@
  *   - packs        : Pack[]
  *   - faqs         : { title?: string, subtitle?: string, content: FAQ[] }
  *
- * Plan shape (extended):
+ * Plan shape (V4 — unified with packs):
  *   {
- *     id, name, tagline, highlighted, badge, cta,
- *     monthlyPrice?, annualPrice?,         // optional — when omitted card shows "Custom" or hides price
- *     features: [{ text, included }],      // legacy flat list, kept for backward-compat
- *     featureSections?: [{                 // NEW — preferred structure for V2 cards
- *       title?: string,                    // optional section heading (omit for un-grouped lists)
- *       inheritsFrom?: string,             // plan id — when set, card prefixes section with "Everything in {parentName}, plus"
- *       items: [{ text, icon?, tooltip?, highlight?, enabled? }]  // enabled defaults to true; false = greyed-out (not missing) for equal-height cards
- *     }],
- *     equivalences?: [...]                 // unchanged
+ *     id, title, subtitle, highlight, badge, cta,
+ *     monthlyPrice?, annualPrice?,         // optional raw numbers — when omitted card shows error or hides price
+ *     info?: string|null,                  // ops-eval / per-cycle quota line, shown between CTA and features
+ *     features: [{ icon, color, text }],   // flat list, icon (fa-solid fa-*) + Vuetify color + label
+ *     meta?: object,                       // free-form per-plan metadata (Stripe IDs, quotas, etc.)
  *   }
  *
  * FAQ shape:
@@ -45,95 +41,51 @@ export const pricingMode = 'both-tabs';
 export const plans = [
   {
     id: 'free',
-    name: 'Free',
-    tagline: 'Discover the platform',
-    highlighted: false,
+    title: 'Free',
+    subtitle: 'Discover the platform',
+    highlight: false,
     badge: null,
     cta: 'Get Started',
     monthlyPrice: 0,
     annualPrice: 0,
+    info: '100 operations / week',
     features: [
-      { text: '1 project', included: true },
-      { text: '3 team members', included: true },
-      { text: 'Community support', included: true },
-      { text: 'Advanced analytics', included: false },
-    ],
-    featureSections: [
-      {
-        title: null,
-        introText: 'Get started with:',
-        items: [
-          { text: '1 project', icon: 'fa-solid fa-folder' },
-          { text: '3 team members', icon: 'fa-solid fa-users', enabled: false },
-          { text: 'Email support', icon: 'fa-solid fa-envelope', enabled: false },
-          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', enabled: false },
-        ],
-      },
-    ],
-    equivalences: [
-      { label: 'operations / week', count: 100 },
+      { icon: 'fa-solid fa-folder', color: 'primary', text: '1 project' },
+      { icon: 'fa-solid fa-users', color: 'primary', text: '3 team members' },
+      { icon: 'fa-solid fa-envelope', color: 'primary', text: 'Community support' },
     ],
   },
   {
     id: 'starter',
-    name: 'Starter',
-    tagline: 'For growing teams',
-    highlighted: false,
+    title: 'Starter',
+    subtitle: 'For growing teams',
+    highlight: false,
     badge: null,
     cta: 'Get Started',
     monthlyPrice: 19,
     annualPrice: 190,
+    info: '500 operations / week',
     features: [
-      { text: '10 projects', included: true },
-      { text: '10 team members', included: true },
-      { text: 'Email support', included: true },
-      { text: 'Advanced analytics', included: false },
-    ],
-    featureSections: [
-      {
-        title: null,
-        inheritsFrom: 'free',
-        items: [
-          { text: '10 projects', icon: 'fa-solid fa-folder', highlight: true, iconColor: 'success' },
-          { text: '10 team members', icon: 'fa-solid fa-users' },
-          { text: 'Email support', icon: 'fa-solid fa-envelope' },
-          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', enabled: false },
-        ],
-      },
-    ],
-    equivalences: [
-      { label: 'operations / week', count: 500 },
+      { icon: 'fa-solid fa-folder', color: 'success', text: '10 projects' },
+      { icon: 'fa-solid fa-users', color: 'primary', text: '10 team members' },
+      { icon: 'fa-solid fa-envelope', color: 'primary', text: 'Email support' },
     ],
   },
   {
     id: 'pro',
-    name: 'Pro',
-    tagline: 'For professionals',
-    highlighted: true,
+    title: 'Pro',
+    subtitle: 'For professionals',
+    highlight: true,
     badge: 'Most Popular',
     cta: 'Get Started',
     monthlyPrice: 49,
     annualPrice: 490,
+    info: '2,000 operations / week',
     features: [
-      { text: 'Unlimited projects', included: true },
-      { text: 'Unlimited members', included: true },
-      { text: 'Priority support', included: true },
-      { text: 'Advanced analytics', included: true },
-    ],
-    featureSections: [
-      {
-        title: null,
-        inheritsFrom: 'starter',
-        items: [
-          { text: 'Unlimited projects', icon: 'fa-solid fa-folder', highlight: true, iconColor: 'success' },
-          { text: 'Unlimited members', icon: 'fa-solid fa-users' },
-          { text: 'Priority support', icon: 'fa-solid fa-headset' },
-          { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', iconColor: 'warning' },
-        ],
-      },
-    ],
-    equivalences: [
-      { label: 'operations / week', count: 2000 },
+      { icon: 'fa-solid fa-folder', color: 'success', text: 'Unlimited projects' },
+      { icon: 'fa-solid fa-users', color: 'primary', text: 'Unlimited members' },
+      { icon: 'fa-solid fa-headset', color: 'primary', text: 'Priority support' },
+      { icon: 'fa-solid fa-chart-line', color: 'warning', text: 'Advanced analytics' },
     ],
   },
 ];

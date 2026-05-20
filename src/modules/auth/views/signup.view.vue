@@ -256,7 +256,7 @@ export default {
       if (auth && this.signupStep === 'form') {
         // Only auto-redirect if no org step is pending
         if (!this.serverConfig?.organizations?.enabled) {
-          this.$router.push(this.config.sign.route);
+          this.pushAfterAuth();
         }
       }
     },
@@ -271,13 +271,24 @@ export default {
     // If already logged in (e.g. page refresh after signup), redirect appropriately
     if (authStore.isLoggedIn) {
       if (authStore.user?.currentOrganization) {
-        this.$router.push(this.config.sign.route);
+        this.pushAfterAuth();
       } else if (this.serverConfig?.organizations?.enabled) {
         this.$router.push('/organization-required');
       }
     }
   },
   methods: {
+    /**
+     * @desc Navigate to the post-auth destination. Honors ?redirect= when it's a
+     * same-origin path (starts with '/') — used by the pricing page CTA to bring
+     * the user back to pricing after signup. Falls back to config.sign.route.
+     * Matches signin.view.vue's redirect-honor pattern.
+     * @returns {void}
+     */
+    pushAfterAuth() {
+      const redirect = this.$route.query.redirect;
+      this.$router.push(typeof redirect === 'string' && redirect.startsWith('/') ? redirect : this.config.sign.route);
+    },
     /**
      * @desc Validate and submit the signup form, then handle organization flow.
      * Names are deduced from email in the store's signup action.
@@ -320,11 +331,11 @@ export default {
               this.signupStep = 'organizationSetup';
             } else {
               // Organizations enabled but no setup needed — proceed normally
-              this.$router.push(this.config.sign.route);
+              this.pushAfterAuth();
             }
           } else {
             // Organizations not enabled — proceed as usual
-            this.$router.push(this.config.sign.route);
+            this.pushAfterAuth();
           }
         } catch (err) {
           this.signupError = this.signupErrorMessage(err);
@@ -379,7 +390,7 @@ export default {
       if (!authStore.user?.currentOrganization && this.serverConfig?.organizations?.enabled) {
         this.$router.push('/organization-required');
       } else {
-        this.$router.push(this.config.sign.route);
+        this.pushAfterAuth();
       }
     },
     /**
