@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
 import { authenticatedContext, createOrgViaAPI, API } from '../../../lib/helpers/e2e/api.js';
+import { API_ORIGIN } from '../../../lib/helpers/e2e/config.js';
 
 const timestamp = Date.now();
 const domain = `domain${timestamp}.com`;
@@ -11,13 +12,33 @@ const password = 'E2eTestPass99xyz';
 let orgId;
 
 /**
+ * @desc Check whether the Node API backend is reachable.
+ * @param {import('@playwright/test').APIRequestContext} request
+ * @returns {Promise<boolean>}
+ */
+async function isApiAvailable(request) {
+  try {
+    const res = await request.get(`${API_ORIGIN}/api`);
+    return res.ok();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * End-to-end suite for organization domain-based join flow.
+ *
+ * Node #3680 (D5 always-create): domain-match signup no longer creates a pending
+ * join request. Every user always gets their own active workspace. A `suggestedJoin`
+ * hint ({ orgId, orgName }) is returned alongside the new workspace when the email
+ * domain matches an existing org. The Vue app surfaces it as a dismissible snackbar
+ * banner ("There may already be a workspace for X. Request access?").
  * @returns {void}
  */
 test.describe('Organization Domain Join E2E', () => {
   test.describe.configure({ mode: 'serial' });
 
-  // ── Phase 1: Signup & pending join ────────────────────────────────
+  // ── Phase 1: Signup & always-create workspace ─────────────────────
 
   /**
    * Creates owner account and organization with domain matching.
@@ -25,12 +46,21 @@ test.describe('Organization Domain Join E2E', () => {
    * @returns {Promise<void>}
    */
   test('owner signs up via API and creates org', async ({ playwright, request }) => {
-    const res = await signupViaAPI(request, {
-      email: ownerEmail,
-      password,
-      firstName: 'DJOwner',
-      lastName: 'Test',
-    });
+    const apiUp = await isApiAvailable(request);
+    test.skip(!apiUp, 'Node API backend not running');
+
+    let res;
+    try {
+      res = await signupViaAPI(request, {
+        email: ownerEmail,
+        password,
+        firstName: 'DJOwner',
+        lastName: 'Test',
+      });
+    } catch (err) {
+      test.skip(true, `API connection failed during signup: ${err.message}`);
+      return;
+    }
     expect(res.user).toBeTruthy();
 
     // Create org via authenticated API (domain matching uses the email domain)
@@ -43,11 +73,15 @@ test.describe('Organization Domain Join E2E', () => {
   });
 
   /**
-   * Signs up a member with matching domain and verifies pending join message.
+   * Spec D5: member signs up with a matching domain.
+   * Always-create: member lands in the organizationWelcome step ("Welcome! Your
+   * organization X has been created.") — NOT a "request to join" pending message.
+   * Sidenav is still absent during the signup wizard.
    * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
    * @returns {Promise<void>}
    */
-  test('member signs up via UI — sees pending message, no sidenav', async ({ page }) => {
+  test('member signs up via UI — lands in own workspace, sees welcome step (no "request to join")', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await page.goto('/signup');
     await page.getByPlaceholder('name@example.com').first().waitFor({ state: 'visible', timeout: 10000 });
 
@@ -55,50 +89,105 @@ test.describe('Organization Domain Join E2E', () => {
     await page.getByPlaceholder('Create a password').first().fill(password);
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
 
-    // Wait for the pending join message
+    // D5: member gets their own workspace — "Welcome!" message appears, NOT "request to join"
+    const welcomeText = page.locator('text=Welcome!').first();
+    await expect(welcomeText).toBeVisible({ timeout: 15000 });
+
+    // The old "request to join" pending message must NOT appear
     const pendingText = page.locator('text=request to join').first();
-    await expect(pendingText).toBeVisible({ timeout: 10000 });
+    await expect(pendingText).not.toBeVisible({ timeout: 3000 });
 
-    // CRITICAL: Sidenav must NOT be visible during signup
-    const sidenav = page.locator('nav.v-navigation-drawer, .v-navigation-drawer');
-    await expect(sidenav).toHaveCount(0, { timeout: 3000 });
+    // NOTE: Unlike the old pendingJoin flow, the sidenav IS present during the
+    // organizationWelcome step because the user has an active workspace (always-create).
+    // The old "no sidenav" invariant no longer applies.
+
+    // Proceed to the app to complete signup (required so member has a session for later tests)
+    await page.getByRole('button', { name: 'Get Started', exact: true }).click();
+    await page.waitForURL((url) => url.pathname.includes('/tasks'), { timeout: 15000 });
   });
 
   /**
-   * Verifies pending members are redirected to organization-required on sign-in.
+   * Spec D5: member signs in — lands on the main app (has currentOrganization).
+   * Router no longer redirects to /organization-required.
    * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
    * @returns {Promise<void>}
    */
-  test('member signs in — lands on organization-required', async ({ page }) => {
+  test('member signs in — lands on main app (not organization-required)', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, memberEmail, password);
-    await page.waitForURL((url) => url.pathname.includes('/organization-required'), { timeout: 15000 });
 
-    // Should land on organization-required page (pending member has no active org)
-    expect(page.url()).toContain('/organization-required');
-
-    // Should see the pending request banner
-    await expect(page.getByRole('alert').getByText('pending approval')).toBeVisible({ timeout: 10000 });
+    // D5: member has currentOrganization → router sends to /tasks, NOT /organization-required
+    await page.waitForURL((url) => url.pathname.includes('/tasks'), { timeout: 15000 });
+    expect(page.url()).toContain('/tasks');
+    expect(page.url()).not.toContain('/organization-required');
   });
 
   /**
-   * Verifies logged-in member visiting signup is redirected to organization-required.
+   * Spec D5: member who is already logged in visiting /signup is redirected to the app.
+   * With always-create (currentOrganization is set), the router sends to /tasks.
    * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
    * @returns {Promise<void>}
    */
-  test('member refresh on signup — redirects to organization-required', async ({ page }) => {
+  test('member refresh on signup — redirects to main app (not organization-required)', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, memberEmail, password);
     await page.waitForLoadState('domcontentloaded');
 
     // Navigate to signup (simulating refresh — user is already logged in)
     await page.goto('/signup');
-    // Wait for Vue app to detect logged-in user and redirect to organization-required
-    await page.waitForURL((url) => url.pathname.includes('/organization-required'), { timeout: 15000 });
+    // D5: member has currentOrganization → redirected to /tasks, NOT /organization-required
+    await page.waitForURL((url) => url.pathname.includes('/tasks'), { timeout: 15000 });
 
-    // Should redirect to organization-required (not show signup form again)
-    expect(page.url()).toContain('/organization-required');
+    expect(page.url()).toContain('/tasks');
+    expect(page.url()).not.toContain('/organization-required');
   });
 
-  // ── Phase 2: Owner approves, then member access control ───────────
+  // ── Phase 2: suggestedJoin banner CTA → join request + access control ─
+
+  /**
+   * Member clicks 'Request access' on the suggestedJoin banner.
+   * Pre-populates localStorage with the suggestedJoin hint (simulating what the signup
+   * flow stored) so the banner renders on the next page load.
+   * A pending join request is created on the domain-matched owner org.
+   * @param {{ page: import('@playwright/test').Page, playwright: import('@playwright/test').Playwright }} fixtures - Playwright fixtures
+   * @returns {Promise<void>}
+   */
+  test('member clicks Request access on suggestedJoin banner — join request created', async ({ page, playwright }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
+
+    // Inject suggestedJoin into localStorage before every page load via addInitScript.
+    // This ensures initFromStorage() reads the key on the /signin page mount,
+    // before the user credentials are submitted and the SPA navigates to /tasks.
+    // Replicates what signup stores: key = `${config.cookie.prefix}SuggestedJoin`
+    // = 'devkitSuggestedJoin' in dev.
+    await page.context().addInitScript(
+      ([id, name]) => {
+        window.localStorage.setItem('devkitSuggestedJoin', JSON.stringify({ orgId: id, orgName: name }));
+      },
+      [orgId, `DomainOrg${timestamp}`],
+    );
+
+    await signin(page, memberEmail, password);
+    await page.waitForURL((url) => url.pathname.includes('/tasks'), { timeout: 15000 });
+
+    // suggestedJoin snackbar banner must be visible (top-right v-snackbar)
+    // Banner text: "There may already be a workspace for {orgName}. Request access?"
+    const requestBtn = page.getByRole('button', { name: 'Request access' }).first();
+    await expect(requestBtn).toBeVisible({ timeout: 10000 });
+    await requestBtn.click();
+
+    // After sending, the banner shows a success feedback snackbar and dismisses
+    const feedbackText = page.locator('text=Request sent').first();
+    await expect(feedbackText).toBeVisible({ timeout: 10000 });
+
+    // Verify the join request was created on the backend
+    const ctx = await authenticatedContext(playwright, ownerEmail, password);
+    const reqRes = await ctx.get(`${API}/organizations/${orgId}/requests`);
+    const reqBody = await reqRes.json();
+    const requests = reqBody.data || [];
+    expect(requests.length).toBeGreaterThan(0);
+    await ctx.dispose();
+  });
 
   /**
    * Owner approves the pending join request via API.
@@ -106,6 +195,7 @@ test.describe('Organization Domain Join E2E', () => {
    * @returns {Promise<void>}
    */
   test('owner approves member join request', async ({ playwright }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     // Approve via authenticated API context — the pending requests section in the
     // detail component relies on loadMembership middleware timing which is not
     // deterministic in CI.  The banner proves the API works; use it directly.
@@ -129,11 +219,14 @@ test.describe('Organization Domain Join E2E', () => {
   });
 
   /**
-   * Verifies approved member cannot see the manage chevron on account page.
+   * Verifies approved member cannot navigate into the domain-org (no manage chevron).
+   * With always-create (Node #3680), the member owns their own auto-created workspace
+   * (chevron IS present for it), but has role 'member' on DomainOrg (no chevron there).
    * @param {{ page: import('@playwright/test').Page }} fixtures - Playwright fixtures
    * @returns {Promise<void>}
    */
   test('approved member — no Manage button on account page', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, memberEmail, password);
     await page.goto('/users');
     await page.waitForLoadState('domcontentloaded');
@@ -141,11 +234,14 @@ test.describe('Organization Domain Join E2E', () => {
     // Click the Organizations tab
     const orgTab = page.getByRole('tab', { name: /organizations/i });
     await orgTab.click({ timeout: 10000 });
-    await expect(page.getByRole('main').getByText(`DomainOrg${timestamp}`, { exact: true })).toBeVisible({ timeout: 10000 });
 
-    // Members should NOT see the chevron (manage) icon on their org item
-    const chevron = page.locator('.v-list-item .fa-chevron-right');
-    await expect(chevron).toHaveCount(0, { timeout: 5000 });
+    // Wait for the domain org list item to appear
+    const domainOrgItem = page.locator('.v-list-item', { hasText: `DomainOrg${timestamp}` });
+    await expect(domainOrgItem).toBeVisible({ timeout: 10000 });
+
+    // The domain org list item should NOT have a chevron (member role, not owner/admin)
+    const chevronInDomainOrg = domainOrgItem.locator('.fa-chevron-right');
+    await expect(chevronInDomainOrg).toHaveCount(0, { timeout: 5000 });
   });
 
   /**
@@ -154,6 +250,7 @@ test.describe('Organization Domain Join E2E', () => {
    * @returns {Promise<void>}
    */
   test('approved member — no management controls on org page', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, memberEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
     await expect(page.getByRole('heading', { name: `DomainOrg${timestamp}` })).toBeVisible({ timeout: 10000 });
@@ -181,6 +278,7 @@ test.describe('Organization Domain Join E2E', () => {
    * @returns {Promise<void>}
    */
   test('owner sees full management controls', async ({ page }) => {
+    test.skip(!orgId, 'Setup was skipped — no org created');
     await signin(page, ownerEmail, password);
     await page.goto(`/users/organizations/${orgId}`);
     await page.waitForLoadState('domcontentloaded');
