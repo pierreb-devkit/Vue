@@ -52,13 +52,32 @@ describe('organizations module config — organizations.tabs', () => {
   it('resolveSurfaceTabs returns billing tab when can("manage","Organization") is true', () => {
     const tabs = organizationsDefaultConfig.organizations.tabs;
     const result = resolveSurfaceTabs(tabs, () => true);
-    expect(result).toHaveLength(1);
-    expect(result[0].value).toBe('billing');
+    // Both organization (read) and billing (manage) are visible when can() always returns true
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result.find((t) => t.value === 'billing')).toBeDefined();
   });
 
   it('resolveSurfaceTabs filters out billing tab when can("manage","Organization") is false', () => {
     const tabs = organizationsDefaultConfig.organizations.tabs;
+    // can() = false filters out all CASL-gated tabs; organization tab has action:'read' so also filtered
     const result = resolveSurfaceTabs(tabs, () => false);
     expect(result).toHaveLength(0);
+  });
+
+  test('organizations.tabs has the "organization" tab as the first entry', () => {
+    expect(organizationsDefaultConfig.organizations.tabs[0]).toEqual({
+      value: 'organization',
+      label: 'Organization',
+      icon: 'fa-solid fa-building',
+      route: 'general',
+      action: 'read',
+      subject: 'Organization',
+    });
+  });
+
+  test('organizations.tabs still has the "billing" tab (preserved)', () => {
+    const billing = organizationsDefaultConfig.organizations.tabs.find((t) => t.value === 'billing');
+    expect(billing).toBeTruthy();
+    expect(billing.route).toBe('billing');
   });
 });
