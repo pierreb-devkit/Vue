@@ -317,7 +317,7 @@ export default {
           return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
         })();
         const priceChip = (this.annual && annualSavingsPct > 0)
-          ? { text: this.$t('billing.pricingCard.saveAnnual', { pct: annualSavingsPct }), color: 'success' }
+          ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
           : null;
 
         return {
