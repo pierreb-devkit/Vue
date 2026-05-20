@@ -43,6 +43,14 @@ vi.mock('../../../lib/services/config', () => ({
     organizations: {
       tabs: [
         {
+          value: 'organization',
+          label: 'Organization',
+          icon: 'fa-solid fa-building',
+          route: 'general',
+          action: 'read',
+          subject: 'Organization',
+        },
+        {
           value: 'billing',
           label: 'Billing',
           icon: 'fa-solid fa-credit-card',
@@ -103,6 +111,14 @@ function mountLayout(orgId = 'abc123', routePath = null) {
           vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
           organizations: {
             tabs: [
+              {
+                value: 'organization',
+                label: 'Organization',
+                icon: 'fa-solid fa-building',
+                route: 'general',
+                action: 'read',
+                subject: 'Organization',
+              },
               {
                 value: 'billing',
                 label: 'Billing',
@@ -191,6 +207,14 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     const tabs = tabBar.props('tabs');
     expect(Array.isArray(tabs)).toBe(true);
     expect(tabs.find((t) => t.value === 'billing')).toBeDefined();
+  });
+
+  it('passes both Organization + Billing tabs to CoreSurfaceTabBar', () => {
+    const wrapper = mountLayout();
+    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
+    expect(tabBar.exists()).toBe(true);
+    const tabs = tabBar.props('tabs');
+    expect(tabs.map((t) => t.value)).toEqual(['organization', 'billing']);
   });
 
   it('passes a function as the `can` prop to CoreSurfaceTabBar', () => {
@@ -481,15 +505,15 @@ describe('organizations router — nested route structure (C3)', () => {
     expect(Array.isArray(orgParent.children)).toBe(true);
   });
 
-  it('default child (path="") passes organizationId as props function', async () => {
+  it('general child (path="general") passes organizationId as props function', async () => {
     const { default: orgRoutes, ORG_PARENT_PATH } = await import('../router/organizations.router.js');
     const orgParent = orgRoutes.find((r) => r.path === ORG_PARENT_PATH);
-    const defaultChild = orgParent.children.find((c) => c.path === '');
-    expect(defaultChild).toBeDefined();
+    const generalChild = orgParent.children.find((c) => c.path === 'general');
+    expect(generalChild).toBeDefined();
     // props must be a function (not static object) so it maps route.params → component props
-    expect(typeof defaultChild.props).toBe('function');
+    expect(typeof generalChild.props).toBe('function');
     // Verify the function maps organizationId correctly
-    const result = defaultChild.props({ params: { organizationId: 'test-id' } });
+    const result = generalChild.props({ params: { organizationId: 'test-id' } });
     expect(result).toEqual({ organizationId: 'test-id' });
   });
 });

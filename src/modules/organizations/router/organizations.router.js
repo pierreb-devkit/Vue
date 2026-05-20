@@ -52,7 +52,13 @@ export default [
     // are injected via organizationChildModules in app.router.js.
     children: [
       {
+        // Redirect bare /users/organizations/:id → :id/general so SurfaceTabBar
+        // descriptors with `route: 'general'` resolve correctly.
         path: '',
+        redirect: { name: 'Account Organization General' },
+      },
+      {
+        path: 'general',
         name: 'Account Organization General',
         component: organizationGeneralTab,
         props: (route) => ({ organizationId: route.params.organizationId }),
