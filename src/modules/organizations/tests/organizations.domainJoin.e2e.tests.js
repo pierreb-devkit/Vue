@@ -299,8 +299,10 @@ test.describe('Organization Domain Join E2E', () => {
     await signin(page, memberEmail, password);
     // Gamma refactor: Organizations is its own routed view at /users/organizations
     // (no longer a tab inside /users) — navigate directly instead of clicking a tab.
+    // networkidle (vs domcontentloaded) waits for the fetchOrganizations() XHR
+    // initiated in the view's created() hook to complete before assertions.
     await page.goto('/users/organizations');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
     // Wait for the domain org list item to appear
     const domainOrgItem = page.locator('.v-list-item', { hasText: `DomainOrg${timestamp}` });
