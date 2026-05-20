@@ -19,7 +19,7 @@
       </template>
     </v-tabs>
     <v-divider></v-divider>
-    <v-window :model-value="modelValue" @update:model-value="(v) => $emit('update:modelValue', v)">
+    <v-window :model-value="modelValue">
       <v-window-item
         v-for="tab in visibleTabs"
         :key="tab.value"
