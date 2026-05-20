@@ -19,7 +19,7 @@ vi.mock('vuetify', async (importOriginal) => {
 });
 
 // Mock auth store — report logged in + org so the drawer actually renders.
-// authStoreState is a mutable hoisted ref so individual tests can override
+// authStoreState is a mutable hoisted object so individual tests can override
 // serverConfig (e.g. to enable billing.meterMode) without re-mocking.
 const authStoreState = vi.hoisted(() => ({
   isLoggedIn: true,
@@ -308,11 +308,17 @@ describe('core.navigation.component — compute gauge slot', () => {
 
   it('renders stubbed BillingNavComputeGaugeComponent when meterMode is true', () => {
     // Override auth state so meterMode resolves to true for this test only.
-    // beforeEach resets it back to the default (no billing key) for subsequent tests.
+    // The try/finally below resets it immediately so the override cannot leak
+    // into subsequent tests/describes even if mountNav() ever throws.
+    const defaultServerConfig = { organizations: { enabled: false } };
     authStoreState.serverConfig = { organizations: { enabled: false }, billing: { meterMode: true } };
-    const wrapper = mountNav();
-    expect(wrapper.vm.meterMode).toBe(true);
-    expect(wrapper.find('.stub-billing-nav-compute-gauge').exists()).toBe(true);
+    try {
+      const wrapper = mountNav();
+      expect(wrapper.vm.meterMode).toBe(true);
+      expect(wrapper.find('.stub-billing-nav-compute-gauge').exists()).toBe(true);
+    } finally {
+      authStoreState.serverConfig = defaultServerConfig;
+    }
   });
 });
 
