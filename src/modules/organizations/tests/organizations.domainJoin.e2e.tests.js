@@ -1,7 +1,27 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
 import { authenticatedContext, createOrgViaAPI, API } from '../../../lib/helpers/e2e/api.js';
-import { API_ORIGIN } from '../../../lib/helpers/e2e/config.js';
+import { API_URL, COOKIE_PREFIX } from '../../../lib/helpers/e2e/config.js';
+
+/**
+ * @desc Patterns that identify a backend-unreachable / transport-level failure.
+ * Used to scope `test.skip` so real backend regressions (4xx/5xx, schema drift,
+ * etc.) surface as failures instead of silent skips.
+ * @type {RegExp}
+ */
+const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network error/i;
+
+/**
+ * @desc Safely extract a string message from an unknown thrown value.
+ * Avoids crashing when something throws `null` / `undefined` / a non-Error.
+ * @param {unknown} err
+ * @returns {string}
+ */
+function errorMessage(err) {
+  if (err instanceof Error) return err.message;
+  if (err == null) return String(err);
+  return typeof err === 'string' ? err : String(err);
+}
 
 const timestamp = Date.now();
 const domain = `domain${timestamp}.com`;
@@ -18,7 +38,9 @@ let orgId;
  */
 async function isApiAvailable(request) {
   try {
-    const res = await request.get(`${API_ORIGIN}/api`);
+    // Use the fully-configured API URL (honors api.protocol/host/port/base) so
+    // we don't false-negative on projects that customize `config.api.base`.
+    const res = await request.get(API_URL);
     return res.ok();
   } catch {
     return false;
@@ -58,8 +80,14 @@ test.describe('Organization Domain Join E2E', () => {
         lastName: 'Test',
       });
     } catch (err) {
-      test.skip(true, `API connection failed during signup: ${err.message}`);
-      return;
+      // Skip ONLY on infra-level connectivity failures so real backend
+      // regressions (4xx/5xx, schema drift) surface as failures, not silent skips.
+      const msg = errorMessage(err);
+      if (CONNECTIVITY_ERROR_RE.test(msg)) {
+        test.skip(true, `API connection failed during signup: ${msg}`);
+        return;
+      }
+      throw err;
     }
     expect(res.user).toBeTruthy();
 
@@ -165,14 +193,16 @@ test.describe('Organization Domain Join E2E', () => {
 
     // Inject suggestedJoin into localStorage before every page load via addInitScript.
     // This ensures initFromStorage() reads the key on the /signin page mount,
-    // before the user credentials are submitted and the SPA navigates to /tasks.
-    // Replicates what signup stores: key = `${config.cookie.prefix}SuggestedJoin`
-    // = 'devkitSuggestedJoin' in dev.
+    // before the user credentials are submitted and the SPA navigates to the home.
+    // Replicates what signup stores: key = `${config.cookie.prefix}SuggestedJoin`.
+    // COOKIE_PREFIX is sourced from the same config the SPA reads, so the key matches
+    // even if a project overrides `config.cookie.prefix`.
+    const storageKey = `${COOKIE_PREFIX}SuggestedJoin`;
     await page.context().addInitScript(
-      ([id, name]) => {
-        window.localStorage.setItem('devkitSuggestedJoin', JSON.stringify({ orgId: id, orgName: name }));
+      ([key, id, name]) => {
+        window.localStorage.setItem(key, JSON.stringify({ orgId: id, orgName: name }));
       },
-      [orgId, `DomainOrg${timestamp}`],
+      [storageKey, orgId, `DomainOrg${timestamp}`],
     );
 
     await signin(page, memberEmail, password);
