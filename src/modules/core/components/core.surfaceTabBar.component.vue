@@ -54,7 +54,7 @@ function tabTo(route) {
 </script>
 
 <template>
-  <v-tabs>
+  <v-tabs class="mx-4">
     <v-tab
       v-for="t in visibleTabs"
       :key="t.value"
