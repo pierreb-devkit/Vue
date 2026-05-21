@@ -176,10 +176,6 @@ export default {
       }
       return [];
     },
-    isActiveOrg(org) {
-      const currentOrg = this.user?.currentOrganization?._id || this.user?.currentOrganization?.id || this.user?.currentOrganization;
-      return currentOrg && org.orgId && String(currentOrg) === String(org.orgId);
-    },
     /**
      * @desc Emit the form payload on user save (after Vuetify form validation).
      * @returns {Promise<void>}
