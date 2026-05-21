@@ -35,16 +35,7 @@
         <span :class="currentBreadcrumb.titleClass || ''">{{ currentBreadcrumb.title }}</span>
       </template>
       <template v-if="!currentBreadcrumb" #tabs>
-        <v-tabs v-model="activeTab" color="primary" class="px-2 flex-grow-1">
-          <v-tab
-            v-for="tab in allTabs"
-            :key="tab.value"
-            :to="tabTo(tab)"
-            :value="tabTo(tab)"
-            class="text-none text-body-medium"
-            ><v-icon v-if="tab.icon" :icon="tab.icon" size="small" class="mr-2"></v-icon>{{ tab.label }}</v-tab
-          >
-        </v-tabs>
+        <CoreSurfaceTabBar :tabs="allTabs" :can="adminCan" :base-path="basePath" />
       </template>
     </PageHeader>
 
@@ -58,16 +49,15 @@
  * Module dependencies.
  */
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
+import { ability } from '../../../lib/helpers/ability';
 import { useAdminStore } from '../stores/admin.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { isValidTab } from '@/lib/helpers/surface-tabs';
 
 /**
- * Built-in admin tabs.
- *
- * Each entry maps to a routed child of the admin parent route (see
- * `admin.router.js`). They are rendered inline alongside the extras from
- * `config.admin.tabs` to form a single flat tab bar.
+ * Built-in admin tabs (canonical). Downstream apps may add more via
+ * `config.admin.tabs` — both are merged and passed to CoreSurfaceTabBar,
+ * which validates + CASL-filters internally.
  */
 const BUILT_IN_TABS = Object.freeze([
   { value: 'users', label: 'Users', icon: 'fa-solid fa-users', route: 'users' },
@@ -79,110 +69,69 @@ const BUILT_IN_TABS = Object.freeze([
 /**
  * Component definition.
  *
- * `admin.layout.vue` is the parent layout component for the admin section.
- * It renders the page header, a single flat tab bar (built-in Users /
- * Organizations / Readiness / Activity + extras from `config.admin.tabs`)
- * and a `<router-view>` that hosts the active child:
+ * `admin.layout.vue` is the parent layout for the admin section. It renders
+ * banners (error + mailer-not-configured warning), a page header that either
+ * shows the admin tab bar (list-page mode) or a breadcrumb pushed by a sub-
+ * view (detail-page mode), and a `<router-view>` for nested children.
  *
- *  - Built-in tabs (`/admin/users`, `/admin/organizations`, …) are routed
- *    children defined in `admin.router.js`.
- *  - User / Organization detail views (`/admin/users/:id`, …) are also
- *    children — they deep-link inside the layout.
- *  - Any child route injected via `injectAdminChildren` (downstream tabs)
- *    renders through the same `<router-view>`.
- *
- * Extra tabs are config-driven; their `route` may be relative (preferred,
- * e.g. `'knowledge'`) or a legacy absolute path (`'/admin/knowledge'`).
- * Both are supported — relative is resolved against `/admin/`.
- *
- * Global concerns (error banner, mailer warning) are rendered at the top
- * (before the header) so they stay visible across all admin tabs, including
- * downstream extras.
- *
- * When `currentBreadcrumb` is set (detail page), the header switches to
- * breadcrumb mode and tabs are hidden. On list pages (null breadcrumb),
- * tabs render inside the PageHeader `#tabs` slot.
+ * Tab rendering is delegated to `CoreSurfaceTabBar` (the same primitive used
+ * by `user.view.vue` and `organization.detail.component.vue`) — full chrome
+ * convergence across Account / Organization / Admin surfaces. The tab bar
+ * receives the canonical built-in tabs merged with any downstream extras from
+ * `config.admin.tabs`; validation + CASL gating happen inside the bar.
  */
 export default {
   name: 'AdminLayout',
-  components: { PageHeader },
-  data() {
-    return {
-      activeTab: '/admin/users',
-      builtInTabs: BUILT_IN_TABS,
-    };
-  },
+  components: { PageHeader, CoreSurfaceTabBar },
   computed: {
     /**
-     * @desc Base path for the admin layout. Kept configurable so a downstream
-     *       project could remount the layout under a different prefix.
+     * @desc Base path for admin tabs (where CoreSurfaceTabBar resolves relative routes).
      * @returns {string}
      */
     basePath() {
       return '/admin';
     },
     /**
-     * @desc Global error from the admin store (surfaced on any admin tab).
+     * @desc Global error from the admin store (surfaced as a banner above the header).
      * @returns {string|null}
      */
     error() {
       return useAdminStore().error;
     },
     /**
-     * @desc Whether to show the mailer warning across admin tabs.
+     * @desc Whether to show the mailer-not-configured warning across admin tabs.
      * @returns {boolean}
      */
     showMailerWarning() {
       return useAuthStore().serverConfig?.mail?.configured === false;
     },
     /**
-     * @desc Current breadcrumb set by a detail sub-view via useAdminStore().setBreadcrumb.
-     *       When non-null, the header switches to breadcrumb mode and tabs are hidden.
-     * @returns {{ title: string, titleClass?: string }|null}
+     * @desc Current breadcrumb published by an admin sub-view via
+     *       `useAdminStore().setBreadcrumb(...)`. When set, the layout renders
+     *       a breadcrumb in the header instead of the tab bar.
+     * @returns {{ title: string, titleClass?: string } | null}
      */
     currentBreadcrumb() {
       return useAdminStore().currentBreadcrumb;
     },
     /**
-     * @desc Returns validated extra admin tabs from `config.admin.tabs`.
-     *
-     * Accepted shapes (in preference order):
-     *  - **Relative path** (new): `'knowledge'`, `'billing'`, …
-     *    No leading slash, non-empty, no `..` traversal segments, no
-     *    `?`/`#`, no whitespace.
-     *  - **Legacy absolute under /admin/**: `'/admin/knowledge'` — still
-     *    works during the migration but logs a dev-mode warning.
-     *
-     * Anything else (absolute routes outside `/admin/`, malformed entries,
-     * path traversal, empty strings) is filtered out silently in
-     * production and with a dev-mode warning otherwise.
-     *
-     * @returns {Array<{ value: string, label: string, icon?: string, route: string }>}
-     */
-    extraTabs() {
-      const tabs = this.config?.admin?.tabs;
-      if (!Array.isArray(tabs)) return [];
-      return tabs.filter((tab) => this.isValidTab(tab));
-    },
-    /**
-     * @desc Merged built-in + extra tabs for rendering in the #tabs slot.
-     * @returns {Array<{ value: string, label: string, icon?: string, route: string }>}
+     * @desc Merged tab list (built-in + config-driven extras), passed to
+     *       CoreSurfaceTabBar. Validation and CASL filtering happen inside
+     *       the bar via `resolveSurfaceTabs`.
+     * @returns {Array<object>}
      */
     allTabs() {
-      return [...this.builtInTabs, ...this.extraTabs];
+      const extras = Array.isArray(this.config?.admin?.tabs) ? this.config.admin.tabs : [];
+      return [...BUILT_IN_TABS, ...extras];
     },
-  },
-  watch: {
     /**
-     * @desc Keep `activeTab` in sync with the current route so the tab
-     *       indicator stays correct across deep-links and back/forward.
+     * @desc Reactive CASL predicate passed to CoreSurfaceTabBar. Falls back
+     *       to allow-all when ability is not yet loaded (consistent with the
+     *       user view's `userCan`).
+     * @returns {(action: string, subject: string) => boolean}
      */
-    $route: {
-      immediate: true,
-      handler(to) {
-        if (!to || typeof to.path !== 'string') return;
-        this.activeTab = this.resolveActiveTab(to.path);
-      },
+    adminCan() {
+      return (action, subject) => (ability ? ability.can(action, subject) : true);
     },
   },
   methods: {
@@ -191,77 +140,6 @@ export default {
      */
     clearError() {
       useAdminStore().error = null;
-    },
-    /**
-     * @desc Validate a single tab descriptor (shared by `extraTabs`).
-     *
-     * Delegates to the shared `isValidTab` helper from `surface-tabs.js` and
-     * emits dev-mode warnings — both for rejected entries and for the accepted
-     * legacy `/admin/*` absolute-path case — so the admin surface keeps its
-     * full diagnostic output without polluting the pure helper.
-     *
-     * The warn conditions and message strings below are intentionally kept
-     * byte-identical to the original inline `isValidTab` (pre-B2 hoist).
-     * This guard mirrors `isValidTab`'s internal guard and must stay in sync
-     * with the branch order in surface-tabs.js (canary for future editors).
-     *
-     * @param {unknown} tab - Raw entry from `config.admin.tabs`.
-     * @returns {boolean} True if the tab should render.
-     */
-    isValidTab(tab) {
-      const valid = isValidTab(tab);
-      if (import.meta.env?.MODE !== 'production') {
-        // Re-derive route for warn-message routing — mirrors isValidTab's internal guard.
-        const route = tab && typeof tab === 'object' ? tab.route : undefined;
-        if (!valid) {
-          if (typeof route === 'string') {
-            // Reproduce the THREE distinct original warn messages in the same priority order.
-            if (/\s/.test(route) || route.includes('?') || route.includes('#')) {
-              console.warn(`[admin] Invalid tab route filtered: "${route}"`);
-            } else if (route === '' || route === '/' || route === '.' || route === '..') {
-              console.warn(`[admin] Empty or dot tab route filtered: "${route}"`);
-            } else {
-              const segments = route.split('/');
-              if (segments.some((seg) => seg === '..' || seg === '.')) {
-                console.warn(`[admin] Path-traversal tab route filtered: "${route}"`);
-              } else {
-                // Absolute path outside /admin/ — falls through all accept checks.
-                console.warn(`[admin] Invalid tab route filtered: "${route}"`);
-              }
-            }
-          }
-          // Non-string route (missing value/label/route) — no route string to echo, silent in dev too.
-        } else if (typeof route === 'string' && route.startsWith('/admin/')) {
-          // Accepted legacy route — warn to prompt migration (verbatim original message).
-          console.warn(`[admin] Legacy absolute tab route "${route}" — migrate to a relative path (see MIGRATIONS.md)`);
-        }
-      }
-      return valid;
-    },
-    /**
-     * @desc Resolve a tab descriptor to a concrete absolute path.
-     *       Relative paths are joined under `/admin/`.
-     * @param {{ route: string }} tab - The tab descriptor.
-     * @returns {string} Absolute path the `<v-tab>` should link to.
-     */
-    tabTo(tab) {
-      if (tab.route.startsWith('/')) return tab.route;
-      return `${this.basePath}/${tab.route}`.replace(/\/+/g, '/');
-    },
-    /**
-     * @desc Map a router path to the `v-tab` value it should activate.
-     *       Prefix-match across built-in + extra tabs, longest-match wins
-     *       so detail routes (e.g. `/admin/users/abc`) still light up the
-     *       parent tab (`/admin/users`).
-     * @param {string} path - Current route path.
-     * @returns {string} The matching tab's `value` (absolute path).
-     */
-    resolveActiveTab(path) {
-      const candidates = this.allTabs.map((tab) => this.tabTo(tab));
-      const match = candidates
-        .filter((to) => path === to || path.startsWith(`${to}/`))
-        .sort((a, b) => b.length - a.length)[0];
-      return match || `${this.basePath}/users`;
     },
   },
 };
