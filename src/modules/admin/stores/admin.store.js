@@ -55,6 +55,7 @@ export const useAdminStore = defineStore('admin', {
     users: [],
     organizations: [],
     error: null,
+    currentBreadcrumb: null,
     readiness: [],
     auditLogs: [],
     auditTotal: 0,
@@ -122,6 +123,14 @@ export const useAdminStore = defineStore('admin', {
 
     resetUser() {
       this.user = defaultUser();
+    },
+
+    setBreadcrumb(payload) {
+      this.currentBreadcrumb = payload ? { ...payload } : null;
+    },
+
+    clearBreadcrumb() {
+      this.currentBreadcrumb = null;
     },
 
     /**
