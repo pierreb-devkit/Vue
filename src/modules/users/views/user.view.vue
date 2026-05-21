@@ -3,17 +3,17 @@
     <!-- Layout chrome: header + tab bar, guttered with their own container.
          pb-0 collapses the gap below tabs — child router-view supplies its own top padding. -->
     <v-container fluid class="pb-0">
-      <PageHeader icon="fa-solid fa-user" title="Account">
-        <template #actions>
-          <organizationsSwitcherComponent />
-        </template>
-      </PageHeader>
-      <!-- Tab bar (config-driven, CASL-gated) -->
-      <CoreSurfaceTabBar
+      <CorePageHeaderTabs
+        icon="fa-solid fa-user"
+        title="Account"
         :tabs="config.users.tabs"
         :can="userCan"
         :base-path="basePath"
-      />
+      >
+        <template #actions>
+          <organizationsSwitcherComponent />
+        </template>
+      </CorePageHeaderTabs>
     </v-container>
 
     <!-- Active child route renders outside the layout container so each child's
@@ -26,13 +26,12 @@
 import { ability } from '../../../lib/helpers/ability';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
-import PageHeader from '../../core/components/core.pageHeader.component.vue';
-import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
+import CorePageHeaderTabs from '../../core/components/core.pageHeaderTabs.component.vue';
 import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 
 export default {
   name: 'UserView',
-  components: { PageHeader, CoreSurfaceTabBar, organizationsSwitcherComponent },
+  components: { CorePageHeaderTabs, organizationsSwitcherComponent },
   /**
    * @desc Wires auth + organizations stores for the layout-level isLoggedIn
    *       watcher. The watcher mirrors the pre-Gamma fetch behavior: it pre-

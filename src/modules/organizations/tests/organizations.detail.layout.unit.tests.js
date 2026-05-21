@@ -73,13 +73,12 @@ import OrganizationGeneralTab from '../components/organization.general.tab.vue';
  * Minimal stubs for Vuetify / child components so mount stays lightweight.
  */
 const baseStubs = {
-  PageHeader: { template: '<div class="page-header-stub" />' },
-  orgAvatarComponent: { template: '<div />' },
-  CoreSurfaceTabBar: {
-    name: 'CoreSurfaceTabBar',
-    props: ['tabs', 'can', 'basePath'],
-    template: '<div class="surface-tab-bar-stub" :data-base-path="basePath" />',
+  CorePageHeaderTabs: {
+    name: 'CorePageHeaderTabs',
+    props: ['title', 'tabs', 'can', 'basePath', 'hideTabs'],
+    template: '<div class="page-header-tabs-stub" :data-base-path="basePath"><slot name="avatar" /><slot name="actions" /></div>',
   },
+  orgAvatarComponent: { template: '<div />' },
   coreConfirmDialog: { template: '<div class="core-confirm-dialog-stub"><slot /></div>' },
   RouterView: { template: '<div class="router-view-stub" />' },
   'router-view': { template: '<div class="router-view-stub" />' },
@@ -140,9 +139,9 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     setActivePinia(createPinia());
   });
 
-  it('renders CoreSurfaceTabBar', () => {
+  it('renders CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'CorePageHeaderTabs' }).exists()).toBe(true);
   });
 
   it('renders router-view for child tabs', () => {
@@ -152,27 +151,16 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
   });
 
   it('router-view is NOT nested inside a v-container (no double-gutter regression)', () => {
-    // The layout wraps only its chrome (PageHeader + CoreSurfaceTabBar) in a
-    // v-container; router-view sits outside so each child provides its own
-    // single container gutter.  The stub renders as <div><slot /></div>, so
-    // we verify the rendered HTML does NOT show router-view-stub as a
-    // descendant of a v-container stub (i.e. router-view-stub is not inside
-    // the container div that also contains page-header-stub and surface-tab-bar-stub).
+    // The layout wraps only its chrome (CorePageHeaderTabs) in a v-container;
+    // router-view sits outside so each child provides its own single container
+    // gutter.
     const wrapper = mountLayout();
     const html = wrapper.html();
-    // The router-view-stub should appear AFTER the closing tag of the inner container
-    // that holds the tab bar. A simple structural check: router-view-stub must not
-    // appear between page-header-stub and surface-tab-bar-stub's enclosing div.
-    const tabBarPos = html.indexOf('surface-tab-bar-stub');
+    const headerPos = html.indexOf('page-header-tabs-stub');
     const routerViewPos = html.indexOf('router-view-stub');
-    // router-view-stub must appear after the tab bar (chrome is above content)
-    expect(routerViewPos).toBeGreaterThan(tabBarPos);
+    // router-view-stub must appear after the header chrome
+    expect(routerViewPos).toBeGreaterThan(headerPos);
     // The layout root must NOT be a v-container stub itself — it is a plain <div>
-    // (the v-container stub renders as <div><slot/></div>, but the root wrapper
-    // element should be a plain div wrapping a v-container then router-view).
-    // Verify the component root element is not the v-container by checking
-    // that the layout exposes no v-container as the outermost wrapper.
-    // (shallowMount root = component's root template element)
     expect(wrapper.element.tagName.toLowerCase()).toBe('div');
   });
 
@@ -192,32 +180,32 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     expect(wrapper.vm.basePath).not.toContain(':organizationId');
   });
 
-  it('passes the resolved basePath to CoreSurfaceTabBar', () => {
+  it('passes the resolved basePath to CorePageHeaderTabs', () => {
     const wrapper = mountLayout('org-xyz');
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(tabBar.props('basePath')).toBe('/users/organizations/org-xyz');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('basePath')).toBe('/users/organizations/org-xyz');
   });
 
-  it('passes config.organizations.tabs to CoreSurfaceTabBar', () => {
+  it('passes config.organizations.tabs to CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    const tabs = tabBar.props('tabs');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    const tabs = headerTabs.props('tabs');
     expect(Array.isArray(tabs)).toBe(true);
     expect(tabs.find((t) => t.value === 'billing')).toBeDefined();
   });
 
-  it('passes both Organization + Billing tabs to CoreSurfaceTabBar', () => {
+  it('passes both Organization + Billing tabs to CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(tabBar.exists()).toBe(true);
-    const tabs = tabBar.props('tabs');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.exists()).toBe(true);
+    const tabs = headerTabs.props('tabs');
     expect(tabs.map((t) => t.value)).toEqual(['organization', 'billing']);
   });
 
-  it('passes a function as the `can` prop to CoreSurfaceTabBar', () => {
+  it('passes a function as the `can` prop to CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(typeof tabBar.props('can')).toBe('function');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(typeof headerTabs.props('can')).toBe('function');
   });
 
   it('basePath resolves differently for different org IDs (reactive)', () => {
@@ -245,10 +233,10 @@ describe('organization.detail.component.vue — tabbed parent layout (C3)', () =
     expect(wrapper.vm.basePath).not.toContain(':organizationId');
   });
 
-  it('passes admin basePath to CoreSurfaceTabBar in admin context', () => {
+  it('passes admin basePath to CorePageHeaderTabs in admin context', () => {
     const wrapper = mountLayout('org-xyz', '/admin/organizations/org-xyz');
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(tabBar.props('basePath')).toBe('/admin/organizations/org-xyz');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('basePath')).toBe('/admin/organizations/org-xyz');
   });
 
   // ── FIX 1: no inert beforeRouteLeave on the layout ───────────────────────

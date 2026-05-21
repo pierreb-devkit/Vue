@@ -107,7 +107,7 @@ describe('core.pageHeader.component — breadcrumb slot', () => {
   });
 });
 
-describe('core.pageHeader.component — canonical 56px height invariant', () => {
+describe('core.pageHeader.component — root layout class', () => {
   it('applies the .core-page-header class on the root row in title mode', () => {
     const wrapper = mountHeader({ props: { title: 'Tasks' } });
     expect(wrapper.find('.core-page-header').exists()).toBe(true);
@@ -129,7 +129,6 @@ describe('core.pageHeader.component — canonical 56px height invariant', () => 
     });
     const titleRoot = wrapperTitle.find('.core-page-header');
     const bcRoot = wrapperBc.find('.core-page-header');
-    // Layout-bearing classes (height invariant + nowrap) must match across modes
     expect(titleRoot.classes()).toEqual(expect.arrayContaining(['core-page-header', 'flex-nowrap']));
     expect(bcRoot.classes()).toEqual(expect.arrayContaining(['core-page-header', 'flex-nowrap']));
   });
@@ -196,21 +195,3 @@ describe('core.pageHeader.component — actions cluster', () => {
   });
 });
 
-describe('core.pageHeader.component — tabs mode (unchanged)', () => {
-  it('renders the tabs slot and skips the icon/title block', () => {
-    const wrapper = mountHeader({
-      props: { title: 'Tasks', icon: 'fa-solid fa-list-check' },
-      slots: { tabs: '<div class="qa-tabs">Tabs here</div>' },
-    });
-    expect(wrapper.find('.qa-tabs').exists()).toBe(true);
-    expect(wrapper.find('h2.core-page-header__title').exists()).toBe(false);
-    expect(wrapper.find('.core-page-header__breadcrumb').exists()).toBe(false);
-  });
-
-  it('still applies the canonical 56px height class in tabs mode', () => {
-    const wrapper = mountHeader({
-      slots: { tabs: '<div class="qa-tabs">Tabs here</div>' },
-    });
-    expect(wrapper.find('.core-page-header').exists()).toBe(true);
-  });
-});
