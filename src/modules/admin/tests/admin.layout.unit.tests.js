@@ -3,16 +3,15 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
+const adminStoreState = { error: null, currentBreadcrumb: null };
+const authStoreState = { serverConfig: null };
+
 vi.mock('../stores/admin.store', () => ({
-  useAdminStore: () => ({
-    error: null,
-  }),
+  useAdminStore: () => adminStoreState,
 }));
 
 vi.mock('../../auth/stores/auth.store', () => ({
-  useAuthStore: () => ({
-    serverConfig: null,
-  }),
+  useAuthStore: () => authStoreState,
 }));
 
 import AdminLayout from '../views/admin.layout.vue';
@@ -39,7 +38,20 @@ const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
       stubs: {
         RouterLink: true,
         RouterView: { template: '<div class="router-view-stub" />' },
-        PageHeader: { template: '<div class="page-header-stub" />' },
+        // CRITICAL: PageHeader stub must pass through #tabs, #breadcrumb, #actions, #avatar slots
+        // so existing tests can still find VTab components inside the layout.
+        PageHeader: {
+          template: `
+            <div class="page-header-stub">
+              <slot name="avatar" />
+              <slot name="breadcrumb" />
+              <slot name="tabs" />
+              <slot name="title" />
+              <slot name="subtitle" />
+              <slot name="actions" />
+            </div>
+          `,
+        },
       },
     },
   });
@@ -47,6 +59,11 @@ const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
 describe('admin.layout', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    // Reset mock state — vitest does NOT reset between describe blocks because the
+    // mocked module is hoisted and module-scope state persists across tests.
+    adminStoreState.error = null;
+    adminStoreState.currentBreadcrumb = null;
+    authStoreState.serverConfig = null;
   });
 
   it('should render the page header', () => {
@@ -242,5 +259,63 @@ describe('admin.layout', () => {
     const extraIcons = tabs[4].findAllComponents({ name: 'VIcon' });
     expect(extraIcons.length).toBe(1);
     expect(extraIcons[0].props('icon')).toBe('fa-solid fa-book');
+  });
+
+  // NEW tests — Task 4: banners on top, tabs in PageHeader, breadcrumb support
+
+  it('renders the error banner at the TOP of the layout, before the header', async () => {
+    adminStoreState.error = 'Boom';
+    const wrapper = mountLayout();
+    await wrapper.vm.$nextTick();
+    const html = wrapper.html();
+    const errIdx = html.indexOf('Boom');
+    const headerIdx = html.indexOf('page-header-stub');
+    expect(errIdx).toBeGreaterThan(-1);
+    expect(headerIdx).toBeGreaterThan(-1);
+    expect(errIdx).toBeLessThan(headerIdx);
+  });
+
+  it('renders the mailer warning at the TOP when serverConfig.mail.configured is false', async () => {
+    authStoreState.serverConfig = { mail: { configured: false } };
+    const wrapper = mountLayout();
+    await wrapper.vm.$nextTick();
+    const html = wrapper.html();
+    const warnIdx = html.indexOf('No mailer configured');
+    const headerIdx = html.indexOf('page-header-stub');
+    expect(warnIdx).toBeGreaterThan(-1);
+    expect(warnIdx).toBeLessThan(headerIdx);
+  });
+
+  it('does NOT render the mailer warning when mail is configured', () => {
+    authStoreState.serverConfig = { mail: { configured: true } };
+    const wrapper = mountLayout();
+    expect(wrapper.html()).not.toContain('No mailer configured');
+  });
+
+  it('renders a single .admin-content wrapper around <router-view>', () => {
+    const wrapper = mountLayout();
+    expect(wrapper.findAll('.admin-content').length).toBe(1);
+    expect(wrapper.find('.admin-content .router-view-stub').exists()).toBe(true);
+  });
+
+  it('renders the breadcrumb when useAdminStore().currentBreadcrumb is set', async () => {
+    adminStoreState.currentBreadcrumb = { title: 'Jane Doe', titleClass: 'text-capitalize' };
+    const wrapper = mountLayout({}, '/admin/users/u1');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('Jane Doe');
+  });
+
+  it('does NOT render <v-tabs> when currentBreadcrumb is set (detail mode)', async () => {
+    adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
+    const wrapper = mountLayout({}, '/admin/users/u1');
+    await wrapper.vm.$nextTick();
+    const tabs = wrapper.findAllComponents({ name: 'VTab' });
+    expect(tabs.length).toBe(0);
+  });
+
+  it('renders <v-tabs> when currentBreadcrumb is null (list mode)', () => {
+    const wrapper = mountLayout();
+    const tabs = wrapper.findAllComponents({ name: 'VTab' });
+    expect(tabs.length).toBe(4);
   });
 });

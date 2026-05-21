@@ -1,6 +1,5 @@
 <template>
   <v-container fluid>
-    <PageHeader icon="fa-solid fa-user-tie" title="Admin" />
     <v-alert
       v-if="error"
       type="error"
@@ -13,38 +12,45 @@
       @click:close="clearError"
       ><span class="text-body-medium">{{ error }}</span></v-alert
     >
-    <v-tabs v-model="activeTab" color="primary" class="px-2">
-      <v-tab
-        v-for="tab in builtInTabs"
-        :key="tab.value"
-        :to="tabTo(tab)"
-        :value="tabTo(tab)"
-        class="text-none text-body-medium"
-        ><v-icon :icon="tab.icon" size="small" class="mr-2"></v-icon>{{ tab.label }}</v-tab
-      >
-      <v-tab
-        v-for="extraTab in extraTabs"
-        :key="extraTab.value"
-        :to="tabTo(extraTab)"
-        :value="tabTo(extraTab)"
-        class="text-none text-body-medium"
-        ><v-icon v-if="extraTab.icon" :icon="extraTab.icon" size="small" class="mr-2"></v-icon
-        >{{ extraTab.label }}</v-tab
-      >
-    </v-tabs>
-    <router-view />
     <v-alert
       v-if="showMailerWarning"
       type="warning"
       variant="tonal"
       density="compact"
-      class="mx-2 mt-4"
+      class="mx-2 mt-2"
       :class="config.vuetify.theme.rounded"
       icon="fa-solid fa-triangle-exclamation"
       ><span class="text-body-medium"
         >No mailer configured. Users can register with any email without verification. Set up SMTP to enable email verification.</span
       ></v-alert
     >
+
+    <PageHeader
+      :icon="currentBreadcrumb ? '' : 'fa-solid fa-user-tie'"
+      :title="currentBreadcrumb ? '' : 'Admin'"
+    >
+      <template v-if="currentBreadcrumb" #breadcrumb>
+        <router-link to="/admin" class="text-medium-emphasis text-decoration-none">Admin</router-link>
+        <v-icon icon="fa-solid fa-chevron-right" size="x-small" class="mx-2 text-medium-emphasis"></v-icon>
+        <span :class="currentBreadcrumb.titleClass || ''">{{ currentBreadcrumb.title }}</span>
+      </template>
+      <template v-if="!currentBreadcrumb" #tabs>
+        <v-tabs v-model="activeTab" color="primary" class="px-2 flex-grow-1">
+          <v-tab
+            v-for="tab in allTabs"
+            :key="tab.value"
+            :to="tabTo(tab)"
+            :value="tabTo(tab)"
+            class="text-none text-body-medium"
+            ><v-icon v-if="tab.icon" :icon="tab.icon" size="small" class="mr-2"></v-icon>{{ tab.label }}</v-tab
+          >
+        </v-tabs>
+      </template>
+    </PageHeader>
+
+    <div class="admin-content pa-4">
+      <router-view />
+    </div>
   </v-container>
 </template>
 <script>
@@ -89,8 +95,13 @@ const BUILT_IN_TABS = Object.freeze([
  * e.g. `'knowledge'`) or a legacy absolute path (`'/admin/knowledge'`).
  * Both are supported — relative is resolved against `/admin/`.
  *
- * Global concerns (error banner, mailer warning) are rendered here so
- * they stay visible across all admin tabs, including downstream extras.
+ * Global concerns (error banner, mailer warning) are rendered at the top
+ * (before the header) so they stay visible across all admin tabs, including
+ * downstream extras.
+ *
+ * When `currentBreadcrumb` is set (detail page), the header switches to
+ * breadcrumb mode and tabs are hidden. On list pages (null breadcrumb),
+ * tabs render inside the PageHeader `#tabs` slot.
  */
 export default {
   name: 'AdminLayout',
@@ -125,6 +136,14 @@ export default {
       return useAuthStore().serverConfig?.mail?.configured === false;
     },
     /**
+     * @desc Current breadcrumb set by a detail sub-view via useAdminStore().setBreadcrumb.
+     *       When non-null, the header switches to breadcrumb mode and tabs are hidden.
+     * @returns {{ title: string, titleClass?: string }|null}
+     */
+    currentBreadcrumb() {
+      return useAdminStore().currentBreadcrumb;
+    },
+    /**
      * @desc Returns validated extra admin tabs from `config.admin.tabs`.
      *
      * Accepted shapes (in preference order):
@@ -144,6 +163,13 @@ export default {
       const tabs = this.config?.admin?.tabs;
       if (!Array.isArray(tabs)) return [];
       return tabs.filter((tab) => this.isValidTab(tab));
+    },
+    /**
+     * @desc Merged built-in + extra tabs for rendering in the #tabs slot.
+     * @returns {Array<{ value: string, label: string, icon?: string, route: string }>}
+     */
+    allTabs() {
+      return [...this.builtInTabs, ...this.extraTabs];
     },
   },
   watch: {
