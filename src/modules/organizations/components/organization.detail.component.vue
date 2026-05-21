@@ -1,7 +1,8 @@
 <template>
   <div>
-    <!-- Layout chrome: header + tab bar, guttered with their own container -->
-    <v-container fluid>
+    <!-- Layout chrome: header + tab bar, guttered with their own container.
+         pb-0 collapses the gap below tabs — child router-view supplies its own top padding. -->
+    <v-container fluid class="pb-0">
       <!-- Header -->
       <PageHeader
         :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
