@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
@@ -40,7 +40,7 @@ describe('core.avatarUploader.component', () => {
     const file = new File(['x'], 'avatar.png', { type: 'image/png' });
     Object.defineProperty(input.element, 'files', { value: [file] });
     await input.trigger('change');
-    await new Promise((r) => setTimeout(r, 0));
+    await flushPromises();
     expect(axios.post).toHaveBeenCalledTimes(1);
     expect(axios.post.mock.calls[0][0]).toContain('/users/avatar');
     expect(wrapper.emitted('uploaded')).toBeTruthy();
