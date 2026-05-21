@@ -1,20 +1,38 @@
 <template>
   <v-container fluid>
-    <userProfileComponent
-      :user="user"
-      :organizations="organizations"
-      @save="updateProfile"
-      @avatar-uploaded="onAvatarUploaded"
-    />
+    <v-row class="pa-2 mt-0">
+      <v-col cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+          <userProfileComponent
+            :user="user"
+            :organizations="organizations"
+            @save="updateProfile"
+            @avatar-uploaded="onAvatarUploaded"
+          />
+        </v-card>
 
-    <!-- Danger zone -->
-    <v-card variant="outlined" color="error" class="mt-6">
-      <v-card-title class="text-title-medium font-weight-medium">Delete Account</v-card-title>
-      <v-card-text class="text-body-small text-medium-emphasis">Permanently delete your account, data, and organization ownership. This cannot be undone.</v-card-text>
-      <v-card-actions>
-        <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteAccount = true">Delete Account</v-btn>
-      </v-card-actions>
-    </v-card>
+        <!-- Danger zone -->
+        <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
+          <div class="d-flex align-center flex-wrap ga-4">
+            <div class="flex-grow-1">
+              <h3 class="text-title-medium font-weight-medium mb-1">Delete Account</h3>
+              <p class="text-body-small text-medium-emphasis mb-0">
+                Permanently delete your account, data, and organization ownership. This cannot be undone.
+              </p>
+            </div>
+            <v-btn
+              color="error"
+              variant="tonal"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              @click="confirmDeleteAccount = true"
+            >
+              Delete Account
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <coreConfirmDialog
       v-model="confirmDeleteAccount"
