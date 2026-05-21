@@ -81,3 +81,6 @@ mongod
 .github/*local.*
 .claude/worktrees/
 playwright.local.config.js
+
+# Top-level git worktrees (per superpowers convention)
+.worktrees/

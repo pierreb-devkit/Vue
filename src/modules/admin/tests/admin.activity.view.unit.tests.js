@@ -181,3 +181,44 @@ describe('admin.activity.view', () => {
     expect(getAuditLogs).not.toHaveBeenCalled();
   });
 });
+
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+describe('admin.activity.view — template chrome', () => {
+  it('does NOT wrap its template in <v-container> (admin layout owns chrome)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).not.toMatch(/<v-container/);
+  });
+
+  it('has zero inline style="…" attributes in its template', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    // Allow :style="…" (dynamic bindings, none expected here) and reject plain style="…".
+    // But neither should appear in this view after the refactor.
+    expect(tmpl).not.toMatch(/\bstyle\s*=\s*"/);
+    expect(tmpl).not.toMatch(/:style\s*=\s*"/);
+  });
+
+  it('uses v-table with the hover prop for row affordance', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/<v-table[^>]*\bhover\b/);
+  });
+
+  it('expandable rows have keyboard semantics (tabindex, role, aria-expanded, keydown handlers)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/tabindex="0"/);
+    expect(tmpl).toMatch(/role="button"/);
+    expect(tmpl).toMatch(/aria-expanded/);
+    expect(tmpl).toMatch(/@keydown\.enter/);
+    expect(tmpl).toMatch(/@keydown\.space/);
+  });
+});

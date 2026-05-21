@@ -415,3 +415,36 @@ describe('Admin Store', () => {
     });
   });
 });
+
+describe('admin store — currentBreadcrumb', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('defaults to null', () => {
+    const store = useAdminStore();
+    expect(store.currentBreadcrumb).toBeNull();
+  });
+
+  it('setBreadcrumb stores a shallow-copied payload', () => {
+    const store = useAdminStore();
+    const payload = { title: 'Jane Doe', titleClass: 'text-capitalize' };
+    store.setBreadcrumb(payload);
+    expect(store.currentBreadcrumb).toEqual(payload);
+    expect(store.currentBreadcrumb).not.toBe(payload); // shallow copy
+  });
+
+  it('clearBreadcrumb() resets to null', () => {
+    const store = useAdminStore();
+    store.setBreadcrumb({ title: 'X' });
+    store.clearBreadcrumb();
+    expect(store.currentBreadcrumb).toBeNull();
+  });
+
+  it('setBreadcrumb(null) clears the breadcrumb', () => {
+    const store = useAdminStore();
+    store.setBreadcrumb({ title: 'X' });
+    store.setBreadcrumb(null);
+    expect(store.currentBreadcrumb).toBeNull();
+  });
+});

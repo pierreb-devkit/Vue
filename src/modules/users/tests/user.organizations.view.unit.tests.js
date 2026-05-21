@@ -1,4 +1,7 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, it, test, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import { shallowMount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import UserOrganizationsView from '../views/user.organizations.view.vue';
@@ -17,6 +20,7 @@ vi.mock('../../../lib/helpers/orgColor', () => ({ default: () => 'blue' }));
 
 const sharedStubs = {
   orgAvatarComponent: { template: '<div />' },
+  coreConfirmDialog: { template: '<div data-test="core-confirm-dialog" />', name: 'CoreConfirmDialog' },
   'v-container': { template: '<div><slot /></div>' },
   'v-list': { template: '<div><slot /></div>' },
   'v-list-item': { template: '<div><slot /></div>' },
@@ -26,12 +30,6 @@ const sharedStubs = {
   'v-chip': { template: '<div><slot /></div>' },
   'v-btn': { template: '<button v-bind="$attrs" :to="$attrs.to"><slot /></button>', inheritAttrs: false },
   'v-icon': { template: '<div />' },
-  'v-dialog': { template: '<div><slot /></div>' },
-  'v-card': { template: '<div><slot /></div>' },
-  'v-card-title': { template: '<div><slot /></div>' },
-  'v-card-text': { template: '<div><slot /></div>' },
-  'v-card-actions': { template: '<div><slot /></div>' },
-  'v-spacer': { template: '<div />' },
 };
 
 const sharedMocks = ($router = { push: vi.fn() }) => ({
@@ -126,5 +124,15 @@ describe('user.organizations.view', () => {
 
     expect(store.leaveOrganization).toHaveBeenCalledWith(orgId);
     expect(routerPush).toHaveBeenCalledWith('/organization-required');
+  });
+});
+
+describe('user.organizations.view — confirm dialog', () => {
+  it('uses coreConfirmDialog for Leave Org (no inline v-dialog)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/user.organizations.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/<coreConfirmDialog/);
+    expect(tmpl).not.toMatch(/<v-dialog/);
   });
 });

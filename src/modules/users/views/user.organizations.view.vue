@@ -53,20 +53,14 @@
       <p class="text-body-medium">No organizations yet.</p>
     </div>
 
-    <!-- Leave organization dialog -->
-    <v-dialog v-model="leaveDialog" max-width="440">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
-        <v-card-title class="text-title-large font-weight-medium">Leave Organization</v-card-title>
-        <v-card-text class="text-body-medium">
-          Are you sure you want to leave {{ orgToLeave?.name }}? You will lose access to all resources in this organization.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none text-body-medium" @click="leaveDialog = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="leaveOrg">Leave</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <coreConfirmDialog
+      v-model="leaveDialog"
+      title="Leave Organization"
+      :message="leaveOrgMessage"
+      confirm-label="Leave"
+      confirm-color="error"
+      @confirm="leaveOrg"
+    />
   </v-container>
 </template>
 
@@ -75,10 +69,11 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import roleColor from '../../../lib/helpers/roleColor';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
+import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 export default {
   name: 'UserOrganizationsView',
-  components: { orgAvatarComponent },
+  components: { orgAvatarComponent, coreConfirmDialog },
   /**
    * @desc Wires auth and organizations stores for computed properties and methods.
    * @returns {{ authStore: Object, organizationsStore: Object }}
@@ -110,6 +105,13 @@ export default {
     currentOrganizationId() {
       const id = this.authStore.user?.currentOrganization;
       return id?._id || id?.id || id;
+    },
+    /**
+     * @desc Confirmation copy interpolated with the org name.
+     * @returns {string}
+     */
+    leaveOrgMessage() {
+      return `Are you sure you want to leave ${this.orgToLeave?.name || ''}? You will lose access to all resources in this organization.`;
     },
   },
   /**
