@@ -163,7 +163,8 @@ export const packs = [
 ];
 
 /**
- * @desc FAQ section content. Title + subtitle are optional (fallback to i18n).
+ * @desc FAQ section content. Title + subtitle are optional (fallback to hardcoded English defaults:
+ * `'Frequently asked questions'` / `null` — no subtitle by default).
  * @type {{ title?: string, subtitle?: string, content: Array<{id: string, question: string, answer: string}> }}
  */
 export const faqs = {
@@ -190,8 +191,8 @@ export const faqs = {
 
 /**
  * @desc Configurable tab labels (used in 'both-tabs' mode).
- * Each field is optional — when omitted the view falls back to i18n keys
- * `billing.pricing.tabs.plans` / `billing.pricing.tabs.units`.
+ * Each field is optional — when omitted the view falls back to hardcoded English defaults
+ * (`'Plans'` / `'Units'`).
  * Downstream projects can override either or both labels per project.
  * @type {{ plans?: string, units?: string }}
  */
@@ -201,8 +202,8 @@ export const tabs = {
 };
 
 /**
- * @desc Page header copy. When `null`/absent, falls back to i18n keys
- * `billing.pricing.title` / `billing.pricing.subtitle`.
+ * @desc Page header copy. When `null`/absent, falls back to hardcoded English defaults
+ * (`'Pricing'` / `'Choose the plan that fits your needs.'`).
  * @type {{ title?: string|null, subtitle?: string|null }}
  */
 export const header = {
