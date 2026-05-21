@@ -10,6 +10,12 @@ import userProfile from '../components/user.profile.component.vue';
 
 const vuetify = createVuetify({ components, directives });
 
+/**
+ * Mount UserProfileComponent with Vuetify, a minimal config mock, and a
+ * stubbed coreAvatarUploader (avoids axios dependency in unit tests).
+ * @param {object} [props={}] - Props merged into the default user prop set.
+ * @returns {import('@vue/test-utils').VueWrapper} Fully mounted wrapper.
+ */
 const mountProfile = (props = {}) =>
   mount(userProfile, {
     global: {

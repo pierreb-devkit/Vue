@@ -125,10 +125,21 @@ export const useAdminStore = defineStore('admin', {
       this.user = defaultUser();
     },
 
+    /**
+     * @desc Set (or clear) the current breadcrumb published by an admin sub-view.
+     *       A shallow copy is stored so callers cannot mutate the store state directly.
+     *       Pass `null` to clear (identical effect to `clearBreadcrumb()`).
+     * @param {{ title: string, titleClass?: string } | null} payload - Breadcrumb data, or null to clear.
+     * @returns {void}
+     */
     setBreadcrumb(payload) {
       this.currentBreadcrumb = payload ? { ...payload } : null;
     },
 
+    /**
+     * @desc Clear the current breadcrumb (reset to null). Called by admin sub-views on unmount.
+     * @returns {void}
+     */
     clearBreadcrumb() {
       this.currentBreadcrumb = null;
     },

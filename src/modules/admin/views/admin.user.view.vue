@@ -55,15 +55,29 @@ export default {
   watch: {
     id: {
       immediate: true,
+      /**
+       * @desc Reload the admin-store user whenever the route :id param changes.
+       * @returns {Promise<void>}
+       */
       async handler() {
         await this.loadUser();
       },
     },
     user: {
       immediate: true,
+      /**
+       * @desc Keep the admin layout breadcrumb in sync with the current user record.
+       * @param {object|null} u - Updated user record from the store.
+       * @returns {void}
+       */
       handler(u) { this.publishBreadcrumb(u); },
     },
   },
+  /**
+   * @desc Clear the admin layout breadcrumb so the layout header reverts to its
+   *       default state after leaving the user detail page.
+   * @returns {void}
+   */
   beforeUnmount() {
     useAdminStore().clearBreadcrumb();
   },

@@ -14,7 +14,7 @@
             :variant="isUserActiveOrg(item, m) ? 'flat' : 'tonal'"
             :color="orgColor(m.organizationId)"
             class="mr-1 text-capitalize"
-            :style="membershipOrgId(m) ? 'cursor: pointer' : ''"
+            :class="membershipOrgId(m) ? 'cursor-pointer' : ''"
             @click="navigateToMembershipOrg(m)"
             >{{ (m.organizationId && m.organizationId.name) || '—' }} ({{ m.role || '—' }})</v-chip
           ></template

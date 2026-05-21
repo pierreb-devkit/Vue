@@ -49,9 +49,21 @@ export default {
   },
   emits: ['uploaded', 'error'],
   methods: {
+    /**
+     * @desc Programmatically open the hidden file input to let the user pick an avatar.
+     * @returns {void}
+     */
     triggerUpload() {
       this.$refs.fileInput.click();
     },
+    /**
+     * @desc Handle a file-input change event: upload the selected file to the
+     *       configured endpoint via multipart POST, then emit `uploaded` on
+     *       success or `error` on failure. Clears the input value after each
+     *       attempt so the same file can be re-selected if needed.
+     * @param {Event} event - The native `change` event from the hidden `<input type="file">`.
+     * @returns {Promise<void>}
+     */
     async onFile(event) {
       const file = event.target.files[0];
       if (!file) return;

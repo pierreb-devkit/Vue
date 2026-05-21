@@ -66,25 +66,52 @@ export default {
     loading: { type: Boolean, default: false },
   },
   emits: ['update:modelValue', 'confirm', 'cancel'],
+  /**
+   * @desc Local reactive state. `typed` holds the user's text-field input when
+   *       a `confirmText` typed-gate is active.
+   * @returns {{ typed: string }}
+   */
   data() {
     return { typed: '' };
   },
   computed: {
+    /**
+     * @desc Whether the confirm button should be enabled. Always true when no
+     *       `confirmText` is required; otherwise requires an exact string match.
+     * @returns {boolean}
+     */
     canConfirm() {
       if (!this.confirmText) return true;
       return this.typed === this.confirmText;
     },
   },
   watch: {
+    /**
+     * @desc Reset the typed-gate input whenever the dialog closes so the next
+     *       opening starts clean.
+     * @param {boolean} open - New `modelValue` (true = dialog opened, false = closed).
+     * @returns {void}
+     */
     modelValue(open) {
       if (!open) this.typed = '';
     },
   },
   methods: {
+    /**
+     * @desc Handle the cancel action: emit `cancel` then close the dialog via
+     *       `update:modelValue`.
+     * @returns {void}
+     */
     onCancel() {
       this.$emit('cancel');
       this.$emit('update:modelValue', false);
     },
+    /**
+     * @desc Handle the confirm action: emit `confirm` only when `canConfirm` is
+     *       true. The dialog does NOT self-close — the parent controls closing
+     *       via the v-model binding (intentional, to support async loading states).
+     * @returns {void}
+     */
     onConfirm() {
       if (!this.canConfirm) return;
       this.$emit('confirm');

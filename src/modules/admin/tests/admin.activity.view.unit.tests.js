@@ -210,4 +210,15 @@ describe('admin.activity.view — template chrome', () => {
     const tmpl = sfc.split('<script>')[0];
     expect(tmpl).toMatch(/<v-table[^>]*\bhover\b/);
   });
+
+  it('expandable rows have keyboard semantics (tabindex, role, aria-expanded, keydown handlers)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/tabindex="0"/);
+    expect(tmpl).toMatch(/role="button"/);
+    expect(tmpl).toMatch(/aria-expanded/);
+    expect(tmpl).toMatch(/@keydown\.enter/);
+    expect(tmpl).toMatch(/@keydown\.space/);
+  });
 });

@@ -73,7 +73,15 @@
       </thead>
       <tbody>
         <template v-for="item in auditLogs" :key="item._id || item.id">
-          <tr @click="toggleActivityExpand(item._id || item.id)">
+          <tr
+            tabindex="0"
+            role="button"
+            :aria-expanded="activityExpandedId === (item._id || item.id) ? 'true' : 'false'"
+            class="cursor-pointer"
+            @click="toggleActivityExpand(item._id || item.id)"
+            @keydown.enter.prevent="toggleActivityExpand(item._id || item.id)"
+            @keydown.space.prevent="toggleActivityExpand(item._id || item.id)"
+          >
             <td class="text-body-medium">{{ formatActivityDate(item.createdAt) }}</td>
             <td>
               <v-chip size="small" variant="tonal" color="primary">{{ item.action }}</v-chip>

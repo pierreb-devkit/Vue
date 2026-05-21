@@ -26,6 +26,12 @@ const baseConfig = {
   vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
 };
 
+/**
+ * Mount AdminLayout with shared stubs/mocks and optional config overrides.
+ * @param {object} [configOverrides={}] - Config keys merged (shallow) into the base config mock.
+ * @param {string} [routePath='/admin/users'] - Mocked current route path for `$route.path`.
+ * @returns {import('@vue/test-utils').VueWrapper} Fully mounted AdminLayout wrapper.
+ */
 const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
   mount(AdminLayout, {
     global: {

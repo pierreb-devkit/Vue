@@ -130,6 +130,7 @@ export default {
     /**
      * @desc Pull the form fields from a fresh `user` prop and reset dirty.
      * @param {object} u - The user record.
+     * @returns {void}
      */
     syncForm(u) {
       this.form.firstName = u.firstName || '';
@@ -142,6 +143,7 @@ export default {
     /**
      * @desc Build the `orgItems` list from `user.memberships` (preferred) or
      *       the `organizations` prop (legacy flat format).
+     * @returns {void}
      */
     syncOrganizations() {
       const memberships = this.getMemberships();

@@ -33,6 +33,14 @@ const vuetifyStubs = {
   coreConfirmDialog: true,
 };
 
+/**
+ * Shallow-mount AdminUserView with a fresh Pinia instance and standard stubs.
+ * Pre-seeds the admin store's user record when `initialUser` is provided so the
+ * `user` watcher fires on mount (triggering breadcrumb publishing).
+ * @param {string} [routeId='u1'] - The `:id` param to expose via mocked `$route`.
+ * @param {object|null} [initialUser=null] - Optional user record to pre-seed in the store.
+ * @returns {import('@vue/test-utils').VueWrapper} Shallow-mounted wrapper.
+ */
 const mountView = (routeId = 'u1', initialUser = null) => {
   setActivePinia(createPinia());
   const store = useAdminStore();

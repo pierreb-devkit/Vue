@@ -137,6 +137,7 @@ export default {
   methods: {
     /**
      * @desc Clear the global admin error banner.
+     * @returns {void}
      */
     clearError() {
       useAdminStore().error = null;
