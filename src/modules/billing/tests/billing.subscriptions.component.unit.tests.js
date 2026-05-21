@@ -25,6 +25,15 @@ vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: () => authState,
 }));
 
+// ─── Decouple from tenant-specific plan IDs ──────────────────────────────────
+
+vi.mock('../lib/billing.resolveStaticContent.js', () => ({
+  resolveStaticContent: () => ({
+    plans: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }],
+    packs: [],
+  }),
+}));
+
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
 import { useBillingStore } from '../stores/billing.store';
@@ -386,7 +395,7 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
   });
 
   it('labels the paid plan upgrade CTA as Change Plan when a higher plan exists', async () => {
-    store.subscription = { status: 'active', plan: 'starter', currentPeriodEnd: new Date().toISOString() };
+    store.subscription = { status: 'active', plan: 'p2', currentPeriodEnd: new Date().toISOString() };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
     expect(wrapper.text()).toContain('Change Plan');
