@@ -4,6 +4,116 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## PageHeader split + tabs spacing/alignment refactor (2026-05-21, v2)
+
+**Non-breaking for default consumers** — affects 3 stack layouts (Account, Organization detail, Admin) which were already refactored upstream. Downstream projects only need to act if they wrote a custom layout using `PageHeader` + `CoreSurfaceTabBar` directly, or relied on the (now removed) `#tabs` slot on `PageHeader`.
+
+This entry supersedes the spacing/structure parts of the previous "Account / Organization / Admin chrome convergence" entry below; the four conventions still apply for child views, dialogs, etc.
+
+### What changed
+
+1. **`PageHeader` is now content-sized** — the canonical `min-height: 56px / max-height: 56px` is gone from `core.pageHeader.component.vue`. Pages without tabs (list views like Tasks, Scraps) no longer pay the chrome tax.
+2. **`PageHeader`'s `#tabs` slot is removed** — it was dead code since #4187 (tabs are siblings of the header, not inside it).
+3. **`CoreSurfaceTabBar` aligns tabs horizontally with the title** — `<v-tabs class="mx-4">` is now applied internally, so the tab strip sits at the same x-offset as `PageHeader`'s icon+title.
+4. **New primitive `CorePageHeaderTabs`** (`src/modules/core/components/core.pageHeaderTabs.component.vue`) bundles `PageHeader` + `CoreSurfaceTabBar` and enforces the 56px title↔breadcrumb rhythm via a scoped `:deep()` rule — used wherever a section needs both a header and a tab bar.
+5. **Tabbed layouts use `<v-container fluid class="pb-0">`** to collapse the dead gap between the tab underline and the routed child's top edge.
+
+### The new convention
+
+Pages **with tabs** (Account, Org detail, Admin) — single primitive:
+
+```vue
+<template>
+  <v-container fluid class="pb-0">
+    <CorePageHeaderTabs
+      icon="fa-solid fa-X"
+      title="Section"
+      :tabs="config.section.tabs"
+      :can="sectionCan"
+      :base-path="basePath"
+      :hide-tabs="false"
+    >
+      <template #actions>...</template>
+      <template #breadcrumb v-if="...">...</template>
+    </CorePageHeaderTabs>
+  </v-container>
+  <router-view />
+</template>
+```
+
+Pages **without tabs** (Tasks, Scraps, simple list views) — content-sized `PageHeader`, unchanged shape:
+
+```vue
+<template>
+  <v-container fluid>
+    <PageHeader icon="fa-solid fa-X" title="Section">
+      <template #actions>...</template>
+    </PageHeader>
+    <v-row class="pa-2 mt-0">
+      <!-- content -->
+    </v-row>
+  </v-container>
+</template>
+```
+
+### Breadcrumb mode
+
+The pattern from the previous migration entry still holds. Now expressed via `CorePageHeaderTabs`:
+
+```vue
+<CorePageHeaderTabs
+  icon="fa-solid fa-user-tie"
+  :title="currentBreadcrumb ? '' : 'Section'"
+  :tabs="tabs"
+  :can="can"
+  :base-path="basePath"
+  :hide-tabs="!!currentBreadcrumb"
+>
+  <template v-if="currentBreadcrumb" #breadcrumb>
+    <router-link to="/section">Section</router-link>
+    <v-icon icon="fa-solid fa-chevron-right" size="x-small" class="mx-2 text-medium-emphasis" />
+    <span>{{ currentBreadcrumb.title }}</span>
+  </template>
+</CorePageHeaderTabs>
+```
+
+Set `:hide-tabs="true"` when in breadcrumb mode (user has drilled into a sub-record) so the tab bar disappears; the 56px height stays consistent across the title↔breadcrumb route transition.
+
+### Empty-state regression to watch for
+
+If a list view renders both a populated row AND an empty-state row in the same template, **guard the populated row with `v-if`** so it doesn't take vertical space when the list is empty. Example fixed in this batch (`tasks.view.vue`):
+
+```vue
+<v-row v-if="tasks && tasks.length" class="pa-2 mt-0">
+  <taskComponent v-for="..." />
+</v-row>
+<v-row v-if="!tasks || !tasks.length" class="pa-2 mt-0">
+  <!-- empty state -->
+</v-row>
+```
+
+Without the guard, the empty populated row still consumes ~16-24px (pa-2 + default v-row margins) and pushes the empty-state card down.
+
+### Migration for downstream projects
+
+Most downstream projects don't write custom layouts using `PageHeader` + `CoreSurfaceTabBar` — they consume the layouts via the stack. `/update-stack` will pick up the new convention automatically.
+
+**If your project has a custom tabbed layout** (rare):
+
+1. Replace `<PageHeader>` + `<CoreSurfaceTabBar>` siblings with a single `<CorePageHeaderTabs>` (import from `src/modules/core/components/core.pageHeaderTabs.component.vue`).
+2. Add `class="pb-0"` to the wrapping `<v-container fluid>` so the gap below tabs collapses.
+3. Drop any local CSS that compensated for the 56px PageHeader height — the new primitive handles it.
+
+**If your project uses `PageHeader` with the `#tabs` slot** (very rare):
+
+- Remove the slot usage. Render tabs as a sibling of `PageHeader` (or use `CorePageHeaderTabs`).
+
+### Tests touched
+
+Stack tests updated to find `CorePageHeaderTabs` by name instead of looking for `PageHeader` + `CoreSurfaceTabBar` separately. Downstream test files that follow the same pattern will need the same update; if a downstream stub-tests `PageHeader` directly, no change needed.
+
+---
+
 ## Account / Organization / Admin chrome convergence (2026-05-21)
 
 **Non-breaking for default consumers.** Builds on #4183 (`corePageTabs`), #4184 (org tabs), #4185 (Account chrome), and #4187 (Admin chrome + `coreConfirmDialog` + `coreAvatarUploader`). Locks in one chrome convention across all "section + tab bar + routed children" layouts.

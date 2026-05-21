@@ -1,10 +1,13 @@
 <template>
   <div>
-    <!-- Layout chrome: header + tab bar, guttered with their own container -->
-    <v-container fluid>
-      <!-- Header -->
-      <PageHeader
+    <!-- Layout chrome: header + tab bar, guttered with their own container.
+         pb-0 collapses the gap below tabs — child router-view supplies its own top padding. -->
+    <v-container fluid class="pb-0">
+      <CorePageHeaderTabs
         :title="viewedOrganization ? viewedOrganization.name : 'Organization'"
+        :tabs="config.organizations.tabs"
+        :can="abilityCan"
+        :base-path="basePath"
       >
         <template #avatar>
           <orgAvatarComponent v-if="viewedOrganization" :org="viewedOrganization" :size="40" class="mr-3" />
@@ -22,14 +25,7 @@
             Delete
           </v-btn>
         </template>
-      </PageHeader>
-
-      <!-- Tab bar (config-driven, CASL-gated) -->
-      <CoreSurfaceTabBar
-        :tabs="config.organizations.tabs"
-        :can="abilityCan"
-        :base-path="basePath"
-      />
+      </CorePageHeaderTabs>
     </v-container>
 
     <!-- Active child route renders outside the layout container so each child's
@@ -60,17 +56,15 @@ import { subject } from '@casl/ability';
 import { useRoute } from 'vue-router';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
-import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import CorePageHeaderTabs from '../../core/components/core.pageHeaderTabs.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
-import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 export default {
   name: 'OrganizationDetailComponent',
   components: {
-    PageHeader,
+    CorePageHeaderTabs,
     orgAvatarComponent,
-    CoreSurfaceTabBar,
     coreConfirmDialog,
   },
   props: {

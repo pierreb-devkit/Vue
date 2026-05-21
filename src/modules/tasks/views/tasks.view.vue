@@ -15,12 +15,12 @@
         </v-btn>
       </template>
     </PageHeader>
-    <v-row class="pa-2 mt-0">
+    <v-row v-if="tasks && tasks.length" class="pa-2 mt-0">
       <taskComponent v-for="(item, index) in tasks" :key="item.id" :item="item" :index="index"></taskComponent>
     </v-row>
-    <v-row v-if="!tasks || !tasks.length" align="start" justify="center">
+    <v-row v-if="!tasks || !tasks.length" class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card class="ma-6 pa-8 text-center" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+        <v-card class="pa-6 text-center" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <v-icon icon="fa-solid fa-list-check" size="x-large" color="primary" class="mb-4 text-medium-emphasis"></v-icon>
           <h2 class="text-title-large font-weight-medium mb-2">No tasks yet</h2>
           <p class="text-body-medium text-medium-emphasis mb-4">Create your first task to get started.</p>

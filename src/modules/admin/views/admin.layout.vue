@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="pb-0">
     <v-alert
       v-if="error"
       type="error"
@@ -27,22 +27,20 @@
       </span>
     </v-alert>
 
-    <PageHeader
+    <CorePageHeaderTabs
       icon="fa-solid fa-user-tie"
       :title="currentBreadcrumb ? '' : 'Admin'"
+      :tabs="allTabs"
+      :can="adminCan"
+      :base-path="basePath"
+      :hide-tabs="!!currentBreadcrumb"
     >
       <template v-if="currentBreadcrumb" #breadcrumb>
         <router-link to="/admin" class="text-medium-emphasis text-decoration-none">Admin</router-link>
         <v-icon icon="fa-solid fa-chevron-right" size="x-small" class="mx-2 text-medium-emphasis"></v-icon>
         <span :class="currentBreadcrumb.titleClass || ''">{{ currentBreadcrumb.title }}</span>
       </template>
-    </PageHeader>
-    <CoreSurfaceTabBar
-      v-if="!currentBreadcrumb"
-      :tabs="allTabs"
-      :can="adminCan"
-      :base-path="basePath"
-    />
+    </CorePageHeaderTabs>
   </v-container>
 
   <router-view />
@@ -51,8 +49,7 @@
 /**
  * Module dependencies.
  */
-import PageHeader from '../../core/components/core.pageHeader.component.vue';
-import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
+import CorePageHeaderTabs from '../../core/components/core.pageHeaderTabs.component.vue';
 import { ability } from '../../../lib/helpers/ability';
 import { useAdminStore } from '../stores/admin.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
@@ -85,7 +82,7 @@ const BUILT_IN_TABS = Object.freeze([
  */
 export default {
   name: 'AdminLayout',
-  components: { PageHeader, CoreSurfaceTabBar },
+  components: { CorePageHeaderTabs },
   computed: {
     /**
      * @desc Base path for admin tabs (where CoreSurfaceTabBar resolves relative routes).

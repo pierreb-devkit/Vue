@@ -15,8 +15,11 @@ vi.mock('../../../lib/services/config', () => ({
 vi.mock('../../../lib/helpers/ability', () => ({ ability: null, updateAbilities: vi.fn() }));
 
 const sharedStubs = {
-  PageHeader: { template: '<div data-test="page-header"><slot /><slot name="actions" /></div>', name: 'PageHeader' },
-  CoreSurfaceTabBar: { template: '<div data-test="core-surface-tab-bar" />', name: 'CoreSurfaceTabBar', props: ['tabs', 'can', 'basePath'] },
+  CorePageHeaderTabs: {
+    template: '<div data-test="page-header-tabs"><slot /><slot name="actions" /></div>',
+    name: 'CorePageHeaderTabs',
+    props: ['icon', 'title', 'tabs', 'can', 'basePath', 'hideTabs'],
+  },
   organizationsSwitcherComponent: { template: '<div />' },
   RouterView: { template: '<div data-test="router-view" />' },
   'router-view': { template: '<div data-test="router-view" />' },
@@ -38,23 +41,16 @@ const sharedMocks = () => ({
 
 // ── UserView – layout shape (Gamma refactor) ──────────────────────────────────
 
-describe('UserView – layout shape (PageHeader + SurfaceTabBar + router-view)', () => {
+describe('UserView – layout shape (CorePageHeaderTabs + router-view)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it('renders PageHeader', () => {
+  it('renders CorePageHeaderTabs', () => {
     const wrapper = shallowMount(UserView, {
       global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    expect(wrapper.find('[data-test="page-header"]').exists()).toBe(true);
-  });
-
-  it('renders CoreSurfaceTabBar', () => {
-    const wrapper = shallowMount(UserView, {
-      global: { mocks: sharedMocks(), stubs: sharedStubs },
-    });
-    expect(wrapper.find('[data-test="core-surface-tab-bar"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="page-header-tabs"]').exists()).toBe(true);
   });
 
   it('renders a router-view for child route content', () => {
@@ -64,31 +60,31 @@ describe('UserView – layout shape (PageHeader + SurfaceTabBar + router-view)',
     expect(wrapper.find('[data-test="router-view"]').exists()).toBe(true);
   });
 
-  it('passes config.users.tabs to CoreSurfaceTabBar', () => {
+  it('passes config.users.tabs to CorePageHeaderTabs', () => {
     const wrapper = shallowMount(UserView, {
       global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    const tabs = tabBar.props('tabs');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    const tabs = headerTabs.props('tabs');
     expect(Array.isArray(tabs)).toBe(true);
     expect(tabs.map((t) => t.value)).toContain('profile');
     expect(tabs.map((t) => t.value)).toContain('organizations');
   });
 
-  it('passes /users as basePath to CoreSurfaceTabBar', () => {
+  it('passes /users as basePath to CorePageHeaderTabs', () => {
     const wrapper = shallowMount(UserView, {
       global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(tabBar.props('basePath')).toBe('/users');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('basePath')).toBe('/users');
   });
 
-  it('passes a function as can prop to CoreSurfaceTabBar', () => {
+  it('passes a function as can prop to CorePageHeaderTabs', () => {
     const wrapper = shallowMount(UserView, {
       global: { mocks: sharedMocks(), stubs: sharedStubs },
     });
-    const tabBar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(typeof tabBar.props('can')).toBe('function');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(typeof headerTabs.props('can')).toBe('function');
   });
 });
 

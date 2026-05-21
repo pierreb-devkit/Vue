@@ -44,26 +44,20 @@ const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
       stubs: {
         RouterLink: true,
         RouterView: { template: '<div class="router-view-stub" />' },
-        PageHeader: {
-          name: 'PageHeader',
-          props: ['title', 'icon'],
+        // Single stub for the new bundled header-with-tabs primitive — exposes
+        // all the props admin.layout passes through, plus the breadcrumb slot.
+        CorePageHeaderTabs: {
+          name: 'CorePageHeaderTabs',
+          props: ['title', 'icon', 'tabs', 'can', 'basePath', 'hideTabs'],
           template: `
-            <div class="page-header-stub" :data-title="title" :data-icon="icon">
+            <div class="page-header-tabs-stub" :data-title="title" :data-icon="icon" :data-hide-tabs="hideTabs">
               <slot name="avatar" />
               <slot name="breadcrumb" />
-              <slot name="tabs" />
               <slot name="title" />
               <slot name="subtitle" />
               <slot name="actions" />
             </div>
           `,
-        },
-        // Stub SurfaceTabBar so we can read the props it receives without rendering full v-tabs.
-        // name: 'CoreSurfaceTabBar' is required for findComponent({ name: ... }) to work.
-        CoreSurfaceTabBar: {
-          name: 'CoreSurfaceTabBar',
-          props: ['tabs', 'can', 'basePath'],
-          template: '<div class="surface-tab-bar-stub" :data-tabs-count="tabs?.length || 0" />',
         },
       },
     },
@@ -79,7 +73,7 @@ describe('admin.layout', () => {
 
   it('renders the page header', () => {
     const wrapper = mountLayout();
-    expect(wrapper.find('.page-header-stub').exists()).toBe(true);
+    expect(wrapper.find('.page-header-tabs-stub').exists()).toBe(true);
   });
 
   it('renders a <router-view> for nested admin content', () => {
@@ -87,16 +81,16 @@ describe('admin.layout', () => {
     expect(wrapper.find('.router-view-stub').exists()).toBe(true);
   });
 
-  it('passes the four built-in tabs to CoreSurfaceTabBar when no extras are configured', () => {
+  it('passes the four built-in tabs to CorePageHeaderTabs when no extras are configured', () => {
     const wrapper = mountLayout();
-    const bar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(bar.exists()).toBe(true);
-    const tabs = bar.props('tabs');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.exists()).toBe(true);
+    const tabs = headerTabs.props('tabs');
     expect(tabs).toHaveLength(4);
     expect(tabs.map((t) => t.value)).toEqual(['users', 'organizations', 'readiness', 'activity']);
   });
 
-  it('passes built-in + extra tabs from config.admin.tabs to CoreSurfaceTabBar', () => {
+  it('passes built-in + extra tabs from config.admin.tabs to CorePageHeaderTabs', () => {
     const wrapper = mountLayout({
       admin: {
         tabs: [
@@ -105,29 +99,29 @@ describe('admin.layout', () => {
         ],
       },
     });
-    const bar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    const tabs = bar.props('tabs');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    const tabs = headerTabs.props('tabs');
     expect(tabs).toHaveLength(6);
     expect(tabs[4].value).toBe('knowledge');
     expect(tabs[5].value).toBe('costs');
   });
 
-  it('passes basePath="/admin" to CoreSurfaceTabBar', () => {
+  it('passes basePath="/admin" to CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    const bar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(bar.props('basePath')).toBe('/admin');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('basePath')).toBe('/admin');
   });
 
-  it('passes a function `can` predicate to CoreSurfaceTabBar', () => {
+  it('passes a function `can` predicate to CorePageHeaderTabs', () => {
     const wrapper = mountLayout();
-    const bar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(typeof bar.props('can')).toBe('function');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(typeof headerTabs.props('can')).toBe('function');
   });
 
-  it('gracefully handles non-array admin.tabs (CoreSurfaceTabBar receives only the built-in 4)', () => {
+  it('gracefully handles non-array admin.tabs (CorePageHeaderTabs receives only the built-in 4)', () => {
     const wrapper = mountLayout({ admin: { tabs: 'invalid' } });
-    const bar = wrapper.findComponent({ name: 'CoreSurfaceTabBar' });
-    expect(bar.props('tabs')).toHaveLength(4);
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('tabs')).toHaveLength(4);
   });
 
   it('renders the error banner at the TOP of the layout, before the header', async () => {
@@ -135,7 +129,7 @@ describe('admin.layout', () => {
     const wrapper = mountLayout();
     await wrapper.vm.$nextTick();
     const html = wrapper.html();
-    expect(html.indexOf('Boom')).toBeLessThan(html.indexOf('page-header-stub'));
+    expect(html.indexOf('Boom')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
   });
 
   it('renders the mailer warning at the TOP when serverConfig.mail.configured is false', async () => {
@@ -143,23 +137,13 @@ describe('admin.layout', () => {
     const wrapper = mountLayout();
     await wrapper.vm.$nextTick();
     const html = wrapper.html();
-    expect(html.indexOf('No mailer configured')).toBeLessThan(html.indexOf('page-header-stub'));
+    expect(html.indexOf('No mailer configured')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
   });
 
   it('does NOT render the mailer warning when mail is configured', () => {
     authStoreState.serverConfig = { mail: { configured: true } };
     const wrapper = mountLayout();
     expect(wrapper.html()).not.toContain('No mailer configured');
-  });
-
-  it('renders <CoreSurfaceTabBar> as a SIBLING of <PageHeader> (not inside its #tabs slot)', () => {
-    const wrapper = mountLayout();
-    const pageHeaderEl = wrapper.find('.page-header-stub');
-    const surfaceTabBarEl = wrapper.find('.surface-tab-bar-stub');
-    expect(pageHeaderEl.exists()).toBe(true);
-    expect(surfaceTabBarEl.exists()).toBe(true);
-    // Sibling layout: the tab-bar element is NOT inside the page-header-stub element.
-    expect(pageHeaderEl.element.contains(surfaceTabBarEl.element)).toBe(false);
   });
 
   it('renders <router-view> OUTSIDE the layout <v-container>', () => {
@@ -171,32 +155,34 @@ describe('admin.layout', () => {
     expect(layoutContainer.element.contains(routerViewEl.element)).toBe(false);
   });
 
-  it('PageHeader receives title="Admin" + icon="fa-solid fa-user-tie" in list mode', () => {
+  it('CorePageHeaderTabs receives title="Admin" + icon="fa-solid fa-user-tie" in list mode', () => {
     const wrapper = mountLayout();
-    const ph = wrapper.findComponent({ name: 'PageHeader' });
-    expect(ph.props('title')).toBe('Admin');
-    expect(ph.props('icon')).toBe('fa-solid fa-user-tie');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('title')).toBe('Admin');
+    expect(headerTabs.props('icon')).toBe('fa-solid fa-user-tie');
   });
 
-  it('PageHeader receives title="" + icon stays in breadcrumb mode', async () => {
+  it('CorePageHeaderTabs receives title="" + icon stays in breadcrumb mode', async () => {
     adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
     const wrapper = mountLayout({}, '/admin/users/u1');
     await wrapper.vm.$nextTick();
-    const ph = wrapper.findComponent({ name: 'PageHeader' });
-    expect(ph.props('title')).toBe('');
-    expect(ph.props('icon')).toBe('fa-solid fa-user-tie');
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('title')).toBe('');
+    expect(headerTabs.props('icon')).toBe('fa-solid fa-user-tie');
   });
 
-  it('does NOT render <CoreSurfaceTabBar> when currentBreadcrumb is set (detail mode)', async () => {
+  it('passes hideTabs=true when currentBreadcrumb is set (detail mode)', async () => {
     adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
     const wrapper = mountLayout({}, '/admin/users/u1');
     await wrapper.vm.$nextTick();
-    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(false);
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('hideTabs')).toBe(true);
   });
 
-  it('renders <CoreSurfaceTabBar> when currentBreadcrumb is null (list mode)', () => {
+  it('passes hideTabs=false when currentBreadcrumb is null (list mode)', () => {
     const wrapper = mountLayout();
-    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(true);
+    const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
+    expect(headerTabs.props('hideTabs')).toBe(false);
   });
 
   it('renders the breadcrumb when useAdminStore().currentBreadcrumb is set', async () => {
