@@ -45,8 +45,10 @@ const mountLayout = (configOverrides = {}, routePath = '/admin/users') =>
         RouterLink: true,
         RouterView: { template: '<div class="router-view-stub" />' },
         PageHeader: {
+          name: 'PageHeader',
+          props: ['title', 'icon'],
           template: `
-            <div class="page-header-stub">
+            <div class="page-header-stub" :data-title="title" :data-icon="icon">
               <slot name="avatar" />
               <slot name="breadcrumb" />
               <slot name="tabs" />
@@ -150,10 +152,51 @@ describe('admin.layout', () => {
     expect(wrapper.html()).not.toContain('No mailer configured');
   });
 
-  it('renders a single .admin-content wrapper around <router-view>', () => {
+  it('renders <CoreSurfaceTabBar> as a SIBLING of <PageHeader> (not inside its #tabs slot)', () => {
     const wrapper = mountLayout();
-    expect(wrapper.findAll('.admin-content').length).toBe(1);
-    expect(wrapper.find('.admin-content .router-view-stub').exists()).toBe(true);
+    const pageHeaderEl = wrapper.find('.page-header-stub');
+    const surfaceTabBarEl = wrapper.find('.surface-tab-bar-stub');
+    expect(pageHeaderEl.exists()).toBe(true);
+    expect(surfaceTabBarEl.exists()).toBe(true);
+    // Sibling layout: the tab-bar element is NOT inside the page-header-stub element.
+    expect(pageHeaderEl.element.contains(surfaceTabBarEl.element)).toBe(false);
+  });
+
+  it('renders <router-view> OUTSIDE the layout <v-container>', () => {
+    const wrapper = mountLayout();
+    const layoutContainer = wrapper.find('.v-container');
+    const routerViewEl = wrapper.find('.router-view-stub');
+    expect(layoutContainer.exists()).toBe(true);
+    expect(routerViewEl.exists()).toBe(true);
+    expect(layoutContainer.element.contains(routerViewEl.element)).toBe(false);
+  });
+
+  it('PageHeader receives title="Admin" + icon="fa-solid fa-user-tie" in list mode', () => {
+    const wrapper = mountLayout();
+    const ph = wrapper.findComponent({ name: 'PageHeader' });
+    expect(ph.props('title')).toBe('Admin');
+    expect(ph.props('icon')).toBe('fa-solid fa-user-tie');
+  });
+
+  it('PageHeader receives title="" + icon stays in breadcrumb mode', async () => {
+    adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
+    const wrapper = mountLayout({}, '/admin/users/u1');
+    await wrapper.vm.$nextTick();
+    const ph = wrapper.findComponent({ name: 'PageHeader' });
+    expect(ph.props('title')).toBe('');
+    expect(ph.props('icon')).toBe('fa-solid fa-user-tie');
+  });
+
+  it('does NOT render <CoreSurfaceTabBar> when currentBreadcrumb is set (detail mode)', async () => {
+    adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
+    const wrapper = mountLayout({}, '/admin/users/u1');
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(false);
+  });
+
+  it('renders <CoreSurfaceTabBar> when currentBreadcrumb is null (list mode)', () => {
+    const wrapper = mountLayout();
+    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(true);
   });
 
   it('renders the breadcrumb when useAdminStore().currentBreadcrumb is set', async () => {
@@ -163,15 +206,4 @@ describe('admin.layout', () => {
     expect(wrapper.text()).toContain('Jane Doe');
   });
 
-  it('does NOT render CoreSurfaceTabBar when currentBreadcrumb is set (detail mode)', async () => {
-    adminStoreState.currentBreadcrumb = { title: 'Jane Doe' };
-    const wrapper = mountLayout({}, '/admin/users/u1');
-    await wrapper.vm.$nextTick();
-    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(false);
-  });
-
-  it('renders CoreSurfaceTabBar when currentBreadcrumb is null (list mode)', () => {
-    const wrapper = mountLayout();
-    expect(wrapper.findComponent({ name: 'CoreSurfaceTabBar' }).exists()).toBe(true);
-  });
 });
