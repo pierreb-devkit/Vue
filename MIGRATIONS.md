@@ -4,6 +4,158 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Account / Organization / Admin chrome convergence (2026-05-21)
+
+**Non-breaking for default consumers.** Builds on #4183 (`corePageTabs`), #4184 (org tabs), #4185 (Account chrome), and #4187 (Admin chrome + `coreConfirmDialog` + `coreAvatarUploader`). Locks in one chrome convention across all "section + tab bar + routed children" layouts.
+
+### The convention
+
+Layouts (Account, Organization detail, Admin) use the same shape:
+
+```vue
+<template>
+  <v-container fluid>
+    <PageHeader icon="fa-solid fa-X" title="Section">
+      <template #actions v-if="...">...</template>
+    </PageHeader>
+    <CoreSurfaceTabBar :tabs="..." :can="..." :base-path="..." />
+  </v-container>
+  <router-view />
+</template>
+```
+
+- `PageHeader` and `CoreSurfaceTabBar` are **siblings inside the container** — NEVER pass tabs via PageHeader's `#tabs` slot. That slot replaces the icon+title row and is reserved for future cases that intentionally suppress the title (none in this codebase today).
+- `<router-view />` is **outside** the layout's `<v-container fluid>` — children supply their own gutter.
+
+Routed children wrap their primary content like this:
+
+```vue
+<template>
+  <v-container fluid>
+    <v-row class="pa-2 mt-0">
+      <v-col cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+          <!-- primary content -->
+        </v-card>
+        <!-- optional sibling cards (e.g. danger zone) -->
+      </v-col>
+    </v-row>
+    <coreConfirmDialog ... />
+  </v-container>
+</template>
+```
+
+The `<v-card color="surface">` provides the visible pane background. Content that already provides its own surface (e.g. `coreDataTableComponent`) skips the wrap card to avoid double-surface — wrap the data table directly in `<v-col cols="12">` without an inner `<v-card>`.
+
+### Detail-page breadcrumb (admin only)
+
+Admin sub-views that drill into a single record publish a breadcrumb to the layout instead of carrying their own header:
+
+```javascript
+import { useAdminStore } from '../stores/admin.store';
+// ...
+watch: {
+  user: { immediate: true, handler(u) { this.publishBreadcrumb(u); } },
+},
+beforeUnmount() { useAdminStore().clearBreadcrumb(); },
+methods: {
+  publishBreadcrumb(u) {
+    if (!u || (!u.firstName && !u.lastName && !u.email)) return;
+    const title = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
+    useAdminStore().setBreadcrumb({ title, titleClass: 'text-capitalize' });
+  },
+},
+```
+
+In breadcrumb mode the layout hides `<CoreSurfaceTabBar>` (user is "drilled in") and renders `Section › <title>` via `<PageHeader>`'s `#breadcrumb` slot.
+
+### Shared destructive-confirm dialog
+
+`<coreConfirmDialog>` (from `src/modules/core/components/core.confirmDialog.component.vue`) replaces inline `<v-dialog>` blocks for destructive actions:
+
+```vue
+<coreConfirmDialog
+  v-model="confirmDelete"
+  title="Delete X"
+  :confirm-text="confirmTarget"
+  confirm-label="Delete"
+  confirm-color="error"
+  @confirm="remove"
+>
+  <!-- optional default slot for rich body content -->
+</coreConfirmDialog>
+```
+
+Supports a simple yes/no (no `confirm-text`) OR a typed-gate (`confirm-text="DELETE"` or `:confirm-text="orgName"` — confirm button stays disabled until the user types the exact string).
+
+### Avatar uploader
+
+`<coreAvatarUploader>` (`src/modules/core/components/core.avatarUploader.component.vue`) replaces hand-rolled `position-absolute` camera-button overlays:
+
+```vue
+<coreAvatarUploader :user="user" :size="200" @uploaded="$emit('avatar-uploaded')" />
+```
+
+Posts to `/users/avatar` by default; `endpoint` and `field` props let it serve other upload contracts (logos, banners) without forking.
+
+### Action for downstream projects
+
+**Default consumers (no admin extras, no custom account chrome):** no action required. The convention is applied uniformly inside devkit.
+
+**Projects with `config.admin.tabs` extras:** no structural change — extras are merged with the canonical `BUILT_IN_TABS` (Users, Organizations, Readiness, Activity) and passed through `CoreSurfaceTabBar`, which handles validation + CASL filtering via `resolveSurfaceTabs`. Existing tab descriptors (`{ value, label, icon, route, action?, subject? }`) work as-is.
+
+**Projects with module-specific tabs under a page title** (e.g. trawl_vue's `/developers`, `/scraps`, custom dashboards): you can now adopt the homogeneous `PageHeader + CoreSurfaceTabBar` sibling pattern instead of the legacy `<v-card><v-tabs><v-window>` in-card pattern. Migration is opt-in — the legacy pattern still works, but the new pattern integrates visually with Account / Organization / Admin and gets CASL gating for free.
+
+Before:
+
+```vue
+<v-container fluid>
+  <PageHeader icon="fa-solid fa-code" title="Developers" />
+  <v-row class="pa-2 mt-0">
+    <v-col cols="12">
+      <v-card color="surface">
+        <v-tabs v-model="tab">
+          <v-tab value="keys">...</v-tab>
+          <v-tab value="webhooks">...</v-tab>
+        </v-tabs>
+        <v-divider />
+        <v-window v-model="tab">
+          <v-window-item value="keys"><developersKeysTab :keys="..." /></v-window-item>
+          <v-window-item value="webhooks"><developersWebhooksTab :webhooks="..." /></v-window-item>
+        </v-window>
+      </v-card>
+    </v-col>
+  </v-row>
+</v-container>
+```
+
+After (route-driven, homogeneous with Account / Org / Admin):
+
+```vue
+<!-- developers.layout.vue -->
+<template>
+  <v-container fluid>
+    <PageHeader icon="fa-solid fa-code" title="Developers" />
+    <CoreSurfaceTabBar
+      :tabs="config.developers.tabs"
+      :can="developersCan"
+      :base-path="basePath"
+    />
+  </v-container>
+  <router-view />
+</template>
+```
+
+Plus `config.developers.tabs = [{ value: 'keys', label: 'API Keys', icon: 'fa-solid fa-key', route: 'keys' }, { value: 'webhooks', label: 'Webhooks', icon: 'fa-solid fa-globe', route: 'webhooks' }]`, then split the keys / webhooks tabs into routed children (`developers.keys.view.vue`, `developers.webhooks.view.vue`) each wrapping its content per the child-view shape above. Dialogs (`showCreateKeyDialog`, `showPlainKeyDialog`, etc.) move into the child views that own them.
+
+This migration is **opt-in per module** — coordinate with the maintainer of each module before applying.
+
+### Why
+
+`/admin/users`, `/users/profile`, `/users/organizations` looked visually disconnected from `/developers`, `/tasks` after #4187 (no surface background on routed panes, no section title on admin, ad-hoc padding). Locking in one convention makes every "section + tabs + content" layout in the app visually identical and lets downstream projects opt their own modules in cheaply.
+
+---
+
 ## Legal module + cookie consent banner (2026-05-07)
 
 **Non-breaking for default consumers.** New `modules/legal/` ships:
