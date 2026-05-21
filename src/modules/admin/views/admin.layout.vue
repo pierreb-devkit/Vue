@@ -257,7 +257,7 @@ export default {
      * @returns {string} The matching tab's `value` (absolute path).
      */
     resolveActiveTab(path) {
-      const candidates = [...this.builtInTabs, ...this.extraTabs].map((tab) => this.tabTo(tab));
+      const candidates = this.allTabs.map((tab) => this.tabTo(tab));
       const match = candidates
         .filter((to) => path === to || path.startsWith(`${to}/`))
         .sort((a, b) => b.length - a.length)[0];
