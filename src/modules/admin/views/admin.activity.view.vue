@@ -1,16 +1,19 @@
 <template>
-  <!-- Audit disabled info state -->
-  <v-alert
-    v-if="config.audit && config.audit.enabled === false"
-    type="info"
-    variant="tonal"
-    density="compact"
-    :class="config.vuetify.theme.rounded"
-    icon="fa-solid fa-circle-info"
-  >
-    <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
-  </v-alert>
-  <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+  <v-container fluid>
+    <v-row class="pa-2 mt-0">
+      <v-col cols="12">
+        <!-- Audit disabled info state -->
+        <v-alert
+          v-if="config.audit && config.audit.enabled === false"
+          type="info"
+          variant="tonal"
+          density="compact"
+          :class="config.vuetify.theme.rounded"
+          icon="fa-solid fa-circle-info"
+        >
+          <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
+        </v-alert>
+        <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
     <v-card-title>
       <v-row dense align="center">
         <v-col cols="12" sm="auto">
@@ -131,7 +134,10 @@
         <v-icon icon="fa-solid fa-angle-right" size="small"></v-icon>
       </v-btn>
     </v-card-actions>
-  </v-card>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 <script>
 /**
