@@ -37,40 +37,21 @@
     <router-view />
 
     <!-- Delete confirmation dialog (layout-level: visible from any tab) -->
-    <v-dialog v-model="confirmDelete" max-width="440">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
-        <v-card-title class="text-title-large font-weight-medium">Delete Organization</v-card-title>
-        <v-card-text class="text-body-medium">
-          <p class="mb-4">
-            This action <strong>cannot be undone</strong>. All members will lose access.
-          </p>
-          <p class="mb-2 text-body-small text-medium-emphasis">
-            Type <strong>{{ viewedOrganization?.name }}</strong> to confirm:
-          </p>
-          <v-text-field
-            v-model="deleteConfirmName"
-            variant="outlined"
-            density="comfortable"
-            :placeholder="viewedOrganization?.name"
-            autofocus
-          ></v-text-field>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none text-body-medium" @click="confirmDelete = false; deleteConfirmName = ''">Cancel</v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            :disabled="deleteConfirmName !== viewedOrganization?.name"
-            @click="remove"
-          >
-            Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <coreConfirmDialog
+      v-model="confirmDelete"
+      title="Delete Organization"
+      :confirm-text="deleteConfirmTarget"
+      confirm-label="Delete"
+      confirm-color="error"
+      @confirm="remove"
+    >
+      <p class="mb-4">
+        This action <strong>cannot be undone</strong>. All members will lose access.
+      </p>
+      <p class="mb-2 text-body-small text-medium-emphasis">
+        Type <strong>{{ deleteConfirmTarget }}</strong> to confirm:
+      </p>
+    </coreConfirmDialog>
   </div>
 </template>
 
@@ -82,6 +63,7 @@ import { useOrganizationsStore } from '../stores/organizations.store';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 import CoreSurfaceTabBar from '../../core/components/core.surfaceTabBar.component.vue';
+import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 export default {
   name: 'OrganizationDetailComponent',
@@ -89,6 +71,7 @@ export default {
     PageHeader,
     orgAvatarComponent,
     CoreSurfaceTabBar,
+    coreConfirmDialog,
   },
   props: {
     organizationId: { type: String, default: null },
@@ -105,7 +88,6 @@ export default {
   data() {
     return {
       confirmDelete: false,
-      deleteConfirmName: '',
     };
   },
   computed: {
@@ -151,6 +133,15 @@ export default {
     abilityCan() {
       return (action, subjectName) => ability.can(action, subjectName);
     },
+    /**
+     * @desc Organization name used as the typed-confirmation target for the
+     *       delete dialog. Falls back to '' before the org loads — the
+     *       dialog's `coreConfirmDialog` keeps the confirm button disabled.
+     * @returns {string}
+     */
+    deleteConfirmTarget() {
+      return this.viewedOrganization?.name || '';
+    },
   },
   watch: {
     /**
@@ -186,7 +177,6 @@ export default {
       try {
         await organizationsStore.deleteOrganization(this.resolvedOrganizationId);
         this.confirmDelete = false;
-        this.deleteConfirmName = '';
         this.$router.push(this.backRoute);
       } catch {
         // interceptor handles snackbar
