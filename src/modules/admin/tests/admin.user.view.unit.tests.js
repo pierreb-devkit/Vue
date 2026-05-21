@@ -107,6 +107,18 @@ describe('admin.user.view — breadcrumb publishing', () => {
     wrapper = null;
     expect(store.currentBreadcrumb).toBeNull();
   });
+
+  it('clears the breadcrumb when user resets to a blank record (stale nav guard)', async () => {
+    // Simulate component instance reuse: user starts populated, then store resets to empty
+    wrapper = mountView('u1', { firstName: 'Jane', lastName: 'Doe' });
+    await flushPromises();
+    const store = useAdminStore();
+    expect(store.currentBreadcrumb).toBeTruthy();
+    // Simulate store.resetUser() wiping the record
+    store.user = {};
+    await flushPromises();
+    expect(store.currentBreadcrumb).toBeNull();
+  });
 });
 
 describe('admin.user.view — delete flow', () => {

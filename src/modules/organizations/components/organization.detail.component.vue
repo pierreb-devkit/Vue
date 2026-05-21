@@ -135,8 +135,12 @@ export default {
     },
     /**
      * @desc Organization name used as the typed-confirmation target for the
-     *       delete dialog. Falls back to '' before the org loads — the
-     *       dialog's `coreConfirmDialog` keeps the confirm button disabled.
+     *       delete dialog. The delete trigger button is already gated by
+     *       `v-if="viewedOrganization && canManage"`, so `confirmDelete` can
+     *       only become true once the org is loaded and this value is non-empty.
+     *       Falls back to '' as a safety net (coreConfirmDialog treats an empty
+     *       confirmText as no typed gate, but the trigger guard prevents that
+     *       state from being reachable in practice).
      * @returns {string}
      */
     deleteConfirmTarget() {

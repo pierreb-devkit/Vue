@@ -70,11 +70,16 @@ export default {
   methods: {
     /**
      * @desc Publish the user's name (or email fallback) as the admin layout's
-     *       current breadcrumb. Cleared on unmount.
+     *       current breadcrumb. Clears the breadcrumb when `u` is null/blank
+     *       so the previous user's title does not persist during navigation
+     *       between user detail pages (component instance reuse on route change).
      * @param {object|null} u - The current user record.
      */
     publishBreadcrumb(u) {
-      if (!u || (!u.firstName && !u.lastName && !u.email)) return;
+      if (!u || (!u.firstName && !u.lastName && !u.email)) {
+        useAdminStore().clearBreadcrumb();
+        return;
+      }
       const title = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
       useAdminStore().setBreadcrumb({ title, titleClass: 'text-capitalize' });
     },
