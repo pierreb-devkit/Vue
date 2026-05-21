@@ -1,17 +1,13 @@
 <template>
-  <v-container fluid class="pa-0">
-    <div class="pa-4">
-      <coreDataTableComponent :headers="orgHeaders" :items="organizations" :fetch-action="fetchOrganizations"
-        ><template #orgName="{ item }"
-          ><router-link
-            :to="'/admin/organizations/' + (item.id || item._id)"
-            class="text-capitalize text-primary text-decoration-none font-weight-medium"
-            >{{ item.name }}</router-link
-          ></template
-        ></coreDataTableComponent
+  <coreDataTableComponent :headers="orgHeaders" :items="organizations" :fetch-action="fetchOrganizations">
+    <template #orgName="{ item }">
+      <router-link
+        :to="'/admin/organizations/' + (item.id || item._id)"
+        class="text-capitalize text-primary text-decoration-none font-weight-medium"
+        >{{ item.name }}</router-link
       >
-    </div>
-  </v-container>
+    </template>
+  </coreDataTableComponent>
 </template>
 <script>
 /**

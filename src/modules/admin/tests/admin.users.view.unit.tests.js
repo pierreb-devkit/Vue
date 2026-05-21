@@ -122,3 +122,28 @@ describe('admin.users.view', () => {
     expect(wrapper.vm.deleteDialog.show).toBe(false);
   });
 });
+
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+describe('admin.users.view — template chrome', () => {
+  it('does NOT wrap its template in <v-container> (admin layout owns chrome)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.users.view.vue'), 'utf8');
+    // Extract only the top-level <template>…</template> block (before <script>)
+    const tmpl = sfc.split('<script>')[0] || '';
+    expect(tmpl).not.toMatch(/<v-container/);
+  });
+});
+
+describe('admin.users.view — confirm dialog', () => {
+  it('uses coreConfirmDialog (no inline v-dialog)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.users.view.vue'), 'utf8');
+    // Extract only the top-level <template>…</template> block (before <script>)
+    const tmpl = sfc.split('<script>')[0] || '';
+    expect(tmpl).toMatch(/<coreConfirmDialog/);
+    expect(tmpl).not.toMatch(/<v-dialog/);
+  });
+});

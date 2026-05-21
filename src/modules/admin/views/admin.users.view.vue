@@ -1,73 +1,65 @@
 <template>
-  <v-container fluid class="pa-0">
-    <div class="pa-4">
-      <coreDataTableComponent :headers="userHeaders" :items="users" :fetch-action="fetchUsers">
-        <template #name="{ item }"
-          ><router-link
-            :to="'/admin/users/' + (item.id || item._id)"
-            class="text-capitalize text-primary text-decoration-none font-weight-medium"
-            >{{ item.firstName }} {{ item.lastName }}</router-link
-          ></template
-        >
-        <template #organizations="{ item }"
-          ><template v-for="m in item.memberships || []" :key="m._id || m.id"
-            ><v-chip
-              size="small"
-              :variant="isUserActiveOrg(item, m) ? 'flat' : 'tonal'"
-              :color="orgColor(m.organizationId)"
-              class="mr-1 text-capitalize"
-              :style="membershipOrgId(m) ? 'cursor: pointer' : ''"
-              @click="navigateToMembershipOrg(m)"
-              >{{ (m.organizationId && m.organizationId.name) || '—' }} ({{ m.role || '—' }})</v-chip
-            ></template
-          ><span v-if="!item.memberships || !item.memberships.length" class="text-medium-emphasis">—</span></template
-        >
-        <template #roles="{ item }"
+  <div>
+    <coreDataTableComponent :headers="userHeaders" :items="users" :fetch-action="fetchUsers">
+      <template #name="{ item }"
+        ><router-link
+          :to="'/admin/users/' + (item.id || item._id)"
+          class="text-capitalize text-primary text-decoration-none font-weight-medium"
+          >{{ item.firstName }} {{ item.lastName }}</router-link
+        ></template
+      >
+      <template #organizations="{ item }"
+        ><template v-for="m in item.memberships || []" :key="m._id || m.id"
           ><v-chip
-            v-for="(role, index) in item.roles || []"
-            :key="index"
             size="small"
-            variant="tonal"
-            :color="roleColor(role)"
+            :variant="isUserActiveOrg(item, m) ? 'flat' : 'tonal'"
+            :color="orgColor(m.organizationId)"
             class="mr-1 text-capitalize"
-            >{{ role }}</v-chip
-          ><span v-if="!item.roles || !item.roles.length" class="text-medium-emphasis">—</span></template
-        >
-        <template #actions="{ item }"
-          ><v-menu location="bottom end"
-            ><template #activator="{ props }"
-              ><v-btn v-bind="props" icon variant="text" size="small" class="mr-1"
-                ><v-icon icon="fa-solid fa-user-pen" size="small"></v-icon></v-btn></template
-            ><v-list density="compact" min-width="160" :class="config.vuetify.theme.rounded"
-              ><v-list-subheader class="text-label-small">APP ROLES</v-list-subheader
-              ><v-list-item
-                v-for="role in config.whitelists.users.roles"
-                :key="role"
-                :active="(item.roles || []).includes(role)"
-                @click="toggleUserRole(item, role)"
-                ><v-list-item-title class="text-body-medium text-capitalize">{{ role }}</v-list-item-title></v-list-item
-              ></v-list
-            ></v-menu
-          ><v-btn icon variant="text" size="small" color="error" @click="openDeleteDialog(item)"
-            ><v-icon icon="fa-solid fa-trash" size="small"></v-icon></v-btn
-        ></template>
-      </coreDataTableComponent>
-    </div>
-    <v-dialog v-model="deleteDialog.show" max-width="440"
-      ><v-card :class="config.vuetify.theme.rounded" class="pa-4"
-        ><v-card-title class="text-title-large font-weight-medium">Delete this user?</v-card-title
-        ><v-card-text class="text-body-medium"
-          >Are you sure you want to delete <strong>{{ deleteDialog.userName }}</strong
-          >? This action cannot be undone.</v-card-text
-        ><v-card-actions
-          ><v-spacer></v-spacer><v-btn variant="text" class="text-none text-body-medium" @click="deleteDialog.show = false">Cancel</v-btn
-          ><v-btn color="error" variant="flat" :class="config.vuetify.theme.rounded" class="text-none text-body-medium" @click="confirmDeleteUser"
-            >Delete</v-btn
-          ></v-card-actions
-        ></v-card
-      ></v-dialog
-    >
-  </v-container>
+            :style="membershipOrgId(m) ? 'cursor: pointer' : ''"
+            @click="navigateToMembershipOrg(m)"
+            >{{ (m.organizationId && m.organizationId.name) || '—' }} ({{ m.role || '—' }})</v-chip
+          ></template
+        ><span v-if="!item.memberships || !item.memberships.length" class="text-medium-emphasis">—</span></template
+      >
+      <template #roles="{ item }"
+        ><v-chip
+          v-for="(role, index) in item.roles || []"
+          :key="index"
+          size="small"
+          variant="tonal"
+          :color="roleColor(role)"
+          class="mr-1 text-capitalize"
+          >{{ role }}</v-chip
+        ><span v-if="!item.roles || !item.roles.length" class="text-medium-emphasis">—</span></template
+      >
+      <template #actions="{ item }"
+        ><v-menu location="bottom end"
+          ><template #activator="{ props }"
+            ><v-btn v-bind="props" icon variant="text" size="small" class="mr-1"
+              ><v-icon icon="fa-solid fa-user-pen" size="small"></v-icon></v-btn></template
+          ><v-list density="compact" min-width="160" :class="config.vuetify.theme.rounded"
+            ><v-list-subheader class="text-label-small">APP ROLES</v-list-subheader
+            ><v-list-item
+              v-for="role in config.whitelists.users.roles"
+              :key="role"
+              :active="(item.roles || []).includes(role)"
+              @click="toggleUserRole(item, role)"
+              ><v-list-item-title class="text-body-medium text-capitalize">{{ role }}</v-list-item-title></v-list-item
+            ></v-list
+          ></v-menu
+        ><v-btn icon variant="text" size="small" color="error" @click="openDeleteDialog(item)"
+          ><v-icon icon="fa-solid fa-trash" size="small"></v-icon></v-btn
+      ></template>
+    </coreDataTableComponent>
+    <coreConfirmDialog
+      v-model="deleteDialog.show"
+      title="Delete this user?"
+      :message="`Are you sure you want to delete ${deleteDialog.userName}? This action cannot be undone.`"
+      confirm-label="Delete"
+      confirm-color="error"
+      @confirm="confirmDeleteUser"
+    />
+  </div>
 </template>
 <script>
 /**
@@ -77,6 +69,7 @@ import { useAdminStore } from '../stores/admin.store';
 import roleColor from '../../../lib/helpers/roleColor';
 import orgColor from '../../../lib/helpers/orgColor';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
+import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 /**
  * Component definition.
@@ -89,6 +82,7 @@ export default {
   name: 'AdminUsers',
   components: {
     coreDataTableComponent,
+    coreConfirmDialog,
   },
   data() {
     return {

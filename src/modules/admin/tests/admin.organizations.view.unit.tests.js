@@ -69,3 +69,17 @@ describe('admin.organizations.view', () => {
     ]);
   });
 });
+
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+describe('admin.organizations.view — template chrome', () => {
+  it('does NOT wrap its template in <v-container> (admin layout owns chrome)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.organizations.view.vue'), 'utf8');
+    // Extract only the top-level <template>…</template> block (before <script>)
+    const tmpl = sfc.split('<script>')[0] || '';
+    expect(tmpl).not.toMatch(/<v-container/);
+  });
+});

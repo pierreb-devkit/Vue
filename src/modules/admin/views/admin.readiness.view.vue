@@ -1,31 +1,29 @@
 <template>
-  <v-container fluid class="pa-0">
-    <div class="pa-4">
-      <v-card width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-        <v-progress-linear :active="readinessLoading" indeterminate color="primary"></v-progress-linear>
-        <v-table v-if="!readinessLoading && readiness.length"
-          ><thead>
-            <tr>
-              <th class="text-left text-label-medium">Category</th>
-              <th class="text-left text-label-medium">Status</th>
-              <th class="text-left text-label-medium">Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in readiness" :key="item.category">
-              <td class="text-body-medium text-capitalize">{{ item.category }}</td>
-              <td>
-                <v-icon :icon="readinessIcon(item.status)" :color="readinessColor(item.status)" size="small" class="mr-2"></v-icon
-                ><v-chip :color="readinessColor(item.status)" size="small" variant="tonal">{{ item.status }}</v-chip>
-              </td>
-              <td class="text-body-medium">{{ item.message }}</td>
-            </tr>
-          </tbody></v-table
-        >
-        <div v-if="!readinessLoading && !readiness.length" class="pa-4 text-medium-emphasis text-body-medium">No readiness data available.</div>
-      </v-card>
+  <v-card width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+    <v-progress-linear :active="readinessLoading" indeterminate color="primary"></v-progress-linear>
+    <v-table v-if="!readinessLoading && readiness.length">
+      <thead>
+        <tr>
+          <th class="text-left text-label-medium">Category</th>
+          <th class="text-left text-label-medium">Status</th>
+          <th class="text-left text-label-medium">Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in readiness" :key="item.category">
+          <td class="text-body-medium text-capitalize">{{ item.category }}</td>
+          <td>
+            <v-icon :icon="readinessIcon(item.status)" :color="readinessColor(item.status)" size="small" class="mr-2"></v-icon>
+            <v-chip :color="readinessColor(item.status)" size="small" variant="tonal">{{ item.status }}</v-chip>
+          </td>
+          <td class="text-body-medium">{{ item.message }}</td>
+        </tr>
+      </tbody>
+    </v-table>
+    <div v-if="!readinessLoading && !readiness.length" class="pa-4 text-medium-emphasis text-body-medium">
+      No readiness data available.
     </div>
-  </v-container>
+  </v-card>
 </template>
 <script>
 /**
