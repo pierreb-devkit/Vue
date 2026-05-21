@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <coreDataTableComponent :headers="userHeaders" :items="users" :fetch-action="fetchUsers">
+  <coreDataTableComponent :headers="userHeaders" :items="users" :fetch-action="fetchUsers">
       <template #name="{ item }"
         ><router-link
           :to="'/admin/users/' + (item.id || item._id)"
@@ -59,7 +58,6 @@
       confirm-color="error"
       @confirm="confirmDeleteUser"
     />
-  </div>
 </template>
 <script>
 /**
