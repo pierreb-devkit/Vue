@@ -16,35 +16,16 @@
       </v-card-actions>
     </v-card>
 
-    <!-- Delete account dialog -->
-    <v-dialog v-model="confirmDeleteAccount" max-width="440">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
-        <v-card-title class="text-title-large font-weight-medium text-error">Delete Account</v-card-title>
-        <v-card-text class="text-body-medium">
-          Permanently delete your account, data, and organization ownership. This cannot be undone.
-          <v-text-field
-            v-model="deleteConfirmInput"
-            label="Type DELETE to confirm"
-            variant="outlined"
-            density="compact"
-            class="mt-4"
-            autocomplete="off"
-          ></v-text-field>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none text-body-medium" @click="confirmDeleteAccount = false; deleteConfirmInput = ''">Cancel</v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            :disabled="deleteConfirmInput !== 'DELETE'"
-            @click="deleteAccount"
-          >Delete my account</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <coreConfirmDialog
+      v-model="confirmDeleteAccount"
+      title="Delete Account"
+      title-class="text-error"
+      message="Permanently delete your account, data, and organization ownership. This cannot be undone."
+      confirm-text="DELETE"
+      confirm-label="Delete my account"
+      confirm-color="error"
+      @confirm="deleteAccount"
+    />
   </v-container>
 </template>
 
@@ -53,10 +34,11 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import axios from '../../../lib/services/axios';
 import userProfileComponent from '../components/user.profile.component.vue';
+import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 export default {
   name: 'UserProfileView',
-  components: { userProfileComponent },
+  components: { userProfileComponent, coreConfirmDialog },
   /**
    * @desc Wires auth and organizations stores for computed properties and methods.
    * @returns {{ authStore: Object, organizationsStore: Object }}
@@ -70,7 +52,6 @@ export default {
   data() {
     return {
       confirmDeleteAccount: false,
-      deleteConfirmInput: '',
     };
   },
   computed: {
@@ -129,7 +110,6 @@ export default {
         this.$router.push('/signin');
       } catch {
         this.confirmDeleteAccount = false;
-        this.deleteConfirmInput = '';
       }
     },
   },

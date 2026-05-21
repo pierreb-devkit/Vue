@@ -1,4 +1,7 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, it, test, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import { shallowMount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import UserProfileView from '../views/user.profile.view.vue';
@@ -25,14 +28,13 @@ vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 
 const sharedStubs = {
   userProfileComponent: { template: '<div data-test="user-profile-component" />', name: 'UserProfileComponent' },
+  coreConfirmDialog: { template: '<div data-test="core-confirm-dialog" />', name: 'CoreConfirmDialog' },
   'v-container': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
   'v-card-title': { template: '<div><slot /></div>' },
   'v-card-text': { template: '<div><slot /></div>' },
   'v-card-actions': { template: '<div><slot /></div>' },
   'v-btn': { template: '<button v-bind="$attrs"><slot /></button>' },
-  'v-dialog': { template: '<div><slot /></div>' },
-  'v-text-field': { template: '<div />' },
   'v-spacer': { template: '<div />' },
 };
 
@@ -114,12 +116,26 @@ describe('user.profile.view', () => {
     });
 
     wrapper.vm.confirmDeleteAccount = true;
-    wrapper.vm.deleteConfirmInput = 'DELETE';
     axios.delete.mockRejectedValue(new Error('Server error'));
 
     await wrapper.vm.deleteAccount();
 
     expect(wrapper.vm.confirmDeleteAccount).toBe(false);
-    expect(wrapper.vm.deleteConfirmInput).toBe('');
+  });
+});
+
+describe('user.profile.view — confirm dialog', () => {
+  it('uses coreConfirmDialog for Delete Account (no inline v-dialog)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/user.profile.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/<coreConfirmDialog/);
+    expect(tmpl).not.toMatch(/<v-dialog/);
+  });
+
+  it('drops the deleteConfirmInput data field (coreConfirmDialog manages typed state)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/user.profile.view.vue'), 'utf8');
+    expect(sfc).not.toMatch(/deleteConfirmInput/);
   });
 });
