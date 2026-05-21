@@ -1,19 +1,19 @@
 <template>
-  <v-container fluid class="pa-0">
-    <div class="pa-4">
-      <!-- Audit disabled info state -->
-      <v-alert
-        v-if="config.audit && config.audit.enabled === false"
-        type="info"
-        variant="tonal"
-        density="compact"
-        :class="config.vuetify.theme.rounded"
-        icon="fa-solid fa-circle-info"
-      >
-        <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
-      </v-alert>
-      <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-        <v-card-title class="d-flex align-center flex-wrap ga-2">
+  <!-- Audit disabled info state -->
+  <v-alert
+    v-if="config.audit && config.audit.enabled === false"
+    type="info"
+    variant="tonal"
+    density="compact"
+    :class="config.vuetify.theme.rounded"
+    icon="fa-solid fa-circle-info"
+  >
+    <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
+  </v-alert>
+  <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+    <v-card-title>
+      <v-row dense align="center">
+        <v-col cols="12" sm="auto">
           <v-text-field
             v-model="activityFilterAction"
             placeholder="Filter by action"
@@ -21,100 +21,109 @@
             density="compact"
             variant="outlined"
             prepend-inner-icon="fa-solid fa-filter"
-            style="max-width: 240px"
             :class="config.vuetify.theme.rounded"
+            max-width="240"
             @keyup.enter="applyActivityFilters"
-          ></v-text-field
-          ><v-text-field
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" sm="auto">
+          <v-text-field
             v-model="activityFilterUserId"
             placeholder="Filter by user ID"
             hide-details
             density="compact"
             variant="outlined"
             prepend-inner-icon="fa-solid fa-user"
-            style="max-width: 240px"
             :class="config.vuetify.theme.rounded"
+            max-width="240"
             @keyup.enter="applyActivityFilters"
-          ></v-text-field
-          ><v-btn
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" sm="auto">
+          <v-btn
             variant="tonal"
             color="primary"
             class="text-none text-body-medium"
             :class="config.vuetify.theme.rounded"
             @click="applyActivityFilters"
-            ><v-icon icon="fa-solid fa-magnifying-glass" size="small" class="mr-2"></v-icon>Search</v-btn
-          ><v-btn
+          >
+            <v-icon icon="fa-solid fa-magnifying-glass" size="small" class="mr-2"></v-icon>Search
+          </v-btn>
+          <v-btn
             v-if="activityFilterAction || activityFilterUserId"
             variant="text"
-            class="text-none text-body-medium"
+            class="text-none text-body-medium ml-2"
             @click="clearActivityFilters"
-            >Clear</v-btn
           >
-        </v-card-title>
-        <v-progress-linear :active="activityLoading" indeterminate color="primary"></v-progress-linear>
-        <v-table v-if="!activityLoading && auditLogs.length" fixed-header
-          ><thead>
-            <tr>
-              <th class="text-left text-label-medium">Date</th>
-              <th class="text-left text-label-medium">Action</th>
-              <th class="text-left text-label-medium">User</th>
-              <th class="text-left text-label-medium">Target</th>
-              <th class="text-left text-label-medium">IP</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="item in auditLogs" :key="item._id || item.id"
-              ><tr style="cursor: pointer" @click="toggleActivityExpand(item._id || item.id)">
-                <td class="text-body-medium">{{ formatActivityDate(item.createdAt) }}</td>
-                <td>
-                  <v-chip size="small" variant="tonal" color="primary">{{ item.action }}</v-chip>
-                </td>
-                <td class="text-body-medium">{{ item.userId || '—' }}</td>
-                <td class="text-body-medium">
-                  <span v-if="item.targetType"
-                    >{{ item.targetType }}<span v-if="item.targetId">:{{ item.targetId }}</span></span
-                  ><span v-else class="text-medium-emphasis">—</span>
-                </td>
-                <td class="text-body-medium">{{ item.ip || '—' }}</td>
-              </tr>
-              <tr v-if="activityExpandedId === (item._id || item.id)">
-                <td colspan="5" class="bg-surface-variant pa-4">
-                  <div class="text-label-small text-medium-emphasis mb-1">Metadata</div>
-                  <pre v-if="item.metadata && Object.keys(item.metadata).length" class="text-body-small">{{
-                    JSON.stringify(item.metadata, null, 2)
-                  }}</pre>
-                  <span v-else class="text-body-small text-medium-emphasis">No metadata</span>
-                  <div v-if="item.userAgent" class="mt-2">
-                    <span class="text-label-small text-medium-emphasis">User Agent: </span
-                    ><span class="text-body-small">{{ item.userAgent }}</span>
-                  </div>
-                </td>
-              </tr></template
-            >
-          </tbody></v-table
-        >
-        <div v-if="!activityLoading && !auditLogs.length" class="pa-4 text-medium-emphasis text-body-medium">No audit logs found.</div>
-        <v-card-actions class="d-flex align-center justify-end ga-2">
-          <span class="text-body-small text-medium-emphasis mr-2">Per page</span
-          ><v-select
-            v-model="activityPerPage"
-            :items="[10, 20, 50, 100]"
-            density="compact"
-            variant="outlined"
-            hide-details
-            style="max-width: 100px"
-            :class="config.vuetify.theme.rounded"
-          ></v-select
-          ><v-btn :disabled="activityPage <= 1" variant="text" icon size="small" @click="activityPrevPage"
-            ><v-icon icon="fa-solid fa-angle-left" size="small"></v-icon></v-btn
-          ><span class="text-body-medium">{{ activityPage }}</span
-          ><v-btn :disabled="!activityHasNextPage" variant="text" icon size="small" @click="activityNextPage"
-            ><v-icon icon="fa-solid fa-angle-right" size="small"></v-icon
-          ></v-btn>
-        </v-card-actions>
-      </v-card>
-    </div>
-  </v-container>
+            Clear
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-title>
+    <v-progress-linear :active="activityLoading" indeterminate color="primary"></v-progress-linear>
+    <v-table v-if="!activityLoading && auditLogs.length" fixed-header hover>
+      <thead>
+        <tr>
+          <th class="text-left text-label-medium">Date</th>
+          <th class="text-left text-label-medium">Action</th>
+          <th class="text-left text-label-medium">User</th>
+          <th class="text-left text-label-medium">Target</th>
+          <th class="text-left text-label-medium">IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-for="item in auditLogs" :key="item._id || item.id">
+          <tr @click="toggleActivityExpand(item._id || item.id)">
+            <td class="text-body-medium">{{ formatActivityDate(item.createdAt) }}</td>
+            <td>
+              <v-chip size="small" variant="tonal" color="primary">{{ item.action }}</v-chip>
+            </td>
+            <td class="text-body-medium">{{ item.userId || '—' }}</td>
+            <td class="text-body-medium">
+              <span v-if="item.targetType">
+                {{ item.targetType }}<span v-if="item.targetId">:{{ item.targetId }}</span>
+              </span>
+              <span v-else class="text-medium-emphasis">—</span>
+            </td>
+            <td class="text-body-medium">{{ item.ip || '—' }}</td>
+          </tr>
+          <tr v-if="activityExpandedId === (item._id || item.id)">
+            <td colspan="5" class="bg-surface-variant pa-4">
+              <div class="text-label-small text-medium-emphasis mb-1">Metadata</div>
+              <pre v-if="item.metadata && Object.keys(item.metadata).length" class="text-body-small">{{
+                JSON.stringify(item.metadata, null, 2)
+              }}</pre>
+              <span v-else class="text-body-small text-medium-emphasis">No metadata</span>
+              <div v-if="item.userAgent" class="mt-2">
+                <span class="text-label-small text-medium-emphasis">User Agent: </span>
+                <span class="text-body-small">{{ item.userAgent }}</span>
+              </div>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </v-table>
+    <div v-if="!activityLoading && !auditLogs.length" class="pa-4 text-medium-emphasis text-body-medium">No audit logs found.</div>
+    <v-card-actions class="d-flex align-center justify-end ga-2">
+      <span class="text-body-small text-medium-emphasis mr-2">Per page</span>
+      <v-select
+        v-model="activityPerPage"
+        :items="[10, 20, 50, 100]"
+        density="compact"
+        variant="outlined"
+        hide-details
+        max-width="100"
+        :class="config.vuetify.theme.rounded"
+      ></v-select>
+      <v-btn :disabled="activityPage <= 1" variant="text" icon size="small" @click="activityPrevPage">
+        <v-icon icon="fa-solid fa-angle-left" size="small"></v-icon>
+      </v-btn>
+      <span class="text-body-medium">{{ activityPage }}</span>
+      <v-btn :disabled="!activityHasNextPage" variant="text" icon size="small" @click="activityNextPage">
+        <v-icon icon="fa-solid fa-angle-right" size="small"></v-icon>
+      </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 <script>
 /**
