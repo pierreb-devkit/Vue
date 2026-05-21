@@ -30,6 +30,8 @@ const sharedStubs = {
   userProfileComponent: { template: '<div data-test="user-profile-component" />', name: 'UserProfileComponent' },
   coreConfirmDialog: { template: '<div data-test="core-confirm-dialog" />', name: 'CoreConfirmDialog' },
   'v-container': { template: '<div><slot /></div>' },
+  'v-row': { template: '<div><slot /></div>' },
+  'v-col': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
   'v-card-title': { template: '<div><slot /></div>' },
   'v-card-text': { template: '<div><slot /></div>' },
@@ -121,6 +123,17 @@ describe('user.profile.view', () => {
     await wrapper.vm.deleteAccount();
 
     expect(wrapper.vm.confirmDeleteAccount).toBe(false);
+  });
+});
+
+describe('user.profile.view — template chrome', () => {
+  it('wraps content in <v-row class="pa-2 mt-0"> + <v-col cols="12"> + <v-card color="surface">', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/user.profile.view.vue'), 'utf8');
+    const tmpl = sfc.split('<script>')[0];
+    expect(tmpl).toMatch(/<v-row[^>]*class="[^"]*pa-2\s+mt-0/);
+    expect(tmpl).toMatch(/<v-col\s+cols="12"/);
+    expect(tmpl).toMatch(/<v-card[^>]*color="surface"/);
   });
 });
 

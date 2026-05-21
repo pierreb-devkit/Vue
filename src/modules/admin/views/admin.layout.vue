@@ -10,8 +10,9 @@
       :class="config.vuetify.theme.rounded"
       icon="fa-solid fa-circle-exclamation"
       @click:close="clearError"
-      ><span class="text-body-medium">{{ error }}</span></v-alert
     >
+      <span class="text-body-medium">{{ error }}</span>
+    </v-alert>
     <v-alert
       v-if="showMailerWarning"
       type="warning"
@@ -20,13 +21,14 @@
       class="mx-2 mt-2"
       :class="config.vuetify.theme.rounded"
       icon="fa-solid fa-triangle-exclamation"
-      ><span class="text-body-medium"
-        >No mailer configured. Users can register with any email without verification. Set up SMTP to enable email verification.</span
-      ></v-alert
     >
+      <span class="text-body-medium">
+        No mailer configured. Users can register with any email without verification. Set up SMTP to enable email verification.
+      </span>
+    </v-alert>
 
     <PageHeader
-      :icon="currentBreadcrumb ? '' : 'fa-solid fa-user-tie'"
+      icon="fa-solid fa-user-tie"
       :title="currentBreadcrumb ? '' : 'Admin'"
     >
       <template v-if="currentBreadcrumb" #breadcrumb>
@@ -34,15 +36,16 @@
         <v-icon icon="fa-solid fa-chevron-right" size="x-small" class="mx-2 text-medium-emphasis"></v-icon>
         <span :class="currentBreadcrumb.titleClass || ''">{{ currentBreadcrumb.title }}</span>
       </template>
-      <template v-if="!currentBreadcrumb" #tabs>
-        <CoreSurfaceTabBar :tabs="allTabs" :can="adminCan" :base-path="basePath" />
-      </template>
     </PageHeader>
-
-    <div class="admin-content pa-4">
-      <router-view />
-    </div>
+    <CoreSurfaceTabBar
+      v-if="!currentBreadcrumb"
+      :tabs="allTabs"
+      :can="adminCan"
+      :base-path="basePath"
+    />
   </v-container>
+
+  <router-view />
 </template>
 <script>
 /**

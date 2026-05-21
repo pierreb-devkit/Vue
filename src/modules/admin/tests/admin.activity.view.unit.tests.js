@@ -187,11 +187,13 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
 describe('admin.activity.view — template chrome', () => {
-  it('does NOT wrap its template in <v-container> (admin layout owns chrome)', () => {
+  it('wraps its template in <v-container fluid> + <v-row class="pa-2 mt-0"> + <v-col cols="12">', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
     const tmpl = sfc.split('<script>')[0];
-    expect(tmpl).not.toMatch(/<v-container/);
+    expect(tmpl).toMatch(/<v-container\s+fluid/);
+    expect(tmpl).toMatch(/<v-row[^>]*class="[^"]*pa-2\s+mt-0/);
+    expect(tmpl).toMatch(/<v-col\s+cols="12"/);
   });
 
   it('has zero inline style="…" attributes in its template', () => {

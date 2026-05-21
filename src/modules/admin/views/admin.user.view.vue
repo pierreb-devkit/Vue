@@ -1,18 +1,24 @@
 <template>
-  <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
-    <div class="d-flex align-center justify-end mb-4">
-      <v-btn
-        v-if="id"
-        color="error"
-        variant="tonal"
-        :class="config.vuetify.theme.rounded"
-        class="text-none text-body-medium"
-        @click="removeConfirm = true"
-      >
-        <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>Delete
-      </v-btn>
-    </div>
-    <accountUserProfileComponent :user="user" @save="update" @avatar-uploaded="onAvatarUploaded" />
+  <v-container fluid>
+    <v-row class="pa-2 mt-0">
+      <v-col cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+          <div class="d-flex align-center justify-end mb-4">
+            <v-btn
+              v-if="id"
+              color="error"
+              variant="tonal"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              @click="removeConfirm = true"
+            >
+              <v-icon icon="fa-solid fa-trash" size="small" class="mr-2"></v-icon>Delete
+            </v-btn>
+          </div>
+          <accountUserProfileComponent :user="user" @save="update" @avatar-uploaded="onAvatarUploaded" />
+        </v-card>
+      </v-col>
+    </v-row>
     <coreConfirmDialog
       v-model="removeConfirm"
       title="Delete this user?"
@@ -22,7 +28,7 @@
       :loading="removing"
       @confirm="remove"
     />
-  </v-card>
+  </v-container>
 </template>
 
 <script>
