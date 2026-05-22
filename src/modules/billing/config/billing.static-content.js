@@ -163,8 +163,10 @@ export const packs = [
 ];
 
 /**
- * @desc FAQ section content. Title + subtitle are optional (fallback to i18n).
- * @type {{ title?: string, subtitle?: string, content: Array<{id: string, question: string, answer: string}> }}
+ * @desc FAQ section content. `title` and `subtitle` are optional; any falsy value (including
+ * `null` or empty string) triggers the view's hardcoded fallback:
+ * `'Frequently asked questions'` for title, `null` (no subtitle rendered) for subtitle.
+ * @type {{ title?: string|null, subtitle?: string|null, content: Array<{id: string, question: string, answer: string}> }}
  */
 export const faqs = {
   title: 'Frequently asked questions',
@@ -190,9 +192,10 @@ export const faqs = {
 
 /**
  * @desc Configurable tab labels (used in 'both-tabs' mode).
- * Each field is optional — when omitted the view falls back to i18n keys
- * `billing.pricing.tabs.plans` / `billing.pricing.tabs.units`.
+ * This devkit default ships `plans: 'Plans'` / `units: 'Extras'`.
  * Downstream projects can override either or both labels per project.
+ * The view's hardcoded fallback (`'Plans'` / `'Units'`) only applies when
+ * the field is entirely absent or falsy — it is not reached under the devkit default.
  * @type {{ plans?: string, units?: string }}
  */
 export const tabs = {
@@ -201,8 +204,9 @@ export const tabs = {
 };
 
 /**
- * @desc Page header copy. When `null`/absent, falls back to i18n keys
- * `billing.pricing.title` / `billing.pricing.subtitle`.
+ * @desc Page header copy. Any falsy value (including `null`, `undefined`, or empty string)
+ * triggers the view's hardcoded English fallback
+ * (`'Pricing'` / `'Choose the plan that fits your needs.'`).
  * @type {{ title?: string|null, subtitle?: string|null }}
  */
 export const header = {

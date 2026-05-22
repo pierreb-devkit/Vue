@@ -266,6 +266,18 @@ This migration is **opt-in per module** — coordinate with the maintainer of ea
 
 ---
 
+## Drop CorePageTabsComponent (2026-05-21)
+
+The `core.pageTabs.component.vue` introduced in PR #4183 was abandoned 2h after merge in favor of `CoreSurfaceTabBar` (PR #4187). The component had zero consumers and is removed.
+
+**Downstream action:** if you propagated the files via `/update-stack`, delete both:
+- `src/modules/core/components/core.pageTabs.component.vue`
+- `src/modules/core/tests/core.pageTabs.component.unit.tests.js`
+
+Use `CoreSurfaceTabBar` (`core.surfaceTabBar.component.vue`) for any tab layouts.
+
+---
+
 ## Legal module + cookie consent banner (2026-05-07)
 
 **Non-breaking for default consumers.** New `modules/legal/` ships:
@@ -285,7 +297,7 @@ Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or 
 - MODIFIED: `src/modules/core/components/core.footer.component.vue` — auto-injects a "Legal" section when `legal.cookieConsent.enabled` or any `legal.pages.items[*].enabled` is true. Also fixes a pre-existing bug where the footer was hidden on hard-load (the `$route` watcher didn't fire on initial mount); a `created()` hook now initializes `enabled` from `$route.meta.footer`.
 - MODIFIED: `src/modules/app/app.vue` — global mount of `<legalCookieBanner />`.
 - MODIFIED: `src/modules/app/app.router.js` — concatenates legal routes (returns empty when `pages.enabled: false`).
-- MODIFIED: `src/lib/plugins/i18n.js` — imports `legalEn` / `legalFr`.
+- ~~MODIFIED: `src/lib/plugins/i18n.js` — imports `legalEn` / `legalFr`.~~ **Superseded:** `src/lib/plugins/i18n.js` was removed entirely in PR #4169 (i18n removal). Legal strings are now hardcoded in English directly in the legal components.
 
 ### Action for downstream projects
 
