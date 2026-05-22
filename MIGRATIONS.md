@@ -268,9 +268,13 @@ This migration is **opt-in per module** — coordinate with the maintainer of ea
 
 ## Drop CorePageTabsComponent (2026-05-21)
 
-The `core.pageTabs.component.vue` introduced in PR #4183 was abandoned 2h after merge in favor of `SurfaceTabBar` (PR #4187). The component had zero consumers and is removed.
+The `core.pageTabs.component.vue` introduced in PR #4183 was abandoned 2h after merge in favor of `CoreSurfaceTabBar` (PR #4187). The component had zero consumers and is removed.
 
-**Downstream action:** if you propagated `core.pageTabs.component.{vue,test}` via `/update-stack`, delete both files. Use `SurfaceTabBar` for any tab layouts.
+**Downstream action:** if you propagated the files via `/update-stack`, delete both:
+- `src/modules/core/components/core.pageTabs.component.vue`
+- `src/modules/core/tests/core.pageTabs.component.unit.tests.js`
+
+Use `CoreSurfaceTabBar` (`core.surfaceTabBar.component.vue`) for any tab layouts.
 
 ---
 
