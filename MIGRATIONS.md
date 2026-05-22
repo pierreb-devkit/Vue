@@ -20,7 +20,7 @@ Breaking changes and upgrade notes for downstream projects.
 
 1. Bump **both** `@casl/ability` to `^7.0.0` and `@casl/vue` to `^3.0.0` together, then reinstall.
 2. After `/update-stack`, verify `src/lib/helpers/ability.js` wraps the ability with the local `toReactiveAbility()` helper (tracking the `updated` event), not Vue's `reactive()`.
-3. If you wrote custom CASL code: never wrap a v7 ability in Vue's `reactive()` (use `reactiveAbility`), and replace the removed `Ability` class with `createMongoAbility`.
+3. If you wrote custom CASL code: never wrap a v7 ability in Vue's `reactive()` (use an `updated`-event wrapper like `toReactiveAbility()` above). If you instantiated `Ability`/`PureAbility` directly, switch to `createMongoAbility` — v7's `Ability` export no longer carries the default conditions matcher.
 4. Run unit + e2e to confirm the ability plugin and `Can`/`subject`/computed `can()` usages still work.
 
 ---

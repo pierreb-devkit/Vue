@@ -22,9 +22,9 @@ const toReactiveAbility = (ability) => {
     trigger.value = !trigger.value;
   });
   const possibleRulesFor = ability.possibleRulesFor.bind(ability);
-  ability.possibleRulesFor = (action, subjectType) => {
+  ability.possibleRulesFor = (...args) => {
     void trigger.value; // reactive read — tracks ability updates in computeds
-    return possibleRulesFor(action, subjectType);
+    return possibleRulesFor(...args); // forward all args (action, subject, field) unchanged
   };
   ability.can = ability.can.bind(ability);
   ability.cannot = ability.cannot.bind(ability);
