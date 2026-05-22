@@ -4,6 +4,27 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## @casl/ability v6 → v7 + @casl/vue v2 → v3 (2026-05-22)
+
+`@casl/ability` `^6.8.1` → `^7.0.0` and `@casl/vue` `^2.2.6` → `^3.0.0`, bumped **together**.
+
+### What changed (this repo)
+
+- **`package.json`** — `@casl/ability` `^7.0.0` + `@casl/vue` `^3.0.0`. They must move together: `@casl/vue@2` rejects `@casl/ability@^7` as a peer (build breaks), and `@casl/vue@3` requires `@casl/ability@^7`.
+- **`src/lib/helpers/ability.js`** — the shared ability is no longer wrapped with Vue's `reactive()`. v7 freezes the ability's internal rule structures; a `reactive()` proxy over the frozen rules array throws a Proxy get-invariant `TypeError` on the first `.can()` call. Components here call `ability.can()` directly inside computeds, so reactivity must be preserved — the instance is now wrapped with a small local `toReactiveAbility()` helper that tracks the ability's `updated` event via a `ref` read inside `possibleRulesFor` (the path every `can`/`cannot`/`relevantRuleFor` call funnels through). This mirrors `@casl/vue`'s internal `reactiveAbility`, which v3 declares in its `.d.ts` but does **not** export at runtime, so it cannot simply be imported.
+- **No change** to `src/main.js` (`app.use(abilitiesPlugin, ability)` API preserved) or to the `subject()` helper used in components (unchanged in v7).
+
+### Downstream action required
+
+`package.json` does not auto-propagate via `/update-stack` (`--ours`); the `ability.js` fix does (devkit file, `--theirs`):
+
+1. Bump **both** `@casl/ability` to `^7.0.0` and `@casl/vue` to `^3.0.0` together, then reinstall.
+2. After `/update-stack`, verify `src/lib/helpers/ability.js` wraps the ability with the local `toReactiveAbility()` helper (tracking the `updated` event), not Vue's `reactive()`.
+3. If you wrote custom CASL code: never wrap a v7 ability in Vue's `reactive()` (use `reactiveAbility`), and replace the removed `Ability` class with `createMongoAbility`.
+4. Run unit + e2e to confirm the ability plugin and `Can`/`subject`/computed `can()` usages still work.
+
+---
+
 ## PageHeader split + tabs spacing/alignment refactor (2026-05-21, v2)
 
 **Non-breaking for default consumers** — affects 3 stack layouts (Account, Organization detail, Admin) which were already refactored upstream. Downstream projects only need to act if they wrote a custom layout using `PageHeader` + `CoreSurfaceTabBar` directly, or relied on the (now removed) `#tabs` slot on `PageHeader`.
