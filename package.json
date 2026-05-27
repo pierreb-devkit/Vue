@@ -84,7 +84,7 @@
     "husky": "^9.1.7",
     "object-path": "^0.11.8",
     "prettier": "^3.8.3",
-    "puppeteer": "^25.0.4",
+    "puppeteer": "^25.1.0",
     "sass": "^1.100",
     "semantic-release": "^25.0.3",
     "typescript": "^6.0.3",
