@@ -62,7 +62,7 @@
       </div>
 
       <!-- Registration disabled -->
-      <v-alert v-if="serverConfig?.sign?.up === false && !invite?.valid" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+      <v-alert v-if="serverConfig?.sign?.up === false && !invite?.valid && !inviteChecking" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
         <span class="text-body-medium">Registration is currently disabled.</span>
       </v-alert>
 
@@ -188,7 +188,8 @@ export default {
       theme,
       valid: false,
       serverConfig: undefined,
-      inviteToken: this.$route.query.inviteToken || null,
+      inviteToken: (() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })(),
+      inviteChecking: !!((() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })()),
       invite: null, // { valid, email } once verified
       signupStep: 'form',
       organizationWelcomeMessage: '',
@@ -276,6 +277,7 @@ export default {
     if (this.inviteToken) {
       this.invite = await authStore.verifyInvite(this.inviteToken);
       if (this.invite?.valid && this.invite.email) this.email = this.invite.email;
+      this.inviteChecking = false;
     }
     // If already logged in (e.g. page refresh after signup), redirect appropriately
     if (authStore.isLoggedIn) {

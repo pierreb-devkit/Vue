@@ -433,6 +433,63 @@ describe('auth.signup.view', () => {
     return mountView(makeFormStub(true), query);
   };
 
+  describe('inviteToken normalization', () => {
+    test('when $route.query.inviteToken is an array, takes the first element', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: ['a', 'b'] },
+        serverConfig: { sign: { up: true } },
+        verifyInvite: { valid: true, email: null },
+      });
+      await flushPromises();
+      expect(wrapper.vm.inviteToken).toBe('a');
+    });
+
+    test('when $route.query.inviteToken is a string, uses it as-is', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: true } },
+        verifyInvite: { valid: true, email: null },
+      });
+      await flushPromises();
+      expect(wrapper.vm.inviteToken).toBe('tok123');
+    });
+
+    test('when $route.query.inviteToken is absent, inviteToken is null', async () => {
+      const wrapper = await mountSignup({ query: {}, serverConfig: { sign: { up: true } } });
+      await flushPromises();
+      expect(wrapper.vm.inviteToken).toBeNull();
+    });
+
+    test('inviteChecking starts true when a token is present and becomes false after mount resolves', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: true, email: 'guest@example.com' },
+      });
+      // After flushPromises, created() has completed — inviteChecking must be false
+      await flushPromises();
+      expect(wrapper.vm.inviteChecking).toBe(false);
+    });
+
+    test('inviteChecking starts false when no token is present', async () => {
+      const wrapper = await mountSignup({ query: {}, serverConfig: { sign: { up: false } } });
+      await flushPromises();
+      expect(wrapper.vm.inviteChecking).toBe(false);
+    });
+
+    test('disabled alert is hidden while inviteChecking is true (no flash)', async () => {
+      // Simulate in-flight verify: mount without flushing promises
+      verifyInviteMock.mockResolvedValue({ valid: false, email: null });
+      fetchServerConfigMock.mockResolvedValue({ sign: { up: false } });
+      const wrapper = mountView(makeFormStub(true), { inviteToken: 'pending-tok' });
+      // Before promises flush, inviteChecking should be true → alert not shown
+      expect(wrapper.vm.inviteChecking).toBe(true);
+      await flushPromises();
+      // After resolve, inviteChecking is false
+      expect(wrapper.vm.inviteChecking).toBe(false);
+    });
+  });
+
   describe('signup view — invited flow (signup disabled)', () => {
     test('with a valid ?inviteToken, the credentials form is shown and email is prefilled', async () => {
       const wrapper = await mountSignup({
