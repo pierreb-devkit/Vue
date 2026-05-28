@@ -465,6 +465,17 @@ describe('auth.signup.view', () => {
       await wrapper.vm.validate();
       expect(signupSpy).toHaveBeenCalledWith(expect.objectContaining({ inviteToken: 'tok123', email: 'guest@example.com' }));
     });
+
+    test('with an invalid invite (valid: false) and signup disabled, the disabled alert is shown and no form', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'expired-token' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: false, email: null },
+      });
+      await flushPromises();
+      expect(wrapper.text()).toContain('Registration is currently disabled');
+      expect(wrapper.find('input[type="password"]').exists()).toBe(false);
+    });
   });
 
   describe('email verification flow', () => {

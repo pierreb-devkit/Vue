@@ -904,6 +904,13 @@ describe('Auth Store', () => {
       expect(axios.get.mock.calls[0][0]).toContain('/invitations/verify/tok123');
       expect(r).toEqual({ valid: true, email: 'a@b.co' });
     });
+
+    it('verifyInvite returns { valid: false, email: null } when the API rejects', async () => {
+      const authStore = useAuthStore();
+      axios.get.mockRejectedValueOnce(new Error('Not found'));
+      const r = await authStore.verifyInvite('bad-token');
+      expect(r).toEqual({ valid: false, email: null });
+    });
   });
 
   describe('PostHog analytics', () => {
