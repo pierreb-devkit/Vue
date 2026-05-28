@@ -85,6 +85,10 @@ export default {
  * a 56px rhythm for title↔breadcrumb route transitions use CorePageHeaderTabs,
  * which enforces the height externally.
  */
+.core-page-header {
+  flex: 0 0 auto; /* never grow on the main axis of a flex-column parent — v-row inherits flex: 1 1 auto from Vuetify */
+}
+
 .core-page-header__content {
   flex: 1 1 0;
   min-width: 0;
