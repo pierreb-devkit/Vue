@@ -7,7 +7,7 @@ const signupMock = vi.hoisted(() => vi.fn());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const resendVerificationMock = vi.hoisted(() => vi.fn().mockResolvedValue());
-const verifyInviteMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
+const verifyInviteMock = vi.hoisted(() => vi.fn().mockResolvedValue({ valid: false, email: null }));
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock, resendVerification: resendVerificationMock, verifyInvite: verifyInviteMock }),
   deduceNamesFromEmail: (email) => {
@@ -68,7 +68,7 @@ describe('auth.signup.view', () => {
     fetchServerConfigMock.mockReset().mockResolvedValue(null);
     refreshAbilitiesMock.mockReset().mockResolvedValue();
     resendVerificationMock.mockReset().mockResolvedValue();
-    verifyInviteMock.mockReset().mockResolvedValue(null);
+    verifyInviteMock.mockReset().mockResolvedValue({ valid: false, email: null });
     createOrganizationMock.mockReset();
   });
 

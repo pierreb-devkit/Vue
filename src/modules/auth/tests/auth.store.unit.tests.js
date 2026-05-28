@@ -639,11 +639,12 @@ describe('Auth Store', () => {
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-      const params = { email: 'jane.smith@test.com', password: 'password123' };
-      await authStore.signup(params);
+      await authStore.signup({ email: 'jane.smith@test.com', password: 'password123' });
 
-      expect(params.firstName).toBe('Jane');
-      expect(params.lastName).toBe('Smith');
+      // Assert the meaningful thing: the POSTed body contains the deduced names
+      const body = axios.post.mock.calls[0][1];
+      expect(body.firstName).toBe('Jane');
+      expect(body.lastName).toBe('Smith');
     });
   });
 

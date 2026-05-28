@@ -208,8 +208,8 @@ export const useAuthStore = defineStore('auth', {
       // Deduce firstName/lastName from email if not explicitly provided
       if (!payload.firstName && !payload.lastName) {
         const deduced = deduceNamesFromEmail(payload.email);
-        if (deduced.firstName) { payload.firstName = deduced.firstName; params.firstName = deduced.firstName; }
-        if (deduced.lastName) { payload.lastName = deduced.lastName; params.lastName = deduced.lastName; }
+        if (deduced.firstName) { payload.firstName = deduced.firstName; }
+        if (deduced.lastName) { payload.lastName = deduced.lastName; }
       }
 
       const signupUrl = `${api}/${config.api.endPoints.auth}/signup${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
