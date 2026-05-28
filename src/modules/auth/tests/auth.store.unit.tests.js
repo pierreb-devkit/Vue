@@ -639,11 +639,12 @@ describe('Auth Store', () => {
       };
 
       axios.post.mockResolvedValueOnce(mockResponse);
-      const params = { email: 'jane.smith@test.com', password: 'password123' };
-      await authStore.signup(params);
+      await authStore.signup({ email: 'jane.smith@test.com', password: 'password123' });
 
-      expect(params.firstName).toBe('Jane');
-      expect(params.lastName).toBe('Smith');
+      // Assert the meaningful thing: the POSTed body contains the deduced names
+      const body = axios.post.mock.calls[0][1];
+      expect(body.firstName).toBe('Jane');
+      expect(body.lastName).toBe('Smith');
     });
   });
 
@@ -877,6 +878,39 @@ describe('Auth Store', () => {
 
       axios.post.mockRejectedValueOnce(new Error('Not authenticated'));
       await expect(authStore.resendVerification()).rejects.toThrow('Not authenticated');
+    });
+  });
+
+  describe('auth store — invite token relay', () => {
+    it('signup appends inviteToken as a query param and omits it from the body', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'], email: 'a@b.co' }, tokenExpiresIn: 10 } });
+      await authStore.signup({ email: 'a@b.co', password: 'x', inviteToken: 'tok123' });
+      const [url, body] = axios.post.mock.calls[0];
+      expect(url).toContain('/signup?inviteToken=tok123');
+      expect(body).not.toHaveProperty('inviteToken');
+    });
+
+    it('signup without inviteToken posts to a plain /signup URL', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'], email: 'a@b.co' }, tokenExpiresIn: 10 } });
+      await authStore.signup({ email: 'a@b.co', password: 'x' });
+      expect(axios.post.mock.calls[0][0]).toMatch(/\/signup$/);
+    });
+
+    it('verifyInvite returns { valid, email } from the API', async () => {
+      const authStore = useAuthStore();
+      axios.get.mockResolvedValueOnce({ data: { data: { valid: true, email: 'a@b.co' } } });
+      const r = await authStore.verifyInvite('tok123');
+      expect(axios.get.mock.calls[0][0]).toContain('/invitations/verify/tok123');
+      expect(r).toEqual({ valid: true, email: 'a@b.co' });
+    });
+
+    it('verifyInvite returns { valid: false, email: null } when the API rejects', async () => {
+      const authStore = useAuthStore();
+      axios.get.mockRejectedValueOnce(new Error('Not found'));
+      const r = await authStore.verifyInvite('bad-token');
+      expect(r).toEqual({ valid: false, email: null });
     });
   });
 
