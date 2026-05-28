@@ -203,15 +203,19 @@ export const useAuthStore = defineStore('auth', {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
 
+      const { inviteToken, ...payload } = params;
+
       // Deduce firstName/lastName from email if not explicitly provided
-      if (!params.firstName && !params.lastName) {
-        const deduced = deduceNamesFromEmail(params.email);
-        if (deduced.firstName) params.firstName = deduced.firstName;
-        if (deduced.lastName) params.lastName = deduced.lastName;
+      if (!payload.firstName && !payload.lastName) {
+        const deduced = deduceNamesFromEmail(payload.email);
+        if (deduced.firstName) { payload.firstName = deduced.firstName; params.firstName = deduced.firstName; }
+        if (deduced.lastName) { payload.lastName = deduced.lastName; params.lastName = deduced.lastName; }
       }
 
+      const signupUrl = `${api}/${config.api.endPoints.auth}/signup${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
+
       try {
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/signup`, params);
+        const res = await axios.post(signupUrl, payload);
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
@@ -373,6 +377,22 @@ export const useAuthStore = defineStore('auth', {
 
       const res = await axios.post(`${api}/${config.api.endPoints.auth}/resend-verification`);
       return res.data;
+    },
+
+    /**
+     * @desc Verify a signup invite token (public). Used by the signup page to
+     * reveal the form + prefill the invited email when public signup is closed.
+     * @param {string} token
+     * @returns {Promise<{valid: boolean, email: string|null}>}
+     */
+    async verifyInvite(token) {
+      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      try {
+        const res = await axios.get(`${api}/${config.api.endPoints.auth}/invitations/verify/${encodeURIComponent(token)}`);
+        return res.data.data;
+      } catch {
+        return { valid: false, email: null };
+      }
     },
   },
 });
