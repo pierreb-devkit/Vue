@@ -62,7 +62,7 @@
       </div>
 
       <!-- Registration disabled -->
-      <v-alert v-if="serverConfig?.sign?.up === false" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+      <v-alert v-if="serverConfig?.sign?.up === false && !invite?.valid" type="warning" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
         <span class="text-body-medium">Registration is currently disabled.</span>
       </v-alert>
 
@@ -103,7 +103,10 @@
       </template>
 
       <!-- Credentials form -->
-      <template v-else-if="serverConfig === null || serverConfig?.sign?.up === true">
+      <template v-else-if="serverConfig === null || serverConfig?.sign?.up === true || invite?.valid">
+        <v-alert v-if="invite?.valid" type="success" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
+          <span class="text-body-medium">You've been invited. Create your account below.</span>
+        </v-alert>
         <v-alert
           v-if="signupError"
           type="error"
@@ -185,6 +188,8 @@ export default {
       theme,
       valid: false,
       serverConfig: undefined,
+      inviteToken: this.$route.query.inviteToken || null,
+      invite: null, // { valid, email } once verified
       signupStep: 'form',
       organizationWelcomeMessage: '',
       suggestedOrganization: null,
@@ -268,6 +273,10 @@ export default {
   async created() {
     const authStore = useAuthStore();
     this.serverConfig = await authStore.fetchServerConfig();
+    if (this.inviteToken) {
+      this.invite = await authStore.verifyInvite(this.inviteToken);
+      if (this.invite?.valid && this.invite.email) this.email = this.invite.email;
+    }
     // If already logged in (e.g. page refresh after signup), redirect appropriately
     if (authStore.isLoggedIn) {
       if (authStore.user?.currentOrganization) {
@@ -303,6 +312,7 @@ export default {
           const result = await authStore.signup({
             email: this.email,
             password: this.password,
+            ...(this.inviteToken ? { inviteToken: this.inviteToken } : {}),
           });
 
           if (!result) return;

@@ -7,8 +7,9 @@ const signupMock = vi.hoisted(() => vi.fn());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const resendVerificationMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const verifyInviteMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock, resendVerification: resendVerificationMock }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock, resendVerification: resendVerificationMock, verifyInvite: verifyInviteMock }),
   deduceNamesFromEmail: (email) => {
     const local = email ? email.split('@')[0] : '';
     const parts = local.split(/[._-]/);
@@ -67,6 +68,7 @@ describe('auth.signup.view', () => {
     fetchServerConfigMock.mockReset().mockResolvedValue(null);
     refreshAbilitiesMock.mockReset().mockResolvedValue();
     resendVerificationMock.mockReset().mockResolvedValue();
+    verifyInviteMock.mockReset().mockResolvedValue(null);
     createOrganizationMock.mockReset();
   });
 
@@ -417,6 +419,51 @@ describe('auth.signup.view', () => {
       await flushPromises();
 
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+    });
+  });
+
+  /**
+   * Extended mount helper for invite-gate scenarios.
+   * Allows configuring $route.query, fetchServerConfig return, verifyInvite return, and signup mock.
+   */
+  const mountSignup = ({ query = {}, serverConfig = null, verifyInvite = null, signup = undefined } = {}) => {
+    fetchServerConfigMock.mockResolvedValue(serverConfig);
+    verifyInviteMock.mockResolvedValue(verifyInvite);
+    if (signup) signupMock.mockImplementation(signup);
+    return mountView(makeFormStub(true), query);
+  };
+
+  describe('signup view — invited flow (signup disabled)', () => {
+    test('with a valid ?inviteToken, the credentials form is shown and email is prefilled', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: true, email: 'guest@example.com' },
+      });
+      await flushPromises();
+      expect(wrapper.find('input[type="password"]').exists()).toBe(true);
+      expect(wrapper.vm.email).toBe('guest@example.com');
+    });
+
+    test('with no invite and signup disabled, the disabled alert is shown and no form', async () => {
+      const wrapper = await mountSignup({ query: {}, serverConfig: { sign: { up: false } } });
+      await flushPromises();
+      expect(wrapper.text()).toContain('Registration is currently disabled');
+      expect(wrapper.find('input[type="password"]').exists()).toBe(false);
+    });
+
+    test('validate() passes inviteToken to store.signup', async () => {
+      const signupSpy = vi.fn().mockResolvedValue({});
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: true, email: 'guest@example.com' },
+        signup: signupSpy,
+      });
+      await flushPromises();
+      wrapper.vm.password = 'Sup3rStr0ng!';
+      await wrapper.vm.validate();
+      expect(signupSpy).toHaveBeenCalledWith(expect.objectContaining({ inviteToken: 'tok123', email: 'guest@example.com' }));
     });
   });
 
