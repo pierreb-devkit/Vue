@@ -106,6 +106,45 @@ describe('Admin Store', () => {
     });
   });
 
+  describe('getUser', () => {
+    it('should fetch and set a single user', async () => {
+      const store = useAdminStore();
+      const mockUser = { id: '1', firstName: 'John', email: 'john@example.com' };
+
+      axios.get.mockResolvedValueOnce({ data: { data: mockUser } });
+
+      await store.getUser({ id: '1' });
+
+      expect(store.user).toEqual(mockUser);
+    });
+
+    it('should handle error, set error state, and reset user', async () => {
+      const store = useAdminStore();
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      store.user = { firstName: 'Stale', lastName: 'Data', email: 'stale@example.com', bio: '', position: '', avatar: '', roles: [], memberships: [], updated: '', created: '' };
+
+      axios.get.mockRejectedValueOnce(new Error('Not found'));
+
+      await store.getUser({ id: '999' });
+
+      expect(store.error).toBe('Failed to load data. Please try again.');
+      expect(store.user).toEqual({
+        firstName: '',
+        lastName: '',
+        bio: '',
+        position: '',
+        email: '',
+        avatar: '',
+        roles: [],
+        memberships: [],
+        updated: '',
+        created: '',
+      });
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
   describe('getOrganizations', () => {
     it('should fetch organizations with params', async () => {
       const store = useAdminStore();
@@ -446,6 +485,37 @@ describe('admin store — invitations', () => {
     axios.delete.mockResolvedValueOnce({ data: { data: { id: '3' } } });
     await store.deleteInvitation('3');
     expect(axios.delete).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/invitations\/3$/));
+  });
+
+  it('getInvitations sets error state on API failure', async () => {
+    const store = useAdminStore();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    axios.get.mockRejectedValueOnce(new Error('Network error'));
+    await store.getInvitations();
+    expect(store.invitations).toEqual([]);
+    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('createInvitation sets error state and rethrows on API failure', async () => {
+    const store = useAdminStore();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    axios.post.mockRejectedValueOnce(new Error('Server error'));
+    await expect(store.createInvitation('fail@b.co')).rejects.toThrow('Server error');
+    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('deleteInvitation sets error state and rethrows on API failure', async () => {
+    const store = useAdminStore();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    axios.delete.mockRejectedValueOnce(new Error('Forbidden'));
+    await expect(store.deleteInvitation('99')).rejects.toThrow('Forbidden');
+    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 });
 
