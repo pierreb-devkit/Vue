@@ -4,6 +4,51 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## billing.subscriptions: checkout-polling extracted to useCheckoutPolling composable (2026-05-29, #4219)
+
+**Non-breaking structural refactor — behavior is byte-for-byte preserved.**
+
+`BillingSubscriptionsComponent` (`src/modules/billing/components/billing.subscriptions.component.vue`)
+was a 900-LOC god component mixing plan grid, checkout-polling state machine, usage panel, and dialogs.
+
+### What moved
+
+| Extracted to | What moved |
+|---|---|
+| `src/modules/billing/composables/billing.useCheckoutPolling.js` | `handleCheckoutSuccessQuery`, `resumeCheckoutPollingFromSession`, `persistCheckoutPollingSession`, `clearCheckoutPollingSession`, `pollSubscription`, `safeSessionRemove`, all `CHECKOUT_POLL_*` constants, and the reactive polling state: `checkoutProcessing`, `checkoutTimeout`, `paymentSuccessMessage`, `checkoutPollCount`, `pollAborted`, `checkoutPollSnapshotId/Status/Plan`, `checkoutPollTimer` |
+| `src/modules/billing/tests/billing.useCheckoutPolling.unit.tests.js` | 39 new unit tests covering the composable in isolation |
+
+### What stayed in the component
+
+`BillingSubscriptionsComponent` retains all template markup, computed properties for subscription
+status/meta/icon/action/nextBillingDate, `manageSubscription`, `retryFetchSubscription`, ledger
+pagination, the visibility-change debounce handler, and timer teardown in `beforeUnmount`.
+
+### How the wiring works
+
+The component calls `useCheckoutPolling()` in `setup()` and returns all polling refs to the instance.
+Vue 3 auto-unwraps `setup()` refs on the instance, so `this.checkoutProcessing` and
+`wrapper.vm.checkoutProcessing` continue to work in Options API methods and in the existing test suite
+— no test changes were required to maintain the 82-test green suite.
+
+The `pollingComposable` ref is an internal handle for the component to delegate method calls to the composable.
+
+### LOC
+
+- Component before: **900 LOC** → after: **~640 LOC** (~29% reduction)
+- New composable: **~240 LOC** (including JSDoc)
+- New composable tests: **39 tests** added
+
+### Downstream action required
+
+None. This is an internal Devkit Vue structural refactor. Downstream projects consuming
+`BillingSubscriptionsComponent` do not need any changes — public API (no props/events) is unchanged.
+
+Follow-up splits deferred for safety (document here for future work):
+- Presentation sub-components: `BillingCurrentPlanCard`, `BillingPlanGrid`, `BillingUsagePanelCard`, `BillingExtrasCard` — feasible but higher blast radius; prefer separate PR after observing prod.
+
+---
+
 ## @casl/ability v6 → v7 + @casl/vue v2 → v3 (2026-05-22)
 
 `@casl/ability` `^6.8.1` → `^7.0.0` and `@casl/vue` `^2.2.6` → `^3.0.0`, bumped **together**.
