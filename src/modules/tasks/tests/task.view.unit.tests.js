@@ -10,7 +10,6 @@ const createTaskMock = vi.hoisted(() => vi.fn());
 const updateTaskMock = vi.hoisted(() => vi.fn());
 const deleteTaskMock = vi.hoisted(() => vi.fn());
 const getTaskMock = vi.hoisted(() => vi.fn());
-const resetTaskMock = vi.hoisted(() => vi.fn());
 
 const mockTask = vi.hoisted(() => ({
   title: 'My Task',
@@ -27,15 +26,8 @@ vi.mock('../stores/tasks.store', () => ({
     updateTask: updateTaskMock,
     deleteTask: deleteTaskMock,
     getTask: getTaskMock,
-    resetTask: resetTaskMock,
+    resetTask: vi.fn(),
   }),
-}));
-
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { tasks: 'tasks' } },
-    vuetify: { theme: { flat: true, rounded: 'rounded-lg', maxWidth: '1200px', snackbar: { status: false } } },
-  },
 }));
 
 vi.mock('../../core/components/core.pageHeader.component.vue', () => ({
@@ -58,7 +50,6 @@ const mockPush = vi.fn();
  */
 const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { tasks: 'tasks' } },
-  sign: { route: '/tasks', in: true, up: true },
   vuetify: { theme: { flat: true, maxWidth: '1200px', rounded: 'rounded-lg', snackbar: { status: false } } },
 };
 
