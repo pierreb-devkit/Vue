@@ -77,6 +77,10 @@ export const useHomeStore = defineStore('home', {
       }
     },
 
+    /**
+     * Fetch home statistics (tasks and users counts) and update the store.
+     * @returns {Promise<void>}
+     */
     async getStatistics() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
