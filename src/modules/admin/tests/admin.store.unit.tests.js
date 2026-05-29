@@ -8,6 +8,7 @@ vi.mock('../../../lib/services/axios', () => ({
   default: {
     get: vi.fn(),
     put: vi.fn(),
+    post: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -413,6 +414,38 @@ describe('Admin Store', () => {
         expect.stringContaining('/audit'),
       );
     });
+  });
+});
+
+describe('admin store — invitations', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    axios.get.mockReset();
+    axios.post.mockReset();
+    axios.delete.mockReset();
+  });
+
+  it('getInvitations loads the list into state', async () => {
+    const store = useAdminStore();
+    axios.get.mockResolvedValueOnce({ data: { data: [{ id: '1', email: 'a@b.co', usedAt: null }] } });
+    await store.getInvitations();
+    expect(axios.get).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/invitations$/));
+    expect(store.invitations).toEqual([{ id: '1', email: 'a@b.co', usedAt: null }]);
+  });
+
+  it('createInvitation POSTs the email and returns the created invite', async () => {
+    const store = useAdminStore();
+    axios.post.mockResolvedValueOnce({ data: { data: { id: '2', email: 'new@b.co' } } });
+    const result = await store.createInvitation('new@b.co');
+    expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/invitations$/), { email: 'new@b.co' });
+    expect(result).toEqual({ id: '2', email: 'new@b.co' });
+  });
+
+  it('deleteInvitation DELETEs by id', async () => {
+    const store = useAdminStore();
+    axios.delete.mockResolvedValueOnce({ data: { data: { id: '3' } } });
+    await store.deleteInvitation('3');
+    expect(axios.delete).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/invitations\/3$/));
   });
 });
 

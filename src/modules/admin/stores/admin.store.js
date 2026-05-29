@@ -54,6 +54,7 @@ export const useAdminStore = defineStore('admin', {
     user: defaultUser(),
     users: [],
     organizations: [],
+    invitations: [],
     error: null,
     currentBreadcrumb: null,
     readiness: [],
@@ -169,6 +170,55 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.error = sanitizeApiError(err);
         console.error(err);
+      }
+    },
+
+    /**
+     * @desc Load all signup invitations (admin). Backend returns the full list
+     * (no server pagination), newest first, with token stripped.
+     * @returns {Promise<void>}
+     */
+    async getInvitations() {
+      this.error = null;
+      try {
+        const res = await axios.get(`${apiBase()}/auth/invitations`);
+        this.invitations = res.data.data;
+      } catch (err) {
+        this.error = sanitizeApiError(err);
+        console.error(err);
+      }
+    },
+
+    /**
+     * @desc Create + email a signup invitation for an email (admin).
+     * @param {string} email
+     * @returns {Promise<Object>} the created invitation
+     */
+    async createInvitation(email) {
+      this.error = null;
+      try {
+        const res = await axios.post(`${apiBase()}/auth/invitations`, { email });
+        return res.data.data;
+      } catch (err) {
+        this.error = sanitizeApiError(err);
+        console.error(err);
+        throw err;
+      }
+    },
+
+    /**
+     * @desc Revoke a signup invitation by id (admin).
+     * @param {string} id
+     * @returns {Promise<void>}
+     */
+    async deleteInvitation(id) {
+      this.error = null;
+      try {
+        await axios.delete(`${apiBase()}/auth/invitations/${id}`);
+      } catch (err) {
+        this.error = sanitizeApiError(err);
+        console.error(err);
+        throw err;
       }
     },
 
