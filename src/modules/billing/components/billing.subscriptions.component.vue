@@ -292,9 +292,10 @@
  * Module dependencies.
  */
 import { computed, watch } from 'vue';
-import { useBillingStore, clearExtrasIntentIds } from '../stores/billing.store';
+import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
+import { useCheckoutPolling } from '../composables/billing.useCheckoutPolling';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingPlanBadgeComponent from './billing.planBadge.component.vue';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
@@ -303,29 +304,6 @@ import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
 
 const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
-
-/** Maximum number of polling attempts after checkout success (2s × 8 = 16s max). */
-const CHECKOUT_POLL_MAX = 8;
-/** Interval between polling attempts in milliseconds. */
-const CHECKOUT_POLL_INTERVAL_MS = 2000;
-/** Total polling window in milliseconds (POLL_MAX × POLL_INTERVAL). */
-const CHECKOUT_POLL_WINDOW_MS = CHECKOUT_POLL_MAX * CHECKOUT_POLL_INTERVAL_MS;
-/** sessionStorage key used to persist polling state across F5 reloads. */
-const CHECKOUT_POLL_SESSION_KEY = 'billing.checkout.polling';
-
-/**
- * @desc Best-effort sessionStorage.removeItem — silently ignores SecurityError
- * thrown in privacy / sandboxed browser contexts where storage is unavailable.
- * @param {string} key
- * @returns {void}
- */
-function safeSessionRemove(key) {
-  try {
-    sessionStorage.removeItem(key);
-  } catch {
-    // SecurityError in private/sandboxed mode — nothing to clean up
-  }
-}
 
 /**
  * Component definition.
@@ -341,7 +319,9 @@ export default {
   },
   /**
    * @desc Wires billingStore + authStore + reactive meterMode + useMeter derived refs.
-   * Mirrors the previous billing.billing.view.vue setup so the visible UX stays identical.
+   * Checkout polling state is owned by useCheckoutPolling composable (issue #4219 refactor).
+   * Polling refs are returned here so Options API methods can access them via `this.X` and
+   * tests can read them via `wrapper.vm.X` — Vue 3 auto-unwraps setup() refs on the instance.
    * @returns {Object}
    */
   setup() {
@@ -372,6 +352,10 @@ export default {
       { immediate: true },
     );
 
+    // Checkout polling composable — owns all polling reactive state.
+    // Refs are returned to the instance so Options API methods + tests access them via `this.X`.
+    const polling = useCheckoutPolling();
+
     return {
       billingStore,
       authStore,
@@ -382,24 +366,26 @@ export default {
       meterBreakdown,
       meterOverage,
       meterNetRemainingRaw,
+      // Polling state (refs — auto-unwrapped on the instance)
+      checkoutProcessing: polling.checkoutProcessing,
+      checkoutTimeout: polling.checkoutTimeout,
+      paymentSuccessMessage: polling.paymentSuccessMessage,
+      checkoutPollCount: polling.checkoutPollCount,
+      pollAborted: polling.pollAborted,
+      checkoutPollSnapshotId: polling.checkoutPollSnapshotId,
+      checkoutPollSnapshotStatus: polling.checkoutPollSnapshotStatus,
+      checkoutPollSnapshotPlan: polling.checkoutPollSnapshotPlan,
+      checkoutPollTimer: polling.checkoutPollTimer,
+      // Polling methods delegated to the composable
+      _polling: polling,
     };
   },
   data() {
     return {
       portalLoading: false,
       extrasCheckoutDialog: false,
-      paymentSuccessMessage: null,
-      successCleanupTimer: null,
       paymentSuccessTimer: null,
-      // P1-2: checkout polling state
-      checkoutProcessing: false,
-      checkoutTimeout: false,
-      checkoutPollTimer: null,
-      checkoutPollCount: 0,
-      pollAborted: false,
-      checkoutPollSnapshotId: null,
-      checkoutPollSnapshotStatus: null,
-      checkoutPollSnapshotPlan: null,
+      successCleanupTimer: null,
       // V5 P2: visibility-change subscription refresh debounce (timestamp of last fetch)
       subscriptionLastFetchedAt: 0,
     };
@@ -657,168 +643,48 @@ export default {
 
     /**
      * @desc Detect ?success=true or ?checkout=success from Stripe redirect and start polling.
-     * Returns true when checkout-success polling is initiated (skips normal single fetch).
+     * Delegates to useCheckoutPolling composable.
      * @returns {boolean} True when polling was started
      */
     handleCheckoutSuccessQuery() {
-      const query = this.$route?.query || {};
-      const packPurchased = query.packPurchased === true || query.packPurchased === 'true';
-      const isSuccess = query.success === 'true' || packPurchased;
-      if (!isSuccess) return false;
-
-      if (query.type === 'extras' || packPurchased) {
-        // Extras purchase: no subscription state to poll — show success directly.
-        // Clear any leftover subscription polling session and return true so that
-        // mounted() skips both resumeCheckoutPollingFromSession() and the normal
-        // fetchSubscription() call, preventing stale polling from overriding the
-        // extras success banner.
-        this.clearCheckoutPollingSession();
-        // Drop the persisted intentId(s) so a follow-up purchase of the same pack
-        // generates a fresh UUID. Cancelled flows do NOT reach this branch and
-        // intentionally keep the intentId so retries reuse the same idempotency key.
-        clearExtrasIntentIds();
-        this.paymentSuccessMessage = 'Pack credited to your balance';
-        this.scheduleQueryCleanup();
-        return true;
-      }
-
-      // Subscription checkout success: capture pre-poll snapshot and start polling
-      this.checkoutProcessing = true;
-      this.checkoutTimeout = false;
-      this.checkoutPollCount = 0;
-      this.checkoutPollSnapshotId = this.billingStore.subscription?.stripeSubscriptionId ?? null;
-      this.checkoutPollSnapshotStatus = this.billingStore.subscription?.status ?? null;
-      this.checkoutPollSnapshotPlan = this.billingStore.subscription?.plan ?? null;
-      this.persistCheckoutPollingSession({
-        startedAt: Date.now(),
-        snapshotId: this.checkoutPollSnapshotId,
-        snapshotStatus: this.checkoutPollSnapshotStatus,
-        snapshotPlan: this.checkoutPollSnapshotPlan,
-      });
-      this.scheduleQueryCleanup();
-      this.pollSubscription();
-      return true;
+      return this._polling.handleCheckoutSuccessQuery(this.$route, () => this.scheduleQueryCleanup());
     },
 
     /**
      * @desc Attempt to resume an interrupted checkout polling session after F5 reload.
-     * Reads from sessionStorage — clears stale entry when the polling window has expired.
-     * When resumed, restores the pre-checkout snapshots from storage so that polling
-     * detects state changes against the original baseline (not the null store state after reload).
+     * Delegates to useCheckoutPolling composable.
      * @returns {boolean} True when polling was successfully resumed
      */
     resumeCheckoutPollingFromSession() {
-      let stored;
-      try {
-        const raw = sessionStorage.getItem(CHECKOUT_POLL_SESSION_KEY);
-        if (!raw) return false;
-        stored = JSON.parse(raw);
-      } catch {
-        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
-        return false;
-      }
-
-      const { startedAt, snapshotId, snapshotStatus, snapshotPlan } = stored;
-
-      // Validate startedAt to guard against malformed storage data.
-      // Number.isFinite rejects NaN, Infinity, null, strings, and future timestamps.
-      const now = Date.now();
-      if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > now) {
-        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
-        return false;
-      }
-
-      const elapsed = now - startedAt;
-      const remaining = CHECKOUT_POLL_WINDOW_MS - elapsed;
-
-      if (remaining <= 0) {
-        safeSessionRemove(CHECKOUT_POLL_SESSION_KEY);
-        return false;
-      }
-
-      // Resume: restore baseline snapshots from storage and poll for remaining time.
-      // Using persisted snapshots (not null store state) prevents a false-positive
-      // activation on the first fetch after F5.
-      this.checkoutProcessing = true;
-      this.checkoutTimeout = false;
-      this.checkoutPollCount = Math.floor(elapsed / CHECKOUT_POLL_INTERVAL_MS);
-      this.checkoutPollSnapshotId = snapshotId ?? null;
-      this.checkoutPollSnapshotStatus = snapshotStatus ?? null;
-      this.checkoutPollSnapshotPlan = snapshotPlan ?? null;
-      this.pollSubscription();
-      return true;
+      return this._polling.resumeCheckoutPollingFromSession();
     },
 
     /**
      * @desc Persist checkout polling session to sessionStorage for F5 recovery.
+     * Delegates to useCheckoutPolling composable.
      * @param {{ startedAt: number }} payload - Session data to persist
      * @returns {void}
      */
     persistCheckoutPollingSession(payload) {
-      try {
-        sessionStorage.setItem(CHECKOUT_POLL_SESSION_KEY, JSON.stringify(payload));
-      } catch {
-        // sessionStorage unavailable (private mode / quota exceeded) — polling continues without persistence
-      }
+      this._polling.persistCheckoutPollingSession(payload);
     },
 
     /**
      * @desc Clear the checkout polling session from sessionStorage.
-     * Called on successful activation or timeout to prevent stale resumption.
+     * Delegates to useCheckoutPolling composable.
      * @returns {void}
      */
     clearCheckoutPollingSession() {
-      try {
-        sessionStorage.removeItem(CHECKOUT_POLL_SESSION_KEY);
-      } catch {
-        // sessionStorage unavailable — nothing to clean up
-      }
+      this._polling.clearCheckoutPollingSession();
     },
 
     /**
      * @desc Poll fetchSubscription until the subscription changes or max attempts reached.
-     * Criteria: stripeSubscriptionId appeared, OR status changed to active/trialing,
-     * OR plan changed (covers upgrades that keep the same Stripe sub ID and status).
+     * Delegates to useCheckoutPolling composable.
      * @returns {void}
      */
     pollSubscription() {
-      this.checkoutPollTimer = setTimeout(async () => {
-        try {
-          await this.billingStore.fetchSubscription();
-        } catch {
-          // Keep polling even on transient errors
-        }
-
-        if (this.pollAborted) return;
-
-        const sub = this.billingStore.subscription;
-        const newId = sub?.stripeSubscriptionId ?? null;
-        const newStatus = sub?.status ?? null;
-        const newPlan = sub?.plan ?? null;
-
-        const activated =
-          (newId && newId !== this.checkoutPollSnapshotId) ||
-          (['active', 'trialing'].includes(newStatus) && newStatus !== this.checkoutPollSnapshotStatus) ||
-          (newPlan && newPlan !== this.checkoutPollSnapshotPlan);
-
-        if (activated) {
-          this.checkoutProcessing = false;
-          this.checkoutTimeout = false;
-          this.clearCheckoutPollingSession();
-          this.paymentSuccessMessage = 'Subscription activated successfully. Thank you!';
-          return;
-        }
-
-        this.checkoutPollCount += 1;
-        if (this.checkoutPollCount >= CHECKOUT_POLL_MAX) {
-          this.checkoutProcessing = false;
-          this.checkoutTimeout = true;
-          this.clearCheckoutPollingSession();
-          return;
-        }
-
-        this.pollSubscription();
-      }, CHECKOUT_POLL_INTERVAL_MS);
+      this._polling.pollSubscription();
     },
 
     /**
