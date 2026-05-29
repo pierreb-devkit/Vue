@@ -66,9 +66,13 @@ export default {
       return tasksStore.tasks;
     },
   },
-  created() {
+  async created() {
     const tasksStore = useTasksStore();
-    tasksStore.getTasks();
+    try {
+      await tasksStore.getTasks();
+    } catch (err) {
+      console.error(err);
+    }
   },
 };
 </script>
