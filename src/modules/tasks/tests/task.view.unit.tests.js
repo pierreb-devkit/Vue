@@ -49,8 +49,7 @@ const mockPush = vi.fn();
  * @returns {import('@vue/test-utils').VueWrapper}
  */
 const mockConfig = {
-  api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { tasks: 'tasks' } },
-  vuetify: { theme: { flat: true, maxWidth: '1200px', rounded: 'rounded-lg', snackbar: { status: false } } },
+  vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
 };
 
 const mountView = ({ id = null } = {}) =>
