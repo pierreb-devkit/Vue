@@ -31,7 +31,7 @@ Vue 3 auto-unwraps `setup()` refs on the instance, so `this.checkoutProcessing` 
 `wrapper.vm.checkoutProcessing` continue to work in Options API methods and in the existing test suite
 — no test changes were required to maintain the 82-test green suite.
 
-The `_polling` ref is an internal handle for the component to delegate method calls to the composable.
+The `pollingComposable` ref is an internal handle for the component to delegate method calls to the composable.
 
 ### LOC
 
