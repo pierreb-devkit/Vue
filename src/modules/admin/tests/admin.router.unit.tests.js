@@ -52,6 +52,14 @@ describe('admin.router (structure)', () => {
     expect(user.meta.display).toBe(false);
     expect(org.meta.display).toBe(false);
   });
+
+  it('registers the invitations child route', () => {
+    const routes = adminRoutes;
+    const adminParent = routes.find((r) => Array.isArray(r.children));
+    const child = adminParent.children.find((c) => c.path === 'invitations');
+    expect(child).toBeTruthy();
+    expect(child.name).toBe('Admin Invitations');
+  });
 });
 
 /**
