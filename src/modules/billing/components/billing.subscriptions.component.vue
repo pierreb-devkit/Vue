@@ -376,8 +376,9 @@ export default {
       checkoutPollSnapshotStatus: polling.checkoutPollSnapshotStatus,
       checkoutPollSnapshotPlan: polling.checkoutPollSnapshotPlan,
       checkoutPollTimer: polling.checkoutPollTimer,
-      // Polling methods delegated to the composable
-      _polling: polling,
+      // Polling composable handle — used by Options API methods to delegate calls.
+      // Named without $ / _ prefix to avoid Vue 3 reserved-prefix dev warning.
+      pollingComposable: polling,
     };
   },
   data() {
@@ -647,7 +648,7 @@ export default {
      * @returns {boolean} True when polling was started
      */
     handleCheckoutSuccessQuery() {
-      return this._polling.handleCheckoutSuccessQuery(this.$route, () => this.scheduleQueryCleanup());
+      return this.pollingComposable.handleCheckoutSuccessQuery(this.$route, () => this.scheduleQueryCleanup());
     },
 
     /**
@@ -656,7 +657,7 @@ export default {
      * @returns {boolean} True when polling was successfully resumed
      */
     resumeCheckoutPollingFromSession() {
-      return this._polling.resumeCheckoutPollingFromSession();
+      return this.pollingComposable.resumeCheckoutPollingFromSession();
     },
 
     /**
@@ -666,7 +667,7 @@ export default {
      * @returns {void}
      */
     persistCheckoutPollingSession(payload) {
-      this._polling.persistCheckoutPollingSession(payload);
+      this.pollingComposable.persistCheckoutPollingSession(payload);
     },
 
     /**
@@ -675,7 +676,7 @@ export default {
      * @returns {void}
      */
     clearCheckoutPollingSession() {
-      this._polling.clearCheckoutPollingSession();
+      this.pollingComposable.clearCheckoutPollingSession();
     },
 
     /**
@@ -684,7 +685,7 @@ export default {
      * @returns {void}
      */
     pollSubscription() {
-      this._polling.pollSubscription();
+      this.pollingComposable.pollSubscription();
     },
 
     /**
