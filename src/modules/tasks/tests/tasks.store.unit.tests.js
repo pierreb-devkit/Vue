@@ -13,10 +13,24 @@ vi.mock('../../../lib/services/axios', () => ({
   },
 }));
 
+// Mock config
+vi.mock('../../../lib/services/config', () => ({
+  default: {
+    api: {
+      protocol: 'http',
+      host: 'localhost',
+      port: '3000',
+      base: 'api',
+      endPoints: { tasks: 'tasks' },
+    },
+  },
+}));
+
 describe('Tasks Store', () => {
   beforeEach(() => {
     // Create a new pinia instance for each test
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it('should initialize with default state', () => {
@@ -85,16 +99,13 @@ describe('Tasks Store', () => {
       expect(tasksStore.tasks).toEqual(mockTasks);
     });
 
-    it('should handle getTasks error', async () => {
+    it('should propagate getTasks error to caller', async () => {
       const tasksStore = useTasksStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Network error');
 
-      axios.get.mockRejectedValueOnce(new Error('Failed'));
+      axios.get.mockRejectedValueOnce(error);
 
-      await tasksStore.getTasks();
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await expect(tasksStore.getTasks()).rejects.toThrow('Network error');
     });
   });
 
@@ -110,16 +121,13 @@ describe('Tasks Store', () => {
       expect(tasksStore.task).toEqual(mockTask);
     });
 
-    it('should handle getTask error', async () => {
+    it('should propagate getTask error to caller', async () => {
       const tasksStore = useTasksStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Not found');
 
-      axios.get.mockRejectedValueOnce(new Error('Failed'));
+      axios.get.mockRejectedValueOnce(error);
 
-      await tasksStore.getTask({ id: '123' });
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await expect(tasksStore.getTask({ id: '123' })).rejects.toThrow('Not found');
     });
   });
 
@@ -136,16 +144,23 @@ describe('Tasks Store', () => {
       expect(tasksStore.task).toEqual(mockResponse.data.data);
     });
 
-    it('should handle createTask error', async () => {
+    it('should propagate createTask error to caller', async () => {
       const tasksStore = useTasksStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Server error');
+
+      axios.post.mockRejectedValueOnce(error);
+
+      await expect(tasksStore.createTask({ title: 'Test' })).rejects.toThrow('Server error');
+    });
+
+    it('should not update store state when createTask fails', async () => {
+      const tasksStore = useTasksStore();
+      const originalTask = { ...tasksStore.task };
 
       axios.post.mockRejectedValueOnce(new Error('Failed'));
 
-      await tasksStore.createTask({ title: 'Test' });
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await expect(tasksStore.createTask({ title: 'Test' })).rejects.toThrow();
+      expect(tasksStore.task).toEqual(originalTask);
     });
   });
 
@@ -162,16 +177,13 @@ describe('Tasks Store', () => {
       expect(tasksStore.task).toMatchObject(updatedTask);
     });
 
-    it('should handle updateTask error', async () => {
+    it('should propagate updateTask error to caller', async () => {
       const tasksStore = useTasksStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Update failed');
 
-      axios.put.mockRejectedValueOnce(new Error('Failed'));
+      axios.put.mockRejectedValueOnce(error);
 
-      await tasksStore.updateTask({ id: '789' });
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await expect(tasksStore.updateTask({ id: '789' })).rejects.toThrow('Update failed');
     });
   });
 
@@ -187,16 +199,24 @@ describe('Tasks Store', () => {
       expect(tasksStore.task).toEqual({ title: '', description: '' });
     });
 
-    it('should handle deleteTask error', async () => {
+    it('should propagate deleteTask error to caller', async () => {
       const tasksStore = useTasksStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Delete failed');
+
+      axios.delete.mockRejectedValueOnce(error);
+
+      await expect(tasksStore.deleteTask({ id: '999' })).rejects.toThrow('Delete failed');
+    });
+
+    it('should not reset task state when deleteTask fails', async () => {
+      const tasksStore = useTasksStore();
+      tasksStore.task = { id: '999', title: 'To Delete', description: 'Delete me' };
 
       axios.delete.mockRejectedValueOnce(new Error('Failed'));
 
-      await tasksStore.deleteTask({ id: '999' });
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await expect(tasksStore.deleteTask({ id: '999' })).rejects.toThrow();
+      // Task should NOT have been reset since the delete failed
+      expect(tasksStore.task).toMatchObject({ id: '999', title: 'To Delete' });
     });
   });
 });
