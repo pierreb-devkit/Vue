@@ -3,18 +3,6 @@
  */
 
 /**
- * @desc Function to evaluate numbers of release from last release
- * @param {String} release - Version string (e.g. '2.3.4' or 'v2.3.4')
- * @returns {Array} Array of version number parts
- */
-export const releasesNumber = (release) => {
-  const numbers = release[0] === 'v' ? release.substr(1).split('.') : release.split('.'); // get numbers last release
-  numbers.pop();
-  numbers[0] = numbers[0] === '1' ? '1' : String(parseInt(numbers[0], 10) * 10); // calc aproximativly number of release
-  return numbers;
-};
-
-/**
  * @desc Function generate pagniation request
  * @param {Int} page
  * @param {Int} perPage
@@ -39,4 +27,4 @@ export const serverItemsLength = (items, options) =>
 /**
  * Exports.
  */
-export default { releasesNumber, pageRequest, serverItemsLength };
+export default { pageRequest, serverItemsLength };

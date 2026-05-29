@@ -149,45 +149,6 @@ describe('Home Store', () => {
     });
   });
 
-  describe('getChangelogs', () => {
-    it('should fetch and transform changelog data', async () => {
-      const homeStore = useHomeStore();
-      const mockChangelogsData = {
-        data: {
-          data: [
-            {
-              title: 'v1.0.0',
-              markdown: '- [Fix] Bug fixes (#abc1234)\n- [Feature] New feature (def5678)',
-            },
-          ],
-        },
-      };
-
-      axios.get.mockResolvedValueOnce(mockChangelogsData);
-
-      await homeStore.getChangelogs();
-
-      expect(homeStore.contents).toHaveLength(1);
-      expect(homeStore.contents[0].title).toBe('v1.0.0');
-      expect(homeStore.contents[0].style).toBe('air');
-      expect(homeStore.contents[0].markdown).toBeDefined();
-    });
-
-    it('should handle getChangelogs error', async () => {
-      const homeStore = useHomeStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      axios.get.mockRejectedValueOnce(new Error('Failed to fetch changelogs'));
-
-      await homeStore.getChangelogs();
-
-      expect(homeStore.contents).toEqual([]);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
   describe('getPages', () => {
     it('should fetch and transform page data with banner', async () => {
       const homeStore = useHomeStore();
@@ -265,62 +226,25 @@ describe('Home Store', () => {
   });
 
   describe('getStatistics', () => {
-    it('should fetch and calculate statistics successfully', async () => {
+    it('should fetch and update tasks and users statistics', async () => {
       const homeStore = useHomeStore();
       homeStore.initStatistics();
 
       if (!homeStore.statistics) {
-        homeStore.statistics = [{ value: 0 }, { value: 0 }, { value: 0 }];
+        homeStore.statistics = [{ value: 0 }, { value: 0 }];
       }
 
       const mockTasksData = { data: { data: 150 } };
-      const mockReleasesData = {
-        data: {
-          data: [
-            { list: [{ name: 'v2.5.3' }] },
-            { list: [{ name: 'v3.2.1' }] },
-          ],
-        },
-      };
       const mockUsersData = { data: { data: 1000 } };
 
       axios.get
         .mockResolvedValueOnce(mockTasksData)
-        .mockResolvedValueOnce(mockReleasesData)
         .mockResolvedValueOnce(mockUsersData);
 
       await homeStore.getStatistics();
 
       expect(homeStore.statistics[0].value).toBe(150);
-      expect(homeStore.statistics[1].value).toBeGreaterThan(0);
-      expect(homeStore.statistics[2].value).toBe(1000);
-    });
-
-    it('should handle empty release list in statistics', async () => {
-      const homeStore = useHomeStore();
-      homeStore.initStatistics();
-
-      if (!homeStore.statistics) {
-        homeStore.statistics = [{ value: 0 }, { value: 0 }, { value: 0 }];
-      }
-
-      const mockTasksData = { data: { data: 100 } };
-      const mockReleasesData = {
-        data: {
-          data: [{ list: [] }],
-        },
-      };
-      const mockUsersData = { data: { data: 500 } };
-
-      axios.get
-        .mockResolvedValueOnce(mockTasksData)
-        .mockResolvedValueOnce(mockReleasesData)
-        .mockResolvedValueOnce(mockUsersData);
-
-      await homeStore.getStatistics();
-
-      expect(homeStore.statistics[0].value).toBe(100);
-      expect(homeStore.statistics[2].value).toBe(500);
+      expect(homeStore.statistics[1].value).toBe(1000);
     });
 
     it('should handle getStatistics error', async () => {
@@ -342,12 +266,10 @@ describe('Home Store', () => {
       homeStore.statistics = null;
 
       const mockTasksData = { data: { data: 150 } };
-      const mockReleasesData = { data: { data: [] } };
       const mockUsersData = { data: { data: 1000 } };
 
       axios.get
         .mockResolvedValueOnce(mockTasksData)
-        .mockResolvedValueOnce(mockReleasesData)
         .mockResolvedValueOnce(mockUsersData);
 
       await homeStore.getStatistics();

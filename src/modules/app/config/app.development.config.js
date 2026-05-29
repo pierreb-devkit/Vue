@@ -147,11 +147,6 @@ export default {
             url: '/team',
           },
           {
-            label: 'Changelogs',
-            icon: 'fa-solid fa-clipboard-list',
-            url: '/changelogs',
-          },
-          {
             label: `DevKit ${new Date().getFullYear()}`,
             icon: 'fa-regular fa-copyright',
             url: 'https://devkit.me',

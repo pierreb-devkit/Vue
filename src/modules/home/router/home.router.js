@@ -21,17 +21,6 @@ export default [
     },
   },
   {
-    path: '/changelogs',
-    name: 'changelogs',
-    component: pages,
-    meta: {
-      display: false, // hide from drawer any time
-      title: 'Changelogs',
-      data: 'getChangelogs', // array of {title: ..., markdown: ...}
-      footer: true, // display footer
-    },
-  },
-  {
     path: '/team',
     name: 'Team',
     component: team,

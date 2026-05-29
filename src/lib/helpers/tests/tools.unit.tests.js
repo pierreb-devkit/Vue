@@ -1,55 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { releasesNumber, pageRequest, serverItemsLength } from '../tools.js';
+import { pageRequest, serverItemsLength } from '../tools.js';
 
 describe('Tools Helpers', () => {
-  describe('releasesNumber', () => {
-    it('should parse release version starting with v', () => {
-      const result = releasesNumber('v2.3.4');
-      expect(result).toEqual(['20', '3']);
-    });
-
-    it('should parse release version without v prefix', () => {
-      const result = releasesNumber('2.3.4');
-      expect(result).toEqual(['20', '3']);
-    });
-
-    it('should handle version 1.x.x specially', () => {
-      const result = releasesNumber('1.5.2');
-      expect(result).toEqual(['1', '5']);
-    });
-
-    it('should handle version v1.x.x specially', () => {
-      const result = releasesNumber('v1.5.2');
-      expect(result).toEqual(['1', '5']);
-    });
-
-    it('should multiply major version by 10 for versions >= 2', () => {
-      const result = releasesNumber('3.2.1');
-      expect(result).toEqual(['30', '2']);
-    });
-
-    it('should handle double digit major version', () => {
-      const result = releasesNumber('10.5.3');
-      expect(result).toEqual(['100', '5']);
-    });
-
-    it('should handle version with v prefix and double digit major', () => {
-      const result = releasesNumber('v12.4.7');
-      expect(result).toEqual(['120', '4']);
-    });
-
-    it('should pop the patch version', () => {
-      const result = releasesNumber('5.9.99');
-      expect(result).toHaveLength(2);
-      expect(result).toEqual(['50', '9']);
-    });
-
-    it('should handle zero major version', () => {
-      const result = releasesNumber('0.8.3');
-      expect(result).toEqual(['0', '8']);
-    });
-  });
-
   describe('pageRequest', () => {
     it('should generate request string without search', () => {
       const result = pageRequest(1, 10, '');
