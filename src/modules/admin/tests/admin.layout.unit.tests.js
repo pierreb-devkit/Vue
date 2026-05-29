@@ -81,13 +81,13 @@ describe('admin.layout', () => {
     expect(wrapper.find('.router-view-stub').exists()).toBe(true);
   });
 
-  it('passes the four built-in tabs to CorePageHeaderTabs when no extras are configured', () => {
+  it('passes the five built-in tabs to CorePageHeaderTabs when no extras are configured', () => {
     const wrapper = mountLayout();
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
     expect(headerTabs.exists()).toBe(true);
     const tabs = headerTabs.props('tabs');
-    expect(tabs).toHaveLength(4);
-    expect(tabs.map((t) => t.value)).toEqual(['users', 'organizations', 'readiness', 'activity']);
+    expect(tabs).toHaveLength(5);
+    expect(tabs.map((t) => t.value)).toEqual(['users', 'invitations', 'organizations', 'readiness', 'activity']);
   });
 
   it('passes built-in + extra tabs from config.admin.tabs to CorePageHeaderTabs', () => {
@@ -101,9 +101,17 @@ describe('admin.layout', () => {
     });
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
     const tabs = headerTabs.props('tabs');
-    expect(tabs).toHaveLength(6);
-    expect(tabs[4].value).toBe('knowledge');
-    expect(tabs[5].value).toBe('costs');
+    expect(tabs).toHaveLength(7);
+    expect(tabs[5].value).toBe('knowledge');
+    expect(tabs[6].value).toBe('costs');
+  });
+
+  it('includes the Invitations tab', () => {
+    const wrapper = mountLayout();
+    const labels = wrapper.vm.allTabs.map((t) => t.label);
+    expect(labels).toContain('Invitations');
+    const tab = wrapper.vm.allTabs.find((t) => t.label === 'Invitations');
+    expect(tab.route).toBe('invitations');
   });
 
   it('passes basePath="/admin" to CorePageHeaderTabs', () => {
@@ -118,10 +126,10 @@ describe('admin.layout', () => {
     expect(typeof headerTabs.props('can')).toBe('function');
   });
 
-  it('gracefully handles non-array admin.tabs (CorePageHeaderTabs receives only the built-in 4)', () => {
+  it('gracefully handles non-array admin.tabs (CorePageHeaderTabs receives only the built-in 5)', () => {
     const wrapper = mountLayout({ admin: { tabs: 'invalid' } });
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
-    expect(headerTabs.props('tabs')).toHaveLength(4);
+    expect(headerTabs.props('tabs')).toHaveLength(5);
   });
 
   it('renders the error banner at the TOP of the layout, before the header', async () => {
