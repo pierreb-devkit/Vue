@@ -156,7 +156,7 @@ export default {
      * @returns {void}
      */
     openRevoke(item) {
-      this.deleteDialog = { show: true, id: item.id, email: item.email };
+      this.deleteDialog = { show: true, id: item.id || item._id, email: item.email };
     },
     /**
      * @desc Confirm revoke: delete then refresh and close.

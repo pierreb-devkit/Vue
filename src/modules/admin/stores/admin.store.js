@@ -184,6 +184,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(`${apiBase()}/auth/invitations`);
         this.invitations = res.data.data;
       } catch (err) {
+        this.invitations = [];
         this.error = sanitizeApiError(err);
         console.error(err);
       }
