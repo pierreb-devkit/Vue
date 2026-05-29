@@ -634,10 +634,6 @@ export default {
         },
         {
           value: '0',
-          title: 'Releases',
-        },
-        {
-          value: '0',
           title: 'Users',
         },
         {

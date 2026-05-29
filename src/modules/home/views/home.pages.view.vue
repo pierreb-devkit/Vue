@@ -69,8 +69,6 @@ export default {
         const action = this.$route.meta.data;
         if (action === 'getPages') {
           homeStore.getPages(this.$route.params.name);
-        } else if (action === 'getChangelogs') {
-          homeStore.getChangelogs();
         }
         this.page = this.$route.params.name;
       }
@@ -84,8 +82,6 @@ export default {
         homeStore.getPages(this.$route.params.name);
       }
       this.page = this.$route.params.name;
-    } else if (action === 'getChangelogs') {
-      homeStore.getChangelogs();
     }
   },
   methods: {

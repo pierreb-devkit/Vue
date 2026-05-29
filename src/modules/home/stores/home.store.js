@@ -2,11 +2,10 @@
  * Module dependencies.
  */
 import { defineStore } from 'pinia';
-import { sum, flatten, merge } from 'lodash-es';
+import { merge } from 'lodash-es';
 import GhostContentAPI from '@tryghost/content-api';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
-import * as tools from '../../../lib/helpers/tools';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const log = createLogger('home');
@@ -34,21 +33,6 @@ export const useHomeStore = defineStore('home', {
       try {
         const team = await axios.get(`${api}/${config.api.endPoints.home}/team`);
         this.team = team.data.data;
-      } catch (err) {
-        log.error(err);
-      }
-    },
-
-    async getChangelogs() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-
-      try {
-        const changelogs = await axios.get(`${api}/${config.api.endPoints.home}/changelogs`);
-        this.contents = changelogs.data.data.map((item) => ({
-          title: item.title,
-          markdown: item.markdown.replace(/\[([^\\[\]]*)\]\((.*?)\)/gm, '$1').replace(/\(\w{7}\)/g, ''),
-          style: 'air',
-        }));
       } catch (err) {
         log.error(err);
       }
@@ -93,27 +77,20 @@ export const useHomeStore = defineStore('home', {
       }
     },
 
+    /**
+     * Fetch home statistics (tasks and users counts) and update the store.
+     * @returns {Promise<void>}
+     */
     async getStatistics() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
       try {
         const tasks = await axios.get(`${api}/${config.api.endPoints.tasks}/stats`);
-        const releases = await axios.get(`${api}/${config.api.endPoints.home}/releases`);
         const users = await axios.get(`${api}/${config.api.endPoints.account}/stats`);
 
         if (this.statistics) {
           this.statistics[0].value = tasks.data.data;
-          this.statistics[1].value = sum(
-            flatten(
-              releases.data.data.map((release) => {
-                if (release.list.length > 0) {
-                  return tools.releasesNumber(release.list[0].name);
-                }
-                return 0;
-              }),
-            ).map((x) => +x),
-          );
-          this.statistics[2].value = users.data.data;
+          this.statistics[1].value = users.data.data;
         }
       } catch (err) {
         log.error(err);
