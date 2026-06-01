@@ -63,6 +63,10 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isLoggedIn: (state) => !!state.cookieExpire,
     authStatus: (state) => state.status,
+    // Beta capacity from the public auth config: cap/remaining are null when uncapped; betaCapped is true only when a numeric cap is set.
+    signupCap: (state) => state.serverConfig?.sign?.cap ?? null,
+    seatsRemaining: (state) => state.serverConfig?.sign?.remaining ?? null,
+    betaCapped: (state) => state.serverConfig?.sign?.cap != null,
   },
 
   actions: {
