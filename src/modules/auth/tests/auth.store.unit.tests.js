@@ -1011,3 +1011,31 @@ describe('Auth Store', () => {
     });
   });
 });
+
+describe('auth store — beta seat getters', () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  it('uncapped serverConfig → cap null, remaining null, betaCapped false', () => {
+    const store = useAuthStore();
+    store.serverConfig = { sign: { in: true, up: false, cap: null, remaining: null } };
+    expect(store.signupCap).toBeNull();
+    expect(store.seatsRemaining).toBeNull();
+    expect(store.betaCapped).toBe(false);
+  });
+
+  it('capped serverConfig → exposes cap + remaining, betaCapped true', () => {
+    const store = useAuthStore();
+    store.serverConfig = { sign: { in: true, up: false, cap: 50, remaining: 40 } };
+    expect(store.signupCap).toBe(50);
+    expect(store.seatsRemaining).toBe(40);
+    expect(store.betaCapped).toBe(true);
+  });
+
+  it('missing serverConfig → safe nulls', () => {
+    const store = useAuthStore();
+    store.serverConfig = null;
+    expect(store.signupCap).toBeNull();
+    expect(store.seatsRemaining).toBeNull();
+    expect(store.betaCapped).toBe(false);
+  });
+});
