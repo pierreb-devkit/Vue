@@ -92,6 +92,41 @@ BODY
 
 Proceed to Phase 2 and track the upstream fix separately — do not block downstream alignment on it.
 
+### 3ter. Block on undeclared drift
+
+After `/verify` passes, run a final diff sweep before starting Phase 2. Any stack file that diverges from upstream **and** is not declared in `DOWNSTREAM_PATCHES.md` blocks the flow.
+
+```bash
+git fetch devkit-vue master --quiet
+
+drift_found=0
+while IFS= read -r f; do
+  upstream_blob=$(git ls-tree devkit-vue/master -- "$f" 2>/dev/null | awk '{print $3}')
+  [ -z "$upstream_blob" ] && continue  # downstream-only file — skip
+  local_blob=$(git rev-parse "HEAD:$f" 2>/dev/null)
+  if [ "$upstream_blob" != "$local_blob" ]; then
+    if ! grep -qF "'$f'" DOWNSTREAM_PATCHES.md 2>/dev/null; then
+      echo "BLOCK: undeclared drift on stack file: $f"
+      echo "  Fix A — revert to upstream:  git checkout devkit-vue/master -- $f"
+      echo "  Fix B — declare it:          add '$f' + rationale to DOWNSTREAM_PATCHES.md"
+      drift_found=1
+    fi
+  fi
+done < <(git ls-files src/modules/home src/modules/auth src/modules/users src/modules/tasks src/modules/core src/modules/app src/modules/secure 2>/dev/null \
+  | grep -vE "/(tests|__tests__)/" | grep -vE "\.(test|spec)\.(js|jsx|ts|tsx|vue)$")
+
+[ "$drift_found" -eq 1 ] && exit 1
+echo "3ter: no undeclared drift — OK"
+```
+
+**Rules:**
+- Missing `DOWNSTREAM_PATCHES.md` = no declared divergences allowed (treat as empty).
+- Declare diverging paths in `DOWNSTREAM_PATCHES.md` as `'path/to/file'` (single-quoted) — the gate matches on the quoted token to avoid substring collisions.
+- Downstream-only files (new modules, composables) are not scanned — the sweep only covers the stack module directories listed above.
+- `src/modules/app/app.router.js` legitimately diverges (downstream routes) — declare it in `DOWNSTREAM_PATCHES.md` once on project bootstrap.
+- This gate runs **after** `/verify` (never blocks on transient verify failures) and **before** Phase 2 (failure is recoverable — no merge commit yet).
+- Ref: plan `2026-05-30-trawl-devkit-perfect-alignment.md` Tasks E.1 + E.2.
+
 ---
 
 ## Phase 2 — Project alignment
