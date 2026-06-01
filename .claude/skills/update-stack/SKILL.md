@@ -113,7 +113,7 @@ while IFS= read -r f; do
     fi
   fi
 done < <(git ls-files src/modules/home src/modules/auth src/modules/users src/modules/tasks src/modules/core src/modules/app src/modules/secure 2>/dev/null \
-  | grep -v "/tests/" | grep -vE "\.(test|spec)\.(js|ts|vue)$")
+  | grep -vE "/(tests|__tests__)/" | grep -vE "\.(test|spec)\.(js|jsx|ts|tsx|vue)$")
 
 [ "$drift_found" -eq 1 ] && exit 1
 echo "3ter: no undeclared drift — OK"
