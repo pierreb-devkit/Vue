@@ -10,7 +10,7 @@ vi.mock('../components/utils/home.blur.background.component.vue', () => ({
   default: {
     name: 'HomeBlurBackgroundComponent',
     template: '<div><slot /></div>',
-    props: ['ratio', 'animationSpeed', 'backgroundColors', 'haloColors', 'noMargin'],
+    props: ['ratio', 'animationSpeed', 'backgroundColors', 'haloColors', 'haloCount', 'noMargin'],
   },
 }));
 
@@ -207,5 +207,34 @@ describe('HomeStatisticsComponent', () => {
     expect(wrapper.vm.isPendingStatValue('100')).toBe(false);
     expect(wrapper.vm.isPendingStatValue('1000+')).toBe(false);
     expect(wrapper.vm.isPendingStatValue(0)).toBe(false);
+  });
+
+  describe('haloCount prop (T5)', () => {
+    it('defaults haloCount to 4', () => {
+      const wrapper = mount(HomeStatisticsComponent, {
+        props: { setup: [{ value: '100', title: 'Test' }] },
+        global: globalOpts(vuetify),
+      });
+      expect(wrapper.vm.haloCount).toBe(4);
+    });
+
+    it('passes haloCount to homeBlurBackgroundComponent', () => {
+      const wrapper = mount(HomeStatisticsComponent, {
+        props: { setup: [{ value: '100', title: 'Test' }], haloCount: 2 },
+        global: globalOpts(vuetify),
+      });
+      const blur = wrapper.findComponent({ name: 'HomeBlurBackgroundComponent' });
+      expect(blur.props('haloCount')).toBe(2);
+    });
+
+    it('accepts valid haloCount values 1 through 5', () => {
+      [1, 2, 3, 4, 5].forEach((count) => {
+        const wrapper = mount(HomeStatisticsComponent, {
+          props: { setup: [{ value: '10', title: 'T' }], haloCount: count },
+          global: globalOpts(vuetify),
+        });
+        expect(wrapper.vm.haloCount).toBe(count);
+      });
+    });
   });
 });

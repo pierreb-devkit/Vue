@@ -87,6 +87,7 @@ export default {
       set(title) {
         const tasksStore = useTasksStore();
         tasksStore.task.title = title;
+        this.save = true;
       },
     },
     description: {
@@ -96,15 +97,8 @@ export default {
       set(description) {
         const tasksStore = useTasksStore();
         tasksStore.task.description = description;
-      },
-    },
-  },
-  watch: {
-    task: {
-      handler() {
         this.save = true;
       },
-      deep: true,
     },
   },
   async created() {

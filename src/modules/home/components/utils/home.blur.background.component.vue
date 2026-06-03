@@ -48,10 +48,10 @@
       <!-- Halo/Blob layers -->
       <div class="halo-container">
         <div class="halo halo-1" :style="haloStyle(0)"></div>
-        <div class="halo halo-2" :style="haloStyle(1)"></div>
-        <div class="halo halo-3" :style="haloStyle(2)"></div>
-        <div class="halo halo-4" :style="haloStyle(3)"></div>
-        <div class="halo halo-5" :style="haloStyle(4)"></div>
+        <div v-if="haloCount >= 2" class="halo halo-2" :style="haloStyle(1)"></div>
+        <div v-if="haloCount >= 3" class="halo halo-3" :style="haloStyle(2)"></div>
+        <div v-if="haloCount >= 4" class="halo halo-4" :style="haloStyle(3)"></div>
+        <div v-if="haloCount >= 5" class="halo halo-5" :style="haloStyle(4)"></div>
       </div>
 
       <!-- Glass overlay -->
@@ -90,6 +90,12 @@ export default {
     haloColors: {
       type: Array,
       default: null,
+    },
+    // Number of animated halos to render (1..5). Lower = cheaper.
+    haloCount: {
+      type: Number,
+      default: 5,
+      validator: (v) => v >= 1 && v <= 5,
     },
     // Remove top margin (for non-banner usage like stats)
     noMargin: {
