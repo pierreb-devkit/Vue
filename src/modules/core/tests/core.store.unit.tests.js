@@ -7,6 +7,13 @@ vi.mock('../../../lib/helpers/ability', () => ({
   ability: mockAbility,
 }));
 
+// Mutable config mock — mutate mockConfig.modules between tests to exercise T3 config-driven nav filter
+const mockConfig = vi.hoisted(() => ({
+  vuetify: { theme: { dark: false } },
+  modules: {},
+}));
+vi.mock('../../../lib/services/config', () => ({ default: mockConfig }));
+
 import { useCoreStore } from '../stores/core.store';
 
 describe('Core Store', () => {
@@ -455,6 +462,67 @@ describe('Core Store', () => {
       coreStore.refreshNav(false);
 
       expect(coreStore.nav.map((r) => r.name)).toEqual(['zero', 'ten']);
+    });
+  });
+
+  describe('refreshNav — config.modules display override (T3)', () => {
+    beforeEach(() => {
+      // Reset modules config between tests
+      mockConfig.modules = {};
+    });
+
+    it('filters out a route when config.modules[name].display is false even if meta.display is undefined', () => {
+      const coreStore = useCoreStore();
+      mockConfig.modules = { tasks: { display: false } };
+      const mockRoutes = [
+        { path: '/', name: 'home', meta: { display: true, icon: 'fa-solid fa-house' } },
+        { path: '/tasks', name: 'tasks', meta: { icon: 'fa-solid fa-check' } }, // meta.display undefined
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.find((r) => r.name === 'tasks')).toBeUndefined();
+      expect(coreStore.nav.find((r) => r.name === 'home')).toBeDefined();
+    });
+
+    it('shows a route when config.modules[name] is absent (no override)', () => {
+      const coreStore = useCoreStore();
+      mockConfig.modules = {};
+      const mockRoutes = [
+        { path: '/tasks', name: 'tasks', meta: { display: true, icon: 'fa-solid fa-check' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.find((r) => r.name === 'tasks')).toBeDefined();
+    });
+
+    it('shows a route when config.modules[name].display is true', () => {
+      const coreStore = useCoreStore();
+      mockConfig.modules = { tasks: { display: true } };
+      const mockRoutes = [
+        { path: '/tasks', name: 'tasks', meta: { display: true, icon: 'fa-solid fa-check' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.find((r) => r.name === 'tasks')).toBeDefined();
+    });
+
+    it('config.modules display:false takes priority over meta.display:true', () => {
+      const coreStore = useCoreStore();
+      mockConfig.modules = { tasks: { display: false } };
+      const mockRoutes = [
+        { path: '/tasks', name: 'tasks', meta: { display: true, icon: 'fa-solid fa-check' } },
+      ];
+
+      coreStore.init(mockRoutes);
+      coreStore.refreshNav(false);
+
+      expect(coreStore.nav.find((r) => r.name === 'tasks')).toBeUndefined();
     });
   });
 });

@@ -109,7 +109,7 @@ export default {
     const homeStore = useHomeStore();
     if (this.config.home.statistics) {
       homeStore.initStatistics();
-      homeStore.getStatistics();
+      if (this.config.home.statistics.dynamic !== false) homeStore.getStatistics();
     }
     if (this.config.home.articles) homeStore.getNews();
   },

@@ -50,6 +50,7 @@
       :animation-speed="animationSpeed"
       :background-colors="backgroundColors"
       :halo-colors="haloColors"
+      :halo-count="haloCount"
       no-margin
     >
       <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
@@ -143,6 +144,12 @@ export default {
     haloColors: {
       type: Array,
       default: null,
+    },
+    // For blur variant - number of animated halos (1..5). Lower = cheaper.
+    haloCount: {
+      type: Number,
+      default: 4,
+      validator: (v) => v >= 1 && v <= 5,
     },
     // Overlap: slides section up into previous section
     overlap: {

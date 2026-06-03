@@ -195,3 +195,53 @@ describe('task.view — remove()', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 });
+
+describe('task.view — save flag on user action (T6)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    mockTask.id = null;
+    mockTask.title = 'My Task';
+    mockTask.description = 'My Description';
+  });
+
+  it('sets save=true when title computed setter is called', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    // Simulate user editing the title
+    wrapper.vm.title = 'Updated Title';
+
+    expect(wrapper.vm.save).toBe(true);
+  });
+
+  it('sets save=true when description computed setter is called', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    // Simulate user editing the description
+    wrapper.vm.description = 'Updated Description';
+
+    expect(wrapper.vm.save).toBe(true);
+  });
+
+  it('does not have a watch block on task (removed in T6)', () => {
+    const wrapper = mountView();
+    // The $options.watch should be absent or not contain a 'task' watcher
+    const watch = wrapper.vm.$options.watch;
+    if (watch) {
+      expect(watch).not.toHaveProperty('task');
+    } else {
+      // No watch block at all — task watcher is gone (expected outcome)
+      expect(watch).toBeUndefined();
+    }
+  });
+
+  it('save starts as null (not pre-triggered on mount for new task)', async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    // For a new task (no id), save should remain null until user edits
+    expect(wrapper.vm.save).toBeNull();
+  });
+});
