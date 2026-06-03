@@ -77,6 +77,8 @@
     >
       <v-btn
         :href="setup.button.link"
+        :target="buttonTarget"
+        :rel="buttonRel"
         variant="text"
         class="my-4 text-none text-body-large"
         :style="themeColor ? { color: setup.button.color || themeColor } : {}"
@@ -180,6 +182,15 @@ export default {
         return this.theme.themes.dark.colors.onSurface;
       }
       return null;
+    },
+    buttonTarget() {
+      const explicit = this.setup.button?.target;
+      if (explicit) return explicit;
+      const link = this.setup.button?.link || '';
+      return /^https?:\/\//i.test(link) ? '_blank' : null;
+    },
+    buttonRel() {
+      return this.buttonTarget === '_blank' ? 'noopener noreferrer' : null;
     },
   },
 };

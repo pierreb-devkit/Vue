@@ -124,4 +124,65 @@ describe('auth.organizationSetup.component', () => {
 
     expect(wrapper.vm.loading).toBe(false);
   });
+
+  // --- error alert UX (T9) ---
+
+  it('initializes error as null', () => {
+    const wrapper = mountComponent();
+    expect(wrapper.vm.error).toBeNull();
+  });
+
+  it('sets error from response data message on createOrganization failure', async () => {
+    const apiError = { response: { data: { message: 'Name already taken' } } };
+    createOrganizationMock.mockRejectedValueOnce(apiError);
+
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    wrapper.vm.organizationName = 'Duplicate Org';
+    await wrapper.vm.submit();
+
+    expect(wrapper.vm.error).toBe('Name already taken');
+  });
+
+  it('falls back to err.message when no response data message', async () => {
+    const apiError = new Error('Network error');
+    createOrganizationMock.mockRejectedValueOnce(apiError);
+
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    wrapper.vm.organizationName = 'Test Org';
+    await wrapper.vm.submit();
+
+    expect(wrapper.vm.error).toBe('Network error');
+  });
+
+  it('falls back to generic message when error has no message', async () => {
+    createOrganizationMock.mockRejectedValueOnce({});
+
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    wrapper.vm.organizationName = 'Test Org';
+    await wrapper.vm.submit();
+
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
+  });
+
+  it('clears error at the start of a new submit', async () => {
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    // First submission fails
+    createOrganizationMock.mockRejectedValueOnce(new Error('First error'));
+    wrapper.vm.organizationName = 'Test Org';
+    await wrapper.vm.submit();
+    expect(wrapper.vm.error).toBe('First error');
+
+    // Second submission succeeds — error must be cleared
+    createOrganizationMock.mockResolvedValueOnce({ name: 'Test Org', _id: '456' });
+    await wrapper.vm.submit();
+    expect(wrapper.vm.error).toBeNull();
+  });
 });

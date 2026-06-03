@@ -172,4 +172,54 @@ describe('HomeContentComponent', () => {
     expect(validator('right')).toBe(true);
     expect(validator('bogus')).toBe(false);
   });
+
+  // --- buttonTarget / buttonRel (external-link safety) ---
+
+  it('buttonTarget returns _blank for an external https link', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: 'https://example.com' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonTarget).toBe('_blank');
+  });
+
+  it('buttonTarget returns _blank for an external http link', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: 'http://example.com' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonTarget).toBe('_blank');
+  });
+
+  it('buttonTarget returns null for an internal (relative) link', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: '/internal' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonTarget).toBeNull();
+  });
+
+  it('buttonTarget returns the explicit target when setup.button.target is provided', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: '/internal', target: '_self' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonTarget).toBe('_self');
+  });
+
+  it('buttonRel is "noopener noreferrer" when buttonTarget is _blank', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: 'https://external.com' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonRel).toBe('noopener noreferrer');
+  });
+
+  it('buttonRel is null when buttonTarget is null (internal link)', () => {
+    const wrapper = mount(HomeContentComponent, {
+      props: { setup: { ...baseSetup, button: { title: 'Go', link: '/internal' } } },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.buttonRel).toBeNull();
+  });
 });

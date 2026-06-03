@@ -54,6 +54,19 @@
           </v-divider>
         </template>
 
+        <!-- Error alert -->
+        <v-alert
+          v-if="error"
+          type="error"
+          variant="tonal"
+          class="mb-4"
+          :class="config.vuetify.theme.rounded"
+          closable
+          @click:close="error = null"
+        >
+          {{ error }}
+        </v-alert>
+
         <!-- Create organization form -->
         <v-form ref="form" v-model="valid">
           <v-text-field
@@ -121,6 +134,7 @@ export default {
       loading: false,
       requestLoading: false,
       requestSent: false,
+      error: null,
       organizationName: this.defaultName ? `${this.defaultName}'s organization` : '',
       rules: {
         required: (v) => (!!v && !!v.trim()) || 'Organization name is required',
@@ -136,6 +150,7 @@ export default {
       if (!form.valid) return;
 
       this.loading = true;
+      this.error = null;
       const organizationsStore = useOrganizationsStore();
       try {
         const organization = await organizationsStore.createOrganization({
@@ -145,7 +160,7 @@ export default {
           this.$emit('created', organization);
         }
       } catch (err) {
-        console.error(err);
+        this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
       } finally {
         this.loading = false;
       }
