@@ -37,6 +37,9 @@ jobs:
       - run: npm run lint
       - run: npm run test:unit:coverage
       - run: UV_USE_IO_URING=0 npm run build
+        env:
+          DEVKIT_VUE_api_host: https://api.example.com
+          DEVKIT_VUE_api_port: ""
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
