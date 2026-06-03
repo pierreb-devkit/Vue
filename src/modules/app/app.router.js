@@ -18,60 +18,95 @@ import tasks from '../tasks/router/tasks.router';
 import billing, { organizationRoutes as billingOrganizationRoutes } from '../billing/router/billing.router';
 import legal from '../legal/router/legal.router';
 
-// Core modules — always mounted
-const coreRoutes = [].concat(home, auth, users);
+/**
+ * Downstream route registries — mutated by `registerDownstreamRoutes` before
+ * the router is instantiated. Module-load order guarantees downstream code
+ * (imported before this file's composition runs) populates these arrays first.
+ *
+ * @type {Array}
+ */
+const _downstreamCoreModules = [];
+const _downstreamAdminChildModules = [];
+const _downstreamOptionalModules = [];
 
 /**
- * Admin child modules — routes injected as children of the `/admin` parent
- * route via `injectAdminChildren`. Downstream projects should register any
- * module that contributes an admin tab here (see MIGRATIONS.md).
+ * Register downstream-specific route extensions.
  *
- * Each module's router file should export routes with **relative** paths
- * (e.g. `'my-tab'` rather than `'/admin/my-tab'`) so they resolve under
- * the `/admin/` parent.
+ * Call this from your downstream module (e.g. `src/modules/<project>/index.js`)
+ * BEFORE the router is instantiated.  Calling it mutates the internal registry
+ * arrays in place; the router composition picks up the additions automatically.
  *
- * @example
- *   import myTabRoutes from '../my-tab/router/my-tab.router';
- *   const adminChildModules = [
- *     { name: 'my-tab', routes: myTabRoutes },
- *   ];
+ * @param {object}   [options={}]
+ * @param {Array}    [options.coreModules]        Routes spread into `coreRoutes` (always mounted, no activation gate).
+ * @param {Array}    [options.adminChildModules]  Added to `adminChildModules` (injected under `/admin`).
+ * @param {Array}    [options.optionalModules]    Added to `optionalModules` (gated by `isModuleActive`).
+ * @returns {void}
  */
-const adminChildModules = [];
-injectAdminChildren(admin, adminChildModules, isModuleActive);
-
-/**
- * Organization-settings child modules — routes injected as children of the
- * `/users/organizations/:organizationId` parent route via `injectModuleChildren`.
- * Base devkit ships this empty; PR (c) and downstream projects populate it
- * (e.g. a billing-settings tab rendered inside the org detail layout).
- *
- * Each module's router file should export routes with **relative** paths
- * (e.g. `'billing'` rather than `'/users/organizations/:organizationId/billing'`)
- * so they resolve under the org parent.
- */
-const organizationChildModules = [
-  { name: 'billing', routes: billingOrganizationRoutes },
-];
-injectModuleChildren(organizations, organizationChildModules, isModuleActive, ORG_PARENT_PATH);
-
-// Optional modules — mounted only when activated
-const optionalModules = [
-  { name: 'organizations', routes: organizations },
-  { name: 'admin', routes: admin },
-  { name: 'tasks', routes: tasks },
-  { name: 'billing', routes: billing },
-  { name: 'legal', routes: legal },
-];
-
-const routes = optionalModules.reduce(
-  (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
-  coreRoutes,
-);
+export function registerDownstreamRoutes(options = {}) {
+  if (options.coreModules) _downstreamCoreModules.push(...options.coreModules);
+  if (options.adminChildModules) _downstreamAdminChildModules.push(...options.adminChildModules);
+  if (options.optionalModules) _downstreamOptionalModules.push(...options.optionalModules);
+}
 
 /**
  * Router configuration.
+ *
+ * Route composition is deferred inside `getRouter()` so that
+ * `registerDownstreamRoutes` calls made during module initialisation (before
+ * `getRouter` is invoked from `main.js`) are always visible to the composition.
  */
 const getRouter = () => {
+  // Core modules — always mounted
+  const coreRoutes = [].concat(home, auth, users, ..._downstreamCoreModules);
+
+  /**
+   * Admin child modules — routes injected as children of the `/admin` parent
+   * route via `injectAdminChildren`. Downstream projects should register any
+   * module that contributes an admin tab here (see MIGRATIONS.md).
+   *
+   * Each module's router file should export routes with **relative** paths
+   * (e.g. `'my-tab'` rather than `'/admin/my-tab'`) so they resolve under
+   * the `/admin/` parent.
+   *
+   * @example
+   *   import myTabRoutes from '../my-tab/router/my-tab.router';
+   *   const adminChildModules = [
+   *     { name: 'my-tab', routes: myTabRoutes },
+   *   ];
+   */
+  const adminChildModules = [..._downstreamAdminChildModules];
+  injectAdminChildren(admin, adminChildModules, isModuleActive);
+
+  /**
+   * Organization-settings child modules — routes injected as children of the
+   * `/users/organizations/:organizationId` parent route via `injectModuleChildren`.
+   * Base devkit ships this empty; PR (c) and downstream projects populate it
+   * (e.g. a billing-settings tab rendered inside the org detail layout).
+   *
+   * Each module's router file should export routes with **relative** paths
+   * (e.g. `'billing'` rather than `'/users/organizations/:organizationId/billing'`)
+   * so they resolve under the org parent.
+   */
+  const organizationChildModules = [
+    { name: 'billing', routes: billingOrganizationRoutes },
+  ];
+  injectModuleChildren(organizations, organizationChildModules, isModuleActive, ORG_PARENT_PATH);
+
+  // Optional modules — mounted only when activated
+  const optionalModules = [
+    { name: 'organizations', routes: organizations },
+    { name: 'admin', routes: admin },
+    { name: 'tasks', routes: tasks },
+    { name: 'billing', routes: billing },
+    { name: 'legal', routes: legal },
+    ..._downstreamOptionalModules,
+  ];
+
+  const routes = optionalModules.reduce(
+    (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
+    coreRoutes,
+  );
+
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes,

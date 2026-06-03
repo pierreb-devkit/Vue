@@ -560,3 +560,120 @@ describe('app.router', () => {
     });
   });
 });
+
+describe('registerDownstreamRoutes', () => {
+  /**
+   * Each test resets modules so it gets a fresh registry (arrays start empty).
+   * registerDownstreamRoutes is imported from the same fresh module instance
+   * as getRouter, so mutations are visible to the composition.
+   */
+  async function setupFreshModule(registerFn) {
+    vi.resetModules();
+    vi.doMock('../../auth/stores/auth.store', () => ({
+      useAuthStore: () => mockAuthStore,
+    }));
+    vi.doMock('../../../lib/services/config', () => ({
+      default: testConfig,
+    }));
+    vi.doMock('../../../lib/helpers/ability.js', () => ({
+      ability: mockAbility,
+    }));
+    vi.doMock('../../billing/stores/billing.store', () => ({
+      useBillingStore: () => mockBillingStore,
+    }));
+    vi.doMock('../../../lib/helpers/analytics', () => ({
+      capturePageview: (...args) => mockCapturePageview(...args),
+    }));
+    vi.doMock('../../../lib/helpers/modules', () => ({
+      isModuleActive: (...args) => mockIsModuleActive(...args),
+    }));
+    const mod = await import('../app.router.js');
+    if (registerFn) registerFn(mod.registerDownstreamRoutes);
+    return mod;
+  }
+
+  beforeEach(() => {
+    mockIsModuleActive = () => true;
+    mockAuthStore.isLoggedIn = false;
+    mockAuthStore.serverConfig = null;
+    mockAuthStore.user = null;
+  });
+
+  it('(a) routes work unchanged when registerDownstreamRoutes is never called', async () => {
+    const mod = await setupFreshModule(null);
+    const router = mod.default();
+    const paths = router.options.routes.map((r) => r.path);
+    // Stack-defined routes must still exist
+    expect(paths).toContain('/');
+    expect(paths).toContain('/signin');
+    expect(paths).toContain('/tasks');
+    expect(paths).toContain('/admin');
+  });
+
+  it('(b) calling registerDownstreamRoutes({ optionalModules }) adds the route to the compiled list', async () => {
+    const fakeRoute = { path: '/downstream-feature', name: 'DownstreamFeature', component: { template: '<div />' } };
+    const mod = await setupFreshModule((register) => {
+      register({ optionalModules: [{ name: 'downstream-feature', routes: [fakeRoute] }] });
+    });
+    const router = mod.default();
+    const paths = router.options.routes.map((r) => r.path);
+    expect(paths).toContain('/downstream-feature');
+  });
+
+  it('(b) calling registerDownstreamRoutes({ coreModules }) adds core route (no activation gate)', async () => {
+    const fakeRoute = { path: '/ds-core', name: 'DsCore', component: { template: '<div />' } };
+    const mod = await setupFreshModule((register) => {
+      register({ coreModules: [fakeRoute] });
+    });
+    const router = mod.default();
+    const paths = router.options.routes.map((r) => r.path);
+    expect(paths).toContain('/ds-core');
+  });
+
+  it('(b) registerDownstreamRoutes({ adminChildModules }) populates adminChildModules before injectAdminChildren runs', async () => {
+    // We verify indirectly: the downstream admin module entry must not throw and
+    // the router must still create without error.
+    const fakeAdminChild = { path: 'ds-admin-tab', name: 'DsAdminTab', component: { template: '<div />' } };
+    let caughtError = null;
+    try {
+      const mod = await setupFreshModule((register) => {
+        register({ adminChildModules: [{ name: 'ds-admin-tab', routes: [fakeAdminChild] }] });
+      });
+      mod.default(); // must not throw
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError).toBeNull();
+  });
+
+  it('(c) stack routes appear before downstream routes in the compiled list', async () => {
+    const fakeRoute = { path: '/downstream-last', name: 'DownstreamLast', component: { template: '<div />' } };
+    const mod = await setupFreshModule((register) => {
+      register({ optionalModules: [{ name: 'downstream-last', routes: [fakeRoute] }] });
+    });
+    const router = mod.default();
+    const paths = router.options.routes.map((r) => r.path);
+    const homeIdx = paths.indexOf('/');
+    const dsIdx = paths.indexOf('/downstream-last');
+    // Stack home route must appear BEFORE the downstream-injected route
+    expect(homeIdx).toBeGreaterThanOrEqual(0);
+    expect(dsIdx).toBeGreaterThan(homeIdx);
+  });
+
+  it('(c) downstream optional module is gated by isModuleActive', async () => {
+    const fakeRoute = { path: '/gated-ds', name: 'GatedDs', component: { template: '<div />' } };
+    // Deactivate the downstream module
+    mockIsModuleActive = (name) => name !== 'gated-ds';
+    const mod = await setupFreshModule((register) => {
+      register({ optionalModules: [{ name: 'gated-ds', routes: [fakeRoute] }] });
+    });
+    const router = mod.default();
+    const paths = router.options.routes.map((r) => r.path);
+    expect(paths).not.toContain('/gated-ds');
+  });
+
+  it('registerDownstreamRoutes is a named export of app.router.js', async () => {
+    const mod = await setupFreshModule(null);
+    expect(typeof mod.registerDownstreamRoutes).toBe('function');
+  });
+});
