@@ -78,4 +78,18 @@ describe('configGuard – assertConfigLoaded', () => {
       assertConfigLoaded({ api: { host: 'api.example.com' } }, 'production'),
     ).not.toThrow();
   });
+
+  // Normalization regression tests: case and whitespace must not bypass guards.
+
+  it('throws in production when api.host is "LOCALHOST" (uppercase bypass attempt)', () => {
+    expect(() =>
+      assertConfigLoaded({ api: { host: 'LOCALHOST', port: '' } }, 'production'),
+    ).toThrow('dev-default API host');
+  });
+
+  it('throws in production when api.port is " 3000 " (padded bypass attempt)', () => {
+    expect(() =>
+      assertConfigLoaded({ api: { host: 'api.example.com', port: ' 3000 ' } }, 'production'),
+    ).toThrow('dev-default API port');
+  });
 });

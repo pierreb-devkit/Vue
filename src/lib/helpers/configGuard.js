@@ -7,7 +7,7 @@ const CONFIG_PLACEHOLDER = { port: 8080 };
 
 /**
  * Dev-only hostnames and ports that must never reach a production bundle.
- * Root cause of 2026-05-10 signin-broken :3010 outage (issue #949).
+ * Root cause of 2026-05-10 signin-broken :3010 outage (trawl_vue#949).
  */
 const DEV_HOSTS = new Set(['localhost', '127.0.0.1']);
 const DEV_PORTS = new Set(['3000', '3001', '3010', '4000', '5000', '8000', '8080', '8888']);
@@ -35,22 +35,22 @@ export const assertConfigLoaded = (config, mode) => {
     safeConfig === CONFIG_PLACEHOLDER || (Object.keys(safeConfig).length === 1 && safeConfig.port === 8080 && !safeConfig.host);
   if (isPlaceholder) {
     throw new Error(
-      'Production build requires a valid config. Run `npm run config` to generate src/config/index.js before building.',
+      'Production build requires a valid config. Run `npm run generateConfig` to generate src/config/index.js before building.',
     );
   }
 
-  // Guard against dev-default API host leaking into a prod bundle (#949).
-  const apiHost = safeConfig?.api?.host;
-  if (apiHost && DEV_HOSTS.has(String(apiHost))) {
+  // Guard against dev-default API host leaking into a prod bundle (trawl_vue#949).
+  const apiHost = String(safeConfig?.api?.host || '').trim().toLowerCase();
+  if (apiHost && DEV_HOSTS.has(apiHost)) {
     throw new Error(
-      `Production build has dev-default API host "${apiHost}". ` +
-        'Set DEVKIT_VUE_api_host to the real API URL before building.',
+      `Production build has dev-default API host/hostname "${safeConfig?.api?.host}". ` +
+        'Set DEVKIT_VUE_api_host to the real host/hostname before building.',
     );
   }
 
-  // Guard against dev-default API port leaking into a prod bundle (#949).
-  const apiPort = safeConfig?.api?.port;
-  if (apiPort && DEV_PORTS.has(String(apiPort))) {
+  // Guard against dev-default API port leaking into a prod bundle (trawl_vue#949).
+  const apiPort = String(safeConfig?.api?.port || '').trim();
+  if (apiPort && DEV_PORTS.has(apiPort)) {
     throw new Error(
       `Production build has dev-default API port "${apiPort}". ` +
         'Set DEVKIT_VUE_api_port to "" (empty) or the real port before building.',
