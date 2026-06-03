@@ -17,7 +17,7 @@ Two-phase workflow. Phase 1 brings the stack down ISO. Phase 2 aligns the projec
 
 **Goal: stack modules exit this phase identical to upstream. Zero downstream logic in them.**
 
-Stack modules: `home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`
+Stack scope = every file under `src/modules/`, `src/lib/`, `src/config/` that exists in `devkit-vue/master`. Auto-discovered by the step 3ter gate; do not enumerate by hand.
 
 ### 1. Setup remote + merge
 
@@ -64,7 +64,7 @@ Failures typically indicate regressions from conflict resolution — fix these b
 
 ### 3bis. Report stack issues
 
-If `/verify` failures originate from **stack module code** (`home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`) and not from conflict resolution mistakes, open a GitHub issue on `pierreb-devkit/Vue`.
+If `/verify` failures originate from a **stack file** (any file under `src/modules/`, `src/lib/`, or `src/config/` present in `devkit-vue/master`) and not from conflict resolution mistakes, open a GitHub issue on `pierreb-devkit/Vue`.
 
 **How to determine the failure origin:**
 - **Stack code failure:** error occurs in unmodified stack module files (resolved with `--theirs`)
@@ -92,9 +92,9 @@ BODY
 
 Proceed to Phase 2 and track the upstream fix separately — do not block downstream alignment on it.
 
-### 3ter. Block on undeclared drift
+### 3ter. Block on drift
 
-After `/verify` passes, run a final diff sweep before starting Phase 2. Any stack file that diverges from upstream **and** is not declared in `DOWNSTREAM_PATCHES.md` blocks the flow.
+After `/verify` passes, run a final diff sweep before starting Phase 2. Any shared non-test stack file that diverges from upstream blocks the flow. No ledger exception (user decision 2026-06-02 — drift must never happen, not be documented).
 
 ```bash
 git fetch devkit-vue master --quiet
@@ -105,25 +105,25 @@ while IFS= read -r f; do
   [ -z "$upstream_blob" ] && continue  # downstream-only file — skip
   local_blob=$(git rev-parse "HEAD:$f" 2>/dev/null)
   if [ "$upstream_blob" != "$local_blob" ]; then
-    if ! grep -qF "'$f'" DOWNSTREAM_PATCHES.md 2>/dev/null; then
-      echo "BLOCK: undeclared drift on stack file: $f"
-      echo "  Fix A — revert to upstream:  git checkout devkit-vue/master -- $f"
-      echo "  Fix B — declare it:          add '$f' + rationale to DOWNSTREAM_PATCHES.md"
-      drift_found=1
-    fi
+    echo "BLOCK: drift on shared stack file: $f"
+    echo "  Fix A — revert to upstream: git checkout devkit-vue/master -- $f"
+    echo "  Fix B — promote upstream:   open a devkit PR with the change, merge, /update-stack here"
+    echo "  Fix C — relocate:           move logic to a downstream-only module or src/config/defaults/<project>.config.js"
+    drift_found=1
   fi
-done < <(git ls-files src/modules/home src/modules/auth src/modules/users src/modules/tasks src/modules/core src/modules/app src/modules/secure 2>/dev/null \
+done < <(git ls-files src/modules src/lib src/config 2>/dev/null \
   | grep -vE "/(tests|__tests__)/" | grep -vE "\.(test|spec)\.(js|jsx|ts|tsx|vue)$")
 
 [ "$drift_found" -eq 1 ] && exit 1
-echo "3ter: no undeclared drift — OK"
+echo "3ter: no drift — OK"
 ```
 
 **Rules:**
-- Missing `DOWNSTREAM_PATCHES.md` = no declared divergences allowed (treat as empty).
-- Declare diverging paths in `DOWNSTREAM_PATCHES.md` as `'path/to/file'` (single-quoted) — the gate matches on the quoted token to avoid substring collisions.
-- Downstream-only files (new modules, composables) are not scanned — the sweep only covers the stack module directories listed above.
-- `src/modules/app/app.router.js` legitimately diverges (downstream routes) — declare it in `DOWNSTREAM_PATCHES.md` once on project bootstrap.
+- Block on ANY shared-file divergence. No "declare and skip" path — the `DOWNSTREAM_PATCHES.md` ledger model was abandoned 2026-06-02 (memory `feedback_no_dev_in_shared_modules`).
+- Scan covers the full stack tree (`src/modules`, `src/lib`, `src/config`) — auto-discovers every shared module. Per-file `git ls-tree` on upstream filters downstream-only files.
+- Test files (paths containing `/tests/` or `/__tests__/`, or filenames ending `.test.{js,jsx,ts,tsx,vue}` / `.spec.{js,jsx,ts,tsx,vue}`) are excluded — downstream test adaptations are acceptable.
+- E2E helpers under `src/lib/helpers/e2e/` ARE scanned — they are stack-managed. Downstream modification triggers BLOCK; use Fix B (promote upstream) if a downstream needs e2e helper changes.
+- `src/modules/app/app.router.js` historically diverged on every downstream (downstream routes). Under no-ledger this must be refactored: `app.router.js` does NOT currently expose an extension hook — the refactor needs to add one (e.g. a `registerDownstreamRoutes()` call sourced from a downstream-only module like `src/modules/{project}/{project}.router.js`), then keep `app.router.js` stack-iso. Until that refactor lands, this gate will BLOCK on every Vue downstream `/update-stack`.
 - This gate runs **after** `/verify` (never blocks on transient verify failures) and **before** Phase 2 (failure is recoverable — no merge commit yet).
 - Ref: plan `2026-05-30-trawl-devkit-perfect-alignment.md` Tasks E.1 + E.2.
 
