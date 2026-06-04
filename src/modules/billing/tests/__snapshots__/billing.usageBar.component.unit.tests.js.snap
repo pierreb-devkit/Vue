@@ -9,10 +9,10 @@ exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
     <!-- Label row -->
     <!--v-if-->
     <!-- Bar variant -->
-    <div data-v-f7f25334="" class="v-progress-linear v-progress-linear--rounded v-progress-linear--rounded v-theme--light v-locale--is-ltr" style="top: 0px; height: 10px; --v-progress-linear-height: 10px;" role="progressbar" aria-hidden="false" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+    <div data-v-f7f25334="" class="v-progress-linear v-progress-linear--rounded v-progress-linear--rounded v-theme--light v-locale--is-ltr" style="top: 0px; height: 10px; --v-progress-linear-height: 10px; --v-progress-chunk-gap: 4px;" role="progressbar" aria-hidden="false" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
       <!---->
-      <div class="v-progress-linear__background bg-surface-variant" style="opacity: NaN;"></div>
-      <div class="v-progress-linear__buffer bg-surface-variant" style="opacity: NaN; width: 0%;"></div>
+      <div class="v-progress-linear__background bg-surface-variant"></div>
+      <div class="v-progress-linear__buffer bg-surface-variant" style="width: 0%;"></div>
       <transition-stub name="slide-x-transition" appear="false" persisted="false" css="true">
         <div class="v-progress-linear__determinate bg-error" style="width: 100%;"></div>
       </transition-stub>
