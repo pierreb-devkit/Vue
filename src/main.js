@@ -47,7 +47,15 @@ if (typeof window !== 'undefined' && config.vuetify?.theme?.dark === 'auto') {
   coreStore.syncOsTheme();
   const mql = window.matchMedia?.('(prefers-color-scheme: dark)');
   if (mql) {
-    mql.addEventListener('change', () => coreStore.syncOsTheme());
+    /**
+     * Syncs the theme with OS preference changes.
+     * @param {MediaQueryListEvent} _event - Media query change event.
+     * @returns {void}
+     */
+    const handleOsThemeChange = (_event) => {
+      coreStore.syncOsTheme();
+    };
+    mql.addEventListener('change', handleOsThemeChange);
   }
 }
 
