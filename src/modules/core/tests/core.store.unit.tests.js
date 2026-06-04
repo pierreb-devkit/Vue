@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 
 // Mock the ability module — vi.hoisted ensures the variable exists before vi.mock runs
@@ -17,6 +17,8 @@ vi.mock('../../../lib/services/config', () => ({ default: mockConfig }));
 import { useCoreStore } from '../stores/core.store';
 
 describe('Core Store', () => {
+  let originalMatchMedia;
+
   beforeEach(() => {
     // Create a new pinia instance for each test
     setActivePinia(createPinia());
@@ -26,6 +28,15 @@ describe('Core Store', () => {
     mockAbility.rules = [];
     mockAbility.can.mockReset();
     mockAbility.can.mockReturnValue(false);
+    // Save original matchMedia
+    originalMatchMedia = window.matchMedia;
+  });
+
+  afterEach(() => {
+    // Restore original matchMedia
+    window.matchMedia = originalMatchMedia;
+    // Reset theme config
+    mockConfig.vuetify.theme.dark = false;
   });
 
   it('should initialize with default state', () => {
@@ -462,6 +473,72 @@ describe('Core Store', () => {
       coreStore.refreshNav(false);
 
       expect(coreStore.nav.map((r) => r.name)).toEqual(['zero', 'ten']);
+    });
+  });
+
+  describe('syncOsTheme — prerender light-lock fix (auto mode)', () => {
+    it('sets theme to dark when config.dark is "auto" and OS is dark', () => {
+      mockConfig.vuetify.theme.dark = 'auto';
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: query === '(prefers-color-scheme: dark)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+
+      const coreStore = useCoreStore();
+      // Simulate prerender baked light theme
+      coreStore.theme = 'light';
+      coreStore.syncOsTheme();
+
+      expect(coreStore.theme).toBe('dark');
+    });
+
+    it('sets theme to light when config.dark is "auto" and OS is light', () => {
+      mockConfig.vuetify.theme.dark = 'auto';
+      window.matchMedia = vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+
+      const coreStore = useCoreStore();
+      coreStore.theme = 'dark';
+      coreStore.syncOsTheme();
+
+      expect(coreStore.theme).toBe('light');
+    });
+
+    it('does not change theme when config.dark is not "auto"', () => {
+      mockConfig.vuetify.theme.dark = 'light';
+
+      const coreStore = useCoreStore();
+      coreStore.theme = 'light';
+      coreStore.syncOsTheme();
+
+      expect(coreStore.theme).toBe('light');
+    });
+
+    it('does not change theme when config.dark is "dark" (explicit, not auto)', () => {
+      mockConfig.vuetify.theme.dark = 'dark';
+
+      const coreStore = useCoreStore();
+      coreStore.theme = 'dark';
+      coreStore.syncOsTheme();
+
+      expect(coreStore.theme).toBe('dark');
+    });
+
+    it('handles missing matchMedia gracefully when config.dark is "auto"', () => {
+      mockConfig.vuetify.theme.dark = 'auto';
+      window.matchMedia = undefined;
+
+      const coreStore = useCoreStore();
+      coreStore.theme = 'light';
+      // Should not throw and should default to light (matchMedia unavailable → isDark returns false)
+      expect(() => coreStore.syncOsTheme()).not.toThrow();
+      expect(coreStore.theme).toBe('light');
     });
   });
 
