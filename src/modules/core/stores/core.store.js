@@ -30,6 +30,19 @@ export const useCoreStore = defineStore('core', {
       this.routes = routes;
     },
 
+    /**
+     * @desc Re-apply the OS-derived theme on the client after hydration.
+     * Called post-mount to override the prerendered light class when
+     * `config.vuetify.theme.dark` is `"auto"` and `window.matchMedia` now
+     * reflects the real OS preference (which was unavailable at SSR/prerender
+     * build time). A no-op for explicit `"light"` / `"dark"` configs.
+     * @returns {void}
+     */
+    syncOsTheme() {
+      if (config.vuetify.theme.dark !== 'auto') return;
+      this.theme = isDark(config.vuetify.theme.dark) ? 'dark' : 'light';
+    },
+
     setDrawer(value) {
       this.drawer = value;
     },

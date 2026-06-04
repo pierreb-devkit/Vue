@@ -36,7 +36,20 @@ app
   .use(plugins.vuetify)
 
 // Initialize stores after all plugins are loaded
-initializeStores(routes);
+const { core: coreStore } = initializeStores(routes);
+
+// Re-apply OS theme on client after hydration so prerendered light markup
+// is corrected for users with dark="auto" and a dark system preference.
+// The prerender Puppeteer process resolves matchMedia to false (no OS), baking
+// a v-theme--light class; this call corrects the Pinia state immediately on
+// client bootstrap so Vuetify syncs the right class before first paint.
+if (typeof window !== 'undefined' && config.vuetify?.theme?.dark === 'auto') {
+  coreStore.syncOsTheme();
+  const mql = window.matchMedia?.('(prefers-color-scheme: dark)');
+  if (mql) {
+    mql.addEventListener('change', () => coreStore.syncOsTheme());
+  }
+}
 
 // Wire global error handlers — fan-out to PostHog Error Tracking
 app.config.errorHandler = (err, instance, info) => {
