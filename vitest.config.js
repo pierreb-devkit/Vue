@@ -13,6 +13,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    setupFiles: ['./vitest.setup.js'],
     css: false,
     pool: 'forks',
     restoreMocks: true,
