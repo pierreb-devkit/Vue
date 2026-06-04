@@ -49,10 +49,9 @@ if (typeof window !== 'undefined' && config.vuetify?.theme?.dark === 'auto') {
   if (mql) {
     /**
      * Syncs the theme with OS preference changes.
-     * @param {MediaQueryListEvent} _event - Media query change event.
      * @returns {void}
      */
-    const handleOsThemeChange = (_event) => {
+    const handleOsThemeChange = () => {
       coreStore.syncOsTheme();
     };
     mql.addEventListener('change', handleOsThemeChange);
