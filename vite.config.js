@@ -19,7 +19,7 @@ try {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  assertConfigLoaded(appConfig, mode);
+  assertConfigLoaded(appConfig, mode, { strict: process.env.DEVKIT_VUE_assert_strict === 'true' });
   return {
     plugins: [
       seoInjectPlugin(appConfig),
