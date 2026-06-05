@@ -401,4 +401,80 @@ describe('BillingNavComputeGaugeComponent', () => {
       expect(wrapper.vm.tooltipOpen).toBe(false);
     });
   });
+
+  // ── #4260 — admin ∞ rainbow display ─────────────────────────────────────
+
+  describe('admin display (#4260)', () => {
+    const setupAdmin = () => {
+      const authStore = useAuthStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      authStore.user = { roles: ['admin'] };
+    };
+
+    it('isAdmin is true when user roles include "admin"', () => {
+      setupAdmin();
+      wrapper = mountComponent();
+      expect(wrapper.vm.isAdmin).toBe(true);
+    });
+
+    it('isAdmin is false when user has no admin role', () => {
+      const authStore = useAuthStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      authStore.user = { roles: ['user'] };
+      wrapper = mountComponent();
+      expect(wrapper.vm.isAdmin).toBe(false);
+    });
+
+    it('isAdmin is false when user is null', () => {
+      const authStore = useAuthStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      authStore.user = null;
+      wrapper = mountComponent();
+      expect(wrapper.vm.isAdmin).toBe(false);
+    });
+
+    it('renders ∞ glyph for admin instead of "X% used"', () => {
+      setupAdmin();
+      wrapper = mountComponent();
+      expect(wrapper.text()).toContain('∞');
+      expect(wrapper.text()).not.toContain('% used');
+      expect(wrapper.text()).not.toContain('—');
+    });
+
+    it('renders admin-rainbow class on the ∞ span', () => {
+      setupAdmin();
+      wrapper = mountComponent();
+      const rainbowSpan = wrapper.find('.admin-rainbow');
+      expect(rainbowSpan.exists()).toBe(true);
+    });
+
+    it('renders .nav-gauge-admin-ring div in prepend slot for admin (not VProgressCircular)', () => {
+      setupAdmin();
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-admin-ring').exists()).toBe(true);
+      expect(wrapper.findComponent({ name: 'VProgressCircular' }).exists()).toBe(false);
+    });
+
+    it('renders VProgressCircular (not admin ring) for non-admin users', () => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      authStore.user = { roles: ['user'] };
+      billingStore.usageMeter = { meterUsed: 50, meterQuota: 100, extrasRemaining: 0, weekResetAt: null };
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-admin-ring').exists()).toBe(false);
+      expect(wrapper.findComponent({ name: 'VProgressCircular' }).exists()).toBe(true);
+    });
+
+    it('aria-label includes "unlimited (admin)" for admin users', () => {
+      setupAdmin();
+      wrapper = mountComponent();
+      const listItem = wrapper.findComponent({ name: 'VListItem' });
+      expect(listItem.attributes('aria-label')).toMatch(/unlimited.*admin/i);
+    });
+  });
 });

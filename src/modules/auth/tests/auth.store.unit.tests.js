@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
+import { useBillingStore } from '../../billing/stores/billing.store';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 
@@ -263,6 +264,71 @@ describe('Auth Store', () => {
       expect(consoleErrorSpy).toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
+    });
+
+    // ── #4261 — fetchUsageMeter called on signin when meterMode is on ────────
+
+    it('calls billingStore.fetchUsageMeter after signin when meterMode is true (#4261)', async () => {
+      const authStore = useAuthStore();
+      // Pre-set serverConfig with meterMode enabled (simulates router guard having run before login)
+      authStore.serverConfig = { billing: { meterMode: true } };
+
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+      axios.post.mockResolvedValueOnce(mockResponse);
+      // fetchUsageMeter uses GET /billing/usage — stub to avoid throwing
+      axios.get.mockResolvedValue({ data: { data: { meterUsed: 0, meterQuota: 500 } } });
+
+      const billingStore = useBillingStore();
+      const fetchUsageMeterSpy = vi.spyOn(billingStore, 'fetchUsageMeter');
+
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(fetchUsageMeterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does NOT call billingStore.fetchUsageMeter after signin when meterMode is false (#4261)', async () => {
+      const authStore = useAuthStore();
+      authStore.serverConfig = { billing: { meterMode: false } };
+
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+      axios.post.mockResolvedValueOnce(mockResponse);
+
+      const billingStore = useBillingStore();
+      const fetchUsageMeterSpy = vi.spyOn(billingStore, 'fetchUsageMeter');
+
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call billingStore.fetchUsageMeter after signin when serverConfig is null (#4261)', async () => {
+      const authStore = useAuthStore();
+      authStore.serverConfig = null;
+
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+      axios.post.mockResolvedValueOnce(mockResponse);
+
+      const billingStore = useBillingStore();
+      const fetchUsageMeterSpy = vi.spyOn(billingStore, 'fetchUsageMeter');
+
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
     });
   });
 

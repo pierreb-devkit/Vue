@@ -6,6 +6,7 @@
   reflecting consumption level.
 
   Hover tooltip exposes the precise figures: "X / Y compute · resets <day>".
+  Admin users see a permanent ∞ rainbow state (no quota applies).
 
   Click → navigates to /users/billing.
   Auto-fetches on mount + on window.focus.
@@ -18,13 +19,17 @@
       <v-list-item
         v-bind="tooltipProps"
         :to="'/users/billing'"
-        :aria-label="`Compute usage: ${usageMeter ? pctUsed + '% used' : '—'}`"
+        :aria-label="isAdmin ? 'Compute usage: unlimited (admin)' : `Compute usage: ${usageMeter ? pctUsed + '% used' : '—'}`"
         aria-haspopup="true"
         :aria-expanded="tooltipOpen ? 'true' : 'false'"
         @touchstart.passive="onTouchActivate"
       >
         <template #prepend>
+          <!-- Admin: rainbow circular indicator (full ring) -->
+          <div v-if="isAdmin" class="nav-gauge-admin-ring me-8" aria-hidden="true" />
+          <!-- Standard: color-coded progress ring -->
           <v-progress-circular
+            v-else
             :model-value="pctUsed"
             :color="iconColor"
             size="24"
@@ -32,11 +37,18 @@
             class="me-8"
           />
         </template>
-        <v-list-item-title>{{ usageMeter ? `${pctUsed}% used` : '—' }}</v-list-item-title>
+        <!-- Admin: ∞ rainbow label -->
+        <v-list-item-title v-if="isAdmin">
+          <span class="admin-rainbow admin-rainbow--text" aria-hidden="true">∞</span>
+        </v-list-item-title>
+        <v-list-item-title v-else>{{ usageMeter ? `${pctUsed}% used` : '—' }}</v-list-item-title>
       </v-list-item>
     </template>
-    <div>{{ usedDisplay }} / {{ totalDisplay }} compute</div>
-    <div v-if="resetLabel">{{ resetLabel }}</div>
+    <div v-if="isAdmin">Admin — unlimited compute</div>
+    <template v-else>
+      <div>{{ usedDisplay }} / {{ totalDisplay }} compute</div>
+      <div v-if="resetLabel">{{ resetLabel }}</div>
+    </template>
   </v-tooltip>
 </template>
 
@@ -74,6 +86,16 @@ export default {
     show() {
       if (!this.authStore.isLoggedIn) return false;
       return this.authStore.serverConfig?.billing?.meterMode === true;
+    },
+
+    /**
+     * @desc True when the authenticated user has the 'admin' role.
+     * Admins have unlimited quota — show ∞ rainbow state instead of a progress ring.
+     * Mirrors the `displayMode === 'admin'` branch in billing.usageBar.component.vue.
+     * @returns {boolean}
+     */
+    isAdmin() {
+      return this.authStore.user?.roles?.includes('admin') === true;
     },
 
     usageMeter() {
@@ -166,3 +188,41 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* ── Admin rainbow — reused from billing.usageBar.component ──────────────── */
+.admin-rainbow {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--v-theme-warning)),
+    rgb(var(--v-theme-error)),
+    rgb(var(--v-theme-secondary)),
+    rgb(var(--v-theme-info)),
+    rgb(var(--v-theme-success))
+  );
+}
+
+.admin-rainbow--text {
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Admin ring: 24×24 filled circle with rainbow gradient (matches VProgressCircular size) */
+.nav-gauge-admin-ring {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--v-theme-warning)),
+    rgb(var(--v-theme-error)),
+    rgb(var(--v-theme-secondary)),
+    rgb(var(--v-theme-info)),
+    rgb(var(--v-theme-success))
+  );
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+</style>

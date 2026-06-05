@@ -5,6 +5,7 @@ import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
+import { useBillingStore } from '../../billing/stores/billing.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 
@@ -133,6 +134,13 @@ export const useAuthStore = defineStore('auth', {
         if (res.data.pendingRequests) this.pendingRequests = res.data.pendingRequests;
 
         coreStore.refreshNav(this.isLoggedIn);
+
+        // Refresh compute meter immediately on login so the sidenav gauge
+        // populates without waiting for mount/focus (guard: only when meterMode is on).
+        if (this.serverConfig?.billing?.meterMode === true) {
+          const billingStore = useBillingStore();
+          billingStore.fetchUsageMeter().catch((err) => { console.error('[auth] fetchUsageMeter on signin failed:', err); });
+        }
 
         // PostHog identify on signin
         const u = res.data.user;
