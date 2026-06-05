@@ -39,7 +39,7 @@
         </template>
         <!-- Admin: ∞ rainbow label -->
         <v-list-item-title v-if="isAdmin">
-          <span class="admin-rainbow admin-rainbow--text">∞</span>
+          <span class="admin-rainbow admin-rainbow--text" aria-hidden="true">∞</span>
         </v-list-item-title>
         <v-list-item-title v-else>{{ usageMeter ? `${pctUsed}% used` : '—' }}</v-list-item-title>
       </v-list-item>

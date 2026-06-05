@@ -139,7 +139,7 @@ export const useAuthStore = defineStore('auth', {
         // populates without waiting for mount/focus (guard: only when meterMode is on).
         if (this.serverConfig?.billing?.meterMode === true) {
           const billingStore = useBillingStore();
-          billingStore.fetchUsageMeter().catch(() => {});
+          billingStore.fetchUsageMeter().catch((err) => { console.error('[auth] fetchUsageMeter on signin failed:', err); });
         }
 
         // PostHog identify on signin
