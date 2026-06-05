@@ -23,6 +23,15 @@
         </v-col>
       </v-row>
     </v-container>
+    <v-container v-if="appVersion" class="px-4 py-2 text-center">
+      <component
+        :is="appVersionHref ? 'a' : 'span'"
+        v-bind="appVersionHref ? { href: appVersionHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
+        class="text-label-small text-medium-emphasis footer-version"
+      >
+        {{ appVersion }}
+      </component>
+    </v-container>
   </v-footer>
 </template>
 
@@ -89,6 +98,39 @@ export default {
       };
     },
     /**
+     * @desc Resolved display string for the app version badge.
+     * Returns `null` when no version is configured so the element is omitted.
+     * @returns {string|null}
+     */
+    appVersion() {
+      const v = this.config?.app?.version;
+      if (!v) return null;
+      // Prefix semver tags with 'v' when not already prefixed
+      if (/^\d/.test(v)) return `v${v}`;
+      return v;
+    },
+    /**
+     * @desc Href for the version badge link. Links to the GitHub tag when the
+     * version looks like a semver release; links to the commit when it looks
+     * like a `dev-<sha>` string. Returns `null` otherwise (e.g. plain `'dev'`).
+     * @returns {string|null}
+     */
+    appVersionHref() {
+      const v = this.config?.app?.version;
+      const repoUrl = this.config?.app?.repository;
+      if (!v || !repoUrl) return null;
+      // Guard: only allow https:// repository URLs (defense-in-depth, build-time config)
+      if (!repoUrl.startsWith('https://')) return null;
+      // Normalise: strip leading 'v' before testing (some CI tools prefix the tag)
+      const bare = v.replace(/^v/, '');
+      // e.g. "1.36.0" or "v1.36.0" → link to GitHub releases tag
+      if (/^\d+\.\d+\.\d+$/.test(bare)) return `${repoUrl}/releases/tag/v${bare}`;
+      // e.g. "dev-abc1234" → link to GitHub commit
+      const shaMatch = bare.match(/^dev-([0-9a-f]{7,40})$/i);
+      if (shaMatch) return `${repoUrl}/commit/${shaMatch[1]}`;
+      return null;
+    },
+    /**
      * @desc Combines the prop-provided footer links with sections registered by
      * optional modules via `useFooterExtras`. Extras whose title matches an
      * existing config-driven section are merged into that section (items
@@ -151,5 +193,15 @@ export default {
 <style>
 .footer {
   position: relative !important;
+}
+
+.footer-version {
+  font-size: 0.7rem;
+  text-decoration: none;
+  opacity: 0.6;
+}
+
+.footer-version:hover {
+  opacity: 1;
 }
 </style>

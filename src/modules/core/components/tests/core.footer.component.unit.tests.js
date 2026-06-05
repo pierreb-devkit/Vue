@@ -53,6 +53,77 @@ const mountFooter = (config) =>
     },
   });
 
+describe('core.footer.component — app version badge', () => {
+  beforeEach(() => {
+    const { extras } = useFooterExtras();
+    extras.value = [];
+  });
+
+  it('renders the version badge when config.app.version is set', () => {
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '1.36.0' } });
+    expect(wrapper.text()).toContain('v1.36.0');
+  });
+
+  it('prefixes bare semver with v', () => {
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '2.0.1' } });
+    expect(wrapper.text()).toContain('v2.0.1');
+  });
+
+  it('renders dev version as-is when passed as dev-<sha>', () => {
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: 'dev-abc1234' } });
+    expect(wrapper.text()).toContain('dev-abc1234');
+  });
+
+  it('renders plain "dev" string as-is', () => {
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: 'dev' } });
+    expect(wrapper.text()).toContain('dev');
+  });
+
+  it('does not render a version badge when config.app.version is absent', () => {
+    const wrapper = mountFooter(baseConfig());
+    // No version in baseConfig — appVersion computed returns null → badge text absent
+    expect(wrapper.vm.appVersion).toBeNull();
+    expect(wrapper.text()).not.toMatch(/^v\d/);
+  });
+
+  it('appVersionHref is null when config.app.repository is absent', () => {
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '1.0.0' } });
+    expect(wrapper.vm.appVersionHref).toBeNull();
+  });
+
+  it('appVersionHref points to GitHub tag for semver release when repository is set', () => {
+    const wrapper = mountFooter({
+      ...baseConfig(),
+      app: { version: '1.36.0', repository: 'https://github.com/org/repo' },
+    });
+    expect(wrapper.vm.appVersionHref).toBe('https://github.com/org/repo/releases/tag/v1.36.0');
+  });
+
+  it('appVersionHref normalises v-prefixed version (v1.2.3) to same tag href as unprefixed', () => {
+    const wrapper = mountFooter({
+      ...baseConfig(),
+      app: { version: 'v1.36.0', repository: 'https://github.com/org/repo' },
+    });
+    expect(wrapper.vm.appVersionHref).toBe('https://github.com/org/repo/releases/tag/v1.36.0');
+  });
+
+  it('appVersionHref points to GitHub commit for dev-<sha> version when repository is set', () => {
+    const wrapper = mountFooter({
+      ...baseConfig(),
+      app: { version: 'dev-abc1234f', repository: 'https://github.com/org/repo' },
+    });
+    expect(wrapper.vm.appVersionHref).toBe('https://github.com/org/repo/commit/abc1234f');
+  });
+
+  it('appVersionHref is null when repository does not start with https://', () => {
+    const wrapper = mountFooter({
+      ...baseConfig(),
+      app: { version: '1.0.0', repository: 'http://github.com/org/repo' },
+    });
+    expect(wrapper.vm.appVersionHref).toBeNull();
+  });
+});
+
 describe('core.footer.component — registry extras', () => {
   beforeEach(() => {
     // Clear any extras registered by previous tests
