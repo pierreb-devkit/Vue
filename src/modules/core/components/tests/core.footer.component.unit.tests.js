@@ -16,6 +16,16 @@ vi.mock('vuetify', async (importOriginal) => {
   };
 });
 
+// Mock auth store — avoids pulling in axios/config/ability which aren't available
+// in the unit-test environment. authStoreState is a mutable hoisted object so
+// individual tests can override serverConfig without re-mocking.
+const authStoreState = vi.hoisted(() => ({
+  serverConfig: null,
+}));
+vi.mock('@/modules/auth/stores/auth.store', () => ({
+  useAuthStore: () => authStoreState,
+}));
+
 import CoreFooter from '../core.footer.component.vue';
 
 /**
@@ -57,11 +67,12 @@ describe('core.footer.component — app version badge', () => {
   beforeEach(() => {
     const { extras } = useFooterExtras();
     extras.value = [];
+    authStoreState.serverConfig = null;
   });
 
   it('renders the version badge when config.app.version is set', () => {
     const wrapper = mountFooter({ ...baseConfig(), app: { version: '1.36.0' } });
-    expect(wrapper.text()).toContain('v1.36.0');
+    expect(wrapper.text()).toContain('Web v1.36.0');
   });
 
   it('prefixes bare semver with v', () => {
@@ -129,6 +140,7 @@ describe('core.footer.component — registry extras', () => {
     // Clear any extras registered by previous tests
     const { extras } = useFooterExtras();
     extras.value = [];
+    authStoreState.serverConfig = null;
   });
 
   afterEach(() => {
@@ -216,5 +228,62 @@ describe('core.footer.component — registry extras', () => {
     expect(actionItem).toBeTruthy();
     await actionItem.trigger('click');
     expect(onClick).toHaveBeenCalledOnce();
+  });
+});
+
+describe('core.footer.component — layout + backend version (Parts A + C)', () => {
+  beforeEach(() => {
+    const { extras } = useFooterExtras();
+    extras.value = [];
+    authStoreState.serverConfig = null;
+  });
+
+  afterEach(() => {
+    const { extras } = useFooterExtras();
+    extras.value = [];
+    authStoreState.serverConfig = null;
+  });
+
+  it('Part A — renders exactly ONE v-container when both links and appVersion are present', () => {
+    // Pre-fix the template had two sibling <v-container> elements (one for links, one for version),
+    // causing the version badge to appear beside the columns rather than below them.
+    // After the fix both live inside a single container.
+    // VFooter is stubbed as a plain div, so VContainer renders as a real Vuetify component;
+    // we assert via DOM class (.v-container) rather than findAllComponents to avoid stub
+    // name-resolution quirks — Vuetify renders VContainer with that class reliably.
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '2.2.0' } });
+    const containers = wrapper.findAll('.v-container');
+    expect(containers.length).toBe(1);
+  });
+
+  it('Part C — renders Web + API versions when auth store has serverConfig', async () => {
+    // authStoreState is the hoisted mock object — mutate before mount so setup()
+    // picks it up. @pinia/testing is not in devDeps; mock is sufficient.
+    authStoreState.serverConfig = { app: { version: '0.4.0' } };
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '2.2.0' } });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('Web v2.2.0');
+    expect(wrapper.text()).toContain('API v0.4.0');
+  });
+
+  it('Part C — omits API segment when serverConfig is null (pre-login / no backend response)', () => {
+    // authStoreState.serverConfig is null (reset in beforeEach) → backendVersion returns null
+    const wrapper = mountFooter({ ...baseConfig(), app: { version: '1.36.0' } });
+    expect(wrapper.text()).toContain('Web v1.36.0');
+    expect(wrapper.text()).not.toContain('API');
+  });
+
+  it('Part C — renders API version alone (no Web, no leading separator) when frontend version is unset', async () => {
+    // api-only case: backend reports a version but config.app.version is absent.
+    // The version row must still render the API badge, without a "Web" segment and
+    // without a leading "·" separator.
+    authStoreState.serverConfig = { app: { version: '0.4.0' } };
+    const wrapper = mountFooter(baseConfig());
+    await wrapper.vm.$nextTick();
+    const text = wrapper.text();
+    expect(text).toContain('API v0.4.0');
+    expect(text).not.toContain('Web');
+    // No leading separator before the API segment
+    expect(text).not.toMatch(/·\s*API v0\.4\.0/);
   });
 });
