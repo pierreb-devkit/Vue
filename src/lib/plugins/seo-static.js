@@ -44,6 +44,11 @@ export function seoStaticPlugin(config) {
       if (manifestJson !== null) {
         this.emitFile({ type: 'asset', fileName: 'manifest.json', source: manifestJson });
       }
+
+      const llmsTxt = buildLlmsTxt(seo.llms, app);
+      if (llmsTxt !== null) {
+        this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llmsTxt });
+      }
     },
   };
 }
@@ -149,4 +154,29 @@ export function buildManifestJson(manifestConfig, app) {
   }
 
   return JSON.stringify(manifest, null, 2);
+}
+
+/**
+ * Build llms.txt content from config (https://llmstxt.org/).
+ * Markdown entry point for LLM crawlers / answer engines.
+ *
+ * @param {object|undefined} llmsConfig - llms configuration object
+ * @param {object} app - app-level config (title fallback)
+ * @returns {string|null} llms.txt content or null if disabled
+ */
+export function buildLlmsTxt(llmsConfig, app) {
+  if (!llmsConfig?.enabled) return null;
+  const lines = [`# ${llmsConfig.title || app.title || 'App'}`, ''];
+  if (llmsConfig.summary) lines.push(`> ${llmsConfig.summary}`, '');
+  if (llmsConfig.intro) lines.push(llmsConfig.intro, '');
+  for (const section of llmsConfig.sections || []) {
+    lines.push(`## ${section.title}`);
+    for (const item of section.items || []) {
+      const head = item.url ? `- [${item.label}](${item.url})` : `- ${item.label}`;
+      lines.push(item.note ? `${head}: ${item.note}` : head);
+    }
+    lines.push('');
+  }
+  if (llmsConfig.body) lines.push(llmsConfig.body, '');
+  return `${lines.join('\n').trimEnd()}\n`;
 }
