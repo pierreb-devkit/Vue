@@ -1,12 +1,12 @@
 <template>
-  <v-footer v-if="enabled" class="footer pa-0 align-end" :style="footerStyle" app>
-    <v-container v-if="allLinks.length > 0" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
-      <v-row density="compact" align="center" justify="center">
+  <v-footer v-if="enabled" class="footer pa-0" :style="footerStyle" app>
+    <v-container v-if="visibleSections.length > 0 || appVersion" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
+      <v-row v-if="visibleSections.length > 0" density="compact" align="center" justify="center">
         <v-col
-          v-for="({ items, title }, i) in allLinks.filter((section) => section.items)"
+          v-for="({ items, title }, i) in visibleSections"
           :key="i"
           cols="12"
-          :md="12 / allLinks.filter((section) => section.items).length"
+          :md="12 / visibleSections.length"
           class="text-center"
         >
           <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
@@ -22,15 +22,16 @@
           </v-card>
         </v-col>
       </v-row>
-    </v-container>
-    <v-container v-if="appVersion" class="px-4 py-2 text-center">
-      <component
-        :is="appVersionHref ? 'a' : 'span'"
-        v-bind="appVersionHref ? { href: appVersionHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
-        class="text-label-small text-medium-emphasis footer-version"
-      >
-        {{ appVersion }}
-      </component>
+      <v-row v-if="appVersion" justify="center" class="mt-2">
+        <v-col cols="12" class="text-center py-2">
+          <component
+            :is="appVersionHref ? 'a' : 'span'"
+            v-bind="appVersionHref ? { href: appVersionHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
+            class="text-label-small text-medium-emphasis footer-version"
+          >Web {{ appVersion }}</component>
+          <span v-if="backendVersion" class="text-label-small text-medium-emphasis footer-version"> · API {{ backendVersion }}</span>
+        </v-col>
+      </v-row>
     </v-container>
   </v-footer>
 </template>
@@ -41,6 +42,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useFooterExtras } from '@/lib/composables/useFooterExtras';
+import { useAuthStore } from '@/modules/auth/stores/auth.store';
 /**
  * Component definition.
  */
@@ -68,7 +70,9 @@ export default {
    */
   setup() {
     const { extras } = useFooterExtras();
-    return { extras };
+    let authStore = null;
+    try { authStore = useAuthStore(); } catch { authStore = null; }
+    return { extras, authStore };
   },
   data() {
     const theme = useTheme();
@@ -154,6 +158,27 @@ export default {
         }
       }
       return result;
+    },
+    /**
+     * @desc Resolved display string for the backend (API) version badge.
+     * Read from the auth store's serverConfig, populated by the public
+     * /api/auth/config endpoint (no login required). Returns `null` when
+     * unavailable so the element is omitted (Pinia inactive, endpoint unreachable).
+     * @returns {string|null}
+     */
+    backendVersion() {
+      const v = this.authStore?.serverConfig?.app?.version;
+      if (!v) return null;
+      if (/^\d/.test(v)) return `v${v}`;
+      return v;
+    },
+    /**
+     * @desc Sections from allLinks that have items, used by the template to
+     * avoid double-filtering (previously called twice inline in the template).
+     * @returns {Array}
+     */
+    visibleSections() {
+      return this.allLinks.filter((section) => section.items);
     },
   },
   watch: {
