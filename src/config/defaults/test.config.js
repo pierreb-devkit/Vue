@@ -35,6 +35,16 @@ export default {
         enabled: true,
         display: 'standalone',
       },
+      llms: {
+        enabled: true,
+        summary: 'Test summary',
+        intro: 'Test intro paragraph.',
+        sections: [
+          { title: 'Links', items: [{ label: 'Home', url: 'https://example.com', note: 'the home page' }] },
+          { title: 'Plain', items: [{ label: 'bullet-only', note: 'no url here' }] },
+        ],
+        body: '## Extra\nsome trailing markdown',
+      },
     },
   },
   vuetify: {

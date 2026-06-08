@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { seoStaticPlugin, buildRobotsTxt, buildSitemapXml, buildManifestJson } from '../seo-static.js';
+import { seoStaticPlugin, buildRobotsTxt, buildSitemapXml, buildManifestJson, buildLlmsTxt } from '../seo-static.js';
 import testConfig from '../../../config/defaults/test.config.js';
 
 describe('seoStaticPlugin', () => {
@@ -17,16 +17,17 @@ describe('seoStaticPlugin', () => {
     expect(plugin.apply({}, { command: 'serve', mode: 'production' })).toBe(false);
   });
 
-  it('emits all three files when all are enabled', () => {
+  it('emits all four files when all are enabled', () => {
     const plugin = seoStaticPlugin(testConfig);
     const emitFile = vi.fn();
     plugin.generateBundle.call({ emitFile });
 
-    expect(emitFile).toHaveBeenCalledTimes(3);
+    expect(emitFile).toHaveBeenCalledTimes(4);
     const fileNames = emitFile.mock.calls.map((c) => c[0].fileName);
     expect(fileNames).toContain('robots.txt');
     expect(fileNames).toContain('sitemap.xml');
     expect(fileNames).toContain('manifest.json');
+    expect(fileNames).toContain('llms.txt');
   });
 
   it('emits nothing when config is empty', () => {
@@ -246,5 +247,81 @@ describe('buildManifestJson', () => {
     const parsed = JSON.parse(result);
     expect(parsed.background_color).toBe('#000000');
     expect(parsed.theme_color).toBe('#ff0000');
+  });
+});
+
+describe('buildLlmsTxt', () => {
+  it('returns null when disabled', () => {
+    expect(buildLlmsTxt({ enabled: false }, {})).toBeNull();
+  });
+
+  it('returns null when config is undefined', () => {
+    expect(buildLlmsTxt(undefined, {})).toBeNull();
+  });
+
+  it('renders the title from config, falling back to app.title', () => {
+    expect(buildLlmsTxt({ enabled: true, title: 'Brand' }, { title: 'AppName' })).toMatch(/^# Brand\n/);
+    expect(buildLlmsTxt({ enabled: true }, { title: 'AppName' })).toMatch(/^# AppName\n/);
+    expect(buildLlmsTxt({ enabled: true }, {})).toMatch(/^# App\n/);
+  });
+
+  it('renders summary as a blockquote and intro as a paragraph', () => {
+    const out = buildLlmsTxt({ enabled: true, title: 'X', summary: 'one-liner', intro: 'a paragraph' }, {});
+    expect(out).toContain('> one-liner');
+    expect(out).toContain('a paragraph');
+  });
+
+  it('renders a section item with a url as a markdown link, with a note suffix', () => {
+    const out = buildLlmsTxt(
+      { enabled: true, title: 'X', sections: [{ title: 'S', items: [{ label: 'Docs', url: 'https://e.com', note: 'the docs' }] }] },
+      {},
+    );
+    expect(out).toContain('## S');
+    expect(out).toContain('- [Docs](https://e.com): the docs');
+  });
+
+  it('renders a section item without a url as a plain bullet', () => {
+    const out = buildLlmsTxt(
+      { enabled: true, title: 'X', sections: [{ title: 'Tools', items: [{ label: 'whoami', note: 'verify auth' }] }] },
+      {},
+    );
+    expect(out).toContain('- whoami: verify auth');
+    expect(out).not.toContain('](');
+  });
+
+  it('appends the body passthrough at the end', () => {
+    const out = buildLlmsTxt({ enabled: true, title: 'X', body: '## Connect\nstuff' }, {});
+    expect(out).toContain('## Connect\nstuff');
+    expect(out.endsWith('\n')).toBe(true);
+  });
+
+  it('does not throw and falls back to "App" when app is undefined', () => {
+    expect(buildLlmsTxt({ enabled: true }, undefined)).toMatch(/^# App\n/);
+  });
+
+  it('skips sections without a title and items without a label', () => {
+    const out = buildLlmsTxt(
+      {
+        enabled: true,
+        title: 'X',
+        sections: [
+          { items: [{ label: 'orphan', note: 'no section title' }] },
+          { title: 'Real', items: [{ note: 'no label' }, { label: 'kept' }] },
+        ],
+      },
+      {},
+    );
+    expect(out).not.toContain('orphan');
+    expect(out).not.toContain('undefined');
+    expect(out).toContain('## Real');
+    expect(out).toContain('- kept');
+  });
+
+  it('renders the test.config fixture correctly', () => {
+    const out = buildLlmsTxt(testConfig.app.seo.llms, testConfig.app);
+    expect(out).toMatch(/^# Test App\n/);
+    expect(out).toContain('> Test summary');
+    expect(out).toContain('## Links');
+    expect(out).toContain('- [Home](https://example.com): the home page');
   });
 });
