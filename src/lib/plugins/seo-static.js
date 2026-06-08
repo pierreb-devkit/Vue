@@ -25,7 +25,7 @@ export function seoStaticPlugin(config) {
     },
 
     /**
-     * Emits robots.txt, sitemap.xml, and manifest.json as build assets.
+     * Emits robots.txt, sitemap.xml, manifest.json, and llms.txt as build assets.
      *
      * @returns {void}
      */
@@ -166,12 +166,14 @@ export function buildManifestJson(manifestConfig, app) {
  */
 export function buildLlmsTxt(llmsConfig, app) {
   if (!llmsConfig?.enabled) return null;
-  const lines = [`# ${llmsConfig.title || app.title || 'App'}`, ''];
+  const lines = [`# ${llmsConfig.title || app?.title || 'App'}`, ''];
   if (llmsConfig.summary) lines.push(`> ${llmsConfig.summary}`, '');
   if (llmsConfig.intro) lines.push(llmsConfig.intro, '');
   for (const section of llmsConfig.sections || []) {
+    if (!section.title) continue;
     lines.push(`## ${section.title}`);
     for (const item of section.items || []) {
+      if (!item.label) continue;
       const head = item.url ? `- [${item.label}](${item.url})` : `- ${item.label}`;
       lines.push(item.note ? `${head}: ${item.note}` : head);
     }

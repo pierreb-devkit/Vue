@@ -294,4 +294,34 @@ describe('buildLlmsTxt', () => {
     expect(out).toContain('## Connect\nstuff');
     expect(out.endsWith('\n')).toBe(true);
   });
+
+  it('does not throw and falls back to "App" when app is undefined', () => {
+    expect(buildLlmsTxt({ enabled: true }, undefined)).toMatch(/^# App\n/);
+  });
+
+  it('skips sections without a title and items without a label', () => {
+    const out = buildLlmsTxt(
+      {
+        enabled: true,
+        title: 'X',
+        sections: [
+          { items: [{ label: 'orphan', note: 'no section title' }] },
+          { title: 'Real', items: [{ note: 'no label' }, { label: 'kept' }] },
+        ],
+      },
+      {},
+    );
+    expect(out).not.toContain('orphan');
+    expect(out).not.toContain('undefined');
+    expect(out).toContain('## Real');
+    expect(out).toContain('- kept');
+  });
+
+  it('renders the test.config fixture correctly', () => {
+    const out = buildLlmsTxt(testConfig.app.seo.llms, testConfig.app);
+    expect(out).toMatch(/^# Test App\n/);
+    expect(out).toContain('> Test summary');
+    expect(out).toContain('## Links');
+    expect(out).toContain('- [Home](https://example.com): the home page');
+  });
 });
