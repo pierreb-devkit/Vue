@@ -272,4 +272,18 @@ describe('core.footer.component — layout + backend version (Parts A + C)', () 
     expect(wrapper.text()).toContain('Web v1.36.0');
     expect(wrapper.text()).not.toContain('API');
   });
+
+  it('Part C — renders API version alone (no Web, no leading separator) when frontend version is unset', async () => {
+    // api-only case: backend reports a version but config.app.version is absent.
+    // The version row must still render the API badge, without a "Web" segment and
+    // without a leading "·" separator.
+    authStoreState.serverConfig = { app: { version: '0.4.0' } };
+    const wrapper = mountFooter(baseConfig());
+    await wrapper.vm.$nextTick();
+    const text = wrapper.text();
+    expect(text).toContain('API v0.4.0');
+    expect(text).not.toContain('Web');
+    // No leading separator before the API segment
+    expect(text).not.toMatch(/·\s*API v0\.4\.0/);
+  });
 });

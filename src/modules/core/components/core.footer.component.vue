@@ -1,6 +1,6 @@
 <template>
   <v-footer v-if="enabled" class="footer pa-0" :style="footerStyle" app>
-    <v-container v-if="visibleSections.length > 0 || appVersion" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
+    <v-container v-if="visibleSections.length > 0 || appVersion || backendVersion" class="px-0 py-4" :style="custom && custom.section ? custom.section : null">
       <v-row v-if="visibleSections.length > 0" density="compact" align="center" justify="center">
         <v-col
           v-for="({ items, title }, i) in visibleSections"
@@ -22,14 +22,15 @@
           </v-card>
         </v-col>
       </v-row>
-      <v-row v-if="appVersion" justify="center" class="mt-2">
+      <v-row v-if="appVersion || backendVersion" justify="center" class="mt-2">
         <v-col cols="12" class="text-center py-2">
           <component
             :is="appVersionHref ? 'a' : 'span'"
+            v-if="appVersion"
             v-bind="appVersionHref ? { href: appVersionHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
             class="text-label-small text-medium-emphasis footer-version"
           >Web {{ appVersion }}</component>
-          <span v-if="backendVersion" class="text-label-small text-medium-emphasis footer-version"> · API {{ backendVersion }}</span>
+          <span v-if="backendVersion" class="text-label-small text-medium-emphasis footer-version">{{ appVersion ? ' · ' : '' }}API {{ backendVersion }}</span>
         </v-col>
       </v-row>
     </v-container>
