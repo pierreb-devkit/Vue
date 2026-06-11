@@ -3,6 +3,16 @@
  */
 import user from '../views/user.view.vue';
 
+/**
+ * @desc Path of the account parent route — the injection seam under which
+ *       optional modules (e.g. the standalone `invitations` module's "Referrals"
+ *       tab) register child routes via `injectModuleChildren`. Exported so the
+ *       host (`app.router.js`) and tests reference the constant instead of
+ *       hardcoding the string (mirrors `ORG_PARENT_PATH`).
+ * @type {string}
+ */
+export const ACCOUNT_PARENT_PATH = '/users';
+
 // TODO(remove one release after PR(c) merges AND after billing.store successUrl repointed):
 // legacy ?tab=subscriptions alias — one-release retention only.
 // IMPORTANT: this guard also actively bridges Stripe successUrl redirects —

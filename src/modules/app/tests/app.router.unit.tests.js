@@ -489,6 +489,36 @@ describe('app.router', () => {
     });
   });
 
+  describe('invitations module injection (P6 — optional-module guarantee)', () => {
+    it('injects the invitations child route under BOTH /admin and /users when the module is active', async () => {
+      vi.resetModules();
+      mockIsModuleActive = () => true;
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const adminParent = router.options.routes.find((r) => r.path === '/admin');
+      const accountParent = router.options.routes.find((r) => r.path === '/users');
+      expect(adminParent).toBeDefined();
+      expect(accountParent).toBeDefined();
+      expect(adminParent.children.find((c) => c.path === 'invitations')).toBeDefined();
+      expect(accountParent.children.find((c) => c.path === 'invitations')).toBeDefined();
+    });
+
+    it('does NOT inject the invitations child route under /admin or /users when the module is inactive (admin + account surfaces still work)', async () => {
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'invitations';
+      const mod = await setupRouterModule();
+      const router = mod.default();
+      const adminParent = router.options.routes.find((r) => r.path === '/admin');
+      const accountParent = router.options.routes.find((r) => r.path === '/users');
+      // The host surfaces remain — the optional module's absence must not break them.
+      expect(adminParent).toBeDefined();
+      expect(accountParent).toBeDefined();
+      // ...but the invitations tab/route is absent from both.
+      expect((adminParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
+      expect((accountParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
+    });
+  });
+
   describe('module activation gating', () => {
     it('includes all module routes when all modules are active', () => {
       mockIsModuleActive = () => true;

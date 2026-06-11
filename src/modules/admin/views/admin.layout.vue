@@ -61,7 +61,6 @@ import { useAuthStore } from '../../auth/stores/auth.store';
  */
 const BUILT_IN_TABS = Object.freeze([
   { value: 'users', label: 'Users', icon: 'fa-solid fa-users', route: 'users' },
-  { value: 'invitations', label: 'Invitations', icon: 'fa-solid fa-envelope', route: 'invitations' },
   { value: 'organizations', label: 'Organizations', icon: 'fa-solid fa-building', route: 'organizations' },
   { value: 'readiness', label: 'Readiness', icon: 'fa-solid fa-clipboard-check', route: 'readiness' },
   { value: 'activity', label: 'Activity', icon: 'fa-solid fa-clock-rotate-left', route: 'activity' },

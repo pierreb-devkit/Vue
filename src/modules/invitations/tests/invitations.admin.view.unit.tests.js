@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
-import { useAdminStore } from '../stores/admin.store';
-import AdminInvitations from '../views/admin.invitations.view.vue';
+import { useInvitationsStore } from '../stores/invitations.store';
+import InvitationsAdmin from '../views/invitations.admin.view.vue';
 
 vi.mock('../../../lib/services/axios', () => ({ default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() } }));
 vi.mock('../../../lib/services/config', () => ({
@@ -49,25 +49,29 @@ const stubs = {
   'v-icon': { template: '<i />' },
 };
 
+/**
+ * Mount InvitationsAdmin in shallow mode with shared stubs.
+ * @returns {import('@vue/test-utils').VueWrapper} Mounted component wrapper.
+ */
 const mountView = () =>
-  shallowMount(AdminInvitations, {
+  shallowMount(InvitationsAdmin, {
     global: {
       mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } } } },
       stubs,
     },
   });
 
-describe('admin.invitations.view', () => {
+describe('invitations.admin.view', () => {
   let store;
   beforeEach(() => {
     setActivePinia(createPinia());
-    store = useAdminStore();
+    store = useInvitationsStore();
     store.getInvitations = vi.fn().mockResolvedValue();
     store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co' });
     store.deleteInvitation = vi.fn().mockResolvedValue();
   });
 
-  it('exposes invitations from the admin store', () => {
+  it('exposes invitations from the invitations store', () => {
     store.invitations = [{ id: '1', email: 'a@b.co', usedAt: null, expiresAt: null }];
     const wrapper = mountView();
     expect(wrapper.vm.invitations).toEqual([{ id: '1', email: 'a@b.co', usedAt: null, expiresAt: null }]);
@@ -167,19 +171,6 @@ describe('admin.invitations.view', () => {
     // item has only _id (no .id) — should still populate deleteDialog correctly
     wrapper.vm.openRevoke({ _id: 'mongo-id-99', email: 'only-id@b.co' });
     expect(wrapper.vm.deleteDialog).toEqual({ show: true, id: 'mongo-id-99', email: 'only-id@b.co' });
-  });
-
-  it('cancel button in create-dialog sets createDialog.show = false (line 49)', async () => {
-    const wrapper = mountView();
-    // Open the dialog first so the Cancel click is meaningful
-    wrapper.vm.createDialog.show = true;
-    await wrapper.vm.$nextTick();
-    // The Cancel v-btn is the first button rendered inside v-card-actions.
-    // Its @click calls `createDialog.show = false` directly.
-    // Call the handler directly to assert the exact line behavior.
-    wrapper.vm.createDialog.show = false;
-    await wrapper.vm.$nextTick();
-    expect(wrapper.vm.createDialog.show).toBe(false);
   });
 
   it('v-dialog update:modelValue handler sets createDialog.show (line 33 binding)', async () => {

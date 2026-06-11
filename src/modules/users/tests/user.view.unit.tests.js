@@ -71,6 +71,23 @@ describe('UserView – layout shape (CorePageHeaderTabs + router-view)', () => {
     expect(tabs.map((t) => t.value)).toContain('organizations');
   });
 
+  it('merges config.users.extraTabs into the tabs (gap-fix A — the optional-module account-tab seam)', () => {
+    const mocks = sharedMocks();
+    // An optional module (e.g. invitations) contributes its account tab via the
+    // SEPARATE extraTabs key (deepMerge replaces arrays, so it can't append to users.tabs).
+    mocks.config.users.extraTabs = [
+      { value: 'invitations', label: 'Referrals', icon: 'fa-solid fa-gift', route: 'invitations' },
+    ];
+    const wrapper = shallowMount(UserView, {
+      global: { mocks, stubs: sharedStubs },
+    });
+    const values = wrapper.findComponent({ name: 'CorePageHeaderTabs' }).props('tabs').map((t) => t.value);
+    // base tabs preserved AND the module-contributed extra appended
+    expect(values).toContain('profile');
+    expect(values).toContain('organizations');
+    expect(values).toContain('invitations');
+  });
+
   it('passes /users as basePath to CorePageHeaderTabs', () => {
     const wrapper = shallowMount(UserView, {
       global: { mocks: sharedMocks(), stubs: sharedStubs },

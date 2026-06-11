@@ -13,10 +13,11 @@ import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
 import organizations, { ORG_PARENT_PATH } from '../organizations/router/organizations.router';
 import admin from '../admin/router/admin.router';
-import users from '../users/router/users.router';
+import users, { ACCOUNT_PARENT_PATH } from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing, { organizationRoutes as billingOrganizationRoutes } from '../billing/router/billing.router';
 import legal from '../legal/router/legal.router';
+import { invitationsAdminRoutes, invitationsAccountRoutes } from '../invitations/router/invitations.router';
 
 /**
  * Downstream route registries — mutated by `registerDownstreamRoutes` before
@@ -27,6 +28,7 @@ import legal from '../legal/router/legal.router';
  */
 const _downstreamCoreModules = [];
 const _downstreamAdminChildModules = [];
+const _downstreamAccountChildModules = [];
 const _downstreamOptionalModules = [];
 
 /**
@@ -37,14 +39,16 @@ const _downstreamOptionalModules = [];
  * arrays in place; the router composition picks up the additions automatically.
  *
  * @param {object}   [options={}]
- * @param {Array}    [options.coreModules]        Routes spread into `coreRoutes` (always mounted, no activation gate).
- * @param {Array}    [options.adminChildModules]  Added to `adminChildModules` (injected under `/admin`).
- * @param {Array}    [options.optionalModules]    Added to `optionalModules` (gated by `isModuleActive`).
+ * @param {Array}    [options.coreModules]          Routes spread into `coreRoutes` (always mounted, no activation gate).
+ * @param {Array}    [options.adminChildModules]    Added to `adminChildModules` (injected under `/admin`).
+ * @param {Array}    [options.accountChildModules]  Added to `accountChildModules` (injected under `/users`).
+ * @param {Array}    [options.optionalModules]      Added to `optionalModules` (gated by `isModuleActive`).
  * @returns {void}
  */
 export function registerDownstreamRoutes(options = {}) {
   if (options.coreModules) _downstreamCoreModules.push(...options.coreModules);
   if (options.adminChildModules) _downstreamAdminChildModules.push(...options.adminChildModules);
+  if (options.accountChildModules) _downstreamAccountChildModules.push(...options.accountChildModules);
   if (options.optionalModules) _downstreamOptionalModules.push(...options.optionalModules);
 }
 
@@ -74,8 +78,28 @@ const getRouter = () => {
    *     { name: 'my-tab', routes: myTabRoutes },
    *   ];
    */
-  const adminChildModules = [..._downstreamAdminChildModules];
+  const adminChildModules = [
+    { name: 'invitations', routes: invitationsAdminRoutes },
+    ..._downstreamAdminChildModules,
+  ];
   injectAdminChildren(admin, adminChildModules, isModuleActive);
+
+  /**
+   * Account child modules — routes injected as children of the `/users` parent
+   * route (the account surface) via `injectModuleChildren`, gated by
+   * `isModuleActive`. Net-new seam (mirrors the org-settings injection): the
+   * standalone `invitations` module contributes its "Referrals" tab here so the
+   * account layout renders `/users/invitations` inline. The matching tab
+   * descriptor lives in `config.users.extraTabs` (merged by `user.view.vue`).
+   *
+   * Each module's router exports routes with **relative** paths (e.g.
+   * `'invitations'`) so they resolve under the `/users` parent.
+   */
+  const accountChildModules = [
+    { name: 'invitations', routes: invitationsAccountRoutes },
+    ..._downstreamAccountChildModules,
+  ];
+  injectModuleChildren(users, accountChildModules, isModuleActive, ACCOUNT_PARENT_PATH);
 
   /**
    * Organization-settings child modules — routes injected as children of the

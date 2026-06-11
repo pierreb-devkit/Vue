@@ -68,15 +68,21 @@
 /**
  * Module dependencies.
  */
-import { useAdminStore } from '../stores/admin.store';
+import { useInvitationsStore } from '../stores/invitations.store';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 /**
- * Component definition — admin invitations management tab.
+ * Component definition — admin platform-invitations management tab.
+ *
+ * Moved out of the admin module into the standalone `invitations` module
+ * (invitations↔org decouple, P6). Renders inside the admin layout as an
+ * injected child route + config-contributed tab; the management UI itself is
+ * unchanged from the former `admin.invitations.view.vue`, only its store
+ * dependency is repointed to the dedicated invitations store.
  */
 export default {
-  name: 'AdminInvitations',
+  name: 'InvitationsAdmin',
   components: { coreDataTableComponent, coreConfirmDialog },
   /**
    * @desc Reactive state: table headers, create + revoke dialog state, form rules.
@@ -102,11 +108,11 @@ export default {
   },
   computed: {
     /**
-     * @desc The invitations list from the admin store.
+     * @desc The invitations list from the invitations store.
      * @returns {Array}
      */
     invitations() {
-      return useAdminStore().invitations;
+      return useInvitationsStore().invitations;
     },
   },
   methods: {
@@ -115,7 +121,7 @@ export default {
      * @returns {Promise<void>}
      */
     async fetchInvitations() {
-      await useAdminStore().getInvitations();
+      await useInvitationsStore().getInvitations();
     },
     /**
      * @desc Derive a status label + color from an invitation's lifecycle fields.
@@ -141,7 +147,7 @@ export default {
     async submitInvite() {
       this.createDialog.loading = true;
       try {
-        await useAdminStore().createInvitation(this.createDialog.email);
+        await useInvitationsStore().createInvitation(this.createDialog.email);
         await this.fetchInvitations();
         this.createDialog.show = false;
       } catch {
@@ -164,7 +170,7 @@ export default {
      */
     async confirmRevoke() {
       try {
-        await useAdminStore().deleteInvitation(this.deleteDialog.id);
+        await useInvitationsStore().deleteInvitation(this.deleteDialog.id);
         await this.fetchInvitations();
       } catch {
         // error surfaced via store.error

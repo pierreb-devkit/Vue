@@ -81,13 +81,16 @@ describe('admin.layout', () => {
     expect(wrapper.find('.router-view-stub').exists()).toBe(true);
   });
 
-  it('passes the five built-in tabs to CorePageHeaderTabs when no extras are configured', () => {
+  it('passes the four built-in tabs to CorePageHeaderTabs when no extras are configured', () => {
     const wrapper = mountLayout();
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
     expect(headerTabs.exists()).toBe(true);
     const tabs = headerTabs.props('tabs');
-    expect(tabs).toHaveLength(5);
-    expect(tabs.map((t) => t.value)).toEqual(['users', 'invitations', 'organizations', 'readiness', 'activity']);
+    // Invitations is no longer built-in — it is contributed by the standalone
+    // invitations module via config.admin.tabs (invitations↔org decouple, P6).
+    expect(tabs).toHaveLength(4);
+    expect(tabs.map((t) => t.value)).toEqual(['users', 'organizations', 'readiness', 'activity']);
+    expect(tabs.map((t) => t.value)).not.toContain('invitations');
   });
 
   it('passes built-in + extra tabs from config.admin.tabs to CorePageHeaderTabs', () => {
@@ -101,13 +104,21 @@ describe('admin.layout', () => {
     });
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
     const tabs = headerTabs.props('tabs');
-    expect(tabs).toHaveLength(7);
-    expect(tabs[5].value).toBe('knowledge');
-    expect(tabs[6].value).toBe('costs');
+    expect(tabs).toHaveLength(6);
+    expect(tabs[4].value).toBe('knowledge');
+    expect(tabs[5].value).toBe('costs');
   });
 
-  it('includes the Invitations tab', () => {
-    const wrapper = mountLayout();
+  it('renders an Invitations tab when contributed via config.admin.tabs (module-driven)', () => {
+    // After the decouple, Invitations comes from the invitations module's
+    // config fragment rather than the built-in list. Mirror that contribution.
+    const wrapper = mountLayout({
+      admin: {
+        tabs: [
+          { value: 'invitations', label: 'Invitations', icon: 'fa-solid fa-envelope', route: 'invitations', action: 'manage', subject: 'UserAdmin' },
+        ],
+      },
+    });
     const labels = wrapper.vm.allTabs.map((t) => t.label);
     expect(labels).toContain('Invitations');
     const tab = wrapper.vm.allTabs.find((t) => t.label === 'Invitations');
@@ -126,10 +137,10 @@ describe('admin.layout', () => {
     expect(typeof headerTabs.props('can')).toBe('function');
   });
 
-  it('gracefully handles non-array admin.tabs (CorePageHeaderTabs receives only the built-in 5)', () => {
+  it('gracefully handles non-array admin.tabs (CorePageHeaderTabs receives only the built-in 4)', () => {
     const wrapper = mountLayout({ admin: { tabs: 'invalid' } });
     const headerTabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' });
-    expect(headerTabs.props('tabs')).toHaveLength(5);
+    expect(headerTabs.props('tabs')).toHaveLength(4);
   });
 
   it('renders the error banner at the TOP of the layout, before the header', async () => {

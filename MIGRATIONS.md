@@ -4,6 +4,24 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## invitations: standalone Vue module + account `extraTabs` seam; admin Invitations tab moved (2026-06-11, #4279)
+
+Phase 6 of the invitations↔org decouple epic. The platform-invitations UI is now its own optional `src/modules/invitations/` module (admin management tab + a new account "Referrals" tab).
+
+### What changed (this repo)
+
+- The admin Invitations tab + its store actions moved out of `admin` into `src/modules/invitations/` (store actions repointed to the canonical `/api/invitations` — was `/api/auth/invitations`). The hardcoded `invitations` entry was removed from `BUILT_IN_TABS` in `admin.layout.vue`; the tab now arrives via `config.admin.tabs` (contributed by the module's config fragment).
+- **New account-surface composition seams** (upstream gap-fixes): `user.view.vue` now merges `config.users.tabs` + a NEW `config.users.extraTabs` key (`deepMerge` replaces arrays, so an optional module can't append to `users.tabs`); `app.router.js` gained an `accountChildModules` injection seam under `/users` (mirrors the org-settings injection) + an `accountChildModules` param on `registerDownstreamRoutes`; `ACCOUNT_PARENT_PATH` is exported from `users.router.js`.
+- The global `admin: { tabs: [] }` default was removed from `development.config.js` (now contributed only by the invitations module fragment). `admin.layout.vue` guards with `Array.isArray(config.admin.tabs) ? … : []`, so this is safe upstream.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. The module + gap-fix files are devkit-owned → arrive via `/update-stack`.
+2. **⚠️ If a downstream overrides `admin.tabs` in its `{project}.config.js`, or relied on the global `admin.tabs: []` default**, verify the admin Invitations tab still appears after the stack merge (it now depends on the `invitations` module being active + its config fragment merging). The account "Referrals" tab requires the new `users.extraTabs` merge in `user.view.vue` + the `/users` route injection — both arrive via `/update-stack`.
+3. Pairs with the canonical-path repoint: once this lands downstream, the Node `/api/auth/invitations` deprecation alias (P2) can be dropped.
+
+---
+
 ## billing.subscriptions: checkout-polling extracted to useCheckoutPolling composable (2026-05-29, #4219)
 
 **Non-breaking structural refactor — behavior is byte-for-byte preserved.**

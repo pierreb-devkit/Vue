@@ -6,7 +6,7 @@
       <CorePageHeaderTabs
         icon="fa-solid fa-user"
         title="Account"
-        :tabs="config.users.tabs"
+        :tabs="allTabs"
         :can="userCan"
         :base-path="basePath"
       >
@@ -53,6 +53,22 @@ export default {
      */
     basePath() {
       return '/users';
+    },
+    /**
+     * @desc Merged account tab list (built-in + module-contributed extras),
+     *       passed to CoreSurfaceTabBar. Mirrors `admin.layout.vue`'s
+     *       built-in ∪ config.admin.tabs merge: `config.users.tabs` holds the
+     *       core tabs (Profile, Organizations) while optional modules append to
+     *       `config.users.extraTabs` (a separate key — generateConfig's
+     *       deepMerge REPLACES arrays, so a module fragment cannot push onto
+     *       `users.tabs` without clobbering the base set). Validation + CASL
+     *       filtering happen inside the bar via `resolveSurfaceTabs`.
+     * @returns {Array<object>}
+     */
+    allTabs() {
+      const tabs = Array.isArray(this.config?.users?.tabs) ? this.config.users.tabs : [];
+      const extras = Array.isArray(this.config?.users?.extraTabs) ? this.config.users.extraTabs : [];
+      return [...tabs, ...extras];
     },
     /**
      * @desc CASL predicate passed to CoreSurfaceTabBar. Account tabs (Profile,
