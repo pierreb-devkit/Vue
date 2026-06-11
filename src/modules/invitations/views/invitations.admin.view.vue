@@ -1,6 +1,21 @@
 <template>
   <v-container fluid>
     <v-row class="pa-2 mt-0">
+      <!-- Error banner (surfaced from the invitations store) -->
+      <v-col v-if="error" cols="12">
+        <v-alert
+          type="error"
+          variant="tonal"
+          density="compact"
+          closable
+          :class="config.vuetify.theme.rounded"
+          icon="fa-solid fa-circle-exclamation"
+          @click:close="clearError"
+        >
+          <span class="text-body-medium">{{ error }}</span>
+        </v-alert>
+      </v-col>
+
       <v-col cols="12" class="d-flex justify-end">
         <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none" @click="openCreate">
           <v-icon start icon="fa-solid fa-envelope"></v-icon>
@@ -115,6 +130,13 @@ export default {
     invitations() {
       return useInvitationsStore().invitations;
     },
+    /**
+     * @desc Global error from the invitations store (surfaced as a banner).
+     * @returns {string|null}
+     */
+    error() {
+      return useInvitationsStore().error;
+    },
   },
   methods: {
     /**
@@ -150,7 +172,7 @@ export default {
         await this.fetchInvitations();
         this.createDialog.show = false;
       } catch {
-        // error is surfaced via the admin layout banner (store.error)
+        // error is surfaced via the view's own error banner (invitations store)
       } finally {
         this.createDialog.loading = false;
       }
@@ -172,10 +194,17 @@ export default {
         await useInvitationsStore().deleteInvitation(this.deleteDialog.id);
         await this.fetchInvitations();
       } catch {
-        // error surfaced via store.error
+        // error is surfaced via the view's own error banner (invitations store)
       } finally {
         this.deleteDialog.show = false;
       }
+    },
+    /**
+     * @desc Clear the invitations store error banner.
+     * @returns {void}
+     */
+    clearError() {
+      useInvitationsStore().error = null;
     },
   },
 };

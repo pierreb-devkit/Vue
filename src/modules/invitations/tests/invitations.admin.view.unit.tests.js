@@ -77,6 +77,14 @@ describe('invitations.admin.view', () => {
     expect(wrapper.vm.invitations).toEqual([{ id: '1', email: 'a@b.co', usedAt: null, expiresAt: null }]);
   });
 
+  it('exposes the store error and clearError nulls it (banner contract)', () => {
+    store.error = 'boom';
+    const wrapper = mountView();
+    expect(wrapper.vm.error).toBe('boom');
+    wrapper.vm.clearError();
+    expect(store.error).toBeNull();
+  });
+
   it('fetchInvitations delegates to the store', async () => {
     const wrapper = mountView();
     await wrapper.vm.fetchInvitations();
