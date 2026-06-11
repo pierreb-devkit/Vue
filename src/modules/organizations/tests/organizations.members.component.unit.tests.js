@@ -46,7 +46,7 @@ const config = {
 /**
  * Mount the members component with the given org store overrides.
  * @param {Object} [storeOverrides] - Methods/state to set on the store.
- * @returns {Promise<import('@vue/test-utils').VueWrapper>}
+ * @returns {Promise<{ wrapper: import('@vue/test-utils').VueWrapper, store: object }>}
  */
 async function mountComponent(storeOverrides = {}) {
   const { useOrganizationsStore } = await import('../stores/organizations.store');

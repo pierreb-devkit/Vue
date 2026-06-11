@@ -252,13 +252,11 @@ export default {
         this.nudge = false;
         await this.organizationsStore.fetchOrganizations();
         await this.organizationsStore.fetchMyPendingInvitations();
-        try {
-          await this.authStore.refreshAbilities();
-        } catch {
-          // Non-fatal to THIS flow: the accept already succeeded. Don't let an
-          // abilities hiccup surprise-logout the user; abilities self-heal on the
-          // next natural refresh. Interceptor already toasted.
-        }
+        // Soft-refresh abilities: token() updates abilities/user in-place without
+        // signing out on failure (unlike refreshAbilities() which calls signout()
+        // before re-throwing). A stale ability set self-heals on the next natural
+        // refresh. Non-fatal by design — the accept already succeeded.
+        await this.authStore.token();
       } catch {
         // interceptor handles snackbar
       } finally {

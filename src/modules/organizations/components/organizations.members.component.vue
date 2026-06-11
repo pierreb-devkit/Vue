@@ -270,10 +270,15 @@ export default {
         { text: 'Last Login', value: 'userId.lastLoginAt', kind: 'date', format: 'DD/MM/YY HH:mm' },
         { text: 'Actions', value: 'actions', kind: 'slot', slotName: 'actions' },
       ],
-      availableRoles: (this.config.organizations?.roles || ['member', 'admin', 'owner']).map((r) => ({
-        title: r.charAt(0).toUpperCase() + r.slice(1),
-        value: r,
-      })),
+      // 'owner' is unconditionally excluded: granting owner via the UI is not
+      // allowed (add-member and change-role both use this list). Ownership
+      // transfer is a separate explicit privilege outside this component.
+      availableRoles: (this.config.organizations?.roles || ['member', 'admin', 'owner'])
+        .filter((r) => r !== 'owner')
+        .map((r) => ({
+          title: r.charAt(0).toUpperCase() + r.slice(1),
+          value: r,
+        })),
       // Email validity rule — mirrors the auth forms' `rules.mail` (signin/signup).
       // Gates the search so obvious garbage doesn't round-trip to the endpoint.
       emailRules: [(v) => !v || /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid'],
