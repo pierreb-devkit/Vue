@@ -1,5 +1,19 @@
 <template>
   <div>
+    <div v-if="canAddMember()" class="d-flex justify-end mb-3">
+      <v-btn
+        color="primary"
+        variant="tonal"
+        :class="config.vuetify.theme.rounded"
+        class="text-none text-body-medium"
+        data-test="org-add-member-open"
+        @click="openAddDialog"
+      >
+        <v-icon icon="fa-solid fa-user-plus" size="small" class="mr-2"></v-icon>
+        Add member
+      </v-btn>
+    </div>
+
     <coreDataTableComponent
       :headers="filteredHeaders"
       :items="members"
@@ -108,6 +122,115 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Add member dialog: search a user by exact email, then invite them -->
+    <v-dialog v-model="addDialog.show" max-width="480" data-test="org-add-member-dialog">
+      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+        <v-card-title class="text-title-large font-weight-medium">Add member</v-card-title>
+        <v-card-text class="text-body-medium">
+          <p class="text-medium-emphasis mb-4">
+            Search an existing user by their exact email, then send them an invitation.
+            They'll need to accept before they become a member.
+          </p>
+
+          <v-form @submit.prevent="searchUser">
+            <div class="d-flex align-start ga-2">
+              <v-text-field
+                v-model="addDialog.email"
+                label="Email"
+                type="email"
+                variant="outlined"
+                density="comfortable"
+                autofocus
+                hide-details="auto"
+                data-test="org-add-member-email"
+                :disabled="addDialog.searching"
+                @update:model-value="onEmailInput"
+              ></v-text-field>
+              <v-btn
+                color="primary"
+                variant="tonal"
+                :class="config.vuetify.theme.rounded"
+                class="text-none text-body-medium mt-1"
+                type="submit"
+                :loading="addDialog.searching"
+                :disabled="!addDialog.email"
+                data-test="org-add-member-search"
+              >
+                Search
+              </v-btn>
+            </div>
+          </v-form>
+
+          <!-- Not found -->
+          <v-alert
+            v-if="addDialog.searched && !addDialog.foundUser"
+            type="info"
+            variant="tonal"
+            density="comfortable"
+            class="mt-4 text-body-small"
+            :class="config.vuetify.theme.rounded"
+            data-test="org-add-member-notfound"
+          >
+            No account with that email yet. Invite them to the platform first, then add them here.
+          </v-alert>
+
+          <!-- Found: matched user + role selector -->
+          <div v-if="addDialog.foundUser" class="mt-4" data-test="org-add-member-found">
+            <v-list-item
+              :class="config.vuetify.theme.rounded"
+              class="px-3 py-2 bg-surface-variant"
+            >
+              <template #prepend>
+                <userAvatarComponent :user="addDialog.foundUser" :size="40" class="mr-3" />
+              </template>
+              <v-list-item-title class="text-body-medium font-weight-medium">
+                {{ addDialog.foundUser.displayName || addDialog.foundUser.email }}
+              </v-list-item-title>
+              <v-list-item-subtitle class="text-body-small">{{ addDialog.foundUser.email }}</v-list-item-subtitle>
+            </v-list-item>
+
+            <v-select
+              v-model="addDialog.role"
+              :items="availableRoles"
+              item-title="title"
+              item-value="value"
+              label="Role"
+              variant="outlined"
+              density="comfortable"
+              hide-details="auto"
+              class="mt-4"
+              :class="config.vuetify.theme.rounded"
+              data-test="org-add-member-role"
+            ></v-select>
+          </div>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            variant="text"
+            class="text-none text-body-medium"
+            :disabled="addDialog.adding"
+            @click="addDialog.show = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            v-if="addDialog.foundUser"
+            color="primary"
+            variant="flat"
+            :class="config.vuetify.theme.rounded"
+            class="text-none text-body-medium"
+            :loading="addDialog.adding"
+            data-test="org-add-member-submit"
+            @click="confirmAddMember"
+          >
+            Send invitation
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -162,6 +285,15 @@ export default {
         currentRole: '',
         newRole: '',
       },
+      addDialog: {
+        show: false,
+        email: '',
+        searching: false,
+        searched: false,
+        foundUser: null,
+        role: (this.config.organizations?.roles || ['member', 'admin'])[0] || 'member',
+        adding: false,
+      },
     };
   },
   computed: {
@@ -213,6 +345,17 @@ export default {
       return false;
     },
     /**
+     * @desc Gate the add-member affordance on the owner/admin CASL ability. Mirrors
+     *       the backend: owners (manage) + admins (create) may add; members cannot.
+     * @returns {boolean}
+     */
+    canAddMember() {
+      if (ability && ability.rules && ability.rules.length > 0) {
+        return ability.can('create', 'Membership');
+      }
+      return false;
+    },
+    /**
      * @desc Open confirmation dialog before changing a member's role.
      * @param {Object} member - Member object
      * @param {string} role - New role value
@@ -256,6 +399,73 @@ export default {
         this.removeDialog.show = false;
       } catch (err) {
         console.error(err);
+      }
+    },
+    /**
+     * @desc Open the add-member dialog with a clean search state.
+     * @returns {void}
+     */
+    openAddDialog() {
+      this.addDialog = {
+        show: true,
+        email: '',
+        searching: false,
+        searched: false,
+        foundUser: null,
+        role: this.availableRoles[0]?.value || 'member',
+        adding: false,
+      };
+    },
+    /**
+     * @desc Reset the result state when the email input changes so a stale
+     *       found/not-found result never lingers against a new email.
+     * @returns {void}
+     */
+    onEmailInput() {
+      this.addDialog.searched = false;
+      this.addDialog.foundUser = null;
+    },
+    /**
+     * @desc Look up a user by exact email. Sets foundUser on a match, or marks
+     *       searched with no foundUser for the not-found state. Errors surface via
+     *       the axios interceptor toast.
+     * @returns {Promise<void>}
+     */
+    async searchUser() {
+      if (!this.addDialog.email || this.addDialog.searching) return;
+      const organizationsStore = useOrganizationsStore();
+      this.addDialog.searching = true;
+      this.addDialog.foundUser = null;
+      try {
+        const match = await organizationsStore.searchUserByEmail(this.organizationId, this.addDialog.email);
+        this.addDialog.foundUser = match || null;
+        this.addDialog.searched = true;
+      } catch {
+        // interceptor handles snackbar; leave searched false so the user can retry
+        this.addDialog.searched = false;
+      } finally {
+        this.addDialog.searching = false;
+      }
+    },
+    /**
+     * @desc Send the invitation (create a pending owner_add membership). On success
+     *       the interceptor toasts "invitation created"; we refresh the member list
+     *       and close the dialog. Already-a-member / already-pending come back as a
+     *       422 the interceptor surfaces — keep the dialog open so the user sees it.
+     * @returns {Promise<void>}
+     */
+    async confirmAddMember() {
+      if (!this.addDialog.foundUser || this.addDialog.adding) return;
+      const organizationsStore = useOrganizationsStore();
+      this.addDialog.adding = true;
+      try {
+        await organizationsStore.addMember(this.organizationId, this.addDialog.foundUser.id, this.addDialog.role);
+        await this.fetchMembers();
+        this.addDialog.show = false;
+      } catch {
+        // interceptor handles snackbar (e.g. already a member / pending)
+      } finally {
+        this.addDialog.adding = false;
       }
     },
   },

@@ -33,6 +33,8 @@ const sharedStubs = {
   'v-chip': { template: '<div><slot /></div>' },
   'v-btn': { template: '<button v-bind="$attrs" :to="$attrs.to"><slot /></button>', inheritAttrs: false },
   'v-icon': { template: '<div />' },
+  'v-alert': { template: '<div><slot /></div>' },
+  'v-snackbar': { template: '<div><slot /><slot name="actions" /></div>' },
 };
 
 const sharedMocks = ($router = { push: vi.fn() }) => ({
@@ -53,6 +55,7 @@ describe('user.organizations.view', () => {
     const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
 
     const wrapper = shallowMount(UserOrganizationsView, {
       global: {
@@ -68,6 +71,7 @@ describe('user.organizations.view', () => {
     const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
 
     const wrapper = shallowMount(UserOrganizationsView, {
       global: {
@@ -83,6 +87,7 @@ describe('user.organizations.view', () => {
     const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
 
     const wrapper = shallowMount(UserOrganizationsView, {
       global: {
@@ -105,6 +110,7 @@ describe('user.organizations.view', () => {
     const authStore = useAuthStore();
 
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
     const routerPush = vi.fn();
 
     const wrapper = shallowMount(UserOrganizationsView, {
@@ -127,6 +133,113 @@ describe('user.organizations.view', () => {
 
     expect(store.leaveOrganization).toHaveBeenCalledWith(orgId);
     expect(routerPush).toHaveBeenCalledWith('/organization-required');
+  });
+});
+
+describe('user.organizations.view — pending invitations', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  test('fetches pending invitations on created', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    const fetchInvites = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = fetchInvites;
+
+    shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    await Promise.resolve();
+
+    expect(fetchInvites).toHaveBeenCalled();
+  });
+
+  test('exposes the store pendingInvitations via computed', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
+    store.pendingInvitations = [{ id: 'inv1', role: 'member', organizationId: { name: 'Acme' } }];
+
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+
+    expect(wrapper.vm.pendingInvitations).toHaveLength(1);
+    expect(wrapper.vm.pendingInvitations[0].organizationId.name).toBe('Acme');
+  });
+
+  test('shows the nudge snackbar when invitations exist after fetch', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockImplementation(() => {
+      store.pendingInvitations = [{ id: 'inv1', role: 'member', organizationId: { name: 'Acme' } }];
+      return Promise.resolve(store.pendingInvitations);
+    });
+
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(wrapper.vm.nudge).toBe(true);
+  });
+
+  test('does not show the nudge snackbar when there are no invitations', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
+
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    await Promise.resolve();
+
+    expect(wrapper.vm.nudge).toBe(false);
+  });
+
+  test('acceptInvitation accepts, refreshes orgs + abilities, and re-fetches invitations', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const store = useOrganizationsStore();
+    const authStore = useAuthStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
+    store.acceptMembership = vi.fn().mockResolvedValue({ id: 'inv1', status: 'active' });
+    authStore.refreshAbilities = vi.fn().mockResolvedValue();
+
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+
+    await wrapper.vm.acceptInvitation({ id: 'inv1', role: 'member', organizationId: { name: 'Acme' } });
+
+    expect(store.acceptMembership).toHaveBeenCalledWith('inv1');
+    expect(authStore.refreshAbilities).toHaveBeenCalled();
+    expect(store.fetchOrganizations).toHaveBeenCalled();
+    // initial mount + post-accept refresh
+    expect(store.fetchMyPendingInvitations.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('invitationOrgName + invitationRole helpers read the populated membership', async () => {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
+
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+
+    const inv = { id: 'inv1', role: 'admin', organizationId: { name: 'Acme Corp' } };
+    expect(wrapper.vm.invitationOrgName(inv)).toBe('Acme Corp');
+    expect(wrapper.vm.invitationRole(inv)).toBe('admin');
+    expect(wrapper.vm.invitationOrgName({ id: 'x' })).toBe('an organization');
   });
 });
 

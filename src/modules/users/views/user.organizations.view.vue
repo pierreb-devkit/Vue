@@ -1,5 +1,54 @@
 <template>
   <v-container fluid>
+    <!-- Pending invitations to accept (persistent, owner_add): durable surface an
+         offline invitee sees on their next login. -->
+    <v-row v-if="pendingInvitations.length" class="pa-2 mt-0" data-test="pending-invitations">
+      <v-col cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-4">
+          <div class="d-flex align-center mb-2">
+            <v-icon icon="fa-solid fa-envelope-open-text" size="small" color="primary" class="mr-2"></v-icon>
+            <span class="text-title-medium font-weight-medium">Pending invitations</span>
+          </div>
+          <p class="text-body-small text-medium-emphasis mb-2">
+            You've been invited to join these organizations. Accept to become a member.
+          </p>
+          <v-list lines="two" class="pa-0 bg-transparent">
+            <template v-for="(inv, i) in pendingInvitations" :key="inv.id || inv._id">
+              <v-list-item :class="config.vuetify.theme.rounded" class="pa-4">
+                <template #prepend>
+                  <orgAvatarComponent :org="inv.organizationId || {}" :size="40" class="mr-4" />
+                </template>
+                <v-list-item-title class="text-body-large font-weight-medium">
+                  {{ invitationOrgName(inv) }}
+                </v-list-item-title>
+                <v-list-item-subtitle class="text-body-small">
+                  Invited as
+                  <v-chip size="x-small" :color="roleColor(invitationRole(inv))" variant="tonal" class="text-capitalize ml-1">
+                    {{ invitationRole(inv) }}
+                  </v-chip>
+                </v-list-item-subtitle>
+                <template #append>
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    size="small"
+                    :class="config.vuetify.theme.rounded"
+                    class="text-none text-body-medium"
+                    :loading="acceptingId === (inv.id || inv._id)"
+                    :data-test="`accept-invitation-${inv.id || inv._id}`"
+                    @click="acceptInvitation(inv)"
+                  >
+                    Accept
+                  </v-btn>
+                </template>
+              </v-list-item>
+              <v-divider v-if="i < pendingInvitations.length - 1"></v-divider>
+            </template>
+          </v-list>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-4">
@@ -67,6 +116,19 @@
       confirm-color="error"
       @confirm="leaveOrg"
     />
+
+    <!-- Login nudge: not triggered by a POST/PUT response, so a component-local
+         snackbar (the persistent list above is the source of truth). -->
+    <v-snackbar v-model="nudge" location="top right" color="info" :timeout="6000" data-test="pending-invitations-nudge">
+      <span class="text-body-medium">
+        <v-icon icon="fa-solid fa-envelope-open-text" size="small" class="mr-1" />
+        You have {{ pendingInvitations.length }}
+        pending {{ pendingInvitations.length === 1 ? 'invitation' : 'invitations' }} to accept.
+      </span>
+      <template #actions>
+        <v-btn variant="text" size="small" icon="$close" @click="nudge = false" />
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -94,6 +156,8 @@ export default {
     return {
       leaveDialog: false,
       orgToLeave: null,
+      acceptingId: null,
+      nudge: false,
     };
   },
   computed: {
@@ -103,6 +167,13 @@ export default {
      */
     organizations() {
       return this.organizationsStore.organizations;
+    },
+    /**
+     * @desc The current user's pending owner_add invitations (durable list).
+     * @returns {Array}
+     */
+    pendingInvitations() {
+      return this.organizationsStore.pendingInvitations;
     },
     /**
      * @desc The ID of the user's current active organization.
@@ -131,9 +202,56 @@ export default {
     } catch {
       // interceptor handles snackbar
     }
+    try {
+      await this.organizationsStore.fetchMyPendingInvitations();
+      // Nudge on login when there are invitations to accept. The persistent list
+      // above is the source of truth; this is only a transient prompt.
+      this.nudge = this.pendingInvitations.length > 0;
+    } catch {
+      // interceptor handles snackbar
+    }
   },
   methods: {
     roleColor,
+    /**
+     * @desc Display name of the org an invitation is for. Org is populated
+     *       ({ id, name, slug }); falls back gracefully if missing.
+     * @param {Object} invitation - A pending owner_add membership.
+     * @returns {string}
+     */
+    invitationOrgName(invitation) {
+      return invitation?.organizationId?.name || 'an organization';
+    },
+    /**
+     * @desc Role the user is invited to hold once they accept.
+     * @param {Object} invitation - A pending owner_add membership.
+     * @returns {string}
+     */
+    invitationRole(invitation) {
+      return invitation?.role || 'member';
+    },
+    /**
+     * @desc Accept a pending owner_add invitation. On success the PUT interceptor
+     *       toasts; we refresh abilities + orgs (the user is now a member) and
+     *       re-fetch the pending list so the accepted row disappears.
+     * @param {Object} invitation - The pending membership to accept.
+     * @returns {Promise<void>}
+     */
+    async acceptInvitation(invitation) {
+      const membershipId = invitation.id || invitation._id;
+      if (!membershipId || this.acceptingId) return;
+      this.acceptingId = membershipId;
+      try {
+        await this.organizationsStore.acceptMembership(membershipId);
+        await this.authStore.refreshAbilities();
+        await this.organizationsStore.fetchOrganizations();
+        await this.organizationsStore.fetchMyPendingInvitations();
+      } catch {
+        // interceptor handles snackbar
+      } finally {
+        this.acceptingId = null;
+      }
+    },
     /**
      * @desc Check whether the given org is the user's active organization.
      * @param {Object} org - Organization object.
