@@ -143,6 +143,7 @@
                 density="comfortable"
                 autofocus
                 hide-details="auto"
+                :rules="emailRules"
                 data-test="org-add-member-email"
                 :disabled="addDialog.searching"
                 @update:model-value="onEmailInput"
@@ -154,7 +155,7 @@
                 class="text-none text-body-medium mt-1"
                 type="submit"
                 :loading="addDialog.searching"
-                :disabled="!addDialog.email"
+                :disabled="!isValidAddEmail"
                 data-test="org-add-member-search"
               >
                 Search
@@ -273,6 +274,9 @@ export default {
         title: r.charAt(0).toUpperCase() + r.slice(1),
         value: r,
       })),
+      // Email validity rule — mirrors the auth forms' `rules.mail` (signin/signup).
+      // Gates the search so obvious garbage doesn't round-trip to the endpoint.
+      emailRules: [(v) => !v || /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid'],
       removeDialog: {
         show: false,
         memberId: null,
@@ -291,7 +295,9 @@ export default {
         searching: false,
         searched: false,
         foundUser: null,
-        role: (this.config.organizations?.roles || ['member', 'admin'])[0] || 'member',
+        // Set on every open by openAddDialog (the only entry point) from
+        // availableRoles[0] — see defaultRole(). Initialized here for shape only.
+        role: '',
         adding: false,
       },
     };
@@ -309,6 +315,14 @@ export default {
       const isMobile = this.$vuetify.display.smAndDown;
       if (!isMobile) return this.headers;
       return this.headers.filter((h) => !['createdAt', 'userId.lastLoginAt'].includes(h.value));
+    },
+    /**
+     * @desc Whether the typed add-member email is a syntactically valid address.
+     *       Gates the Search button so obvious garbage doesn't hit the endpoint.
+     * @returns {boolean}
+     */
+    isValidAddEmail() {
+      return /\S+@\S+\.\S+/.test((this.addDialog.email || '').trim());
     },
   },
   methods: {
@@ -402,6 +416,14 @@ export default {
       }
     },
     /**
+     * @desc The default role for a new add-member dialog — first available role,
+     *       falling back to 'member'. Single source of truth for the role default.
+     * @returns {string}
+     */
+    defaultRole() {
+      return this.availableRoles[0]?.value || 'member';
+    },
+    /**
      * @desc Open the add-member dialog with a clean search state.
      * @returns {void}
      */
@@ -412,7 +434,7 @@ export default {
         searching: false,
         searched: false,
         foundUser: null,
-        role: this.availableRoles[0]?.value || 'member',
+        role: this.defaultRole(),
         adding: false,
       };
     },
@@ -428,20 +450,29 @@ export default {
     /**
      * @desc Look up a user by exact email. Sets foundUser on a match, or marks
      *       searched with no foundUser for the not-found state. Errors surface via
-     *       the axios interceptor toast.
+     *       the axios interceptor toast. Guards against a stale response: a slower
+     *       earlier search must not overwrite foundUser if the email has since
+     *       changed (fast re-submits) — we capture the requested email (trimmed, to
+     *       match the store's trim) before awaiting and bail if it no longer matches.
      * @returns {Promise<void>}
      */
     async searchUser() {
-      if (!this.addDialog.email || this.addDialog.searching) return;
+      // Guard the submit path too (Enter key bypasses the disabled button): never
+      // round-trip an empty or syntactically-invalid email to the search endpoint.
+      if (!this.isValidAddEmail || this.addDialog.searching) return;
       const organizationsStore = useOrganizationsStore();
+      const reqEmail = this.addDialog.email.trim();
       this.addDialog.searching = true;
       this.addDialog.foundUser = null;
       try {
         const match = await organizationsStore.searchUserByEmail(this.organizationId, this.addDialog.email);
+        // Bail on a stale resolution: the input changed while this request was in flight.
+        if (this.addDialog.email.trim() !== reqEmail) return;
         this.addDialog.foundUser = match || null;
         this.addDialog.searched = true;
       } catch {
         // interceptor handles snackbar; leave searched false so the user can retry
+        if (this.addDialog.email.trim() !== reqEmail) return;
         this.addDialog.searched = false;
       } finally {
         this.addDialog.searching = false;

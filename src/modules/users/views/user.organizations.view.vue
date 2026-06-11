@@ -232,8 +232,13 @@ export default {
     },
     /**
      * @desc Accept a pending owner_add invitation. On success the PUT interceptor
-     *       toasts; we refresh abilities + orgs (the user is now a member) and
-     *       re-fetch the pending list so the accepted row disappears.
+     *       toasts; the membership is now active server-side, so we reflect that in
+     *       the UI (refresh orgs + drop the accepted row) FIRST, then refresh
+     *       abilities. The abilities refresh is wrapped in its own try/catch so a
+     *       hiccup on that endpoint can't surprise-logout the user (refreshAbilities
+     *       signs out + throws on failure) right after a successful accept, nor abort
+     *       the org/pending refresh — a stale ability set self-heals on the next
+     *       natural refresh.
      * @param {Object} invitation - The pending membership to accept.
      * @returns {Promise<void>}
      */
@@ -243,9 +248,17 @@ export default {
       this.acceptingId = membershipId;
       try {
         await this.organizationsStore.acceptMembership(membershipId);
-        await this.authStore.refreshAbilities();
+        // Membership is accepted server-side: reflect it before touching abilities.
+        this.nudge = false;
         await this.organizationsStore.fetchOrganizations();
         await this.organizationsStore.fetchMyPendingInvitations();
+        try {
+          await this.authStore.refreshAbilities();
+        } catch {
+          // Non-fatal to THIS flow: the accept already succeeded. Don't let an
+          // abilities hiccup surprise-logout the user; abilities self-heal on the
+          // next natural refresh. Interceptor already toasted.
+        }
       } catch {
         // interceptor handles snackbar
       } finally {

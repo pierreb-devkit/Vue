@@ -102,6 +102,15 @@ describe('organizations.members.component — add member', () => {
     expect(wrapper.vm.addDialog.role).toBe('member');
   });
 
+  it('defaultRole is the first available role (single source of truth for openAddDialog)', async () => {
+    const { wrapper } = await mountComponent();
+    // config.organizations.roles = ['member', 'admin'] → first is 'member'
+    expect(wrapper.vm.defaultRole()).toBe('member');
+    expect(wrapper.vm.availableRoles[0].value).toBe('member');
+    wrapper.vm.openAddDialog();
+    expect(wrapper.vm.addDialog.role).toBe(wrapper.vm.defaultRole());
+  });
+
   it('onEmailInput clears a stale result', async () => {
     const { wrapper } = await mountComponent();
     wrapper.vm.addDialog.searched = true;
@@ -145,6 +154,40 @@ describe('organizations.members.component — add member', () => {
     wrapper.vm.addDialog.email = '';
     await wrapper.vm.searchUser();
     expect(searchUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('searchUser no-ops with a syntactically invalid email (no endpoint round-trip)', async () => {
+    const searchUserByEmail = vi.fn();
+    const { wrapper } = await mountComponent({ searchUserByEmail });
+    wrapper.vm.addDialog.email = 'not-an-email';
+    await wrapper.vm.searchUser();
+    expect(searchUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('isValidAddEmail gates obvious garbage but accepts a real address', async () => {
+    const { wrapper } = await mountComponent();
+    wrapper.vm.addDialog.email = '';
+    expect(wrapper.vm.isValidAddEmail).toBe(false);
+    wrapper.vm.addDialog.email = 'nope';
+    expect(wrapper.vm.isValidAddEmail).toBe(false);
+    wrapper.vm.addDialog.email = '  jane@example.com  ';
+    expect(wrapper.vm.isValidAddEmail).toBe(true);
+  });
+
+  it('searchUser ignores a stale resolution when the email changed mid-flight', async () => {
+    // A slower earlier search resolves AFTER the input has changed; its result
+    // must NOT overwrite foundUser/searched (request-token guard).
+    let resolveStale;
+    const searchUserByEmail = vi.fn(() => new Promise((r) => { resolveStale = r; }));
+    const { wrapper } = await mountComponent({ searchUserByEmail });
+    wrapper.vm.addDialog.email = 'old@example.com';
+    const pending = wrapper.vm.searchUser();
+    // User retypes a different email while the first request is in flight.
+    wrapper.vm.addDialog.email = 'new@example.com';
+    resolveStale({ id: 'stale', email: 'old@example.com' });
+    await pending;
+    expect(wrapper.vm.addDialog.foundUser).toBeNull();
+    expect(wrapper.vm.addDialog.searched).toBe(false);
   });
 
   it('confirmAddMember adds the found user, refreshes members, and closes', async () => {
