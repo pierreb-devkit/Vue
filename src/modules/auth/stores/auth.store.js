@@ -394,13 +394,15 @@ export const useAuthStore = defineStore('auth', {
     /**
      * @desc Verify a signup invite token (public). Used by the signup page to
      * reveal the form + prefill the invited email when public signup is closed.
+     * Canonical mount (modules/invitations); the legacy /auth/invitations alias
+     * is removed post-P9.
      * @param {string} token
      * @returns {Promise<{valid: boolean, email: string|null}>}
      */
     async verifyInvite(token) {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       try {
-        const res = await axios.get(`${api}/${config.api.endPoints.auth}/invitations/verify/${encodeURIComponent(token)}`);
+        const res = await axios.get(`${api}/invitations/verify/${encodeURIComponent(token)}`);
         return res.data.data;
       } catch {
         return { valid: false, email: null };

@@ -1,6 +1,21 @@
 <template>
   <v-container fluid>
     <v-row class="pa-2 mt-0">
+      <!-- Error banner (surfaced from the invitations store) -->
+      <v-col v-if="error" cols="12">
+        <v-alert
+          type="error"
+          variant="tonal"
+          density="compact"
+          closable
+          :class="config.vuetify.theme.rounded"
+          icon="fa-solid fa-circle-exclamation"
+          @click:close="clearError"
+        >
+          <span class="text-body-medium">{{ error }}</span>
+        </v-alert>
+      </v-col>
+
       <v-col cols="12" class="d-flex justify-end">
         <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none" @click="openCreate">
           <v-icon start icon="fa-solid fa-envelope"></v-icon>
@@ -21,7 +36,7 @@
               size="small"
               variant="text"
               color="error"
-              :disabled="!!item.usedAt"
+              :disabled="!!item.usedAt || !!item.revokedAt || item.status === 'revoked'"
               @click="openRevoke(item)"
             ></v-btn>
           </template>
@@ -69,6 +84,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
@@ -114,6 +130,13 @@ export default {
     invitations() {
       return useInvitationsStore().invitations;
     },
+    /**
+     * @desc Global error from the invitations store (surfaced as a banner).
+     * @returns {string|null}
+     */
+    error() {
+      return useInvitationsStore().error;
+    },
   },
   methods: {
     /**
@@ -124,14 +147,12 @@ export default {
       await useInvitationsStore().getInvitations();
     },
     /**
-     * @desc Derive a status label + color from an invitation's lifecycle fields.
+     * @desc Shared status derivation (lib/invitations.status — revoked-aware).
      * @param {Object} item - invitation
      * @returns {{ label: string, color: string }}
      */
     inviteStatus(item) {
-      if (item.usedAt) return { label: 'Accepted', color: 'success' };
-      if (item.expiresAt && new Date(item.expiresAt).getTime() < Date.now()) return { label: 'Expired', color: 'error' };
-      return { label: 'Pending', color: 'warning' };
+      return deriveInviteStatus(item);
     },
     /**
      * @desc Open the create-invite dialog (reset fields).
@@ -151,7 +172,7 @@ export default {
         await this.fetchInvitations();
         this.createDialog.show = false;
       } catch {
-        // error is surfaced via the admin layout banner (store.error)
+        // error is surfaced via the view's own error banner (invitations store)
       } finally {
         this.createDialog.loading = false;
       }
@@ -173,10 +194,17 @@ export default {
         await useInvitationsStore().deleteInvitation(this.deleteDialog.id);
         await this.fetchInvitations();
       } catch {
-        // error surfaced via store.error
+        // error is surfaced via the view's own error banner (invitations store)
       } finally {
         this.deleteDialog.show = false;
       }
+    },
+    /**
+     * @desc Clear the invitations store error banner.
+     * @returns {void}
+     */
+    clearError() {
+      useInvitationsStore().error = null;
     },
   },
 };
