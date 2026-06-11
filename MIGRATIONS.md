@@ -14,7 +14,7 @@ Phase 6 of the invitations↔org decouple epic. The platform-invitations UI is n
 - **New account-surface composition seams** (upstream gap-fixes): `user.view.vue` now merges `config.users.tabs` + a NEW `config.users.extraTabs` key (`deepMerge` replaces arrays, so an optional module can't append to `users.tabs`); `app.router.js` gained an `accountChildModules` injection seam under `/users` (mirrors the org-settings injection) + an `accountChildModules` param on `registerDownstreamRoutes`; `ACCOUNT_PARENT_PATH` is exported from `users.router.js`.
 - The global `admin: { tabs: [] }` default was removed from `development.config.js` (now contributed only by the invitations module fragment). `admin.layout.vue` guards with `Array.isArray(config.admin.tabs) ? … : []`, so this is safe upstream.
 
-### Action required for downstream projects (`/update-project`)
+### Action required for downstream projects (`/update-stack`)
 
 1. The module + gap-fix files are devkit-owned → arrive via `/update-stack`.
 2. **⚠️ If a downstream overrides `admin.tabs` in its `{project}.config.js`, or relied on the global `admin.tabs: []` default**, verify the admin Invitations tab still appears after the stack merge (it now depends on the `invitations` module being active + its config fragment merging). The account "Referrals" tab requires the new `users.extraTabs` merge in `user.view.vue` + the `/users` route injection — both arrive via `/update-stack`.
