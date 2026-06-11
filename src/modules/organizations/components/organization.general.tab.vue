@@ -74,59 +74,6 @@
           :organization-id="organizationId"
         />
 
-        <!-- Invite Member (owner/admin only) -->
-        <v-card
-          v-if="canManage"
-          color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
-          class="pa-6 mb-4 mt-4"
-        >
-          <h3 class="text-title-medium font-weight-medium mb-4">Invite Member</h3>
-          <v-form ref="inviteForm" v-model="inviteValid" @submit.prevent="sendInvite">
-            <div class="d-flex ga-2 flex-column flex-sm-row align-end">
-              <div class="flex-grow-1">
-                <label class="text-label-large font-weight-medium d-block mb-1">Email address</label>
-                <v-text-field
-                  v-model="inviteEmail"
-                  placeholder="colleague@example.com"
-                  type="email"
-                  :rules="[rules.required, rules.email]"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details="auto"
-                ></v-text-field>
-              </div>
-              <v-btn
-                color="primary"
-                variant="flat"
-                :class="config.vuetify.theme.rounded"
-                class="text-none text-body-medium"
-                :disabled="!inviteValid"
-                :loading="inviteLoading"
-                style="min-height: 48px;"
-                :block="$vuetify.display.xs"
-                @click="sendInvite"
-              >
-                Send Invite
-              </v-btn>
-            </div>
-          </v-form>
-          <v-alert v-if="inviteLink" type="info" variant="tonal" class="mt-2" closable @click:close="inviteLink = null">
-            <span class="text-body-small">Invite link (share manually if no email was sent):</span>
-            <div class="d-flex align-center mt-1 ga-2">
-              <code class="text-body-small flex-grow-1 text-truncate">{{ inviteLink }}</code>
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                :icon="copied ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
-                :color="copied ? 'success' : 'default'"
-                @click="copyInviteLink"
-              ></v-btn>
-            </div>
-          </v-alert>
-        </v-card>
-
         <!-- Pending Join Requests (owner/admin only) -->
         <v-card
           v-if="canManage && pendingRequests.length > 0"
@@ -226,8 +173,8 @@ export default {
     return { authStore };
   },
   /**
-   * @desc Component local state for form validation, pending requests, and invite flow.
-   * @returns {{ valid: boolean, dirty: boolean, pendingRequests: Array, requestActionLoading: string|null, inviteEmail: string, inviteValid: boolean, inviteLoading: boolean, inviteLink: string|null, copied: boolean, rules: Object }}
+   * @desc Component local state for form validation and pending requests.
+   * @returns {{ valid: boolean, dirty: boolean, pendingRequests: Array, requestActionLoading: string|null, rules: Object }}
    */
   data() {
     return {
@@ -235,14 +182,8 @@ export default {
       dirty: false,
       pendingRequests: [],
       requestActionLoading: null,
-      inviteEmail: '',
-      inviteValid: false,
-      inviteLoading: false,
-      inviteLink: null,
-      copied: false,
       rules: {
         required: (v) => !!v || 'Required',
-        email: (v) => /\S+@\S+\.\S+/.test(v) || 'Valid email required',
       },
     };
   },
@@ -354,27 +295,6 @@ export default {
       }
     },
     /**
-     * @desc Validate the invite form and send a membership invite email.
-     * @returns {Promise<void>}
-     */
-    async sendInvite() {
-      const form = await this.$refs.inviteForm.validate();
-      if (!form.valid) return;
-      this.inviteLoading = true;
-      const organizationsStore = useOrganizationsStore();
-      try {
-        const result = await organizationsStore.inviteMember(this.organizationId, this.inviteEmail);
-        const front = `${this.config.api.protocol}://${this.config.api.host}`;
-        this.inviteLink = `${front}/invite?token=${result.inviteToken}`;
-        this.inviteEmail = '';
-        this.$refs.inviteForm.reset();
-      } catch {
-        // interceptor handles snackbar
-      } finally {
-        this.inviteLoading = false;
-      }
-    },
-    /**
      * @desc Format a date as a relative time string.
      * @param {string|Date} date - The date to format
      * @returns {string} Relative time string (e.g. "5m ago", "2d ago")
@@ -392,19 +312,6 @@ export default {
       const diffDays = Math.floor(diffHours / 24);
       if (diffDays < 30) return `${diffDays}d ago`;
       return `${Math.floor(diffDays / 30)}mo ago`;
-    },
-    /**
-     * @desc Copy the invite link to clipboard.
-     * @returns {Promise<void>}
-     */
-    async copyInviteLink() {
-      try {
-        await navigator.clipboard.writeText(this.inviteLink);
-        this.copied = true;
-        setTimeout(() => { this.copied = false; }, 2000);
-      } catch {
-        // fallback: select text manually
-      }
     },
     /**
      * @desc Reject a pending join request and remove it from the local list.

@@ -4,6 +4,24 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## organizations: org email-invite UI removed (2026-06-11, #4280)
+
+Phase 7 of the invitations↔org decouple epic. Pairs with Node P4 (#3812), which deleted the backends (`POST /api/organizations/:id/invites`, `GET /api/invites/:token`, `POST /api/invites/:token/accept`) — this UI was dead.
+
+### What changed (this repo)
+
+- `organization.general.tab.vue`: the "Invite Member" card + `sendInvite`/`copyInviteLink` removed (Pending Join Requests card stays).
+- `organizations.store.js`: `inviteMember` / `getInvite` / `acceptInvite` removed (negative tests guard against resurrection). The P5b add-member flow (`searchUserByEmail`/`addMember`/`acceptMembership`/`fetchMyPendingInvitations`) is the replacement.
+- `views/invite.view.vue` + the `/invite` route + the `orgExemptExact` `'/invite'` guard entry removed.
+- The `invitation_sent` PostHog capture went with `inviteMember`; parity lives in the P6 invitations store (`invitation_created`).
+
+### Action required for downstream projects (`/update-stack`)
+
+1. All files are devkit-owned → arrive via `/update-stack`.
+2. **⚠️ If downstream code calls `organizationsStore.inviteMember`/`getInvite`/`acceptInvite` or links to `/invite?token=`**, migrate to the 2-step flow: platform invite (`/api/invitations`, P6 module) → `addMember(orgId, userId, role)` + invitee accept (P5a/P5b). The old Node endpoints are gone (P4) — leftover callers 404.
+
+---
+
 ## invitations: standalone Vue module + account `extraTabs` seam; admin Invitations tab moved (2026-06-11, #4279)
 
 Phase 6 of the invitations↔org decouple epic. The platform-invitations UI is now its own optional `src/modules/invitations/` module (admin management tab + a new account "Referrals" tab).

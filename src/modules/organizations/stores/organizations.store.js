@@ -293,30 +293,6 @@ export const useOrganizationsStore = defineStore('organizations', {
     },
 
     /**
-     * @desc Invite a member to an organization by email
-     * @param {string} organizationId
-     * @param {string} email
-     * @returns {Promise<Object>} Resolved invite data
-     */
-    async inviteMember(organizationId, email) {
-      const api = apiBase();
-      const res = await axios.post(`${api}/organizations/${organizationId}/invites`, { email });
-      capture('invitation_sent', { organization_id: organizationId, email });
-      return res.data.data;
-    },
-
-    /**
-     * @desc Get invite details by token
-     * @param {string} token
-     * @returns {Promise<Object>} Resolved invite data
-     */
-    async getInvite(token) {
-      const api = apiBase();
-      const res = await axios.get(`${api}/invites/${token}`);
-      return res.data.data;
-    },
-
-    /**
      * @desc Fetch pending request counts for all orgs where user is owner/admin.
      * @returns {Promise<void>}
      */
@@ -333,17 +309,6 @@ export const useOrganizationsStore = defineStore('organizations', {
       this.adminPendingRequests = results
         .filter((r) => r.status === 'fulfilled' && r.value)
         .map((r) => r.value);
-    },
-
-    /**
-     * @desc Accept an organization invite
-     * @param {string} token
-     * @returns {Promise<Object>} Resolved acceptance data
-     */
-    async acceptInvite(token) {
-      const api = apiBase();
-      const res = await axios.post(`${api}/invites/${token}/accept`);
-      return res.data.data;
     },
 
     /**
