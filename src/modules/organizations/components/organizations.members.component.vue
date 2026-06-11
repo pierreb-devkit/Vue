@@ -352,12 +352,20 @@ export default {
       return user.email || 'Unknown';
     },
     roleColor,
+    /**
+     * @desc Check whether the current user can update memberships in the viewed organization.
+     * @returns {boolean}
+     */
     canUpdateMember() {
       if (ability && ability.rules && ability.rules.length > 0) {
         return ability.can('update', subject('Membership', { organizationId: this.organizationId }));
       }
       return false;
     },
+    /**
+     * @desc Check whether the current user can remove memberships in the viewed organization.
+     * @returns {boolean}
+     */
     canRemoveMember() {
       if (ability && ability.rules && ability.rules.length > 0) {
         return ability.can('delete', subject('Membership', { organizationId: this.organizationId }));
