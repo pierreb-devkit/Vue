@@ -1,25 +1,27 @@
 <template>
   <div>
-    <div v-if="canAddMember()" class="d-flex justify-end mb-3">
-      <v-btn
-        color="primary"
-        variant="tonal"
-        :class="config.vuetify.theme.rounded"
-        class="text-none text-body-medium"
-        data-test="org-add-member-open"
-        @click="openAddDialog"
-      >
-        <v-icon icon="fa-solid fa-user-plus" size="small" class="mr-2"></v-icon>
-        Add member
-      </v-btn>
-    </div>
-
     <coreDataTableComponent
       :headers="filteredHeaders"
       :items="members"
       :fetch-action="fetchMembers"
       :search="true"
     >
+      <!-- Card-level action: Add member lives inside the datatable card title,
+           left of the search field, so the card aligns with the Details card. -->
+      <template #toolbar>
+        <v-btn
+          v-if="canAddMember()"
+          color="primary"
+          variant="tonal"
+          :class="config.vuetify.theme.rounded"
+          class="text-none text-body-medium"
+          data-test="org-add-member-open"
+          @click="openAddDialog"
+        >
+          <v-icon icon="fa-solid fa-user-plus" size="small" class="mr-2"></v-icon>
+          Add member
+        </v-btn>
+      </template>
       <!-- Avatar column -->
       <template #avatar="{ item }">
         <userAvatarComponent :user="item.userId || item" :size="37" />

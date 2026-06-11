@@ -94,4 +94,37 @@ describe('core.datatable.component', () => {
       });
     }).not.toThrow();
   });
+
+  // Card-level #toolbar slot — renders inside the v-card-title, left of the search
+  // field. Named `toolbar` (not `actions`) to avoid colliding with the dynamic
+  // per-row slots resolved via `header.slotName || header.value`.
+  it('renders the #toolbar slot content in the card title', () => {
+    const wrapper = mount(CoreDatatable, {
+      props: { headers: [{ text: 'Name', value: 'name' }], items: [], fetchAction: vi.fn().mockResolvedValue() },
+      slots: { toolbar: '<button data-test="toolbar-action">Add</button>' },
+      global: globalOpts(vuetify),
+    });
+    const action = wrapper.find('[data-test="toolbar-action"]');
+    expect(action.exists()).toBe(true);
+    expect(action.element.closest('.v-card-title')).not.toBeNull();
+  });
+
+  it('does not collide with a per-row #actions slot (toolbar stays out of the rows)', () => {
+    const headers = [
+      { text: 'Name', value: 'name' },
+      { text: 'Actions', value: 'actions', kind: 'slot', slotName: 'actions' },
+    ];
+    const items = [{ _id: '1', name: 'John' }];
+    const wrapper = mount(CoreDatatable, {
+      props: { headers, items, fetchAction: vi.fn().mockResolvedValue() },
+      slots: {
+        toolbar: '<button data-test="toolbar-action">Add</button>',
+        actions: '<span data-test="row-action">edit</span>',
+      },
+      global: globalOpts(vuetify),
+    });
+    // Row slot renders in the table body, toolbar slot in the card title — both present, independent.
+    expect(wrapper.find('[data-test="row-action"]').element.closest('tbody')).not.toBeNull();
+    expect(wrapper.find('[data-test="toolbar-action"]').element.closest('.v-card-title')).not.toBeNull();
+  });
 });

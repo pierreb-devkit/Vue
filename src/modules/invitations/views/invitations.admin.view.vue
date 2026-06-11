@@ -16,14 +16,16 @@
         </v-alert>
       </v-col>
 
-      <v-col cols="12" class="d-flex justify-end">
-        <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none" @click="openCreate">
-          <v-icon start icon="fa-solid fa-envelope"></v-icon>
-          Invite
-        </v-btn>
-      </v-col>
       <v-col cols="12">
         <coreDataTableComponent :headers="inviteHeaders" :items="invitations" :fetch-action="fetchInvitations" :search="false">
+          <!-- Card-level action: the Invite button lives inside the datatable card
+               title (top-right — no search on this table), like other admin tabs. -->
+          <template #toolbar>
+            <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none" @click="openCreate">
+              <v-icon start icon="fa-solid fa-envelope"></v-icon>
+              Invite
+            </v-btn>
+          </template>
           <template #status="{ item }">
             <v-chip :color="inviteStatus(item).color" size="small" variant="tonal">{{ inviteStatus(item).label }}</v-chip>
           </template>
