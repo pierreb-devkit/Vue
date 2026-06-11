@@ -21,7 +21,7 @@
               size="small"
               variant="text"
               color="error"
-              :disabled="!!item.usedAt"
+              :disabled="!!item.usedAt || !!item.revokedAt || item.status === 'revoked'"
               @click="openRevoke(item)"
             ></v-btn>
           </template>
@@ -69,6 +69,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
@@ -124,14 +125,12 @@ export default {
       await useInvitationsStore().getInvitations();
     },
     /**
-     * @desc Derive a status label + color from an invitation's lifecycle fields.
+     * @desc Shared status derivation (lib/invitations.status — revoked-aware).
      * @param {Object} item - invitation
      * @returns {{ label: string, color: string }}
      */
     inviteStatus(item) {
-      if (item.usedAt) return { label: 'Accepted', color: 'success' };
-      if (item.expiresAt && new Date(item.expiresAt).getTime() < Date.now()) return { label: 'Expired', color: 'error' };
-      return { label: 'Pending', color: 'warning' };
+      return deriveInviteStatus(item);
     },
     /**
      * @desc Open the create-invite dialog (reset fields).

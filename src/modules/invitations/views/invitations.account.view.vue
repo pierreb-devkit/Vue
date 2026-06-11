@@ -68,6 +68,9 @@
               <v-chip size="small" variant="tonal" color="success">{{ referralSummary.joined }} joined</v-chip>
               <v-chip size="small" variant="tonal" color="warning">{{ referralSummary.pending }} pending</v-chip>
               <v-chip v-if="referralSummary.expired" size="small" variant="tonal" color="error">{{ referralSummary.expired }} expired</v-chip>
+              <v-chip v-if="referralSummary.revoked" size="small" variant="tonal">
+                {{ referralSummary.revoked }} revoked
+              </v-chip>
             </div>
           </div>
           <coreDataTableComponent :headers="inviteHeaders" :items="invitations" :fetch-action="fetchInvitations" :search="false">
@@ -93,6 +96,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 
 /**
@@ -151,7 +155,7 @@ export default {
      * the SAME per-row derivation as the table's status chips (`inviteStatus`)
      * so the header and the list can never disagree. Pure derivation — no
      * endpoint, no credit math (rewards are a later phase, #5).
-     * @returns {{ total: number, joined: number, pending: number, expired: number }}
+     * @returns {{ total: number, joined: number, pending: number, expired: number, revoked: number }}
      */
     referralSummary() {
       return this.invitations.reduce(
@@ -159,10 +163,11 @@ export default {
           const { label } = this.inviteStatus(item);
           if (label === 'Accepted') counts.joined += 1;
           else if (label === 'Expired') counts.expired += 1;
+          else if (label === 'Revoked') counts.revoked += 1;
           else counts.pending += 1;
           return counts;
         },
-        { total: this.invitations.length, joined: 0, pending: 0, expired: 0 },
+        { total: this.invitations.length, joined: 0, pending: 0, expired: 0, revoked: 0 },
       );
     },
   },
@@ -175,14 +180,12 @@ export default {
       await useInvitationsStore().getInvitations();
     },
     /**
-     * @desc Derive a status label + color from an invitation's lifecycle fields.
+     * @desc Shared status derivation (lib/invitations.status — revoked-aware).
      * @param {Object} item - invitation
      * @returns {{ label: string, color: string }}
      */
     inviteStatus(item) {
-      if (item.usedAt) return { label: 'Accepted', color: 'success' };
-      if (item.expiresAt && new Date(item.expiresAt).getTime() < Date.now()) return { label: 'Expired', color: 'error' };
-      return { label: 'Pending', color: 'warning' };
+      return deriveInviteStatus(item);
     },
     /**
      * @desc Submit a new invitation, then refresh the list and reset the form.

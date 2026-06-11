@@ -90,6 +90,12 @@ describe('invitations.admin.view', () => {
     expect(wrapper.vm.inviteStatus({ usedAt: null, expiresAt: '2999-01-01' }).label).toBe('Pending');
   });
 
+  it('inviteStatus derives Revoked (revokedAt or status) ahead of expiry', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.inviteStatus({ revokedAt: '2026-01-01', expiresAt: '2000-01-01' }).label).toBe('Revoked');
+    expect(wrapper.vm.inviteStatus({ status: 'revoked' }).label).toBe('Revoked');
+  });
+
   it('submitInvite calls createInvitation then refreshes the list', async () => {
     const wrapper = mountView();
     wrapper.vm.createDialog.email = 'new@b.co';

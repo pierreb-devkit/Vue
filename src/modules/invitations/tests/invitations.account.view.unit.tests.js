@@ -75,6 +75,12 @@ describe('invitations.account.view', () => {
     expect(wrapper.vm.inviteStatus({ usedAt: null, expiresAt: '2999-01-01' }).label).toBe('Pending');
   });
 
+  it('inviteStatus derives Revoked (revokedAt or status) ahead of expiry', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.inviteStatus({ revokedAt: '2026-01-01', expiresAt: '2000-01-01' }).label).toBe('Revoked');
+    expect(wrapper.vm.inviteStatus({ status: 'revoked' }).label).toBe('Revoked');
+  });
+
   it('submitInvite no-ops when the form is invalid', async () => {
     const wrapper = mountView();
     wrapper.vm.inviteForm.valid = false;
@@ -131,15 +137,18 @@ describe('invitations.account.view', () => {
       { id: '2', usedAt: '2026-02-01', expiresAt: '2000-01-01' }, // joined (usedAt wins over expiry)
       { id: '3', usedAt: null, expiresAt: '2000-01-01' }, // expired
       { id: '4', usedAt: null, expiresAt: '2999-01-01' }, // pending
+      { id: '5', usedAt: null, revokedAt: '2026-03-01', expiresAt: '2999-01-01' }, // revoked — NOT pending
     ];
     const wrapper = mountView();
-    expect(wrapper.vm.referralSummary).toEqual({ total: 4, joined: 2, pending: 1, expired: 1 });
+    expect(wrapper.vm.referralSummary).toEqual({ total: 5, joined: 2, pending: 1, expired: 1, revoked: 1 });
+    expect(wrapper.vm.referralSummary.revoked).toBe(1);
+    expect(wrapper.vm.referralSummary.pending).toBe(1);
   });
 
   it('referralSummary on an empty list is all zeros', () => {
     store.invitations = [];
     const wrapper = mountView();
-    expect(wrapper.vm.referralSummary).toEqual({ total: 0, joined: 0, pending: 0, expired: 0 });
+    expect(wrapper.vm.referralSummary).toEqual({ total: 0, joined: 0, pending: 0, expired: 0, revoked: 0 });
   });
 
   it('renders the My referrals summary chips (expired chip hidden at zero)', () => {
