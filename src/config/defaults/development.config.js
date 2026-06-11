@@ -61,15 +61,14 @@ export default {
       billing: 'billing',
     },
   },
-  admin: {
-    // tabs — extra tabs appended after Users & Organizations in /admin
-    // each entry: { value: string, label: string, icon?: string, route: string }
-    // example:
-    // tabs: [
-    //   { value: 'billing', label: 'Billing', icon: 'fa-solid fa-credit-card', route: '/admin/billing' },
-    // ],
-    tabs: [],
-  },
+  // admin.tabs — extra tabs appended after the built-in admin tabs (Users,
+  // Organizations, Readiness, Activity). Contributed by modules via their
+  // `{module}.{env}.config.js` fragment (e.g. the standalone `invitations`
+  // module adds the Invitations tab), NOT hardcoded here — generateConfig's
+  // deepMerge REPLACES arrays, so a global `admin: { tabs: [] }` default would
+  // clobber every module-contributed tab. `admin.layout.vue` guards a missing
+  // `config.admin.tabs` (Array.isArray → []), so omitting it here is safe.
+  // Each entry: { value, label, icon?, route, action?, subject? } (relative route).
   cookie: {
     prefix: 'devkit', // prefix for all cookies (e.g. 'devkit' → 'devkit_token')
   },

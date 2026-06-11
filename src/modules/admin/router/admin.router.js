@@ -3,7 +3,6 @@
  */
 import adminLayout from '../views/admin.layout.vue';
 import adminUsers from '../views/admin.users.view.vue';
-import adminInvitations from '../views/admin.invitations.view.vue';
 import adminOrganizations from '../views/admin.organizations.view.vue';
 import adminReadiness from '../views/admin.readiness.view.vue';
 import adminActivity from '../views/admin.activity.view.vue';
@@ -51,14 +50,6 @@ export default [
         path: 'users',
         name: 'Admin Users',
         component: adminUsers,
-        meta: {
-          action: 'manage', subject: 'UserAdmin',
-        },
-      },
-      {
-        path: 'invitations',
-        name: 'Admin Invitations',
-        component: adminInvitations,
         meta: {
           action: 'manage', subject: 'UserAdmin',
         },
