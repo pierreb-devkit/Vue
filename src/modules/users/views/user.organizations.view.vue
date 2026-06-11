@@ -190,7 +190,7 @@ export default {
     }
     try {
       // The persistent list above is the source of truth; the transient login
-      // nudge is app-level (organizations.pendingInvitationsNudge in app.vue).
+      // nudge is app-level (organizations.loginNotices in app.vue).
       await this.organizationsStore.fetchMyPendingInvitations();
     } catch {
       // interceptor handles snackbar
