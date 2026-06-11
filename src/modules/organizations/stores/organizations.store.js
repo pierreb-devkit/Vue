@@ -25,6 +25,9 @@ export const useOrganizationsStore = defineStore('organizations', {
     organizations: [],
     members: [],
     adminPendingRequests: [],
+    // Pending owner_add invitations the current user must accept (source:'owner_add').
+    // Fetched on mount of the My Organizations view — the durable, offline-safe surface.
+    pendingInvitations: [],
   }),
 
   actions: {
@@ -340,6 +343,69 @@ export const useOrganizationsStore = defineStore('organizations', {
     async acceptInvite(token) {
       const api = apiBase();
       const res = await axios.post(`${api}/invites/${token}/accept`);
+      return res.data.data;
+    },
+
+    /**
+     * @desc Look up a single user by EXACT email to add them to an organization
+     *       (owner/admin only). Not fuzzy — the caller types a full email. Returns
+     *       `{ id, displayName, email }` on a match, or null when no account exists.
+     * @param {string} organizationId - The organization the owner/admin manages
+     * @param {string} email - The exact email to look up
+     * @returns {Promise<{ id: string, displayName: string, email: string }|null>}
+     */
+    async searchUserByEmail(organizationId, email) {
+      const api = apiBase();
+      const query = new URLSearchParams({ email: (email || '').trim() });
+      const res = await axios.get(`${api}/organizations/${organizationId}/members/search?${query.toString()}`);
+      return res.data.data || null;
+    },
+
+    /**
+     * @desc Add a user to an organization (owner/admin only). Creates a PENDING
+     *       owner_add membership — the invited user is NOT immediately active and
+     *       must accept via acceptMembership. Success/error toast is fired by the
+     *       axios POST interceptor.
+     * @param {string} organizationId - The organization to add the user to
+     * @param {string} userId - The id of the user being added
+     * @param {string} [role] - The role to grant on acceptance (member/admin)
+     * @returns {Promise<Object>} The created pending membership
+     */
+    async addMember(organizationId, userId, role) {
+      const api = apiBase();
+      const body = role ? { userId, role } : { userId };
+      const res = await axios.post(`${api}/organizations/${organizationId}/members`, body);
+      capture('org_member_added', { organization_id: organizationId, role: role || 'member' });
+      return res.data.data;
+    },
+
+    /**
+     * @desc Fetch the current user's own pending owner_add invitations — memberships
+     *       an owner/admin created for them that they must accept. Durable, offline-safe
+     *       surface: fetched on mount so an invitee sees it on their next login.
+     * @returns {Promise<Array>} The user's pending owner_add memberships
+     */
+    async fetchMyPendingInvitations() {
+      const api = apiBase();
+      const res = await axios.get(`${api}/membership-requests/mine/pending`);
+      this.pendingInvitations = res.data.data || [];
+      return this.pendingInvitations;
+    },
+
+    /**
+     * @desc Accept a pending owner_add invitation (the invited user consents),
+     *       flipping the membership PENDING → ACTIVE. Drops it from the local
+     *       pending list on success. Success/error toast is fired by the axios PUT
+     *       interceptor.
+     * @param {string} membershipId - The pending membership to accept
+     * @returns {Promise<Object>} The activated membership
+     */
+    async acceptMembership(membershipId) {
+      const api = apiBase();
+      const res = await axios.put(`${api}/membership-requests/${membershipId}/accept`);
+      this.pendingInvitations = this.pendingInvitations.filter(
+        (inv) => inv.id !== membershipId && inv._id !== membershipId,
+      );
       return res.data.data;
     },
   },

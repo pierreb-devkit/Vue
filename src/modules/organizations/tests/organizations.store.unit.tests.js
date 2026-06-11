@@ -69,6 +69,7 @@ describe('Organizations Store', () => {
     expect(store.organizations).toEqual([]);
     expect(store.members).toEqual([]);
     expect(store.adminPendingRequests).toEqual([]);
+    expect(store.pendingInvitations).toEqual([]);
   });
 
   describe('fetchOrganizations', () => {
@@ -631,6 +632,129 @@ describe('Organizations Store', () => {
       const result = await store.searchOrganizationsByDomain();
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('searchUserByEmail', () => {
+    it('should search a user by exact email and return the match', async () => {
+      const store = useOrganizationsStore();
+      const match = { id: 'u1', displayName: 'Jane Doe', email: 'jane@example.com' };
+
+      axios.get.mockResolvedValueOnce({ data: { data: match } });
+
+      const result = await store.searchUserByEmail('org1', 'jane@example.com');
+
+      expect(axios.get).toHaveBeenCalledWith(
+        `${API}/organizations/org1/members/search?email=jane%40example.com`,
+      );
+      expect(result).toEqual(match);
+    });
+
+    it('should return null when no user matches', async () => {
+      const store = useOrganizationsStore();
+
+      axios.get.mockResolvedValueOnce({ data: { data: null } });
+
+      const result = await store.searchUserByEmail('org1', 'ghost@example.com');
+
+      expect(result).toBeNull();
+    });
+
+    it('should trim and URL-encode the email before querying', async () => {
+      const store = useOrganizationsStore();
+
+      axios.get.mockResolvedValueOnce({ data: { data: null } });
+
+      await store.searchUserByEmail('org1', '  a+b@example.com  ');
+
+      expect(axios.get).toHaveBeenCalledWith(
+        `${API}/organizations/org1/members/search?email=a%2Bb%40example.com`,
+      );
+    });
+  });
+
+  describe('addMember', () => {
+    it('should POST userId and role and return the created membership', async () => {
+      const store = useOrganizationsStore();
+      const created = { id: 'm9', status: 'pending', source: 'owner_add', role: 'member' };
+
+      axios.post.mockResolvedValueOnce({ data: { data: created } });
+
+      const result = await store.addMember('org1', 'u1', 'member');
+
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/members`, {
+        userId: 'u1',
+        role: 'member',
+      });
+      expect(result).toEqual(created);
+    });
+
+    it('should omit role from the body when not provided', async () => {
+      const store = useOrganizationsStore();
+
+      axios.post.mockResolvedValueOnce({ data: { data: { id: 'm9' } } });
+
+      await store.addMember('org1', 'u1');
+
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/members`, {
+        userId: 'u1',
+      });
+    });
+  });
+
+  describe('fetchMyPendingInvitations', () => {
+    it('should fetch and set the pending invitations list', async () => {
+      const store = useOrganizationsStore();
+      const invitations = [
+        { id: 'inv1', role: 'member', organizationId: { id: 'org1', name: 'Acme' } },
+      ];
+
+      axios.get.mockResolvedValueOnce({ data: { data: invitations } });
+
+      const result = await store.fetchMyPendingInvitations();
+
+      expect(axios.get).toHaveBeenCalledWith(`${API}/membership-requests/mine/pending`);
+      expect(store.pendingInvitations).toEqual(invitations);
+      expect(result).toEqual(invitations);
+    });
+
+    it('should set an empty array when no data is returned', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ id: 'stale' }];
+
+      axios.get.mockResolvedValueOnce({ data: { data: null } });
+
+      const result = await store.fetchMyPendingInvitations();
+
+      expect(store.pendingInvitations).toEqual([]);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('acceptMembership', () => {
+    it('should PUT accept, drop the invitation locally, and return the membership', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ id: 'inv1' }, { id: 'inv2' }];
+      const accepted = { id: 'inv1', status: 'active' };
+
+      axios.put.mockResolvedValueOnce({ data: { data: accepted } });
+
+      const result = await store.acceptMembership('inv1');
+
+      expect(axios.put).toHaveBeenCalledWith(`${API}/membership-requests/inv1/accept`);
+      expect(store.pendingInvitations).toEqual([{ id: 'inv2' }]);
+      expect(result).toEqual(accepted);
+    });
+
+    it('should drop the invitation matched by _id', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ _id: 'a' }, { _id: 'b' }];
+
+      axios.put.mockResolvedValueOnce({ data: { data: { id: 'a' } } });
+
+      await store.acceptMembership('a');
+
+      expect(store.pendingInvitations).toEqual([{ _id: 'b' }]);
     });
   });
 
