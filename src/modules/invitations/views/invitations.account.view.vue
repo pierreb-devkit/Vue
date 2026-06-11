@@ -55,18 +55,33 @@
         </v-card>
       </v-col>
 
-      <!-- My invitations -->
+      <!-- My referrals: summary header + the invitations list -->
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
-          <div class="d-flex align-center mb-4">
-            <v-icon icon="fa-solid fa-envelope" color="primary" class="mr-3"></v-icon>
-            <span class="text-title-large">My invitations</span>
+          <div class="d-flex align-center flex-wrap ga-2 mb-4">
+            <v-icon icon="fa-solid fa-users" color="primary" class="mr-1"></v-icon>
+            <span class="text-title-large">My referrals</span>
+            <v-spacer></v-spacer>
+            <!-- Counts derived from the list below (same derivation as the status chips) -->
+            <div class="d-flex align-center flex-wrap ga-2" data-test="referrals-summary">
+              <v-chip size="small" variant="tonal">{{ referralSummary.total }} invited</v-chip>
+              <v-chip size="small" variant="tonal" color="success">{{ referralSummary.joined }} joined</v-chip>
+              <v-chip size="small" variant="tonal" color="warning">{{ referralSummary.pending }} pending</v-chip>
+              <v-chip v-if="referralSummary.expired" size="small" variant="tonal" color="error">{{ referralSummary.expired }} expired</v-chip>
+            </div>
           </div>
           <coreDataTableComponent :headers="inviteHeaders" :items="invitations" :fetch-action="fetchInvitations" :search="false">
             <template #status="{ item }">
               <v-chip :color="inviteStatus(item).color" size="small" variant="tonal">{{ inviteStatus(item).label }}</v-chip>
             </template>
           </coreDataTableComponent>
+          <!-- Referral rewards placeholder — credits land here in a later phase (#5). No numbers, no math. -->
+          <div class="d-flex align-center mt-4" data-test="referral-rewards-placeholder">
+            <v-chip size="small" variant="tonal" class="text-medium-emphasis">
+              <v-icon start icon="fa-solid fa-coins" size="x-small"></v-icon>
+              Referral rewards — coming soon
+            </v-chip>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -89,8 +104,10 @@ import coreDataTableComponent from '../../core/components/core.datatable.compone
  * `/users/invitations` child route + a config-contributed `users.extraTabs`
  * entry, both gated by `isModuleActive('invitations')`.
  *
- * P8b expands this into the full referrals experience (referral attribution,
- * rewards). This phase ships the invite-a-contact + my-invites foundation.
+ * P8b frames this as the referrals experience: a summary header (counts by
+ * status, derived from the same list the table shows) + a "Referral rewards —
+ * coming soon" placeholder marking where the credit grant (#5) will land.
+ * Scaffold only — ZERO credit math/logic lives here.
  */
 export default {
   name: 'InvitationsAccount',
@@ -128,6 +145,25 @@ export default {
      */
     error() {
       return useInvitationsStore().error;
+    },
+    /**
+     * @desc Referrals summary counts, derived from the invitations list through
+     * the SAME per-row derivation as the table's status chips (`inviteStatus`)
+     * so the header and the list can never disagree. Pure derivation — no
+     * endpoint, no credit math (rewards are a later phase, #5).
+     * @returns {{ total: number, joined: number, pending: number, expired: number }}
+     */
+    referralSummary() {
+      return this.invitations.reduce(
+        (counts, item) => {
+          const { label } = this.inviteStatus(item);
+          if (label === 'Accepted') counts.joined += 1;
+          else if (label === 'Expired') counts.expired += 1;
+          else counts.pending += 1;
+          return counts;
+        },
+        { total: this.invitations.length, joined: 0, pending: 0, expired: 0 },
+      );
     },
   },
   methods: {

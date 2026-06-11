@@ -124,4 +124,52 @@ describe('invitations.account.view', () => {
     expect(wrapper.vm.rules.mail('user@example.com')).toBe(true);
     expect(wrapper.vm.rules.mail('not-an-email')).toBe('E-mail must be valid');
   });
+
+  it('referralSummary derives counts by status from a mixed list', () => {
+    store.invitations = [
+      { id: '1', usedAt: '2026-01-01', expiresAt: '2999-01-01' }, // joined
+      { id: '2', usedAt: '2026-02-01', expiresAt: '2000-01-01' }, // joined (usedAt wins over expiry)
+      { id: '3', usedAt: null, expiresAt: '2000-01-01' }, // expired
+      { id: '4', usedAt: null, expiresAt: '2999-01-01' }, // pending
+    ];
+    const wrapper = mountView();
+    expect(wrapper.vm.referralSummary).toEqual({ total: 4, joined: 2, pending: 1, expired: 1 });
+  });
+
+  it('referralSummary on an empty list is all zeros', () => {
+    store.invitations = [];
+    const wrapper = mountView();
+    expect(wrapper.vm.referralSummary).toEqual({ total: 0, joined: 0, pending: 0, expired: 0 });
+  });
+
+  it('renders the My referrals summary chips (expired chip hidden at zero)', () => {
+    store.invitations = [
+      { id: '1', usedAt: '2026-01-01', expiresAt: '2999-01-01' },
+      { id: '2', usedAt: null, expiresAt: '2999-01-01' },
+      { id: '3', usedAt: null, expiresAt: '2999-01-01' },
+    ];
+    const wrapper = mountView();
+    expect(wrapper.text()).toContain('My referrals');
+    const summary = wrapper.find('[data-test="referrals-summary"]');
+    expect(summary.exists()).toBe(true);
+    expect(summary.text()).toContain('3 invited');
+    expect(summary.text()).toContain('1 joined');
+    expect(summary.text()).toContain('2 pending');
+    expect(summary.text()).not.toContain('expired');
+  });
+
+  it('renders the expired chip when expired invitations exist', () => {
+    store.invitations = [{ id: '1', usedAt: null, expiresAt: '2000-01-01' }];
+    const wrapper = mountView();
+    expect(wrapper.find('[data-test="referrals-summary"]').text()).toContain('1 expired');
+  });
+
+  it('renders the referral-rewards placeholder — honest, no numbers', () => {
+    const wrapper = mountView();
+    const placeholder = wrapper.find('[data-test="referral-rewards-placeholder"]');
+    expect(placeholder.exists()).toBe(true);
+    expect(placeholder.text()).toContain('Referral rewards — coming soon');
+    // Scaffold contract (#5 not built): the placeholder must never show numbers/fake math
+    expect(placeholder.text()).not.toMatch(/\d/);
+  });
 });
