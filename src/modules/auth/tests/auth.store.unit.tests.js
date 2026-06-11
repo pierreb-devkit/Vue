@@ -964,11 +964,12 @@ describe('Auth Store', () => {
       expect(axios.post.mock.calls[0][0]).toMatch(/\/signup$/);
     });
 
-    it('verifyInvite returns { valid, email } from the API', async () => {
+    it('verifyInvite hits the canonical /api/invitations/verify (NOT the legacy /auth/invitations alias)', async () => {
       const authStore = useAuthStore();
       axios.get.mockResolvedValueOnce({ data: { data: { valid: true, email: 'a@b.co' } } });
       const r = await authStore.verifyInvite('tok123');
-      expect(axios.get.mock.calls[0][0]).toContain('/invitations/verify/tok123');
+      expect(axios.get).toHaveBeenCalledWith(expect.stringMatching(/\/api\/invitations\/verify\/tok123$/));
+      expect(axios.get).not.toHaveBeenCalledWith(expect.stringContaining('/auth/invitations/'));
       expect(r).toEqual({ valid: true, email: 'a@b.co' });
     });
 
