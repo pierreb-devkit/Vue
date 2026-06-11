@@ -49,6 +49,10 @@ const stubs = {
   'v-icon': { template: '<i />' },
 };
 
+/**
+ * Mount InvitationsAdmin in shallow mode with shared stubs.
+ * @returns {import('@vue/test-utils').VueWrapper} Mounted component wrapper.
+ */
 const mountView = () =>
   shallowMount(InvitationsAdmin, {
     global: {

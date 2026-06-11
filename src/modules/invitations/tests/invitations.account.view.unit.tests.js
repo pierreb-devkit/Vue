@@ -29,6 +29,10 @@ const stubs = {
   'v-icon': { template: '<i />' },
 };
 
+/**
+ * Mount InvitationsAccount in shallow mode with shared stubs.
+ * @returns {import('@vue/test-utils').VueWrapper} Mounted component wrapper.
+ */
 const mountView = () =>
   shallowMount(InvitationsAccount, {
     global: {

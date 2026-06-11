@@ -34,9 +34,10 @@ export const invitationsAdminRoutes = [
 ];
 
 /**
- * Account-surface child route (rendered inside the account layout). Requires an
- * authenticated user; fine-grained tab visibility is handled by the
- * `users.extraTabs` CASL descriptor (`create` / `Invitation`).
+ * Account-surface child route (rendered inside the account layout). CASL-gated
+ * to users who can create an Invitation (`create` / `Invitation`); this mirrors
+ * the tab-descriptor guard in `users.extraTabs` so direct navigation respects
+ * the same ability check.
  * @type {Array<object>}
  */
 export const invitationsAccountRoutes = [
@@ -46,6 +47,8 @@ export const invitationsAccountRoutes = [
     component: () => import('../views/invitations.account.view.vue'),
     meta: {
       requiresAuth: true,
+      action: 'create',
+      subject: 'Invitation',
     },
   },
 ];
