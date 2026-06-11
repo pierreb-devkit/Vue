@@ -28,7 +28,7 @@ Designed to be cloned into downstream projects and kept up-to-date via `git merg
 ### Core
 
 - **User** : classic register / auth
-- **Organizations** : create, manage members, invite, switch context (optional — controlled by backend config)
+- **Organizations** : create, manage members, switch context (optional — controlled by backend config)
 - **CASL Abilities** : route guards + navigation + template helpers powered by `@casl/ability` and `@casl/vue`
 
 ### Examples

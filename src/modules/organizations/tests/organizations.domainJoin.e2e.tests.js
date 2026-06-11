@@ -332,9 +332,9 @@ test.describe('Organization Domain Join E2E', () => {
     const saveButton = page.locator('button', { hasText: 'Save Changes' });
     await expect(saveButton).toHaveCount(0, { timeout: 5000 });
 
-    // Invite Member NOT visible
-    const inviteSection = page.locator('text=Invite Member');
-    await expect(inviteSection).toHaveCount(0, { timeout: 5000 });
+    // Add member button (P5b owner_add affordance) NOT visible
+    const addMemberButton = page.locator('[data-test="org-add-member-open"]');
+    await expect(addMemberButton).toHaveCount(0, { timeout: 5000 });
 
     // Pending Join Requests NOT visible
     const pendingSection = page.locator('text=Pending Join Requests');
@@ -356,8 +356,8 @@ test.describe('Organization Domain Join E2E', () => {
     const deleteButton = page.locator('button', { hasText: 'Delete' });
     await expect(deleteButton).toBeVisible({ timeout: 10000 });
 
-    // Invite Member IS visible
-    const inviteSection = page.locator('text=Invite Member');
-    await expect(inviteSection).toBeVisible({ timeout: 10000 });
+    // Add member button (P5b owner_add affordance) IS visible
+    const addMemberButton = page.locator('[data-test="org-add-member-open"]');
+    await expect(addMemberButton).toBeVisible({ timeout: 10000 });
   });
 });

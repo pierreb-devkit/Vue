@@ -81,7 +81,7 @@ export default [
           action: 'manage', subject: 'UserAdmin',
         },
         // Default child: reuses the shared general-tab so admin org detail
-        // renders the same sections (Details, Roles, Members, Invite, Pending).
+        // renders the same sections (Details, Roles, Members, Pending).
         children: [
           {
             path: '',

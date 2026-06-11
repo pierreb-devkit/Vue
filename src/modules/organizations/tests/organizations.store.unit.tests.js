@@ -568,46 +568,13 @@ describe('Organizations Store', () => {
     });
   });
 
-  describe('inviteMember', () => {
-    it('should send invite and return data', async () => {
+  describe('org email-invite removal (P7 — Node endpoints gone in P4)', () => {
+    it('should not expose the removed inviteMember/getInvite/acceptInvite actions', () => {
       const store = useOrganizationsStore();
-      const mockInvite = { id: 'inv1', email: 'test@example.com' };
 
-      axios.post.mockResolvedValueOnce({ data: { data: mockInvite } });
-
-      const result = await store.inviteMember('org1', 'test@example.com');
-
-      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/invites`, { email: 'test@example.com' });
-      expect(result).toEqual(mockInvite);
-      expect(mockCapture).toHaveBeenCalledWith('invitation_sent', { organization_id: 'org1', email: 'test@example.com' });
-    });
-  });
-
-  describe('getInvite', () => {
-    it('should get invite by token', async () => {
-      const store = useOrganizationsStore();
-      const mockInvite = { id: 'inv1', organization: 'org1' };
-
-      axios.get.mockResolvedValueOnce({ data: { data: mockInvite } });
-
-      const result = await store.getInvite('token123');
-
-      expect(axios.get).toHaveBeenCalledWith(`${API}/invites/token123`);
-      expect(result).toEqual(mockInvite);
-    });
-  });
-
-  describe('acceptInvite', () => {
-    it('should accept invite by token', async () => {
-      const store = useOrganizationsStore();
-      const mockResult = { id: 'inv1', status: 'accepted' };
-
-      axios.post.mockResolvedValueOnce({ data: { data: mockResult } });
-
-      const result = await store.acceptInvite('token123');
-
-      expect(axios.post).toHaveBeenCalledWith(`${API}/invites/token123/accept`);
-      expect(result).toEqual(mockResult);
+      expect(store.inviteMember).toBeUndefined();
+      expect(store.getInvite).toBeUndefined();
+      expect(store.acceptInvite).toBeUndefined();
     });
   });
 

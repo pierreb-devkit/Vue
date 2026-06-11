@@ -72,7 +72,13 @@ describe('organizations.members.component — add member', () => {
   });
 
   it('shows the Add member affordance when the user can create a Membership', async () => {
-    abilityMock.can.mockImplementation((action, subject) => action === 'create' && subject === 'Membership');
+    // ability.can is called with a subject()-tagged object, not the bare string — check the
+    // __caslSubjectType__ tag (set by @casl/ability's subject() helper) plus the organizationId.
+    abilityMock.can.mockImplementation((action, sub) => {
+      if (action !== 'create') return false;
+      if (typeof sub === 'string') return sub === 'Membership';
+      return sub?.__caslSubjectType__ === 'Membership' && sub?.organizationId === 'org1';
+    });
     const { wrapper } = await mountComponent();
     expect(wrapper.find('[data-test="org-add-member-open"]').exists()).toBe(true);
     expect(wrapper.vm.canAddMember()).toBe(true);

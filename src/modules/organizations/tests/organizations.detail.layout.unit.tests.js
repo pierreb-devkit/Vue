@@ -309,7 +309,7 @@ function mountGeneralTab(orgId = 'abc123') {
   });
 }
 
-describe('organization.general.tab.vue — 6 native sections (C3)', () => {
+describe('organization.general.tab.vue — native sections (C3, email-invite removed P7)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
@@ -329,10 +329,15 @@ describe('organization.general.tab.vue — 6 native sections (C3)', () => {
     expect(wrapper.html()).toContain('members-stub');
   });
 
-  it('renders the Invite Member section when canManage is true', () => {
+  it('does NOT render the org email-invite section (removed in P7 — Node endpoints gone in P4)', () => {
     const wrapper = mountGeneralTab();
-    // canManage uses ability.can which is mocked to return true
-    expect(wrapper.html()).toContain('Invite Member');
+    // Even with canManage true (ability.can is mocked to return true), the
+    // email-invite card is gone — owner_add via the Members "Add member"
+    // dialog (P5b) is the replacement flow.
+    expect(wrapper.html()).not.toContain('Invite Member');
+    expect(wrapper.html()).not.toContain('Send Invite');
+    expect(wrapper.vm.sendInvite).toBeUndefined();
+    expect(wrapper.vm.copyInviteLink).toBeUndefined();
   });
 
   it('renders the Pending Join Requests section when there are pending requests', async () => {

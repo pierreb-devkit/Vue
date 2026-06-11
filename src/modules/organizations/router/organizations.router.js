@@ -5,7 +5,6 @@ import organizationRequired from '../views/organizations.required.view.vue';
 import organizationCreate from '../views/organization.create.view.vue';
 import organizationLayout from '../components/organization.detail.component.vue';
 import organizationGeneralTab from '../components/organization.general.tab.vue';
-import invite from '../views/invite.view.vue';
 
 /**
  * Parent route path for the organization detail page.
@@ -48,7 +47,7 @@ export default [
       subject: 'Organization',
     },
     // Default child: native org-settings sections (Details, Roles, Members,
-    // Invite, Pending Requests). Downstream child modules (e.g. billing)
+    // Pending Requests). Downstream child modules (e.g. billing)
     // are injected via organizationChildModules in app.router.js.
     children: [
       {
@@ -69,14 +68,6 @@ export default [
         },
       },
     ],
-  },
-  {
-    path: '/invite',
-    name: 'Invite',
-    component: invite,
-    meta: {
-      display: false,
-    },
   },
 ];
 

@@ -239,6 +239,7 @@
 /**
  * Module dependencies.
  */
+import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import roleColor from '../../../lib/helpers/roleColor';
@@ -351,26 +352,36 @@ export default {
       return user.email || 'Unknown';
     },
     roleColor,
+    /**
+     * @desc Check whether the current user can update memberships in the viewed organization.
+     * @returns {boolean}
+     */
     canUpdateMember() {
       if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('update', 'Membership');
+        return ability.can('update', subject('Membership', { organizationId: this.organizationId }));
       }
       return false;
     },
+    /**
+     * @desc Check whether the current user can remove memberships in the viewed organization.
+     * @returns {boolean}
+     */
     canRemoveMember() {
       if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('delete', 'Membership');
+        return ability.can('delete', subject('Membership', { organizationId: this.organizationId }));
       }
       return false;
     },
     /**
      * @desc Gate the add-member affordance on the owner/admin CASL ability. Mirrors
      *       the backend: owners (manage) + admins (create) may add; members cannot.
+     *       Scoped to the viewed organization so a user who owns another org does not
+     *       see this control when browsing an org where they are only a member.
      * @returns {boolean}
      */
     canAddMember() {
       if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('create', 'Membership');
+        return ability.can('create', subject('Membership', { organizationId: this.organizationId }));
       }
       return false;
     },
