@@ -2,6 +2,10 @@
 
 Vue 3 + Vuetify 4 stack from Devkit. Standalone frontend or fullstack with Node/Swift. Cloned into downstream projects, kept up-to-date via upstream merges.
 
+## 🔓 PUBLIC OSS repo — no downstream references
+
+This repository is open source. **Never reference downstream consumers** — project names, domains, cluster/infra details, business decisions, or links to private trackers — in code, comments, docs, issues, PRs, or commit messages. Use neutral wording ("a downstream consumer", "downstream rollouts"). Downstream-specific operations are tracked on the consumer's own repo, never here.
+
 ## Quick start
 
 - Source of truth: `README.md` + `package.json` scripts
