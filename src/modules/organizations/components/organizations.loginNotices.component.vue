@@ -132,6 +132,10 @@ function benignMessage(err) {
 export default {
   name: 'OrganizationsLoginNotices',
 
+  /**
+   * @desc Reactive state for the two login-notice surfaces.
+   * @returns {{ suggested: { visible: boolean, loading: boolean, feedback: { visible: boolean, color: string, text: string } }, nudge: { announced: boolean, dismissed: boolean } }}
+   */
   data: () => ({
     /**
      * @desc Suggested-join banner state.
@@ -207,6 +211,7 @@ export default {
      * via the `announced` flag; logout re-arms it. The suggested-join banner
      * is untouched here — its visibility is driven by the auth-store payload.
      * @param {boolean} loggedIn - Whether the user is logged in
+     * @returns {Promise<void>}
      */
     isLoggedIn: {
       immediate: true,
