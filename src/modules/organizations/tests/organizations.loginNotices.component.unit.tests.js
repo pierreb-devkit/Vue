@@ -20,6 +20,18 @@ vi.mock('../../../lib/services/config', () => ({
     cookie: { prefix: 'devkit' },
   },
 }));
+
+// Mock generated @/config — used directly by the component for feature flags
+// (isLoggedIn watcher gates on config.organizations being truthy).
+// Without this mock, a clean checkout without src/config/index.js would fail to
+// import the SFC and the nudge logic would be silently skipped.
+vi.mock('@/config', () => ({
+  default: {
+    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
+    cookie: { prefix: 'devkit' },
+    organizations: { enabled: true },
+  },
+}));
 vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn(), ability: { rules: [], can: vi.fn() } }));
 
 // ── Component + store imports (real pinia stores, mocked per-instance) ───────
