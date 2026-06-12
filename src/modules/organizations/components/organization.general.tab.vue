@@ -55,7 +55,7 @@
           color="surface"
           :flat="config.vuetify.theme.flat"
           :class="config.vuetify.theme.rounded"
-          class="pa-6 mt-4"
+          class="pa-6 mt-3"
         >
           <h3 class="text-title-medium font-weight-medium mb-4">Roles & Permissions</h3>
           <v-list density="compact" class="bg-transparent">
@@ -80,7 +80,7 @@
           color="surface"
           :flat="config.vuetify.theme.flat"
           :class="config.vuetify.theme.rounded"
-          class="pa-6 mt-4"
+          class="pa-6 mt-3"
         >
           <h3 class="text-title-medium font-weight-medium mb-4">
             Pending Join Requests

@@ -14,7 +14,8 @@ vi.mock('../../../lib/helpers/roleColor', () => ({ default: () => 'primary' }));
 import OrganizationsMembersComponent from '../components/organizations.members.component.vue';
 
 const sharedStubs = {
-  coreDataTableComponent: { template: '<div data-test="datatable" />' },
+  // Renders the card-level #toolbar slot (hosts the Add member button)
+  coreDataTableComponent: { template: '<div data-test="datatable"><slot name="toolbar" /></div>' },
   userAvatarComponent: { template: '<div />' },
   'v-btn': { template: '<button v-bind="$attrs"><slot /></button>', inheritAttrs: false },
   'v-icon': { template: '<i />' },

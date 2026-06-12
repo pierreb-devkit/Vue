@@ -13,9 +13,10 @@ vi.mock('../../../lib/services/config', () => ({
 }));
 
 const stubs = {
-  // Render named slots so the #status/#invitedBy/#actions template functions are invoked
+  // Render named slots so the #toolbar/#status/#invitedBy/#actions template functions are invoked
   coreDataTableComponent: {
     template: `<div>
+      <slot name="toolbar" />
       <slot name="status" :item="{ id:'s1', email:'a@b.co', usedAt: null, expiresAt: '2999-01-01', invitedBy: null }" />
       <slot name="invitedBy" :item="{ id:'s2', email:'b@b.co', usedAt: null, expiresAt: null, invitedBy: { email: 'admin@b.co' } }" />
       <slot name="invitedBy" :item="{ id:'s4', email:'d@b.co', usedAt: null, expiresAt: null, invitedBy: null }" />

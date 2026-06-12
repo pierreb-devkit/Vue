@@ -116,19 +116,6 @@
       confirm-color="error"
       @confirm="leaveOrg"
     />
-
-    <!-- Login nudge: not triggered by a POST/PUT response, so a component-local
-         snackbar (the persistent list above is the source of truth). -->
-    <v-snackbar v-model="nudge" location="top right" color="info" :timeout="6000" data-test="pending-invitations-nudge">
-      <span class="text-body-medium">
-        <v-icon icon="fa-solid fa-envelope-open-text" size="small" class="mr-1" />
-        You have {{ pendingInvitations.length }}
-        pending {{ pendingInvitations.length === 1 ? 'invitation' : 'invitations' }} to accept.
-      </span>
-      <template #actions>
-        <v-btn variant="text" size="small" icon="$close" @click="nudge = false" />
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -157,7 +144,6 @@ export default {
       leaveDialog: false,
       orgToLeave: null,
       acceptingId: null,
-      nudge: false,
     };
   },
   computed: {
@@ -203,10 +189,9 @@ export default {
       // interceptor handles snackbar
     }
     try {
+      // The persistent list above is the source of truth; the transient login
+      // nudge is app-level (organizations.loginNotices in app.vue).
       await this.organizationsStore.fetchMyPendingInvitations();
-      // Nudge on login when there are invitations to accept. The persistent list
-      // above is the source of truth; this is only a transient prompt.
-      this.nudge = this.pendingInvitations.length > 0;
     } catch {
       // interceptor handles snackbar
     }
@@ -249,7 +234,8 @@ export default {
       try {
         await this.organizationsStore.acceptMembership(membershipId);
         // Membership is accepted server-side: reflect it before touching abilities.
-        this.nudge = false;
+        // (acceptMembership drains the shared pendingInvitations list, which also
+        // hides the app-level nudge.)
         await this.organizationsStore.fetchOrganizations();
         await this.organizationsStore.fetchMyPendingInvitations();
         // Soft-refresh abilities: token() updates abilities/user in-place without

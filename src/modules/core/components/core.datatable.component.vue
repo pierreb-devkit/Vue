@@ -1,8 +1,13 @@
 <template>
   <v-card width="100%" class="datatable" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-    <v-card-title class="d-flex align-center">
+    <v-card-title class="d-flex align-center ga-3">
       <span class="text-title-medium">{{ title }}</span>
       <v-spacer></v-spacer>
+      <!-- Optional card-level actions (e.g. an "Add" button) rendered inside the card
+           title, left of the search field. Named `toolbar` — NOT `actions` — because
+           row slots resolve dynamically via `header.slotName || header.value` and
+           several consumers already pass #actions for the row actions column. -->
+      <slot name="toolbar"></slot>
       <v-text-field
         v-if="search"
         v-model="textSearch"
