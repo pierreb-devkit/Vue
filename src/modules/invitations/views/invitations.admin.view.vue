@@ -21,8 +21,14 @@
           <!-- Card-level action: the Invite button lives inside the datatable card
                title (top-right — no search on this table), like other admin tabs. -->
           <template #toolbar>
-            <v-btn color="primary" variant="flat" :class="config.vuetify.theme.rounded" class="text-none" @click="openCreate">
-              <v-icon start icon="fa-solid fa-envelope"></v-icon>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              :class="config.vuetify.theme.rounded"
+              class="text-none text-body-medium"
+              @click="openCreate"
+            >
+              <v-icon icon="fa-solid fa-envelope" size="small" class="mr-2"></v-icon>
               Invite
             </v-btn>
           </template>
