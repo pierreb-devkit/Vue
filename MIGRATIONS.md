@@ -4,6 +4,25 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## surface-tabs: activation-aware tab filtering (2026-06-12, #4295)
+
+Module-contributed surface tabs now respect `config.modules.{name}.activated`. Previously a downstream setting `modules: { invitations: { activated: false } }` still rendered the admin "Invitations" tab + the account "Referrals" tab (the module fragment's `admin.tabs` / `users.extraTabs` merge unconditionally at generation time) while the routes were correctly NOT injected — clicking the tab landed on a 404.
+
+### What changed (this repo)
+
+- `resolveSurfaceTabs(tabs, can, isActive = () => true)` gained an optional third parameter: tab descriptors may carry an optional `module` field, and a tab whose `module` is reported inactive is filtered out. Tabs without a `module` field are never activation-filtered; omitting `isActive` keeps every tab (existing callers unchanged).
+- `core.surfaceTabBar.component.vue` passes `isModuleActive` as the third argument — its single call site means ALL surfaces using `CoreSurfaceTabBar` (admin, account, org-settings) get the gate.
+- The invitations config fragment tags both of its tab descriptors with `module: 'invitations'`; the regenerated `src/config/index.js` carries the field.
+- The filter is render-time on purpose (single source of truth: `isModuleActive`). Generation-time pruning would have to run after all 5 merge layers, handle env-var string coercion (`'false' !== false`), and silently diverge the committed generated file.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. All files are devkit-owned → arrive via `/update-stack`. Re-run `npm run generateConfig` (any `dev`/`build`/`preview` does it) so the regenerated config picks up the `module` fields.
+2. **⚠️ If a downstream overrides `admin.tabs` or `users.extraTabs` in its `{project}.config.js`** (deepMerge REPLACES arrays — the override is the whole array), add `module: '<owning-module>'` to any module-owned tab descriptors in the override, or those tabs will keep rendering when that module is deactivated. Tabs without a `module` field are always shown — project-owned tabs need no change.
+3. Deactivating a module (e.g. `modules: { invitations: { activated: false } }`) now hides its surface tabs as well as its routes — no more tab-to-404.
+
+---
+
 ## organizations: org email-invite UI removed (2026-06-11, #4280)
 
 Phase 7 of the invitations↔org decouple epic. Pairs with Node P4 (#3812), which deleted the backends (`POST /api/organizations/:id/invites`, `GET /api/invites/:token`, `POST /api/invites/:token/accept`) — this UI was dead.
