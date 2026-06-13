@@ -12,6 +12,11 @@ vi.mock('../../../lib/services/config', () => ({
   },
 }));
 
+const authStoreMock = vi.hoisted(() => ({ serverConfig: null }));
+vi.mock('../../auth/stores/auth.store', () => ({
+  useAuthStore: () => authStoreMock,
+}));
+
 const stubs = {
   // Render the #status slot so the chip template function is invoked
   coreDataTableComponent: {
@@ -44,6 +49,7 @@ const mountView = () =>
 describe('invitations.account.view', () => {
   let store;
   beforeEach(() => {
+    authStoreMock.serverConfig = { sign: { in: true, up: false } };
     setActivePinia(createPinia());
     store = useInvitationsStore();
     store.getInvitations = vi.fn().mockResolvedValue();
@@ -180,5 +186,35 @@ describe('invitations.account.view', () => {
     expect(placeholder.text()).toContain('Referral rewards — coming soon');
     // Scaffold contract (#5 not built): the placeholder must never show numbers/fake math
     expect(placeholder.text()).not.toMatch(/\d/);
+  });
+
+  it('signup open: replaces the invite form with the informational alert', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: true } };
+    const wrapper = mountView();
+    const alert = wrapper.find('[data-test="referrals-open-signup-alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(alert.text()).toContain('Referral invitations are inactive on this deployment because public signup is open.');
+    expect(wrapper.find('form').exists()).toBe(false);
+  });
+
+  it('signup closed: renders the invite form, no open-signup alert', () => {
+    const wrapper = mountView();
+    expect(wrapper.find('[data-test="referrals-open-signup-alert"]').exists()).toBe(false);
+    expect(wrapper.find('form').exists()).toBe(true);
+  });
+
+  it('unknown server config (null) is treated as closed — form stays (backend CASL is the real gate)', () => {
+    authStoreMock.serverConfig = null;
+    const wrapper = mountView();
+    expect(wrapper.vm.signupOpen).toBe(false);
+    expect(wrapper.find('form').exists()).toBe(true);
+  });
+
+  it('keeps the My referrals list visible read-only when signup is open', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: true } };
+    store.invitations = [{ id: '1', usedAt: null, expiresAt: '2999-01-01' }];
+    const wrapper = mountView();
+    expect(wrapper.text()).toContain('My referrals');
+    expect(wrapper.find('[data-test="referrals-summary"]').exists()).toBe(true);
   });
 });
