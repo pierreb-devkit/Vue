@@ -28,18 +28,32 @@
                   </v-chip>
                 </v-list-item-subtitle>
                 <template #append>
-                  <v-btn
-                    color="primary"
-                    variant="flat"
-                    size="small"
-                    :class="config.vuetify.theme.rounded"
-                    class="text-none text-body-medium"
-                    :loading="acceptingId === (inv.id || inv._id)"
-                    :data-test="`accept-invitation-${inv.id || inv._id}`"
-                    @click="acceptInvitation(inv)"
-                  >
-                    Accept
-                  </v-btn>
+                  <div class="d-flex align-center ga-2">
+                    <v-btn
+                      color="error"
+                      variant="text"
+                      size="small"
+                      :class="config.vuetify.theme.rounded"
+                      class="text-none text-body-medium"
+                      :loading="decliningId === (inv.id || inv._id)"
+                      :data-test="`decline-invitation-${inv.id || inv._id}`"
+                      @click="confirmDecline(inv)"
+                    >
+                      Decline
+                    </v-btn>
+                    <v-btn
+                      color="primary"
+                      variant="flat"
+                      size="small"
+                      :class="config.vuetify.theme.rounded"
+                      class="text-none text-body-medium"
+                      :loading="acceptingId === (inv.id || inv._id)"
+                      :data-test="`accept-invitation-${inv.id || inv._id}`"
+                      @click="acceptInvitation(inv)"
+                    >
+                      Accept
+                    </v-btn>
+                  </div>
                 </template>
               </v-list-item>
               <v-divider v-if="i < pendingInvitations.length - 1"></v-divider>
@@ -116,6 +130,15 @@
       confirm-color="error"
       @confirm="leaveOrg"
     />
+
+    <coreConfirmDialog
+      v-model="declineDialog"
+      title="Decline Invitation"
+      :message="declineInvitationMessage"
+      confirm-label="Decline"
+      confirm-color="error"
+      @confirm="declineInvitation"
+    />
   </v-container>
 </template>
 
@@ -144,6 +167,9 @@ export default {
       leaveDialog: false,
       orgToLeave: null,
       acceptingId: null,
+      declineDialog: false,
+      invitationToDecline: null,
+      decliningId: null,
     };
   },
   computed: {
@@ -175,6 +201,13 @@ export default {
      */
     leaveOrgMessage() {
       return `Are you sure you want to leave ${this.orgToLeave?.name || ''}? You will lose access to all resources in this organization.`;
+    },
+    /**
+     * @desc Confirmation copy interpolated with the inviting org's name.
+     * @returns {string}
+     */
+    declineInvitationMessage() {
+      return `Are you sure you want to decline the invitation to join ${this.invitationOrgName(this.invitationToDecline)}? The owner can invite you again later.`;
     },
   },
   /**
@@ -247,6 +280,42 @@ export default {
         // interceptor handles snackbar
       } finally {
         this.acceptingId = null;
+      }
+    },
+    /**
+     * @desc Open the Decline confirmation dialog for a pending invitation.
+     * @param {Object} invitation - The pending membership to decline.
+     * @returns {void}
+     */
+    confirmDecline(invitation) {
+      this.invitationToDecline = invitation;
+      this.declineDialog = true;
+    },
+    /**
+     * @desc Decline the pending invitation selected in the dialog. DELETE is not
+     *       in the snackbar interceptor methods (post/put only), so the pending
+     *       list refresh below is the only success feedback — deliberate:
+     *       declining is low-stakes and the owner can re-invite. Soft-refresh
+     *       abilities via token(): refreshAbilities() signs out + throws on
+     *       failure, which must never follow a successful decline (same choice
+     *       as acceptInvitation above).
+     * @returns {Promise<void>}
+     */
+    async declineInvitation() {
+      const invitation = this.invitationToDecline;
+      const membershipId = invitation && (invitation.id || invitation._id);
+      if (!membershipId || this.decliningId) return;
+      this.decliningId = membershipId;
+      this.declineDialog = false;
+      try {
+        await this.organizationsStore.declineMembership(membershipId);
+        await this.organizationsStore.fetchMyPendingInvitations();
+        await this.authStore.token();
+      } catch {
+        // interceptor handles snackbar
+      } finally {
+        this.decliningId = null;
+        this.invitationToDecline = null;
       }
     },
     /**

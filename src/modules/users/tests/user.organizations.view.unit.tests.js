@@ -26,7 +26,7 @@ const sharedStubs = {
   'v-col': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
   'v-list': { template: '<div><slot /></div>' },
-  'v-list-item': { template: '<div><slot /></div>' },
+  'v-list-item': { template: '<div><slot name="prepend" /><slot /><slot name="append" /></div>' },
   'v-list-item-title': { template: '<div><slot /></div>' },
   'v-list-item-subtitle': { template: '<div><slot /></div>' },
   'v-divider': { template: '<div />' },
@@ -263,5 +263,71 @@ describe('user.organizations.view — confirm dialog', () => {
     const tmpl = sfc.split('<script>')[0];
     expect(tmpl).toMatch(/<coreConfirmDialog/);
     expect(tmpl).not.toMatch(/<v-dialog/);
+  });
+});
+
+describe('user.organizations.view — decline invitation', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  /**
+   * Mount the view with a store seeded with one pending invitation.
+   * @returns {Promise<{ wrapper: object, store: object, authStore: object }>}
+   */
+  async function mountWithInvitation() {
+    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const store = useOrganizationsStore();
+    const authStore = useAuthStore();
+    store.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
+    store.declineMembership = vi.fn().mockResolvedValue({ id: 'inv1' });
+    authStore.token = vi.fn().mockResolvedValue();
+    store.pendingInvitations = [{ id: 'inv1', role: 'member', organizationId: { name: 'Acme' } }];
+    const wrapper = shallowMount(UserOrganizationsView, {
+      global: { mocks: sharedMocks(), stubs: sharedStubs },
+    });
+    return { wrapper, store, authStore };
+  }
+
+  test('renders a Decline button next to Accept for each pending invitation', async () => {
+    const { wrapper } = await mountWithInvitation();
+    expect(wrapper.find('[data-test="decline-invitation-inv1"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="accept-invitation-inv1"]').exists()).toBe(true);
+  });
+
+  test('confirmDecline stores the invitation and opens the confirm dialog', async () => {
+    const { wrapper } = await mountWithInvitation();
+    const inv = { id: 'inv1', role: 'member', organizationId: { name: 'Acme' } };
+    wrapper.vm.confirmDecline(inv);
+    expect(wrapper.vm.invitationToDecline).toEqual(inv);
+    expect(wrapper.vm.declineDialog).toBe(true);
+    expect(wrapper.vm.declineInvitationMessage).toContain('Acme');
+  });
+
+  test('declineInvitation declines via the store, refreshes the pending list, and soft-refreshes via token()', async () => {
+    const { wrapper, store, authStore } = await mountWithInvitation();
+    store.fetchMyPendingInvitations.mockClear();
+    wrapper.vm.confirmDecline({ id: 'inv1', role: 'member', organizationId: { name: 'Acme' } });
+    await wrapper.vm.declineInvitation();
+    // DELETE is not in the snackbar interceptor methods (post/put only): the
+    // pending-list refresh is deliberately the only success feedback.
+    expect(store.declineMembership).toHaveBeenCalledWith('inv1');
+    expect(store.fetchMyPendingInvitations).toHaveBeenCalled();
+    // Soft refresh (token) — refreshAbilities() signs out on failure, never use it here.
+    expect(authStore.token).toHaveBeenCalled();
+    expect(wrapper.vm.declineDialog).toBe(false);
+    expect(wrapper.vm.decliningId).toBeNull();
+    expect(wrapper.vm.invitationToDecline).toBeNull();
+  });
+
+  test('declineInvitation: token() failure is non-fatal', async () => {
+    const { wrapper, store, authStore } = await mountWithInvitation();
+    authStore.token = vi.fn().mockRejectedValue(new Error('token endpoint hiccup'));
+    wrapper.vm.confirmDecline({ id: 'inv1' });
+    await expect(wrapper.vm.declineInvitation()).resolves.toBeUndefined();
+    expect(store.declineMembership).toHaveBeenCalledWith('inv1');
+    expect(wrapper.vm.decliningId).toBeNull();
   });
 });
