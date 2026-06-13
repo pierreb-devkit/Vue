@@ -68,6 +68,13 @@ function tabTo(route) {
     >
       <v-icon v-if="t.icon" :icon="t.icon" class="mr-2" />
       {{ t.label }}
+      <!-- Optional numeric badge on a tab descriptor (e.g. the admin
+           readiness warning count). Additive: tabs without a `badge`
+           field render exactly as before, so the Account / Organization
+           surfaces sharing this component are unaffected. -->
+      <v-chip v-if="t.badge > 0" size="small" density="compact" variant="tonal" color="warning" class="ml-1">
+        {{ t.badge }}
+      </v-chip>
     </v-tab>
   </v-tabs>
 </template>

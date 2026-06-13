@@ -95,14 +95,30 @@ export default {
       return useAdminStore().currentBreadcrumb;
     },
     /**
+     * @desc Number of readiness checks that are not OK — drives the badge
+     *       on the built-in Readiness tab.
+     * @returns {number}
+     */
+    readinessWarnings() {
+      const checks = useAdminStore().readiness;
+      if (!Array.isArray(checks)) return 0;
+      return checks.filter((c) => c && c.status !== 'ok').length;
+    },
+    /**
      * @desc Merged tab list (built-in + config-driven extras), passed to
      *       CoreSurfaceTabBar. Validation and CASL filtering happen inside
-     *       the bar via `resolveSurfaceTabs`.
+     *       the bar via `resolveSurfaceTabs`. The built-in Readiness tab is
+     *       decorated with an optional numeric `badge` (non-ok check count)
+     *       that CoreSurfaceTabBar renders as a small warning chip.
      * @returns {Array<object>}
      */
     allTabs() {
       const extras = Array.isArray(this.config?.admin?.tabs) ? this.config.admin.tabs : [];
-      return [...BUILT_IN_TABS, ...extras];
+      const tabs = [...BUILT_IN_TABS, ...extras];
+      if (this.readinessWarnings > 0) {
+        return tabs.map((t) => (t.value === 'readiness' ? { ...t, badge: this.readinessWarnings } : t));
+      }
+      return tabs;
     },
     /**
      * @desc Reactive CASL predicate passed to CoreSurfaceTabBar. Falls back
@@ -113,6 +129,20 @@ export default {
     adminCan() {
       return (action, subject) => (ability ? ability.can(action, subject) : true);
     },
+  },
+  mounted() {
+    // Readiness data feeds the tab badge. The readiness view fetches on its
+    // own mount, and child mounted() runs BEFORE the parent's — so when the
+    // user lands directly on /admin/readiness a request is already in
+    // flight and an empty-store check alone would still double-hit
+    // GET /admin/readiness. Skip that route entirely; everywhere else,
+    // fetch once iff the store has no readiness data yet (fire-and-forget;
+    // the store sanitizes failures into its own `error` state).
+    if (this.$route?.path?.startsWith('/admin/readiness')) return;
+    const adminStore = useAdminStore();
+    if (!Array.isArray(adminStore.readiness) || adminStore.readiness.length === 0) {
+      adminStore.getReadiness();
+    }
   },
   methods: {
     /**

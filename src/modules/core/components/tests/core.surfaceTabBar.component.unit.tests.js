@@ -135,3 +135,36 @@ describe('SurfaceTabBar — path composition', () => {
     expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/admin/x');
   });
 });
+
+describe('SurfaceTabBar — optional tab badge', () => {
+  it('renders a small tonal warning chip with the count after the label when badge > 0', () => {
+    const wrapper = mountBar({
+      tabs: [{ value: 'readiness', label: 'Readiness', route: 'readiness', badge: 3 }],
+      can: () => true,
+      basePath: '/admin',
+    });
+    const chip = wrapper.findComponent({ name: 'VChip' });
+    expect(chip.exists()).toBe(true);
+    expect(chip.text()).toBe('3');
+    expect(chip.props('color')).toBe('warning');
+    expect(chip.props('variant')).toBe('tonal');
+  });
+
+  it('renders no chip when badge is 0', () => {
+    const wrapper = mountBar({
+      tabs: [{ value: 'readiness', label: 'Readiness', route: 'readiness', badge: 0 }],
+      can: () => true,
+      basePath: '/admin',
+    });
+    expect(wrapper.findComponent({ name: 'VChip' }).exists()).toBe(false);
+  });
+
+  it('renders no chip when badge is absent (existing surfaces unaffected)', () => {
+    const wrapper = mountBar({
+      tabs: [{ value: 'general', label: 'General', route: 'general' }],
+      can: () => true,
+      basePath: '/users/organizations/1',
+    });
+    expect(wrapper.findComponent({ name: 'VChip' }).exists()).toBe(false);
+  });
+});
