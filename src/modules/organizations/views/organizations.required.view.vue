@@ -48,6 +48,46 @@
         </div>
       </v-alert>
 
+      <!-- Pending owner_add invitations: an invited user who lands on the wall
+           can accept right here instead of dead-ending on "No workspace found". -->
+      <template v-if="pendingInvitations.length > 0">
+        <label class="text-label-large font-weight-medium d-block mb-2">You've been invited</label>
+        <v-list density="compact" class="mb-2" data-test="wall-pending-invitations">
+          <v-list-item
+            v-for="inv in pendingInvitations"
+            :key="inv.id || inv._id"
+          >
+            <template #prepend>
+              <orgAvatarComponent :org="inv.organizationId || {}" :size="32" class="mr-3" />
+            </template>
+            <v-list-item-title class="text-body-medium">{{ inv.organizationId?.name || 'an organization' }}</v-list-item-title>
+            <template #append>
+              <div class="d-flex align-center ga-2">
+                <v-chip size="x-small" :color="roleColor(inv.role || 'member')" variant="tonal" class="text-capitalize">
+                  {{ inv.role || 'member' }}
+                </v-chip>
+                <v-btn
+                  size="small"
+                  color="primary"
+                  variant="flat"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none"
+                  :loading="acceptingId === (inv.id || inv._id)"
+                  :data-test="`wall-accept-invitation-${inv.id || inv._id}`"
+                  @click="acceptInvitation(inv)"
+                >
+                  Accept
+                </v-btn>
+              </div>
+            </template>
+          </v-list-item>
+        </v-list>
+        <p class="text-body-small text-medium-emphasis mb-4">
+          <a href="#" class="text-primary font-weight-bold text-decoration-none" data-test="wall-see-organizations" @click.prevent="$router.push('/users/organizations')">See My Organizations</a>
+          to manage your invitations.
+        </p>
+      </template>
+
       <!-- Domain-matched organizations -->
       <template v-if="domainOrgs.length > 0">
         <label class="text-label-large font-weight-medium d-block mb-2">Organizations matching your email domain</label>
@@ -114,6 +154,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../../core/stores/core.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
+import roleColor from '../../../lib/helpers/roleColor';
 
 export default {
   name: 'OrganizationsRequiredView',
@@ -126,6 +167,7 @@ export default {
       requestingOrgId: null,
       resending: false,
       resent: false,
+      acceptingId: null,
     };
   },
   computed: {
@@ -149,17 +191,64 @@ export default {
       const authStore = useAuthStore();
       return authStore.user?.email || '';
     },
+    /**
+     * @desc Pending owner_add invitations the user RECEIVED (durable surface —
+     *       distinct from pendingRequests, the join requests the user SENT).
+     * @returns {Array}
+     */
+    pendingInvitations() {
+      const organizationsStore = useOrganizationsStore();
+      return organizationsStore.pendingInvitations || [];
+    },
   },
   async created() {
-    // Auto-load organizations matching the user's email domain
     const organizationsStore = useOrganizationsStore();
+    // Auto-load organizations matching the user's email domain
     try {
       this.domainOrgs = await organizationsStore.searchOrganizationsByDomain();
     } catch {
       this.domainOrgs = [];
     }
+    // Pending owner_add invitations: surfaced on the wall so an invited user
+    // is not stuck behind "No workspace found".
+    try {
+      await organizationsStore.fetchMyPendingInvitations();
+    } catch {
+      // interceptor handles snackbar
+    }
   },
   methods: {
+    roleColor,
+    /**
+     * @desc Accept a pending owner_add invitation from the wall. Mirrors the
+     *       My Organizations accept flow (deliberate small duplication, not a
+     *       new abstraction): accept server-side, refresh the pending list,
+     *       then soft-refresh abilities via token() — refreshAbilities() signs
+     *       out + throws on failure, which must never follow a successful
+     *       accept. If the refreshed user now has a currentOrganization, leave
+     *       the wall the same way refresh() does.
+     * @param {Object} invitation - The pending membership to accept.
+     * @returns {Promise<void>}
+     */
+    async acceptInvitation(invitation) {
+      const membershipId = invitation.id || invitation._id;
+      if (!membershipId || this.acceptingId) return;
+      this.acceptingId = membershipId;
+      const authStore = useAuthStore();
+      const organizationsStore = useOrganizationsStore();
+      try {
+        await organizationsStore.acceptMembership(membershipId);
+        await organizationsStore.fetchMyPendingInvitations();
+        await authStore.token();
+        if (authStore.user?.currentOrganization) {
+          this.$router.push(this.config.sign.route);
+        }
+      } catch {
+        // interceptor handles snackbar
+      } finally {
+        this.acceptingId = null;
+      }
+    },
     async refresh() {
       const authStore = useAuthStore();
       await authStore.refreshAbilities();
