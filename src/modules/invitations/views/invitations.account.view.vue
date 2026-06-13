@@ -282,7 +282,7 @@ export default {
     signupLink(token) {
       if (!token) return null;
       const base = (this.config.app?.url || window.location.origin).replace(/\/+$/, '');
-      return `${base}/signup?inviteToken=${token}`;
+      return `${base}/signup?inviteToken=${encodeURIComponent(token)}`;
     },
     /**
      * @desc Copy the one-time signup link — local 'Copy link' → 'Copied' flip.

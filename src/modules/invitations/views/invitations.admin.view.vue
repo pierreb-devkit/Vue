@@ -44,6 +44,7 @@
               size="small"
               variant="text"
               color="primary"
+              aria-label="Resend invitation"
               :loading="resendingId === (item.id || item._id)"
               :disabled="item.status !== 'pending'"
               :data-test="`resend-invitation-${item.id || item._id}`"
@@ -252,7 +253,7 @@ export default {
     signupLink(token) {
       if (!token) return null;
       const base = (this.config.app?.url || window.location.origin).replace(/\/+$/, '');
-      return `${base}/signup?inviteToken=${token}`;
+      return `${base}/signup?inviteToken=${encodeURIComponent(token)}`;
     },
     /**
      * @desc Copy the one-time signup link. Feedback is a local label flip
@@ -270,8 +271,9 @@ export default {
       }
     },
     /**
-     * @desc Re-send the invitation email (single-flight per row). The POST
-     * response toasts via the axios interceptor; errors land in the banner.
+     * @desc Re-send the invitation email (single global in-flight guard — only
+     * one resend at a time across all rows). The POST response toasts via the
+     * axios interceptor; errors land in the banner.
      * @param {Object} item - invitation row
      * @returns {Promise<void>}
      */
