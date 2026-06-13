@@ -193,8 +193,8 @@ export default {
      * global router guard for any logged-in navigation). When open, the referral
      * substrate is inert by design — a presented token is resolved but never
      * claimed/finalized — so the invite form is replaced by an informational
-     * state. Strict === true: an unknown/missing serverConfig keeps the form
-     * (the backend policy remains the actual gate).
+     * state. Uses strict equality (`=== true`) so an unknown/missing
+     * serverConfig keeps the form shown (the backend policy is the actual gate).
      * @returns {boolean}
      */
     signupOpen() {
