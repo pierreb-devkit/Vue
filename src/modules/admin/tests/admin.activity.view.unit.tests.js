@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useAdminStore } from '../stores/admin.store';
@@ -222,5 +222,100 @@ describe('admin.activity.view — template chrome', () => {
     expect(tmpl).toMatch(/aria-expanded/);
     expect(tmpl).toMatch(/@keydown\.enter/);
     expect(tmpl).toMatch(/@keydown\.space/);
+  });
+});
+
+describe('admin.activity.view — debounced card-title filters', () => {
+  let adminStore;
+
+  /**
+   * Mount with a fresh pinia + mocked store action. Call AFTER
+   * vi.useFakeTimers() so the debounce timer is controllable.
+   * @returns {import('@vue/test-utils').VueWrapper}
+   */
+  const mountWithFreshStore = () => {
+    setActivePinia(createPinia());
+    adminStore = useAdminStore();
+    adminStore.getAuditLogs = vi.fn().mockResolvedValue();
+    return mountActivity();
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('fetches 1000ms after typing in the action filter (single trailing call, page reset)', async () => {
+    vi.useFakeTimers();
+    const wrapper = mountWithFreshStore();
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(1); // mount fetch
+    wrapper.vm.activityFilterAction = 'auth.log';
+    await wrapper.vm.$nextTick();
+    wrapper.vm.activityFilterAction = 'auth.login';
+    await wrapper.vm.$nextTick();
+    vi.advanceTimersByTime(999);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(2);
+    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(
+      expect.objectContaining({ action: 'auth.login', page: 1 }),
+    );
+  });
+
+  it('does not fetch while the user-ID filter is not a valid ObjectId', async () => {
+    vi.useFakeTimers();
+    const wrapper = mountWithFreshStore();
+    wrapper.vm.activityFilterUserId = 'not-an-objectid';
+    await wrapper.vm.$nextTick();
+    vi.advanceTimersByTime(1000);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(1); // mount fetch only
+    expect(wrapper.vm.activityUserIdValid).toBe(false);
+    wrapper.vm.activityFilterUserId = '507f1f77bcf86cd799439011';
+    await wrapper.vm.$nextTick();
+    vi.advanceTimersByTime(1000);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(2);
+    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(
+      expect.objectContaining({ userId: '507f1f77bcf86cd799439011', page: 1 }),
+    );
+  });
+
+  it('Clear fetches immediately and the trailing debounce does not double-fetch', async () => {
+    vi.useFakeTimers();
+    const wrapper = mountWithFreshStore();
+    wrapper.vm.activityFilterAction = 'auth.login';
+    await wrapper.vm.$nextTick();
+    vi.advanceTimersByTime(1000);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(2);
+    wrapper.vm.clearActivityFilters();
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(3);
+    await wrapper.vm.$nextTick();
+    vi.advanceTimersByTime(1000);
+    expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(3); // debounce deduped
+  });
+});
+
+describe('admin.activity.view — card-title chrome (datatable parity)', () => {
+  /**
+   * Read the SFC template section from disk.
+   * @returns {string}
+   */
+  const readTemplate = () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/admin.activity.view.vue'), 'utf8');
+    return sfc.split('<script>')[0];
+  };
+
+  it('mirrors the datatable card-title row: flex title + spacer + two compact outlined filter fields', () => {
+    const tmpl = readTemplate();
+    expect(tmpl).toMatch(/<v-card-title class="d-flex align-center ga-3">/);
+    expect(tmpl).toMatch(/<v-spacer><\/v-spacer>/);
+    expect(tmpl).toMatch(/prepend-inner-icon="fa-solid fa-magnifying-glass"/);
+    expect(tmpl).toMatch(/prepend-inner-icon="fa-solid fa-user"/);
+    expect(tmpl.match(/max-width="280"/g) || []).toHaveLength(2);
+  });
+
+  it('the enter-key + Search-button flow is gone (debounce replaces it)', () => {
+    const tmpl = readTemplate();
+    expect(tmpl).not.toMatch(/@keyup\.enter/);
+    expect(tmpl).not.toMatch(/Search\s*<\/v-btn>/);
   });
 });

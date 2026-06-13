@@ -14,54 +14,42 @@
           <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
         </v-alert>
         <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
-    <v-card-title>
-      <v-row dense align="center">
-        <v-col cols="12" sm="auto">
-          <v-text-field
-            v-model="activityFilterAction"
-            placeholder="Filter by action"
-            hide-details
-            density="compact"
-            variant="outlined"
-            prepend-inner-icon="fa-solid fa-filter"
-            :class="config.vuetify.theme.rounded"
-            max-width="240"
-            @keyup.enter="applyActivityFilters"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-text-field
-            v-model="activityFilterUserId"
-            placeholder="Filter by user ID"
-            hide-details
-            density="compact"
-            variant="outlined"
-            prepend-inner-icon="fa-solid fa-user"
-            :class="config.vuetify.theme.rounded"
-            max-width="240"
-            @keyup.enter="applyActivityFilters"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12" sm="auto">
-          <v-btn
-            variant="tonal"
-            color="primary"
-            class="text-none text-body-medium"
-            :class="config.vuetify.theme.rounded"
-            @click="applyActivityFilters"
-          >
-            <v-icon icon="fa-solid fa-magnifying-glass" size="small" class="mr-2"></v-icon>Search
-          </v-btn>
-          <v-btn
-            v-if="activityFilterAction || activityFilterUserId"
-            variant="text"
-            class="text-none text-body-medium ml-2"
-            @click="clearActivityFilters"
-          >
-            Clear
-          </v-btn>
-        </v-col>
-      </v-row>
+    <v-card-title class="d-flex align-center ga-3">
+      <span class="text-title-medium">Activity</span>
+      <v-spacer></v-spacer>
+      <v-btn
+        v-if="activityFilterAction || activityFilterUserId"
+        color="primary"
+        variant="tonal"
+        size="small"
+        :class="config.vuetify.theme.rounded"
+        class="text-none text-body-medium"
+        @click="clearActivityFilters"
+      >
+        <v-icon icon="fa-solid fa-xmark" size="small" class="mr-2"></v-icon>
+        Clear
+      </v-btn>
+      <v-text-field
+        v-model="activityFilterAction"
+        placeholder="Filter by action"
+        hide-details
+        density="compact"
+        variant="outlined"
+        prepend-inner-icon="fa-solid fa-magnifying-glass"
+        max-width="280"
+        :class="config.vuetify.theme.rounded"
+      ></v-text-field>
+      <v-text-field
+        v-model="activityFilterUserId"
+        placeholder="Filter by user ID"
+        hide-details
+        density="compact"
+        variant="outlined"
+        prepend-inner-icon="fa-solid fa-user"
+        max-width="280"
+        :error="!activityUserIdValid"
+        :class="config.vuetify.theme.rounded"
+      ></v-text-field>
     </v-card-title>
     <v-progress-linear :active="activityLoading" indeterminate color="primary"></v-progress-linear>
     <v-table v-if="!activityLoading && auditLogs.length" fixed-header hover>
@@ -144,15 +132,23 @@
  * Module dependencies.
  */
 import dayjs from 'dayjs';
+import { debounce } from 'lodash-es';
 import { useAdminStore } from '../stores/admin.store';
+
+/**
+ * Mongo ObjectId shape — GET /audit rejects malformed `userId` values with
+ * a 400, so the user-ID filter is gated client-side until it is complete.
+ */
+const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 
 /**
  * Component definition.
  *
  * Activity tab of the admin section — renders the audit-log table with
- * filters and pagination. Fetches on `mounted()` since it is now a routed
- * view (no parent tab model to watch). Mounted as a routed child of
- * `admin.layout.vue` at `/admin/activity`.
+ * card-title filters (debounced 1000ms, mirroring the search field of
+ * `core.datatable.component.vue`) and auditTotal-based pagination. Fetches
+ * on `mounted()` since it is a routed view (no parent tab model to watch).
+ * Mounted as a routed child of `admin.layout.vue` at `/admin/activity`.
  */
 export default {
   name: 'AdminActivity',
@@ -164,6 +160,10 @@ export default {
       activityFilterAction: '',
       activityFilterUserId: '',
       activityExpandedId: null,
+      // Snapshot of the last APPLIED filter pair — lets the trailing
+      // debounce no-op when nothing changed (e.g. right after Clear
+      // already fetched with the reset values).
+      activityAppliedFilters: JSON.stringify(['', '']),
     };
   },
   computed: {
@@ -180,6 +180,15 @@ export default {
     activityHasNextPage() {
       return this.activityPage * this.activityPerPage < this.auditTotal;
     },
+    /**
+     * @desc Whether the user-ID filter is empty or a complete Mongo
+     *       ObjectId. The backend 400s on malformed userId values, so
+     *       debounced fetches are gated on this while the user types.
+     * @returns {boolean}
+     */
+    activityUserIdValid() {
+      return !this.activityFilterUserId || OBJECT_ID_REGEX.test(this.activityFilterUserId);
+    },
   },
   watch: {
     activityPerPage() {
@@ -187,10 +196,23 @@ export default {
       this.fetchActivityLogs();
     },
   },
+  created() {
+    // Mirror core.datatable.component.vue's search wiring: a 1000ms
+    // debounced watcher replaces the old enter-key + Search-button flow.
+    // Stored on the instance (non-reactive) so it can be cancelled.
+    this.debouncedApplyFilters = debounce(() => {
+      this.applyActivityFilters();
+    }, 1000);
+    this.$watch('activityFilterAction', this.debouncedApplyFilters);
+    this.$watch('activityFilterUserId', this.debouncedApplyFilters);
+  },
   mounted() {
     if (!(this.config?.audit && this.config.audit.enabled === false)) {
       this.fetchActivityLogs();
     }
+  },
+  beforeUnmount() {
+    this.debouncedApplyFilters.cancel();
   },
   methods: {
     /**
@@ -210,9 +232,11 @@ export default {
       this.activityExpandedId = this.activityExpandedId === id ? null : id;
     },
     /**
-     * @desc Fetch audit logs from the store with current filters and pagination.
-     *       Loading flag is always cleared, even if the store action rejects,
-     *       so the progress bar does not stay pinned on failure.
+     * @desc Fetch audit logs from the store with current filters and
+     *       pagination. The userId param is only sent when it is a valid
+     *       ObjectId (backend 400s otherwise). Loading flag is always
+     *       cleared, even if the store action rejects, so the progress bar
+     *       does not stay pinned on failure.
      * @returns {Promise<void>}
      */
     async fetchActivityLogs() {
@@ -220,7 +244,7 @@ export default {
       try {
         await useAdminStore().getAuditLogs({
           action: this.activityFilterAction || undefined,
-          userId: this.activityFilterUserId || undefined,
+          userId: this.activityUserIdValid ? this.activityFilterUserId || undefined : undefined,
           page: this.activityPage,
           perPage: this.activityPerPage,
         });
@@ -228,15 +252,24 @@ export default {
         this.activityLoading = false;
       }
     },
-    /** @desc Apply activity filters and reset to page 1. */
+    /**
+     * @desc Apply activity filters and reset to page 1. Skips when the
+     *       user-ID filter is incomplete, and dedupes against the last
+     *       applied pair so the trailing debounce after Clear is a no-op.
+     */
     applyActivityFilters() {
+      if (!this.activityUserIdValid) return;
+      const next = JSON.stringify([this.activityFilterAction, this.activityFilterUserId]);
+      if (next === this.activityAppliedFilters) return;
+      this.activityAppliedFilters = next;
       this.activityPage = 1;
       this.fetchActivityLogs();
     },
-    /** @desc Clear all activity filters and reset to page 1. */
+    /** @desc Clear all activity filters, reset to page 1 and refetch. */
     clearActivityFilters() {
       this.activityFilterAction = '';
       this.activityFilterUserId = '';
+      this.activityAppliedFilters = JSON.stringify(['', '']);
       this.activityPage = 1;
       this.fetchActivityLogs();
     },
