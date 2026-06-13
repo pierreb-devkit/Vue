@@ -53,22 +53,33 @@ export function isValidTab(tab) {
 }
 
 /**
- * Filter a tabs array by validity then by CASL permissions.
+ * Filter a tabs array by validity, then by CASL permissions, then by module
+ * activation.
  *
  * A tab with no `{action, subject}` pair is always shown (unconditional tabs).
  * Both `action` AND `subject` must be present for the CASL check to apply.
  *
- * Intended for use by surface layouts (org-settings, admin, etc.) to derive
- * their reactive extra-tab list from a config array + a `can` predicate from
- * `useAbility()`.
+ * A tab may carry an optional `module` field naming the optional module that
+ * owns it (e.g. a module-contributed `config.admin.tabs` entry). When the
+ * `isActive` predicate reports that module inactive, the tab is hidden —
+ * keeping render-time tab visibility consistent with route injection, which
+ * already skips deactivated modules (`injectModuleChildren`). Tabs without a
+ * `module` field are never activation-filtered, and the keep-all default
+ * preserves existing 2-argument callers byte-for-byte.
+ *
+ * Intended for use by surface layouts (org-settings, admin, account, etc.)
+ * to derive their reactive extra-tab list from a config array + a `can`
+ * predicate from `useAbility()` (+ optionally `isModuleActive`).
  *
  * @param {Array<unknown>|null|undefined} tabs - Raw tabs from config.
  * @param {(action: string, subject: string) => boolean} can - Required. CASL predicate from `useAbility()`. Must be a function.
- * @returns {Array<object>} Validated + permitted tabs.
+ * @param {(moduleName: string) => boolean} [isActive=() => true] - Optional module-activation predicate (e.g. `isModuleActive`). Defaults to keep-all.
+ * @returns {Array<object>} Validated + permitted + activation-filtered tabs.
  */
-export function resolveSurfaceTabs(tabs, can) {
+export function resolveSurfaceTabs(tabs, can, isActive = () => true) {
   if (typeof can !== 'function') throw new TypeError('[resolveSurfaceTabs] can must be a function');
   return (Array.isArray(tabs) ? tabs : [])
     .filter(isValidTab)
-    .filter((t) => (t.action && t.subject ? can(t.action, t.subject) : true));
+    .filter((t) => (t.action && t.subject ? can(t.action, t.subject) : true))
+    .filter((t) => (t.module ? isActive(t.module) : true));
 }

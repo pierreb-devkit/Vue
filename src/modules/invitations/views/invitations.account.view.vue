@@ -67,6 +67,39 @@
                 </v-btn>
               </div>
             </v-form>
+            <!-- One-time copy-link: built from the create response only (the list
+                 endpoint strips tokens). Local label-flip feedback — the global
+                 snackbar is interceptor-only and a copy is not an HTTP call. -->
+            <v-alert
+              v-if="createdLink"
+              type="success"
+              variant="tonal"
+              density="compact"
+              class="mt-4"
+              :class="config.vuetify.theme.rounded"
+              data-test="invite-created-link"
+              closable
+              @click:close="createdLink = null"
+            >
+              <div class="d-flex align-center flex-wrap ga-2">
+                <span class="text-body-medium flex-grow-1">
+                  Invitation sent. This signup link is shown only once:
+                  <code class="text-body-small d-block mt-1">{{ createdLink }}</code>
+                </span>
+                <v-btn
+                  color="success"
+                  variant="tonal"
+                  size="small"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none"
+                  data-test="copy-invite-link"
+                  @click="copyCreatedLink"
+                >
+                  <v-icon start icon="fa-solid fa-copy" size="x-small"></v-icon>
+                  {{ linkCopied ? 'Copied' : 'Copy link' }}
+                </v-btn>
+              </div>
+            </v-alert>
           </template>
         </v-card>
       </v-col>
@@ -140,6 +173,9 @@ export default {
   data() {
     return {
       inviteForm: { email: '', valid: false, loading: false },
+      // One-time copy-link state — set from the create response only.
+      createdLink: null,
+      linkCopied: false,
       inviteHeaders: [
         { text: 'Email', value: 'email', kind: 'email' },
         { text: 'Status', value: 'status', kind: 'slot', slotName: 'status' },
@@ -218,14 +254,17 @@ export default {
       return deriveInviteStatus(item);
     },
     /**
-     * @desc Submit a new invitation, then refresh the list and reset the form.
+     * @desc Submit a new invitation, surface the one-time signup link from the
+     * create response (the list strips tokens), then refresh and reset the form.
      * @returns {Promise<void>}
      */
     async submitInvite() {
       if (this.inviteForm.valid !== true) return;
       this.inviteForm.loading = true;
       try {
-        await useInvitationsStore().createInvitation(this.inviteForm.email);
+        const created = await useInvitationsStore().createInvitation(this.inviteForm.email);
+        this.createdLink = this.signupLink(created?.token);
+        this.linkCopied = false;
         this.inviteForm.email = '';
         this.$refs.inviteForm?.resetValidation?.();
         await this.fetchInvitations();
@@ -233,6 +272,28 @@ export default {
         // error is surfaced via the store error banner
       } finally {
         this.inviteForm.loading = false;
+      }
+    },
+    /**
+     * @desc Build the one-time signup link for a freshly created invitation.
+     * @param {string|undefined} token - invitation token from the create response
+     * @returns {string|null} the absolute signup link, or null without a token
+     */
+    signupLink(token) {
+      if (!token) return null;
+      const base = (this.config.app?.url || window.location.origin).replace(/\/+$/, '');
+      return `${base}/signup?inviteToken=${encodeURIComponent(token)}`;
+    },
+    /**
+     * @desc Copy the one-time signup link — local 'Copy link' → 'Copied' flip.
+     * @returns {Promise<void>}
+     */
+    async copyCreatedLink() {
+      try {
+        await navigator.clipboard.writeText(this.createdLink);
+        this.linkCopied = true;
+      } catch {
+        // Clipboard unavailable: the link stays visible for manual selection.
       }
     },
     /**

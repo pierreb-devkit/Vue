@@ -57,7 +57,7 @@ const stubs = {
 const mountView = () =>
   shallowMount(InvitationsAdmin, {
     global: {
-      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } } } },
+      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } }, app: { url: 'https://app.example.test' } } },
       stubs,
     },
   });
@@ -128,7 +128,7 @@ describe('invitations.admin.view', () => {
     // Simulate a dirty dialog state before opening
     wrapper.vm.createDialog = { show: false, email: 'old@b.co', valid: true, loading: true };
     wrapper.vm.openCreate();
-    expect(wrapper.vm.createDialog).toEqual({ show: true, email: '', valid: false, loading: false });
+    expect(wrapper.vm.createDialog).toEqual({ show: true, email: '', valid: false, loading: false, createdLink: null, copied: false });
   });
 
   it('openRevoke populates deleteDialog with the item id and email', () => {
@@ -242,5 +242,85 @@ describe('invitations.admin.view', () => {
       wrapper.vm.createDialog.email = 'typed@b.co';
       expect(wrapper.vm.createDialog.email).toBe('typed@b.co');
     }
+  });
+});
+
+describe('invitations.admin.view — copy-link + resend (#3834)', () => {
+  let store;
+  const writeText = vi.fn();
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    store = useInvitationsStore();
+    store.getInvitations = vi.fn().mockResolvedValue();
+    store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co', token: 'tok-9' });
+    store.deleteInvitation = vi.fn().mockResolvedValue();
+    store.resendInvitation = vi.fn().mockResolvedValue({ id: '7', status: 'pending' });
+    // FIRST clipboard code in the repo — happy-dom needs an explicit mock.
+    writeText.mockReset().mockResolvedValue();
+    Object.defineProperty(globalThis.navigator, 'clipboard', { value: { writeText }, configurable: true });
+  });
+
+  it('signupLink builds the config-based one-time URL (null without a token)', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.signupLink('tok-9')).toBe('https://app.example.test/signup?inviteToken=tok-9');
+    expect(wrapper.vm.signupLink(undefined)).toBeNull();
+  });
+
+  it('submitInvite keeps the dialog open with the one-time link when the response carries a token', async () => {
+    const wrapper = mountView();
+    wrapper.vm.createDialog = { show: true, email: 'new@b.co', valid: true, loading: false, createdLink: null, copied: false };
+    await wrapper.vm.submitInvite();
+    expect(wrapper.vm.createDialog.show).toBe(true); // NOT closed — one-time copy chance
+    expect(wrapper.vm.createDialog.createdLink).toBe('https://app.example.test/signup?inviteToken=tok-9');
+    expect(wrapper.vm.createDialog.copied).toBe(false);
+    expect(store.getInvitations).toHaveBeenCalled();
+  });
+
+  it('submitInvite without a token in the response closes the dialog (no dead link shown)', async () => {
+    store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co' });
+    const wrapper = mountView();
+    wrapper.vm.createDialog = { show: true, email: 'new@b.co', valid: true, loading: false, createdLink: null, copied: false };
+    await wrapper.vm.submitInvite();
+    expect(wrapper.vm.createDialog.show).toBe(false);
+    expect(wrapper.vm.createDialog.createdLink).toBeNull();
+  });
+
+  it('copyCreatedLink writes the link to the clipboard and flips the label to Copied', async () => {
+    const wrapper = mountView();
+    wrapper.vm.createDialog.createdLink = 'https://app.example.test/signup?inviteToken=tok-9';
+    await wrapper.vm.copyCreatedLink();
+    expect(writeText).toHaveBeenCalledWith('https://app.example.test/signup?inviteToken=tok-9');
+    expect(wrapper.vm.createDialog.copied).toBe(true);
+  });
+
+  it('copyCreatedLink clipboard failure: no throw, label does NOT flip (link stays selectable)', async () => {
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    const wrapper = mountView();
+    wrapper.vm.createDialog.createdLink = 'https://app.example.test/signup?inviteToken=tok-9';
+    await expect(wrapper.vm.copyCreatedLink()).resolves.toBeUndefined();
+    expect(wrapper.vm.createDialog.copied).toBe(false);
+  });
+
+  it('resendInvite delegates to the store with the row id and resets the single-flight guard', async () => {
+    const wrapper = mountView();
+    await wrapper.vm.resendInvite({ id: '7', status: 'pending' });
+    expect(store.resendInvitation).toHaveBeenCalledWith('7');
+    expect(wrapper.vm.resendingId).toBeNull();
+  });
+
+  it('resendInvite is single-flight: a call while one is in-flight no-ops', async () => {
+    const wrapper = mountView();
+    wrapper.vm.resendingId = 'other';
+    await wrapper.vm.resendInvite({ id: '7', status: 'pending' });
+    expect(store.resendInvitation).not.toHaveBeenCalled();
+  });
+
+  it('resendInvite error path: no throw, guard reset, _id-only rows supported', async () => {
+    store.resendInvitation = vi.fn().mockRejectedValue(new Error('Conflict'));
+    const wrapper = mountView();
+    await expect(wrapper.vm.resendInvite({ _id: 'm1', status: 'pending' })).resolves.toBeUndefined();
+    expect(store.resendInvitation).toHaveBeenCalledWith('m1');
+    expect(wrapper.vm.resendingId).toBeNull();
   });
 });

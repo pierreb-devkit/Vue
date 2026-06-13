@@ -139,4 +139,34 @@ describe('invitations store', () => {
     expect(store.error).toBe('Failed to load data. Please try again.');
     consoleErrorSpy.mockRestore();
   });
+
+  // ── #3834 invitation ops: resend + the one-time token contract ──
+
+  it('createInvitation returns the created invite INCLUDING the one-time token (copy-link source)', async () => {
+    const store = useInvitationsStore();
+    axios.post.mockResolvedValueOnce({ data: { data: { id: '2', email: 'new@b.co', token: 'tok-abc' } } });
+    const result = await store.createInvitation('new@b.co');
+    // The list endpoint strips tokens server-side — the create response is the
+    // ONLY place a /signup?inviteToken= link can ever be built from.
+    expect(result.token).toBe('tok-abc');
+  });
+
+  it('resendInvitation POSTs to /api/invitations/:id/resend and returns the invitation', async () => {
+    const store = useInvitationsStore();
+    axios.post.mockResolvedValueOnce({ data: { data: { id: '4', email: 'a@b.co', status: 'pending' } } });
+    const result = await store.resendInvitation('4');
+    expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/api\/invitations\/4\/resend$/));
+    expect(axios.post).not.toHaveBeenCalledWith(expect.stringMatching(/\/auth\/invitations/));
+    expect(result).toEqual({ id: '4', email: 'a@b.co', status: 'pending' });
+  });
+
+  it('resendInvitation sets error state and rethrows on API failure', async () => {
+    const store = useInvitationsStore();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    axios.post.mockRejectedValueOnce(new Error('Conflict'));
+    await expect(store.resendInvitation('9')).rejects.toThrow('Conflict');
+    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
 });

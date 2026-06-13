@@ -182,3 +182,49 @@ describe('resolveSurfaceTabs', () => {
     expect(resolveSurfaceTabs(tabs, can).map((t) => t.value)).toEqual(['billing']);
   });
 });
+
+/**
+ * resolveSurfaceTabs — optional module-activation filter (3rd param).
+ * A tab may carry an optional `module` field naming its owning optional
+ * module; when the `isActive` predicate reports that module inactive the tab
+ * is hidden. Tabs without a `module` field are never activation-filtered,
+ * and omitting `isActive` keeps every tab (backward compatible default).
+ */
+describe('resolveSurfaceTabs — module activation filter', () => {
+  const allowAll = () => true;
+  const tabs = [
+    { value: 'profile', label: 'Profile', route: 'profile' },
+    { value: 'invitations', label: 'Referrals', route: 'invitations', module: 'invitations' },
+  ];
+
+  it('filters out a tab whose module is inactive', () => {
+    const isActive = (name) => name !== 'invitations';
+    expect(resolveSurfaceTabs(tabs, allowAll, isActive).map((t) => t.value)).toEqual(['profile']);
+  });
+
+  it('keeps a tab whose module is active', () => {
+    const isActive = () => true;
+    expect(resolveSurfaceTabs(tabs, allowAll, isActive).map((t) => t.value)).toEqual(['profile', 'invitations']);
+  });
+
+  it('never activation-filters tabs without a module field, even when isActive rejects everything', () => {
+    const isActive = () => false;
+    expect(resolveSurfaceTabs(tabs, allowAll, isActive).map((t) => t.value)).toEqual(['profile']);
+  });
+
+  it('keeps all tabs when isActive is omitted (backward-compatible default)', () => {
+    expect(resolveSurfaceTabs(tabs, allowAll).map((t) => t.value)).toEqual(['profile', 'invitations']);
+  });
+
+  it('applies validity + CASL + activation in one pass', () => {
+    const mixed = [
+      { value: 'profile', label: 'Profile', route: 'profile' },
+      { value: 'denied', label: 'Denied', route: 'denied', action: 'manage', subject: 'Nope' },
+      { value: 'invitations', label: 'Referrals', route: 'invitations', module: 'invitations' },
+      { label: 'broken' },
+    ];
+    const can = (action, subject) => subject !== 'Nope';
+    const isActive = (name) => name !== 'invitations';
+    expect(resolveSurfaceTabs(mixed, can, isActive).map((t) => t.value)).toEqual(['profile']);
+  });
+});

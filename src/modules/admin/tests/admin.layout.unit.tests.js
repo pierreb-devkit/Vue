@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const adminStoreState = { error: null, currentBreadcrumb: null };
+const adminStoreState = { error: null, currentBreadcrumb: null, readiness: [], getReadiness: vi.fn() };
 const authStoreState = { serverConfig: null };
 
 vi.mock('../stores/admin.store', () => ({
@@ -68,6 +68,8 @@ describe('admin.layout', () => {
     setActivePinia(createPinia());
     adminStoreState.error = null;
     adminStoreState.currentBreadcrumb = null;
+    adminStoreState.readiness = [];
+    adminStoreState.getReadiness = vi.fn();
     authStoreState.serverConfig = null;
   });
 
@@ -151,17 +153,10 @@ describe('admin.layout', () => {
     expect(html.indexOf('Boom')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
   });
 
-  it('renders the mailer warning at the TOP when serverConfig.mail.configured is false', async () => {
+  it('does NOT render a mailer banner even when serverConfig.mail.configured is false (signal lives in the Readiness tab)', async () => {
     authStoreState.serverConfig = { mail: { configured: false } };
     const wrapper = mountLayout();
     await wrapper.vm.$nextTick();
-    const html = wrapper.html();
-    expect(html.indexOf('No mailer configured')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
-  });
-
-  it('does NOT render the mailer warning when mail is configured', () => {
-    authStoreState.serverConfig = { mail: { configured: true } };
-    const wrapper = mountLayout();
     expect(wrapper.html()).not.toContain('No mailer configured');
   });
 
@@ -209,6 +204,42 @@ describe('admin.layout', () => {
     const wrapper = mountLayout({}, '/admin/users/u1');
     await wrapper.vm.$nextTick();
     expect(wrapper.text()).toContain('Jane Doe');
+  });
+
+  it('fetches readiness on mount when the store has none (feeds the tab badge)', () => {
+    mountLayout();
+    expect(adminStoreState.getReadiness).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fetch readiness on mount when the store is already populated', () => {
+    adminStoreState.readiness = [{ category: 'database', status: 'ok', message: 'up' }];
+    mountLayout();
+    expect(adminStoreState.getReadiness).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch readiness when landing directly on the readiness tab (view fetches itself)', () => {
+    mountLayout({}, '/admin/readiness');
+    expect(adminStoreState.getReadiness).not.toHaveBeenCalled();
+  });
+
+  it('decorates the readiness tab with a badge equal to the non-ok check count', () => {
+    adminStoreState.readiness = [
+      { category: 'database', status: 'ok', message: 'up' },
+      { category: 'mailer', status: 'warning', message: 'not configured' },
+      { category: 'storage', status: 'error', message: 'unreachable' },
+    ];
+    const wrapper = mountLayout();
+    const tabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' }).props('tabs');
+    const readinessTab = tabs.find((t) => t.value === 'readiness');
+    expect(readinessTab.badge).toBe(2);
+  });
+
+  it('adds no badge field when every readiness check is ok', () => {
+    adminStoreState.readiness = [{ category: 'database', status: 'ok', message: 'up' }];
+    const wrapper = mountLayout();
+    const tabs = wrapper.findComponent({ name: 'CorePageHeaderTabs' }).props('tabs');
+    const readinessTab = tabs.find((t) => t.value === 'readiness');
+    expect(readinessTab.badge).toBeUndefined();
   });
 
 });

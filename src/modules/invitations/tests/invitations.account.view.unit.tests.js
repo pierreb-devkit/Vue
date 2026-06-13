@@ -41,7 +41,7 @@ const stubs = {
 const mountView = () =>
   shallowMount(InvitationsAccount, {
     global: {
-      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } } } },
+      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } }, app: { url: 'https://app.example.test' } } },
       stubs,
     },
   });
@@ -216,5 +216,68 @@ describe('invitations.account.view', () => {
     const wrapper = mountView();
     expect(wrapper.text()).toContain('My referrals');
     expect(wrapper.find('[data-test="referrals-summary"]').exists()).toBe(true);
+  });
+});
+
+describe('invitations.account.view — one-time copy-link (#3834)', () => {
+  let store;
+  const writeText = vi.fn();
+
+  beforeEach(() => {
+    // Task 2b's describe leaves the hoisted auth-store mock with signup OPEN
+    // ({ sign: { up: true } }), which hides the <template v-else> form branch
+    // these tests render into — reset to the signup-closed default first.
+    authStoreMock.serverConfig = { sign: { in: true, up: false } };
+    setActivePinia(createPinia());
+    store = useInvitationsStore();
+    store.getInvitations = vi.fn().mockResolvedValue();
+    store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co', token: 'tok-9' });
+    writeText.mockReset().mockResolvedValue();
+    Object.defineProperty(globalThis.navigator, 'clipboard', { value: { writeText }, configurable: true });
+  });
+
+  it('submitInvite surfaces the one-time copy link when the response carries a token', async () => {
+    const wrapper = mountView();
+    wrapper.vm.inviteForm.valid = true;
+    wrapper.vm.inviteForm.email = 'new@b.co';
+    await wrapper.vm.submitInvite();
+    expect(wrapper.vm.createdLink).toBe('https://app.example.test/signup?inviteToken=tok-9');
+    expect(wrapper.vm.linkCopied).toBe(false);
+    expect(wrapper.vm.inviteForm.email).toBe(''); // form still resets
+  });
+
+  it('submitInvite without a token leaves the link block hidden (no dead link)', async () => {
+    store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co' });
+    const wrapper = mountView();
+    wrapper.vm.inviteForm.valid = true;
+    wrapper.vm.inviteForm.email = 'new@b.co';
+    await wrapper.vm.submitInvite();
+    expect(wrapper.vm.createdLink).toBeNull();
+  });
+
+  it('renders the one-time link block with the copy button when createdLink is set', async () => {
+    const wrapper = mountView();
+    wrapper.vm.createdLink = 'https://app.example.test/signup?inviteToken=tok-9';
+    await wrapper.vm.$nextTick();
+    const block = wrapper.find('[data-test="invite-created-link"]');
+    expect(block.exists()).toBe(true);
+    expect(block.text()).toContain('signup?inviteToken=tok-9');
+    expect(wrapper.find('[data-test="copy-invite-link"]').exists()).toBe(true);
+  });
+
+  it('copyCreatedLink writes to the clipboard and flips Copy link → Copied', async () => {
+    const wrapper = mountView();
+    wrapper.vm.createdLink = 'https://app.example.test/signup?inviteToken=tok-9';
+    await wrapper.vm.copyCreatedLink();
+    expect(writeText).toHaveBeenCalledWith('https://app.example.test/signup?inviteToken=tok-9');
+    expect(wrapper.vm.linkCopied).toBe(true);
+  });
+
+  it('copyCreatedLink clipboard failure: no throw, Copied not shown', async () => {
+    writeText.mockRejectedValueOnce(new Error('denied'));
+    const wrapper = mountView();
+    wrapper.vm.createdLink = 'https://app.example.test/signup?inviteToken=tok-9';
+    await expect(wrapper.vm.copyCreatedLink()).resolves.toBeUndefined();
+    expect(wrapper.vm.linkCopied).toBe(false);
   });
 });
