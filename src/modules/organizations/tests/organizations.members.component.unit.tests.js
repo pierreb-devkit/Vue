@@ -228,3 +228,72 @@ describe('organizations.members.component — add member', () => {
     expect(addMember).not.toHaveBeenCalled();
   });
 });
+
+describe('organizations.members.component — pending status', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    abilityMock.can.mockReset();
+    abilityMock.can.mockReturnValue(true);
+    abilityMock.rules = [{ action: 'create', subject: 'Membership' }];
+  });
+
+  it('declares a Status column rendered as a slot', async () => {
+    const { wrapper } = await mountComponent();
+    const status = wrapper.vm.headers.find((h) => h.value === 'status');
+    expect(status).toEqual({ text: 'Status', value: 'status', kind: 'slot', slotName: 'status' });
+  });
+
+  it('statusChip maps active → Active/success and pending → Invited/warning', async () => {
+    const { wrapper } = await mountComponent();
+    expect(wrapper.vm.statusChip({ status: 'active' })).toEqual({ label: 'Active', color: 'success' });
+    expect(wrapper.vm.statusChip({ status: 'pending' })).toEqual({ label: 'Invited', color: 'warning' });
+    // Defensive: rows without a status field render as active members.
+    expect(wrapper.vm.statusChip({})).toEqual({ label: 'Active', color: 'success' });
+  });
+
+  it('hides the role-change menu on pending rows but keeps the remove button (owner cancel affordance)', async () => {
+    const rowsStub = {
+      props: ['items'],
+      template: `<div>
+        <div v-for="item in items" :key="item.id" :data-test="'row-' + item.id">
+          <slot name="status" :item="item" />
+          <slot name="actions" :item="item" />
+        </div>
+      </div>`,
+    };
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
+    const store = useOrganizationsStore();
+    store.fetchMembers = vi.fn().mockResolvedValue([]);
+    store.members = [
+      { id: 'm1', role: 'member', status: 'active', userId: { email: 'a@example.com' } },
+      { id: 'm2', role: 'member', status: 'pending', userId: { email: 'b@example.com' } },
+    ];
+    const wrapper = shallowMount(OrganizationsMembersComponent, {
+      props: { organizationId: 'org1' },
+      global: {
+        mocks: { config, $vuetify: { display: { smAndDown: false } } },
+        stubs: { ...sharedStubs, coreDataTableComponent: rowsStub },
+      },
+    });
+    const active = wrapper.find('[data-test="row-m1"]');
+    const pending = wrapper.find('[data-test="row-m2"]');
+    expect(active.text()).toContain('Active');
+    expect(pending.text()).toContain('Invited');
+    expect(active.find('[data-test="member-role-menu"]').exists()).toBe(true);
+    expect(pending.find('[data-test="member-role-menu"]').exists()).toBe(false);
+    expect(active.find('[data-test="member-remove"]').exists()).toBe(true);
+    expect(pending.find('[data-test="member-remove"]').exists()).toBe(true);
+  });
+
+  it('openRemoveDialog relabels the confirm copy for pending rows', async () => {
+    const { wrapper } = await mountComponent();
+    wrapper.vm.openRemoveDialog({ id: 'm2', status: 'pending', userId: { email: 'b@example.com' } });
+    expect(wrapper.vm.removeDialog.pending).toBe(true);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('Cancel this pending invitation?');
+    wrapper.vm.openRemoveDialog({ id: 'm1', status: 'active', userId: { firstName: 'Jane' } });
+    expect(wrapper.vm.removeDialog.pending).toBe(false);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('Are you sure you want to remove');
+  });
+});

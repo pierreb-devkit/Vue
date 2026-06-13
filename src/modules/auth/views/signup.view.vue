@@ -362,6 +362,9 @@ export default {
     signupErrorMessage(error) {
       const data = error?.response?.data;
       if (typeof data === 'string' && data.trim()) return data;
+      // The API error envelope carries the precise reason in `description`
+      // (e.g. signup disabled) while `message` is often generic — prefer it.
+      if (typeof data?.description === 'string' && data.description.trim()) return data.description;
       if (typeof data?.message === 'string' && data.message.trim()) return data.message;
       if (typeof data?.error === 'string' && data.error.trim()) return data.error;
       if (Array.isArray(data?.errors) && data.errors.length > 0) {

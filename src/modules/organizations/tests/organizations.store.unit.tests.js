@@ -725,6 +725,33 @@ describe('Organizations Store', () => {
     });
   });
 
+  describe('declineMembership', () => {
+    it('should DELETE the pending membership, drop it locally, and return the deleted row', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ id: 'inv1' }, { id: 'inv2' }];
+      const declined = { id: 'inv1', status: 'pending' };
+
+      axios.delete.mockResolvedValueOnce({ data: { data: declined } });
+
+      const result = await store.declineMembership('inv1');
+
+      expect(axios.delete).toHaveBeenCalledWith(`${API}/membership-requests/inv1`);
+      expect(store.pendingInvitations).toEqual([{ id: 'inv2' }]);
+      expect(result).toEqual(declined);
+    });
+
+    it('should drop the invitation matched by _id', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ _id: 'a' }, { _id: 'b' }];
+
+      axios.delete.mockResolvedValueOnce({ data: { data: { id: 'a' } } });
+
+      await store.declineMembership('a');
+
+      expect(store.pendingInvitations).toEqual([{ _id: 'b' }]);
+    });
+  });
+
   describe('fetchAdminPendingRequests', () => {
     it('should aggregate pending requests across orgs', async () => {
       const store = useOrganizationsStore();

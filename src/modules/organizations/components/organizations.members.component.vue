@@ -37,9 +37,22 @@
           {{ item.role }}
         </v-chip>
       </template>
+      <!-- Status column with chip: pending owner_add rows render as Invited -->
+      <template #status="{ item }">
+        <v-chip
+          :color="statusChip(item).color"
+          variant="tonal"
+          size="small"
+        >
+          {{ statusChip(item).label }}
+        </v-chip>
+      </template>
       <!-- Actions column -->
       <template #actions="{ item }">
-        <v-menu v-if="canUpdateMember()" location="bottom end">
+        <!-- Role change only makes sense once the invitee has accepted; the
+             remove button stays on pending rows — it is the owner's cancel
+             affordance for the invitation. -->
+        <v-menu v-if="canUpdateMember() && item.status !== 'pending'" location="bottom end">
           <template #activator="{ props }">
             <v-btn
               v-bind="props"
@@ -47,6 +60,7 @@
               variant="text"
               size="small"
               class="mr-1"
+              data-test="member-role-menu"
             >
               <v-icon icon="fa-solid fa-user-pen" size="small"></v-icon>
             </v-btn>
@@ -69,6 +83,7 @@
           variant="text"
           size="small"
           color="error"
+          data-test="member-remove"
           @click="openRemoveDialog(item)"
         >
           <v-icon icon="fa-solid fa-user-minus" size="small"></v-icon>
@@ -80,10 +95,15 @@
     <v-dialog v-model="removeDialog.show" max-width="440">
       <v-card :class="config.vuetify.theme.rounded" class="pa-4">
         <v-card-title class="text-title-large font-weight-medium">
-          Remove Member
+          {{ removeDialog.pending ? 'Cancel Invitation' : 'Remove Member' }}
         </v-card-title>
         <v-card-text class="text-body-medium">
-          Are you sure you want to remove <strong>{{ removeDialog.memberName }}</strong> from this organization?
+          <template v-if="removeDialog.pending">
+            Cancel this pending invitation?
+          </template>
+          <template v-else>
+            Are you sure you want to remove <strong>{{ removeDialog.memberName }}</strong> from this organization?
+          </template>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -269,6 +289,7 @@ export default {
         { text: 'Name', value: 'userId.firstName', kind: 'capitalize' },
         { text: 'Email', value: 'userId.email', kind: 'email' },
         { text: 'Org Role', value: 'role', kind: 'slot', slotName: 'role' },
+        { text: 'Status', value: 'status', kind: 'slot', slotName: 'status' },
         { text: 'Joined', value: 'createdAt', kind: 'date', format: 'DD/MM/YY' },
         { text: 'Last Login', value: 'userId.lastLoginAt', kind: 'date', format: 'DD/MM/YY HH:mm' },
         { text: 'Actions', value: 'actions', kind: 'slot', slotName: 'actions' },
@@ -289,6 +310,7 @@ export default {
         show: false,
         memberId: null,
         memberName: '',
+        pending: false,
       },
       roleDialog: {
         show: false,
@@ -354,6 +376,17 @@ export default {
       return user.email || 'Unknown';
     },
     roleColor,
+    /**
+     * @desc Status chip descriptor for a membership row. Pending owner_add rows
+     *       (awaiting the invitee's consent) render as Invited; everything else
+     *       is an active member. Mirrors the role-chip slot pattern.
+     * @param {Object} member - Membership row from the members list.
+     * @returns {{ label: string, color: string }}
+     */
+    statusChip(member) {
+      if (member?.status === 'pending') return { label: 'Invited', color: 'warning' };
+      return { label: 'Active', color: 'success' };
+    },
     /**
      * @desc Check whether the current user can update memberships in the viewed organization.
      * @returns {boolean}
@@ -422,6 +455,7 @@ export default {
         show: true,
         memberId: member.id || member._id,
         memberName: this.memberName(member),
+        pending: member.status === 'pending',
       };
     },
     async confirmRemoveMember() {

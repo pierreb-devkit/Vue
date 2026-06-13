@@ -6,6 +6,7 @@ import { createVuetify } from 'vuetify';
 const resendVerificationMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const signoutMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const tokenMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const authStoreMock = vi.hoisted(() => ({
   isLoggedIn: true,
   user: null,
@@ -14,6 +15,7 @@ const authStoreMock = vi.hoisted(() => ({
   resendVerification: resendVerificationMock,
   refreshAbilities: refreshAbilitiesMock,
   signout: signoutMock,
+  token: tokenMock,
 }));
 
 vi.mock('../../auth/stores/auth.store', () => ({
@@ -22,11 +24,17 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 const searchDomainMock = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const createJoinRequestMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const fetchMyPendingInvitationsMock = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const acceptMembershipMock = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+const organizationsStoreMock = vi.hoisted(() => ({
+  pendingInvitations: [],
+  searchOrganizationsByDomain: searchDomainMock,
+  createJoinRequest: createJoinRequestMock,
+  fetchMyPendingInvitations: fetchMyPendingInvitationsMock,
+  acceptMembership: acceptMembershipMock,
+}));
 vi.mock('../stores/organizations.store', () => ({
-  useOrganizationsStore: () => ({
-    searchOrganizationsByDomain: searchDomainMock,
-    createJoinRequest: createJoinRequestMock,
-  }),
+  useOrganizationsStore: () => organizationsStoreMock,
 }));
 
 vi.mock('../../core/stores/core.store', () => ({
@@ -204,5 +212,102 @@ describe('organizations.required.view — D3 recovery copy', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Check status');
+  });
+});
+
+describe('organizations.required.view — pending owner_add invitations', () => {
+  /**
+   * Mount the wall with an observable router push.
+   * @param {Function} [routerPush] - Spy for $router.push.
+   * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
+   */
+  const mountWall = (routerPush = vi.fn()) =>
+    mount(OrganizationsRequiredView, {
+      global: {
+        plugins: [createVuetify()],
+        mocks: { config: mockConfig, $route: { query: {} }, $router: { push: routerPush } },
+        stubs: { RouterLink: true },
+      },
+    });
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    searchDomainMock.mockReset().mockResolvedValue([]);
+    fetchMyPendingInvitationsMock.mockReset().mockResolvedValue([]);
+    acceptMembershipMock.mockReset().mockResolvedValue({});
+    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    tokenMock.mockReset().mockResolvedValue();
+    organizationsStoreMock.pendingInvitations = [];
+    authStoreMock.user = { emailVerified: true, email: 'test@example.com' };
+    authStoreMock.serverConfig = { mail: { configured: false } };
+    authStoreMock.pendingRequests = [];
+  });
+
+  it('fetches pending invitations on created', async () => {
+    mountWall();
+    await flushPromises();
+    expect(fetchMyPendingInvitationsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders an invitation row with org name, role chip and Accept button', async () => {
+    organizationsStoreMock.pendingInvitations = [
+      { id: 'inv1', role: 'admin', organizationId: { name: 'Acme Corp' } },
+    ];
+    const wrapper = mountWall();
+    await flushPromises();
+    const block = wrapper.find('[data-test="wall-pending-invitations"]');
+    expect(block.exists()).toBe(true);
+    expect(block.text()).toContain('Acme Corp');
+    expect(block.text()).toContain('admin');
+    expect(wrapper.find('[data-test="wall-accept-invitation-inv1"]').exists()).toBe(true);
+  });
+
+  it('renders a See My Organizations link routing to /users/organizations', async () => {
+    organizationsStoreMock.pendingInvitations = [
+      { id: 'inv1', role: 'member', organizationId: { name: 'Acme Corp' } },
+    ];
+    const routerPush = vi.fn();
+    const wrapper = mountWall(routerPush);
+    await flushPromises();
+    const link = wrapper.find('[data-test="wall-see-organizations"]');
+    expect(link.exists()).toBe(true);
+    expect(wrapper.text()).toContain('See My Organizations');
+    await link.trigger('click');
+    expect(routerPush).toHaveBeenCalledWith('/users/organizations');
+  });
+
+  it('hides the block when there are no pending invitations', async () => {
+    const wrapper = mountWall();
+    await flushPromises();
+    expect(wrapper.find('[data-test="wall-pending-invitations"]').exists()).toBe(false);
+  });
+
+  it('accept: accepts, soft-refreshes via token(), and redirects when currentOrganization appears', async () => {
+    organizationsStoreMock.pendingInvitations = [
+      { id: 'inv1', role: 'member', organizationId: { name: 'Acme Corp' } },
+    ];
+    tokenMock.mockImplementation(async () => {
+      authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org1' };
+    });
+    const routerPush = vi.fn();
+    const wrapper = mountWall(routerPush);
+    await flushPromises();
+    await wrapper.vm.acceptInvitation({ id: 'inv1', role: 'member', organizationId: { name: 'Acme Corp' } });
+    expect(acceptMembershipMock).toHaveBeenCalledWith('inv1');
+    expect(tokenMock).toHaveBeenCalled();
+    expect(routerPush).toHaveBeenCalledWith('/tasks');
+  });
+
+  it('accept without a resulting currentOrganization refreshes the pending list and stays on the wall', async () => {
+    organizationsStoreMock.pendingInvitations = [
+      { id: 'inv1', role: 'member', organizationId: { name: 'Acme Corp' } },
+    ];
+    const routerPush = vi.fn();
+    const wrapper = mountWall(routerPush);
+    await flushPromises();
+    fetchMyPendingInvitationsMock.mockClear();
+    await wrapper.vm.acceptInvitation({ id: 'inv1', role: 'member', organizationId: { name: 'Acme Corp' } });
+    expect(fetchMyPendingInvitationsMock).toHaveBeenCalled();
+    expect(routerPush).not.toHaveBeenCalled();
   });
 });
