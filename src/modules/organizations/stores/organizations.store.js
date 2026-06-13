@@ -373,6 +373,25 @@ export const useOrganizationsStore = defineStore('organizations', {
       );
       return res.data.data;
     },
+
+    /**
+     * @desc Decline a pending owner_add invitation (the invited user refuses).
+     *       The membership row is deleted server-side — the owner can re-invite
+     *       later. Drops it from the local pending list on success. DELETE is not
+     *       in the snackbar interceptor methods (post/put only), so the pending
+     *       list refresh is the only success feedback — deliberate: declining is
+     *       low-stakes and re-invitable. Errors still toast via the interceptor.
+     * @param {string} membershipId - The pending membership to decline
+     * @returns {Promise<Object>} The deleted membership
+     */
+    async declineMembership(membershipId) {
+      const api = apiBase();
+      const res = await axios.delete(`${api}/membership-requests/${membershipId}`);
+      this.pendingInvitations = this.pendingInvitations.filter(
+        (inv) => inv.id !== membershipId && inv._id !== membershipId,
+      );
+      return res.data.data;
+    },
   },
 });
 
