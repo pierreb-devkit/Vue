@@ -67,13 +67,34 @@ export const useInvitationsStore = defineStore('invitations', {
      * Re-emits the `invitation_created` analytics event so the funnel parity is
      * preserved after the org `invitation_sent` capture is dropped (P7).
      * @param {string} email
-     * @returns {Promise<Object>} the created invitation
+     * @returns {Promise<Object>} the created invitation — includes the one-time
+     * `token` (the list endpoint strips it; copy-link surfaces MUST read it here)
      */
     async createInvitation(email) {
       this.error = null;
       try {
         const res = await axios.post(`${apiBase()}/invitations`, { email });
         capture('invitation_created', { source: 'platform' });
+        return res.data.data;
+      } catch (err) {
+        this.error = sanitizeApiError(err);
+        logger.error(err);
+        throw err;
+      }
+    },
+
+    /**
+     * @desc Re-send the invitation email for a still-pending invitation. The
+     * backend re-uses the EXISTING token (no regeneration), so a previously
+     * shared link stays valid. Success/error toast is fired by the axios POST
+     * interceptor.
+     * @param {string} id
+     * @returns {Promise<Object>} the resent invitation
+     */
+    async resendInvitation(id) {
+      this.error = null;
+      try {
+        const res = await axios.post(`${apiBase()}/invitations/${id}/resend`);
         return res.data.data;
       } catch (err) {
         this.error = sanitizeApiError(err);
