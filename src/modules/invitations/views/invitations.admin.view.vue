@@ -40,6 +40,16 @@
           </template>
           <template #actions="{ item }">
             <v-btn
+              icon="fa-solid fa-paper-plane"
+              size="small"
+              variant="text"
+              color="primary"
+              :loading="resendingId === (item.id || item._id)"
+              :disabled="item.status !== 'pending'"
+              :data-test="`resend-invitation-${item.id || item._id}`"
+              @click="resendInvite(item)"
+            ></v-btn>
+            <v-btn
               icon="fa-solid fa-trash"
               size="small"
               variant="text"
@@ -52,26 +62,43 @@
       </v-col>
     </v-row>
 
-    <!-- Create invite dialog -->
+    <!-- Create invite dialog — flips to a one-time copy-link panel after create -->
     <v-dialog v-model="createDialog.show" max-width="460">
       <v-card :class="config.vuetify.theme.rounded">
         <v-card-title>Invite a user</v-card-title>
-        <v-card-text>
-          <v-form ref="createForm" v-model="createDialog.valid">
-            <v-text-field
-              v-model="createDialog.email"
-              label="Email address"
-              :rules="[rules.required, rules.mail]"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-            ></v-text-field>
-          </v-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn variant="text" @click="createDialog.show = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" :loading="createDialog.loading" :disabled="createDialog.valid !== true" @click="submitInvite">Send invite</v-btn>
-        </v-card-actions>
+        <template v-if="!createDialog.createdLink">
+          <v-card-text>
+            <v-form ref="createForm" v-model="createDialog.valid">
+              <v-text-field
+                v-model="createDialog.email"
+                label="Email address"
+                :rules="[rules.required, rules.mail]"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+              ></v-text-field>
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn variant="text" @click="createDialog.show = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" :loading="createDialog.loading" :disabled="createDialog.valid !== true" @click="submitInvite">Send invite</v-btn>
+          </v-card-actions>
+        </template>
+        <template v-else>
+          <v-card-text data-test="invite-created-link">
+            <p class="text-body-medium text-medium-emphasis mb-2">
+              Invitation sent. This signup link is shown only once — the list never exposes it again.
+            </p>
+            <code class="text-body-small">{{ createDialog.createdLink }}</code>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn variant="text" @click="createDialog.show = false">Close</v-btn>
+            <v-btn color="primary" variant="tonal" data-test="copy-invite-link" @click="copyCreatedLink">
+              <v-icon start icon="fa-solid fa-copy" size="small"></v-icon>
+              {{ createDialog.copied ? 'Copied' : 'Copy link' }}
+            </v-btn>
+          </v-card-actions>
+        </template>
       </v-card>
     </v-dialog>
 
@@ -122,8 +149,10 @@ export default {
         { text: 'Expires', value: 'expiresAt', kind: 'date', format: 'DD/MM/YY' },
         { text: 'Actions', value: 'actions', kind: 'slot', slotName: 'actions' },
       ],
-      createDialog: { show: false, email: '', valid: false, loading: false },
+      createDialog: { show: false, email: '', valid: false, loading: false, createdLink: null, copied: false },
       deleteDialog: { show: false, id: null, email: '' },
+      // Single-flight guard for the resend icon-button (id in flight, or null).
+      resendingId: null,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
@@ -167,18 +196,26 @@ export default {
      * @returns {void}
      */
     openCreate() {
-      this.createDialog = { show: true, email: '', valid: false, loading: false };
+      this.createDialog = { show: true, email: '', valid: false, loading: false, createdLink: null, copied: false };
     },
     /**
-     * @desc Submit a new invitation, then refresh the list and close the dialog.
+     * @desc Submit a new invitation. On success the dialog STAYS OPEN showing
+     * the one-time signup link (the list strips tokens server-side, so the
+     * link can only be built here, from the create response).
      * @returns {Promise<void>}
      */
     async submitInvite() {
       this.createDialog.loading = true;
       try {
-        await useInvitationsStore().createInvitation(this.createDialog.email);
+        const created = await useInvitationsStore().createInvitation(this.createDialog.email);
         await this.fetchInvitations();
-        this.createDialog.show = false;
+        const link = this.signupLink(created?.token);
+        if (link) {
+          this.createDialog.createdLink = link;
+          this.createDialog.copied = false;
+        } else {
+          this.createDialog.show = false;
+        }
       } catch {
         // error is surfaced via the view's own error banner (invitations store)
       } finally {
@@ -205,6 +242,49 @@ export default {
         // error is surfaced via the view's own error banner (invitations store)
       } finally {
         this.deleteDialog.show = false;
+      }
+    },
+    /**
+     * @desc Build the one-time signup link for a freshly created invitation.
+     * @param {string|undefined} token - invitation token from the create response
+     * @returns {string|null} the absolute signup link, or null without a token
+     */
+    signupLink(token) {
+      if (!token) return null;
+      const base = (this.config.app?.url || window.location.origin).replace(/\/+$/, '');
+      return `${base}/signup?inviteToken=${token}`;
+    },
+    /**
+     * @desc Copy the one-time signup link. Feedback is a local label flip
+     * ('Copy link' → 'Copied') — the global snackbar is interceptor-only and
+     * a clipboard write is not an HTTP call.
+     * @returns {Promise<void>}
+     */
+    async copyCreatedLink() {
+      try {
+        await navigator.clipboard.writeText(this.createDialog.createdLink);
+        this.createDialog.copied = true;
+      } catch {
+        // Clipboard unavailable (permissions / insecure context): the link
+        // stays visible above for manual selection.
+      }
+    },
+    /**
+     * @desc Re-send the invitation email (single-flight per row). The POST
+     * response toasts via the axios interceptor; errors land in the banner.
+     * @param {Object} item - invitation row
+     * @returns {Promise<void>}
+     */
+    async resendInvite(item) {
+      const id = item.id || item._id;
+      if (!id || this.resendingId) return;
+      this.resendingId = id;
+      try {
+        await useInvitationsStore().resendInvitation(id);
+      } catch {
+        // error is surfaced via the view's own error banner (invitations store)
+      } finally {
+        this.resendingId = null;
       }
     },
     /**
