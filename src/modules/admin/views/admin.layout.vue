@@ -13,19 +13,6 @@
     >
       <span class="text-body-medium">{{ error }}</span>
     </v-alert>
-    <v-alert
-      v-if="showMailerWarning"
-      type="warning"
-      variant="tonal"
-      density="compact"
-      class="mx-2 mt-2"
-      :class="config.vuetify.theme.rounded"
-      icon="fa-solid fa-triangle-exclamation"
-    >
-      <span class="text-body-medium">
-        No mailer configured. Users can register with any email without verification. Set up SMTP to enable email verification.
-      </span>
-    </v-alert>
 
     <CorePageHeaderTabs
       icon="fa-solid fa-user-tie"
@@ -52,7 +39,6 @@
 import CorePageHeaderTabs from '../../core/components/core.pageHeaderTabs.component.vue';
 import { ability } from '../../../lib/helpers/ability';
 import { useAdminStore } from '../stores/admin.store';
-import { useAuthStore } from '../../auth/stores/auth.store';
 
 /**
  * Built-in admin tabs (canonical). Downstream apps may add more via
@@ -69,10 +55,11 @@ const BUILT_IN_TABS = Object.freeze([
 /**
  * Component definition.
  *
- * `admin.layout.vue` is the parent layout for the admin section. It renders
- * banners (error + mailer-not-configured warning), a page header that either
- * shows the admin tab bar (list-page mode) or a breadcrumb pushed by a sub-
- * view (detail-page mode), and a `<router-view>` for nested children.
+ * `admin.layout.vue` is the parent layout for the admin section. It renders an
+ * error banner, a page header that either shows the admin tab bar (list-page
+ * mode) or a breadcrumb pushed by a sub-view (detail-page mode), and a
+ * `<router-view>` for nested children. Mailer readiness is reported by the
+ * Readiness tab only — no layout-level banner.
  *
  * Tab rendering is delegated to `CoreSurfaceTabBar` (the same primitive used
  * by `user.view.vue` and `organization.detail.component.vue`) — full chrome
@@ -97,13 +84,6 @@ export default {
      */
     error() {
       return useAdminStore().error;
-    },
-    /**
-     * @desc Whether to show the mailer-not-configured warning across admin tabs.
-     * @returns {boolean}
-     */
-    showMailerWarning() {
-      return useAuthStore().serverConfig?.mail?.configured === false;
     },
     /**
      * @desc Current breadcrumb published by an admin sub-view via

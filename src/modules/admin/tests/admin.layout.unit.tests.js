@@ -151,17 +151,10 @@ describe('admin.layout', () => {
     expect(html.indexOf('Boom')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
   });
 
-  it('renders the mailer warning at the TOP when serverConfig.mail.configured is false', async () => {
+  it('does NOT render a mailer banner even when serverConfig.mail.configured is false (signal lives in the Readiness tab)', async () => {
     authStoreState.serverConfig = { mail: { configured: false } };
     const wrapper = mountLayout();
     await wrapper.vm.$nextTick();
-    const html = wrapper.html();
-    expect(html.indexOf('No mailer configured')).toBeLessThan(html.indexOf('page-header-tabs-stub'));
-  });
-
-  it('does NOT render the mailer warning when mail is configured', () => {
-    authStoreState.serverConfig = { mail: { configured: true } };
-    const wrapper = mountLayout();
     expect(wrapper.html()).not.toContain('No mailer configured');
   });
 
