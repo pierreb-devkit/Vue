@@ -23,35 +23,51 @@
             <v-icon icon="fa-solid fa-gift" color="primary" class="mr-3"></v-icon>
             <span class="text-title-large">Invite a contact</span>
           </div>
-          <p class="text-body-medium text-medium-emphasis mb-4">
-            Share the platform with someone you know. They'll receive an email invitation to join.
-          </p>
-          <v-form ref="inviteForm" v-model="inviteForm.valid" @submit.prevent="submitInvite">
-            <div class="d-flex flex-column flex-sm-row ga-3">
-              <v-text-field
-                v-model="inviteForm.email"
-                label="Email address"
-                :rules="[rules.required, rules.mail]"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                class="flex-grow-1"
-              ></v-text-field>
-              <v-btn
-                type="submit"
-                color="primary"
-                variant="flat"
-                size="large"
-                :class="config.vuetify.theme.rounded"
-                class="text-none"
-                :loading="inviteForm.loading"
-                :disabled="inviteForm.valid !== true"
-              >
-                <v-icon start icon="fa-solid fa-paper-plane"></v-icon>
-                Send invite
-              </v-btn>
-            </div>
-          </v-form>
+          <!-- #3833 open-signup state: the server never claims/finalizes an invite
+               token while public signup is open (invitation.accepted never fires),
+               so soliciting invites here would promise a referral that can never
+               convert. Informational state instead of the form; list stays below. -->
+          <v-alert
+            v-if="signupOpen"
+            type="info"
+            variant="tonal"
+            density="compact"
+            :class="config.vuetify.theme.rounded"
+            data-test="referrals-open-signup-alert"
+          >
+            <span class="text-body-medium">Referral invitations are inactive on this deployment because public signup is open.</span>
+          </v-alert>
+          <template v-else>
+            <p class="text-body-medium text-medium-emphasis mb-4">
+              Share the platform with someone you know. They'll receive an email invitation to join.
+            </p>
+            <v-form ref="inviteForm" v-model="inviteForm.valid" @submit.prevent="submitInvite">
+              <div class="d-flex flex-column flex-sm-row ga-3">
+                <v-text-field
+                  v-model="inviteForm.email"
+                  label="Email address"
+                  :rules="[rules.required, rules.mail]"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details="auto"
+                  class="flex-grow-1"
+                ></v-text-field>
+                <v-btn
+                  type="submit"
+                  color="primary"
+                  variant="flat"
+                  size="large"
+                  :class="config.vuetify.theme.rounded"
+                  class="text-none"
+                  :loading="inviteForm.loading"
+                  :disabled="inviteForm.valid !== true"
+                >
+                  <v-icon start icon="fa-solid fa-paper-plane"></v-icon>
+                  Send invite
+                </v-btn>
+              </div>
+            </v-form>
+          </template>
         </v-card>
       </v-col>
 
@@ -96,6 +112,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 
@@ -169,6 +186,19 @@ export default {
         },
         { total: this.invitations.length, joined: 0, pending: 0, expired: 0, revoked: 0 },
       );
+    },
+    /**
+     * @desc Whether the deployment has PUBLIC signup open, from the server auth
+     * config (GET /api/auth/config → authStore.serverConfig.sign.up; loaded by the
+     * global router guard for any logged-in navigation). When open, the referral
+     * substrate is inert by design — a presented token is resolved but never
+     * claimed/finalized — so the invite form is replaced by an informational
+     * state. Uses strict equality (`=== true`) so an unknown/missing
+     * serverConfig keeps the form shown (the backend policy is the actual gate).
+     * @returns {boolean}
+     */
+    signupOpen() {
+      return useAuthStore().serverConfig?.sign?.up === true;
     },
   },
   methods: {
