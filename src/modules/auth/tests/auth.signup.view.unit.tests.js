@@ -199,6 +199,32 @@ describe('auth.signup.view', () => {
       await flushPromises();
       expect(wrapper.vm.signupError).toBe('Password too weak Email invalid');
     });
+
+    it('shows the API error description (the precise reason in the error envelope)', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 403, data: { description: 'Registration is currently deactivated' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Registration is currently deactivated');
+    });
+
+    it('prefers description over message when both are present', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 403, data: { message: 'Forbidden', description: 'Registration is currently deactivated' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Registration is currently deactivated');
+    });
   });
 
   describe('password visibility toggle', () => {
