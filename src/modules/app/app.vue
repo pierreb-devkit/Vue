@@ -220,6 +220,10 @@ export default {
       }
     },
   },
+  /**
+   * @desc Initialize SEO metadata and wire global axios interceptors.
+   * @returns {void}
+   */
   created() {
     const { app } = this.config;
     const seo = app.seo || {};
