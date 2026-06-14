@@ -220,6 +220,10 @@ export default {
       }
     },
   },
+  /**
+   * @desc Initialize SEO metadata and wire global axios interceptors.
+   * @returns {void}
+   */
   created() {
     const { app } = this.config;
     const seo = app.seo || {};
@@ -258,7 +262,10 @@ export default {
 
     // Configure axios interceptors
     const authStore = useAuthStore();
-    setupInterceptors(this.config, this.snackbar, () => authStore.signout(), () => authStore.refreshAbilities());
+    // Pass `true` to signout() so the 401 side-effect path suppresses the success
+    // snackbar; explicit user logouts (nav / profile / org) call signout() with no
+    // arg and keep the "success: Signed out" toast (#4305).
+    setupInterceptors(this.config, this.snackbar, () => authStore.signout(true), () => authStore.refreshAbilities(), () => authStore.isLoggedIn);
   },
 };
 </script>
