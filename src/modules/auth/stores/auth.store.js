@@ -253,9 +253,14 @@ export const useAuthStore = defineStore('auth', {
      * @desc Sign out the current user: call backend to clear the httpOnly TOKEN cookie,
      * then reset auth state, abilities, and localStorage. Backend failures never trap the
      * user as logged-in on the client — local reset always runs.
+     * @param {boolean} [silent=false] - When true, suppress the success snackbar for the
+     *   /signout request. Pass true only from the 401 side-effect path (session expiry)
+     *   where the signout is an automatic consequence, not a deliberate user action.
+     *   Explicit user logouts (nav / profile / org screens) leave this false so the
+     *   "success: Signed out" toast is shown normally.
      * @returns {Promise<void>}
      */
-    async signout() {
+    async signout(silent = false) {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
 
@@ -263,13 +268,14 @@ export const useAuthStore = defineStore('auth', {
       // Swallow any error (older backends may not expose this endpoint, or the
       // server may be unreachable) — the local reset below must still run.
       // `__isRetryRequest: true` flags this request so the 401 interceptor does
-      // not re-enter signout() and recurse. `__silent: true` flags it so the
-      // success interceptor skips its snackbar — a signout is a side effect, not
-      // an action worth a "success: Signed out" toast (see src/lib/services/axios.js, #4305).
+      // not re-enter signout() and recurse. `__silent: true` is set only when
+      // `silent` is true (401 side-effect path) so the success interceptor skips
+      // its snackbar for that case; explicit user logouts preserve the toast.
+      // (see src/lib/services/axios.js, #4305).
       try {
         await axios.post(`${api}/${config.api.endPoints.auth}/signout`, null, {
           __isRetryRequest: true,
-          __silent: true,
+          ...(silent ? { __silent: true } : {}),
         });
       } catch {
         // Never trap the user logged-in on backend failure.

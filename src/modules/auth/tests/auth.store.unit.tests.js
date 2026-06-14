@@ -107,7 +107,9 @@ describe('Auth Store', () => {
   });
 
   describe('signout backend call', () => {
-    it('should call backend signout endpoint with the correct URL', async () => {
+    it('should call backend signout endpoint with the correct URL (explicit logout — no __silent)', async () => {
+      // Explicit user logout: signout() with no arg must NOT set __silent so the
+      // "success: Signed out" toast is preserved.
       const authStore = useAuthStore();
       authStore.auth = true;
       authStore.user = { id: 'u1' };
@@ -118,25 +120,41 @@ describe('Auth Store', () => {
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:3000/api/auth/signout',
         null,
-        { __isRetryRequest: true, __silent: true },
+        { __isRetryRequest: true },
       );
     });
 
-    it('should flag the signout request __silent so it raises no success toast', async () => {
-      // D2 (#4305): a signout is a side effect — its /signout 200 must not flow
-      // through the success snackbar interceptor as "success: Signed out".
+    it('should flag the signout request __silent when called from the 401 side-effect path', async () => {
+      // D2 (#4305): the 401 interceptor calls signout(true) — the /signout POST
+      // must be marked __silent so the success snackbar is suppressed. A session
+      // expiry side-effect must never surface "success: Signed out".
       const authStore = useAuthStore();
       authStore.auth = true;
       authStore.user = { id: 'u1' };
 
       axios.post.mockResolvedValueOnce({ data: { type: 'success', message: 'Signed out' } });
-      await authStore.signout();
+      await authStore.signout(true);
 
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:3000/api/auth/signout',
         null,
         expect.objectContaining({ __silent: true }),
       );
+    });
+
+    it('should NOT flag __silent for an explicit user logout (toast preserved)', async () => {
+      // Complement of the D2 test: explicit logout (signout() with no arg or
+      // signout(false)) must NOT set __silent, so the success interceptor can
+      // show the "success: Signed out" snackbar as expected.
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      axios.post.mockResolvedValueOnce({ data: { type: 'success', message: 'Signed out' } });
+      await authStore.signout(); // no arg → explicit logout
+
+      const callOptions = axios.post.mock.calls[0][2];
+      expect(callOptions).not.toHaveProperty('__silent');
     });
 
     it('should clear local state even when backend signout rejects', async () => {
@@ -154,12 +172,13 @@ describe('Auth Store', () => {
       axios.post.mockRejectedValueOnce(backendError);
 
       // Must not throw — signout always resolves so the user is never trapped as logged-in.
+      // Explicit signout (no arg) → no __silent flag.
       await expect(authStore.signout()).resolves.toBeUndefined();
 
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:3000/api/auth/signout',
         null,
-        { __isRetryRequest: true, __silent: true },
+        { __isRetryRequest: true },
       );
       expect(authStore.auth).toBe(false);
       expect(authStore.cookieExpire).toBe(0);
