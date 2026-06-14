@@ -23,6 +23,7 @@ describe('Axios Service', () => {
   let mockSnackbar;
   let mockOnSignout;
   let mockOnRefreshAbilities;
+  let mockIsLoggedIn;
   let responseInterceptor;
   let errorInterceptor;
 
@@ -60,8 +61,12 @@ describe('Axios Service', () => {
     // Mock onRefreshAbilities callback
     mockOnRefreshAbilities = vi.fn().mockResolvedValue();
 
+    // Mock isLoggedIn getter — default to an authenticated session so existing
+    // 401 auto-signout behaviour (session expiry) is preserved.
+    mockIsLoggedIn = vi.fn(() => true);
+
     // Setup interceptors
-    setupInterceptors(mockConfig, mockSnackbar, mockOnSignout, mockOnRefreshAbilities);
+    setupInterceptors(mockConfig, mockSnackbar, mockOnSignout, mockOnRefreshAbilities, mockIsLoggedIn);
 
     // Get the interceptors that were registered
     const mockInstance = axios.create();
@@ -190,6 +195,67 @@ describe('Axios Service', () => {
       expect(mockSnackbar.text).toBe('Signin failed');
       expect(mockSnackbar.color).toBe('error');
       expect(mockSnackbar.status).toBe(true);
+    });
+
+    it('should NOT call onSignout on a 401 when there is no live session (failed login)', async () => {
+      // D1: a failed login (POST /signin → 401) is not a session expiry. The
+      // global auto-signout must not fire — it would POST /signout, wipe state,
+      // and surface a misleading "success: Signed out" toast. The user must see
+      // the login error instead.
+      mockIsLoggedIn.mockReturnValue(false);
+
+      const error = {
+        response: { status: 401 },
+        config: { url: 'http://localhost:3000/api/auth/signin' },
+      };
+
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        expect(err).toEqual(error);
+      }
+
+      expect(mockOnSignout).not.toHaveBeenCalled();
+      // The login error must still be the message the user sees.
+      expect(mockSnackbar.text).toBe('Signin failed');
+      expect(mockSnackbar.color).toBe('error');
+      expect(mockSnackbar.status).toBe(true);
+    });
+
+    it('should still auto-signout on a 401 for an authenticated session (expiry)', async () => {
+      // D1 guard: a genuine session 401 (live session) must still sign out.
+      mockIsLoggedIn.mockReturnValue(true);
+
+      const error = {
+        response: { status: 401 },
+        config: { __isRetryRequest: false },
+      };
+
+      try {
+        await errorInterceptor(error);
+      } catch (err) {
+        expect(err).toEqual(error);
+      }
+
+      expect(mockOnSignout).toHaveBeenCalled();
+      expect(mockSnackbar.color).toBe('error');
+      expect(mockSnackbar.status).toBe(true);
+    });
+
+    it('should NOT raise a success snackbar for a silent (side-effect) request', () => {
+      // D2: a programmatic signout marks its /signout POST __silent so the
+      // success interceptor skips it — a side-effect signout must never show
+      // "success: Signed out".
+      const response = {
+        config: { method: 'post', __silent: true },
+        data: { type: 'success', message: 'Signed out' },
+      };
+
+      const result = responseInterceptor(response);
+
+      expect(mockSnackbar.text).toBe('');
+      expect(mockSnackbar.status).toBe(false);
+      expect(result).toEqual(response);
     });
 
     it('should not handle 401 error if retry request', async () => {

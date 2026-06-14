@@ -258,7 +258,7 @@ export default {
 
     // Configure axios interceptors
     const authStore = useAuthStore();
-    setupInterceptors(this.config, this.snackbar, () => authStore.signout(), () => authStore.refreshAbilities());
+    setupInterceptors(this.config, this.snackbar, () => authStore.signout(), () => authStore.refreshAbilities(), () => authStore.isLoggedIn);
   },
 };
 </script>

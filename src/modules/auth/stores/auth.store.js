@@ -263,10 +263,13 @@ export const useAuthStore = defineStore('auth', {
       // Swallow any error (older backends may not expose this endpoint, or the
       // server may be unreachable) — the local reset below must still run.
       // `__isRetryRequest: true` flags this request so the 401 interceptor does
-      // not re-enter signout() and recurse (see src/lib/services/axios.js).
+      // not re-enter signout() and recurse. `__silent: true` flags it so the
+      // success interceptor skips its snackbar — a signout is a side effect, not
+      // an action worth a "success: Signed out" toast (see src/lib/services/axios.js, #4305).
       try {
         await axios.post(`${api}/${config.api.endPoints.auth}/signout`, null, {
           __isRetryRequest: true,
+          __silent: true,
         });
       } catch {
         // Never trap the user logged-in on backend failure.

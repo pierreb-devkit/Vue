@@ -118,7 +118,24 @@ describe('Auth Store', () => {
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:3000/api/auth/signout',
         null,
-        { __isRetryRequest: true },
+        { __isRetryRequest: true, __silent: true },
+      );
+    });
+
+    it('should flag the signout request __silent so it raises no success toast', async () => {
+      // D2 (#4305): a signout is a side effect — its /signout 200 must not flow
+      // through the success snackbar interceptor as "success: Signed out".
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+
+      axios.post.mockResolvedValueOnce({ data: { type: 'success', message: 'Signed out' } });
+      await authStore.signout();
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'http://localhost:3000/api/auth/signout',
+        null,
+        expect.objectContaining({ __silent: true }),
       );
     });
 
@@ -142,7 +159,7 @@ describe('Auth Store', () => {
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:3000/api/auth/signout',
         null,
-        { __isRetryRequest: true },
+        { __isRetryRequest: true, __silent: true },
       );
       expect(authStore.auth).toBe(false);
       expect(authStore.cookieExpire).toBe(0);
