@@ -81,6 +81,7 @@ export default {
     analytics: { activated: true },
     admin: { activated: true },
     legal: { activated: true },
+    docs: { activated: false },
   },
   cookie: { prefix: 'devkit' },
   sign: { route: '/', in: true, up: true },

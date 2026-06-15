@@ -17,6 +17,7 @@ import users, { ACCOUNT_PARENT_PATH } from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
 import billing, { organizationRoutes as billingOrganizationRoutes } from '../billing/router/billing.router';
 import legal from '../legal/router/legal.router';
+import docs from '../docs/router/docs.router';
 import { invitationsAdminRoutes, invitationsAccountRoutes } from '../invitations/router/invitations.router';
 
 /**
@@ -123,6 +124,7 @@ const getRouter = () => {
     { name: 'tasks', routes: tasks },
     { name: 'billing', routes: billing },
     { name: 'legal', routes: legal },
+    { name: 'docs', routes: docs },
     ..._downstreamOptionalModules,
   ];
 
