@@ -7,10 +7,12 @@
       avatar-color="primary"
     />
 
-    <!-- Search affordance (⌘K / "/") -->
-    <v-row class="mt-1" justify="center">
-      <v-col cols="12" sm="8" md="6">
-        <DocsSearch data-test="docs-home-search" />
+    <!-- Primary search affordance (⌘K / "/"): the landing's main entry point.
+         Left-aligned to the header + door axis (not floated centre) and width
+         capped so it reads as a search bar, not a full-bleed band. -->
+    <v-row class="mt-5 mb-2">
+      <v-col cols="12" sm="9" md="6" lg="5">
+        <DocsSearch block size="large" data-test="docs-home-search" />
       </v-col>
     </v-row>
 
@@ -28,7 +30,7 @@
 
     <template v-else>
       <!-- Persona doors: one per audience, accent differentiates rather than repeats -->
-      <v-row class="mt-3" data-test="docs-home-personas">
+      <v-row class="mt-8" data-test="docs-home-personas">
         <v-col
           v-for="persona in personas"
           :key="persona.key"

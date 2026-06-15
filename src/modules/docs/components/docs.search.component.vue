@@ -7,6 +7,7 @@
       class="docs-search__trigger text-none justify-start"
       prepend-icon="fa-solid fa-magnifying-glass"
       :block="block"
+      :size="size"
       data-test="docs-search-trigger"
       @click="open"
     >
@@ -147,8 +148,10 @@ import { useDocsStore } from '../stores/docs.store';
 import config from '@/config';
 
 defineProps({
-  /** Render the trigger button full-width (used in the nav sidebar). */
+  /** Render the trigger button full-width (used in the nav sidebar + home hero). */
   block: { type: Boolean, default: false },
+  /** Vuetify size for the trigger button (e.g. 'large' for the home hero). */
+  size: { type: String, default: undefined },
 });
 
 const router = useRouter();
@@ -382,7 +385,9 @@ defineExpose({ open, close });
 </script>
 
 <style scoped>
-.docs-search__trigger {
+/* Floor only the inline (non-block) trigger; block usages (nav sidebar + home
+   hero) fill their container, so this must not override Vuetify's block width. */
+.docs-search__trigger:not(.v-btn--block) {
   min-width: 180px;
 }
 
