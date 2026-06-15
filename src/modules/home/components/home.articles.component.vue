@@ -52,7 +52,7 @@
               <v-col v-for="(item, i) in content" :key="i" cols="12" :md="item.fullWidth ? 12 : setup.content.length > 1 ? 6 : 12">
                 <v-hover v-slot="{ isHovering, props }">
                   <!-- eslint-disable-next-line -->
-                  <a :href="item.url" target="_blank">
+                  <a :href="safeHref(item.url)" target="_blank" rel="noopener noreferrer">
                     <homeImgComponent
                       v-if="item.feature_image"
                       v-bind="props"
@@ -147,6 +147,22 @@ export default {
     style,
     stepper(input) {
       this.step = input;
+    },
+    /**
+     * @desc Sanitize an external article URL before binding it to an anchor href.
+     * Only http:/https: schemes are allowed; anything else (javascript:, data:,
+     * unparseable values) collapses to '#' so a hostile feed entry cannot inject
+     * a script-executing URL.
+     * @param {string} url - The candidate article URL from the content feed.
+     * @returns {string} The original URL when safe, otherwise '#'.
+     */
+    safeHref(url) {
+      try {
+        const { protocol } = new URL(url);
+        return protocol === 'http:' || protocol === 'https:' ? url : '#';
+      } catch {
+        return '#';
+      }
     },
   },
 };
