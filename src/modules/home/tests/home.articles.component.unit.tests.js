@@ -66,7 +66,6 @@ describe('HomeArticlesComponent', () => {
 
     it('neutralizes a javascript: URL to #', () => {
       const wrapper = mountWithItem(vuetify, { title: 'A', url: 'https://example.com' });
-      // eslint-disable-next-line no-script-url
       expect(wrapper.vm.safeHref('javascript:alert(1)')).toBe('#');
     });
 
@@ -85,7 +84,6 @@ describe('HomeArticlesComponent', () => {
 
   describe('rendered :href', () => {
     it('renders a javascript: article URL as # (no script execution)', () => {
-      // eslint-disable-next-line no-script-url
       const wrapper = mountWithItem(vuetify, { title: 'Bad', url: 'javascript:alert(1)', feature_image: '/x.webp' });
       const anchor = wrapper.find('a');
       expect(anchor.exists()).toBe(true);
