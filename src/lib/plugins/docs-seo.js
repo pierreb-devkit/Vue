@@ -48,7 +48,9 @@ function normalizeBasePath(basePath) {
 function normalizeCategories(tree) {
   const categories = Array.isArray(tree?.categories) ? tree.categories : [];
   return categories.map((c, i) => {
-    const id = c?.id ?? c?.slug ?? '';
+    // Field-preference order MUST match `docs.store.js normalizeTree` (slug ?? id)
+    // so SEO-derived /docs/:cat/:slug paths stay in sync with runtime router paths.
+    const id = c?.slug ?? c?.id ?? '';
     const list = Array.isArray(c?.guides) ? c.guides : Array.isArray(c?.articles) ? c.articles : [];
     return {
       id: String(id),

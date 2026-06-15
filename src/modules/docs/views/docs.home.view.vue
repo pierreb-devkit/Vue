@@ -171,6 +171,7 @@ const quickstart = config?.docs?.quickstart || null;
  * `<YOUR_API_KEY>` placeholder. Downstream may override the home view to ship
  * its own product-specific snippet.
  */
+// KEEP `api.example.com` as a generic placeholder — downstream overrides supply the real endpoint.
 const QUICKSTART_COMMAND = [
   'curl https://api.example.com/api/public/resource \\',
   '  -H "Authorization: Bearer <YOUR_API_KEY>" \\',

@@ -93,7 +93,6 @@
                 Read the guide
               </v-btn>
             </div>
-            <!-- eslint-disable-next-line vue/no-v-html -- group.description is from the trusted backend spec, rendered via VMarkdown (DOMPurify-sanitized) -->
             <VMarkdown
               v-if="group.description"
               :source="group.description"
