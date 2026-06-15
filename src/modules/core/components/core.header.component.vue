@@ -228,7 +228,7 @@ export default {
     },
     navigate(link) {
       if (link.startsWith('http')) {
-        window.open(link, '_blank');
+        window.open(link, '_blank', 'noopener,noreferrer');
       } else {
         this.$router.push(link);
       }
