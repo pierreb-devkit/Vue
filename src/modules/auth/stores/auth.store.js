@@ -139,7 +139,7 @@ export const useAuthStore = defineStore('auth', {
         // populates without waiting for mount/focus (guard: only when meterMode is on).
         if (this.serverConfig?.billing?.meterMode === true) {
           const billingStore = useBillingStore();
-          billingStore.fetchUsageMeter().catch((err) => { console.error('[auth] fetchUsageMeter on signin failed:', err); });
+          billingStore.fetchUsageMeter().catch(() => { /* meter refresh is best-effort; do not log err (avoids leaking response internals to the console) */ });
         }
 
         // PostHog identify on signin
@@ -162,8 +162,11 @@ export const useAuthStore = defineStore('auth', {
           this.clearLockout();
           return;
         }
+        // Do not log `err`: on a failed signin it carries the submitted
+        // credentials (request payload) and would leak them to the browser
+        // console / any console-forwarding error tracker. The axios response
+        // interceptor already surfaces a user-facing failure message.
         localStorage.removeItem('token');
-        console.error(err);
       }
     },
 
@@ -339,8 +342,10 @@ export const useAuthStore = defineStore('auth', {
         }
 
         coreStore.refreshNav(this.isLoggedIn);
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // Token refresh failed (expired/invalid session). Swallow silently:
+        // the axios interceptor handles the user-facing 401, and logging `err`
+        // would expose request/response internals to the console.
       }
     },
 
@@ -351,8 +356,9 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
         this.mail.status = res.data.data.status;
         this.mail.message = res.data.message;
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // Swallow silently: `err` carries the submitted email (request payload).
+        // The axios interceptor surfaces the user-facing failure message.
       }
     },
 
@@ -370,9 +376,11 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         coreStore.refreshNav(this.isLoggedIn);
-      } catch (err) {
+      } catch {
+        // Swallow silently: `err` carries the submitted reset token + new
+        // password (request payload). The axios interceptor surfaces the
+        // user-facing failure message.
         localStorage.removeItem('token');
-        console.error(err);
       }
     },
 
