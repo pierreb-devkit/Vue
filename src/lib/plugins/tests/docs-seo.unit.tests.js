@@ -72,6 +72,40 @@ describe('deriveDocsRoutes', () => {
     const partial = { categories: [{ id: 'c', label: 'C', guides: [{ title: 'no slug' }, { slug: 'ok', title: 'Ok' }] }] };
     expect(deriveDocsRoutes(partial)).toEqual(['/docs', '/docs/c/ok']);
   });
+
+  it('sorts categories by order field regardless of backend return order', () => {
+    const unordered = {
+      categories: [
+        { id: 'z-cat', label: 'Z Cat', order: 2, guides: [{ slug: 'z-guide', title: 'Z', order: 0 }] },
+        { id: 'a-cat', label: 'A Cat', order: 0, guides: [{ slug: 'a-guide', title: 'A', order: 0 }] },
+        { id: 'm-cat', label: 'M Cat', order: 1, guides: [{ slug: 'm-guide', title: 'M', order: 0 }] },
+      ],
+    };
+    expect(deriveDocsRoutes(unordered)).toEqual([
+      '/docs',
+      '/docs/a-cat/a-guide',
+      '/docs/m-cat/m-guide',
+      '/docs/z-cat/z-guide',
+    ]);
+  });
+
+  it('sorts guides within a category by order field regardless of backend return order', () => {
+    const unordered = {
+      categories: [
+        {
+          id: 'cat',
+          label: 'Cat',
+          order: 0,
+          guides: [
+            { slug: 'third', title: 'Third', order: 2 },
+            { slug: 'first', title: 'First', order: 0 },
+            { slug: 'second', title: 'Second', order: 1 },
+          ],
+        },
+      ],
+    };
+    expect(deriveDocsRoutes(unordered)).toEqual(['/docs', '/docs/cat/first', '/docs/cat/second', '/docs/cat/third']);
+  });
 });
 
 describe('deriveDocsLlmsSections', () => {
@@ -121,6 +155,33 @@ describe('deriveDocsLlmsSections', () => {
     expect(deriveDocsLlmsSections(null, 'https://example.com')).toEqual([]);
     const empty = { categories: [{ id: 'c', label: 'C', guides: [] }] };
     expect(deriveDocsLlmsSections(empty, 'https://example.com')).toEqual([]);
+  });
+
+  it('outputs categories and guides in order-sorted order regardless of backend return order', () => {
+    const unordered = {
+      categories: [
+        {
+          id: 'b-cat',
+          label: 'B Category',
+          order: 1,
+          guides: [
+            { slug: 'b2', title: 'B2', order: 1, summary: '' },
+            { slug: 'b1', title: 'B1', order: 0, summary: '' },
+          ],
+        },
+        {
+          id: 'a-cat',
+          label: 'A Category',
+          order: 0,
+          guides: [{ slug: 'a1', title: 'A1', order: 0, summary: '' }],
+        },
+      ],
+    };
+    const sections = deriveDocsLlmsSections(unordered, 'https://example.com');
+    // Categories in order: A Category (0) before B Category (1)
+    expect(sections.map((s) => s.title)).toEqual(['A Category', 'B Category']);
+    // Guides within B sorted: B1 (order 0) before B2 (order 1)
+    expect(sections[1].items.map((i) => i.label)).toEqual(['B1', 'B2']);
   });
 });
 

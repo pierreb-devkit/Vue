@@ -47,25 +47,31 @@ function normalizeBasePath(basePath) {
  */
 function normalizeCategories(tree) {
   const categories = Array.isArray(tree?.categories) ? tree.categories : [];
-  return categories.map((c, i) => {
-    // Field-preference order MUST match `docs.store.js normalizeTree` (slug ?? id)
-    // so SEO-derived /docs/:cat/:slug paths stay in sync with runtime router paths.
-    const id = c?.slug ?? c?.id ?? '';
-    const list = Array.isArray(c?.guides) ? c.guides : Array.isArray(c?.articles) ? c.articles : [];
-    return {
-      id: String(id),
-      label: String(c?.label ?? c?.title ?? id ?? ''),
-      order: Number.isFinite(c?.order) ? c.order : i,
-      guides: list
+  return categories
+    .map((c, i) => {
+      // Field-preference order MUST match `docs.store.js normalizeTree` (slug ?? id)
+      // so SEO-derived /docs/:cat/:slug paths stay in sync with runtime router paths.
+      const id = c?.slug ?? c?.id ?? '';
+      const list = Array.isArray(c?.guides) ? c.guides : Array.isArray(c?.articles) ? c.articles : [];
+      const guides = list
         .filter((g) => g?.slug)
         .map((g, j) => ({
           slug: String(g.slug),
           title: String(g?.title ?? g.slug),
           summary: typeof g?.summary === 'string' ? g.summary : '',
           order: Number.isFinite(g?.order) ? g.order : j,
-        })),
-    };
-  });
+        }))
+        // Sort guides by order (ascending), then by slug as a stable tiebreaker.
+        .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug));
+      return {
+        id: String(id),
+        label: String(c?.label ?? c?.title ?? id ?? ''),
+        order: Number.isFinite(c?.order) ? c.order : i,
+        guides,
+      };
+    })
+    // Sort categories by order (ascending), then by label as a stable tiebreaker.
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
 }
 
 /**

@@ -37,8 +37,8 @@ describe('resolveDocsTarget', () => {
     expect(resolveDocsTarget({ to: '/changelog', category: 'integrate' }, tree)).toBe('/changelog');
   });
 
-  it('falls back to the category landing when the category has no articles', () => {
-    expect(resolveDocsTarget({ category: 'empty-cat' }, tree)).toBe('/docs/empty-cat');
+  it('falls back to /docs (not a dead /docs/:category path) when the category has no articles', () => {
+    expect(resolveDocsTarget({ category: 'empty-cat' }, tree)).toBe('/docs');
   });
 
   it('falls back to /docs for a missing category', () => {

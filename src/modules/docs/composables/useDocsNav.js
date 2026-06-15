@@ -28,17 +28,18 @@ const orderedArticles = (category) => {
 };
 
 /**
- * Resolve a docs link target to a concrete route path.
+ * Resolve a docs link target to a concrete router path (internal routing only).
  *
  * Resolution order:
- *  1. `target.to` — an explicit absolute override (e.g. an external page).
+ *  1. `target.to` — an explicit internal router path override (e.g. '/docs/api').
  *  2. `target.category` — the first article of that category (`/docs/:cat/:slug`).
- *  3. The category landing (`/docs/:category`) when the category exists but is empty.
- *  4. `/docs` as the safe fallback (tree not loaded / category missing).
+ *  3. `/docs` as the safe fallback when the category is empty, missing, or the tree
+ *     is not yet loaded. The bare `/docs/:category` path has no matching route, so
+ *     it is never returned.
  *
  * @param {{ to?: string, category?: string }|null|undefined} target - The link target.
  * @param {Object|null} tree - The loaded guide tree (or null before load).
- * @returns {string} A router path.
+ * @returns {string} An internal router path (always matches a declared route).
  */
 export const resolveDocsTarget = (target, tree) => {
   if (!target) return '/docs';
@@ -49,7 +50,7 @@ export const resolveDocsTarget = (target, tree) => {
   if (!category) return '/docs';
 
   const first = orderedArticles(category)[0];
-  return first ? `/docs/${category.slug}/${first.slug}` : `/docs/${category.slug}`;
+  return first ? `/docs/${category.slug}/${first.slug}` : '/docs';
 };
 
 /**
