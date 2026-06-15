@@ -158,13 +158,13 @@ const getConfiguration = async () => {
   forEach(environmentVars, (v, k) => objectPath.set(environmentConfigVars, k, v));
   config = deepMerge(config, environmentConfigVars);
 
-  // Generate ESM version
-  const configJSON = JSON.stringify(config, undefined, 2)
-    .replace(/"([^(")"]+)":/g, '$1:')
-    .replace(/\n|\r/g, ',\n')
-    .replace(/{,/g, '{')
-    .replace(/\[,/g, '[')
-    .replace(/,,/g, ',');
+  // Generate ESM version.
+  // JSON is a strict subset of JS object-literal syntax — quoted keys are valid
+  // in ESM exports and in every JS runtime. The previous regex pipeline tried to
+  // unquote keys but corrupted any string VALUE containing `:`, `{`, `}`, `,`,
+  // or quotes (e.g. a curl snippet). Use plain JSON.stringify so multi-line
+  // strings with quote/brace markup round-trip safely. (Fixes #4310.)
+  const configJSON = JSON.stringify(config, null, 2);
 
   // Generate ESM file
   const esmConfigFile = `/**
