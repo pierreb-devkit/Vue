@@ -33,6 +33,13 @@ export default {
         enabled: false, // true to pre-render routes at build time for SEO
         routes: ['/'], // routes to pre-render (e.g. ['/', '/about'])
       },
+      docs: {
+        enabled: false, // true to derive docs SEO (llms.txt + prerender + sitemap) from the content tree at build time — off by default, fail-soft
+        contentUrl: '', // absolute URL of the public docs tree endpoint (e.g. 'https://api.example.com/api/public/docs'); empty = layer inert
+        basePath: '/docs', // frontend base path the docs module serves guides under (e.g. '/docs' → /docs/:category/:slug)
+        timeoutMs: 5000, // build-time fetch timeout (ms) before falling back to static config
+        mdTwin: false, // true to also list the raw-markdown `.md` twin of each guide in llms.txt
+      },
       robots: {
         enabled: true, // true to generate robots.txt at build time
         rules: [{ userAgent: '*', allow: '/' }], // crawl directives

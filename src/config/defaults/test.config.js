@@ -31,6 +31,13 @@ export default {
           { path: '/about', priority: 0.8, changefreq: 'monthly' },
         ],
       },
+      docs: {
+        enabled: false,
+        contentUrl: '',
+        basePath: '/docs',
+        timeoutMs: 5000,
+        mdTwin: false,
+      },
       manifest: {
         enabled: true,
         display: 'standalone',
