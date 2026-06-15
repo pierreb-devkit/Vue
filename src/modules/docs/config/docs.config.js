@@ -72,16 +72,30 @@ export default {
       },
     ],
 
-    // Quickstart hero: copy + CTA for the single copy-pasteable example shown on
-    // /docs. The literal command/JSON snippets live in the home view
-    // (presentational content, not per-environment config — and they contain
-    // quote/brace markup the config serializer can't round-trip). `cta.target`
-    // resolves the same way personas do.
+    // Quickstart hero: copy + CTA + the copy-pasteable shell snippet shown on /docs.
+    // `command` and `result` are NEUTRAL generic placeholders; downstream projects
+    // override them via their own config file to ship a product-specific snippet.
+    // Both fields now round-trip safely via the fixed generateConfig serializer
+    // (JSON.stringify — no regex pipeline). `cta.target` resolves the same way
+    // personas do.
     quickstart: {
       eyebrow: 'Quickstart',
       title: 'One call. Structured JSON back.',
       subtitle: 'Point the API at your request and get clean, structured data back.',
       language: 'bash',
+      // KEEP `api.example.com` and `<YOUR_API_KEY>` as generic placeholders.
+      // Downstream configs supply the real endpoint and key name.
+      command:
+        'curl https://api.example.com/api/resource \\\n' +
+        '  -H "Authorization: Bearer <YOUR_API_KEY>" \\\n' +
+        '  -H "Content-Type: application/json" \\\n' +
+        '  -d \'{ "input": "your request here" }\'',
+      result:
+        '{\n' +
+        '  "id": "abc123",\n' +
+        '  "status": "done",\n' +
+        '  "data": { "items": [] }\n' +
+        '}',
       cta: { label: 'Read the full quickstart', target: { category: 'get-started' } },
     },
 

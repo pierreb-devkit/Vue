@@ -21,6 +21,8 @@ vi.mock('@/config', () => ({
         title: 'One call.',
         subtitle: 'Structured JSON.',
         language: 'bash',
+        command: 'curl https://api.example.com/api/resource \\\n  -H "Authorization: Bearer <YOUR_API_KEY>"',
+        result: '{\n  "status": "config-driven-result"\n}',
         cta: { label: 'Read the full quickstart', target: { category: 'get-started' } },
       },
     },
@@ -95,12 +97,33 @@ describe('docs.home.view', () => {
     expect(developer.attributes('href')).toBe('/docs/get-started/install');
   });
 
-  it('renders the quickstart hero with a highlighted command + result', async () => {
+  it('renders the quickstart hero with a highlighted command + result from config', async () => {
     const wrapper = mountHome();
     await flushPromises();
     expect(wrapper.find('[data-test="docs-home-quickstart"]').exists()).toBe(true);
+    // Content comes from config.docs.quickstart.command / .result — NOT hardcoded consts.
     expect(wrapper.find('[data-test="docs-home-quickstart-command"]').text()).toContain('curl');
-    expect(wrapper.find('[data-test="docs-home-quickstart-result"]').text()).toContain('success');
+    expect(wrapper.find('[data-test="docs-home-quickstart-result"]').text()).toContain('config-driven-result');
+  });
+
+  it('quickstart command and result are config-driven (not hardcoded)', async () => {
+    // Mount with a custom quickstart snippet to prove the view reads from config.
+    const store = useDocsStore();
+    store.tree = tree;
+    // Override config mock locally for this test — since vi.mock is module-level,
+    // we verify by checking the rendered HTML contains the mock-provided strings.
+    const wrapper = mount(DocsHome, {
+      global: { plugins: [vuetify(), router] },
+    });
+    await flushPromises();
+    const cmdEl = wrapper.find('[data-test="docs-home-quickstart-command"]');
+    const resEl = wrapper.find('[data-test="docs-home-quickstart-result"]');
+    // The mock provides `command` with "api.example.com" and `result` with
+    // "config-driven-result" — both should appear in the rendered terminal.
+    expect(cmdEl.text()).toContain('api.example.com');
+    expect(resEl.text()).toContain('config-driven-result');
+    // Confirm the OLD hardcoded strings ("Example Domain", "text") are absent.
+    expect(resEl.text()).not.toContain('Example Domain');
   });
 
   it('renders the job-first category grid from the tree', async () => {

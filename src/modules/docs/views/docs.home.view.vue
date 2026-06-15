@@ -164,28 +164,21 @@ const home = config?.docs?.home || { icon: 'fa-solid fa-book', title: 'Documenta
 const quickstart = config?.docs?.quickstart || null;
 
 /**
- * The literal quickstart snippets. Kept here (not in config) because they carry
- * quote/brace markup the config serializer can't round-trip, and they're pure
- * presentational content rather than a per-environment knob. The endpoint is a
- * generic placeholder (`https://api.example.com`); the API key stays the static
- * `<YOUR_API_KEY>` placeholder. Downstream may override the home view to ship
- * its own product-specific snippet.
+ * Resolve the quickstart command snippet from config, joining array-of-lines
+ * defensively, or falling back to a generic inline placeholder so the terminal
+ * never renders blank.
  */
-// KEEP `api.example.com` as a generic placeholder — downstream overrides supply the real endpoint.
-const QUICKSTART_COMMAND = [
-  'curl https://api.example.com/api/public/resource \\',
-  '  -H "Authorization: Bearer <YOUR_API_KEY>" \\',
-  '  -H "Content-Type: application/json" \\',
-  '  -d \'{ "input": "https://example.com" }\'',
-].join('\n');
+const resolveSnippet = (value, fallback) => {
+  if (!value) return fallback;
+  if (Array.isArray(value)) return value.join('\n');
+  return String(value);
+};
 
-const QUICKSTART_RESULT = [
-  '{',
-  '  "id": "abc123",',
-  '  "status": "success",',
-  '  "data": { "title": "Example Domain", "text": "..." }',
-  '}',
-].join('\n');
+const QUICKSTART_COMMAND_FALLBACK =
+  'curl https://api.example.com/api/resource \\\n' +
+  '  -H "Authorization: Bearer <YOUR_API_KEY>"';
+
+const QUICKSTART_RESULT_FALLBACK = '{\n  "status": "ok"\n}';
 
 const store = useDocsStore();
 const loading = computed(() => store.loading);
@@ -240,8 +233,10 @@ const highlight = (code, lang) => {
   return DOMPurify.sanitize(value);
 };
 
-const commandHtml = computed(() => highlight(QUICKSTART_COMMAND, quickstart?.language || 'bash'));
-const resultHtml = computed(() => highlight(QUICKSTART_RESULT, 'json'));
+const commandHtml = computed(() =>
+  highlight(resolveSnippet(quickstart?.command, QUICKSTART_COMMAND_FALLBACK), quickstart?.language || 'bash'));
+const resultHtml = computed(() =>
+  highlight(resolveSnippet(quickstart?.result, QUICKSTART_RESULT_FALLBACK), 'json'));
 
 onMounted(() => {
   store.fetchTree().catch(() => {});
