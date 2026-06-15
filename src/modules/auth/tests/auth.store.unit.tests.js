@@ -287,7 +287,7 @@ describe('Auth Store', () => {
       expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
     });
 
-    it('should handle signin error', async () => {
+    it('should handle signin error without logging the credentials/error to the console', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -297,7 +297,9 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
       expect(localStorage.getItem('token')).toBe(null);
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      // The submitted credentials must never reach the console: the axios
+      // interceptor surfaces the user-facing message instead.
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
@@ -468,7 +470,7 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
-    it('should handle token refresh error', async () => {
+    it('should handle token refresh error without logging to the console', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -476,7 +478,9 @@ describe('Auth Store', () => {
       await authStore.token();
 
       expect(authStore.auth).toBe(false);
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      // Token refresh failure is swallowed silently; the error object (which can
+      // carry request/response internals) must not be logged to the console.
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
   });
@@ -503,6 +507,8 @@ describe('Auth Store', () => {
       await authStore.forgot({ email: 'forgot@test.com' });
 
       expect(authStore.mail.status).toBe(false);
+      // The submitted email must never be logged to the console.
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
   });
@@ -535,6 +541,8 @@ describe('Auth Store', () => {
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
+      // The submitted reset token + new password must never be logged.
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
   });
