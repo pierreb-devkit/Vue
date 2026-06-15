@@ -9,6 +9,9 @@ import hljs from 'highlight.js/lib/common';
  *
  * A `<div data-docs-example>` survives DOMPurify (div + data-* are allowed),
  * unlike an HTML comment which the sanitizer strips by default.
+ *
+ * @param {number} n - The zero-based example index.
+ * @returns {string} The placeholder HTML string.
  */
 const EXAMPLE_MARKER = (n) => `<div data-docs-example="${n}"></div>`;
 /** Source pattern for the placeholder element (callers build their own /g instance). */

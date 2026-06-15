@@ -24,6 +24,10 @@ vi.mock('@/config', () => ({
 
 import DocsReference from '../views/docs.reference.view.vue';
 
+/**
+ * Create a Vuetify instance with all components and directives for test mounts.
+ * @returns {import('vuetify').Vuetify}
+ */
 const vuetify = () => createVuetify({ components, directives });
 
 const router = createRouter({

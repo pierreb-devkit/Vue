@@ -25,11 +25,18 @@
       data-test="docs-search-dialog"
     >
       <v-card rounded="xl" class="docs-search__card">
-        <!-- DocSearch host: only used when Algolia creds are configured. -->
-        <div v-if="docsearchReady" ref="docsearchHost" data-test="docs-search-docsearch" />
+        <!--
+          DocSearch host: must be present in the DOM *before* `@docsearch/js`
+          mounts into it, so `v-show` is used rather than `v-if`. With `v-if`
+          the element would not exist until `docsearchReady` flips true — after
+          the very call that needs it — causing DocSearch to always bail early
+          (host ref is null). `v-show` keeps the element mounted but hidden
+          until DocSearch has finished attaching.
+        -->
+        <div v-show="docsearchReady" ref="docsearchHost" data-test="docs-search-docsearch" />
 
         <!-- Client-side fuzzy fallback (works locally with no Algolia creds). -->
-        <template v-else>
+        <template v-if="!docsearchReady">
           <v-card-item class="pb-1">
             <v-text-field
               ref="inputRef"

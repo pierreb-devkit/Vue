@@ -129,6 +129,17 @@ describe('Docs Store', () => {
       expect(store.error).toBe('boom');
       expect(store.loading).toBe(false);
     });
+
+    it('does not throw when the rejected value is null (err?.message guard)', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce(null);
+
+      const tree = await store.fetchTree();
+
+      expect(tree).toBeNull();
+      expect(store.error).toBe('An error occurred');
+      expect(store.loading).toBe(false);
+    });
   });
 
   describe('normalizeTree', () => {
@@ -270,6 +281,18 @@ describe('Docs Store', () => {
 
       expect(md).toBeNull();
       expect(store.error).toBe('An error occurred');
+    });
+
+    it('does not throw when the rejected value is null (err?.message guard)', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce(null);
+
+      // Must not throw despite err being null (guard: err?.message not err.message).
+      const md = await store.fetchArticle('nullerr');
+
+      expect(md).toBeNull();
+      expect(store.error).toBe('An error occurred');
+      expect(store.loading).toBe(false);
     });
   });
 

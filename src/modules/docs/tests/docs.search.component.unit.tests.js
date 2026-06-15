@@ -25,6 +25,10 @@ vi.mock('@/config', () => ({
 
 import DocsSearch from '../components/docs.search.component.vue';
 
+/**
+ * Create a Vuetify instance with all components and directives for test mounts.
+ * @returns {import('vuetify').Vuetify}
+ */
 const vuetify = () => createVuetify({ components, directives });
 
 const router = createRouter({
@@ -163,5 +167,56 @@ describe('docs.search.component', () => {
     wrapper.vm.query = 'zzzznotathing';
     await flushPromises();
     expect(wrapper.vm.results).toHaveLength(0);
+  });
+
+  // Finding #8: docsearch host must be in the DOM before docsearchReady flips true
+  // so @docsearch/js can mount into it. The fix replaces v-if with v-show on the
+  // host element. Verify that `docsearchHost` ref resolves (element exists) in the
+  // dialog even when docsearchReady is still false.
+  it('docsearch host element is present in DOM before docsearchReady (v-show, not v-if)', async () => {
+    // Re-mount with real Algolia creds so the host <div> renders.
+    const { createVuetify: cv } = await import('vuetify');
+    const { setActivePinia: sap, createPinia: cp } = await import('pinia');
+
+    sap(cp());
+    const store = useDocsStore();
+    store.tree = tree;
+    store.fetchTree = vi.fn().mockResolvedValue(tree);
+
+    // Override the config mock for this test to supply real-looking creds.
+    const vt = cv({ components, directives });
+    const rt = createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/docs', name: 'docs2', component: { template: '<div />' } },
+        { path: '/docs/:category/:slug', name: 'article2', component: { template: '<div />' } },
+      ],
+    });
+
+    // Spy on the module-level config so we can temporarily inject creds.
+    // Since the config mock is static, we mount a wrapper that exposes docsearchHost.
+    const wrapper = mount(DocsSearch, {
+      global: {
+        plugins: [vt, rt],
+        // Stub VDialog to render slots when open (same as mountSearch).
+        stubs: {
+          VDialog: {
+            props: ['modelValue'],
+            template: '<div v-if="modelValue" data-test="docs-search-dialog"><slot /></div>',
+          },
+        },
+      },
+    });
+
+    // Before dialog opens, docsearchReady is false.
+    expect(wrapper.vm.docsearchReady).toBe(false);
+
+    // When dialog is open, the fallback (v-if="!docsearchReady") renders.
+    wrapper.vm.dialog = true;
+    await flushPromises();
+    expect(wrapper.find('[data-test="docs-search-idle"]').exists()).toBe(true);
+    // The docsearchHost div (v-show) is in the DOM even though docsearchReady is false.
+    // With v-if it would be absent; with v-show it must exist (hidden via display:none).
+    expect(wrapper.find('[data-test="docs-search-docsearch"]').exists()).toBe(true);
   });
 });

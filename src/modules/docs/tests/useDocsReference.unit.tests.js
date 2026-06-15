@@ -147,6 +147,122 @@ describe('parseSpec', () => {
     expect(params[0].required).toBe(true);
   });
 
+  // Finding #4: hasRequestBody must detect $ref request bodies.
+  it('detects a $ref requestBody as hasRequestBody=true', () => {
+    const ref = parseSpec({
+      paths: {
+        '/api/items': {
+          post: {
+            tags: ['Items'],
+            summary: 'Create',
+            requestBody: { $ref: '#/components/requestBodies/CreateItem' },
+            responses: { 201: { description: 'Created' } },
+          },
+        },
+      },
+    });
+    expect(ref.groups[0].endpoints[0].hasRequestBody).toBe(true);
+  });
+
+  it('treats a $ref requestBody with an empty ref string as absent (no false-positive)', () => {
+    const ref = parseSpec({
+      paths: {
+        '/api/items': {
+          post: {
+            tags: ['Items'],
+            summary: 'Create',
+            requestBody: { $ref: '' },
+            responses: { 201: { description: 'Created' } },
+          },
+        },
+      },
+    });
+    expect(ref.groups[0].endpoints[0].hasRequestBody).toBe(false);
+  });
+
+  // Finding #5: parameter merge must use override semantics, not naive concat.
+  it('operation parameters override path-level params with the same name+in (no duplication)', () => {
+    const ref = parseSpec({
+      paths: {
+        '/api/items/{id}': {
+          // Path-level `id` param (required: true, type: string).
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'shared', in: 'query', schema: { type: 'integer' } },
+          ],
+          get: {
+            tags: ['Items'],
+            summary: 'get',
+            // Operation-level `id` param overrides — adds description, keeps required.
+            parameters: [
+              { name: 'id', in: 'path', required: true, description: 'override', schema: { type: 'string' } },
+            ],
+            responses: { 200: { description: 'OK' } },
+          },
+        },
+      },
+    });
+    const params = ref.groups[0].endpoints[0].parameters;
+    // Only ONE `id` param — no duplication.
+    expect(params.filter((p) => p.name === 'id' && p.in === 'path')).toHaveLength(1);
+    // The operation's version wins (has description).
+    expect(params.find((p) => p.name === 'id').description).toBe('override');
+    // Shared path param that was NOT overridden is still present.
+    expect(params.find((p) => p.name === 'shared')).toBeDefined();
+  });
+
+  // Finding #6: secured must fall back to spec.security when op omits security.
+  it('inherits spec-level security when the operation has no security field', () => {
+    const ref = parseSpec({
+      security: [{ apiKeyAuth: [] }], // global
+      paths: {
+        '/api/items': {
+          get: {
+            tags: ['Items'],
+            summary: 'list',
+            // no `security` field → should inherit global
+            responses: { 200: { description: 'OK' } },
+          },
+        },
+      },
+    });
+    expect(ref.groups[0].endpoints[0].secured).toBe(true);
+  });
+
+  it('operation-level security: [] overrides global (disables auth for this op)', () => {
+    const ref = parseSpec({
+      security: [{ apiKeyAuth: [] }], // global
+      paths: {
+        '/api/health': {
+          get: {
+            tags: ['Health'],
+            summary: 'ping',
+            security: [], // explicit empty → public
+            responses: { 200: { description: 'OK' } },
+          },
+        },
+      },
+    });
+    expect(ref.groups[0].endpoints[0].secured).toBe(false);
+  });
+
+  it('operation-level security overrides global when non-empty', () => {
+    const ref = parseSpec({
+      security: [], // no global auth
+      paths: {
+        '/api/secure': {
+          get: {
+            tags: ['Secure'],
+            summary: 'secure',
+            security: [{ bearerAuth: [] }], // op-level auth
+            responses: { 200: { description: 'OK' } },
+          },
+        },
+      },
+    });
+    expect(ref.groups[0].endpoints[0].secured).toBe(true);
+  });
+
   it.each([
     ['null', null],
     ['a non-object', 'nope'],

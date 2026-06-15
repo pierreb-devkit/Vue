@@ -241,6 +241,10 @@ describe('fetchDocsTree (fail-soft)', () => {
 });
 
 describe('augmentSeoConfigWithDocs', () => {
+  /**
+   * Build a minimal valid app config for `augmentSeoConfigWithDocs` tests.
+   * @returns {object} A base config object with `app.seo` prerender/sitemap/llms stubs.
+   */
   const baseConfig = () => ({
     app: {
       title: 'X',
@@ -314,5 +318,24 @@ describe('augmentSeoConfigWithDocs', () => {
     config.app.seo.docs = { enabled: true, contentUrl: 'https://api.example.com/x' };
     const out = await augmentSeoConfigWithDocs(config, { fetchImpl });
     expect(out).toBe(config);
+  });
+
+  // Finding #7: non-string config values must not throw.
+  it('FAIL-SOFT: non-string contentUrl (number) is treated as absent → returns config unchanged', async () => {
+    const fetchImpl = vi.fn();
+    const config = baseConfig();
+    // A number is a truthy non-string — the layer must treat it as absent.
+    config.app.seo.docs = { enabled: true, contentUrl: 42 };
+    const out = await augmentSeoConfigWithDocs(config, { fetchImpl });
+    expect(out).toBe(config);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('FAIL-SOFT: non-string basePath (number) does not throw — normalizeBasePath coerces it', () => {
+    // deriveDocsRoutes calls normalizeBasePath; a number input must not crash.
+    expect(() => deriveDocsRoutes(treeFixture, 42)).not.toThrow();
+    const routes = deriveDocsRoutes(treeFixture, 42);
+    // '42' starts with a digit, not '/', so normalizeBasePath prefixes '/'.
+    expect(routes[0]).toBe('/42');
   });
 });

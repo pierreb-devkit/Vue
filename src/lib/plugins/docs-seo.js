@@ -29,7 +29,9 @@ const DEFAULT_TIMEOUT_MS = 5000;
  * @returns {string} normalised base path (e.g. '/docs'); '' collapses to '/docs' default
  */
 function normalizeBasePath(basePath) {
-  const raw = (basePath ?? '').trim();
+  // Coerce non-string values to a string first so `.trim()` never throws on
+  // unexpected config types (e.g. a number or boolean accidentally set in config).
+  const raw = (typeof basePath === 'string' ? basePath : String(basePath ?? '')).trim();
   if (!raw) return DEFAULT_BASE_PATH;
   const withLead = raw.startsWith('/') ? raw : `/${raw}`;
   return withLead.replace(/\/+$/, '') || DEFAULT_BASE_PATH;
@@ -197,7 +199,9 @@ export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PA
 export async function augmentSeoConfigWithDocs(config, options = {}) {
   const app = config?.app || {};
   const docs = app.seo?.docs;
-  if (!docs?.enabled || !docs?.contentUrl) return config;
+  // Guard: contentUrl must be a non-empty string; a non-string value (number,
+  // boolean, object) is treated as absent so the layer stays off and safe.
+  if (!docs?.enabled || typeof docs?.contentUrl !== 'string' || !docs.contentUrl) return config;
 
   const tree = await fetchDocsTree(docs.contentUrl, { timeoutMs: docs.timeoutMs, fetchImpl: options.fetchImpl });
   if (!tree) return config; // fetch failed → static fallback

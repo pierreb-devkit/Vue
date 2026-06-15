@@ -18,7 +18,7 @@
             <v-btn
               :href="redocUrl"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
               variant="text"
               size="small"
               class="text-none"
@@ -54,7 +54,7 @@
           <v-col>
             <v-alert type="info" variant="tonal" data-test="docs-reference-empty">
               The API reference is not available right now. You can still browse it on
-              <a :href="redocUrl" target="_blank" rel="noopener">Redoc</a>.
+              <a :href="redocUrl" target="_blank" rel="noopener noreferrer">Redoc</a>.
             </v-alert>
           </v-col>
         </v-row>

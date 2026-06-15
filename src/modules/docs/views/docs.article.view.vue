@@ -169,21 +169,39 @@ const next = computed(() => {
 });
 
 /**
+ * Monotonically-increasing token used to discard responses from superseded
+ * in-flight loads (race guard). Each call to `load` captures the token at
+ * invocation time; on resolution it checks that the token still matches the
+ * current one — if not, a newer navigation fired and the result is stale.
+ */
+let _loadToken = 0;
+
+/**
  * Load (and render) the article for a given slug. Ensures the tree is loaded
  * first so breadcrumbs + prev/next resolve, then renders the markdown body.
+ *
+ * Race guard: if the slug changes while a fetch is in flight, the earlier
+ * promise resolves but its result is silently dropped because its captured
+ * token no longer matches the current one.
+ *
  * @param {string} s - The article slug.
  * @returns {Promise<void>}
  */
 const load = async (s) => {
+  const token = ++_loadToken;
   if (!s) {
     page.value = { title: '', html: '', toc: [], examples: [], notFound: true };
     return;
   }
   await store.fetchTree().catch(() => {});
-  page.value = await useDocsPage(s, {
+  const result = await useDocsPage(s, {
     fetcher: (sl) => store.fetchArticle(sl),
     meta: meta.value,
   });
+  // Only commit if this load is still the latest one.
+  if (token === _loadToken) {
+    page.value = result;
+  }
 };
 
 watch(slug, (s) => load(s), { immediate: true });

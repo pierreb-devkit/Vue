@@ -64,6 +64,14 @@ export function normalizeTree(raw) {
  */
 export const useDocsStore = defineStore('docs', {
   state: () => ({
+    // NOTE: `loading` is a single shared flag, not a counter. All three actions
+    // cache aggressively (only one HTTP call per resource), so parallel
+    // invocations of *different* actions would race on this flag — the
+    // earlier-finishing action would clear it while the other is still in flight.
+    // In practice every call site is sequential (article view: fetchTree only;
+    // reference view: `await fetchTree(); await fetchSpec()`), so this is
+    // low-risk (a spinner blip at worst) and adding a counter would be
+    // over-engineering. Revisit only if a view ever fans-out both simultaneously.
     loading: false,
     error: null,
     /* Guide tree: `{ categories: [{ slug, title, order, articles: [{ slug, title, category, order }] }] }`. */
@@ -111,7 +119,7 @@ export const useDocsStore = defineStore('docs', {
         this.tree = normalizeTree(res?.data?.data ?? res?.data ?? null);
         return this.tree;
       } catch (err) {
-        this.error = err?.response?.data?.message || err.message || 'An error occurred';
+        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
         console.error(err);
         return null;
       } finally {
@@ -136,7 +144,7 @@ export const useDocsStore = defineStore('docs', {
         this.articles = { ...this.articles, [slug]: markdown };
         return markdown;
       } catch (err) {
-        this.error = err?.response?.data?.message || err.message || 'An error occurred';
+        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
         console.error(err);
         return null;
       } finally {
@@ -158,7 +166,7 @@ export const useDocsStore = defineStore('docs', {
         this.spec = res?.data?.data ?? res?.data ?? null;
         return this.spec;
       } catch (err) {
-        this.error = err?.response?.data?.message || err.message || 'An error occurred';
+        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
         console.error(err);
         return null;
       } finally {

@@ -57,25 +57,50 @@ const normalizeResponses = (responses) => {
 
 /**
  * Does this operation declare a non-empty request body?
+ * Handles both inline bodies (`requestBody.content`) and `$ref` bodies
+ * (`requestBody.$ref`). A `$ref` body is treated as present — its content is
+ * resolved externally, so the reference itself is proof of a body.
  * @param {Object} operation - An OpenAPI operation object.
  * @returns {boolean}
  */
-const hasRequestBody = (operation) =>
-  Boolean(
-    operation
-      && operation.requestBody
-      && typeof operation.requestBody === 'object'
-      && operation.requestBody.content
-      && Object.keys(operation.requestBody.content).length > 0,
+const hasRequestBody = (operation) => {
+  const rb = operation?.requestBody;
+  if (!rb || typeof rb !== 'object') return false;
+  // $ref body: presence of the reference is sufficient evidence.
+  if (typeof rb.$ref === 'string' && rb.$ref.length > 0) return true;
+  // Inline body: require at least one content media type.
+  return Boolean(rb.content && Object.keys(rb.content).length > 0);
+};
+
+/**
+ * Merge path-level and operation-level parameters per the OpenAPI 3 spec:
+ * operation parameters override path parameters with the same `name` + `in`
+ * combination. Parameters unique to either list are kept as-is.
+ *
+ * @param {Array} pathParams - Path-item–level parameter objects.
+ * @param {Array} opParams   - Operation-level parameter objects.
+ * @returns {Array} Merged parameter list (no duplicate name+in pairs).
+ */
+const mergeParameters = (pathParams, opParams) => {
+  // Build a map of operation-level params keyed by `${name}:${in}` so we can
+  // detect overrides in O(1).
+  const opKeys = new Set(
+    opParams.filter((p) => p?.name && p?.in).map((p) => `${p.name}:${p.in}`),
   );
+  // Path params that are NOT overridden by an operation param come first
+  // (conventional OpenAPI ordering: path-wide defaults before op-specific).
+  const base = pathParams.filter((p) => !opKeys.has(`${p?.name}:${p?.in}`));
+  return [...base, ...opParams];
+};
 
 /**
  * Flatten one path-item's operations into endpoint descriptors.
  * @param {string} path - The URL path (e.g. `/api/items`).
  * @param {Object} pathItem - The OpenAPI path-item object (method → operation).
+ * @param {Array|undefined} [globalSecurity] - Root `spec.security` (inherited when op omits its own).
  * @returns {Array<Object>} Endpoint descriptors for this path.
  */
-const flattenPathItem = (path, pathItem) => {
+const flattenPathItem = (path, pathItem, globalSecurity) => {
   if (!pathItem || typeof pathItem !== 'object') return [];
   // Path-level parameters apply to every operation under the path.
   const sharedParams = Array.isArray(pathItem.parameters) ? pathItem.parameters : [];
@@ -92,14 +117,36 @@ const flattenPathItem = (path, pathItem) => {
         summary: op.summary || '',
         description: op.description || '',
         deprecated: Boolean(op.deprecated),
-        secured: Array.isArray(op.security) && op.security.length > 0,
-        parameters: normalizeParameters([...sharedParams, ...(op.parameters || [])]),
+        secured: isSecured(op, globalSecurity),
+        parameters: normalizeParameters(mergeParameters(sharedParams, op.parameters || [])),
         responses: normalizeResponses(op.responses),
         hasRequestBody: hasRequestBody(op),
         // Stable, unique id for v-expansion-panel keys + deep-linking.
         id: `${method}-${path}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       };
     });
+};
+
+/**
+ * Determine whether an endpoint is secured, per the OpenAPI 3 spec inheritance
+ * rules: an operation's `security` field OVERRIDES the root `spec.security`;
+ * when the operation omits `security`, it INHERITS the root value.
+ *
+ * A non-empty security requirement array means the endpoint requires auth.
+ * An explicit empty array (`security: []`) on the operation disables auth even
+ * when the root declares a global requirement.
+ *
+ * @param {Object} op - The operation object.
+ * @param {Array|undefined} globalSecurity - `spec.security` (root-level).
+ * @returns {boolean}
+ */
+const isSecured = (op, globalSecurity) => {
+  // Operation-level security overrides the root when present (including []).
+  if (Object.prototype.hasOwnProperty.call(op, 'security')) {
+    return Array.isArray(op.security) && op.security.length > 0;
+  }
+  // Inherit from root.
+  return Array.isArray(globalSecurity) && globalSecurity.length > 0;
 };
 
 /**
@@ -120,8 +167,10 @@ export function parseSpec(spec) {
     return { ...EMPTY };
   }
 
+  const globalSecurity = Array.isArray(spec.security) ? spec.security : undefined;
+
   const endpoints = Object.entries(spec.paths).flatMap(([path, item]) =>
-    flattenPathItem(path, item));
+    flattenPathItem(path, item, globalSecurity));
 
   if (!endpoints.length) return { ...EMPTY };
 
