@@ -4,6 +4,25 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## security headers: shipped via the container nginx — tune the report-only CSP (2026-06-15, #4304)
+
+The Vue security hardening bundle (#4304) added a baseline security-header block to `nginx.example.conf` (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS, and a `Content-Security-Policy-Report-Only` starter). **The stack `Dockerfile` bakes this file into the image** (`COPY nginx.example.conf … → envsubst > /etc/nginx/conf.d/default.conf`), so with the default serving setup the headers are emitted by the container's own nginx and reach the browser through any ingress that forwards backend response headers (Traefik, ingress-nginx, and most CDNs do by default). **No ingress change is required for the default deployment** — the `.example` name is historical, the file is the live config.
+
+### What changed (this repo)
+
+- `nginx.example.conf` (the image's live nginx config) gained an `add_header … always;` block: 5 headers + a report-only CSP.
+- Same bundle, devkit-owned (arrive automatically via `/update-stack`): `window.open(…, 'noopener,noreferrer')` on the header's external link; an `http`/`https`-only scheme allowlist (`safeHref`) on external article hrefs; removal of credential/error `console` logging in the auth store; `npm install` → `npm ci` in `Dockerfile` + the release workflow; and deletion of a stale committed Travis deploy key.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. **Tighten the CSP before enforcing it.** The shipped policy is `Content-Security-Policy-Report-Only` — it observes but never blocks, so it has no protective effect as-is. Review it against your asset origins (APIs, CDNs, fonts, analytics, inline styles), then promote it to an enforcing `Content-Security-Policy` header once clean.
+2. **Only if you replaced the serving layer** (a static host / CDN instead of the stack's nginx container, or an edge that strips backend response headers) the merged headers will NOT reach the browser — re-add the equivalent block at your actual edge (e.g. a Traefik `headers` middleware: `customResponseHeaders`, `stsSeconds`, `contentSecurityPolicy`), and verify with `curl -I https://<host>`. The default Dockerfile-based deployment needs none of this.
+3. If you have **customized `core.header.component.vue` or `home.articles.component.vue`** (common branding / home-page points), `/update-stack` will surface a conflict on those files — re-apply the `noopener,noreferrer` and `safeHref` security fixes onto your version rather than blindly taking either side.
+4. `npm ci` requires a committed `package-lock.json` in the build context — ensure your `Dockerfile` `COPY`s it (the stack one does via `COPY package*.json`).
+5. If your repo also committed a Travis-era encrypted deploy key, remove it and treat the underlying key as compromised → rotate/revoke it.
+
+---
+
 ## surface-tabs: activation-aware tab filtering (2026-06-12, #4295)
 
 Module-contributed surface tabs now respect `config.modules.{name}.activated`. Previously a downstream setting `modules: { invitations: { activated: false } }` still rendered the admin "Invitations" tab + the account "Referrals" tab (the module fragment's `admin.tabs` / `users.extraTabs` merge unconditionally at generation time) while the routes were correctly NOT injected — clicking the tab landed on a 404.
