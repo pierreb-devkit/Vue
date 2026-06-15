@@ -22,3 +22,4 @@ Use this file as a compact memory of recurring AI mistakes.
 - [2026-03-15] auth: adding CASL route guard (action/subject) without checking abilities config -> read abilities file first to confirm the ability exists for target roles; deny access by default if no matching ability (do not downgrade to `requiresAuth`)
 - [2026-03-15] pr scope: batching multiple unrelated fixes in one PR -> one fix = one PR to isolate blast radius and reduce iteration loops
 - [2026-05-09] update-stack: adding `import './modules/foo/styles/x.css'` to src/main.js downstream -> moved to project view (`src/modules/{project}/views/{project}.view.vue`). Stack-managed entry; --theirs wipes silently. See pierreb-devkit/Vue#4093.
+- [2026-06-15] npm audit: treating the 3 advisories (brace-expansion+ip-address moderate, picomatch high) as a runtime exposure -> all are transitive devDependencies (`npm audit --omit=dev` = 0); track upgrades, do not panic-patch the runtime bundle.
