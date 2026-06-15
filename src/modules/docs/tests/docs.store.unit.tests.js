@@ -211,6 +211,36 @@ describe('Docs Store', () => {
       expect(axios.get).not.toHaveBeenCalled();
     });
 
+    it('converts a non-string response data (number) to a string', async () => {
+      const store = useDocsStore();
+      axios.get.mockResolvedValueOnce({ data: 123 });
+
+      const md = await store.fetchArticle('numeric');
+
+      expect(md).toBe('123');
+      expect(store.articles.numeric).toBe('123');
+    });
+
+    it('converts a null response data to an empty string', async () => {
+      const store = useDocsStore();
+      axios.get.mockResolvedValueOnce({ data: null });
+
+      const md = await store.fetchArticle('nulldata');
+
+      expect(md).toBe('');
+      expect(store.articles.nulldata).toBe('');
+    });
+
+    it('converts an undefined response data to an empty string', async () => {
+      const store = useDocsStore();
+      axios.get.mockResolvedValueOnce({ data: undefined });
+
+      const md = await store.fetchArticle('undefineddata');
+
+      expect(md).toBe('');
+      expect(store.articles.undefineddata).toBe('');
+    });
+
     it('sets error and returns null on failure', async () => {
       const store = useDocsStore();
       axios.get.mockRejectedValueOnce(new Error('network down'));
@@ -220,6 +250,26 @@ describe('Docs Store', () => {
       expect(md).toBeNull();
       expect(store.error).toBe('network down');
       expect(store.loading).toBe(false);
+    });
+
+    it('uses response.data.message when present in a fetch error', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'article not found' } } });
+
+      const md = await store.fetchArticle('notfound');
+
+      expect(md).toBeNull();
+      expect(store.error).toBe('article not found');
+    });
+
+    it('falls back to "An error occurred" when the error has no message', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce({});
+
+      const md = await store.fetchArticle('nomsg');
+
+      expect(md).toBeNull();
+      expect(store.error).toBe('An error occurred');
     });
   });
 
@@ -286,6 +336,26 @@ describe('Docs Store', () => {
       expect(axios.get).toHaveBeenCalledTimes(2);
     });
 
+    it('returns null when data is null (no inner .data property)', async () => {
+      const store = useDocsStore();
+      axios.get.mockResolvedValueOnce({ data: null });
+
+      const spec = await store.fetchSpec();
+
+      expect(spec).toBeNull();
+      expect(store.spec).toBeNull();
+    });
+
+    it('returns data directly when the response has no nested .data.data', async () => {
+      const store = useDocsStore();
+      const flatSpec = { openapi: '3.0.0', info: { version: '2.0.0' }, paths: { '/ping': {} } };
+      axios.get.mockResolvedValueOnce({ data: flatSpec });
+
+      const spec = await store.fetchSpec();
+
+      expect(spec).toEqual(flatSpec);
+    });
+
     it('sets error and returns null on failure', async () => {
       const store = useDocsStore();
       axios.get.mockRejectedValueOnce(new Error('spec down'));
@@ -296,6 +366,26 @@ describe('Docs Store', () => {
       expect(store.spec).toBeNull();
       expect(store.error).toBe('spec down');
       expect(store.loading).toBe(false);
+    });
+
+    it('uses response.data.message when present in a fetch error', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'spec forbidden' } } });
+
+      const spec = await store.fetchSpec();
+
+      expect(spec).toBeNull();
+      expect(store.error).toBe('spec forbidden');
+    });
+
+    it('falls back to "An error occurred" when the spec error has no message', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce({});
+
+      const spec = await store.fetchSpec();
+
+      expect(spec).toBeNull();
+      expect(store.error).toBe('An error occurred');
     });
   });
 
