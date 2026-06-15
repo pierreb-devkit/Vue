@@ -35,8 +35,10 @@ ARG DEVKIT_VUE_analytics_posthog_webVitals
 ARG DEVKIT_VUE_analytics_posthog_capturePageleave
 
 # Install app dependencies & build
+# `npm ci` installs exactly from package-lock.json (reproducible builds);
+# package*.json above copies the lockfile in, which `npm ci` requires.
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN NODE_ENV=$NODE_ENV npm run build
 
