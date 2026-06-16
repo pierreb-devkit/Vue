@@ -257,7 +257,7 @@ export default {
 
         // Resolve price display — Stripe price objects (when present) override static-content amounts.
         // Supports BOTH plan shapes:
-        //  - V4 (Trawl downstream): plan.meta.{monthlyPrice,annualPrice} (raw numbers)
+        //  - V4 (downstream static content): plan.meta.{monthlyPrice,annualPrice} (raw numbers)
         //  - Devkit (post usePricing normalization): plan.{monthlyPrice,annualPrice} (raw numbers)
         let priceAmount;
         let pricePeriod = null;
@@ -307,7 +307,7 @@ export default {
 
         // Annual savings — rendered as a tonal chip next to the price on annual when discount > 0.
         // Supports BOTH plan shapes:
-        //  - V4 (Trawl downstream): plan.meta.monthlyPrice / plan.meta.annualPrice (raw numbers)
+        //  - V4 (downstream static content): plan.meta.monthlyPrice / plan.meta.annualPrice (raw numbers)
         //  - Devkit (post usePricing normalization): plan.monthlyPrice / plan.annualPrice (raw numbers)
         const annualSavingsPct = (() => {
           const metaM = plan.meta?.monthlyPrice ?? null;

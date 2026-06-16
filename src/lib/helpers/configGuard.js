@@ -7,7 +7,7 @@ const CONFIG_PLACEHOLDER = { port: 8080 };
 
 /**
  * Dev-only hostnames and ports that must never reach a production bundle.
- * Root cause of 2026-05-10 signin-broken :3010 outage (trawl_vue#949).
+ * Root cause of a downstream signin-broken prod outage (a dev-default port leaked into the prod bundle).
  */
 const DEV_HOSTS = new Set(['localhost', '127.0.0.1']);
 const DEV_PORTS = new Set(['3000', '3001', '3010', '4000', '5000', '8000', '8080', '8888']);
@@ -22,7 +22,7 @@ const DEV_PORTS = new Set(['3000', '3001', '3010', '4000', '5000', '8000', '8080
  *     build time via Docker build-args' pattern used by some downstreams (e.g. pierreb_vue).
  *   - STRICT (opt-in): pass `strict: true` or set DEVKIT_VUE_assert_strict=true in the
  *     build environment and read it in vite.config.js before calling this function.
- *     Recommended for projects that were burned by a dev-default leak (e.g. trawl_vue#949).
+ *     Recommended for projects that were burned by a dev-default leak.
  *
  * In development/test mode the function is always a no-op.
  *
@@ -57,7 +57,7 @@ export const assertConfigLoaded = (config, mode, { strict = false } = {}) => {
     if (!strict) return;
   }
 
-  // Guard against dev-default API host leaking into a prod bundle (trawl_vue#949).
+  // Guard against dev-default API host leaking into a prod bundle (the dev-default-leak outage).
   const apiHost = String(safeConfig?.api?.host || '').trim().toLowerCase();
   if (apiHost && DEV_HOSTS.has(apiHost)) {
     report(
@@ -66,7 +66,7 @@ export const assertConfigLoaded = (config, mode, { strict = false } = {}) => {
     );
   }
 
-  // Guard against dev-default API port leaking into a prod bundle (trawl_vue#949).
+  // Guard against dev-default API port leaking into a prod bundle (the dev-default-leak outage).
   const apiPort = String(safeConfig?.api?.port || '').trim();
   if (apiPort && DEV_PORTS.has(apiPort)) {
     report(

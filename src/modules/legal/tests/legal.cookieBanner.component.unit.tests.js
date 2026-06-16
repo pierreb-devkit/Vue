@@ -152,7 +152,7 @@ describe('legal.cookieBanner.component', () => {
         plugins: [vuetify()],
         mocks: {
           config: {
-            name: 'Trawl',
+            name: 'Example',
             legal: { cookieConsent: { enabled: true, privacyPolicyPath: '/privacy' } },
           },
         },
@@ -174,7 +174,7 @@ describe('legal.cookieBanner.component', () => {
         plugins: [vuetify()],
         mocks: {
           config: {
-            name: 'Trawl',
+            name: 'Example',
             legal: { cookieConsent: { enabled: true, privacyPolicyPath: '/privacy' } },
           },
           $posthog: { capture: vi.fn(), opt_in_capturing: vi.fn(), opt_out_capturing: vi.fn(), reset: vi.fn(), set_config: vi.fn() },

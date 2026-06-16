@@ -354,7 +354,7 @@ Posts to `/users/avatar` by default; `endpoint` and `field` props let it serve o
 
 **Projects with `config.admin.tabs` extras:** no structural change — extras are merged with the canonical `BUILT_IN_TABS` (Users, Organizations, Readiness, Activity) and passed through `CoreSurfaceTabBar`, which handles validation + CASL filtering via `resolveSurfaceTabs`. Existing tab descriptors (`{ value, label, icon, route, action?, subject? }`) work as-is.
 
-**Projects with module-specific tabs under a page title** (e.g. trawl_vue's `/developers`, `/scraps`, custom dashboards): you can now adopt the homogeneous `PageHeader + CoreSurfaceTabBar` sibling pattern instead of the legacy `<v-card><v-tabs><v-window>` in-card pattern. Migration is opt-in — the legacy pattern still works, but the new pattern integrates visually with Account / Organization / Admin and gets CASL gating for free.
+**Projects with module-specific tabs under a page title** (e.g. a downstream project's custom dashboards): you can now adopt the homogeneous `PageHeader + CoreSurfaceTabBar` sibling pattern instead of the legacy `<v-card><v-tabs><v-window>` in-card pattern. Migration is opt-in — the legacy pattern still works, but the new pattern integrates visually with Account / Organization / Admin and gets CASL gating for free.
 
 Before:
 
@@ -454,7 +454,7 @@ Disabled by default. Enable in `modules/legal/config/legal.{env}.config.js` (or 
 3. Set `legal.pages.enabled: true`
 4. Pages auto-route at `/legal/{slug}` (configurable via `routePrefix`)
 
-**If you have an existing legal pages implementation** (e.g., trawl_vue's `modules/trawl/views/trawl.legal.view.vue`):
+**If you have an existing legal pages implementation** (e.g., a downstream project's own `modules/<name>/views/<name>.legal.view.vue`):
 - At next `/update-project`, retire your local view + tests + routes
 - Move (or keep) your `.md` files under `/src/` (any path)
 - Override `markdownPath` per item in your config to point at them
@@ -529,7 +529,7 @@ Then verify your detail-view breadcrumbs still render via the new
 
 ### Why
 
-Several downstream projects (notably `trawl_vue`) had to fork this file
+Several downstream projects had to fork this file
 to support breadcrumbs + overflow + canonical height, which produced
 recurring merge conflicts on every `/update-stack`. Pushing the contract
 upstream lets every project drop its custo and removes a sharp edge from

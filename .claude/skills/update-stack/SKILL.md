@@ -129,7 +129,7 @@ echo "3ter: no drift — OK"
 - E2E helpers under `src/lib/helpers/e2e/` ARE scanned — they are stack-managed. Downstream modification triggers BLOCK; use Fix B (promote upstream) if a downstream needs e2e helper changes.
 - `src/modules/app/app.router.js` historically diverged on every downstream (downstream routes). Under no-ledger this must be refactored: `app.router.js` does NOT currently expose an extension hook — the refactor needs to add one (e.g. a `registerDownstreamRoutes()` call sourced from a downstream-only module like `src/modules/{project}/{project}.router.js`), then keep `app.router.js` stack-iso. Until that refactor lands, this gate will BLOCK on every Vue downstream `/update-stack`.
 - This gate runs **after** `/verify` (never blocks on transient verify failures) and **before** Phase 2 (failure is recoverable — no merge commit yet).
-- Ref: plan `2026-05-30-trawl-devkit-perfect-alignment.md` Tasks E.1 + E.2.
+- Ref: the stack/downstream perfect-alignment plan, Tasks E.1 + E.2.
 
 ---
 
@@ -166,4 +166,4 @@ Diff project modules against `src/modules/tasks` (stack reference). Fix any patt
 3. Take the upstream version of `src/main.js` (`git checkout --theirs src/main.js`) once the migrations are committed.
 4. Add a regression note to `DOWNSTREAM_PATCHES.md` if the migration is non-obvious.
 
-This protects against the silent visual / analytics regressions seen in `comes-io/trawl_vue#856` (per-card mesh/grain CSS wiped on stack sync).
+This protects against the silent visual / analytics regressions seen on a downstream project (per-card mesh/grain CSS wiped on stack sync).

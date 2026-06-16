@@ -270,7 +270,7 @@ describe('Core Store', () => {
       {
         path: '/api-docs',
         name: 'API Docs',
-        meta: { display: true, icon: 'fa-solid fa-book', href: 'https://api.trawl.me/api/docs', target: '_blank' },
+        meta: { display: true, icon: 'fa-solid fa-book', href: 'https://api.example.com/api/docs', target: '_blank' },
       },
     ];
 
@@ -279,7 +279,7 @@ describe('Core Store', () => {
 
     const external = coreStore.nav.find((r) => r.name === 'API Docs');
     expect(external).toBeDefined();
-    expect(external.meta.href).toBe('https://api.trawl.me/api/docs');
+    expect(external.meta.href).toBe('https://api.example.com/api/docs');
   });
 
   it('should place external-link routes in navBottom when meta.position is "bottom"', () => {
@@ -291,7 +291,7 @@ describe('Core Store', () => {
         meta: {
           display: true,
           icon: 'fa-solid fa-book',
-          href: 'https://api.trawl.me/api/docs',
+          href: 'https://api.example.com/api/docs',
           position: 'bottom',
         },
       },
@@ -310,7 +310,7 @@ describe('Core Store', () => {
       {
         path: '/api-docs',
         name: 'API Docs',
-        meta: { display: false, icon: 'fa-solid fa-book', href: 'https://api.trawl.me/api/docs' },
+        meta: { display: false, icon: 'fa-solid fa-book', href: 'https://api.example.com/api/docs' },
       },
     ];
 
