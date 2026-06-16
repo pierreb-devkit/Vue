@@ -205,4 +205,38 @@ describe('useDocsPage', () => {
     expect(page.toc.map((e) => e.text)).toEqual(['Hello code World']);
     expect(page.html).toContain('id="hello-code-world"');
   });
+
+  it('ignores an author-injected data-docs-example marker in prose', async () => {
+    // `data-docs-example` is the hydration hook the splitter indexes on. A guide
+    // author could embed a literal `<div data-docs-example="N">` in prose — it
+    // survives markdown + DOMPurify (data-* + div are allowed) and would inject a
+    // bogus example slot (or shift the indexing) into the article view. Only the
+    // markers the renderer itself inserts from the controlled `examples` list may
+    // survive: the stray one is stripped post-sanitize, before the split.
+    const md = [
+      '# Guide',
+      '',
+      '<div data-docs-example="9">sneaky</div>',
+      '',
+      'Some prose.',
+      '',
+      '```bash',
+      'echo hi',
+      '```',
+    ].join('\n');
+    const page = await useDocsPage('g', { fetcher: async () => md });
+
+    // Exactly one controlled example (the fenced block) — the stray div does not
+    // create a second.
+    expect(page.examples).toHaveLength(1);
+    expect(page.examples[0]).toEqual([{ lang: 'bash', code: 'echo hi' }]);
+
+    // Only the renderer's own marker (index 0) survives in the HTML; the stray
+    // `data-docs-example="9"` is gone, so the splitter indexes correctly.
+    const markers = [...page.html.matchAll(/data-docs-example="(\d+)"/g)].map((m) => m[1]);
+    expect(markers).toEqual(['0']);
+    expect(page.html).not.toContain('data-docs-example="9"');
+    // The prose text around the stray div is preserved.
+    expect(page.html).toContain('Some prose.');
+  });
 });
