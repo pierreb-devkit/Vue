@@ -7,14 +7,12 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
 import { useDocsStore } from '../stores/docs.store';
 
-// No Algolia creds → component runs the client-side fuzzy fallback.
+// The docs search is a client-side fuzzy match over the guide tree — no hosted
+// index, no extra config beyond the user-facing copy.
 vi.mock('@/config', () => ({
   default: {
     docs: {
       search: {
-        appId: '',
-        apiKey: '',
-        indexName: '',
         label: 'Search',
         placeholder: 'Search the docs…',
         idleLabel: 'Type to search the documentation.',
@@ -118,7 +116,7 @@ describe('docs.search.component', () => {
     expect(wrapper.vm.dialog).toBe(true);
   });
 
-  it('returns client-side fuzzy results for a query (fallback, no Algolia)', async () => {
+  it('returns client-side fuzzy results for a query', async () => {
     const wrapper = mountSearch();
     wrapper.vm.dialog = true;
     await flushPromises();
@@ -169,54 +167,23 @@ describe('docs.search.component', () => {
     expect(wrapper.vm.results).toHaveLength(0);
   });
 
-  // Finding #8: docsearch host must be in the DOM before docsearchReady flips true
-  // so @docsearch/js can mount into it. The fix replaces v-if with v-show on the
-  // host element. Verify that `docsearchHost` ref resolves (element exists) in the
-  // dialog even when docsearchReady is still false.
-  it('docsearch host element is present in DOM before docsearchReady (v-show, not v-if)', async () => {
-    // Re-mount with real Algolia creds so the host <div> renders.
-    const { createVuetify: cv } = await import('vuetify');
-    const { setActivePinia: sap, createPinia: cp } = await import('pinia');
-
-    sap(cp());
-    const store = useDocsStore();
-    store.tree = tree;
-    store.fetchTree = vi.fn().mockResolvedValue(tree);
-
-    // Override the config mock for this test to supply real-looking creds.
-    const vt = cv({ components, directives });
-    const rt = createRouter({
-      history: createWebHistory(),
-      routes: [
-        { path: '/docs', name: 'docs2', component: { template: '<div />' } },
-        { path: '/docs/:category/:slug', name: 'article2', component: { template: '<div />' } },
-      ],
-    });
-
-    // Spy on the module-level config so we can temporarily inject creds.
-    // Since the config mock is static, we mount a wrapper that exposes docsearchHost.
-    const wrapper = mount(DocsSearch, {
-      global: {
-        plugins: [vt, rt],
-        // Stub VDialog to render slots when open (same as mountSearch).
-        stubs: {
-          VDialog: {
-            props: ['modelValue'],
-            template: '<div v-if="modelValue" data-test="docs-search-dialog"><slot /></div>',
-          },
-        },
-      },
-    });
-
-    // Before dialog opens, docsearchReady is false.
-    expect(wrapper.vm.docsearchReady).toBe(false);
-
-    // When dialog is open, the fallback (v-if="!docsearchReady") renders.
+  // Fuzzy is THE search — there is no hosted-index backend and no host element to
+  // mount one into. Opening the dialog renders the fuzzy input + idle/results
+  // directly, with no Algolia config present in the mock.
+  it('renders the fuzzy search input directly (no Algolia host element)', async () => {
+    const wrapper = mountSearch();
     wrapper.vm.dialog = true;
     await flushPromises();
+
+    // The fuzzy input and idle state render immediately on open.
+    expect(wrapper.find('[data-test="docs-search-input"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="docs-search-idle"]').exists()).toBe(true);
-    // The docsearchHost div (v-show) is in the DOM even though docsearchReady is false.
-    // With v-if it would be absent; with v-show it must exist (hidden via display:none).
-    expect(wrapper.find('[data-test="docs-search-docsearch"]').exists()).toBe(true);
+    // No Algolia DocSearch host element exists — the branch is gone.
+    expect(wrapper.find('[data-test="docs-search-docsearch"]').exists()).toBe(false);
+
+    // And the fuzzy path still ranks results with no Algolia config present.
+    wrapper.vm.query = 'install';
+    await flushPromises();
+    expect(wrapper.vm.results[0].title).toBe('Install the CLI');
   });
 });
