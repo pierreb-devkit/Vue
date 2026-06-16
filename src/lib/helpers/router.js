@@ -99,7 +99,7 @@ export const injectModuleChildren = (routes, childModules, isModuleActive, paren
  * @desc Inject routes from downstream modules as children of the admin parent route.
  *
  * Back-compat wrapper around {@link injectModuleChildren} targeting `'/admin'`.
- * Downstream projects (e.g. Trawl) depend on this signature — it must remain
+ * Downstream projects depend on this signature — it must remain
  * behaviorally identical to the original implementation.
  *
  * @param {Array<object>} adminRoutes - Admin module routes (the array exported by admin.router.js).

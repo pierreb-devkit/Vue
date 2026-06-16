@@ -49,12 +49,12 @@ describe('images plugin', () => {
   });
 
   it('omits port when api.port is empty', () => {
-    const apiNoPort = { protocol: 'https', host: 'trawl.me', port: '' };
-    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://trawl.me/api/uploads/images/photo.jpg');
+    const apiNoPort = { protocol: 'https', host: 'example.com', port: '' };
+    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://example.com/api/uploads/images/photo.jpg');
   });
 
   it('omits port when api.port is undefined', () => {
-    const apiNoPort = { protocol: 'https', host: 'trawl.me' };
-    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://trawl.me/api/uploads/images/photo.jpg');
+    const apiNoPort = { protocol: 'https', host: 'example.com' };
+    expect(setImages(apiNoPort, 'photo.jpg', null, null)).toBe('https://example.com/api/uploads/images/photo.jpg');
   });
 });

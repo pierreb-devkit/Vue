@@ -61,7 +61,7 @@ const mockConfig = {
 };
 
 /**
- * @desc V4 unified pack shape — mirrors trawl static-content contract.
+ * @desc V4 unified pack shape — mirrors a downstream static-content contract.
  * Fields: id, title, subtitle, price, cta (string), info, features, badge, highlight.
  * meta carries Stripe-specific raw values (not used by the component renderer).
  * @type {Array<Object>}

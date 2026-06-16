@@ -101,7 +101,7 @@ describe('configGuard – assertConfigLoaded', () => {
       expect(strictCall(undefined)).toThrow('Production build requires a valid config');
     });
 
-    // DEV_HOSTS / DEV_PORTS leak-detection (incident ref: trawl_vue #949 — signin-broken :3010 outage)
+    // DEV_HOSTS / DEV_PORTS leak-detection (incident ref: a downstream signin-broken prod outage from a dev-default port leak)
 
     it('throws in production when api.host is localhost', () => {
       expect(strictCall({ api: { host: 'localhost', port: '' } })).toThrow('dev-default API host');

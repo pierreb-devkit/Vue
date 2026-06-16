@@ -26,7 +26,7 @@ export default {
       schema: {
         enabled: false, // true to inject JSON-LD structured data in <head>
         type: 'Person', // Schema.org type — 'Person' | 'Organization'
-        name: '', // entity name (e.g. 'Pierre Brisorgueil')
+        name: '', // entity name (e.g. 'Jane Doe')
         sameAs: [], // profile URLs for cross-linking: GitHub, LinkedIn, Twitter…
       },
       prerender: {

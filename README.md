@@ -150,7 +150,7 @@ The merged result is written to `src/config/index.js` via `npm run generateConfi
 
 ### Downstream projects
 
-When running a downstream project that clones this stack, set `NODE_ENV` to the project name (e.g. `trawl`) and create matching config files:
+When running a downstream project that clones this stack, set `NODE_ENV` to the project name (e.g. a downstream project name) and create matching config files:
 
 ```text
 # Global project overrides (app title, API endpoint, footer links, etc.)

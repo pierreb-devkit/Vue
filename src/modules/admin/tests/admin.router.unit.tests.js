@@ -219,9 +219,9 @@ describe('admin.router (integration with vue-router)', () => {
 });
 
 /**
- * Trawl-shape regression guard.
+ * Downstream-shape regression guard.
  *
- * Trawl's app.router calls injectAdminChildren with adminChildModules of shape
+ * A downstream app.router calls injectAdminChildren with adminChildModules of shape
  *   [{ name, routes }]
  * where each route looks like:
  *   { path: 'costs', name: 'Admin Costs', component: () => import(...),
@@ -232,11 +232,11 @@ describe('admin.router (integration with vue-router)', () => {
  * This test suite is characterization-only: the behaviour is already correct after
  * the B1–B4 refactor; these assertions guard against future regressions.
  */
-describe('admin.router (Trawl-shape regression)', () => {
+describe('admin.router (downstream-shape regression)', () => {
   /**
-   * Canonical Trawl-shaped child module: exactly the shape Trawl ships.
+   * Canonical downstream-shaped child module: exactly the shape a downstream ships.
    */
-  const trawlAdminChildModules = [
+  const downstreamAdminChildModules = [
     {
       name: 'costs',
       routes: [
@@ -251,13 +251,13 @@ describe('admin.router (Trawl-shape regression)', () => {
   ];
 
   /**
-   * Canonical Trawl-shaped tab descriptor for the same surface.
+   * Canonical downstream-shaped tab descriptor for the same surface.
    */
-  const trawlCostsTab = { value: 'costs', label: 'Costs', icon: 'fa-solid fa-coins', route: 'costs' };
+  const downstreamCostsTab = { value: 'costs', label: 'Costs', icon: 'fa-solid fa-coins', route: 'costs' };
 
   it('injects the costs route under /admin with meta intact (action, subject, display)', () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, trawlAdminChildModules, () => true);
+    injectAdminChildren(routes, downstreamAdminChildModules, () => true);
     const parent = routes[0];
     const injected = parent.children.find((r) => r.name === 'Admin Costs');
 
@@ -275,14 +275,14 @@ describe('admin.router (Trawl-shape regression)', () => {
     expect(injected.meta.display).toBe(false);
   });
 
-  it('Trawl costs tab descriptor passes isValidTab', () => {
-    // Assertion 4: Trawl-shaped config.admin.tabs entry is valid per hoisted isValidTab
-    expect(isValidTab(trawlCostsTab)).toBe(true);
+  it('downstream costs tab descriptor passes isValidTab', () => {
+    // Assertion 4: downstream-shaped config.admin.tabs entry is valid per hoisted isValidTab
+    expect(isValidTab(downstreamCostsTab)).toBe(true);
   });
 
   it('does NOT inject the costs module when it is inactive', () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, trawlAdminChildModules, (name) => name !== 'costs');
+    injectAdminChildren(routes, downstreamAdminChildModules, (name) => name !== 'costs');
     const parent = routes[0];
     const injected = parent.children.find((r) => r.name === 'Admin Costs');
 
@@ -292,7 +292,7 @@ describe('admin.router (Trawl-shape regression)', () => {
 
   it('resolves /admin/costs in vue-router when the costs module is active', async () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, trawlAdminChildModules, () => true);
+    injectAdminChildren(routes, downstreamAdminChildModules, () => true);
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/', name: 'Home', component: { template: '<div />' } }, ...routes],

@@ -412,13 +412,13 @@ describe('seoInjectPlugin', () => {
     it('emits one ld+json per entry in seo.schemas', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'Self-driving scrapers',
           seo: {
             schemas: [
-              { type: 'Organization', name: 'Trawl' },
-              { type: 'WebSite', name: 'Trawl', url: 'https://trawl.me' },
+              { type: 'Organization', name: 'Example' },
+              { type: 'WebSite', name: 'Example', url: 'https://example.com' },
             ],
           },
         },
@@ -434,8 +434,8 @@ describe('seoInjectPlugin', () => {
     it('keeps single seo.schema legacy path when schemas[] is absent (back-compat)', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'X',
           seo: { schema: { enabled: true, type: 'SoftwareApplication' } },
         },
@@ -448,12 +448,12 @@ describe('seoInjectPlugin', () => {
     it('emits both legacy schema AND schemas[] when both are configured', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'X',
           seo: {
             schema: { enabled: true, type: 'WebSite' },
-            schemas: [{ type: 'Organization', name: 'Trawl' }],
+            schemas: [{ type: 'Organization', name: 'Example' }],
           },
         },
       };
@@ -475,8 +475,8 @@ describe('seoInjectPlugin', () => {
     it('includes applicationCategory + operatingSystem when set', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'X',
           seo: {
             schemas: [
@@ -497,8 +497,8 @@ describe('seoInjectPlugin', () => {
     it('serialises offers[] as Offer-typed entries', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'X',
           seo: {
             schemas: [
@@ -520,8 +520,8 @@ describe('seoInjectPlugin', () => {
     it('includes aggregateRating + softwareVersion + screenshot', () => {
       const config = {
         app: {
-          title: 'Trawl',
-          url: 'https://trawl.me',
+          title: 'Example',
+          url: 'https://example.com',
           description: 'X',
           seo: {
             schemas: [
@@ -529,7 +529,7 @@ describe('seoInjectPlugin', () => {
                 type: 'SoftwareApplication',
                 aggregateRating: { ratingValue: '4.8', ratingCount: '120' },
                 softwareVersion: '2.4.0',
-                screenshot: 'https://trawl.me/og.png',
+                screenshot: 'https://example.com/og.png',
               },
             ],
           },
@@ -538,7 +538,7 @@ describe('seoInjectPlugin', () => {
       const out = seoInjectPlugin(config).transformIndexHtml('<html><head></head><body></body></html>');
       expect(out).toContain('"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"120"}');
       expect(out).toContain('"softwareVersion":"2.4.0"');
-      expect(out).toContain('"screenshot":"https://trawl.me/og.png"');
+      expect(out).toContain('"screenshot":"https://example.com/og.png"');
     });
 
     it('skips non-object offers entries (defensive)', () => {

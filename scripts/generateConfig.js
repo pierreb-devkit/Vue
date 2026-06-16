@@ -35,7 +35,7 @@ if (!process.env.NODE_ENV) process.env.NODE_ENV = 'development';
 
 /**
  * Discover module config files by scanning src/modules for all *.{env}.config.js files.
- * @param {string} env - Environment suffix to match (e.g. 'development', 'trawl')
+ * @param {string} env - Environment suffix to match (e.g. 'development', a downstream project name)
  * @returns {string[]} Sorted list of absolute paths to matching config files
  */
 const discoverModuleConfigs = (env = 'development') => {
@@ -58,7 +58,7 @@ const discoverModuleConfigs = (env = 'development') => {
 
 /**
  * Load and merge all module config files for a given environment.
- * @param {string} env - Environment suffix (e.g. 'development', 'trawl')
+ * @param {string} env - Environment suffix (e.g. 'development', a downstream project name)
  * @returns {Promise<Object>} Merged config object from all matching module files
  */
 const loadModuleConfigs = async (env = 'development') => {
@@ -114,16 +114,16 @@ const getConfiguration = async () => {
   }
 
   // 3 & 4. If not development, overlay project-specific configs (module then global)
-  // Downstream projects set NODE_ENV to their project name (e.g. NODE_ENV=trawl).
+  // Downstream projects set NODE_ENV to their project name (e.g. NODE_ENV=<project>).
   // Layer 3: per-module project overrides — src/modules/*/config/{module}.{project}.config.js
   // Layer 4: global project overrides    — src/config/defaults/{project}.config.js
   if (env !== 'development') {
-    // Layer 3: per-module project overrides (e.g. home.trawl.config.js, auth.trawl.config.js)
+    // Layer 3: per-module project overrides (e.g. home.<project>.config.js, auth.<project>.config.js)
     console.log(`+ Loading module ${env} overrides...`);
     const moduleEnv = await loadModuleConfigs(env);
     config = deepMerge(config, moduleEnv);
 
-    // Layer 4: global project overrides (e.g. trawl.config.js)
+    // Layer 4: global project overrides (e.g. <project>.config.js)
     console.log(`+ Loading global ${env} overrides...`);
     const globalEnv = await loadGlobalConfig(env);
     if (globalEnv) {
@@ -148,8 +148,8 @@ const getConfiguration = async () => {
   // in the upstream Devkit Dockerfile (Vue#4112 part 1) — downstream Dockerfiles
   // must do the same to stay safe. The earlier defense-in-depth filter
   // (`value !== ''`) was over-correction: it broke the documented Layer 5 contract
-  // and silently ignored explicit-clear overrides, causing the trawl prod signin
-  // outage on 2026-05-09 (port `:3010` from trawl.config.js could not be cleared).
+  // and silently ignored explicit-clear overrides, causing a downstream prod signin
+  // outage (a port from a {project}.config.js could not be cleared).
   const environmentVars = mapKeys(
     pickBy(process.env, (_value, key) => key.startsWith('DEVKIT_VUE_')),
     (_v, k) => k.split('_').slice(2).join('.'),

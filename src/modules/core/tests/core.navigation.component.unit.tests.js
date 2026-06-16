@@ -113,10 +113,10 @@ describe('core.navigation.component — navItemBind', () => {
     const wrapper = mountNav();
     const bind = wrapper.vm.navItemBind({
       path: '/api-docs',
-      meta: { icon: 'fa-solid fa-book', display: true, href: 'https://api.trawl.me/api/docs' },
+      meta: { icon: 'fa-solid fa-book', display: true, href: 'https://api.example.com/api/docs' },
     });
     expect(bind).toEqual({
-      href: 'https://api.trawl.me/api/docs',
+      href: 'https://api.example.com/api/docs',
       target: '_blank',
       rel: 'noopener',
     });
@@ -173,14 +173,14 @@ describe('core.navigation.component — template rendering', () => {
           meta: {
             display: true,
             icon: 'fa-solid fa-book',
-            href: 'https://api.trawl.me/api/docs',
+            href: 'https://api.example.com/api/docs',
           },
         },
       ],
     });
     const html = wrapper.html();
     expect(html).toContain('API Docs');
-    expect(html).toContain('href="https://api.trawl.me/api/docs"');
+    expect(html).toContain('href="https://api.example.com/api/docs"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener"');
   });
@@ -194,7 +194,7 @@ describe('core.navigation.component — template rendering', () => {
           meta: {
             display: true,
             icon: 'fa-solid fa-book',
-            href: 'https://api.trawl.me/api/docs',
+            href: 'https://api.example.com/api/docs',
             position: 'bottom',
           },
         },
@@ -202,7 +202,7 @@ describe('core.navigation.component — template rendering', () => {
     });
     const html = wrapper.html();
     expect(html).toContain('API Docs');
-    expect(html).toContain('href="https://api.trawl.me/api/docs"');
+    expect(html).toContain('href="https://api.example.com/api/docs"');
     expect(html).toContain('target="_blank"');
   });
 
@@ -224,14 +224,14 @@ describe('core.navigation.component — template rendering', () => {
         {
           path: '/api-docs',
           name: 'API Docs',
-          meta: { display: true, icon: 'fa-solid fa-book', href: 'https://api.trawl.me/api/docs' },
+          meta: { display: true, icon: 'fa-solid fa-book', href: 'https://api.example.com/api/docs' },
         },
       ],
     });
     const html = wrapper.html();
     expect(html).toContain('Tasks');
     expect(html).toContain('API Docs');
-    expect(html).toContain('href="https://api.trawl.me/api/docs"');
+    expect(html).toContain('href="https://api.example.com/api/docs"');
   });
 });
 
