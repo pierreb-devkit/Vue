@@ -16,8 +16,7 @@
       <span class="docs-search__kbd d-none d-sm-inline-flex text-caption">{{ shortcutHint }}</span>
     </v-btn>
 
-    <!-- Search modal. The Algolia DocSearch UI (when configured) mounts into
-         `docsearchHost`; otherwise the client-side fallback list renders. -->
+    <!-- Search modal — a client-side fuzzy match over the guide tree. -->
     <v-dialog
       v-model="dialog"
       max-width="640"
@@ -26,99 +25,84 @@
       data-test="docs-search-dialog"
     >
       <v-card rounded="xl" class="docs-search__card">
-        <!--
-          DocSearch host: must be present in the DOM *before* `@docsearch/js`
-          mounts into it, so `v-show` is used rather than `v-if`. With `v-if`
-          the element would not exist until `docsearchReady` flips true — after
-          the very call that needs it — causing DocSearch to always bail early
-          (host ref is null). `v-show` keeps the element mounted but hidden
-          until DocSearch has finished attaching.
-        -->
-        <div v-show="docsearchReady" ref="docsearchHost" data-test="docs-search-docsearch" />
+        <v-card-item class="pb-1">
+          <v-text-field
+            ref="inputRef"
+            v-model="query"
+            variant="solo-filled"
+            flat
+            rounded="lg"
+            hide-details
+            autofocus
+            clearable
+            :placeholder="placeholder"
+            prepend-inner-icon="fa-solid fa-magnifying-glass"
+            data-test="docs-search-input"
+            @keydown.down.prevent="move(1)"
+            @keydown.up.prevent="move(-1)"
+            @keydown.enter.prevent="selectActive"
+            @keydown.esc.prevent="close"
+          />
+        </v-card-item>
 
-        <!-- Client-side fuzzy fallback (works locally with no Algolia creds). -->
-        <template v-if="!docsearchReady">
-          <v-card-item class="pb-1">
-            <v-text-field
-              ref="inputRef"
-              v-model="query"
-              variant="solo-filled"
-              flat
+        <v-card-text class="docs-search__results pa-2">
+          <!-- Results -->
+          <v-list
+            v-if="results.length"
+            density="comfortable"
+            bg-color="transparent"
+            nav
+            data-test="docs-search-results"
+          >
+            <v-list-item
+              v-for="(hit, i) in results"
+              :key="`${hit.category}/${hit.slug}`"
+              :active="i === activeIndex"
               rounded="lg"
-              hide-details
-              autofocus
-              clearable
-              :placeholder="placeholder"
-              prepend-inner-icon="fa-solid fa-magnifying-glass"
-              data-test="docs-search-input"
-              @keydown.down.prevent="move(1)"
-              @keydown.up.prevent="move(-1)"
-              @keydown.enter.prevent="selectActive"
-              @keydown.esc.prevent="close"
-            />
-          </v-card-item>
-
-          <v-card-text class="docs-search__results pa-2">
-            <!-- Results -->
-            <v-list
-              v-if="results.length"
-              density="comfortable"
-              bg-color="transparent"
-              nav
-              data-test="docs-search-results"
+              color="primary"
+              prepend-icon="fa-solid fa-file-lines"
+              :data-test="`docs-search-result`"
+              @click="go(hit)"
+              @mouseenter="activeIndex = i"
             >
-              <v-list-item
-                v-for="(hit, i) in results"
-                :key="`${hit.category}/${hit.slug}`"
-                :active="i === activeIndex"
-                rounded="lg"
-                color="primary"
-                prepend-icon="fa-solid fa-file-lines"
-                :data-test="`docs-search-result`"
-                @click="go(hit)"
-                @mouseenter="activeIndex = i"
-              >
-                <v-list-item-title class="text-body-medium font-weight-medium">
-                  {{ hit.title }}
-                </v-list-item-title>
-                <v-list-item-subtitle v-if="hit.categoryTitle" class="text-caption">
-                  {{ hit.categoryTitle }}
-                </v-list-item-subtitle>
-              </v-list-item>
-            </v-list>
+              <v-list-item-title class="text-body-medium font-weight-medium">
+                {{ hit.title }}
+              </v-list-item-title>
+              <v-list-item-subtitle v-if="hit.categoryTitle" class="text-caption">
+                {{ hit.categoryTitle }}
+              </v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
 
-            <!-- Empty (query entered, nothing matched) -->
-            <div
-              v-else-if="query"
-              class="text-center text-medium-emphasis py-8"
-              data-test="docs-search-empty"
-            >
-              <v-icon icon="fa-solid fa-magnifying-glass" size="28" class="mb-2 d-block mx-auto" />
-              <p class="text-body-medium">No results for “{{ query }}”.</p>
-            </div>
+          <!-- Empty (query entered, nothing matched) -->
+          <div
+            v-else-if="query"
+            class="text-center text-medium-emphasis py-8"
+            data-test="docs-search-empty"
+          >
+            <v-icon icon="fa-solid fa-magnifying-glass" size="28" class="mb-2 d-block mx-auto" />
+            <p class="text-body-medium">No results for “{{ query }}”.</p>
+          </div>
 
-            <!-- Idle (no query yet) -->
-            <div
-              v-else
-              class="text-center text-medium-emphasis py-8"
-              data-test="docs-search-idle"
-            >
-              <p class="text-body-medium">{{ idleLabel }}</p>
-            </div>
-          </v-card-text>
+          <!-- Idle (no query yet) -->
+          <div
+            v-else
+            class="text-center text-medium-emphasis py-8"
+            data-test="docs-search-idle"
+          >
+            <p class="text-body-medium">{{ idleLabel }}</p>
+          </div>
+        </v-card-text>
 
-          <v-divider />
-          <v-card-actions class="px-4 py-2 text-caption text-medium-emphasis">
-            <span class="docs-search__kbd">↑↓</span>
-            <span class="ml-1">to navigate</span>
-            <span class="docs-search__kbd ml-3">↵</span>
-            <span class="ml-1">to open</span>
-            <span class="docs-search__kbd ml-3">esc</span>
-            <span class="ml-1">to close</span>
-            <v-spacer />
-            <span v-if="degraded" data-test="docs-search-degraded">Local search</span>
-          </v-card-actions>
-        </template>
+        <v-divider />
+        <v-card-actions class="px-4 py-2 text-caption text-medium-emphasis">
+          <span class="docs-search__kbd">↑↓</span>
+          <span class="ml-1">to navigate</span>
+          <span class="docs-search__kbd ml-3">↵</span>
+          <span class="ml-1">to open</span>
+          <span class="docs-search__kbd ml-3">esc</span>
+          <span class="ml-1">to close</span>
+        </v-card-actions>
       </v-card>
     </v-dialog>
   </div>
@@ -128,16 +112,9 @@
 /**
  * Docs search.
  *
- * One affordance, two backends:
- *  - **Algolia DocSearch** when `config.docs.search` carries a real `appId`,
- *    `apiKey` and `indexName`. The hosted index is provisioned out-of-band
- *    (apply at https://docsearch.algolia.com later), so the `@docsearch/js`
- *    dependency is loaded *lazily* and *defensively* — a variable-specifier
- *    dynamic import marked `@vite-ignore` so the bundler never tries to resolve
- *    the (possibly absent) package at build time.
- *  - **Client-side fuzzy fallback** otherwise — a subsequence match over the
- *    guide titles/summaries from the docs store, so search works locally with
- *    zero external setup (and for tests).
+ * A dependency-free, client-side fuzzy match: a subsequence match over the
+ * guide titles/summaries/categories from the docs store. Works everywhere with
+ * zero external setup (and in tests) — no hosted index, no extra dependency.
  *
  * Opening: a ⌘K (mac) / Ctrl+K shortcut, a "/" shortcut (when not typing in a
  * field), and the visible trigger button. Mounted in the docs home + nav.
@@ -162,29 +139,13 @@ const placeholder = computed(() => searchConfig.value.placeholder || 'Search the
 const triggerLabel = computed(() => searchConfig.value.label || 'Search');
 const idleLabel = computed(() => searchConfig.value.idleLabel || 'Type to search the documentation.');
 
-/** Max fallback hits shown (keeps the modal scannable). */
+/** Max hits shown (keeps the modal scannable). */
 const MAX_RESULTS = 8;
-
-/**
- * True when real Algolia DocSearch credentials are configured. Until an index is
- * provisioned, this is false and we degrade to client-side search.
- * @returns {boolean}
- */
-const hasDocSearchCreds = computed(() => {
-  const c = searchConfig.value;
-  return Boolean(c.appId && c.apiKey && c.indexName);
-});
-
-/** True when running the client-side fuzzy fallback (no Algolia creds). */
-const degraded = computed(() => !hasDocSearchCreds.value);
 
 const dialog = ref(false);
 const query = ref('');
 const activeIndex = ref(0);
 const inputRef = ref(null);
-const docsearchHost = ref(null);
-/** Flips true once `@docsearch/js` has mounted into the host element. */
-const docsearchReady = ref(false);
 
 /**
  * Subsequence ("fuzzy") test: every char of `needle` appears in `haystack`
@@ -286,41 +247,7 @@ const selectActive = () => {
   go(results.value[activeIndex.value]);
 };
 
-/**
- * Lazily mount Algolia DocSearch into the host element. The import specifier is
- * a variable marked `@vite-ignore`, so the bundler never tries to resolve
- * `@docsearch/js` at build time — the dependency only needs to exist once an
- * index has been provisioned and installed. Falls back silently (stays
- * degraded) on any failure.
- * @returns {Promise<void>}
- */
-const mountDocSearch = async () => {
-  if (!hasDocSearchCreds.value || docsearchReady.value) return;
-  await nextTick();
-  const host = docsearchHost.value;
-  if (!host) return;
-  const pkg = '@docsearch/js';
-  try {
-    const mod = await import(/* @vite-ignore */ pkg);
-    const docsearch = mod?.default || mod;
-    if (typeof docsearch !== 'function') return;
-    const c = searchConfig.value;
-    docsearch({
-      container: host,
-      appId: c.appId,
-      apiKey: c.apiKey,
-      indexName: c.indexName,
-      ...(c.searchParameters ? { searchParameters: c.searchParameters } : {}),
-    });
-    docsearchReady.value = true;
-  } catch (err) {
-    // Package absent or init failed — stay on the client-side fallback.
-    console.warn('[docs.search] Algolia DocSearch unavailable, using local search:', err?.message || err);
-    docsearchReady.value = false;
-  }
-};
-
-/** Open the search modal, ensuring the guide tree is loaded for the fallback. */
+/** Open the search modal, ensuring the guide tree is loaded for the search. */
 const open = () => {
   dialog.value = true;
 };
@@ -336,14 +263,10 @@ watch(dialog, async (isOpen) => {
     activeIndex.value = 0;
     return;
   }
-  // Ensure the tree is loaded so the fallback has something to search.
+  // Ensure the tree is loaded so the search has something to match.
   store.fetchTree().catch(() => {});
-  if (hasDocSearchCreds.value) {
-    await mountDocSearch();
-  } else {
-    await nextTick();
-    inputRef.value?.focus?.();
-  }
+  await nextTick();
+  inputRef.value?.focus?.();
 });
 
 /**

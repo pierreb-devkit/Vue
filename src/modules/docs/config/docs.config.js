@@ -115,20 +115,10 @@ export default {
       },
     },
 
-    // Docs search (⌘K / "/"). Two backends, picked at runtime:
-    //  - **Algolia DocSearch** when `appId` + `apiKey` + `indexName` are all set.
-    //    The hosted index is provisioned out-of-band — apply at
-    //    https://docsearch.algolia.com (free for open/public docs), then drop the
-    //    returned creds here (env-overridable downstream). `@docsearch/js` is
-    //    loaded lazily (variable-specifier dynamic import) so it's an optional
-    //    dependency: the build stays green without it.
-    //  - **Client-side fuzzy fallback** otherwise — a dependency-free subsequence
-    //    match over the guide titles/summaries from the docs store, so search
-    //    works locally with zero setup. This is the default until an index lands.
+    // Docs search (⌘K / "/"). A dependency-free, client-side fuzzy match over the
+    // guide titles/summaries/categories from the docs store — works everywhere
+    // with zero external setup. Only the user-facing copy is configurable.
     search: {
-      appId: '',
-      apiKey: '',
-      indexName: '',
       label: 'Search',
       placeholder: 'Search the docs…',
       idleLabel: 'Type to search the documentation.',
