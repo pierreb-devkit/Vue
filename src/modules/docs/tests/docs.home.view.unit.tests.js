@@ -41,6 +41,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/docs', name: 'docs', component: { template: '<div />' } },
+    { path: '/docs/api', name: 'reference', component: { template: '<div />' } },
     { path: '/docs/:category/:slug', name: 'article', component: { template: '<div />' } },
   ],
 });
@@ -124,6 +125,15 @@ describe('docs.home.view', () => {
     expect(resEl.text()).toContain('config-driven-result');
     // Confirm the OLD hardcoded strings ("Example Domain", "text") are absent.
     expect(resEl.text()).not.toContain('Example Domain');
+  });
+
+  it('links the OpenAPI reference (/docs/api) from the quickstart hero', async () => {
+    const wrapper = mountHome();
+    await flushPromises();
+    const cta = wrapper.find('[data-test="docs-home-reference-cta"]');
+    expect(cta.exists()).toBe(true);
+    expect(cta.text()).toContain('API reference');
+    expect(cta.attributes('href')).toBe('/docs/api');
   });
 
   it('renders the job-first category grid from the tree', async () => {

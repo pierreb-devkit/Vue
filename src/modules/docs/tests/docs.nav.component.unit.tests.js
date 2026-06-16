@@ -8,7 +8,12 @@ import { setActivePinia, createPinia } from 'pinia';
 import { useDocsStore } from '../stores/docs.store';
 
 vi.mock('@/config', () => ({
-  default: { docs: { home: { title: 'Documentation' } } },
+  default: {
+    docs: {
+      home: { title: 'Documentation' },
+      reference: { title: 'API reference', icon: 'fa-solid fa-code' },
+    },
+  },
 }));
 
 import DocsNav from '../components/docs.nav.component.vue';
@@ -19,6 +24,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/docs', name: 'docs', component: { template: '<div />' } },
+    { path: '/docs/api', name: 'reference', component: { template: '<div />' } },
     { path: '/docs/:category/:slug', name: 'article', component: { template: '<div />' } },
   ],
 });
@@ -73,6 +79,19 @@ describe('docs.nav.component', () => {
     const wrapper = mountNav();
     const links = wrapper.findAll('[data-test="docs-nav-article"]');
     expect(links.map((l) => l.text())).toEqual(['Install', 'Quickstart', 'Webhooks']);
+  });
+
+  it('links the OpenAPI reference (/docs/api) with the config-driven title', () => {
+    const wrapper = mountNav();
+    const link = wrapper.find('[data-test="docs-nav-reference"]');
+    expect(link.exists()).toBe(true);
+    expect(link.text()).toContain('API reference');
+    expect(link.attributes('href')).toBe('/docs/api');
+  });
+
+  it('shows the reference link even when there are no categories', () => {
+    const wrapper = mountNav({ categories: [] });
+    expect(wrapper.find('[data-test="docs-nav-reference"]').exists()).toBe(true);
   });
 
   it('shows an empty state when there are no categories', () => {

@@ -11,6 +11,27 @@
       <span class="text-title-small font-weight-medium">{{ homeTitle }}</span>
     </RouterLink>
 
+    <!-- Persistent link to the in-theme OpenAPI reference (/docs/api). The route
+         is hidden from the MAIN app sidenav (meta.display:false), so this is the
+         in-surface entry point. Always shown — the module ships the view. -->
+    <v-list
+      density="compact"
+      bg-color="transparent"
+      nav
+      class="docs-nav__list py-0 mb-5"
+      slim
+    >
+      <v-list-item
+        to="/docs/api"
+        :title="referenceTitle"
+        :prepend-icon="referenceIcon"
+        rounded="lg"
+        color="primary"
+        class="docs-nav__item text-body-medium"
+        data-test="docs-nav-reference"
+      />
+    </v-list>
+
     <div
       v-for="category in categories"
       :key="category.slug"
@@ -69,6 +90,8 @@ import config from '@/config';
 const store = useDocsStore();
 
 const homeTitle = computed(() => config?.docs?.home?.title || 'Documentation');
+const referenceTitle = computed(() => config?.docs?.reference?.title || 'API reference');
+const referenceIcon = computed(() => config?.docs?.reference?.icon || 'fa-solid fa-code');
 
 /**
  * Categories in contract order, each with its articles order-sorted.

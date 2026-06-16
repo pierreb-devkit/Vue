@@ -76,18 +76,32 @@
             <p class="text-overline text-primary mb-1">{{ quickstart.eyebrow }}</p>
             <h2 class="text-headline-medium font-weight-bold mb-3">{{ quickstart.title }}</h2>
             <p class="text-body-large text-medium-emphasis mb-4">{{ quickstart.subtitle }}</p>
-            <v-btn
-              v-if="quickstartCtaTo"
-              :to="quickstartCtaTo"
-              color="primary"
-              variant="flat"
-              rounded="lg"
-              class="text-none"
-              append-icon="fa-solid fa-arrow-right"
-              data-test="docs-home-quickstart-cta"
-            >
-              {{ quickstart.cta.label }}
-            </v-btn>
+            <div class="d-flex flex-wrap align-center ga-3">
+              <v-btn
+                v-if="quickstartCtaTo"
+                :to="quickstartCtaTo"
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                class="text-none"
+                append-icon="fa-solid fa-arrow-right"
+                data-test="docs-home-quickstart-cta"
+              >
+                {{ quickstart.cta.label }}
+              </v-btn>
+              <!-- In-theme OpenAPI reference (/docs/api) — the natural next step
+                   after the first call. Config-driven title/icon; always shown. -->
+              <v-btn
+                to="/docs/api"
+                variant="text"
+                rounded="lg"
+                class="text-none"
+                :prepend-icon="reference.icon"
+                data-test="docs-home-reference-cta"
+              >
+                {{ reference.title }}
+              </v-btn>
+            </div>
           </v-col>
           <v-col cols="12" md="7">
             <div class="docs-quickstart__terminal">
@@ -164,6 +178,10 @@ import config from '@/config';
 
 const home = config?.docs?.home || { icon: 'fa-solid fa-book', title: 'Documentation', subtitle: '' };
 const quickstart = config?.docs?.quickstart || null;
+const reference = {
+  icon: config?.docs?.reference?.icon || 'fa-solid fa-code',
+  title: config?.docs?.reference?.title || 'API reference',
+};
 
 /**
  * Resolve the quickstart command snippet from config, joining array-of-lines
