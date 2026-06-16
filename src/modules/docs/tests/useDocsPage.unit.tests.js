@@ -239,4 +239,36 @@ describe('useDocsPage', () => {
     // The prose text around the stray div is preserved.
     expect(page.html).toContain('Some prose.');
   });
+
+  it('keeps the renderer marker, not an author-forged in-sequence marker placed before it', async () => {
+    // Regression for the in-sequence forgery case: an author embeds the *next
+    // expected* marker `<div data-docs-example="0"></div>` in prose BEFORE the
+    // real example. A position-counting strip would keep the forged one (first
+    // "0" seen) and drop the renderer's — hydrating the example at the wrong spot.
+    // The per-render nonce defeats this: the author can't tag their marker, so it
+    // is stripped and only the renderer's surviving marker (after the prose) wins.
+    const md = [
+      '# Guide',
+      '',
+      '<div data-docs-example="0"></div>',
+      '',
+      'Some prose.',
+      '',
+      '```bash',
+      'echo hi',
+      '```',
+    ].join('\n');
+    const page = await useDocsPage('g', { fetcher: async () => md });
+
+    expect(page.examples).toHaveLength(1);
+    const markers = [...page.html.matchAll(/data-docs-example="(\d+)"/g)].map((m) => m[1]);
+    expect(markers).toEqual(['0']);
+    // The surviving marker is the renderer's — it sits AFTER the prose (the real
+    // example position), not at the forged div's spot at the top of the article.
+    expect(page.html.indexOf('data-docs-example="0"')).toBeGreaterThan(
+      page.html.indexOf('Some prose.'),
+    );
+    // The author's forged marker was neutralized in place.
+    expect(page.html).toContain('data-docs-example-stripped');
+  });
 });

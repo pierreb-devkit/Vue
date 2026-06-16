@@ -13,7 +13,15 @@ import hljs from 'highlight.js/lib/common';
  * @param {number} n - The zero-based example index.
  * @returns {string} The placeholder HTML string.
  */
-const EXAMPLE_MARKER = (n) => `<div data-docs-example="${n}"></div>`;
+const EXAMPLE_MARKER = (nonce, n) => `<div data-docs-example="${nonce}:${n}"></div>`;
+/**
+ * Per-render, author-unguessable token tagged onto every renderer-emitted marker.
+ * A guide author writes markdown ahead of time and cannot know it, so any
+ * `data-docs-example` value lacking the current render's nonce is provably
+ * author-injected and is dropped — this closes the in-sequence forgery case where
+ * a plain `data-docs-example="0"` in prose would otherwise shadow the real marker.
+ */
+const makeExampleNonce = () => `e${Math.random().toString(36).slice(2, 10)}`;
 /** Source pattern for the placeholder element (callers build their own /g instance). */
 export const EXAMPLE_MARKER_SOURCE = '<div data-docs-example="(\\d+)"><\\/div>';
 /**
@@ -30,31 +38,33 @@ export const EXAMPLE_MARKER_RE = new RegExp(EXAMPLE_MARKER_SOURCE, 'g');
  * `data-docs-example` is whitelisted through DOMPurify so the renderer's own
  * hydration markers survive — but `div` + `data-*` are otherwise allowed, so a
  * guide author could embed a literal `<div data-docs-example="N">` in prose. It
- * would survive sanitization and inject a bogus slot (or shift the index) into
- * the article-view splitter. Only the markers the renderer inserts from the
- * controlled `examples` list are legitimate: those are indices `0 … count-1`,
- * each appearing exactly once, in ascending document order. This walks every
- * `data-docs-example` occurrence and keeps only the one matching the next
- * expected controlled index; every other occurrence has its attribute stripped
+ * would survive sanitization and inject a bogus slot (or shadow a real marker)
+ * into the article-view splitter. The renderer tags each marker it emits with the
+ * current render's `nonce` (`<nonce>:<index>`), which an author cannot know, so a
+ * marker is legitimate iff it carries the nonce AND its index is in `0 … count-1`.
+ * Legitimate markers are rewritten back to the canonical `data-docs-example="N"`
+ * form the splitter expects; every other occurrence has its attribute stripped
  * (the surrounding prose is left intact), so the splitter never sees a stray.
  *
  * @param {string} html - The sanitized article HTML.
+ * @param {string} nonce - The current render's marker nonce.
+ * @param {number} count - Number of controlled examples (valid indices `0 … count-1`).
  * @returns {string} The HTML with author-injected markers neutralized.
  */
-const stripStrayExampleMarkers = (html) => {
-  let expected = 0;
+const stripStrayExampleMarkers = (html, nonce, count) =>
   // Match the marker's attribute as DOMPurify serializes it; rebuild only the
   // attribute, leaving the rest of the element untouched.
-  return String(html).replace(/data-docs-example="(\d+)"/g, (full, idx) => {
-    if (Number(idx) === expected) {
-      expected += 1;
-      return full;
+  String(html).replace(/data-docs-example="([^"]*)"/g, (full, value) => {
+    const m = value.match(/^([a-z0-9]+):(\d+)$/);
+    if (m && m[1] === nonce) {
+      const idx = Number(m[2]);
+      // Renderer-emitted + in range: restore the canonical form the splitter reads.
+      if (idx >= 0 && idx < count) return `data-docs-example="${idx}"`;
     }
-    // Author-injected (out of sequence / duplicate / out of range): drop the
+    // No current-render nonce (author-injected) or out of range: drop the
     // hydration attribute so the splitter ignores this element.
     return 'data-docs-example-stripped';
   });
-};
 
 /**
  * Minimal HTML-attribute encoder for values interpolated into the pre-DOMPurify
@@ -159,7 +169,7 @@ const langOf = (lang) => (lang || '').match(/\S*/)?.[0] || '';
  *   `stitched` is markdown with example groups replaced by markers; `examples`
  *   is the ordered list of groups (each group = an array of language snippets).
  */
-const extractExamples = (markdown, lexer) => {
+const extractExamples = (markdown, lexer, nonce) => {
   const tokens = lexer.lexer(markdown);
   const examples = [];
   const out = [];
@@ -181,7 +191,7 @@ const extractExamples = (markdown, lexer) => {
         }
         break;
       }
-      out.push(`\n\n${EXAMPLE_MARKER(examples.length)}\n\n`);
+      out.push(`\n\n${EXAMPLE_MARKER(nonce, examples.length)}\n\n`);
       examples.push(group);
       i = j;
     } else {
@@ -230,7 +240,10 @@ export async function useDocsPage(slug, { fetcher, meta = {} } = {}) {
 
   // Pre-pass: lift fenced code-block groups into structured examples and replace
   // them with markers (rendered later as <DocsCodeblock> by the article view).
-  const { stitched, examples } = extractExamples(markdown, instance);
+  // Tag every renderer-emitted marker with a per-render nonce so author-injected
+  // `data-docs-example` markers (which can't carry it) are stripped post-sanitize.
+  const nonce = makeExampleNonce();
+  const { stitched, examples } = extractExamples(markdown, instance, nonce);
 
   const rawHtml = instance.parse(stitched);
   // `data-docs-example` is our hydration hook — whitelist it through DOMPurify so
@@ -241,7 +254,7 @@ export async function useDocsPage(slug, { fetcher, meta = {} } = {}) {
   // Whitelisting `data-docs-example` also lets an author's literal
   // `<div data-docs-example="N">` in prose through the sanitizer; neutralize any
   // marker the renderer did not emit so only the controlled examples hydrate.
-  const html = stripStrayExampleMarkers(sanitized);
+  const html = stripStrayExampleMarkers(sanitized, nonce, examples.length);
 
   // Prefer the tree-provided title; fall back to the first h1 in the body.
   let title = meta.title || '';
