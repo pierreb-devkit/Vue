@@ -197,6 +197,8 @@ const load = async (s) => {
   const result = await useDocsPage(s, {
     fetcher: (sl) => store.fetchArticle(sl),
     meta: meta.value,
+    // The tree feeds the cross-guide `#anchor` link rewrite (fetched just above).
+    tree: store.tree,
   });
   // Only commit if this load is still the latest one.
   if (token === _loadToken) {

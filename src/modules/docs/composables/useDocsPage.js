@@ -98,15 +98,22 @@ export const slugifyHeading = (text) =>
 
 /**
  * Build a marked renderer that:
- *  - assigns stable anchor ids to h2/h3 headings (so the ToC can deep-link), and
+ *  - assigns stable anchor ids to h2/h3 headings (so the ToC can deep-link),
+ *  - rewrites bare `#anchor` links that target *another* guide to that guide's
+ *    `/docs/:category/:slug#anchor` route (cross-guide deep-links), and
  *  - syntax-highlights fenced code blocks via highlight.js.
  *
  * Collects the heading anchors into `toc` as a side effect.
  *
  * @param {Array<{ level: number, text: string, id: string }>} toc - Mutated in place.
+ * @param {Object} [opts]
+ * @param {Set<string>} [opts.localIds] - Every heading id in THIS article (prescanned). A
+ *   `#anchor` whose id is in this set is in-file and left untouched. Omit to disable rewrites.
+ * @param {(id: string) => ({ category: string, slug: string }|null)} [opts.resolveCrossLink] -
+ *   Resolve an anchor id to the guide that owns it, or null. Omit to disable rewrites (fail-soft).
  * @returns {import('marked').MarkedExtension} A marked extension (renderer overrides).
  */
-const buildRenderer = (toc) => ({
+const buildRenderer = (toc, { localIds, resolveCrossLink } = {}) => ({
   renderer: {
     /**
      * Render a heading, registering h2/h3 anchors into the ToC.
@@ -123,6 +130,35 @@ const buildRenderer = (toc) => ({
       const id = slugifyHeading(plain);
       if (depth === 2 || depth === 3) toc.push({ level: depth, text: plain, id });
       return `<h${depth} id="${encodeAttr(id)}">${text}</h${depth}>\n`;
+    },
+    /**
+     * Rewrite a bare same-page `#anchor` link whose target lives in a DIFFERENT
+     * guide to that guide's `/docs/:category/:slug#anchor` route. Left untouched:
+     * in-file anchors (target heading is in THIS article), external/relative
+     * links, and — fail-soft — any `#anchor` that names no known guide. Returning
+     * `false` defers to marked's default link renderer (which keeps href cleaning).
+     *
+     * Membership is tested against the COMPLETE prescanned `localIds` set, not the
+     * partial ToC accumulator: marked emits links in document order, so a link can
+     * precede its own target heading, and the ToC holds only h2/h3 (an h1/h4 target
+     * would be misread as cross-guide).
+     * @param {{ href: string, title?: string, tokens: Array }} args - marked link token.
+     * @returns {string|false} Rewritten anchor HTML, or false to use the default renderer.
+     */
+    link({ href, title, tokens }) {
+      if (typeof href === 'string' && href.startsWith('#') && localIds && resolveCrossLink) {
+        const id = href.slice(1);
+        if (id && !localIds.has(id)) {
+          const target = resolveCrossLink(id);
+          if (target) {
+            const text = this.parser.parseInline(tokens);
+            const url = `/docs/${target.category}/${target.slug}#${id}`;
+            const titleAttr = title ? ` title="${encodeAttr(title)}"` : '';
+            return `<a href="${encodeAttr(url)}"${titleAttr}>${text}</a>`;
+          }
+        }
+      }
+      return false;
     },
     /**
      * Render a fenced code block with highlight.js when the language is known.
@@ -203,6 +239,90 @@ const extractExamples = (markdown, lexer, nonce) => {
   return { stitched: out.join(''), examples };
 };
 
+/**
+ * Prescan a markdown source for EVERY heading id (all depths), using the exact
+ * same plain-text derivation + `slugifyHeading` the renderer's `heading()` uses,
+ * so the set agrees with the emitted `id=""` by construction. Drives the `link()`
+ * renderer's in-file-vs-cross-guide decision (membership = "anchor lives here").
+ *
+ * A throwaway Marked instance is used so the scan can't perturb the real render's
+ * ToC accumulator; its heading renderer collects the id and emits nothing.
+ *
+ * @param {string} markdown - The (example-stitched) article markdown to scan.
+ * @returns {Set<string>} Every heading anchor id in the source.
+ */
+const collectHeadingIds = (markdown) => {
+  const ids = new Set();
+  const scanner = new Marked({ mangle: false, headerIds: false });
+  scanner.use({
+    renderer: {
+      heading({ tokens }) {
+        const plain = this.parser.parseInline(tokens, this.parser.textRenderer).trim();
+        ids.add(slugifyHeading(plain));
+        return '';
+      },
+    },
+  });
+  scanner.parse(markdown);
+  return ids;
+};
+
+/**
+ * Build a cross-guide anchor index from the docs tree: an `anchor id → owning
+ * guide` resolver used by the `link()` renderer to repoint a bare `#anchor` that
+ * targets a different guide.
+ *
+ * Two keyings, anchor authoritative:
+ *  - **slug** (best-effort): every guide is keyed by its own `slug`, so the common
+ *    `#some-guide` cross-reference (anchor === slug) resolves day-one with no
+ *    backend change.
+ *  - **anchor** (authoritative): a guide's optional `anchor` field (its real
+ *    top-of-file heading id, which need not equal its slug) is keyed too and WINS
+ *    at lookup, correcting the cases the slug heuristic can't.
+ *
+ * Fail-soft + deterministic: an id that two different guides claim within the same
+ * keying is dropped (ambiguous → no rewrite); an unknown id resolves to null
+ * (renderer leaves the link untouched). A null/empty tree yields a resolver that
+ * always returns null.
+ *
+ * @param {{ categories?: Array }} [tree] - The normalized docs tree (`store.tree`).
+ * @returns {{ resolve: (id: string) => ({ category: string, slug: string }|null) }}
+ */
+const buildCrossGuideIndex = (tree) => {
+  const slugMap = new Map();
+  const slugDup = new Set();
+  const anchorMap = new Map();
+  const anchorDup = new Set();
+  const put = (map, dup, key, target) => {
+    if (!key || dup.has(key)) return;
+    const prev = map.get(key);
+    if (prev && (prev.category !== target.category || prev.slug !== target.slug)) {
+      map.delete(key);
+      dup.add(key);
+      return;
+    }
+    map.set(key, target);
+  };
+  const categories = Array.isArray(tree?.categories) ? tree.categories : [];
+  for (const cat of categories) {
+    const articles = Array.isArray(cat?.articles) ? cat.articles : [];
+    for (const a of articles) {
+      if (!a?.slug) continue;
+      const target = { category: a.category ?? cat?.slug, slug: a.slug };
+      if (!target.category) continue;
+      put(slugMap, slugDup, a.slug, target);
+      if (a.anchor) put(anchorMap, anchorDup, a.anchor, target);
+    }
+  }
+  return {
+    resolve(id) {
+      if (anchorMap.has(id)) return anchorMap.get(id); // authoritative wins
+      if (slugMap.has(id)) return slugMap.get(id);
+      return null;
+    },
+  };
+};
+
 const NOT_FOUND = { title: '', html: '', toc: [], examples: [], notFound: true };
 
 /**
@@ -219,9 +339,11 @@ const NOT_FOUND = { title: '', html: '', toc: [], examples: [], notFound: true }
  * @param {Object} [options]
  * @param {(slug: string) => Promise<string|null>} [options.fetcher] - Markdown loader.
  * @param {{ title?: string }} [options.meta] - Optional article metadata (e.g. title from the tree).
+ * @param {{ categories?: Array }|null} [options.tree] - The normalized docs tree (`store.tree`),
+ *   used to rewrite cross-guide `#anchor` links. Omit/null → cross-link rewrite disabled (fail-soft).
  * @returns {Promise<{ title: string, html: string, toc: Array, examples: Array, notFound: boolean }>}
  */
-export async function useDocsPage(slug, { fetcher, meta = {} } = {}) {
+export async function useDocsPage(slug, { fetcher, meta = {}, tree = null } = {}) {
   if (!slug || typeof fetcher !== 'function') return { ...NOT_FOUND };
 
   let markdown;
@@ -232,18 +354,26 @@ export async function useDocsPage(slug, { fetcher, meta = {} } = {}) {
   }
   if (typeof markdown !== 'string' || !markdown.trim()) return { ...NOT_FOUND };
 
-  const toc = [];
   // marked.use is global+stateful; scope the renderer to a local instance so
   // concurrent renders don't share ToC accumulators.
   const instance = new Marked({ mangle: false, headerIds: false });
-  instance.use(buildRenderer(toc));
 
   // Pre-pass: lift fenced code-block groups into structured examples and replace
   // them with markers (rendered later as <DocsCodeblock> by the article view).
   // Tag every renderer-emitted marker with a per-render nonce so author-injected
   // `data-docs-example` markers (which can't carry it) are stripped post-sanitize.
+  // (Lexing only — independent of the renderer, so it runs before `use()`.)
   const nonce = makeExampleNonce();
   const { stitched, examples } = extractExamples(markdown, instance, nonce);
+
+  // Cross-link wiring: prescan the stitched source for every in-file heading id,
+  // and build the cross-guide resolver from the tree. Both fail-soft — an absent
+  // tree just disables the rewrite (links render unchanged).
+  const localIds = collectHeadingIds(stitched);
+  const crossIndex = buildCrossGuideIndex(tree);
+
+  const toc = [];
+  instance.use(buildRenderer(toc, { localIds, resolveCrossLink: (id) => crossIndex.resolve(id) }));
 
   const rawHtml = instance.parse(stitched);
   // `data-docs-example` is our hydration hook — whitelist it through DOMPurify so

@@ -157,6 +157,10 @@ describe('Docs Store', () => {
       expect(art.category).toBe('get-started');
       expect(art.summary).toBe('What the API is and when to reach for it.');
       expect(art.persona).toEqual(['developer']);
+      // Optional cross-link anchor passes through fail-soft (present here, absent
+      // on the sibling guide → undefined).
+      expect(art.anchor).toBe('welcome-overview');
+      expect(cat.articles[1].anchor).toBeUndefined();
     });
 
     it('passes an already-canonical tree through intact (defensive)', () => {

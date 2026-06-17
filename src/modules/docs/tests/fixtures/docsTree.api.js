@@ -2,15 +2,20 @@
  * REAL `GET /api/public/docs` response shape — `data.categories`.
  *
  * The backend emits categories as `{ id, label, guides: [...] }` and each guide
- * as `{ slug, title, persona, order, summary }`. The frontend's canonical shape
- * (`{ slug, title, order, articles: [...] }`) is derived from this by the store's
- * `normalizeTree`. Tests that mocked the *canonical* shape masked the real-API
- * mismatch (empty grid / dead persona links / dead search) — this fixture is the
- * single source of truth for the wire contract so that mismatch can't regress.
+ * as `{ slug, title, persona, order, summary, anchor? }`. The frontend's canonical
+ * shape (`{ slug, title, order, articles: [...] }`) is derived from this by the
+ * store's `normalizeTree`. Tests that mocked the *canonical* shape masked the
+ * real-API mismatch (empty grid / dead persona links / dead search) — this fixture
+ * is the single source of truth for the wire contract so that mismatch can't regress.
+ *
+ * `anchor` is OPTIONAL: a guide's top-of-file heading id, consumed by the article
+ * renderer's cross-link rewrite to resolve a bare `#anchor` that targets a *different*
+ * guide (its id need not equal the slug). The `welcome` guide below carries one to
+ * lock the field into the wire contract; guides without it still resolve via slug.
  *
  * Minimal but representative: the 3 categories the default config's persona doors
  * target (`get-started`, `integrate`, `operate`), each with ≥1 guide carrying
- * every wire field (slug/title/persona/order/summary).
+ * every wire field (slug/title/persona/order/summary [+ optional anchor]).
  */
 export const docsTreeApiFixture = {
   categories: [
@@ -24,6 +29,7 @@ export const docsTreeApiFixture = {
           persona: ['developer'],
           order: 0,
           summary: 'What the API is and when to reach for it.',
+          anchor: 'welcome-overview',
         },
         {
           slug: 'quickstart',
