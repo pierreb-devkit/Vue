@@ -8,8 +8,7 @@
  *
  * `/docs/api` is declared BEFORE the `/docs/:category/:slug` catch-all so the
  * static segment wins (vue-router prefers static over dynamic, but order keeps
- * the intent explicit). The standalone backend Redoc UI (`/api/docs`) stays
- * untouched as the fallback reference.
+ * the intent explicit).
  *
  * No CASL `action`/`subject`: docs are public (mirrors the legal pages, which
  * carry no auth meta). Activation is gated by `config.modules.docs.activated`

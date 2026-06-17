@@ -13,22 +13,7 @@
           :title="header.title"
           :subtitle="header.subtitle"
           avatar-color="primary"
-        >
-          <template #actions>
-            <v-btn
-              :href="redocUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="text"
-              size="small"
-              class="text-none"
-              append-icon="fa-solid fa-arrow-up-right-from-square"
-              data-test="docs-reference-redoc-link"
-            >
-              Open in Redoc
-            </v-btn>
-          </template>
-        </PageHeader>
+        />
 
         <!-- Loading -->
         <v-row v-if="loading" justify="center" class="py-12">
@@ -53,8 +38,7 @@
         <v-row v-else-if="!groups.length" class="pa-2 mt-2">
           <v-col>
             <v-alert type="info" variant="tonal" data-test="docs-reference-empty">
-              The API reference is not available right now. You can still browse it on
-              <a :href="redocUrl" target="_blank" rel="noopener noreferrer">Redoc</a>.
+              The API reference is not available right now. Please try again later.
             </v-alert>
           </v-col>
         </v-row>
@@ -257,13 +241,6 @@ const header = {
 const tagGuides = reference.tagGuides && typeof reference.tagGuides === 'object'
   ? reference.tagGuides
   : {};
-
-/** Absolute URL to the standalone Redoc reference (the untouched fallback). */
-const redocUrl = computed(() => {
-  const api = config?.api || {};
-  const port = api.port && ![80, 443, '80', '443'].includes(api.port) ? `:${api.port}` : '';
-  return `${api.protocol}://${api.host}${port}/${api.base}/docs`;
-});
 
 const store = useDocsStore();
 const loading = computed(() => store.loading);

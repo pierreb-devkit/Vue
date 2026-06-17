@@ -50,7 +50,7 @@ export const getDocArticle = (slug) =>
 /**
  * Fetch the merged OpenAPI 3 spec served by the backend.
  * Served at `${api.base}/spec.json` (sibling of `public/`, not under it) — the
- * same JSON the standalone Redoc UI (`/api/docs`) consumes.
+ * same merged spec the in-theme `/docs/api` reference renders.
  * @returns {Promise<import('axios').AxiosResponse>}
  */
 export const getSpec = () => axios.get(`${apiBaseUrl()}/spec.json`);

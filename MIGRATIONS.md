@@ -4,6 +4,23 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## docs: Redoc /api/docs reference UI decommissioned (2026-06-17, #4333)
+
+The docs module's in-theme OpenAPI reference (`/docs/api`) renders the merged spec at `GET /api/spec.json` natively — it is now the **only** reference surface. The dead "Open in Redoc" affordance (a header button + an empty-state fallback link, both pointing at the decommissioned backend `/api/docs` Redoc UI) has been removed.
+
+### What changed (this repo)
+
+- `docs.reference.view.vue`: removed the "Open in Redoc" header action, the empty-state Redoc fallback link (now a plain "not available right now" message), and the `redocUrl` computed.
+- `docs.config.js` / `docs.router.js` / `docs.service.js`: scrubbed the stale "`/api/docs` … untouched fallback" comments — the route is gone (the backend mounts only `/api/spec.json`).
+- Dropped the `links to the standalone Redoc reference` unit test.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. All files are devkit-owned → arrive via `/update-stack`. No action unless you self-host a standalone Redoc UI at `/api/docs` (none expected — the backend mounts only `/api/spec.json`).
+2. If you genuinely need an external API-reference link, add it as a config-driven affordance rather than restoring the Redoc-named one.
+
+---
+
 ## security headers: shipped via the container nginx — tune the report-only CSP (2026-06-15, #4304)
 
 The Vue security hardening bundle (#4304) added a baseline security-header block to `nginx.example.conf` (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS, and a `Content-Security-Policy-Report-Only` starter). **The stack `Dockerfile` bakes this file into the image** (`COPY nginx.example.conf … → envsubst > /etc/nginx/conf.d/default.conf`), so with the default serving setup the headers are emitted by the container's own nginx and reach the browser through any ingress that forwards backend response headers (Traefik, ingress-nginx, and most CDNs do by default). **No ingress change is required for the default deployment** — the `.example` name is historical, the file is the live config.
