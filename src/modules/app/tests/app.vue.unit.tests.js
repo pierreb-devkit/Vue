@@ -105,60 +105,80 @@ describe('App.vue — SEO (useHead)', () => {
     useHeadMock.mockClear();
   });
 
-  const mountApp = (config) =>
+  /**
+   * @desc Mount App with a mocked config + route. The component now passes a
+   * getter to useHead (so canonical/og:url recompute per route), so tests must
+   * invoke the captured getter to read the resolved head object.
+   * @param {Object} config - app config (from makeConfig)
+   * @param {String} path - mocked $route.path (default '/')
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
+  const mountApp = (config, path = '/') =>
     mount(App, {
       global: {
-        mocks: { config },
+        mocks: { config, $route: { path } },
         stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
       },
     });
 
+  /**
+   * @desc Resolve the head object from the last useHead call. The component
+   * passes a getter, so this invokes it (binding does not matter — the getter
+   * closes over `this` via an arrow function inside created()).
+   * @returns {Object} resolved head object ({ title, htmlAttrs, meta, link })
+   */
+  const resolveHead = () => {
+    const arg = useHeadMock.mock.calls[0][0];
+    return typeof arg === 'function' ? arg() : arg;
+  };
+
+  it('passes a getter to useHead (per-route reactivity)', () => {
+    mountApp(makeConfig());
+    expect(typeof useHeadMock.mock.calls[0][0]).toBe('function');
+  });
+
   it('sets title from config', () => {
     mountApp(makeConfig());
-    const call = useHeadMock.mock.calls[0][0];
-    expect(call.title).toBe('Test App');
+    expect(resolveHead().title).toBe('Test App');
   });
 
   it('sets lang from config.app.lang', () => {
     mountApp(makeConfig());
-    const call = useHeadMock.mock.calls[0][0];
-    expect(call.htmlAttrs.lang).toBe('fr');
+    expect(resolveHead().htmlAttrs.lang).toBe('fr');
   });
 
   it('defaults lang to "en" when not set', () => {
     const config = makeConfig({ lang: undefined });
     mountApp(config);
-    const call = useHeadMock.mock.calls[0][0];
-    expect(call.htmlAttrs.lang).toBe('en');
+    expect(resolveHead().htmlAttrs.lang).toBe('en');
   });
 
   it('includes description meta', () => {
     mountApp(makeConfig());
-    const { meta } = useHeadMock.mock.calls[0][0];
+    const { meta } = resolveHead();
     expect(meta).toContainEqual({ name: 'description', content: 'Test description' });
   });
 
   it('includes Open Graph tags', () => {
     mountApp(makeConfig());
-    const { meta } = useHeadMock.mock.calls[0][0];
+    const { meta } = resolveHead();
     expect(meta).toContainEqual({ property: 'og:title', content: 'Test App' });
     expect(meta).toContainEqual({ property: 'og:description', content: 'Test description' });
     expect(meta).toContainEqual({ property: 'og:type', content: 'website' });
-    expect(meta).toContainEqual({ property: 'og:url', content: 'https://example.com' });
     expect(meta).toContainEqual({ property: 'og:image', content: 'https://example.com/og.jpg' });
   });
 
   it('omits og:url and og:image when not configured', () => {
     const config = makeConfig({ url: '', seo: { og: { image: '' } } });
     mountApp(config);
-    const { meta } = useHeadMock.mock.calls[0][0];
+    const { meta } = resolveHead();
     expect(meta.find((m) => m.property === 'og:url')).toBeUndefined();
     expect(meta.find((m) => m.property === 'og:image')).toBeUndefined();
   });
 
   it('includes Twitter Card tags', () => {
     mountApp(makeConfig());
-    const { meta } = useHeadMock.mock.calls[0][0];
+    const { meta } = resolveHead();
     expect(meta).toContainEqual({ name: 'twitter:card', content: 'summary_large_image' });
     expect(meta).toContainEqual({ name: 'twitter:title', content: 'Test App' });
     expect(meta).toContainEqual({ name: 'twitter:site', content: '@testhandle' });
@@ -167,29 +187,54 @@ describe('App.vue — SEO (useHead)', () => {
   it('omits twitter:site when not configured', () => {
     const config = makeConfig({ seo: { og: { twitterSite: '' } } });
     mountApp(config);
-    const { meta } = useHeadMock.mock.calls[0][0];
+    const { meta } = resolveHead();
     expect(meta.find((m) => m.name === 'twitter:site')).toBeUndefined();
   });
 
-  it('sets canonical link when url is configured', () => {
-    mountApp(makeConfig());
-    const { link } = useHeadMock.mock.calls[0][0];
-    expect(link).toContainEqual({ rel: 'canonical', href: 'https://example.com' });
-  });
+  describe('per-route canonical + og:url (self-referential)', () => {
+    it('sets a self-referential canonical for a nested route', () => {
+      mountApp(makeConfig(), '/docs/x');
+      const { link } = resolveHead();
+      expect(link).toContainEqual({ rel: 'canonical', href: 'https://example.com/docs/x' });
+    });
 
-  it('sets no canonical link when url is empty', () => {
-    const config = makeConfig({ url: '' });
-    mountApp(config);
-    const { link } = useHeadMock.mock.calls[0][0];
-    expect(link).toHaveLength(0);
+    it('emits og:url matching the per-route canonical', () => {
+      mountApp(makeConfig(), '/docs/x');
+      const { meta } = resolveHead();
+      expect(meta).toContainEqual({ property: 'og:url', content: 'https://example.com/docs/x' });
+    });
+
+    it('canonicalises the root route to the bare base url', () => {
+      mountApp(makeConfig(), '/');
+      const { link, meta } = resolveHead();
+      expect(link).toContainEqual({ rel: 'canonical', href: 'https://example.com' });
+      expect(meta).toContainEqual({ property: 'og:url', content: 'https://example.com' });
+    });
+
+    it('produces a different canonical per route (proves it is not the static homepage)', () => {
+      mountApp(makeConfig(), '/pricing');
+      const pricing = resolveHead().link.find((l) => l.rel === 'canonical')?.href;
+      useHeadMock.mockClear();
+      mountApp(makeConfig(), '/docs/x');
+      const docs = resolveHead().link.find((l) => l.rel === 'canonical')?.href;
+      expect(pricing).toBe('https://example.com/pricing');
+      expect(docs).toBe('https://example.com/docs/x');
+      expect(pricing).not.toBe(docs);
+    });
+
+    it('sets no canonical link when url is empty', () => {
+      const config = makeConfig({ url: '' });
+      mountApp(config, '/docs/x');
+      const { link } = resolveHead();
+      expect(link).toHaveLength(0);
+    });
   });
 
   describe('Schema.org JSON-LD', () => {
     it('does not inject runtime JSON-LD (handled by seo-inject at build time)', () => {
       const config = makeConfig({ seo: { schema: { enabled: true, type: 'Person', name: 'Test App', sameAs: ['https://github.com/test-user'] } } });
       mountApp(config);
-      const call = useHeadMock.mock.calls[0][0];
-      expect(call.script).toBeUndefined();
+      expect(resolveHead().script).toBeUndefined();
     });
   });
 });

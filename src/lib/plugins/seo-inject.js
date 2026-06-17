@@ -81,8 +81,9 @@ export function seoInjectPlugin(config) {
         tags.push(`  <meta name="keywords" content="${escapeHtml(app.keywords)}">`);
       if (app.author)
         tags.push(`  <meta name="author" content="${escapeHtml(app.author)}">`);
-      if (app.url)
-        tags.push(`  <link rel="canonical" href="${escapeHtml(app.url)}">`);
+      // canonical + og:url are emitted per-route at runtime (app.vue useHead) so the
+      // prerenderer captures the correct self-referential URL for each page; a single
+      // static app.url here would make every prerendered page canonicalize to the homepage.
 
       // Theme color — explicit override wins over Vuetify primary
       const themeColor = seo.themeColor || getPrimaryColor(config);
@@ -100,8 +101,7 @@ export function seoInjectPlugin(config) {
       if (app.description)
         tags.push(`  <meta property="og:description" content="${escapeHtml(app.description)}">`);
       tags.push(`  <meta property="og:type" content="${escapeHtml(og.type || 'website')}">`);
-      if (app.url)
-        tags.push(`  <meta property="og:url" content="${escapeHtml(app.url)}">`);
+      // og:url is emitted per-route at runtime (see canonical note above).
       if (og.image)
         tags.push(`  <meta property="og:image" content="${escapeHtml(og.image)}">`);
 

@@ -68,9 +68,13 @@ describe('seoInjectPlugin', () => {
   });
 
   describe('canonical link', () => {
-    it('injects canonical link when app.url is set', () => {
+    // canonical is now emitted per-route at runtime (app.vue useHead) so the
+    // prerenderer captures a self-referential URL per page. seo-inject must NOT
+    // inject a static homepage canonical (it would make every page canonicalize
+    // to the homepage and collide with the runtime per-route one).
+    it('does not inject a canonical link even when app.url is set', () => {
       const result = transform(testConfig);
-      expect(result).toContain('<link rel="canonical" href="https://example.com">');
+      expect(result).not.toContain('rel="canonical"');
     });
 
     it('does not inject canonical when app.url is not set', () => {
@@ -100,9 +104,9 @@ describe('seoInjectPlugin', () => {
       expect(result).toContain('<meta property="og:type" content="profile">');
     });
 
-    it('injects og:url when app.url is set', () => {
+    it('does not inject og:url (emitted per-route at runtime, see canonical link)', () => {
       const result = transform(testConfig);
-      expect(result).toContain('<meta property="og:url" content="https://example.com">');
+      expect(result).not.toContain('property="og:url"');
     });
 
     it('injects og:image when set', () => {
