@@ -54,6 +54,7 @@
  */
 import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
+import { buildCanonicalUrl } from '@/lib/helpers/canonical.js';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { useBillingStore } from '../billing/stores/billing.store';
 import { setupInterceptors } from '../../lib/services/axios';
@@ -229,7 +230,9 @@ export default {
     const seo = app.seo || {};
     const og = seo.og || {};
 
-    const meta = [
+    // Route-invariant meta — built once; og:url and canonical are appended
+    // per-route inside the useHead getter below.
+    const baseMeta = [
       ...(app.description ? [{ name: 'description', content: app.description }] : []),
       ...(app.keywords ? [{ name: 'keywords', content: app.keywords }] : []),
       ...(app.author ? [{ name: 'author', content: app.author }] : []),
@@ -237,7 +240,6 @@ export default {
       { property: 'og:type', content: og.type || 'website' },
       ...(app.title ? [{ property: 'og:title', content: app.title }] : []),
       ...(app.description ? [{ property: 'og:description', content: app.description }] : []),
-      ...(app.url ? [{ property: 'og:url', content: app.url }] : []),
       ...(og.image ? [{ property: 'og:image', content: og.image }] : []),
       // Twitter Card
       { name: 'twitter:card', content: og.twitterCard || 'summary' },
@@ -247,17 +249,32 @@ export default {
       ...(og.image ? [{ name: 'twitter:image', content: og.image }] : []),
     ];
 
-    const link = app.url ? [{ rel: 'canonical', href: app.url }] : [];
-
     // JSON-LD structured data is handled at build time by seo-inject when
     // schema.enabled is true, so the runtime useHead call must not inject a
     // second block.  See #3677.
 
-    useHead({
-      title: app.title,
-      htmlAttrs: { lang: app.lang || 'en' },
-      meta,
-      link,
+    // Whole-getter form: unhead resolves it inside a watchEffect (walkResolver),
+    // so reading this.$route.path here makes canonical + og:url self-referential
+    // and re-emit on every navigation — which is what the prerenderer captures
+    // per route. Avoids two static canonicals (the homepage one removed from
+    // seo-inject) which unhead would not dedupe.
+    /**
+     * @desc Build per-route head tags so canonical and og:url stay self-referential on every navigation.
+     * Whole-getter form so unhead resolves it inside a watchEffect (walkResolver), re-emitting
+     * on route change — which is what the prerenderer captures per route.
+     * @returns {{title: string, htmlAttrs: {lang: string}, meta: Array<object>, link: Array<object>}}
+     */
+    useHead(() => {
+      const canonicalHref = app.url ? buildCanonicalUrl(app.url, this.$route?.path || '/') : '';
+      return {
+        title: app.title,
+        htmlAttrs: { lang: app.lang || 'en' },
+        meta: [
+          ...baseMeta,
+          ...(canonicalHref ? [{ property: 'og:url', content: canonicalHref }] : []),
+        ],
+        link: canonicalHref ? [{ rel: 'canonical', href: canonicalHref }] : [],
+      };
     });
 
     // Configure axios interceptors
