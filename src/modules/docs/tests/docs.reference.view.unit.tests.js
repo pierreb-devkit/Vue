@@ -124,13 +124,6 @@ describe('docs.reference.view', () => {
     expect(wrapper.find('[data-test="docs-reference-guide-link"]').exists()).toBe(false);
   });
 
-  it('links to the standalone Redoc reference', async () => {
-    const wrapper = mountReference();
-    await flushPromises();
-    const link = wrapper.find('[data-test="docs-reference-redoc-link"]');
-    expect(link.attributes('href')).toBe('https://api.example.com/api/docs');
-  });
-
   it('shows the empty state when the spec is unavailable', async () => {
     const store = useDocsStore();
     store.tree = tree;

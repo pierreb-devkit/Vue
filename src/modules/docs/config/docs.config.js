@@ -100,8 +100,7 @@ export default {
     },
 
     // In-theme OpenAPI reference (/docs/api). Renders the merged spec served at
-    // `GET /api/spec.json` natively (no embedded Redoc) for brand parity — the
-    // standalone backend `/api/docs` Redoc UI stays as the untouched fallback.
+    // `GET /api/spec.json` natively for brand parity — the only reference surface.
     // `tagGuides` maps OpenAPI tag names → docs category slugs; when both the
     // tag and the category exist, the group shows a "Read the guide" cross-link
     // (resolved to the category's first article). Downstream owns the tag↔guide
