@@ -272,3 +272,110 @@ describe('useDocsPage', () => {
     expect(page.html).toContain('data-docs-example-stripped');
   });
 });
+
+describe('useDocsPage cross-guide link rewrite', () => {
+  // Normalized tree shape (what `store.tree` holds): categories → articles.
+  const tree = {
+    categories: [
+      {
+        slug: 'get-started',
+        title: 'Get Started',
+        order: 0,
+        articles: [{ slug: 'quickstart', title: 'Quickstart', order: 0, category: 'get-started' }],
+      },
+      {
+        slug: 'operate',
+        title: 'Operate',
+        order: 1,
+        articles: [
+          // Authoritative anchor (`rl-top`) deliberately differs from the slug.
+          { slug: 'rate-limits', title: 'Rate limits', order: 0, category: 'operate', anchor: 'rl-top' },
+        ],
+      },
+    ],
+  };
+
+  // A `#later` link placed BEFORE the `## Later` heading exercises the forward-
+  // reference case; `#webhooks` (h1) and `#deep-detail` (h4) exercise depths the
+  // ToC accumulator never holds — all must be classified in-file via the prescan.
+  const md = [
+    '# Webhooks',
+    '',
+    '[jump to setup](#setup) then [jump ahead](#later).',
+    '',
+    'See [the quickstart](#quickstart), [rate limits by anchor](#rl-top),',
+    '[rate limits by slug](#rate-limits), and [nowhere](#does-not-exist).',
+    'Back to [the top](#webhooks).',
+    '',
+    '## Setup',
+    '',
+    'Body.',
+    '',
+    '#### Deep detail',
+    '',
+    'Jump to [deep detail](#deep-detail).',
+    '',
+    '## Later',
+    '',
+    'End.',
+  ].join('\n');
+
+  const render = (overrides = {}) =>
+    useDocsPage('webhooks', { fetcher: async () => md, tree, ...overrides });
+
+  it('rewrites a cross-guide #anchor matching another guide slug to its route', async () => {
+    const page = await render();
+    expect(page.html).toContain('href="/docs/get-started/quickstart#quickstart"');
+    expect(page.html).toContain('href="/docs/operate/rate-limits#rate-limits"');
+  });
+
+  it('resolves an authoritative anchor id that differs from the slug', async () => {
+    const page = await render();
+    expect(page.html).toContain('href="/docs/operate/rate-limits#rl-top"');
+  });
+
+  it('leaves in-file anchors untouched — forward refs, h1 and h4 targets included', async () => {
+    const page = await render();
+    expect(page.html).toContain('href="#setup"'); // h2
+    expect(page.html).toContain('href="#later"'); // forward ref (link precedes heading)
+    expect(page.html).toContain('href="#webhooks"'); // h1 (never in the ToC)
+    expect(page.html).toContain('href="#deep-detail"'); // h4 (never in the ToC)
+  });
+
+  it('leaves an unknown #anchor untouched (fail-soft, no invented target)', async () => {
+    const page = await render();
+    expect(page.html).toContain('href="#does-not-exist"');
+  });
+
+  it('disables the rewrite fail-soft when no tree is provided', async () => {
+    const page = await useDocsPage('webhooks', { fetcher: async () => md });
+    expect(page.html).toContain('href="#quickstart"');
+    expect(page.html).not.toContain('/docs/get-started');
+  });
+
+  it('prefers the authoritative anchor over a colliding slug (anchor wins)', async () => {
+    const ambiguous = {
+      categories: [
+        { slug: 'a', order: 0, articles: [{ slug: 'dup', category: 'a' }] },
+        { slug: 'b', order: 1, articles: [{ slug: 'real', category: 'b', anchor: 'dup' }] },
+      ],
+    };
+    const src = ['# Doc', '', 'Go [there](#dup).'].join('\n');
+    const page = await useDocsPage('doc', { fetcher: async () => src, tree: ambiguous });
+    expect(page.html).toContain('href="/docs/b/real#dup"');
+    expect(page.html).not.toContain('/docs/a/dup');
+  });
+
+  it('skips an ambiguous id claimed by two guides within the same keying', async () => {
+    const collide = {
+      categories: [
+        { slug: 'a', order: 0, articles: [{ slug: 'same', category: 'a' }] },
+        { slug: 'b', order: 1, articles: [{ slug: 'same', category: 'b' }] },
+      ],
+    };
+    const src = ['# Doc', '', 'Go [there](#same).'].join('\n');
+    const page = await useDocsPage('doc', { fetcher: async () => src, tree: collide });
+    expect(page.html).toContain('href="#same"');
+    expect(page.html).not.toContain('/docs/');
+  });
+});

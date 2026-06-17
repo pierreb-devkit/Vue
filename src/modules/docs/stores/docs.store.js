@@ -8,10 +8,17 @@ import docsService from '../services/docs.service';
  * Normalize the public docs API tree to the frontend's canonical shape.
  *
  * The backend (`GET /api/public/docs`) emits categories as
- *   `{ id, label, guides: [{ slug, title, persona, order, summary }] }`
+ *   `{ id, label, guides: [{ slug, title, persona, order, summary, anchor? }] }`
  * while every consumer in this module (home grid, nav, `useDocsNav`,
  * `orderedArticles`, search) reads the canonical
- *   `{ slug, title, order, articles: [{ slug, title, order, category, summary, persona }] }`.
+ *   `{ slug, title, order, articles: [{ slug, title, order, category, summary, persona, anchor? }] }`.
+ *
+ * `anchor` is OPTIONAL — a guide's top-of-file heading id, consumed by the
+ * article renderer's cross-link rewrite (`useDocsPage`) to resolve a bare
+ * `#anchor` that targets a *different* guide. Read fail-soft: absent →
+ * `undefined`, no consumer requires it, and a backend that doesn't emit it just
+ * disables the authoritative half of the cross-link index (the slug fallback
+ * still resolves the common `anchor === slug` case).
  *
  * Mapping here, at the single I/O boundary, keeps the rest of the module
  * decoupled from the wire shape. Defensive: tolerates an already-canonical
@@ -45,6 +52,9 @@ export function normalizeTree(raw) {
           category: g?.category ?? slug,
           summary: g?.summary,
           persona: g?.persona,
+          // Optional authoritative cross-link anchor (see header). `undefined`
+          // when the backend doesn't emit it — the renderer falls back to slug.
+          anchor: g?.anchor,
         })),
       };
     }),
