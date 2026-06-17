@@ -258,6 +258,12 @@ export default {
     // and re-emit on every navigation — which is what the prerenderer captures
     // per route. Avoids two static canonicals (the homepage one removed from
     // seo-inject) which unhead would not dedupe.
+    /**
+     * @desc Build per-route head tags so canonical and og:url stay self-referential on every navigation.
+     * Whole-getter form so unhead resolves it inside a watchEffect (walkResolver), re-emitting
+     * on route change — which is what the prerenderer captures per route.
+     * @returns {{title: string, htmlAttrs: {lang: string}, meta: Array<object>, link: Array<object>}}
+     */
     useHead(() => {
       const canonicalHref = app.url ? buildCanonicalUrl(app.url, this.$route?.path || '/') : '';
       return {

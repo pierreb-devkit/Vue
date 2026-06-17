@@ -5,11 +5,12 @@
 /**
  * @desc Build a self-referential canonical (or og:url) URL for a given route path.
  * Joins a base origin with the route's pathname only — any query string or hash
- * is dropped, and slashes are normalised so every route yields a single, stable
- * absolute URL. Used at runtime by the app head so each prerendered page
- * canonicalises to itself rather than to the homepage.
+ * is dropped. Leading and trailing slashes in both the base URL and path are
+ * trimmed (internal duplicate slashes in the path are not collapsed) so every
+ * route yields a single, stable absolute URL. Used at runtime by the app head
+ * so each prerendered page canonicalises to itself rather than to the homepage.
  * @param {string} baseUrl - Absolute origin (e.g. 'https://example.com'); trailing slashes are stripped
- * @param {string} [path='/'] - Route path (e.g. '/docs/a'); query/hash are ignored
+ * @param {string} [path='/'] - Route path (e.g. '/docs/a'); leading/trailing slashes trimmed, query/hash ignored
  * @returns {string} Absolute canonical URL, or '' when baseUrl is falsy
  */
 export const buildCanonicalUrl = (baseUrl, path = '/') => {
