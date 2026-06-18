@@ -6,7 +6,7 @@
   reflecting consumption level.
 
   Hover tooltip exposes the precise figures: "X / Y compute · resets <day>",
-  plus optional capacity chips ("~N easy / ~M heavy ops") when the server config
+  plus optional capacity chips ("N easy / M heavy ops") when the server config
   defines billing.equivalences (rendered via BillingEquivalencesChipsComponent).
   Admin users see a permanent ∞ rainbow state (no quota applies).
 

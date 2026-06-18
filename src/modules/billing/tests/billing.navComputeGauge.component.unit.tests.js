@@ -599,7 +599,13 @@ describe('BillingNavComputeGaugeComponent', () => {
   // ── #4349 — tooltip render (real chips component, open tooltip) ───────────
 
   describe('equivalence chips render in the open tooltip (#4349)', () => {
+    let originalViewport;
+
     beforeEach(() => {
+      // jsdom lacks visualViewport (Vuetify VOverlay reads it when the tooltip opens).
+      // Capture any pre-existing descriptor and stub only when absent, so cleanup
+      // restores exactly what was there (never clobbers a real/global visualViewport).
+      originalViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
       if (!window.visualViewport) {
         Object.defineProperty(window, 'visualViewport', {
           configurable: true,
@@ -609,7 +615,12 @@ describe('BillingNavComputeGaugeComponent', () => {
     });
 
     afterEach(() => {
-      if (window.visualViewport) {
+      // Restore the original descriptor when one existed; otherwise leave a defined
+      // `undefined` value (not a deleted property) so Vuetify overlay teardown's
+      // optional-chained reads stay safe.
+      if (originalViewport) {
+        Object.defineProperty(window, 'visualViewport', originalViewport);
+      } else {
         Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
       }
     });
