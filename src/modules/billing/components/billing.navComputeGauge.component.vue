@@ -5,11 +5,15 @@
   nav items (icon in #prepend, title), only the icon is a colored circle
   reflecting consumption level.
 
-  Hover tooltip exposes the precise figures: "X / Y compute · resets <day>".
+  Hover tooltip exposes the precise figures: "X / Y compute · resets <day>",
+  plus optional capacity chips ("N easy / M heavy ops") when the server config
+  defines billing.equivalences (rendered via BillingEquivalencesChipsComponent).
   Admin users see a permanent ∞ rainbow state (no quota applies).
 
   Click → navigates to /users/billing.
   Auto-fetches on mount + on window.focus.
+  The ring fades/scales in on mount and pulses when usage nears exhaustion
+  (>= 80%); both motions respect prefers-reduced-motion.
 
   Gate: hidden when not logged in or meterMode false.
 -->
@@ -27,15 +31,16 @@
         <template #prepend>
           <!-- Admin: rainbow circular indicator (full ring) -->
           <div v-if="isAdmin" class="nav-gauge-admin-ring me-8" aria-hidden="true" />
-          <!-- Standard: color-coded progress ring -->
-          <v-progress-circular
-            v-else
-            :model-value="pctUsed"
-            :color="iconColor"
-            size="24"
-            width="6"
-            class="me-8"
-          />
+          <!-- Standard: color-coded progress ring (mount fade/scale-in; pulses near exhaustion) -->
+          <div v-else class="nav-gauge-ring-enter me-8">
+            <v-progress-circular
+              :model-value="pctUsed"
+              :color="iconColor"
+              :class="{ 'nav-gauge-ring-alert': isLow }"
+              size="24"
+              width="6"
+            />
+          </div>
         </template>
         <!-- Admin: ∞ rainbow label -->
         <v-list-item-title v-if="isAdmin">
@@ -48,6 +53,11 @@
     <template v-else>
       <div>{{ usedDisplay }} / {{ totalDisplay }} compute</div>
       <div v-if="resetLabel">{{ resetLabel }}</div>
+      <BillingEquivalencesChipsComponent
+        v-if="equivalenceChips.length"
+        :equivalences="equivalenceChips"
+        class="mt-2"
+      />
     </template>
   </v-tooltip>
 </template>
@@ -55,9 +65,12 @@
 <script>
 import { useBillingStore } from '../stores/billing.store.js';
 import { useAuthStore } from '../../auth/stores/auth.store.js';
+import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
 
 export default {
   name: 'BillingNavComputeGaugeComponent',
+
+  components: { BillingEquivalencesChipsComponent },
 
   setup() {
     const billingStore = useBillingStore();
@@ -131,6 +144,61 @@ export default {
       if (this.pctUsed >= 100) return 'error';
       if (this.pctUsed >= 80) return 'warning';
       return 'success';
+    },
+
+    /**
+     * @desc True when usage has reached the warning/error band (>= 80%).
+     * Drives the low-remaining pulse on the ring.
+     * @returns {boolean}
+     */
+    isLow() {
+      return this.iconColor === 'warning' || this.iconColor === 'error';
+    },
+
+    /**
+     * @desc Remaining compute the gauge can still spend: total quota (included +
+     * extras) minus consumed, floored at 0. Consistent with the used/total figures
+     * shown in the tooltip; drives the equivalence-chip estimates.
+     * @returns {number}
+     */
+    totalRemaining() {
+      return Math.max(0, this.totalQuota - this.meterUsed);
+    },
+
+    /**
+     * @desc Per-operation capacity equivalences from server config (downstream-defined,
+     * opaque passthrough via serverConfig.billing.equivalences). Returns [] when unset.
+     * @returns {Array<{kind: string, unitCost: number, label: string}>}
+     */
+    equivalencesConfig() {
+      const eq = this.authStore.serverConfig?.billing?.equivalences;
+      return Array.isArray(eq) ? eq : [];
+    },
+
+    /**
+     * @desc Human-readable remaining-capacity chips derived from the equivalence unit
+     * costs: count = floor(totalRemaining / unitCost). Only consumption-scaled kinds
+     * (easy/hard) with a finite positive unitCost render — this guards against
+     * division-by-zero / Infinity and drops the non-consumption 'feature' kind.
+     * Works identically for per-period and one-shot grants (no special branch): when
+     * the quota is a one-shot total, totalRemaining is simply the remaining grant.
+     * @returns {Array<{kind: string, count: number, label: string}>}
+     */
+    equivalenceChips() {
+      return this.equivalencesConfig
+        .filter(
+          (e) =>
+            e &&
+            (e.kind === 'easy' || e.kind === 'hard') &&
+            typeof e.label === 'string' &&
+            Number.isFinite(e.unitCost) &&
+            e.unitCost > 0,
+        )
+        .map((e) => ({
+          kind: e.kind,
+          count: Math.floor(this.totalRemaining / e.unitCost),
+          label: e.label,
+        }));
     },
 
     usedDisplay() {
@@ -224,5 +292,44 @@ export default {
   );
   opacity: 0.6;
   flex-shrink: 0;
+}
+
+/* ── Nav gauge ring motion (#4349) ──────────────────────────────────────────
+   Mount fade/scale-in to draw the eye, plus a low-remaining pulse near
+   exhaustion. Both are gated on prefers-reduced-motion: no-preference, so
+   reduced-motion users always get a static ring. */
+.nav-gauge-ring-enter {
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav-gauge-ring-enter {
+    animation: nav-gauge-in 420ms ease-out both;
+  }
+
+  .nav-gauge-ring-alert {
+    animation: nav-gauge-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes nav-gauge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes nav-gauge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 </style>
