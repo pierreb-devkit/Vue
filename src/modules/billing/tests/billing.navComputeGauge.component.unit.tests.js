@@ -477,4 +477,223 @@ describe('BillingNavComputeGaugeComponent', () => {
       expect(listItem.attributes('aria-label')).toMatch(/unlimited.*admin/i);
     });
   });
+
+  // ── #4349 — equivalence capacity chips ───────────────────────────────────
+
+  describe('equivalence chips (#4349)', () => {
+    const setupWithEquivalences = (
+      equivalences,
+      meter = { meterUsed: 0, meterQuota: 10000, extrasRemaining: 0, weekResetAt: null },
+    ) => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true, equivalences } };
+      billingStore.usageMeter = meter;
+    };
+
+    it('registers BillingEquivalencesChipsComponent', () => {
+      setupWithEquivalences([{ kind: 'easy', unitCost: 200, label: 'easy ops' }]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.$options.components.BillingEquivalencesChipsComponent).toBeTruthy();
+    });
+
+    it('derives chips with count = floor(totalRemaining / unitCost)', () => {
+      // totalRemaining = (10000 + 0) - 0 = 10000
+      setupWithEquivalences([
+        { kind: 'easy', unitCost: 200, label: 'easy ops' },
+        { kind: 'hard', unitCost: 2000, label: 'hard ops' },
+      ]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([
+        { kind: 'easy', count: 50, label: 'easy ops' },
+        { kind: 'hard', count: 5, label: 'hard ops' },
+      ]);
+    });
+
+    it('floors fractional results (no rounding up)', () => {
+      // totalRemaining = 9500 → 9500 / 200 = 47.5 → 47
+      setupWithEquivalences(
+        [{ kind: 'easy', unitCost: 200, label: 'easy ops' }],
+        { meterUsed: 500, meterQuota: 10000, extrasRemaining: 0, weekResetAt: null },
+      );
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'easy', count: 47, label: 'easy ops' }]);
+    });
+
+    it('returns no chips when equivalences config is absent', () => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      billingStore.usageMeter = { meterUsed: 0, meterQuota: 10000, extrasRemaining: 0, weekResetAt: null };
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([]);
+    });
+
+    it('returns no chips when equivalences is null', () => {
+      setupWithEquivalences(null);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([]);
+    });
+
+    it('returns no chips when equivalences is an empty array', () => {
+      setupWithEquivalences([]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([]);
+    });
+
+    it('drops entries with non-positive / non-finite unitCost (no div-by-zero or Infinity)', () => {
+      setupWithEquivalences([
+        { kind: 'easy', unitCost: 0, label: 'zero' },
+        { kind: 'easy', unitCost: -5, label: 'neg' },
+        { kind: 'hard', unitCost: Number.NaN, label: 'nan' },
+        { kind: 'hard', unitCost: Number.POSITIVE_INFINITY, label: 'inf' },
+        { kind: 'easy', unitCost: 200, label: 'valid' },
+      ]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'easy', count: 50, label: 'valid' }]);
+    });
+
+    it('drops unknown kinds and the non-consumption feature kind', () => {
+      setupWithEquivalences([
+        { kind: 'feature', unitCost: 1, label: 'integrations' },
+        { kind: 'weird', unitCost: 10, label: 'weird' },
+        { kind: 'hard', unitCost: 2000, label: 'hard ops' },
+      ]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'hard', count: 5, label: 'hard ops' }]);
+    });
+
+    it('drops entries whose label is not a string', () => {
+      setupWithEquivalences([
+        { kind: 'easy', unitCost: 200, label: 42 },
+        { kind: 'easy', unitCost: 200, label: 'ok' },
+      ]);
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'easy', count: 50, label: 'ok' }]);
+    });
+
+    it('handles a one-shot grant (quota=0 + extras) from the remaining grant, no per-period branch', () => {
+      // free/one-shot plan: meterQuota 0, grant lives in extrasRemaining.
+      // totalRemaining = max(0, (0 + 500) - 100) = 400 → floor(400 / 200) = 2
+      setupWithEquivalences(
+        [{ kind: 'easy', unitCost: 200, label: 'easy ops' }],
+        { meterUsed: 100, meterQuota: 0, extrasRemaining: 500, weekResetAt: null },
+      );
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'easy', count: 2, label: 'easy ops' }]);
+    });
+
+    it('renders a truthful 0 when remaining compute is exhausted', () => {
+      // totalRemaining = max(0, 500 - 1000) = 0 → count 0
+      setupWithEquivalences(
+        [{ kind: 'easy', unitCost: 200, label: 'easy ops' }],
+        { meterUsed: 1000, meterQuota: 500, extrasRemaining: 0, weekResetAt: null },
+      );
+      wrapper = mountComponent();
+      expect(wrapper.vm.equivalenceChips).toEqual([{ kind: 'easy', count: 0, label: 'easy ops' }]);
+    });
+  });
+
+  // ── #4349 — tooltip render (real chips component, open tooltip) ───────────
+
+  describe('equivalence chips render in the open tooltip (#4349)', () => {
+    beforeEach(() => {
+      if (!window.visualViewport) {
+        Object.defineProperty(window, 'visualViewport', {
+          configurable: true,
+          value: { width: 1024, height: 768, offsetTop: 0, offsetLeft: 0, addEventListener: () => {}, removeEventListener: () => {} },
+        });
+      }
+    });
+
+    afterEach(() => {
+      if (window.visualViewport) {
+        Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
+      }
+    });
+
+    it('renders the real chip text (count + label) inside the open tooltip', async () => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = {
+        billing: {
+          meterMode: true,
+          equivalences: [
+            { kind: 'easy', unitCost: 200, label: 'easy operations' },
+            { kind: 'hard', unitCost: 2000, label: 'heavy operations' },
+          ],
+        },
+      };
+      // Stub the mount-time fetch (the global axios mock resolves { data: null },
+      // which would async-null usageMeter across the awaits below).
+      billingStore.fetchUsageMeter = vi.fn().mockResolvedValue(undefined);
+      // totalRemaining = 10000 → 50 easy / 5 heavy
+      billingStore.usageMeter = { meterUsed: 0, meterQuota: 10000, extrasRemaining: 0, weekResetAt: null };
+
+      wrapper = mountComponent();
+      wrapper.vm.onTouchActivate(); // open the tooltip
+      await wrapper.vm.$nextTick();
+      await wrapper.vm.$nextTick();
+
+      // Tooltip content is teleported to body — assert the real chips rendered there.
+      const body = document.body.textContent || '';
+      expect(body).toContain('50 easy operations');
+      expect(body).toContain('5 heavy operations');
+    });
+  });
+
+  // ── #4349 — ring visibility motion (Slice 2) ─────────────────────────────
+
+  describe('ring motion (#4349)', () => {
+    const setupRing = (meter) => {
+      const authStore = useAuthStore();
+      const billingStore = useBillingStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      billingStore.usageMeter = meter;
+    };
+
+    it('isLow is false below 80%', () => {
+      setupRing({ meterUsed: 50, meterQuota: 100, extrasRemaining: 0, weekResetAt: null });
+      wrapper = mountComponent();
+      expect(wrapper.vm.isLow).toBe(false);
+    });
+
+    it('isLow is true at or above 80%', () => {
+      setupRing({ meterUsed: 80, meterQuota: 100, extrasRemaining: 0, weekResetAt: null });
+      wrapper = mountComponent();
+      expect(wrapper.vm.isLow).toBe(true);
+    });
+
+    it('wraps the ring in .nav-gauge-ring-enter (mount animation) for non-admin', () => {
+      setupRing({ meterUsed: 10, meterQuota: 100, extrasRemaining: 0, weekResetAt: null });
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-ring-enter').exists()).toBe(true);
+    });
+
+    it('applies .nav-gauge-ring-alert on the ring when usage is low', () => {
+      setupRing({ meterUsed: 90, meterQuota: 100, extrasRemaining: 0, weekResetAt: null });
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-ring-alert').exists()).toBe(true);
+    });
+
+    it('does not apply .nav-gauge-ring-alert when usage is healthy', () => {
+      setupRing({ meterUsed: 10, meterQuota: 100, extrasRemaining: 0, weekResetAt: null });
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-ring-alert').exists()).toBe(false);
+    });
+
+    it('uses the admin ring (no .nav-gauge-ring-enter wrapper) for admin users', () => {
+      const authStore = useAuthStore();
+      authStore.cookieExpire = Date.now() + 86400000;
+      authStore.serverConfig = { billing: { meterMode: true } };
+      authStore.user = { roles: ['admin'] };
+      wrapper = mountComponent();
+      expect(wrapper.find('.nav-gauge-ring-enter').exists()).toBe(false);
+      expect(wrapper.find('.nav-gauge-admin-ring').exists()).toBe(true);
+    });
+  });
 });
