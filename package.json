@@ -58,7 +58,7 @@
     "marked": "^18.0.5",
     "pinia": "^3.0.4",
     "posthog-js": "^1.391.2",
-    "video.js": "^8.23.7",
+    "video.js": "^8.23.8",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
     "vuetify": "^4.1.2"
