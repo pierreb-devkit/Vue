@@ -57,7 +57,7 @@
     "lodash-es": "^4.18.1",
     "marked": "^18.0.5",
     "pinia": "^3.0.4",
-    "posthog-js": "^1.392.0",
+    "posthog-js": "^1.393.0",
     "video.js": "^8.23.8",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0",
