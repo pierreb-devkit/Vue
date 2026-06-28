@@ -10,7 +10,7 @@
           <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Sign in</router-link>
         </template>
         <template v-else-if="signupStep === 'emailVerification'">We sent a verification link to <strong>{{ email }}</strong></template>
-        <template v-else-if="signupStep === 'organizationSetup'">Almost there. Join or create your workspace.</template>
+        <template v-else-if="signupStep === 'organizationSetup'">One last step — set up the workspace where your work will live.</template>
         <template v-else-if="signupStep === 'organizationWelcome'">{{ organizationWelcomeMessage }}</template>
       </p>
 
@@ -222,7 +222,7 @@ export default {
         case 'emailVerification':
           return 'Check your inbox';
         case 'organizationSetup':
-          return 'Set up your organization';
+          return 'Set up your workspace';
         case 'organizationWelcome':
           return "You're all set!";
         default:

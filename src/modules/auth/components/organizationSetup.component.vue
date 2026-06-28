@@ -6,7 +6,7 @@
           <v-icon icon="fa-solid fa-building" size="x-large" color="primary" class="mb-4"></v-icon>
           <h3 class="text-headline-small font-weight-bold mb-2">Set up your workspace</h3>
           <p class="text-body-medium text-medium-emphasis">
-            Create or join an organization to start collaborating.
+            A workspace keeps your projects and teammates together — create one or join an existing organization to get started.
           </p>
         </div>
 
