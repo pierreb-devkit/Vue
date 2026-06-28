@@ -55,6 +55,13 @@ describe('auth.organizationSetup.component', () => {
     expect(wrapper.text()).toContain('Organization Name');
   });
 
+  it('shows a friendly helper line explaining why a workspace is needed', async () => {
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('keeps your projects and teammates together');
+  });
+
   it('calls createOrganization with the entered name on submit', async () => {
     const mockOrg = { name: 'Test Org', _id: '123' };
     createOrganizationMock.mockResolvedValueOnce(mockOrg);
