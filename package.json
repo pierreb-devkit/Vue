@@ -84,7 +84,7 @@
     "happy-dom": "^20.10.6",
     "husky": "^9.1.7",
     "object-path": "^0.11.8",
-    "prettier": "^3.8.4",
+    "prettier": "^3.9.1",
     "puppeteer": "^25.2.1",
     "sass": "^1.101",
     "semantic-release": "^25.0.5",
