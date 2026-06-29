@@ -37,6 +37,54 @@ const deserialize = (esmBody) => {
   return JSON.parse(json);
 };
 
+/**
+ * Idempotent-write guard logic extracted from generateConfig.js.
+ *
+ * The script skips `fs.writeFileSync` when the on-disk content is byte-identical
+ * to the newly generated content, preventing a spurious mtime bump that would
+ * restart vite's watcher mid Playwright run (regression: #4372).
+ *
+ * These tests verify the decision predicate and the ENOENT-only catch contract
+ * without performing real I/O.
+ */
+
+/** Mirror of the write-skip predicate in generateConfig.js */
+const shouldWrite = (existingContent, newContent) => existingContent !== newContent;
+
+/**
+ * Mirror of the ENOENT-narrow catch in generateConfig.js:
+ * rethrows anything that isn't a missing-file error.
+ */
+const handleReadError = (err) => {
+  if (err.code !== 'ENOENT') throw err;
+  return null; // file absent — fall through to write
+};
+
+describe('generateConfig idempotent write', () => {
+  it('skips write when content is byte-identical', () => {
+    const content = 'export default {};\n';
+    expect(shouldWrite(content, content)).toBe(false);
+  });
+
+  it('writes when content differs', () => {
+    expect(shouldWrite('export default {"old":true};\n', 'export default {"new":true};\n')).toBe(true);
+  });
+
+  it('writes when file is absent (null existingContent)', () => {
+    expect(shouldWrite(null, 'export default {};\n')).toBe(true);
+  });
+
+  it('rethrows non-ENOENT read errors so permission failures surface loudly', () => {
+    const permError = Object.assign(new Error('Permission denied'), { code: 'EACCES' });
+    expect(() => handleReadError(permError)).toThrow('Permission denied');
+  });
+
+  it('returns null for ENOENT so a missing file falls through to the write path', () => {
+    const notFoundError = Object.assign(new Error('No such file'), { code: 'ENOENT' });
+    expect(handleReadError(notFoundError)).toBeNull();
+  });
+});
+
 describe('generateConfig serializer', () => {
   it('round-trips a string value containing quotes, braces, colons, commas, and newlines', () => {
     const nastyCommand = [

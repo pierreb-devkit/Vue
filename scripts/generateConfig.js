@@ -185,7 +185,8 @@ export default ${configJSON};
   let existingConfig = null;
   try {
     existingConfig = fs.readFileSync(configPath, 'utf8');
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
     // File absent (gitignored / fresh checkout) — fall through and write.
   }
   if (existingConfig === esmConfigFile) {
