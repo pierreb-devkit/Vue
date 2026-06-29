@@ -176,10 +176,24 @@ const getConfiguration = async () => {
 export default ${configJSON};
 `;
 
-  // Write ESM file
-  fs.writeFileSync('./src/config/index.js', esmConfigFile);
-
-  console.log('+ Configuration file generated: index.js');
+  // Write ESM file — idempotently. Vite's dev server watches src/config/index.js;
+  // rewriting it with identical content still bumps mtime, restarting a running
+  // dev server mid-run and racing the first E2E test (ERR_CONNECTION_REFUSED, #4372).
+  // Skip the write when on-disk content is byte-identical so no-op regens (each
+  // Playwright worker re-importing the e2e config helper) never touch the watched file.
+  const configPath = './src/config/index.js';
+  let existingConfig = null;
+  try {
+    existingConfig = fs.readFileSync(configPath, 'utf8');
+  } catch {
+    // File absent (gitignored / fresh checkout) — fall through and write.
+  }
+  if (existingConfig === esmConfigFile) {
+    console.log('+ Configuration unchanged: index.js (write skipped)');
+  } else {
+    fs.writeFileSync(configPath, esmConfigFile);
+    console.log('+ Configuration file generated: index.js');
+  }
 };
 
 getConfiguration();
