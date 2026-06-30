@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import BillingCardComponent from '../components/billing.card.component.vue';
+import BillingPricingFeatureSectionComponent from '../components/billing.pricingFeatureSection.component.vue';
 
 const vuetify = createVuetify();
 
@@ -90,11 +91,10 @@ describe('BillingCardComponent', () => {
 
   it('does not render info paragraph when info is null', () => {
     const wrapper = mountComponent(makeItem({ info: null }));
-    // No `p` with that class should exist unless it contains text
-    const infoEl = wrapper.find('p');
-    if (infoEl.exists()) {
-      expect(infoEl.text().trim()).toBe('For starters'); // subtitle only
-    }
+    // The info line is the only `<p class="text-body-small">` on a default card (no sections,
+    // no parentPlanName). Target it by class — `wrapper.find('p')` returns the always-present
+    // subtitle `<p class="text-body-medium">` and would pass even if the info `v-if` were removed.
+    expect(wrapper.find('p.text-body-small').exists()).toBe(false);
   });
 
   it('renders features list items', () => {
@@ -194,5 +194,141 @@ describe('BillingCardComponent', () => {
     const wrapper = mountComponent(item);
     const icon = wrapper.findComponent({ name: 'VIcon' });
     expect(icon.props('icon')).toBe('fa-solid fa-check');
+  });
+});
+
+// ── Grouped feature sections + plan inheritance ──────────────────────────────
+
+describe('BillingCardComponent — grouped feature sections', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('renders one BillingPricingFeatureSectionComponent per section', () => {
+    const item = makeItem({
+      features: [],
+      sections: [
+        { title: 'Core', items: [{ text: 'A' }] },
+        { title: 'Collaboration', items: [{ text: 'B' }] },
+      ],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(2);
+    expect(wrapper.text()).toContain('A');
+    expect(wrapper.text()).toContain('B');
+  });
+
+  it('passes each section through to the section component as the `section` prop', () => {
+    const sections = [{ title: 'Core', items: [{ text: 'A' }] }];
+    const item = makeItem({ features: [], sections });
+    const wrapper = mountComponent(item);
+    const section = wrapper.findComponent(BillingPricingFeatureSectionComponent);
+    expect(section.props('section')).toEqual(sections[0]);
+  });
+
+  it('renders the plan-level inheritance heading ONCE when item.parentPlanName is set', () => {
+    const item = makeItem({
+      features: [],
+      inheritsFrom: 'starter',
+      parentPlanName: 'Starter',
+      // sections carry plain titles (no section-level inheritsFrom) so the only
+      // "Everything in …" heading comes from the card-level <p>.
+      sections: [{ title: 'Pro only', items: [{ text: 'Advanced analytics' }] }],
+    });
+    const wrapper = mountComponent(item);
+    const text = wrapper.text();
+    expect(text).toContain('Everything in Starter, plus');
+    // Exactly one occurrence (rendered once above the sections, not per section).
+    expect(text.split('Everything in Starter, plus')).toHaveLength(2);
+  });
+
+  it('does NOT forward parentPlanName to section components — the card owns the single plan-level heading', () => {
+    // Regression guard for the double-heading footgun: the card renders the
+    // "Everything in {parent}, plus" heading ONCE at plan level and must not pass parentPlanName
+    // down, or a section that declares `inheritsFrom` would emit a second identical heading.
+    const item = makeItem({
+      features: [],
+      inheritsFrom: 'starter',
+      parentPlanName: 'Starter',
+      // A section that DECLARES inheritsFrom must still NOT produce a second heading, because the
+      // card no longer forwards parentPlanName (section.resolvedHeading stays null without it).
+      sections: [{ inheritsFrom: 'starter', items: [{ text: 'Inherited feature' }] }],
+    });
+    const wrapper = mountComponent(item);
+    const section = wrapper.findComponent(BillingPricingFeatureSectionComponent);
+    expect(section.props('parentPlanName')).toBe(null);
+    // The inheritance heading appears exactly once (plan-level), never duplicated by the section.
+    expect(wrapper.text().split('Everything in Starter, plus')).toHaveLength(2);
+  });
+
+  it('does NOT render the flat features v-list when sections are present', () => {
+    const item = makeItem({
+      // Even if a stray flat `features` array is present, sections take precedence.
+      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Stray flat feature' }],
+      sections: [{ title: 'Core', items: [{ text: 'Section feature' }] }],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(1);
+    expect(wrapper.text()).toContain('Section feature');
+    expect(wrapper.text()).not.toContain('Stray flat feature');
+  });
+});
+
+describe('BillingCardComponent — flat fallback (no sections)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('renders the flat v-list and NO section components when only features are given', () => {
+    const item = makeItem({
+      features: [
+        { icon: 'fa-solid fa-check', color: 'primary', text: 'Flat feature one' },
+        { icon: 'fa-solid fa-check', color: 'success', text: 'Flat feature two' },
+      ],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.text()).toContain('Flat feature one');
+    expect(wrapper.text()).toContain('Flat feature two');
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(0);
+  });
+
+  it('falls back to the flat features list when sections is an empty array', () => {
+    // Guard `item.sections && item.sections.length > 0`: an empty array is truthy but
+    // length-0, so the flat fallback must still run (and no section components mount).
+    const item = makeItem({
+      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Flat only feature' }],
+      sections: [],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.text()).toContain('Flat only feature');
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(0);
+  });
+});
+
+describe('BillingCardComponent — inheritance edge cases', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it('does not render the inheritance heading (and does not crash) when inheritsFrom is set but parentPlanName is null', () => {
+    const item = makeItem({
+      features: [],
+      inheritsFrom: 'starter',
+      parentPlanName: null,
+      sections: [{ title: 'Pro only', items: [{ text: 'A' }] }],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.text()).not.toContain('Everything in');
+    // Sections still render fine.
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(1);
+  });
+
+  it('renders without crashing when neither sections nor features are present', () => {
+    const item = makeItem({ features: [], sections: undefined });
+    const wrapper = mountComponent(item);
+    expect(wrapper.find('.billing-card').exists()).toBe(true);
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(0);
+    // Title still rendered — card body is intact.
+    expect(wrapper.text()).toContain('Free');
   });
 });
