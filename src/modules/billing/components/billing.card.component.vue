@@ -32,15 +32,19 @@
     info      : string|null              — ops-eval line, shown between CTA and features
     features  : [{ icon: string, color: string, text: string }]
                 — flat feature list (legacy / default). Rendered when `sections` is empty/absent.
-    sections  : [{ title?: string, introText?: string, inheritsFrom?: string,
+    sections  : [{ title?: string,
                    items: [{ text, icon?, iconColor?, tooltip?, highlight?, enabled? }] }]
                 — OPTIONAL grouped feature sections. When present (length > 0) they REPLACE the
                   flat `features` list — each section renders via BillingPricingFeatureSectionComponent.
-                  Note: item-level color key is `iconColor` (not `color`), and `enabled: false` greys an item.
+                  Note: item-level color key is `iconColor` (`color` is accepted as a back-compat
+                  alias), and `enabled: false` greys an item. Inheritance is PLAN-level only (see
+                  `inheritsFrom` / `parentPlanName` below) — a section never carries its own
+                  "Everything in …" heading.
     inheritsFrom   : string|null         — OPTIONAL parent plan id (informational; the view resolves the name).
     parentPlanName : string|null         — OPTIONAL resolved parent plan display name. When set AND
                   `sections` is used, the card renders a single "Everything in {parentPlanName}, plus"
-                  heading above the sections. The card is DUMB — it never resolves this itself.
+                  heading above the sections. The card is DUMB — it never resolves this itself, and it
+                  does NOT forward it to the section components (the plan-level heading is the only one).
     badge     : string|null              — e.g. 'MOST POPULAR'
     highlight : boolean                  — elevated card variant
 
@@ -109,7 +113,9 @@
     <template v-if="item.sections && item.sections.length > 0">
       <!-- Plan-level inheritance heading — rendered ONCE above the sections when the
            view resolved a parent plan name. Styled like the section component's own
-           __inherits heading for visual consistency. -->
+           __inherits heading for visual consistency. The card OWNS this heading and
+           deliberately does NOT pass parentPlanName down to the section components, so a
+           section that declares `inheritsFrom` can never emit a second identical heading. -->
       <p
         v-if="item.parentPlanName"
         class="text-body-small text-medium-emphasis mb-2"
@@ -120,7 +126,6 @@
         v-for="(section, idx) in item.sections"
         :key="section.title || `section-${idx}`"
         :section="section"
-        :parent-plan-name="item.parentPlanName"
       />
     </template>
     <template v-else>

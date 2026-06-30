@@ -91,11 +91,10 @@ describe('BillingCardComponent', () => {
 
   it('does not render info paragraph when info is null', () => {
     const wrapper = mountComponent(makeItem({ info: null }));
-    // No `p` with that class should exist unless it contains text
-    const infoEl = wrapper.find('p');
-    if (infoEl.exists()) {
-      expect(infoEl.text().trim()).toBe('For starters'); // subtitle only
-    }
+    // The info line is the only `<p class="text-body-small">` on a default card (no sections,
+    // no parentPlanName). Target it by class — `wrapper.find('p')` returns the always-present
+    // subtitle `<p class="text-body-medium">` and would pass even if the info `v-if` were removed.
+    expect(wrapper.find('p.text-body-small').exists()).toBe(false);
   });
 
   it('renders features list items', () => {
@@ -243,16 +242,23 @@ describe('BillingCardComponent — grouped feature sections', () => {
     expect(text.split('Everything in Starter, plus')).toHaveLength(2);
   });
 
-  it('forwards item.parentPlanName to each section component as parent-plan-name', () => {
+  it('does NOT forward parentPlanName to section components — the card owns the single plan-level heading', () => {
+    // Regression guard for the double-heading footgun: the card renders the
+    // "Everything in {parent}, plus" heading ONCE at plan level and must not pass parentPlanName
+    // down, or a section that declares `inheritsFrom` would emit a second identical heading.
     const item = makeItem({
       features: [],
       inheritsFrom: 'starter',
       parentPlanName: 'Starter',
-      sections: [{ title: 'Pro only', items: [{ text: 'A' }] }],
+      // A section that DECLARES inheritsFrom must still NOT produce a second heading, because the
+      // card no longer forwards parentPlanName (section.resolvedHeading stays null without it).
+      sections: [{ inheritsFrom: 'starter', items: [{ text: 'Inherited feature' }] }],
     });
     const wrapper = mountComponent(item);
     const section = wrapper.findComponent(BillingPricingFeatureSectionComponent);
-    expect(section.props('parentPlanName')).toBe('Starter');
+    expect(section.props('parentPlanName')).toBe(null);
+    // The inheritance heading appears exactly once (plan-level), never duplicated by the section.
+    expect(wrapper.text().split('Everything in Starter, plus')).toHaveLength(2);
   });
 
   it('does NOT render the flat features v-list when sections are present', () => {
@@ -283,6 +289,18 @@ describe('BillingCardComponent — flat fallback (no sections)', () => {
     const wrapper = mountComponent(item);
     expect(wrapper.text()).toContain('Flat feature one');
     expect(wrapper.text()).toContain('Flat feature two');
+    expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(0);
+  });
+
+  it('falls back to the flat features list when sections is an empty array', () => {
+    // Guard `item.sections && item.sections.length > 0`: an empty array is truthy but
+    // length-0, so the flat fallback must still run (and no section components mount).
+    const item = makeItem({
+      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Flat only feature' }],
+      sections: [],
+    });
+    const wrapper = mountComponent(item);
+    expect(wrapper.text()).toContain('Flat only feature');
     expect(wrapper.findAllComponents(BillingPricingFeatureSectionComponent)).toHaveLength(0);
   });
 });

@@ -46,7 +46,7 @@
         <template #prepend>
           <v-icon
             :icon="item.icon || 'fa-solid fa-check'"
-            :color="item.enabled === false ? undefined : (item.iconColor || 'primary')"
+            :color="item.enabled === false ? undefined : (item.iconColor || item.color || 'primary')"
             :class="{ 'text-disabled': item.enabled === false }"
             size="small"
             class="mr-3"

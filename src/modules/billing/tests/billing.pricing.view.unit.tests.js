@@ -578,3 +578,85 @@ describe('BillingPricingView — both-tabs: toggle :disabled when activeTab === 
     expect(toggle.props('disabled')).toBe(true);
   });
 });
+
+// ─── Suite: resolvedPlanItems — sections passthrough + inheritsFrom → parentPlanName ──
+
+describe('BillingPricingView — resolvedPlanItems sections + inheritsFrom resolution', () => {
+  let wrapper;
+  let store;
+
+  const plansWithSections = [
+    { id: 'starter', title: 'Starter', subtitle: 'For growing teams', highlight: false, badge: null, cta: 'Get started', features: [] },
+    {
+      id: 'pro',
+      title: 'Pro',
+      subtitle: 'For professionals',
+      highlight: true,
+      badge: null,
+      cta: 'Upgrade',
+      inheritsFrom: 'starter',
+      sections: [
+        { items: [{ text: 'Unlimited projects' }] },
+        { title: 'Pro only', items: [{ text: 'Advanced analytics' }] },
+      ],
+    },
+    { id: 'ghost', title: 'Ghost', subtitle: 'Dangling parent ref', highlight: false, badge: null, cta: 'Upgrade', inheritsFrom: 'does-not-exist', features: [] },
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'subscription';
+    pricingState.plans = plansWithSections;
+    pricingState.hasPlans = true;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('resolves parentPlanName from an existing inheritsFrom id to the parent plan title', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    const pro = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(pro.parentPlanName).toBe('Starter');
+    expect(pro.inheritsFrom).toBe('starter');
+  });
+
+  it('yields parentPlanName null when inheritsFrom points to a non-existent plan id', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    const ghost = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'ghost');
+    expect(ghost.parentPlanName).toBeNull();
+    // inheritsFrom is still forwarded verbatim (informational) even when unresolved.
+    expect(ghost.inheritsFrom).toBe('does-not-exist');
+  });
+
+  it('yields parentPlanName null and inheritsFrom null when the plan has no inheritsFrom', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    const starter = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'starter');
+    expect(starter.parentPlanName).toBeNull();
+    expect(starter.inheritsFrom).toBeNull();
+  });
+
+  it('forwards the sections array verbatim from static-content through resolvedPlanItems', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    const pro = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(pro.sections).toEqual([
+      { items: [{ text: 'Unlimited projects' }] },
+      { title: 'Pro only', items: [{ text: 'Advanced analytics' }] },
+    ]);
+    // A plan without sections resolves to null (not undefined), matching the card contract.
+    const starter = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'starter');
+    expect(starter.sections).toBeNull();
+  });
+});

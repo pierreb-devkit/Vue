@@ -29,25 +29,30 @@
  * Section shape (grouped feature list — opt-in, fully backward-compatible):
  *   {
  *     title?: string,                      // section heading, e.g. "Core", "Collaboration"
- *     introText?: string,                  // overrides the inheritance heading for this section
- *     inheritsFrom?: string,               // section-level "Everything in {parent}, plus" heading
  *     items: [{
  *       text,                              // required label
  *       icon?: string,                     // fa-solid fa-* (defaults to fa-solid fa-check)
- *       iconColor?: string,                // Vuetify color name OR hex (NOTE: `iconColor`, not `color`)
+ *       iconColor?: string,                // Vuetify color name OR hex. Canonical key for grouped
+ *                                          // items; the flat-list `color` key is accepted as a
+ *                                          // back-compat alias so a flat→grouped migration keeps colors.
  *       tooltip?: string,                  // optional info-icon tooltip
  *       highlight?: boolean,               // emphasised row
  *       enabled?: boolean,                 // `false` greys the row out (e.g. "not in this plan")
  *     }],
  *   }
+ *   Inheritance is PLAN-level only: set `plan.inheritsFrom` to render ONE
+ *   "Everything in {parent title}, plus" heading above the sections. Sections themselves carry
+ *   no inheritance heading — the card owns it.
  *
  * Minimal grouped-plan example (do NOT replace the flat demo plans below — kept for
  * downstream fallback parity; downstreams opt in by authoring `sections` in their own content):
  *   {
  *     id: 'pro', title: 'Pro', subtitle: 'For professionals', cta: 'Get Started',
- *     monthlyPrice: 49, annualPrice: 490, inheritsFrom: 'starter',
+ *     monthlyPrice: 49, annualPrice: 490,
+ *     inheritsFrom: 'starter',   // → card renders ONE "Everything in Starter, plus" heading
  *     sections: [
- *       { title: 'Everything in Starter', items: [{ text: 'Unlimited projects', icon: 'fa-solid fa-folder' }] },
+ *       // First (untitled) section lists the inherited features, right under the plan-level heading.
+ *       { items: [{ text: 'Unlimited projects', icon: 'fa-solid fa-folder' }] },
  *       { title: 'Pro only', items: [
  *         { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', iconColor: 'warning', highlight: true },
  *         { text: 'SSO', enabled: false },
