@@ -134,7 +134,7 @@
         v-if="item.features && item.features.length > 0"
         density="compact"
         bg-color="transparent"
-        class="pa-0"
+        class="pa-0 billing-card__flat-features"
       >
         <v-list-item
           v-for="feature in item.features"
@@ -210,8 +210,11 @@ export default {
   z-index: 2;
 }
 /* Allow `\n` in feature.text to render as line breaks (Vuetify v-list-item-title
-   clips by default). Used by ops-eval features that list scraps / autofixes / stealth. */
-.billing-card :deep(.v-list-item-title) {
+   clips by default). Used by ops-eval features that list multi-line descriptions.
+   Scoped to the FLAT features list only — grouped section items own their own
+   white-space rule (BillingPricingFeatureSectionComponent) and must not inherit
+   pre-line, which would otherwise cascade at equal specificity. */
+.billing-card__flat-features :deep(.v-list-item-title) {
   white-space: pre-line;
 }
 </style>

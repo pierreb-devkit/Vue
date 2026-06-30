@@ -134,6 +134,30 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(icon.attributes('style') || '').toMatch(/#ff6b6b/i);
   });
 
+  it('uses item.color as a back-compat alias when iconColor is absent', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', color: 'success' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    // `color` (the flat-features key) is honored when `iconColor` is absent —
+    // eases a flat→grouped migration that kept its `color` keys.
+    expect(wrapper.find('.v-icon').classes()).toContain('text-success');
+  });
+
+  it('prefers iconColor over color when both are present', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', iconColor: 'success', color: 'error' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    expect(wrapper.find('.v-icon').classes()).toContain('text-success');
+  });
+
   it('falls back to primary color when iconColor is absent', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {
