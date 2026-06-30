@@ -124,7 +124,7 @@
       </p>
       <BillingPricingFeatureSectionComponent
         v-for="(section, idx) in item.sections"
-        :key="section.title || `section-${idx}`"
+        :key="`${section.title || 'section'}-${idx}`"
         :section="section"
       />
     </template>
