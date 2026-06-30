@@ -31,6 +31,16 @@
                 but worth flagging for downstream overrides.
     info      : string|null              — ops-eval line, shown between CTA and features
     features  : [{ icon: string, color: string, text: string }]
+                — flat feature list (legacy / default). Rendered when `sections` is empty/absent.
+    sections  : [{ title?: string, introText?: string, inheritsFrom?: string,
+                   items: [{ text, icon?, iconColor?, tooltip?, highlight?, enabled? }] }]
+                — OPTIONAL grouped feature sections. When present (length > 0) they REPLACE the
+                  flat `features` list — each section renders via BillingPricingFeatureSectionComponent.
+                  Note: item-level color key is `iconColor` (not `color`), and `enabled: false` greys an item.
+    inheritsFrom   : string|null         — OPTIONAL parent plan id (informational; the view resolves the name).
+    parentPlanName : string|null         — OPTIONAL resolved parent plan display name. When set AND
+                  `sections` is used, the card renders a single "Everything in {parentPlanName}, plus"
+                  heading above the sections. The card is DUMB — it never resolves this itself.
     badge     : string|null              — e.g. 'MOST POPULAR'
     highlight : boolean                  — elevated card variant
 
@@ -95,35 +105,61 @@
     <!-- Info line (ops-eval) -->
     <p v-if="item.info" class="text-body-small text-medium-emphasis mb-4">{{ item.info }}</p>
 
-    <!-- Features list -->
-    <v-list
-      v-if="item.features && item.features.length > 0"
-      density="compact"
-      bg-color="transparent"
-      class="pa-0"
-    >
-      <v-list-item
-        v-for="feature in item.features"
-        :key="feature.text"
-        class="px-0"
+    <!-- Features: grouped sections (inheritance-aware) OR flat fallback -->
+    <template v-if="item.sections && item.sections.length > 0">
+      <!-- Plan-level inheritance heading — rendered ONCE above the sections when the
+           view resolved a parent plan name. Styled like the section component's own
+           __inherits heading for visual consistency. -->
+      <p
+        v-if="item.parentPlanName"
+        class="text-body-small text-medium-emphasis mb-2"
       >
-        <template #prepend>
-          <v-icon
-            :icon="feature.icon || 'fa-solid fa-check'"
-            :color="feature.color || 'primary'"
-            size="small"
-            class="mr-3"
-          />
-        </template>
-        <v-list-item-title>{{ feature.text }}</v-list-item-title>
-      </v-list-item>
-    </v-list>
+        Everything in {{ item.parentPlanName }}, plus
+      </p>
+      <BillingPricingFeatureSectionComponent
+        v-for="(section, idx) in item.sections"
+        :key="section.title || `section-${idx}`"
+        :section="section"
+        :parent-plan-name="item.parentPlanName"
+      />
+    </template>
+    <template v-else>
+      <!-- Features list -->
+      <v-list
+        v-if="item.features && item.features.length > 0"
+        density="compact"
+        bg-color="transparent"
+        class="pa-0"
+      >
+        <v-list-item
+          v-for="feature in item.features"
+          :key="feature.text"
+          class="px-0"
+        >
+          <template #prepend>
+            <v-icon
+              :icon="feature.icon || 'fa-solid fa-check'"
+              :color="feature.color || 'primary'"
+              size="small"
+              class="mr-3"
+            />
+          </template>
+          <v-list-item-title>{{ feature.text }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </template>
   </v-card>
 </template>
 
 <script>
+import BillingPricingFeatureSectionComponent from './billing.pricingFeatureSection.component.vue';
+
 export default {
   name: 'BillingCardComponent',
+
+  components: {
+    BillingPricingFeatureSectionComponent,
+  },
 
   props: {
     /**

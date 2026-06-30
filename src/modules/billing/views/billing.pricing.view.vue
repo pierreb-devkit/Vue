@@ -320,6 +320,14 @@ export default {
           ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
           : null;
 
+        // Grouped feature sections (additive, optional). When a plan declares `sections`,
+        // the card renders them instead of the flat `features` list. `inheritsFrom` is the
+        // parent plan id; resolve it to a display name HERE (the card stays dumb) so the card
+        // can render a single "Everything in {parentPlanName}, plus" heading.
+        const parentPlanName = plan.inheritsFrom
+          ? (this.plans.find((p) => p.id === plan.inheritsFrom)?.title ?? null)
+          : null;
+
         return {
           id: plan.id,
           title: plan.title,
@@ -335,6 +343,9 @@ export default {
           },
           info: plan.info || null,
           features: plan.features || [],
+          sections: plan.sections || null,
+          inheritsFrom: plan.inheritsFrom || null,
+          parentPlanName,
           badge: plan.badge || null,
           highlight: !!plan.highlight,
           // Internal field — view's onCtaClick resolves priceId from here, not consumed by card.

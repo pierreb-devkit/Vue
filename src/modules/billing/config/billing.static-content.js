@@ -18,7 +18,41 @@
  *     monthlyPrice?, annualPrice?,         // optional raw numbers — when omitted card shows error or hides price
  *     info?: string|null,                  // ops-eval / per-cycle quota line, shown between CTA and features
  *     features: [{ icon, color, text }],   // flat list, icon (fa-solid fa-*) + Vuetify color + label
+ *     sections?: Section[],                // OPTIONAL grouped, inheritance-aware feature sections (see below).
+ *                                          // When present, REPLACES the flat `features` list on the card.
+ *     inheritsFrom?: string|null,          // OPTIONAL id of the parent plan. The view resolves it to the
+ *                                          // parent's `title` and the card renders one
+ *                                          // "Everything in {parent title}, plus" heading above the sections.
  *     meta?: object,                       // free-form per-plan metadata (Stripe IDs, quotas, etc.)
+ *   }
+ *
+ * Section shape (grouped feature list — opt-in, fully backward-compatible):
+ *   {
+ *     title?: string,                      // section heading, e.g. "Core", "Collaboration"
+ *     introText?: string,                  // overrides the inheritance heading for this section
+ *     inheritsFrom?: string,               // section-level "Everything in {parent}, plus" heading
+ *     items: [{
+ *       text,                              // required label
+ *       icon?: string,                     // fa-solid fa-* (defaults to fa-solid fa-check)
+ *       iconColor?: string,                // Vuetify color name OR hex (NOTE: `iconColor`, not `color`)
+ *       tooltip?: string,                  // optional info-icon tooltip
+ *       highlight?: boolean,               // emphasised row
+ *       enabled?: boolean,                 // `false` greys the row out (e.g. "not in this plan")
+ *     }],
+ *   }
+ *
+ * Minimal grouped-plan example (do NOT replace the flat demo plans below — kept for
+ * downstream fallback parity; downstreams opt in by authoring `sections` in their own content):
+ *   {
+ *     id: 'pro', title: 'Pro', subtitle: 'For professionals', cta: 'Get Started',
+ *     monthlyPrice: 49, annualPrice: 490, inheritsFrom: 'starter',
+ *     sections: [
+ *       { title: 'Everything in Starter', items: [{ text: 'Unlimited projects', icon: 'fa-solid fa-folder' }] },
+ *       { title: 'Pro only', items: [
+ *         { text: 'Advanced analytics', icon: 'fa-solid fa-chart-line', iconColor: 'warning', highlight: true },
+ *         { text: 'SSO', enabled: false },
+ *       ] },
+ *     ],
  *   }
  *
  * FAQ shape:
