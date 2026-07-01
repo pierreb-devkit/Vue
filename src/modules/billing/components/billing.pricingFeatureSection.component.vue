@@ -20,7 +20,7 @@
   <div class="billing-pricing-feature-section">
     <h4
       v-if="section.title"
-      class="billing-pricing-feature-section__title text-title-small font-weight-medium mb-2"
+      class="billing-pricing-feature-section__title text-body-large font-weight-bold mb-2"
     >
       {{ section.title }}
     </h4>
@@ -106,6 +106,12 @@ export default {
 </script>
 
 <style scoped>
+/* Separate stacked sections so each category title reads as a group label,
+   not as another feature row. Uniform top margin gives the card vertical rhythm;
+   the first section sits below the price/CTA/heading so the extra space reads clean. */
+.billing-pricing-feature-section {
+  margin-top: 1.25rem;
+}
 /* Allow feature/pack item text to wrap — Vuetify default v-list-item-title
    has white-space: nowrap + text-overflow: ellipsis which truncates substantive
    descriptions like "Stacks on top of subscription quota" into "… q…". */
