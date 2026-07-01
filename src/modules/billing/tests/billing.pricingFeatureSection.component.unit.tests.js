@@ -207,4 +207,36 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(wrapper.html()).not.toContain('fa-xmark');
     expect(wrapper.find('.text-medium-emphasis').exists()).toBe(false);
   });
+
+  it('announces included / not-included state to assistive tech (icon is not decorative here)', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: {
+          title: null,
+          items: [
+            { text: 'Included feature', enabled: true },
+            { text: 'Missing feature', enabled: false },
+          ],
+        },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    const labels = wrapper.findAll('.v-icon[role="img"]').map((i) => i.attributes('aria-label'));
+    expect(labels).toContain('Included');
+    expect(labels).toContain('Not included');
+  });
+
+  it('makes the tooltip trigger keyboard-focusable with an accessible label', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', tooltip: 'Extra detail' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    const trigger = wrapper.findAll('.v-icon').find((i) => i.attributes('aria-label') === 'Extra detail');
+    expect(trigger).toBeTruthy();
+    expect(trigger.attributes('tabindex')).toBe('0');
+  });
 });

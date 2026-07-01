@@ -48,6 +48,8 @@
         :class="{ 'text-medium-emphasis': item.enabled === false }"
         size="small"
         class="mt-1"
+        role="img"
+        :aria-label="item.enabled === false ? 'Not included' : 'Included'"
       ></v-icon>
       <span
         :class="[
@@ -63,6 +65,10 @@
               icon="fa-solid fa-circle-info"
               size="x-small"
               class="ml-1 text-medium-emphasis"
+              tabindex="0"
+              role="img"
+              :aria-label="item.tooltip"
+              style="cursor: help"
             ></v-icon>
           </template>
         </v-tooltip>
