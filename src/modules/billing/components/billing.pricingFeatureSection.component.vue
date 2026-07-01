@@ -48,8 +48,7 @@
         :class="{ 'text-medium-emphasis': item.enabled === false }"
         size="small"
         class="mt-1"
-        role="img"
-        :aria-label="item.enabled === false ? 'Not included' : 'Included'"
+        aria-hidden="true"
       ></v-icon>
       <span
         :class="[
@@ -57,6 +56,10 @@
           { 'text-medium-emphasis': item.enabled === false },
         ]"
       >
+        <!-- The ✓/✗ icon is decorative (aria-hidden); this sr-only text carries the
+             included / not-included distinction to assistive tech. Skipped for
+             headline (highlight) rows, which have no inclusion semantics. -->
+        <span v-if="!item.highlight" class="sr-only">{{ item.enabled === false ? 'Not included: ' : 'Included: ' }}</span>
         {{ item.text }}
         <v-tooltip v-if="item.tooltip" :text="item.tooltip" location="top">
           <template #activator="{ props: tooltipProps }">
@@ -111,3 +114,20 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Screen-reader-only text — announces the included / not-included state that the
+   ✓ / ✗ icon conveys visually (the icon is aria-hidden / decorative). Vuetify
+   4.x ships no sr-only utility, so the standard clip pattern is defined locally. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>

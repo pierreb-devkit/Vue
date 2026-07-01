@@ -208,7 +208,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(wrapper.find('.text-medium-emphasis').exists()).toBe(false);
   });
 
-  it('announces included / not-included state to assistive tech (icon is not decorative here)', () => {
+  it('announces included / not-included state via sr-only text; ✓/✗ icon stays decorative', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {
         section: {
@@ -222,9 +222,12 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    const labels = wrapper.findAll('.v-icon[role="img"]').map((i) => i.attributes('aria-label'));
-    expect(labels).toContain('Included');
-    expect(labels).toContain('Not included');
+    const srTexts = wrapper.findAll('.sr-only').map((s) => s.text().trim());
+    expect(srTexts).toContain('Included:');
+    expect(srTexts).toContain('Not included:');
+    // The state icon is decorative — hidden from assistive tech (Vuetify would
+    // aria-hidden a non-interactive icon anyway; we set it explicitly).
+    expect(wrapper.find('.v-icon').attributes('aria-hidden')).toBe('true');
   });
 
   it('makes the tooltip trigger keyboard-focusable with an accessible label', () => {
