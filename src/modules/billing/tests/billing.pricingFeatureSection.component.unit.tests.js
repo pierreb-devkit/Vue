@@ -28,7 +28,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    expect(wrapper.find('.billing-pricing-feature-section__title').exists()).toBe(false);
+    expect(wrapper.find('h4').exists()).toBe(false);
   });
 
   it('renders inheritsFrom heading when section has inheritsFrom and parentPlanName is provided', () => {
@@ -88,7 +88,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(wrapper.findAll('.v-icon')).toHaveLength(2);
   });
 
-  it('applies highlight class to items flagged highlight=true', () => {
+  it('renders highlight rows as bold primary text with no leading icon', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {
         section: {
@@ -102,9 +102,12 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    const highlighted = wrapper.findAll('.billing-pricing-feature-section__item--highlight');
-    expect(highlighted).toHaveLength(1);
-    expect(highlighted[0].text()).toContain('Highlighted');
+    const highlighted = wrapper.find('.font-weight-bold');
+    expect(highlighted.exists()).toBe(true);
+    expect(highlighted.text()).toContain('Highlighted');
+    expect(highlighted.classes()).toContain('text-primary');
+    // Highlight rows are iconless — only the single normal row renders a check icon.
+    expect(wrapper.findAll('.v-icon')).toHaveLength(1);
   });
 
   it('applies iconColor when provided (Vuetify color name)', () => {
@@ -169,7 +172,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
     expect(wrapper.find('.v-icon').classes()).toContain('text-primary');
   });
 
-  it('applies disabled class to items with enabled=false', () => {
+  it('renders enabled=false rows with an ✗ (xmark) icon and dimmed text', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {
         section: {
@@ -183,12 +186,14 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    const disabled = wrapper.findAll('.billing-pricing-feature-section__item--disabled');
-    expect(disabled).toHaveLength(1);
-    expect(disabled[0].text()).toContain('Disabled feature');
+    // enabled:false swaps the check for an explicit not-included ✗ marker.
+    expect(wrapper.html()).toContain('fa-xmark');
+    // ...and dims the label so the row reads as "not in this plan".
+    const dimmed = wrapper.findAll('.text-medium-emphasis').filter((el) => el.text().includes('Disabled feature'));
+    expect(dimmed.length).toBeGreaterThan(0);
   });
 
-  it('treats absent enabled as enabled (default true)', () => {
+  it('treats absent enabled as enabled — no xmark, no dimming', () => {
     const wrapper = mount(BillingPricingFeatureSectionComponent, {
       props: {
         section: {
@@ -199,6 +204,42 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    expect(wrapper.find('.billing-pricing-feature-section__item--disabled').exists()).toBe(false);
+    expect(wrapper.html()).not.toContain('fa-xmark');
+    expect(wrapper.find('.text-medium-emphasis').exists()).toBe(false);
+  });
+
+  it('announces included / not-included state via sr-only text; ✓/✗ icon stays decorative', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: {
+          title: null,
+          items: [
+            { text: 'Included feature', enabled: true },
+            { text: 'Missing feature', enabled: false },
+          ],
+        },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    const srTexts = wrapper.findAll('.sr-only').map((s) => s.text().trim());
+    expect(srTexts).toContain('Included:');
+    expect(srTexts).toContain('Not included:');
+    // The state icon is decorative — hidden from assistive tech (Vuetify would
+    // aria-hidden a non-interactive icon anyway; we set it explicitly).
+    expect(wrapper.find('.v-icon').attributes('aria-hidden')).toBe('true');
+  });
+
+  it('makes the tooltip trigger keyboard-focusable with an accessible label', () => {
+    const wrapper = mount(BillingPricingFeatureSectionComponent, {
+      props: {
+        section: { title: null, items: [{ text: 'A', tooltip: 'Extra detail' }] },
+        parentPlanName: null,
+      },
+      global: { plugins: [vuetify] },
+    });
+    const trigger = wrapper.findAll('.v-icon').find((i) => i.attributes('aria-label') === 'Extra detail');
+    expect(trigger).toBeTruthy();
+    expect(trigger.attributes('tabindex')).toBe('0');
   });
 });
