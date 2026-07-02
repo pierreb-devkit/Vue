@@ -46,7 +46,7 @@
   "dependencies": {
     "@casl/ability": "^7.0.0",
     "@casl/vue": "^3.0.0",
-    "@fortawesome/fontawesome-free": "^7.2.0",
+    "@fortawesome/fontawesome-free": "^7.3.0",
     "@tryghost/content-api": "^1.12.9",
     "@unhead/vue": "^3.1.7",
     "aos": "^2.3.4",
