@@ -174,13 +174,14 @@ export default {
       if (!organizationId) return;
 
       this.requestLoading = true;
+      this.error = null;
       const organizationsStore = useOrganizationsStore();
       try {
         await organizationsStore.createJoinRequest(organizationId);
         this.requestSent = true;
         this.$emit('requestSent', this.suggestedOrganization);
       } catch (err) {
-        console.error(err);
+        this.error = err?.response?.data?.message || err?.message || 'Could not send join request. Please try again.';
       } finally {
         this.requestLoading = false;
       }
