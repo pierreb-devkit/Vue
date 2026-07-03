@@ -182,14 +182,18 @@ Vuetify components are **white-label by default** — the Material look is a sta
    // vite.config — plugin registration
    vuetify({ styles: { configFile: 'src/styles/settings.scss' } })
    ```
+
    ```scss
-   // src/styles/settings.scss — override globals before Vuetify builds
-   @use 'vuetify/settings' with (
+   // src/styles/settings.scss — override globals before Vuetify builds.
+   // Use @forward (not @use) in a configFile: it re-exports vuetify/settings
+   // WITH your overrides so the framework's own SASS picks them up.
+   @forward 'vuetify/settings' with (
      $body-font-family: ('Inter', sans-serif),
      $border-radius-root: 6px,       // default 4px — nudge the app's roundness
    );
    ```
-   This shifts font, base radius, and the spacing unit app-wide from one file. **Blueprints** (`createVuetify({ blueprint })`) go further for a full re-skin. Both are config, not scattered `<style>` blocks — keep the "CSS last resort" rule intact.
+
+   This shifts font and base radius app-wide from one file. **Blueprints** (`createVuetify({ blueprint })`) go further for a full re-skin. Both are config, not scattered `<style>` blocks — keep the "CSS last resort" rule intact.
 
 Pick the aesthetic direction up front (the surface's stated visual intent), then reach for lever 1→4 to carry it. Most distinctiveness is won by levers 1-3 alone.
 
