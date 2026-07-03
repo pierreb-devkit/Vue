@@ -170,6 +170,33 @@ Stack uses **FontAwesome** (`defaultSet: 'fa'`).
 <v-icon>fa-brands fa-github</v-icon>
 ```
 
+## Beauty levers (config-only re-skin — push past generic Material)
+
+Vuetify components are **white-label by default** — the Material look is a starting point, not a constraint. Four levers re-skin the whole app with **zero bespoke per-element CSS**; reach for them in order:
+
+1. **Theme palette (biggest lever).** `config.vuetify.theme.themes.{light,dark}.colors` — author a distinctive, mostly-neutral palette: tinted-grey `background`/`surface` (a few degrees of hue, never pure `#888`), one confident `primary` reserved for emphasis, restrained accents. Every token is exposed as `--v-theme-{name}` RGB-triples, so re-tinting is config, not CSS. Author colors in a perceptual space (OKLCH in 2025-26, or HSL — never hand-pick raw hex) so shades stay even.
+2. **Shape.** `config.vuetify.theme.rounded` (`rounded` sharp → `rounded-lg` → `rounded-xl`) sets the app's roundness personality in one value. Sharp reads editorial/serious; pill reads friendly/consumer.
+3. **Density + elevation strategy.** `density` on components (`comfortable`/`compact`) tunes the whitespace rhythm globally; pick a low, consistent elevation ceiling (mostly `elevation-1`/`2`, or `flat: true` + subtle borders) rather than mixing high shadows — consistency of depth is what reads premium.
+4. **Global SASS variables (deepest, still no per-element CSS).** Override Vuetify's own settings once in a `settings.scss` registered via `vite-plugin-vuetify`:
+   ```js
+   // vite.config — plugin registration
+   vuetify({ styles: { configFile: 'src/styles/settings.scss' } })
+   ```
+
+   ```scss
+   // src/styles/settings.scss — override globals before Vuetify builds.
+   // Use @forward (not @use) in a configFile: it re-exports vuetify/settings
+   // WITH your overrides so the framework's own SASS picks them up.
+   @forward 'vuetify/settings' with (
+     $body-font-family: ('Inter', sans-serif),
+     $border-radius-root: 6px,       // default 4px — nudge the app's roundness
+   );
+   ```
+
+   This shifts font and base radius app-wide from one file. **Blueprints** (`createVuetify({ blueprint })`) go further for a full re-skin. Both are config, not scattered `<style>` blocks — keep the "CSS last resort" rule intact.
+
+Pick the aesthetic direction up front (the surface's stated visual intent), then reach for lever 1→4 to carry it. Most distinctiveness is won by levers 1-3 alone.
+
 ## Config-driven theming
 
 The stack's theme is fully config-driven. Key config paths:
