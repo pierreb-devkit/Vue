@@ -44,7 +44,7 @@
     "snyk-protect": "snyk protect"
   },
   "dependencies": {
-    "@casl/ability": "^7.0.0",
+    "@casl/ability": "^7.0.1",
     "@casl/vue": "^3.0.1",
     "@fortawesome/fontawesome-free": "^7.3.0",
     "@tryghost/content-api": "^1.12.9",
