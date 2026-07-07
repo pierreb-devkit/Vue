@@ -75,15 +75,19 @@ describe('BillingUpgradePrompt', () => {
     expect(btn.props('to')).toBe('/pricing');
   });
 
-  it('emits buy-pack instead of linking to pricing in meter mode', async () => {
+  it('routes the Buy units CTA to /pricing#units in meter mode (single billing entry, no modal event)', () => {
     const wrapper = mountComponent({ requiredPlan: 'pro', mode: 'meter' });
     const btn = wrapper.findComponent({ name: 'v-btn' });
     expect(btn.exists()).toBe(true);
     expect(btn.text()).toContain('Buy units');
-    expect(btn.props('to')).toBeUndefined();
+    expect(btn.props('to')).toBe('/pricing#units');
+    expect(wrapper.emitted('buy-pack')).toBeUndefined();
+  });
 
-    await btn.trigger('click');
-    expect(wrapper.emitted('buy-pack')).toHaveLength(1);
+  it('shows out-of-compute copy in meter mode, never the plan-requirement text', () => {
+    const wrapper = mountComponent({ requiredPlan: 'Growth', mode: 'meter' });
+    expect(wrapper.text()).toContain('out of compute');
+    expect(wrapper.text()).not.toContain('requires the');
   });
 
   it('shows generic message when resource/action set but no quota data', () => {
@@ -136,6 +140,8 @@ describe('BillingUpgradePrompt', () => {
       const packBtn = wrapper.find('[data-test="cta-pack"]');
       expect(packBtn.exists()).toBe(true);
       expect(packBtn.text()).toMatch(/boost|pack/i);
+      // Post-grant Boost-pack CTA routes to the single billing entry point, not a modal event.
+      expect(wrapper.findComponent('[data-test="cta-pack"]').props('to')).toBe('/pricing#units');
     });
 
     it('renders secondary upgrade CTA in post-grant variant', () => {
