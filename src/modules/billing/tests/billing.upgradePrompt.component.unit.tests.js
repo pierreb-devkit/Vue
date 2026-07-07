@@ -140,6 +140,8 @@ describe('BillingUpgradePrompt', () => {
       const packBtn = wrapper.find('[data-test="cta-pack"]');
       expect(packBtn.exists()).toBe(true);
       expect(packBtn.text()).toMatch(/boost|pack/i);
+      // Post-grant Boost-pack CTA routes to the single billing entry point, not a modal event.
+      expect(wrapper.findComponent('[data-test="cta-pack"]').props('to')).toBe('/pricing#units');
     });
 
     it('renders secondary upgrade CTA in post-grant variant', () => {
