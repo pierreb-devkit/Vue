@@ -14,7 +14,7 @@
             variant="flat"
             size="small"
             class="text-none"
-            @click="$emit('buy-pack')"
+            to="/pricing#units"
           >
             Buy Boost pack — $9
           </v-btn>
@@ -36,6 +36,7 @@
   <v-alert v-else type="info" variant="tonal" prominent class="my-4">
     <template #text>
       <span v-if="hasUsageInfo">{{ `You've used ${current} of ${limit} ${displayLabel}.` }}</span>
+      <span v-else-if="mode === 'meter'">You're out of compute. Buy more units or upgrade for monthly compute.</span>
       <span v-else>{{ `This feature requires the ${requiredPlan} plan.` }}</span>
     </template>
     <template #append>
@@ -45,7 +46,7 @@
         variant="flat"
         size="small"
         class="text-none"
-        @click="$emit('buy-pack')"
+        to="/pricing#units"
       >
         Buy units
       </v-btn>
@@ -105,8 +106,8 @@ export default {
       default: '',
     },
     /**
-     * @desc Billing mode. Meter mode prompts users to buy unit packs instead of
-     * routing them to plan pricing.
+     * @desc Billing mode. Meter mode surfaces a "buy units" CTA that routes to the
+     * units section of the pricing page; subscription mode surfaces a plan-upgrade CTA.
      */
     mode: {
       type: String,
@@ -119,7 +120,6 @@ export default {
       validator: (value) => ['subscription', 'meter'].includes(value),
     },
   },
-  emits: ['buy-pack'],
   /**
    * @desc Wires useQuota composable and billing store for exhaustedAfterGrant detection.
    * @returns {{ usage: Object, limits: Object, billingStore: Object }}
