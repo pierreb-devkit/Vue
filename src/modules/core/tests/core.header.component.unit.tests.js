@@ -47,16 +47,20 @@ const makeConfig = () => ({
  * @desc Mount the header component with router + config globals.
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountHeader = () => {
+const mountHeader = (routePath = '/', headerExtra = {}) => {
   const vuetify = createVuetify({ components, directives });
   const push = vi.fn();
+  const config = makeConfig();
+  Object.assign(config.vuetify.theme.header, headerExtra);
   return mount(CoreHeaderComponent, {
     global: {
       plugins: [vuetify],
-      mocks: { $router: { push }, $route: { path: '/' } },
-      config: { globalProperties: { config: makeConfig() } },
+      mocks: { $router: { push }, $route: { path: routePath } },
+      config: { globalProperties: { config } },
       // VAppBar needs an injected layout (v-app); stub it so we can exercise the
-      // navigate() method in isolation without a full layout wrapper.
+      // navigate() method in isolation without a full layout wrapper. The stub
+      // still honours the element's v-if, so `find('header')` doubles as a
+      // "is the header shown?" probe.
       stubs: { 'v-app-bar': { template: '<header><slot /></header>' } },
     },
   });
@@ -65,10 +69,38 @@ const mountHeader = () => {
 describe('CoreHeaderComponent', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    authStoreState.isLoggedIn = false; // default logged-out; org-required tests opt in
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  // #4421 — the header force-shows on /organization-required (the sidenav is
+  // hidden there) unless a sidenav-only consumer opts out via config.
+  describe('org-required header visibility (#4421)', () => {
+    it('shows the header on /organization-required by default (signed-in, no org)', () => {
+      authStoreState.isLoggedIn = true;
+      const wrapper = mountHeader('/organization-required');
+      expect(wrapper.find('header').exists()).toBe(true);
+    });
+
+    it('hides it there when the consumer opts out (showOnOrgRequired: false)', () => {
+      authStoreState.isLoggedIn = true;
+      const wrapper = mountHeader('/organization-required', { showOnOrgRequired: false });
+      expect(wrapper.find('header').exists()).toBe(false);
+    });
+
+    it('keeps the header hidden on ordinary signed-in routes', () => {
+      authStoreState.isLoggedIn = true;
+      const wrapper = mountHeader('/tasks');
+      expect(wrapper.find('header').exists()).toBe(false);
+    });
+
+    it('still shows the public header when signed out', () => {
+      const wrapper = mountHeader('/tasks');
+      expect(wrapper.find('header').exists()).toBe(true);
+    });
   });
 
   describe('navigate', () => {

@@ -70,15 +70,23 @@ export default {
       if (form.valid) {
         this.loading = true;
         const organizationsStore = useOrganizationsStore();
+        const authStore = useAuthStore();
+        // No current org (a first org, or a management user who just deleted their
+        // active one) is an onboarding-like step: land in the app via sign.route.
+        // An additional org created while one is already active keeps the
+        // -> org-detail destination. Captured BEFORE create, since the backend sets
+        // currentOrganization when the user had none.
+        const isFirstOrg = !authStore.user?.currentOrganization;
         try {
           const org = await organizationsStore.createOrganization({
             name: this.name,
             description: this.description,
           });
           if (org) {
-            const authStore = useAuthStore();
             await authStore.refreshAbilities();
-            this.$router.push(`/users/organizations/${org.id || org._id}`);
+            this.$router.push(
+              isFirstOrg ? this.config.sign.route : `/users/organizations/${org.id || org._id}`,
+            );
           }
         } catch (err) {
           console.error(err);
