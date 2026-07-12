@@ -18,6 +18,7 @@ export default {
         opacity: 0.5, // header background opacity (0–1)
         scrollBehavior: 'float', // 'float' = shrink to pill on scroll, 'hide' = hide on scroll
         scrollThreshold: 50, // scroll distance (px) before scroll behavior triggers
+        showOnOrgRequired: true, // false to hide the header on /organization-required for sidenav-only apps (that page hides the sidenav, so the header keeps some chrome by default)
       },
       navigation: {
         background: '#2c3e50', // navigation drawer background color (fallback when glass is false)

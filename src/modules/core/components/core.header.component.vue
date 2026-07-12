@@ -1,6 +1,6 @@
 <template>
   <v-app-bar
-    v-if="!isLoggedIn || $route.path === '/organization-required'"
+    v-if="!isLoggedIn || showOnOrgRequired"
     :style="headerStyle"
     :flat="config.vuetify.theme.flat"
     :scroll-behavior="isFloatMode ? undefined : config.vuetify.theme.header?.scrollBehavior"
@@ -150,6 +150,24 @@ export default {
     isLoggedIn() {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;
+    },
+    /**
+     * @desc Whether to force-show the header on `/organization-required` for a
+     *       signed-in user who has no organization yet. The sidenav is hidden on
+     *       that page (it gates on `hasOrganization`), so by default the header is
+     *       shown there to keep some chrome. A sidenav-only consumer that hides the
+     *       header once signed in can opt out via
+     *       `config.vuetify.theme.header.showOnOrgRequired: false`, so the page no
+     *       longer falls back to the signed-out top-nav (the org-required view
+     *       carries its own sign-out escape). Default (undefined) preserves the
+     *       existing behavior.
+     * @returns {Boolean}
+     */
+    showOnOrgRequired() {
+      return (
+        this.$route.path === '/organization-required'
+        && this.config.vuetify.theme.header?.showOnOrgRequired !== false
+      );
     },
     /**
      * @desc Whether the header uses the 'float' scroll behavior mode.
