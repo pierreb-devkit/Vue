@@ -77,7 +77,7 @@
     "chalk": "^5.6.2",
     "commitizen": "^4.3.2",
     "cz-git": "^1.13.1",
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.9.2",
     "globals": "^17.7.0",
