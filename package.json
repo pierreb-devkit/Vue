@@ -87,7 +87,7 @@
     "prettier": "^3.9.5",
     "puppeteer": "^25.3.0",
     "sass": "^1.101",
-    "semantic-release": "^25.0.5",
+    "semantic-release": "^25.0.6",
     "typescript": "^6.0.3",
     "vite": "^8.1.4",
     "vite-plugin-compression": "^0.5.1",
