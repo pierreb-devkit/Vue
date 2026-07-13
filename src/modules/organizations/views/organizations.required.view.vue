@@ -251,7 +251,9 @@ export default {
     },
     async refresh() {
       const authStore = useAuthStore();
-      await authStore.refreshAbilities();
+      // Soft-refresh (token(), never throws) — refreshAbilities() signs out +
+      // rethrows on failure, so a hiccup on "Check status" would eject the user.
+      await authStore.token();
       if (authStore.user?.currentOrganization) {
         this.$router.push(this.config.sign.route);
       }
@@ -263,7 +265,9 @@ export default {
       try {
         await organizationsStore.createJoinRequest(orgId);
         const authStore = useAuthStore();
-        await authStore.refreshAbilities();
+        // Soft-refresh (token(), never throws). refreshAbilities() would sign the
+        // user out before this try/catch could swallow the throw.
+        await authStore.token();
       } catch {
         // interceptor handles snackbar
       } finally {

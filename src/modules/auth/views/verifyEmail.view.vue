@@ -103,13 +103,10 @@ export default {
      */
     async handlePostVerificationRedirect(authStore) {
       if (authStore.isLoggedIn) {
-        // Refresh user data to pick up emailVerified = true
-        try {
-          await authStore.refreshAbilities();
-        } catch {
-          // If refresh fails (e.g. expired token), stay on page
-          return;
-        }
+        // Soft-refresh (token(), never throws) to pick up emailVerified = true.
+        // refreshAbilities() signs out + rethrows on failure, which would eject
+        // the user who just verified their email.
+        await authStore.token();
         this.redirecting = true;
         const serverConfig = authStore.serverConfig || (await authStore.fetchServerConfig());
         if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {

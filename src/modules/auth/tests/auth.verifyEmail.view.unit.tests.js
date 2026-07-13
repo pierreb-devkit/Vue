@@ -4,11 +4,11 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const verifyEmailMock = vi.hoisted(() => vi.fn());
-const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const tokenMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const storeMock = vi.hoisted(() => ({
   verifyEmail: verifyEmailMock,
-  refreshAbilities: refreshAbilitiesMock,
+  token: tokenMock,
   fetchServerConfig: fetchServerConfigMock,
   isLoggedIn: false,
   user: null,
@@ -48,7 +48,7 @@ describe('auth.verifyEmail.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     verifyEmailMock.mockReset();
-    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    tokenMock.mockReset().mockResolvedValue();
     fetchServerConfigMock.mockReset().mockResolvedValue(null);
     storeMock.isLoggedIn = false;
     storeMock.user = null;

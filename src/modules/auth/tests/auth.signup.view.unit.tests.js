@@ -5,11 +5,11 @@ import { createVuetify } from 'vuetify';
 
 const signupMock = vi.hoisted(() => vi.fn());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
-const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const tokenMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const resendVerificationMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const verifyInviteMock = vi.hoisted(() => vi.fn().mockResolvedValue({ valid: false, email: null }));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, refreshAbilities: refreshAbilitiesMock, resendVerification: resendVerificationMock, verifyInvite: verifyInviteMock }),
+  useAuthStore: () => ({ auth: false, signup: signupMock, serverConfig: null, fetchServerConfig: fetchServerConfigMock, token: tokenMock, resendVerification: resendVerificationMock, verifyInvite: verifyInviteMock }),
   deduceNamesFromEmail: (email) => {
     const local = email ? email.split('@')[0] : '';
     const parts = local.split(/[._-]/);
@@ -66,7 +66,7 @@ describe('auth.signup.view', () => {
     setActivePinia(createPinia());
     signupMock.mockReset();
     fetchServerConfigMock.mockReset().mockResolvedValue(null);
-    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    tokenMock.mockReset().mockResolvedValue();
     resendVerificationMock.mockReset().mockResolvedValue();
     verifyInviteMock.mockReset().mockResolvedValue({ valid: false, email: null });
     createOrganizationMock.mockReset();
@@ -343,7 +343,7 @@ describe('auth.signup.view', () => {
 
       await wrapper.vm.proceedToApp();
 
-      expect(refreshAbilitiesMock).toHaveBeenCalled();
+      expect(tokenMock).toHaveBeenCalled();
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
     });
 
@@ -423,7 +423,7 @@ describe('auth.signup.view', () => {
       await wrapper.vm.proceedToApp();
       await flushPromises();
 
-      expect(refreshAbilitiesMock).toHaveBeenCalled();
+      expect(tokenMock).toHaveBeenCalled();
       // useAuthStore mock has currentOrganization undefined → proceedToApp checks authStore.user.currentOrganization;
       // since orgs.enabled is true AND user has no currentOrganization, it goes to /organization-required, NOT redirect.
       // For this test, we assert the redirect-honor branch fires when user DOES have an org.

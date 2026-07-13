@@ -83,7 +83,10 @@ export default {
             description: this.description,
           });
           if (org) {
-            await authStore.refreshAbilities();
+            // Soft-refresh (token(), never throws) to pick up the new org context.
+            // refreshAbilities() signs out + rethrows on failure, which would eject
+            // a user who just created their org.
+            await authStore.token();
             this.$router.push(
               isFirstOrg ? this.config.sign.route : `/users/organizations/${org.id || org._id}`,
             );

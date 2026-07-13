@@ -398,9 +398,11 @@ export default {
      * @returns {void}
      */
     async proceedToApp() {
-      // Refresh token/abilities after org setup to pick up new org context
+      // Soft-refresh (token(), never throws) to pick up the new org context.
+      // refreshAbilities() signs out + rethrows on any failure — at this final
+      // onboarding click a transient error would silently eject a brand-new user.
       const authStore = useAuthStore();
-      await authStore.refreshAbilities();
+      await authStore.token();
       // If user has no org yet (pending join), go to organization-required page
       if (!authStore.user?.currentOrganization && this.serverConfig?.organizations?.enabled) {
         this.$router.push('/organization-required');

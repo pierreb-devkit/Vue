@@ -3,9 +3,9 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const refreshAbilitiesMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+const tokenMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const createOrganizationMock = vi.hoisted(() => vi.fn().mockResolvedValue({ id: 'org-9' }));
-const authStoreMock = vi.hoisted(() => ({ user: null, refreshAbilities: refreshAbilitiesMock }));
+const authStoreMock = vi.hoisted(() => ({ user: null, token: tokenMock }));
 
 vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: () => authStoreMock,
@@ -50,7 +50,7 @@ describe('organization.create.view — first-org redirect (#4422)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     push.mockReset();
-    refreshAbilitiesMock.mockReset().mockResolvedValue();
+    tokenMock.mockReset().mockResolvedValue();
     createOrganizationMock.mockReset().mockResolvedValue({ id: 'org-9' });
     authStoreMock.user = null;
   });
@@ -62,7 +62,7 @@ describe('organization.create.view — first-org redirect (#4422)', () => {
     await wrapper.vm.create();
     await flushPromises();
     expect(createOrganizationMock).toHaveBeenCalledWith({ name: 'Acme', description: '' });
-    expect(refreshAbilitiesMock).toHaveBeenCalled();
+    expect(tokenMock).toHaveBeenCalled();
     expect(push).toHaveBeenCalledWith('/tasks');
   });
 
