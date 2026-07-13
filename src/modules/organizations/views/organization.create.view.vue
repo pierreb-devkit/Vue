@@ -64,6 +64,12 @@ export default {
     };
   },
   methods: {
+    /**
+     * @desc Validate the form and create the organization, then route the user:
+     *       a first org (no current org yet) lands in the app via sign.route; an
+     *       additional org created while one is active goes to its detail page.
+     * @returns {Promise<void>}
+     */
     async create() {
       if (this.loading) return;
       const form = await this.$refs.form.validate();

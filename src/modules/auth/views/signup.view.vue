@@ -395,7 +395,7 @@ export default {
     },
     /**
      * @desc Navigate to the main application after signup and org setup.
-     * @returns {void}
+     * @returns {Promise<void>}
      */
     async proceedToApp() {
       // Soft-refresh (token(), never throws) to pick up the new org context.

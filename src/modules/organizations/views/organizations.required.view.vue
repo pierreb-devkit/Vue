@@ -249,6 +249,11 @@ export default {
         this.acceptingId = null;
       }
     },
+    /**
+     * @desc Soft-refresh the session ("Check status") and, if the user now has an
+     *       organization, forward them into the app.
+     * @returns {Promise<void>}
+     */
     async refresh() {
       const authStore = useAuthStore();
       // Soft-refresh (token(), never throws) — refreshAbilities() signs out +
@@ -258,6 +263,12 @@ export default {
         this.$router.push(this.config.sign.route);
       }
     },
+    /**
+     * @desc Send a join request for the given organization, then soft-refresh the
+     *       session so any resulting membership/pending state is reflected.
+     * @param {Object} org - The organization to request to join.
+     * @returns {Promise<void>}
+     */
     async requestToJoin(org) {
       const orgId = org.id || org._id;
       this.requestingOrgId = orgId;
