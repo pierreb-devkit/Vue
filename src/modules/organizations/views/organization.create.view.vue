@@ -64,6 +64,12 @@ export default {
     };
   },
   methods: {
+    /**
+     * @desc Validate the form and create the organization, then route the user:
+     *       a first org (no current org yet) lands in the app via sign.route; an
+     *       additional org created while one is active goes to its detail page.
+     * @returns {Promise<void>}
+     */
     async create() {
       if (this.loading) return;
       const form = await this.$refs.form.validate();
@@ -83,7 +89,10 @@ export default {
             description: this.description,
           });
           if (org) {
-            await authStore.refreshAbilities();
+            // Soft-refresh (token(), never throws) to pick up the new org context.
+            // refreshAbilities() signs out + rethrows on failure, which would eject
+            // a user who just created their org.
+            await authStore.token();
             this.$router.push(
               isFirstOrg ? this.config.sign.route : `/users/organizations/${org.id || org._id}`,
             );

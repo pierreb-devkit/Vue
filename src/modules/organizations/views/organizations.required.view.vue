@@ -249,13 +249,26 @@ export default {
         this.acceptingId = null;
       }
     },
+    /**
+     * @desc Soft-refresh the session ("Check status") and, if the user now has an
+     *       organization, forward them into the app.
+     * @returns {Promise<void>}
+     */
     async refresh() {
       const authStore = useAuthStore();
-      await authStore.refreshAbilities();
+      // Soft-refresh (token(), never throws) — refreshAbilities() signs out +
+      // rethrows on failure, so a hiccup on "Check status" would eject the user.
+      await authStore.token();
       if (authStore.user?.currentOrganization) {
         this.$router.push(this.config.sign.route);
       }
     },
+    /**
+     * @desc Send a join request for the given organization, then soft-refresh the
+     *       session so any resulting membership/pending state is reflected.
+     * @param {Object} org - The organization to request to join.
+     * @returns {Promise<void>}
+     */
     async requestToJoin(org) {
       const orgId = org.id || org._id;
       this.requestingOrgId = orgId;
@@ -263,7 +276,9 @@ export default {
       try {
         await organizationsStore.createJoinRequest(orgId);
         const authStore = useAuthStore();
-        await authStore.refreshAbilities();
+        // Soft-refresh (token(), never throws). refreshAbilities() would sign the
+        // user out before this try/catch could swallow the throw.
+        await authStore.token();
       } catch {
         // interceptor handles snackbar
       } finally {
