@@ -470,6 +470,28 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
+    it('should populate pendingRequests from the token response (soft-refresh superset)', async () => {
+      const authStore = useAuthStore();
+      const pending = [{ id: 'req-1', organizationId: { name: 'Acme' } }];
+      axios.get.mockResolvedValueOnce({
+        data: { user: { id: '789', roles: ['user'] }, tokenExpiresIn: Date.now() + 7200000, pendingRequests: pending },
+      });
+
+      await authStore.token();
+
+      expect(authStore.pendingRequests).toEqual(pending);
+    });
+
+    it('should clear a stale pendingRequests when the token response omits them', async () => {
+      const authStore = useAuthStore();
+      authStore.pendingRequests = [{ id: 'stale' }];
+      axios.get.mockResolvedValueOnce({ data: { user: { id: '789', roles: ['user'] }, tokenExpiresIn: 1 } });
+
+      await authStore.token();
+
+      expect(authStore.pendingRequests).toEqual([]);
+    });
+
     it('should handle token refresh error without logging to the console', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

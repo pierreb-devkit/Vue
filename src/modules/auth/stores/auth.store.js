@@ -335,6 +335,10 @@ export const useAuthStore = defineStore('auth', {
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
+        // Soft-refresh must carry pendingRequests too, so the org-required wall's
+        // join banner + duplicate-request guard stay accurate after a token()
+        // soft-refresh (mirrors refreshAbilities()). /token already returns it.
+        this.pendingRequests = res.data.pendingRequests || [];
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
         if (res.data.user.lastLoginAt) {
