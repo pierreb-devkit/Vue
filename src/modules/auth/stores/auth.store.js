@@ -43,11 +43,15 @@ function deduceNamesFromEmail(email) {
  * refreshAbilities() and signout() (module scope, mirrors the
  * isRefreshingAbilities dedup flag in lib/services/axios.js). token() and
  * refreshAbilities() capture the generation before their network await;
- * signout() bumps it synchronously before doing anything else. If either
- * soft-refresh resolves after a concurrent signout() already bumped the
- * generation, the captured value no longer matches and the continuation
- * drops its state writes instead of resurrecting auth=true/user/
- * localStorage right after the user signed out.
+ * signout() bumps it synchronously before doing anything else. This drops
+ * a soft-refresh continuation that was already in flight when signout()
+ * ran — its captured generation no longer matches once signout() bumps it,
+ * so it skips resurrecting auth=true/user/localStorage right after the
+ * user signed out. Scope: a soft-refresh call that starts DURING signout()'s
+ * own async window (e.g. a concurrent 401/403 interceptor retry firing
+ * while the /signout request is still pending) captures the already-bumped
+ * generation and is not guarded against resolving after signout() completes
+ * — a known narrow follow-up, not covered here.
  */
 let _authGeneration = 0;
 
