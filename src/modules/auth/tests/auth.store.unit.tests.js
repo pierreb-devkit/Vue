@@ -1255,6 +1255,53 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual({ id: 'u2', roles: ['user'] });
     });
+
+    // Phase-0 follow-up: refreshAbilities()'s catch path unconditionally called
+    // signout() + rethrew, even when the /token request only failed because a
+    // concurrent signout() already ran (e.g. the session cookie is now gone).
+    // That surfaced a stale "session expired" error to the caller right after a
+    // deliberate signout. The catch must respect the same generation guard as
+    // the success path: a stale rejection is swallowed silently instead.
+    it('does NOT re-signout-and-rethrow when refreshAbilities() rejects after a concurrent signout() already ran', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.cookieExpire = Date.now() + 1000;
+      authStore.user = { id: 'u1' };
+
+      let rejectGet;
+      axios.get.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectGet = reject; }));
+      axios.post.mockResolvedValueOnce({ data: {} }); // signout()'s backend call (in-flight refresh's own signout, guarded below, never fires)
+
+      const refreshPromise = authStore.refreshAbilities(); // generation captured BEFORE signout()
+      await authStore.signout(); // bumps generation + clears state synchronously
+
+      // The in-flight /token request now settles with a failure AFTER signout()
+      // already ran (e.g. 401 because the session cookie is gone).
+      rejectGet(new Error('Token refresh failed'));
+
+      // Must resolve silently — no rethrow, and no second signout() call.
+      await expect(refreshPromise).resolves.toBeUndefined();
+
+      // Only signout()'s own backend call happened — the stale catch did not
+      // fire a second /signout request.
+      expect(axios.post).toHaveBeenCalledTimes(1);
+    });
+
+    it('still signs out and rethrows when refreshAbilities() fails within the same (non-stale) generation', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.cookieExpire = Date.now() + 1000;
+      authStore.user = { id: 'u1' };
+
+      axios.get.mockRejectedValueOnce(new Error('Token refresh failed'));
+      axios.post.mockResolvedValueOnce({ data: {} }); // the catch's own signout() backend call
+
+      await expect(authStore.refreshAbilities()).rejects.toThrow('Token refresh failed');
+
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+      expect(axios.post).toHaveBeenCalledTimes(1);
+    });
   });
 });
 

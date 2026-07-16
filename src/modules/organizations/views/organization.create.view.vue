@@ -56,15 +56,16 @@
               <v-spacer></v-spacer>
               <v-btn variant="text" class="text-none text-body-medium mr-2" to="/users">Cancel</v-btn>
               <v-btn
-                :disabled="!valid || loading"
-                :loading="loading"
+                :disabled="pendingOrg ? retrying : (!valid || loading)"
+                :loading="pendingOrg ? retrying : loading"
                 color="primary"
                 variant="flat"
                 :class="config.vuetify.theme.rounded"
                 class="text-none text-body-medium"
-                @click="create"
+                data-test="organization-create-primary-action"
+                @click="handlePrimaryAction"
               >
-                Create Organization
+                {{ pendingOrg ? 'Retry' : 'Create Organization' }}
               </v-btn>
             </v-row>
           </v-form>
@@ -98,6 +99,25 @@ export default {
     };
   },
   methods: {
+    /**
+     * @desc Route the primary button's click. While a post-create soft-refresh
+     *       is pending (pendingOrg set — the organization already exists
+     *       server-side), always retry the refresh instead of creating again,
+     *       regardless of whether the error alert was dismissed in the meantime:
+     *       dismissing the alert only clears `error` (`@click:close` above), it
+     *       must never re-enable a second createOrganization() call for the same
+     *       pending org. Without this, dismissing the banner left the primary
+     *       "Create Organization" button pointed at create(), producing a
+     *       duplicate org on click (#4459 follow-up).
+     * @returns {Promise<void>}
+     */
+    async handlePrimaryAction() {
+      if (this.pendingOrg) {
+        await this.retryRefresh();
+        return;
+      }
+      await this.create();
+    },
     /**
      * @desc Validate the form and create the organization, then route the user:
      *       a first org (no current org yet) lands in the app via sign.route; an

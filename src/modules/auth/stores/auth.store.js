@@ -340,6 +340,13 @@ export const useAuthStore = defineStore('auth', {
         this.pendingRequests = res.data.pendingRequests || [];
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
+        // A concurrent signout() may have already invalidated this generation
+        // while the request was in flight — the failure (e.g. a 401 once the
+        // session is gone) is then just a side effect of that deliberate
+        // signout, not a real refresh failure. Swallow it silently instead of
+        // signing out again and rethrowing a stale "session expired" error
+        // right after the user chose to leave.
+        if (generation !== _authGeneration) return;
         // If token refresh fails, sign out and propagate to caller
         await this.signout();
         throw err;

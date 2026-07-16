@@ -275,4 +275,79 @@ describe('organization.create.view — soft-refresh guard (#4459)', () => {
     expect(tokenMock).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
   });
+
+  // Regression: the alert's `closable`/@click:close only ever cleared `error`,
+  // never `pendingOrg`. Dismissing the banner instead of clicking its inline
+  // Retry left the still-enabled primary "Create Organization" button wired to
+  // create() — clicking it called createOrganization() a SECOND time with the
+  // same data, duplicating the org server-side (the exact outcome the guard
+  // was meant to prevent). The primary button must route to retryRefresh()
+  // whenever pendingOrg is set, independent of whether the alert was dismissed.
+  it('does not recreate the organization when the primary button is clicked after the alert is dismissed while pendingOrg is set', async () => {
+    tokenMock.mockReset().mockResolvedValue(); // stalls: never populates currentOrganization
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(createOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(wrapper.vm.pendingOrg).toEqual({ org: { id: 'org-9' }, isFirstOrg: true });
+
+    // Dismiss the banner exactly as @click:close does: clear `error` only.
+    wrapper.vm.error = null;
+    await wrapper.vm.$nextTick();
+
+    // The alert (and its inline Retry button) is now gone, but pendingOrg
+    // persists — the primary button must have flipped to "Retry" already.
+    const primaryButton = wrapper.find('[data-test="organization-create-primary-action"]');
+    expect(primaryButton.text()).toBe('Retry');
+
+    await primaryButton.trigger('click');
+    await flushPromises();
+
+    // Only the refresh retried — createOrganization was NOT called again.
+    expect(createOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(tokenMock).toHaveBeenCalledTimes(2); // initial create() attempt + the retry
+  });
+
+  it('handlePrimaryAction routes to retryRefresh (not create) whenever pendingOrg is set', async () => {
+    tokenMock.mockReset().mockResolvedValue();
+    const wrapper = mountView();
+    wrapper.vm.pendingOrg = { org: { id: 'org-9' }, isFirstOrg: true };
+
+    await wrapper.vm.handlePrimaryAction();
+    await flushPromises();
+
+    expect(createOrganizationMock).not.toHaveBeenCalled();
+    expect(tokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('handlePrimaryAction falls through to create() when there is no pendingOrg', async () => {
+    tokenMock.mockReset().mockImplementation(async () => {
+      authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org-9' };
+    });
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+
+    await wrapper.vm.handlePrimaryAction();
+    await flushPromises();
+
+    expect(createOrganizationMock).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith('/tasks');
+  });
+
+  it('renders the primary button as "Retry" (disabled/loading bound to retrying) while pendingOrg is set', async () => {
+    tokenMock.mockReset().mockResolvedValue();
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+    await wrapper.vm.$nextTick();
+
+    const primaryButton = wrapper.find('[data-test="organization-create-primary-action"]');
+    expect(primaryButton.exists()).toBe(true);
+    expect(primaryButton.text()).toBe('Retry');
+    expect(primaryButton.attributes('disabled')).toBeFalsy();
+  });
 });
