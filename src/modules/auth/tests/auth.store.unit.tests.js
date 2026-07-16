@@ -262,6 +262,39 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
     });
 
+    it('should populate pendingRequests from the signin response', async () => {
+      const authStore = useAuthStore();
+      const pending = [{ id: 'req-1', organizationId: { name: 'Acme' } }];
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+          pendingRequests: pending,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(authStore.pendingRequests).toEqual(pending);
+    });
+
+    it('should reset a stale pendingRequests to [] when the signin response omits them', async () => {
+      const authStore = useAuthStore();
+      authStore.pendingRequests = [{ id: 'stale' }];
+      const mockResponse = {
+        data: {
+          user: { id: '123', email: 'test@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+      expect(authStore.pendingRequests).toEqual([]);
+    });
+
     it('should handle 423 lockout response', async () => {
       const authStore = useAuthStore();
 

@@ -206,7 +206,8 @@ config.vuetify.theme.dark        // 'auto', 'dark', 'light'
 config.vuetify.theme.flat        // true = flat design
 config.vuetify.theme.rounded     // 'rounded-lg', 'rounded-xl', etc.
 config.vuetify.theme.maxWidth    // '1200px' default
-config.vuetify.theme.header      // { background, color, colorMode, opacity, scrollBehavior }
+config.vuetify.theme.header      // { background, color, colorMode, opacity, scrollBehavior, showOnOrgRequired }
+                                  // showOnOrgRequired: false hides the header on /organization-required (sidenav-only apps)
 config.vuetify.theme.navigation  // { background, color, drawer: { floating, expand, rail } }
 config.vuetify.theme.themes.light.colors  // { primary, secondary, background, surface, ... }
 config.vuetify.theme.themes.dark.colors   // { primary, secondary, background, surface, ... }
