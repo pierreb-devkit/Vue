@@ -167,5 +167,27 @@ describe('auth.verifyEmail.view', () => {
       expect(wrapper.vm.success).toBe(true);
       expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
     });
+
+    // #4447 — the refreshAbilities() -> token() swap (#4431) dropped the
+    // "stay on page if the refresh fails" bail-out, since token() never
+    // throws. A failed soft-refresh leaves the store without a populated
+    // user; the view must stay on the verified-success page instead of
+    // showing "Redirecting..." and navigating on stale state.
+    it('stays on page when the post-verification soft-refresh fails to populate a user', async () => {
+      storeMock.isLoggedIn = true;
+      storeMock.user = null; // token() swallowed a failure, left no user
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(tokenMock).toHaveBeenCalledTimes(1);
+      expect(wrapper.vm.success).toBe(true);
+      expect(wrapper.vm.redirecting).toBe(false);
+      expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
+      expect(wrapper.text()).toContain('Your email has been verified successfully. You can now sign in.');
+    });
   });
 });

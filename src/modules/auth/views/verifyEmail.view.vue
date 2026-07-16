@@ -97,6 +97,7 @@ export default {
      * @desc Redirect the user after successful email verification based on auth state.
      * - Logged in + no org + orgs enabled → /organization-required
      * - Logged in + has org → home route
+     * - Logged in but soft-refresh fails (no user in store) → stay on page
      * - Not logged in → stay on page with sign-in link
      * @param {Object} authStore - The auth store instance.
      * @returns {Promise<void>}
@@ -107,6 +108,14 @@ export default {
         // refreshAbilities() signs out + rethrows on failure, which would eject
         // the user who just verified their email.
         await authStore.token();
+        if (!authStore.user) {
+          // token() swallows failures internally, so a failed soft-refresh
+          // leaves the store without a populated user (same isLoggedIn +
+          // !user signal the app.router.js guard checks). Stay on this page
+          // with the verified-success message instead of showing
+          // "Redirecting..." and navigating on stale state.
+          return;
+        }
         this.redirecting = true;
         const serverConfig = authStore.serverConfig || (await authStore.fetchServerConfig());
         if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {
