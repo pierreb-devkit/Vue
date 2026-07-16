@@ -20,6 +20,12 @@
  *   - plans        : Plan[]
  *   - packs        : Pack[]
  *   - faqs         : { title?: string, subtitle?: string, content: FAQ[] }
+ *   - signupGrant  : { label: string }
+ *                    Copy fragment for the meter-mode "signup grant depleted" prompt
+ *                    (billing.upgradePrompt.component.vue), e.g. used as
+ *                    `You used your ${signupGrant.label}.`. Structural key — an explicit
+ *                    `null` (or non-object) is coerced back to the devkit default, same as
+ *                    plans/packs/faqs, since the consumer reads `.label` unconditionally.
  *
  * Plan shape (V4 — unified with packs):
  *   {
@@ -245,6 +251,18 @@ export const faqs = {
 };
 
 /**
+ * @desc Copy fragment for the meter-mode signup-grant-depleted prompt
+ * (billing.upgradePrompt.component.vue). Downstream projects override via
+ * `config.billing.staticContent.signupGrant` to describe their own grant's size and
+ * unit, e.g. `{ label: '2,000-credit one-shot grant' }`. This devkit default stays
+ * generic — no specific quantity or product vocabulary.
+ * @type {{ label: string }}
+ */
+export const signupGrant = {
+  label: 'one-shot compute grant',
+};
+
+/**
  * @desc Configurable tab labels (used in 'both-tabs' mode).
  * This devkit default ships `plans: 'Plans'` / `units: 'Extras'`.
  * Downstream projects can override either or both labels per project.
@@ -283,6 +301,7 @@ export default {
     plans,
     packs,
     faqs,
+    signupGrant,
     tabs,
     header,
     halo,
