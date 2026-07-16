@@ -200,13 +200,14 @@ export default {
     /**
      * @desc Primary pack CTA label, config-sourced from the resolved pack's own `cta` +
      * price (e.g. "{pack.cta} — {pack.price.amount}"). Falls back to a generic label
-     * when a project configures no packs.
+     * when a project configures no packs, or when a configured pack omits `cta`.
      * @returns {string}
      */
     packCtaLabel() {
       if (!this.primaryPack) return 'Buy a compute pack';
+      const cta = this.primaryPack.cta || 'Buy a compute pack';
       const amount = this.primaryPack.price?.amount;
-      return amount ? `${this.primaryPack.cta} — ${amount}` : this.primaryPack.cta;
+      return amount ? `${cta} — ${amount}` : cta;
     },
     /**
      * @desc Secondary upgrade CTA label, config-sourced from the non-free plan titles

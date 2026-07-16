@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -231,6 +231,13 @@ describe('BillingUpgradePrompt', () => {
   });
 
   describe('static-content resolution (issue #4460 — config-sourced pricing copy)', () => {
+    // Unmock unconditionally after every test in this block, pass or fail — a mock left
+    // active on assertion failure would leak into later tests' module-scope resolution.
+    afterEach(() => {
+      vi.doUnmock('../../../lib/services/config.js');
+      vi.resetModules();
+    });
+
     /**
      * Dynamically re-import the resolver + component after mocking the underlying
      * config service, so the module-scope `resolveStaticContent()` call picks up the
@@ -270,8 +277,6 @@ describe('BillingUpgradePrompt', () => {
       expect(text).toContain('Custom Test Pack');
       expect(text).toContain('$42.00');
       expect(text).toContain('Ultra');
-      vi.doUnmock('../../../lib/services/config.js');
-      vi.resetModules();
     });
   });
 });
