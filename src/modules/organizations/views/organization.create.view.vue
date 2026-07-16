@@ -5,6 +5,20 @@
       <v-col cols="12" sm="10" md="8" lg="6">
         <v-card class="pa-8" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
           <h3 class="text-title-large font-weight-medium mb-6">Organization Details</h3>
+
+          <!-- Error alert -->
+          <v-alert
+            v-if="error"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            :class="config.vuetify.theme.rounded"
+            closable
+            @click:close="error = null"
+          >
+            {{ error }}
+          </v-alert>
+
           <v-form ref="form" v-model="valid">
             <v-text-field
               v-model="name"
@@ -58,6 +72,7 @@ export default {
     return {
       valid: false,
       loading: false,
+      error: null,
       name: '',
       description: '',
       rules: { required: (v) => (!!v && !!v.trim()) || 'Required' },
@@ -75,6 +90,7 @@ export default {
       const form = await this.$refs.form.validate();
       if (form.valid) {
         this.loading = true;
+        this.error = null;
         const organizationsStore = useOrganizationsStore();
         const authStore = useAuthStore();
         // No current org (a first org, or a management user who just deleted their
@@ -98,7 +114,7 @@ export default {
             );
           }
         } catch (err) {
-          console.error(err);
+          this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
         } finally {
           this.loading = false;
         }

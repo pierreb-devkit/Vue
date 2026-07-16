@@ -90,3 +90,87 @@ describe('organization.create.view — first-org redirect (#4422)', () => {
     expect(push).toHaveBeenCalledWith('/tasks');
   });
 });
+
+// #4447 — the catch block only logged to the console, leaving the user with
+// no feedback on a failed create. Surface the backend message via the error
+// alert, mirroring organizationSetup.component.vue (f92003d5).
+describe('organization.create.view — error surfacing (#4447)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    push.mockReset();
+    tokenMock.mockReset().mockResolvedValue();
+    createOrganizationMock.mockReset().mockResolvedValue({ id: 'org-9' });
+    authStoreMock.user = { id: 'u1' };
+  });
+
+  it('sets error from response data message on createOrganization failure and resets loading', async () => {
+    const apiError = { response: { data: { message: 'An organization with this name already exists' } } };
+    createOrganizationMock.mockRejectedValueOnce(apiError);
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBe('An organization with this name already exists');
+    expect(wrapper.vm.loading).toBe(false);
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('renders the error alert with the message in the DOM', async () => {
+    const apiError = { response: { data: { message: 'An organization with this name already exists' } } };
+    createOrganizationMock.mockRejectedValueOnce(apiError);
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain('An organization with this name already exists');
+  });
+
+  it('falls back to err.message when a create failure has no response data message', async () => {
+    createOrganizationMock.mockRejectedValueOnce(new Error('Network error'));
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBe('Network error');
+  });
+
+  it('falls back to a generic message when the error has no message', async () => {
+    createOrganizationMock.mockRejectedValueOnce({});
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
+  });
+
+  it('clears a stale error at the start of a new create attempt', async () => {
+    const wrapper = mountView();
+    wrapper.vm.error = 'Could not create organization. Please try again.';
+
+    createOrganizationMock.mockResolvedValueOnce({ id: 'org-9' });
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBeNull();
+  });
+
+  it('leaves no error on a successful create', async () => {
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBeNull();
+    expect(push).toHaveBeenCalled();
+  });
+});
