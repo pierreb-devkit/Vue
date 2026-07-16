@@ -1176,6 +1176,86 @@ describe('Auth Store', () => {
       expect(mockReset).toHaveBeenCalledOnce();
     });
   });
+
+  // #4459 — token()/refreshAbilities() are soft-refreshes that can be in
+  // flight when the user signs out. Without a generation guard, a late
+  // resolution would write auth=true/user/localStorage right after
+  // signout() already cleared them ("un-logout"). signout() bumps a shared
+  // generation counter synchronously; token()/refreshAbilities() capture it
+  // before their network await and drop stale continuations.
+  describe('signout race guard (#4459)', () => {
+    it('does NOT resurrect auth/user/localStorage when token() resolves after a concurrent signout()', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.cookieExpire = Date.now() + 1000;
+      authStore.user = { id: 'u1' };
+      localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user');
+      localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
+
+      let resolveTokenGet;
+      axios.get.mockImplementationOnce(() => new Promise((resolve) => { resolveTokenGet = resolve; }));
+      axios.post.mockResolvedValueOnce({ data: {} }); // signout()'s backend call
+
+      const tokenPromise = authStore.token(); // in-flight, generation captured BEFORE signout()
+      await authStore.signout(); // bumps generation + clears state synchronously
+
+      // token()'s network call now settles AFTER signout() has already run.
+      resolveTokenGet({
+        data: {
+          user: { id: 'ghost' },
+          tokenExpiresIn: Date.now() + 7200000,
+          roles: ['user'],
+        },
+      });
+      await tokenPromise;
+
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+      expect(authStore.cookieExpire).toBe(0);
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
+    });
+
+    it('does NOT resurrect the user when refreshAbilities() resolves after a concurrent signout()', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.cookieExpire = Date.now() + 1000;
+      authStore.user = { id: 'u1' };
+
+      let resolveGet;
+      axios.get.mockImplementationOnce(() => new Promise((resolve) => { resolveGet = resolve; }));
+      axios.post.mockResolvedValueOnce({ data: {} }); // signout()'s backend call
+
+      const refreshPromise = authStore.refreshAbilities(); // generation captured BEFORE signout()
+      await authStore.signout();
+
+      resolveGet({
+        data: {
+          user: { id: 'ghost' },
+          abilities: [{ action: 'manage', subject: 'all' }],
+        },
+      });
+      await refreshPromise;
+
+      expect(authStore.user).toBe(null);
+      expect(authStore.auth).toBe(false);
+    });
+
+    it('a fresh token() call after signout() still succeeds normally (generation bump does not break later refreshes)', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      axios.get.mockResolvedValueOnce({
+        data: { user: { id: 'u2', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000 },
+      });
+      await authStore.token();
+
+      expect(authStore.auth).toBe(true);
+      expect(authStore.user).toEqual({ id: 'u2', roles: ['user'] });
+    });
+  });
 });
 
 describe('auth store — beta seat getters', () => {

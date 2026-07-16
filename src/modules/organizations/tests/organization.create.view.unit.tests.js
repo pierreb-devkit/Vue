@@ -3,9 +3,30 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-const tokenMock = vi.hoisted(() => vi.fn().mockResolvedValue());
+// Default token() simulates a realistic successful /auth/token refresh: the
+// backend already reflects the just-created/joined org, so currentOrganization
+// gets populated if it wasn't already set. Individual #4459 guard tests
+// override this per-case to simulate a soft-refresh that does NOT (yet)
+// populate it.
+const tokenMock = vi.hoisted(() => vi.fn().mockImplementation(async () => {
+  if (authStoreMock.user && !authStoreMock.user.currentOrganization) {
+    authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org-9' };
+  }
+}));
 const createOrganizationMock = vi.hoisted(() => vi.fn().mockResolvedValue({ id: 'org-9' }));
 const authStoreMock = vi.hoisted(() => ({ user: null, token: tokenMock }));
+
+/**
+ * Reset tokenMock to the default "realistic successful refresh" implementation
+ * described above (used by beforeEach blocks across this file).
+ */
+const resetTokenMockToSuccess = () => {
+  tokenMock.mockReset().mockImplementation(async () => {
+    if (authStoreMock.user && !authStoreMock.user.currentOrganization) {
+      authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org-9' };
+    }
+  });
+};
 
 vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: () => authStoreMock,
@@ -50,7 +71,7 @@ describe('organization.create.view — first-org redirect (#4422)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     push.mockReset();
-    tokenMock.mockReset().mockResolvedValue();
+    resetTokenMockToSuccess();
     createOrganizationMock.mockReset().mockResolvedValue({ id: 'org-9' });
     authStoreMock.user = null;
   });
@@ -98,7 +119,7 @@ describe('organization.create.view — error surfacing (#4447)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     push.mockReset();
-    tokenMock.mockReset().mockResolvedValue();
+    resetTokenMockToSuccess();
     createOrganizationMock.mockReset().mockResolvedValue({ id: 'org-9' });
     authStoreMock.user = { id: 'u1' };
   });
@@ -172,5 +193,86 @@ describe('organization.create.view — error surfacing (#4447)', () => {
 
     expect(wrapper.vm.error).toBeNull();
     expect(push).toHaveBeenCalled();
+  });
+});
+
+// #4459 — token() never throws, so a transient blip after create() must not
+// navigate on the assumption the refresh succeeded: the app-router org-guard
+// would bounce the just-created org straight back to /organization-required.
+// Mirrors organizations.required.view.vue's refresh()/acceptInvitation()
+// currentOrganization check.
+describe('organization.create.view — soft-refresh guard (#4459)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    push.mockReset();
+    createOrganizationMock.mockReset().mockResolvedValue({ id: 'org-9' });
+    authStoreMock.user = { id: 'u1' }; // no currentOrganization → first org
+  });
+
+  it('stays on the page (no router push) when token() resolves without populating currentOrganization', async () => {
+    // token() swallows failures internally — simulate that here: it resolves,
+    // but the store's user still has no currentOrganization.
+    tokenMock.mockReset().mockResolvedValue();
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(push).not.toHaveBeenCalled();
+    expect(wrapper.vm.error).toBeTruthy();
+    expect(wrapper.vm.pendingOrg).toEqual({ org: { id: 'org-9' }, isFirstOrg: true });
+    expect(wrapper.vm.loading).toBe(false);
+  });
+
+  it('still navigates when the soft refresh populates currentOrganization', async () => {
+    tokenMock.mockReset().mockImplementation(async () => {
+      authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org-9' };
+    });
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(push).toHaveBeenCalledWith('/tasks');
+    expect(wrapper.vm.error).toBeNull();
+    expect(wrapper.vm.pendingOrg).toBeNull();
+  });
+
+  it('retryRefresh re-attempts the soft refresh and navigates without recreating the organization', async () => {
+    // First attempt: token() resolves but does not populate currentOrganization.
+    tokenMock.mockReset().mockResolvedValueOnce();
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(push).not.toHaveBeenCalled();
+    expect(createOrganizationMock).toHaveBeenCalledTimes(1);
+
+    // Retry: this time the refresh succeeds.
+    tokenMock.mockImplementation(async () => {
+      authStoreMock.user = { ...authStoreMock.user, currentOrganization: 'org-9' };
+    });
+    await wrapper.vm.retryRefresh();
+    await flushPromises();
+
+    expect(createOrganizationMock).toHaveBeenCalledTimes(1); // organization not recreated
+    expect(push).toHaveBeenCalledWith('/tasks');
+    expect(wrapper.vm.error).toBeNull();
+    expect(wrapper.vm.pendingOrg).toBeNull();
+  });
+
+  it('retryRefresh is a no-op with no pendingOrg', async () => {
+    tokenMock.mockReset().mockResolvedValue();
+    const wrapper = mountView();
+
+    await wrapper.vm.retryRefresh();
+    await flushPromises();
+
+    expect(tokenMock).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
   });
 });

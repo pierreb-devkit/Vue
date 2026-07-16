@@ -39,6 +39,19 @@ function deduceNamesFromEmail(email) {
 }
 
 /**
+ * Monotonically-increasing generation counter shared by token()/
+ * refreshAbilities() and signout() (module scope, mirrors the
+ * isRefreshingAbilities dedup flag in lib/services/axios.js). token() and
+ * refreshAbilities() capture the generation before their network await;
+ * signout() bumps it synchronously before doing anything else. If either
+ * soft-refresh resolves after a concurrent signout() already bumped the
+ * generation, the captured value no longer matches and the continuation
+ * drops its state writes instead of resurrecting auth=true/user/
+ * localStorage right after the user signed out.
+ */
+let _authGeneration = 0;
+
+/**
  * Store definition.
  */
 export const useAuthStore = defineStore('auth', {
@@ -267,6 +280,11 @@ export const useAuthStore = defineStore('auth', {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
 
+      // Bump the generation FIRST (synchronously, before any await) so any
+      // token()/refreshAbilities() already in flight is invalidated the
+      // moment signout begins, regardless of when its network call settles.
+      _authGeneration += 1;
+
       // Call backend first so the server can clear the httpOnly TOKEN cookie.
       // Swallow any error (older backends may not expose this endpoint, or the
       // server may be unreachable) — the local reset below must still run.
@@ -306,8 +324,13 @@ export const useAuthStore = defineStore('auth', {
     async refreshAbilities() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
+      // Capture the generation BEFORE the network await — if a concurrent
+      // signout() bumps it while this request is in flight, the response
+      // below is a stale continuation and must not resurrect state.
+      const generation = _authGeneration;
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
+        if (generation !== _authGeneration) return; // signout() won the race
         if (res.data.abilities) {
           updateAbilities(res.data.abilities);
         }
@@ -326,9 +349,14 @@ export const useAuthStore = defineStore('auth', {
     async token() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
       const coreStore = useCoreStore();
+      // Capture the generation BEFORE the network await — see refreshAbilities()
+      // for the shared rationale (a soft-refresh continuation resolving after
+      // signout() must not re-populate auth=true/user/localStorage).
+      const generation = _authGeneration;
 
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
+        if (generation !== _authGeneration) return; // signout() won the race
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 

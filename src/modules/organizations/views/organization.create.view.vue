@@ -16,7 +16,21 @@
             closable
             @click:close="error = null"
           >
-            {{ error }}
+            <div class="d-flex align-center flex-wrap ga-2">
+              <span class="flex-grow-1">{{ error }}</span>
+              <v-btn
+                v-if="pendingOrg"
+                variant="tonal"
+                color="error"
+                size="small"
+                :class="config.vuetify.theme.rounded"
+                class="text-none"
+                :loading="retrying"
+                @click="retryRefresh"
+              >
+                Retry
+              </v-btn>
+            </div>
           </v-alert>
 
           <v-form ref="form" v-model="valid">
@@ -72,9 +86,14 @@ export default {
     return {
       valid: false,
       loading: false,
+      retrying: false,
       error: null,
       name: '',
       description: '',
+      // { org, isFirstOrg } captured when a post-create soft-refresh does not
+      // (yet) populate currentOrganization — lets retryRefresh() re-attempt
+      // the refresh without recreating the organization.
+      pendingOrg: null,
       rules: { required: (v) => (!!v && !!v.trim()) || 'Required' },
     };
   },
@@ -91,6 +110,7 @@ export default {
       if (form.valid) {
         this.loading = true;
         this.error = null;
+        this.pendingOrg = null;
         const organizationsStore = useOrganizationsStore();
         const authStore = useAuthStore();
         // No current org (a first org, or a management user who just deleted their
@@ -105,19 +125,61 @@ export default {
             description: this.description,
           });
           if (org) {
-            // Soft-refresh (token(), never throws) to pick up the new org context.
-            // refreshAbilities() signs out + rethrows on failure, which would eject
-            // a user who just created their org.
-            await authStore.token();
-            this.$router.push(
-              isFirstOrg ? this.config.sign.route : `/users/organizations/${org.id || org._id}`,
-            );
+            await this.refreshAndNavigate(authStore, org, isFirstOrg);
           }
         } catch (err) {
           this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
         } finally {
           this.loading = false;
         }
+      }
+    },
+    /**
+     * @desc Soft-refresh the session (token(), never throws) to pick up the new
+     *       org context, then navigate — but only if the refresh actually
+     *       populated authStore.user.currentOrganization. token() swallows
+     *       failures internally, so a transient blip leaves currentOrganization
+     *       falsy; navigating anyway would have the app-router org-guard bounce
+     *       the just-created org back to /organization-required. refreshAbilities()
+     *       signs out + rethrows on failure, which would eject a user who just
+     *       created their org, so token() stays the right primitive here — this
+     *       guard just mirrors organizations.required.view.vue's refresh()/
+     *       acceptInvitation() currentOrganization check on its result instead of
+     *       assuming success. On a stalled refresh the organization already
+     *       exists server-side, so it is kept in pendingOrg for a manual retry
+     *       instead of being lost behind a generic error.
+     * @param {Object} authStore - The auth store instance.
+     * @param {Object} org - The just-created organization.
+     * @param {boolean} isFirstOrg - Captured before create(); see create() above.
+     * @returns {Promise<void>}
+     */
+    async refreshAndNavigate(authStore, org, isFirstOrg) {
+      await authStore.token();
+      if (!authStore.user?.currentOrganization) {
+        this.pendingOrg = { org, isFirstOrg };
+        this.error = 'Organization created, but we could not refresh your session. Please retry.';
+        return;
+      }
+      this.pendingOrg = null;
+      this.$router.push(
+        isFirstOrg ? this.config.sign.route : `/users/organizations/${org.id || org._id}`,
+      );
+    },
+    /**
+     * @desc Re-attempt the post-create soft refresh without recreating the
+     *       organization (it already exists server-side from the original create()).
+     * @returns {Promise<void>}
+     */
+    async retryRefresh() {
+      if (!this.pendingOrg || this.retrying) return;
+      this.retrying = true;
+      this.error = null;
+      const authStore = useAuthStore();
+      const { org, isFirstOrg } = this.pendingOrg;
+      try {
+        await this.refreshAndNavigate(authStore, org, isFirstOrg);
+      } finally {
+        this.retrying = false;
       }
     },
   },
