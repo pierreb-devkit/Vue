@@ -16,4 +16,12 @@ describe('organizations router', () => {
     expect(redirect).toBeTruthy();
     expect(redirect.redirect).toEqual({ name: 'Account Organization General' });
   });
+
+  // #4448 — core.header.component.vue reads this flag instead of hardcoding
+  // the '/organization-required' path literal.
+  test('Organization Required route carries meta.orgGate for core.header.component.vue', () => {
+    const route = routes.find((r) => r.path === '/organization-required');
+    expect(route).toBeTruthy();
+    expect(route.meta.orgGate).toBe(true);
+  });
 });

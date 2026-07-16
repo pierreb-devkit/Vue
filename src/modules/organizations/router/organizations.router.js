@@ -25,6 +25,10 @@ export default [
     meta: {
       display: false,
       requiresAuth: true,
+      // Consumed by core.header.component.vue's showOnOrgRequired computed —
+      // lets core force-show the header on this page without hardcoding the
+      // route path (core must not know module route literals).
+      orgGate: true,
     },
   },
   {
