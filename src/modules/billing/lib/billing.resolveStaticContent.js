@@ -15,8 +15,8 @@
  *   - Structural collections (plans, packs): after presence resolution, coerce to devkit
  *     default when the resolved value is not an array. Prevents consumer .map()/.length
  *     crashes when a downstream explicitly sets the key to null or a non-array value.
- *   - Structural object (faqs): coerce to devkit default when the resolved value is not
- *     a non-null object. Prevents consumer property-access crashes on null.
+ *   - Structural object (faqs, signupGrant): coerce to devkit default when the resolved
+ *     value is not a non-null object. Prevents consumer property-access crashes on null.
  *   - Display-optional (pricingMode, tabs, header, halo): pure presence-check — explicit
  *     null is a legitimate suppression signal and consumers tolerate it gracefully.
  */
@@ -26,6 +26,7 @@ import {
   plans as dPlans,
   packs as dPacks,
   faqs as dFaqs,
+  signupGrant as dSignupGrant,
   tabs as dTabs,
   header as dHeader,
   halo as dHalo,
@@ -33,7 +34,7 @@ import {
 
 /**
  * @desc Resolve effective billing static content (project override or devkit default), per key.
- * @returns {{ pricingMode: string, plans: Array, packs: Array, faqs: object, tabs: object, header: object, halo: object|null }}
+ * @returns {{ pricingMode: string, plans: Array, packs: Array, faqs: object, signupGrant: {label: string}, tabs: object, header: object, halo: object|null }}
  */
 export function resolveStaticContent() {
   const o = config?.billing?.staticContent ?? {};
@@ -42,8 +43,9 @@ export function resolveStaticContent() {
   const rPlans = 'plans' in o ? o.plans : dPlans;
   const rPacks = 'packs' in o ? o.packs : dPacks;
 
-  // Structural object — coerce null/non-object to devkit default (crash-safe).
+  // Structural objects — coerce null/non-object to devkit default (crash-safe).
   const rFaqs = 'faqs' in o ? o.faqs : dFaqs;
+  const rSignupGrant = 'signupGrant' in o ? o.signupGrant : dSignupGrant;
 
   return {
     // Display-optional: pure presence-check — explicit null honored by consumers.
@@ -55,5 +57,6 @@ export function resolveStaticContent() {
     plans: Array.isArray(rPlans) ? rPlans : dPlans,
     packs: Array.isArray(rPacks) ? rPacks : dPacks,
     faqs: rFaqs && typeof rFaqs === 'object' ? rFaqs : dFaqs,
+    signupGrant: rSignupGrant && typeof rSignupGrant === 'object' ? rSignupGrant : dSignupGrant,
   };
 }

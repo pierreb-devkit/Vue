@@ -4,7 +4,7 @@
     <v-alert type="info" variant="tonal" prominent>
       <template #text>
         <p class="font-weight-bold mb-1">Your signup grant is depleted</p>
-        <p>You used your 500 compute one-shot grant. Buy a Boost pack to keep going, or upgrade for monthly compute.</p>
+        <p>{{ grantDepletedMessage }}</p>
       </template>
       <template #append>
         <div class="d-flex flex-column ga-2">
@@ -16,7 +16,7 @@
             class="text-none"
             to="/pricing#units"
           >
-            Buy Boost pack — $9
+            {{ packCtaLabel }}
           </v-btn>
           <v-btn
             data-test="cta-upgrade"
@@ -25,7 +25,7 @@
             class="text-none"
             to="/pricing"
           >
-            Upgrade Growth / Pro
+            {{ upgradeCtaLabel }}
           </v-btn>
         </div>
       </template>
@@ -70,6 +70,12 @@
  */
 import { useQuota } from '../composables/billing.useQuota';
 import { useBillingStore } from '../stores/billing.store.js';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
+
+// Static-content resolver call — same module-scope pattern as billing.subscriptions.component.vue.
+// config.billing.staticContent (project override) wins per key, devkit default otherwise —
+// see billing.resolveStaticContent.js for the resolution contract.
+const { packs: packsConfig, plans: plansConfig, signupGrant: signupGrantConfig } = resolveStaticContent();
 
 /**
  * Component definition.
@@ -173,6 +179,47 @@ export default {
      */
     displayLabel() {
       return this.label || `${this.resource} ${this.action}`;
+    },
+    /**
+     * @desc First pack from the resolved static content — the pack featured by the
+     * post-grant prompt's primary CTA. `null` when a project configures no packs.
+     * @returns {Object|null}
+     */
+    primaryPack() {
+      return packsConfig[0] || null;
+    },
+    /**
+     * @desc Post-grant depletion message, config-sourced (grant label + featured pack name).
+     * Devkit default: generic, numberless placeholder copy — no downstream product vocabulary.
+     * @returns {string}
+     */
+    grantDepletedMessage() {
+      const packPhrase = this.primaryPack ? `a ${this.primaryPack.title}` : 'a compute pack';
+      return `You used your ${signupGrantConfig.label}. Buy ${packPhrase} to keep going, or upgrade for monthly compute.`;
+    },
+    /**
+     * @desc Primary pack CTA label, config-sourced from the resolved pack's own `cta` +
+     * price (e.g. "{pack.cta} — {pack.price.amount}"). Falls back to a generic label
+     * when a project configures no packs, or when a configured pack omits `cta`.
+     * @returns {string}
+     */
+    packCtaLabel() {
+      if (!this.primaryPack) return 'Buy a compute pack';
+      const cta = this.primaryPack.cta || 'Buy a compute pack';
+      const amount = this.primaryPack.price?.amount;
+      return amount ? `${cta} — ${amount}` : cta;
+    },
+    /**
+     * @desc Secondary upgrade CTA label, config-sourced from the non-free plan titles
+     * in the resolved static content (e.g. "Upgrade Starter / Pro"). Falls back to a
+     * bare "Upgrade" when no paid plans are configured.
+     * @returns {string}
+     */
+    upgradeCtaLabel() {
+      const paidPlanTitles = plansConfig
+        .filter((plan) => plan.id !== 'free' && plan.title)
+        .map((plan) => plan.title);
+      return paidPlanTitles.length > 0 ? `Upgrade ${paidPlanTitles.join(' / ')}` : 'Upgrade';
     },
   },
 };

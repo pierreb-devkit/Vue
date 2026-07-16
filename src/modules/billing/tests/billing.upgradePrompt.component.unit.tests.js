@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
@@ -131,7 +131,7 @@ describe('BillingUpgradePrompt', () => {
       expect(wrapper.text()).toMatch(/signup grant.*depleted|free compute.*used up/i);
     });
 
-    it('renders Boost pack CTA first (primary) in post-grant variant', () => {
+    it('renders the primary pack CTA first, config-sourced from the resolved static content', () => {
       const wrapper = mountWithStore({
         subscription: { plan: 'free' },
         extrasBalance: { balance: 0 },
@@ -139,8 +139,8 @@ describe('BillingUpgradePrompt', () => {
       });
       const packBtn = wrapper.find('[data-test="cta-pack"]');
       expect(packBtn.exists()).toBe(true);
-      expect(packBtn.text()).toMatch(/boost|pack/i);
-      // Post-grant Boost-pack CTA routes to the single billing entry point, not a modal event.
+      expect(packBtn.text()).toMatch(/pack/i);
+      // Post-grant pack CTA routes to the single billing entry point, not a modal event.
       expect(wrapper.findComponent('[data-test="cta-pack"]').props('to')).toBe('/pricing#units');
     });
 
@@ -209,6 +209,74 @@ describe('BillingUpgradePrompt', () => {
       expect(wrapper.text()).not.toMatch(/signup grant.*depleted/i);
       // Regular prompt still shows
       expect(wrapper.text()).toMatch(/requires the|Upgrade/i);
+    });
+
+    it('devkit default renders generic placeholder copy — no downstream-specific product literal', () => {
+      const wrapper = mountWithStore({
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      const text = wrapper.text();
+      // Devkit generic default — numberless grant label, generic pack/plan names sourced
+      // from billing.static-content.js, not any real consumer's economics. (The rendered
+      // "$9.00" is the devkit's OWN generic demo pack price — same placeholder used
+      // module-wide, e.g. billing.subscriptions.component.vue — not a leaked literal;
+      // the component source itself no longer hardcodes any price.)
+      expect(text).toMatch(/one-shot compute grant/i);
+      expect(text).not.toMatch(/\bboost\b/i);
+      expect(text).not.toMatch(/\bgrowth\b/i);
+      expect(text).not.toContain('500 compute');
+    });
+  });
+
+  describe('static-content resolution (issue #4460 — config-sourced pricing copy)', () => {
+    // Unmock unconditionally after every test in this block, pass or fail — a mock left
+    // active on assertion failure would leak into later tests' module-scope resolution.
+    afterEach(() => {
+      vi.doUnmock('../../../lib/services/config.js');
+      vi.resetModules();
+    });
+
+    /**
+     * Dynamically re-import the resolver + component after mocking the underlying
+     * config service, so the module-scope `resolveStaticContent()` call picks up the
+     * per-test override. Mirrors the pattern in billing.resolveStaticContent.unit.tests.js.
+     * @param {Object} staticContent - Value to install at config.billing.staticContent.
+     * @returns {Promise<{Component: Object, useBillingStore: Function}>}
+     */
+    async function loadWithConfig(staticContent) {
+      vi.resetModules();
+      vi.doMock('../../../lib/services/config.js', () => ({
+        default: { billing: { staticContent } },
+      }));
+      const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
+      const storeModule = await import('../stores/billing.store.js');
+      return { Component, useBillingStore: storeModule.useBillingStore };
+    }
+
+    it('renders copy DRIVEN by the resolved static content — changing config changes the rendered copy', async () => {
+      const { Component, useBillingStore: useStore } = await loadWithConfig({
+        signupGrant: { label: 'custom test grant' },
+        packs: [{ id: 'x', title: 'Custom Test Pack', cta: 'Buy Custom Test Pack', price: { amount: '$42.00', period: null } }],
+        plans: [{ id: 'free', title: 'Free' }, { id: 'ultra', title: 'Ultra' }],
+      });
+      setActivePinia(createPinia());
+      const store = useStore();
+      Object.assign(store, {
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      const wrapper = mount(Component, {
+        props: { requiredPlan: 'ultra', mode: 'meter' },
+        global: { plugins: [vuetify], stubs: { RouterLink: true } },
+      });
+      const text = wrapper.text();
+      expect(text).toContain('custom test grant');
+      expect(text).toContain('Custom Test Pack');
+      expect(text).toContain('$42.00');
+      expect(text).toContain('Ultra');
     });
   });
 });
