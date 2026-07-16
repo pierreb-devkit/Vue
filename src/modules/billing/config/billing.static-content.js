@@ -7,8 +7,12 @@
  * customize via `config.billing.staticContent` (project config, e.g.
  * `src/config/defaults/<project>.config.js`), resolved per-key by
  * `billing.resolveStaticContent.js` (project value wins when present, even
- * `null`; the devkit default here is only the fallback). No secrets or
- * environment-specific values belong in either layer.
+ * `null`, for DISPLAY-OPTIONAL keys — pricingMode/tabs/header/halo. For the
+ * STRUCTURAL keys below — plans/packs/faqs — an explicit `null` (or non-array/
+ * non-object) is coerced back to the devkit default, since consumers `.map()`/
+ * read properties on these unconditionally; the devkit default here is only
+ * the fallback). No secrets or environment-specific values belong in either
+ * layer.
  *
  * Schema (per-key resolver contract — see billing.resolveStaticContent.js):
  *   - pricingMode  : 'subscription' | 'packs' | 'both-tabs' | null
@@ -173,7 +177,7 @@ export const packs = [
     features: [
       { icon: 'fa-solid fa-spider', color: 'primary', text: '~50 typical compute jobs' },
       { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~20 automation runs' },
-      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires (24mo)' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
     meta: { packId: 'demo_small', priceUsd: 9, meterUnits: 5000 },
   },
@@ -189,7 +193,7 @@ export const packs = [
     features: [
       { icon: 'fa-solid fa-spider', color: 'primary', text: '~200 typical compute jobs' },
       { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~80 automation runs' },
-      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires (24mo)' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
     meta: { packId: 'demo_medium', priceUsd: 25, meterUnits: 20000 },
   },
@@ -206,7 +210,7 @@ export const packs = [
       { icon: 'fa-solid fa-spider', color: 'primary', text: '~1,000 typical compute jobs' },
       { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~400 automation runs' },
       { icon: 'fa-solid fa-tag', color: 'success', text: 'Best per-unit value' },
-      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires (24mo)' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
     meta: { packId: 'demo_large', priceUsd: 99, meterUnits: 100000 },
   },
