@@ -26,6 +26,7 @@ description: >
      - Missing form validation or confirmation dialogs on destructive actions
      - Inconsistent selectors in E2E tests (prefer getByRole/getByPlaceholder)
      - Broken or nonexistent route references
+     - Store-contract tests that only assert a mock was called, not the resulting store state (interaction-only assertions let a dropped field slip through)
    - Fix all issues found before proceeding
 
 2. **Lint** — `npm run lint`

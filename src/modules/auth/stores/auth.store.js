@@ -131,7 +131,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
-        if (res.data.pendingRequests) this.pendingRequests = res.data.pendingRequests;
+        this.pendingRequests = res.data.pendingRequests || [];
 
         coreStore.refreshNav(this.isLoggedIn);
 
