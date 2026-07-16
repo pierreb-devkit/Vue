@@ -46,6 +46,7 @@ vi.mock('../../auth/stores/auth.store', () => ({
 import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
+import { packs as realPacks } from '../config/billing.static-content.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -347,5 +348,66 @@ describe('BillingPacksComponent — purchase flow', () => {
     await flushPromises();
     expect(store.createExtrasCheckout).not.toHaveBeenCalled();
     expect(pushFn).toHaveBeenCalledWith({ path: '/organization-required' });
+  });
+});
+
+// ─── Suite 4: Real static-content export (regression guard for #4458) ────────
+// Renders against the ACTUAL `packs` export from billing.static-content.js — not
+// a hand-written V4 mock. This is the shape that crashed in #4458: the card render
+// (item.price.amount unguarded) and the CTA id (item.id undefined on legacy packs).
+
+describe('BillingPacksComponent — real static-content export (not a hand-written mock)', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    livePacks.splice(0, livePacks.length, ...realPacks);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    livePacks.splice(0);
+  });
+
+  it('renders one card per real devkit pack without throwing', async () => {
+    expect(() => {
+      wrapper = mountPacks();
+    }).not.toThrow();
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    expect(cards.length).toBe(realPacks.length);
+  });
+
+  it('every real pack resolves a string price.amount (guards the unguarded item.price.amount crash)', async () => {
+    wrapper = mountPacks();
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    for (const card of cards) {
+      expect(typeof card.props('item').price?.amount).toBe('string');
+    }
+  });
+
+  it('every real pack resolves a defined item.id (guards the undefined-id no-op CTA)', async () => {
+    wrapper = mountPacks();
+    await flushPromises();
+    const cards = wrapper.findAllComponents(BillingCardComponent);
+    const ids = cards.map((card) => card.props('item').id);
+    expect(ids).toEqual(realPacks.map((p) => p.id));
+    expect(ids.every((id) => typeof id === 'string' && id.length > 0)).toBe(true);
+  });
+
+  it('cta-click on a real pack triggers checkout with its real id', async () => {
+    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+    wrapper = mountPacks();
+    await flushPromises();
+    const firstCard = wrapper.findAllComponents(BillingCardComponent)[0];
+    const expectedId = realPacks[0].id;
+    firstCard.vm.$emit('cta-click', { id: expectedId });
+    await flushPromises();
+    expect(store.createExtrasCheckout).toHaveBeenCalledWith(expectedId);
   });
 });

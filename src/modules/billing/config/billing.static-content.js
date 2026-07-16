@@ -1,11 +1,20 @@
 /**
- * Billing module — static marketing content (devkit defaults).
+ * Billing module — static marketing content (devkit generic defaults).
  *
  * Contains plan copy, pack definitions, pricing-mode hint and FAQ entries.
- * Downstream projects override these with their own branded content.
- * No secrets or environment-specific values belong here.
+ * This file is STACK-MANAGED — do NOT edit it to add downstream/project copy,
+ * it is overwritten wholesale by `/update-stack --theirs`. Downstream projects
+ * customize via `config.billing.staticContent` (project config, e.g.
+ * `src/config/defaults/<project>.config.js`), resolved per-key by
+ * `billing.resolveStaticContent.js` (project value wins when present, even
+ * `null`, for DISPLAY-OPTIONAL keys — pricingMode/tabs/header/halo. For the
+ * STRUCTURAL keys below — plans/packs/faqs — an explicit `null` (or non-array/
+ * non-object) is coerced back to the devkit default, since consumers `.map()`/
+ * read properties on these unconditionally; the devkit default here is only
+ * the fallback). No secrets or environment-specific values belong in either
+ * layer.
  *
- * Schema (downstream contract):
+ * Schema (per-key resolver contract — see billing.resolveStaticContent.js):
  *   - pricingMode  : 'subscription' | 'packs' | 'both-tabs' | null
  *                    When null, mode is derived from server `meterMode` + presence of packs.
  *   - plans        : Plan[]
@@ -74,7 +83,10 @@
 export const pricingMode = 'both-tabs';
 
 /**
- * @desc Marketing plans — devkit defaults. Downstream projects replace this whole array.
+ * @desc Marketing plans — devkit generic defaults. Downstream projects do NOT edit this
+ * array directly — customize via `config.billing.staticContent.plans` (project config),
+ * resolved by `billing.resolveStaticContent.js`. This file is stack-managed and is
+ * wiped by `/update-stack --theirs`.
  * @type {Array<Object>}
  */
 export const plans = [
@@ -130,74 +142,77 @@ export const plans = [
 ];
 
 /**
- * @desc Extra credit packs — devkit demo defaults (visual QA for the redesign PR).
- * Downstream projects override this fully with their own marketing copy and Stripe pack IDs.
- * The devkit demo is safe because each downstream project owns its own static-content.js
- * (it is a downstream-owned file, not synced via /update-stack).
+ * @desc Extra credit packs — devkit generic demo defaults (V4 unified card schema,
+ * same shape as `plans` — see BillingCardComponent's ITEM SCHEMA docblock). This file
+ * is stack-managed — downstream projects do NOT edit it directly, they customize via
+ * `config.billing.staticContent.packs` (project config), resolved per-key by
+ * `billing.resolveStaticContent.js`. Direct edits here are wiped by `/update-stack --theirs`.
  *
- * Pack shape (extended):
+ * Pack shape (V4 — unified with plans):
  *   {
- *     packId: string,
- *     label: string,
- *     priceUsd: number,
- *     meterUnits: number,
- *     featureSections?: [{                 // OPTIONAL — same shape as plan featureSections
- *       title?: string,
- *       items: [{ text, icon?, iconColor? }]
- *     }],
+ *     id, title, subtitle, highlight, badge, cta,
+ *     price: { amount: string, period: string|null },  // packs are one-time — period is always null
+ *     info?: string|null,
+ *     features: [{ icon, color, text }],                // flat list, same as plan features
+ *     meta?: { packId, priceUsd, meterUnits },           // raw Stripe-facing values. Consumers
+ *                                                         // needing the legacy { packId, label,
+ *                                                         // priceUsd, meterUnits } shape (e.g. the
+ *                                                         // extras-checkout modal) read them from
+ *                                                         // here; `id` is the canonical identifier
+ *                                                         // and MUST equal `meta.packId`.
  *   }
  *
  * @type {Array<Object>}
  */
 export const packs = [
   {
-    packId: 'demo_small',
-    label: 'Small Pack',
-    priceUsd: 9,
-    meterUnits: 5000,
-    featureSections: [
-      {
-        title: null,
-        items: [
-          { text: '~50 typical scrap runs', icon: 'fa-solid fa-spider' },
-          { text: '~20 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
-          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
-        ],
-      },
+    id: 'demo_small',
+    title: 'Small Pack',
+    subtitle: 'Quick top-up',
+    highlight: false,
+    badge: null,
+    price: { amount: '$9.00', period: null },
+    cta: 'Buy Small Pack',
+    info: null,
+    features: [
+      { icon: 'fa-solid fa-spider', color: 'primary', text: '~50 typical compute jobs' },
+      { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~20 automation runs' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
+    meta: { packId: 'demo_small', priceUsd: 9, meterUnits: 5000 },
   },
   {
-    packId: 'demo_medium',
-    label: 'Medium Pack',
-    priceUsd: 25,
-    meterUnits: 20000,
-    featureSections: [
-      {
-        title: null,
-        items: [
-          { text: '~200 typical scrap runs', icon: 'fa-solid fa-spider' },
-          { text: '~80 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
-          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
-        ],
-      },
+    id: 'demo_medium',
+    title: 'Medium Pack',
+    subtitle: 'For sustained work',
+    highlight: false,
+    badge: null,
+    price: { amount: '$25.00', period: null },
+    cta: 'Buy Medium Pack',
+    info: null,
+    features: [
+      { icon: 'fa-solid fa-spider', color: 'primary', text: '~200 typical compute jobs' },
+      { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~80 automation runs' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
+    meta: { packId: 'demo_medium', priceUsd: 25, meterUnits: 20000 },
   },
   {
-    packId: 'demo_large',
-    label: 'Large Pack',
-    priceUsd: 99,
-    meterUnits: 100000,
-    featureSections: [
-      {
-        title: null,
-        items: [
-          { text: '~1,000 typical scrap runs', icon: 'fa-solid fa-spider' },
-          { text: '~400 autofix sessions', icon: 'fa-solid fa-wand-magic-sparkles' },
-          { text: 'Best value (saves ~10%)', icon: 'fa-solid fa-tag', iconColor: 'success' },
-          { text: 'Never expires (24mo)', icon: 'fa-solid fa-infinity' },
-        ],
-      },
+    id: 'demo_large',
+    title: 'Large Pack',
+    subtitle: 'Best value for heavy usage',
+    highlight: true,
+    badge: 'Best Value',
+    price: { amount: '$99.00', period: null },
+    cta: 'Buy Large Pack',
+    info: null,
+    features: [
+      { icon: 'fa-solid fa-spider', color: 'primary', text: '~1,000 typical compute jobs' },
+      { icon: 'fa-solid fa-wand-magic-sparkles', color: 'primary', text: '~400 automation runs' },
+      { icon: 'fa-solid fa-tag', color: 'success', text: 'Best per-unit value' },
+      { icon: 'fa-solid fa-infinity', color: 'primary', text: 'Never expires' },
     ],
+    meta: { packId: 'demo_large', priceUsd: 99, meterUnits: 100000 },
   },
 ];
 
