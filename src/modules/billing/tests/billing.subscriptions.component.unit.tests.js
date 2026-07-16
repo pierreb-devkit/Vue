@@ -26,11 +26,17 @@ vi.mock('../../auth/stores/auth.store', () => ({
 }));
 
 // ─── Decouple from tenant-specific plan IDs ──────────────────────────────────
+// livePacks is a hoisted live-array (empty by default — existing suites below never
+// exercise the packsConfig fallback, they always seed store.usageMeter.packsAvailable).
+// Suite 3 splices the REAL billing.static-content.js `packs` export in to verify the
+// extras-checkout-modal adapter against real data, not a hand-written mock.
+
+const livePacks = vi.hoisted(() => []);
 
 vi.mock('../lib/billing.resolveStaticContent.js', () => ({
   resolveStaticContent: () => ({
     plans: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }],
-    packs: [],
+    packs: livePacks,
   }),
 }));
 
@@ -38,6 +44,7 @@ vi.mock('../lib/billing.resolveStaticContent.js', () => ({
 
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
+import { packs as realPacks } from '../config/billing.static-content.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1479,5 +1486,59 @@ describe('BillingSubscriptionsComponent — T6: 2-col layout, single meter bar, 
     const meterCards = wrapper.findAll('.billing-subscriptions__meter-card');
     // Left col has 1 meter card; extras is in right col with its own class
     expect(meterCards.length).toBe(1);
+  });
+});
+
+// ─── Suite 3: extras-checkout-modal adapter against the REAL static-content export ──
+// #4458: static-content packs moved to the V4 unified card schema. The extras-checkout
+// modal still requires the legacy { packId, label, priceUsd, meterUnits } shape — this
+// verifies the extrasPacks() adapter maps the ACTUAL billing.static-content.js packs
+// export to that shape (not a hand-written legacy mock) when the backend hasn't
+// returned packsAvailable yet (packsConfig fallback path).
+
+describe('BillingSubscriptionsComponent — extras modal packs (real static-content fallback)', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    livePacks.splice(0, livePacks.length, ...realPacks);
+    const store = useBillingStore();
+    // No backend packsAvailable — forces the extrasPacks() packsConfig fallback.
+    seedMeterStore(
+      store,
+      { ...mockUsageMeterNormal, packsAvailable: [] },
+      { ...mockExtrasBalance, packsAvailable: [] },
+    );
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    livePacks.splice(0);
+  });
+
+  it('adapts every real V4 pack to the legacy modal shape { packId, label, priceUsd, meterUnits }', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    const modal = wrapper.findComponent({ name: 'BillingExtrasCheckoutModalComponent' });
+    const packsProp = modal.props('packs');
+    expect(packsProp.length).toBe(realPacks.length);
+    for (const pack of packsProp) {
+      expect(typeof pack.packId).toBe('string');
+      expect(typeof pack.label).toBe('string');
+      expect(typeof pack.priceUsd).toBe('number');
+      expect(typeof pack.meterUnits).toBe('number');
+    }
+  });
+
+  it('modal packId matches the real static-content pack id (Stripe-facing contract preserved)', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+    const modal = wrapper.findComponent({ name: 'BillingExtrasCheckoutModalComponent' });
+    const packsProp = modal.props('packs');
+    expect(packsProp.map((p) => p.packId)).toEqual(realPacks.map((p) => p.id));
+    expect(packsProp.map((p) => p.priceUsd)).toEqual(realPacks.map((p) => p.meta.priceUsd));
+    expect(packsProp.map((p) => p.meterUnits)).toEqual(realPacks.map((p) => p.meta.meterUnits));
   });
 });

@@ -449,6 +449,14 @@ export default {
     },
     /**
      * @desc Available extras packs for the inline checkout modal.
+     * BillingExtrasCheckoutModalComponent needs the legacy flat shape
+     * `{ packId, label, priceUsd, meterUnits }` — Stripe-backed `packsAvailable`
+     * already comes in that shape from the backend. `packsConfig` (static-content
+     * fallback) is V4-unified (`{ id, title, price:{amount,period}, meta:{packId,
+     * priceUsd, meterUnits}, ... }` — same shape BillingCardComponent renders via
+     * BillingPacksComponent), so it's adapted here at the consumer boundary rather
+     * than at the source: both this modal and the pricing-page card get their
+     * required shape from the SAME `packsConfig` static content.
      * @returns {Array<{packId: string, label: string, priceUsd: number, meterUnits: number}>}
      */
     extrasPacks() {
@@ -457,7 +465,12 @@ export default {
         this.billingStore.extrasBalance?.packsAvailable ??
         null;
       if (fromStore && fromStore.length > 0) return fromStore;
-      return packsConfig;
+      return packsConfig.map((pack) => ({
+        packId: pack.meta?.packId ?? pack.id,
+        label: pack.title,
+        priceUsd: pack.meta?.priceUsd ?? null,
+        meterUnits: pack.meta?.meterUnits ?? null,
+      }));
     },
     /**
      * @desc Current subscription status normalized to a displayable string.
