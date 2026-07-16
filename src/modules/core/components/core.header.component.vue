@@ -152,11 +152,15 @@ export default {
       return authStore.isLoggedIn;
     },
     /**
-     * @desc Whether to force-show the header on `/organization-required` for a
-     *       signed-in user who has no organization yet. The sidenav is hidden on
-     *       that page (it gates on `hasOrganization`), so by default the header is
-     *       shown there to keep some chrome. A sidenav-only consumer that hides the
-     *       header once signed in can opt out via
+     * @desc Whether to force-show the header on the organizations module's
+     *       org-required gate page, for a signed-in user who has no organization
+     *       yet. The sidenav is hidden on that page (it gates on
+     *       `hasOrganization`), so by default the header is shown there to keep
+     *       some chrome. Driven by `meta.orgGate` on the matched route (set by
+     *       `organizations.router.js`) rather than a hardcoded path literal —
+     *       core must not know module route URLs, or renaming the route would
+     *       silently break this. A sidenav-only consumer that hides the header
+     *       once signed in can opt out via
      *       `config.vuetify.theme.header.showOnOrgRequired: false`, so the page no
      *       longer falls back to the signed-out top-nav (the org-required view
      *       carries its own sign-out escape). Default (undefined) preserves the
@@ -165,7 +169,7 @@ export default {
      */
     showOnOrgRequired() {
       return (
-        this.$route.path === '/organization-required'
+        Boolean(this.$route.meta?.orgGate)
         && this.config.vuetify.theme.header?.showOnOrgRequired !== false
       );
     },

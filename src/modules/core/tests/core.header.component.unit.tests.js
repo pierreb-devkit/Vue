@@ -45,9 +45,12 @@ const makeConfig = () => ({
 
 /**
  * @desc Mount the header component with router + config globals.
+ * @param {String} routePath - `$route.path` mock.
+ * @param {Object} headerExtra - merged into `config.vuetify.theme.header`.
+ * @param {Object} routeMeta - `$route.meta` mock (e.g. `{ orgGate: true }`).
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountHeader = (routePath = '/', headerExtra = {}) => {
+const mountHeader = (routePath = '/', headerExtra = {}, routeMeta = {}) => {
   const vuetify = createVuetify({ components, directives });
   const push = vi.fn();
   const config = makeConfig();
@@ -55,7 +58,7 @@ const mountHeader = (routePath = '/', headerExtra = {}) => {
   return mount(CoreHeaderComponent, {
     global: {
       plugins: [vuetify],
-      mocks: { $router: { push }, $route: { path: routePath } },
+      mocks: { $router: { push }, $route: { path: routePath, meta: routeMeta } },
       config: { globalProperties: { config } },
       // VAppBar needs an injected layout (v-app); stub it so we can exercise the
       // navigate() method in isolation without a full layout wrapper. The stub
@@ -76,18 +79,21 @@ describe('CoreHeaderComponent', () => {
     vi.restoreAllMocks();
   });
 
-  // #4421 — the header force-shows on /organization-required (the sidenav is
-  // hidden there) unless a sidenav-only consumer opts out via config.
-  describe('org-required header visibility (#4421)', () => {
-    it('shows the header on /organization-required by default (signed-in, no org)', () => {
+  // #4421 — the header force-shows on the org-required gate page (the sidenav
+  // is hidden there) unless a sidenav-only consumer opts out via config.
+  // #4448 — driven by `meta.orgGate` (set by organizations.router.js), not a
+  // hardcoded '/organization-required' path literal — core must not know
+  // module route URLs.
+  describe('org-required header visibility (#4421, #4448)', () => {
+    it('shows the header on the org-gate route by default (signed-in, no org)', () => {
       authStoreState.isLoggedIn = true;
-      const wrapper = mountHeader('/organization-required');
+      const wrapper = mountHeader('/organization-required', {}, { orgGate: true });
       expect(wrapper.find('header').exists()).toBe(true);
     });
 
     it('hides it there when the consumer opts out (showOnOrgRequired: false)', () => {
       authStoreState.isLoggedIn = true;
-      const wrapper = mountHeader('/organization-required', { showOnOrgRequired: false });
+      const wrapper = mountHeader('/organization-required', { showOnOrgRequired: false }, { orgGate: true });
       expect(wrapper.find('header').exists()).toBe(false);
     });
 
@@ -99,6 +105,20 @@ describe('CoreHeaderComponent', () => {
 
     it('still shows the public header when signed out', () => {
       const wrapper = mountHeader('/tasks');
+      expect(wrapper.find('header').exists()).toBe(true);
+    });
+
+    // #4448 — proves the decoupling: the path literal alone no longer drives
+    // visibility (meta flag is what matters), and vice versa.
+    it('does NOT show the header on /organization-required without meta.orgGate (path literal alone no longer drives it)', () => {
+      authStoreState.isLoggedIn = true;
+      const wrapper = mountHeader('/organization-required');
+      expect(wrapper.find('header').exists()).toBe(false);
+    });
+
+    it('shows the header on any route carrying meta.orgGate, regardless of path', () => {
+      authStoreState.isLoggedIn = true;
+      const wrapper = mountHeader('/some-other-gate-path', {}, { orgGate: true });
       expect(wrapper.find('header').exists()).toBe(true);
     });
   });
