@@ -49,7 +49,9 @@ rebase/force-push reverted the PR to draft:
 ```bash
 STATE=$(gh pr view "$PR" --json isDraft,statusCheckRollup)
 IS_DRAFT=$(echo "$STATE" | jq -r '.isDraft')
-CI_GREEN=$(echo "$STATE" | jq -e '[.statusCheckRollup[].conclusion] | all(. == "SUCCESS" or . == "NEUTRAL" or . == "SKIPPED")' >/dev/null 2>&1 && echo true || echo false)
+# green = rollup non-empty (an empty rollup right after a force-push/rebase must NOT read as green) AND
+# every check is SUCCESS/NEUTRAL/SKIPPED (all non-blocking; a bare FAILURE/CANCELLED or still-pending check stays not-green)
+CI_GREEN=$(echo "$STATE" | jq -r '[.statusCheckRollup[]? | (.conclusion // .state)] | length > 0 and all(. as $s | ["SUCCESS","NEUTRAL","SKIPPED"] | index($s) != null)')
 
 if [ "$IS_DRAFT" = "true" ] && [ "$CI_GREEN" = "true" ]; then
   gh pr ready "$PR"
