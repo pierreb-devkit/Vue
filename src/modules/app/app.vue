@@ -30,6 +30,7 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <billingNavExtras />
     <devkitNav v-if="isLoggedIn && !$route.meta.marketing" />
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
@@ -40,7 +41,6 @@
     <organizationsHeaderAction />
     <legalCookieBanner />
     <legalFooterSection />
-    <billingNavExtras />
     <v-main class="pb-0" :style="mainStyle">
       <appErrorBoundary>
         <router-view />
