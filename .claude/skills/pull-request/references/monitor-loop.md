@@ -13,14 +13,24 @@ PR=<number>
 
 After `gh pr ready`, run this loop yourself — do not wait for the user.
 
+**Ordering invariant:** the PR must be ready (not draft) before this loop
+starts — CodeRabbit never reviews a draft PR, so waiting on it while draft is
+a guaranteed silent deadlock. Step 0 below is a defensive re-check, not a
+substitute for flipping to ready in §5 before entering the loop.
+
 ## Loop procedure
 
 ```text
 consecutive_zero = 0
 
 REPEAT:
+  0. Draft guard (belt-and-braces)      → see 6a-0. If still draft with CI green, flip to ready now.
   1. Wait for CI                        → sleep 30 then gh pr checks "$PR" --watch
   2. If CI fails                        → fix, /verify, commit, push, consecutive_zero=0, GOTO 1
+  2a. Re-run draft guard                → see 6a-0. CI is confirmed green here (whether it started
+                                           green or just turned green in step 1) — re-checking closes
+                                           the gap where a pass starting draft+red would otherwise sail
+                                           straight through to mergeability/grace/review-wait still draft.
   2b. Check mergeable status            → gh pr view "$PR" --json mergeable --jq .mergeable
                                            if "CONFLICTING" → report to user and STOP
                                            if "UNKNOWN" → sleep 30, retry (up to 3 times), then proceed
@@ -33,6 +43,39 @@ REPEAT:
                                            if consecutive_zero >= 3 → check branch protection (see 6f), then STOP ✓
                                            else GOTO 3
 ```
+
+## 6a-0. Draft guard (belt-and-braces)
+
+Run at the top of **every** pass, before waiting on CI or reading threads.
+Covers the race where the loop started before the ready-flip landed, or a
+rebase/force-push reverted the PR to draft:
+
+```bash
+STATE=$(gh pr view "$PR" --json isDraft,statusCheckRollup)
+IS_DRAFT=$(echo "$STATE" | jq -r '.isDraft')
+# green = rollup non-empty (an empty rollup right after a force-push/rebase must NOT read as green) AND
+# every check is SUCCESS/NEUTRAL/SKIPPED (all non-blocking; a bare FAILURE/CANCELLED or still-pending check stays not-green)
+CI_GREEN=$(echo "$STATE" | jq -r '[.statusCheckRollup[]? | (.conclusion // .state)] | length > 0 and all(. as $s | ["SUCCESS","NEUTRAL","SKIPPED"] | index($s) != null)')
+
+if [ "$IS_DRAFT" = "true" ] && [ "$CI_GREEN" = "true" ]; then
+  if ! gh pr ready "$PR"; then
+    sleep 5
+    if ! gh pr ready "$PR"; then
+      echo "gh pr ready failed twice on PR $PR — stopping to avoid a draft deadlock." >&2
+      exit 1
+    fi
+  fi
+fi
+```
+
+If `gh pr ready` fails, retry once (5s later); if it still fails, stop and
+report to user — never fall through to mergeability/grace/review-wait with
+the PR still draft. Continue only once the PR is confirmed non-draft.
+
+If still draft with CI **not** green, do nothing here — fall through to 6a,
+fix CI first. Once CI turns green (either at pass start or mid-pass in 6a),
+this guard re-runs at step 2a before mergeability/grace/review-wait — never
+"next pass."
 
 ## 6a. Wait for CI
 
