@@ -84,8 +84,7 @@ describe('user.profile.view', () => {
     expect(wrapper.vm.confirmDeleteAccount).toBe(false);
   });
 
-  test('deleteAccount method calls axios.delete and redirects to /signin on success', async () => {
-    const axios = (await import('../../../lib/services/axios')).default;
+  test('deleteAccount calls the users store, signs out, and redirects to /signin on success', async () => {
     const routerPush = vi.fn();
 
     const wrapper = shallowMount(UserProfileView, {
@@ -98,18 +97,16 @@ describe('user.profile.view', () => {
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const authStore = useAuthStore();
     authStore.signout = vi.fn().mockResolvedValue();
-    axios.delete.mockResolvedValue({});
+    wrapper.vm.usersStore.deleteAccount = vi.fn().mockResolvedValue();
 
     await wrapper.vm.deleteAccount();
 
-    expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/users'));
+    expect(wrapper.vm.usersStore.deleteAccount).toHaveBeenCalled();
     expect(authStore.signout).toHaveBeenCalled();
     expect(routerPush).toHaveBeenCalledWith('/signin');
   });
 
   test('deleteAccount closes dialog on error (swallows exception)', async () => {
-    const axios = (await import('../../../lib/services/axios')).default;
-
     const wrapper = shallowMount(UserProfileView, {
       global: {
         mocks: sharedMocks(),
@@ -118,11 +115,53 @@ describe('user.profile.view', () => {
     });
 
     wrapper.vm.confirmDeleteAccount = true;
-    axios.delete.mockRejectedValue(new Error('Server error'));
+    wrapper.vm.usersStore.deleteAccount = vi.fn().mockRejectedValue(new Error('Server error'));
 
     await wrapper.vm.deleteAccount();
 
     expect(wrapper.vm.confirmDeleteAccount).toBe(false);
+  });
+
+  test('updateProfile calls the users store then refreshes abilities', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.refreshAbilities = vi.fn().mockResolvedValue();
+    wrapper.vm.usersStore.updateProfile = vi.fn().mockResolvedValue({});
+
+    const formData = { firstName: 'Jane', lastName: 'Smith', bio: 'Dev', position: 'Engineer' };
+    await wrapper.vm.updateProfile(formData);
+
+    expect(wrapper.vm.usersStore.updateProfile).toHaveBeenCalledWith(formData);
+    expect(authStore.refreshAbilities).toHaveBeenCalled();
+  });
+
+  test('updateProfile swallows a store error (interceptor handles the snackbar)', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    wrapper.vm.usersStore.updateProfile = vi.fn().mockRejectedValue(new Error('Server error'));
+
+    await expect(wrapper.vm.updateProfile({ firstName: 'Jane' })).resolves.toBeUndefined();
+  });
+});
+
+describe('user.profile.view — no direct axios import (routed through users.store)', () => {
+  it('does not import axios directly from the view (UI → Store → API layering)', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/user.profile.view.vue'), 'utf8');
+    expect(sfc).not.toMatch(/import axios/);
+    expect(sfc).toMatch(/import \{ useUsersStore \} from '\.\.\/stores\/users\.store'/);
   });
 });
 

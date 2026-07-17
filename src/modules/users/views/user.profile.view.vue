@@ -50,7 +50,7 @@
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
-import axios from '../../../lib/services/axios';
+import { useUsersStore } from '../stores/users.store';
 import userProfileComponent from '../components/user.profile.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
@@ -58,13 +58,14 @@ export default {
   name: 'UserProfileView',
   components: { userProfileComponent, coreConfirmDialog },
   /**
-   * @desc Wires auth and organizations stores for computed properties and methods.
-   * @returns {{ authStore: Object, organizationsStore: Object }}
+   * @desc Wires auth, organizations, and users stores for computed properties and methods.
+   * @returns {{ authStore: Object, organizationsStore: Object, usersStore: Object }}
    */
   setup() {
     return {
       authStore: useAuthStore(),
       organizationsStore: useOrganizationsStore(),
+      usersStore: useUsersStore(),
     };
   },
   data() {
@@ -90,19 +91,13 @@ export default {
   },
   methods: {
     /**
-     * @desc Persist updated profile fields to the API and refresh CASL abilities.
+     * @desc Persist updated profile fields via the users store and refresh CASL abilities.
      * @param {{ firstName: string, lastName: string, bio: string, position: string }} formData
      * @returns {Promise<void>}
      */
     async updateProfile(formData) {
       try {
-        const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
-        await axios.put(`${api}/users`, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          bio: formData.bio,
-          position: formData.position,
-        });
+        await this.usersStore.updateProfile(formData);
         await this.authStore.refreshAbilities();
       } catch {
         // interceptor handles snackbar
@@ -116,14 +111,14 @@ export default {
       await this.authStore.refreshAbilities();
     },
     /**
-     * @desc Permanently delete the authenticated user's account, sign out,
-     *       and redirect to the sign-in page. Closes the dialog on error.
+     * @desc Permanently delete the authenticated user's account via the
+     *       users store, sign out, and redirect to the sign-in page. Closes
+     *       the dialog on error.
      * @returns {Promise<void>}
      */
     async deleteAccount() {
       try {
-        const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
-        await axios.delete(`${api}/users`);
+        await this.usersStore.deleteAccount();
         await this.authStore.signout();
         this.$router.push('/signin');
       } catch {

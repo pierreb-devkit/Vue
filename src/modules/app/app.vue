@@ -37,8 +37,10 @@
 
     <organizationsAdminPendingBanner />
     <organizationsLoginNotices />
+    <organizationsHeaderAction />
     <legalCookieBanner />
     <legalFooterSection />
+    <billingNavExtras />
     <v-main class="pb-0" :style="mainStyle">
       <appErrorBoundary>
         <router-view />
@@ -66,8 +68,10 @@ import authPendingRequestBanner from '../auth/components/pendingRequestBanner.co
 
 import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
 import organizationsLoginNotices from '../organizations/components/organizations.loginNotices.component.vue';
+import organizationsHeaderAction from '../organizations/components/organizations.headerAction.component.vue';
 import legalCookieBanner from '../legal/components/legal.cookieBanner.component.vue';
 import legalFooterSection from '../legal/components/legal.footerSection.component.vue';
+import billingNavExtras from '../billing/components/billing.navExtras.component.vue';
 import appErrorBoundary from './components/app.errorBoundary.component.vue';
 
 /**
@@ -84,8 +88,10 @@ export default {
 
     organizationsAdminPendingBanner,
     organizationsLoginNotices,
+    organizationsHeaderAction,
     legalCookieBanner,
     legalFooterSection,
+    billingNavExtras,
     appErrorBoundary,
   },
   /**

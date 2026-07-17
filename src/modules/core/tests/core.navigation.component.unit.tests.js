@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { setActivePinia, createPinia } from 'pinia';
+import { useNavExtras } from '../../../lib/composables/useNavExtras';
 
 // Mock vuetify composables used in the component script setup
 vi.mock('vuetify', async (importOriginal) => {
@@ -20,7 +24,7 @@ vi.mock('vuetify', async (importOriginal) => {
 
 // Mock auth store — report logged in + org so the drawer actually renders.
 // authStoreState is a mutable hoisted object so individual tests can override
-// serverConfig (e.g. to enable billing.meterMode) without re-mocking.
+// serverConfig without re-mocking.
 const authStoreState = vi.hoisted(() => ({
   isLoggedIn: true,
   user: { currentOrganization: { _id: 'org1', name: 'Org' } },
@@ -67,7 +71,7 @@ const makeConfig = (overrides = {}) => ({
  * @param {Object} opts
  * @param {Array}  opts.nav - items for the main nav list
  * @param {Array}  opts.navBottom - items for the bottom nav list
- * @param {Object} [opts.stubsOverride] - additional stubs merged after defaults (e.g. to replace the gauge stub)
+ * @param {Object} [opts.stubsOverride] - additional stubs merged after defaults
  * @param {Object} [opts.configOverrides] - partial config overrides (e.g. { app: { logoFile: '/logo.svg' } })
  * @returns {import('@vue/test-utils').VueWrapper}
  */
@@ -86,8 +90,6 @@ const mountNav = ({ nav = [], navBottom = [], stubsOverride = {}, configOverride
         'router-link': { template: '<a><slot /></a>' },
         // Stub v-navigation-drawer to a plain wrapper — the real one needs a <v-layout> ancestor
         'v-navigation-drawer': { template: '<div class="v-navigation-drawer"><slot /><slot name="append" /></div>' },
-        // Stub the gauge to prevent it from auto-fetching billing data on mount
-        BillingNavComputeGaugeComponent: { template: '<div class="stub-billing-nav-compute-gauge" />' },
         ...stubsOverride,
       },
     },
@@ -235,37 +237,41 @@ describe('core.navigation.component — template rendering', () => {
   });
 });
 
-describe('core.navigation.component — compute gauge slot', () => {
+describe('core.navigation.component — nav-extras registry seam (useNavExtras)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     coreStoreState.nav = [];
     coreStoreState.navBottom = [];
-    // Reset auth state to default (no billing) so tests are independent
     authStoreState.serverConfig = { organizations: { enabled: false } };
+    // Isolate the module-scope singleton registry between tests.
+    const { extras } = useNavExtras();
+    extras.value = [];
   });
 
-  it('meterMode computed returns false when serverConfig has no billing.meterMode', () => {
-    // The global mock returns serverConfig: { organizations: { enabled: false } }
-    // — no billing key → meterMode must be false
-    const wrapper = mountNav();
-    expect(wrapper.vm.meterMode).toBe(false);
+  it('does not import billing directly — core has no compile-time dependency on the optional module', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../components/core.navigation.component.vue'), 'utf8');
+    expect(sfc).not.toMatch(/modules\/billing/);
   });
 
-  it('does not render BillingNavComputeGaugeComponent when meterMode is false', () => {
-    // Global auth mock has no billing.meterMode — gauge must be absent
+  it('renders nothing in the extras slot when the registry is empty', () => {
     const wrapper = mountNav();
-    const gauge = wrapper.findComponent({ name: 'BillingNavComputeGaugeComponent' });
-    expect(gauge.exists()).toBe(false);
+    expect(wrapper.find('.stub-nav-extra').exists()).toBe(false);
   });
 
-  it('meterMode computed reflects authStore.serverConfig.billing.meterMode', () => {
-    // The auth store mock is hoisted and has no billing key → meterMode = false.
-    // We verify the computed reads the right path by mounting and checking directly.
+  it('renders a component registered via useNavExtras().register()', () => {
+    const { register } = useNavExtras();
+    register('test-extra', { name: 'TestExtra', template: '<div class="stub-nav-extra">extra</div>' });
     const wrapper = mountNav();
-    // Global mock: serverConfig = { organizations: { enabled: false } } → no billing → false
-    expect(wrapper.vm.meterMode).toBe(false);
-    // Verify template guard: if meterMode is false, gauge component must not render
-    expect(wrapper.findComponent({ name: 'BillingNavComputeGaugeComponent' }).exists()).toBe(false);
+    expect(wrapper.find('.stub-nav-extra').exists()).toBe(true);
+  });
+
+  it('stops rendering a component after useNavExtras().unregister()', () => {
+    const { register, unregister } = useNavExtras();
+    register('test-extra', { name: 'TestExtra', template: '<div class="stub-nav-extra">extra</div>' });
+    unregister('test-extra');
+    const wrapper = mountNav();
+    expect(wrapper.find('.stub-nav-extra').exists()).toBe(false);
   });
 
   it('navBottom items appear before sign-out in the append slot', () => {
@@ -306,19 +312,20 @@ describe('core.navigation.component — compute gauge slot', () => {
     expect(signOutPos).toBeGreaterThan(settingsPos);
   });
 
-  it('renders stubbed BillingNavComputeGaugeComponent when meterMode is true', () => {
-    // Override auth state so meterMode resolves to true for this test only.
-    // The try/finally below resets it immediately so the override cannot leak
-    // into subsequent tests/describes even if mountNav() ever throws.
-    const defaultServerConfig = { organizations: { enabled: false } };
-    authStoreState.serverConfig = { organizations: { enabled: false }, billing: { meterMode: true } };
-    try {
-      const wrapper = mountNav();
-      expect(wrapper.vm.meterMode).toBe(true);
-      expect(wrapper.find('.stub-billing-nav-compute-gauge').exists()).toBe(true);
-    } finally {
-      authStoreState.serverConfig = defaultServerConfig;
-    }
+  it('renders multiple registered extras above navBottom, in registration order', () => {
+    const { register } = useNavExtras();
+    register('extra-a', { name: 'ExtraA', template: '<div class="stub-nav-extra-a">A</div>' });
+    register('extra-b', { name: 'ExtraB', template: '<div class="stub-nav-extra-b">B</div>' });
+    const wrapper = mountNav({
+      navBottom: [{ path: '/account', name: 'Account', meta: { display: true, icon: 'fa-solid fa-user', position: 'bottom' } }],
+    });
+    const html = wrapper.html();
+    const aPos = html.indexOf('stub-nav-extra-a');
+    const bPos = html.indexOf('stub-nav-extra-b');
+    const accountPos = html.indexOf('Account');
+    expect(aPos).toBeGreaterThan(-1);
+    expect(bPos).toBeGreaterThan(aPos);
+    expect(accountPos).toBeGreaterThan(bPos);
   });
 });
 
