@@ -11,7 +11,7 @@
         :base-path="basePath"
       >
         <template #actions>
-          <organizationsSwitcherComponent />
+          <component :is="action.component" v-for="action in headerActions" :key="action._id" />
         </template>
       </CorePageHeaderTabs>
     </v-container>
@@ -24,27 +24,25 @@
 
 <script>
 import { ability } from '../../../lib/helpers/ability';
-import { useAuthStore } from '../../auth/stores/auth.store';
-import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useUserHeaderActions } from '../../../lib/composables/useUserHeaderActions';
 import CorePageHeaderTabs from '../../core/components/core.pageHeaderTabs.component.vue';
-import organizationsSwitcherComponent from '../../organizations/components/organizations.switcher.component.vue';
 
 export default {
   name: 'UserView',
-  components: { CorePageHeaderTabs, organizationsSwitcherComponent },
+  components: { CorePageHeaderTabs },
   /**
-   * @desc Wires auth + organizations stores for the layout-level isLoggedIn
-   *       watcher. The watcher mirrors the pre-Gamma fetch behavior: it pre-
-   *       loads organizations as soon as auth flips to logged-in, so deep-links
-   *       into /users/organizations don't race the child view's own fetch
-   *       (which would leave the v-list empty on first paint).
-   * @returns {{ authStore: Object, organizationsStore: Object }}
+   * @desc Reads the account-header-actions registry (see
+   *       `useUserHeaderActions`) so the users module renders whatever
+   *       optional modules have registered (e.g. the organizations switcher,
+   *       via `organizations.headerAction.component.vue`) without importing
+   *       them directly. The on-login organizations pre-load previously
+   *       owned by this view's `isLoggedIn` watcher now lives in that
+   *       registrar component.
+   * @returns {{ headerActions: import('vue').Ref<Array> }}
    */
   setup() {
-    return {
-      authStore: useAuthStore(),
-      organizationsStore: useOrganizationsStore(),
-    };
+    const { extras: headerActions } = useUserHeaderActions();
+    return { headerActions };
   },
   computed: {
     /**
@@ -80,29 +78,6 @@ export default {
      */
     userCan() {
       return (action, subject) => (ability ? ability.can(action, subject) : true);
-    },
-    /**
-     * @desc Convenience read used by the watcher.
-     * @returns {boolean}
-     */
-    isLoggedIn() {
-      return this.authStore.isLoggedIn;
-    },
-  },
-  watch: {
-    /**
-     * @desc Pre-load organizations as soon as auth flips to logged-in. Mirrors
-     *       the pre-Gamma layout behavior so deep-links into the Organizations
-     *       child view don't paint an empty list while the child's own fetch
-     *       is still in flight. `immediate: true` ensures the load fires on
-     *       layout mount, not only on subsequent auth changes.
-     */
-    isLoggedIn: {
-      immediate: true,
-      async handler(loggedIn) {
-        if (!loggedIn) return;
-        await this.organizationsStore.fetchOrganizations().catch(() => {});
-      },
     },
   },
 };

@@ -71,9 +71,11 @@
       </v-list>
       <!-- Bottom section -->
       <template #append>
-        <!-- Compute gauge: ABOVE account row (meterMode only) -->
-        <v-list v-if="meterMode" :style="listStyle" nav class="py-0">
-          <BillingNavComputeGaugeComponent />
+        <!-- Extras: ABOVE account row. Registry seam (useNavExtras) — populated
+             by optional modules (e.g. billing's compute gauge) so core never
+             hard-imports them. Empty when nothing is registered. -->
+        <v-list v-if="navExtras.length" :style="listStyle" nav class="py-0">
+          <component :is="extra.component" v-for="extra in navExtras" :key="extra._id" />
         </v-list>
         <!-- Bottom nav items (account row lives here) -->
         <v-list v-if="navBottom.length" :style="listStyle" nav>
@@ -130,18 +132,21 @@ import { useTheme, useDisplay } from 'vuetify';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { useCoreStore } from '../stores/core.store';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
-// billing module is a devkit core dependency (not optional) — all downstream
-// projects include it. This follows the same pattern as user.view.vue importing
-// BillingSubscriptionsComponent. A consolidated cross-module refactor is tracked
-// as tech debt; this PR does not introduce a new pattern.
-import BillingNavComputeGaugeComponent from '../../billing/components/billing.navComputeGauge.component.vue';
+import { useNavExtras } from '../../../lib/composables/useNavExtras';
 /**
  * Component definition.
  */
 export default {
   name: 'DevkitNavigation',
-  components: {
-    BillingNavComputeGaugeComponent,
+  /**
+   * @desc Reads the nav-extras registry (see `useNavExtras`) so core renders
+   * whatever optional modules have registered (e.g. billing's compute gauge)
+   * without importing them directly.
+   * @returns {{ navExtras: import('vue').Ref<Array> }}
+   */
+  setup() {
+    const { extras: navExtras } = useNavExtras();
+    return { navExtras };
   },
   data() {
     const theme = useTheme();
@@ -167,14 +172,6 @@ export default {
       const authStore = useAuthStore();
       if (!authStore.serverConfig?.organizations?.enabled) return true;
       return !!authStore.user?.currentOrganization;
-    },
-    /**
-     * @desc Whether the app is in meter mode (compute billing active).
-     * @returns {Boolean}
-     */
-    meterMode() {
-      const authStore = useAuthStore();
-      return authStore.serverConfig?.billing?.meterMode === true;
     },
     /**
      * @desc Whether the navigation drawer is in rail (collapsed icon-only) mode.

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useAdminStore } from '../../admin/stores/admin.store';
+import { useUsersStore } from '../stores/users.store';
 import axios from '../../../lib/services/axios';
 
 // Mock axios
@@ -22,268 +22,70 @@ vi.mock('../../../lib/services/config', () => ({
 
 describe('Users Store', () => {
   beforeEach(() => {
-    // Create a new pinia instance for each test
     setActivePinia(createPinia());
   });
 
-  it('should initialize with default state', () => {
-    const usersStore = useAdminStore();
-    expect(usersStore.users).toEqual([]);
-    expect(usersStore.user).toEqual({
-      firstName: '',
-      lastName: '',
-      bio: '',
-      position: '',
-      email: '',
-      avatar: '',
-      roles: [],
-      memberships: [],
-      updated: '',
-      created: '',
-    });
-  });
-
-  it('should reset user to default values', () => {
-    const usersStore = useAdminStore();
-
-    // Modify user
-    usersStore.user.firstName = 'John';
-    usersStore.user.lastName = 'Doe';
-    usersStore.user.email = 'john@example.com';
-    usersStore.user.roles = ['admin'];
-
-    expect(usersStore.user.firstName).toBe('John');
-    expect(usersStore.user.email).toBe('john@example.com');
-
-    // Reset
-    usersStore.resetUser();
-
-    expect(usersStore.user).toEqual({
-      firstName: '',
-      lastName: '',
-      bio: '',
-      position: '',
-      email: '',
-      avatar: '',
-      roles: [],
-      memberships: [],
-      updated: '',
-      created: '',
-    });
-  });
-
-  it('should allow updating user properties', () => {
-    const usersStore = useAdminStore();
-
-    usersStore.user.firstName = 'Jane';
-    usersStore.user.lastName = 'Smith';
-    usersStore.user.email = 'jane@example.com';
-    usersStore.user.position = 'Developer';
-
-    expect(usersStore.user.firstName).toBe('Jane');
-    expect(usersStore.user.lastName).toBe('Smith');
-    expect(usersStore.user.email).toBe('jane@example.com');
-    expect(usersStore.user.position).toBe('Developer');
-  });
-
-  it('should maintain users array', () => {
-    const usersStore = useAdminStore();
-    const mockUsers = [
-      { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-      { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' },
-    ];
-
-    usersStore.users = mockUsers;
-
-    expect(usersStore.users).toEqual(mockUsers);
-    expect(usersStore.users.length).toBe(2);
-  });
-
-  describe('getUsers', () => {
-    it('should fetch and set users with pagination', async () => {
-      const usersStore = useAdminStore();
-      const mockUsers = [
-        { id: '1', firstName: 'John', lastName: 'Doe' },
-        { id: '2', firstName: 'Jane', lastName: 'Smith' },
-      ];
-
-      axios.get.mockResolvedValueOnce({ data: { data: mockUsers } });
-
-      await usersStore.getUsers('0&10');
-
-      expect(usersStore.users).toEqual(mockUsers);
-    });
-
-    it('should handle getUsers error', async () => {
-      const usersStore = useAdminStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      axios.get.mockRejectedValueOnce(new Error('Failed to fetch users'));
-
-      await usersStore.getUsers('0&10');
-
-      expect(usersStore.users).toEqual([]);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
-  describe('getUser', () => {
-    it('should fetch and set single user', async () => {
-      const usersStore = useAdminStore();
-      const mockUser = {
-        id: '123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
+  describe('updateProfile', () => {
+    it('PUTs the whitelisted profile fields to /users and returns the response data', async () => {
+      const usersStore = useUsersStore();
+      const updatedUser = {
+        firstName: 'Jane',
+        lastName: 'Smith',
         bio: 'Developer',
         position: 'Senior',
-        avatar: '/avatar.jpg',
-        roles: ['admin'],
-        updated: '2024-01-01',
-        created: '2023-01-01',
       };
-
-      axios.get.mockResolvedValueOnce({ data: { data: mockUser } });
-
-      await usersStore.getUser({ id: '123' });
-
-      expect(usersStore.user).toEqual(mockUser);
-    });
-
-    it('should handle getUser error', async () => {
-      const usersStore = useAdminStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      axios.get.mockRejectedValueOnce(new Error('Failed to fetch user'));
-
-      await usersStore.getUser({ id: '123' });
-
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
-    });
-  });
-
-  describe('updateUser', () => {
-    it('should update an existing user', async () => {
-      const usersStore = useAdminStore();
-      usersStore.user = {
-        id: '789',
-        firstName: 'Old',
-        lastName: 'Name',
-        email: 'old@example.com',
-        bio: 'Old bio',
-        position: 'Junior',
-        avatar: '/old.jpg',
-        roles: ['user'],
-        updated: '2023-01-01',
-        created: '2022-01-01',
-      };
-
-      const updatedUser = {
-        id: '789',
-        firstName: 'New',
-        lastName: 'Name',
-        email: 'new@example.com',
-        bio: 'New bio',
-        position: 'Senior',
-        avatar: '/new.jpg',
-        roles: ['admin', 'user'],
-        updated: '2024-01-01',
-        created: '2022-01-01',
-      };
-
       axios.put.mockResolvedValueOnce({ data: { data: updatedUser } });
 
-      await usersStore.updateUser({ id: '789' }, updatedUser);
+      const result = await usersStore.updateProfile({
+        firstName: 'Jane',
+        lastName: 'Smith',
+        bio: 'Developer',
+        position: 'Senior',
+        _id: 'should-not-be-sent',
+        roles: ['admin'],
+      });
 
-      expect(usersStore.user).toMatchObject(updatedUser);
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.stringContaining('/users'),
+        { firstName: 'Jane', lastName: 'Smith', bio: 'Developer', position: 'Senior' },
+      );
+      // Only the 4 profile fields are sent — no _id / roles leakage
+      const sentPayload = axios.put.mock.calls[0][1];
+      expect(sentPayload).not.toHaveProperty('_id');
+      expect(sentPayload).not.toHaveProperty('roles');
+      expect(result).toEqual(updatedUser);
     });
 
-    it('should handle updateUser error', async () => {
-      const usersStore = useAdminStore();
+    it('logs and rethrows on failure', async () => {
+      const usersStore = useUsersStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.put.mockRejectedValueOnce(new Error('Failed to update profile'));
 
-      axios.put.mockRejectedValueOnce(new Error('Failed to update user'));
-
-      await expect(usersStore.updateUser({ id: '789' })).rejects.toThrow('Failed to update user');
+      await expect(
+        usersStore.updateProfile({ firstName: 'Jane', lastName: 'Smith', bio: '', position: '' }),
+      ).rejects.toThrow('Failed to update profile');
 
       expect(consoleErrorSpy).toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
     });
-
-    it('should send only whitelisted fields to the API (not _id, updated, created)', async () => {
-      const usersStore = useAdminStore();
-      const formData = {
-        _id: 'should-not-be-sent',
-        firstName: 'John',
-        lastName: 'Doe',
-        bio: 'Dev',
-        position: 'Engineer',
-        email: 'john@example.com',
-        avatar: '/avatar.jpg',
-        roles: ['user'],
-        updated: '2024-01-01',
-        created: '2023-01-01',
-      };
-
-      axios.put.mockClear();
-      axios.put.mockResolvedValueOnce({ data: { data: formData } });
-
-      await usersStore.updateUser({ id: 'should-not-be-sent' }, formData);
-
-      const sentPayload = axios.put.mock.calls[0][1];
-      expect(sentPayload).not.toHaveProperty('_id');
-      expect(sentPayload).not.toHaveProperty('updated');
-      expect(sentPayload).not.toHaveProperty('created');
-      expect(sentPayload).toHaveProperty('firstName', 'John');
-      expect(sentPayload).toHaveProperty('lastName', 'Doe');
-      expect(sentPayload).toHaveProperty('email', 'john@example.com');
-      expect(sentPayload).toHaveProperty('roles');
-    });
   });
 
-  describe('deleteUser', () => {
-    it('should delete a user and reset', async () => {
-      const usersStore = useAdminStore();
-      usersStore.user = {
-        id: '999',
-        firstName: 'To',
-        lastName: 'Delete',
-        email: 'delete@example.com',
-        bio: 'Delete me',
-        position: 'Temporary',
-        avatar: '/temp.jpg',
-        roles: ['user'],
-        updated: '2024-01-01',
-        created: '2023-01-01',
-      };
-
+  describe('deleteAccount', () => {
+    it('DELETEs /users', async () => {
+      const usersStore = useUsersStore();
       axios.delete.mockResolvedValueOnce({ data: { success: true } });
 
-      await usersStore.deleteUser({ id: '999' });
+      await usersStore.deleteAccount();
 
-      expect(usersStore.user).toEqual({
-        firstName: '',
-        lastName: '',
-        bio: '',
-        position: '',
-        email: '',
-        avatar: '',
-        roles: [],
-        memberships: [],
-        updated: '',
-        created: '',
-      });
+      expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/users'));
     });
 
-    it('should handle deleteUser error', async () => {
-      const usersStore = useAdminStore();
+    it('logs and rethrows on failure', async () => {
+      const usersStore = useUsersStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.delete.mockRejectedValueOnce(new Error('Failed to delete account'));
 
-      axios.delete.mockRejectedValueOnce(new Error('Failed to delete user'));
-
-      await expect(usersStore.deleteUser({ id: '999' })).rejects.toThrow('Failed to delete user');
+      await expect(usersStore.deleteAccount()).rejects.toThrow('Failed to delete account');
 
       expect(consoleErrorSpy).toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
