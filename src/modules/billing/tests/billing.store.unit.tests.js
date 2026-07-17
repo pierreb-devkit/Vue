@@ -292,7 +292,7 @@ describe('Billing Store', () => {
         weekResetAt: '2026-05-04T00:00:00Z',
         meterUsed: 1234,
         meterQuota: 8000,
-        meterBreakdown: { scrap: 800, autofix: 434 },
+        meterBreakdown: { compute: 800, automation: 434 },
         extrasRemaining: 12500,
         packsAvailable: [],
       };

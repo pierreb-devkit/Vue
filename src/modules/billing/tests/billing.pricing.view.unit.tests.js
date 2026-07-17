@@ -443,7 +443,7 @@ describe('BillingPricingView — resolvedPlanItems (V4 unified schema)', () => {
       highlight: true,
       badge: 'MOST POPULAR',
       cta: 'Upgrade',
-      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Unlimited scraps' }],
+      features: [{ icon: 'fa-solid fa-check', color: 'primary', text: 'Unlimited operations' }],
       info: null,
       meta: { monthlyPrice: 39, annualPrice: 390 },
     },

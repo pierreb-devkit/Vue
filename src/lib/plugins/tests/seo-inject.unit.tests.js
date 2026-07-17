@@ -418,7 +418,7 @@ describe('seoInjectPlugin', () => {
         app: {
           title: 'Example',
           url: 'https://example.com',
-          description: 'Self-driving scrapers',
+          description: 'Automated workflows for busy teams',
           seo: {
             schemas: [
               { type: 'Organization', name: 'Example' },

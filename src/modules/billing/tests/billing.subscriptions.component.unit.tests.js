@@ -67,7 +67,7 @@ const mockUsageMeterNormal = {
   weekResetAt: new Date(Date.now() + 86400000).toISOString(),
   meterUsed: 120,
   meterQuota: 500,
-  meterBreakdown: { scrap: 80, autofix: 40 },
+  meterBreakdown: { compute: 80, automation: 40 },
   extrasRemaining: 50,
   packsAvailable: [
     { packId: 'pack_500', label: '500 units', priceUsd: 9, meterUnits: 500 },

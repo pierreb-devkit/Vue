@@ -156,7 +156,7 @@ describe('useMeter composable', () => {
   // ── breakdownPercent ──────────────────────────────────────────────────────
 
   it('breakdownPercent returns empty object when used is 0', () => {
-    store.usageMeter = { meterUsed: 0, meterQuota: 8000, meterBreakdown: { scrap: 0, autofix: 0 } };
+    store.usageMeter = { meterUsed: 0, meterQuota: 8000, meterBreakdown: { compute: 0, automation: 0 } };
     const { result } = mountMeter({ pollIntervalMs: 0 });
     expect(result.breakdownPercent.value).toEqual({});
   });
@@ -165,7 +165,7 @@ describe('useMeter composable', () => {
     store.usageMeter = {
       meterUsed: 1200,
       meterQuota: 8000,
-      meterBreakdown: { scrap: 800, autofix: 400 },
+      meterBreakdown: { compute: 800, automation: 400 },
     };
     const { result } = mountMeter({ pollIntervalMs: 0 });
     const bp = result.breakdownPercent.value;
@@ -179,11 +179,11 @@ describe('useMeter composable', () => {
     store.usageMeter = {
       meterUsed: 1000,
       meterQuota: 8000,
-      meterBreakdown: { scrap: 700, autofix: 300 },
+      meterBreakdown: { compute: 700, automation: 300 },
     };
     const { result } = mountMeter({ pollIntervalMs: 0 });
-    expect(result.breakdownPercent.value.scrap).toBe(70);
-    expect(result.breakdownPercent.value.autofix).toBe(30);
+    expect(result.breakdownPercent.value.compute).toBe(70);
+    expect(result.breakdownPercent.value.automation).toBe(30);
   });
 
   // ── totalRemaining ────────────────────────────────────────────────────────
