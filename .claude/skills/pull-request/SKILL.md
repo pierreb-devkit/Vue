@@ -97,12 +97,14 @@ PR title must follow `type(scope): description` (conventional commits). Link the
 - Checkbox sections (Validation, Guardrails): check each box that applies (`- [x]`), leave unchecked only what genuinely does not apply
 - Follow any instructions in the template (e.g. "Delete this section if not applicable")
 
-Once **draft CI passes** and the PR is ready for human review, convert to ready:
+Once **draft CI passes**, convert to ready **immediately, before anything else**:
 
 ```bash
 gh pr ready <number>
 ```
 
+> **Ordering invariant (hard requirement):** CodeRabbit never reviews a draft PR. Flipping to ready is a mandatory prerequisite for entering — or continuing — any wait on CodeRabbit/review threads. Do it the moment draft CI is green, BEFORE starting section 6. Waiting on CodeRabbit while the PR is still draft is a guaranteed silent deadlock (observed 2026-07-16, issue #4450).
+>
 > Some bots (e.g. CodeRabbit) trigger on ready, not on CI completion. After converting, do a **preliminary review pass** before entering the main loop:
 >
 > ```bash
@@ -115,6 +117,9 @@ gh pr ready <number>
 
 ## 6. Monitor loop (autonomous)
 
+The PR must already be ready (see §5) before this loop starts — CodeRabbit
+never reviews a draft, so entering this loop while still draft deadlocks.
+
 After `gh pr ready`, run an autonomous polling loop until either CI is green
 with zero unresolved threads for 3 consecutive passes (~9 min) or the safety
 limit (10 iterations) trips.
@@ -126,6 +131,9 @@ PR=<number>
 ```
 
 Per pass:
+0. **Draft guard** (belt-and-braces) → if still `isDraft: true` and CI is
+   green, `gh pr ready "$PR"` immediately — covers a loop that started
+   pre-flip, or a rebase/force-push that reverted the PR to draft
 1. Wait CI → fix + /verify + commit + push if red, else continue
 2. Check mergeable — `CONFLICTING` stops, `UNKNOWN` retries
 3. Grace `sleep 180` + adaptive recheck of pending review checks
