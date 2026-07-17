@@ -113,7 +113,7 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
   /**
    * @type {import('vue').ComputedRef<number>}
    * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
-   * push usage past quota (e.g. a long-running scrape finishing after quota is hit).
+   * push usage past quota (e.g. a long-running job finishing after quota is hit).
    * Use this in detail views / ledger displays that must show the real debt.
    */
   const netRemainingRaw = computed(() => quota.value - used.value + extras.value);

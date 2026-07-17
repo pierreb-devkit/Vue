@@ -78,20 +78,20 @@ describe('core.pageHeader.component — breadcrumb slot', () => {
   it('renders the breadcrumb slot in place of the title when provided', () => {
     const wrapper = mountHeader({
       props: { title: 'Should be ignored', icon: 'fa-solid fa-list-check' },
-      slots: { breadcrumb: '<a class="bc-link" href="/scraps">Scraps</a> &rsaquo; Detail' },
+      slots: { breadcrumb: '<a class="bc-link" href="/reports">Reports</a> &rsaquo; Detail' },
     });
 
     const breadcrumb = wrapper.find('.core-page-header__breadcrumb');
     expect(breadcrumb.exists()).toBe(true);
     expect(breadcrumb.find('.bc-link').exists()).toBe(true);
-    expect(breadcrumb.text()).toContain('Scraps');
+    expect(breadcrumb.text()).toContain('Reports');
     expect(breadcrumb.text()).toContain('Detail');
   });
 
   it('does not render the <h2> title when breadcrumb is provided', () => {
     const wrapper = mountHeader({
       props: { title: 'Should be ignored' },
-      slots: { breadcrumb: '<span>Scraps &rsaquo; Detail</span>' },
+      slots: { breadcrumb: '<span>Reports &rsaquo; Detail</span>' },
     });
     expect(wrapper.find('h2.core-page-header__title').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('Should be ignored');
@@ -100,7 +100,7 @@ describe('core.pageHeader.component — breadcrumb slot', () => {
   it('does not render the subtitle when breadcrumb takes over', () => {
     const wrapper = mountHeader({
       props: { title: 'Tasks', subtitle: 'Some subtitle' },
-      slots: { breadcrumb: '<span>Scraps &rsaquo; Detail</span>' },
+      slots: { breadcrumb: '<span>Reports &rsaquo; Detail</span>' },
     });
     expect(wrapper.find('p.core-page-header__subtitle').exists()).toBe(false);
     expect(wrapper.text()).not.toContain('Some subtitle');
@@ -186,7 +186,7 @@ describe('core.pageHeader.component — actions cluster', () => {
     const wrapper = mountHeader({
       props: {},
       slots: {
-        breadcrumb: '<span>Scraps &rsaquo; Detail</span>',
+        breadcrumb: '<span>Reports &rsaquo; Detail</span>',
         actions: '<button class="qa-action">Edit</button>',
       },
     });

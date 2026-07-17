@@ -5,7 +5,7 @@
   height/rounded/bg-color as the Weekly compute bar for visual consistency.
 
   USAGE:
-  <BillingMeterBreakdownChartComponent :breakdown="{ scrap: 60, autofix: 40 }" />
+  <BillingMeterBreakdownChartComponent :breakdown="{ compute: 60, automation: 40 }" />
 -->
 <template>
   <div class="billing-meter-breakdown-chart">

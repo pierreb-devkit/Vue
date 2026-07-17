@@ -234,7 +234,7 @@ describe('app.router', () => {
     expect(router.currentRoute.value.meta.marketing).toBe(true);
   });
 
-  it('app routes (/, /scraps-equivalent) do NOT have meta.marketing', async () => {
+  it('app routes (/, /dashboard-equivalent) do NOT have meta.marketing', async () => {
     const router = getRouter();
     await router.push('/');
     await router.isReady();

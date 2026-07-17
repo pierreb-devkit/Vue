@@ -78,7 +78,7 @@ const mockPacksV4 = [
     cta: 'Buy Starter',
     info: '5,000 compute',
     features: [
-      { icon: 'fa-solid fa-check', color: 'primary', text: '~40 easy scraps' },
+      { icon: 'fa-solid fa-check', color: 'primary', text: '~40 easy jobs' },
     ],
     meta: { packId: 'pack_starter', priceUsd: 9, meterUnits: 5000 },
   },
@@ -92,7 +92,7 @@ const mockPacksV4 = [
     cta: 'Buy Power',
     info: '20,000 compute',
     features: [
-      { icon: 'fa-solid fa-check', color: 'primary', text: '~160 easy scraps' },
+      { icon: 'fa-solid fa-check', color: 'primary', text: '~160 easy jobs' },
     ],
     meta: { packId: 'pack_power', priceUsd: 25, meterUnits: 20000 },
   },

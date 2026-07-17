@@ -85,8 +85,8 @@ describe('BillingCardComponent', () => {
   });
 
   it('renders info line when present', () => {
-    const wrapper = mountComponent(makeItem({ info: 'Ops-eval: 200 scraps / month' }));
-    expect(wrapper.text()).toContain('Ops-eval: 200 scraps / month');
+    const wrapper = mountComponent(makeItem({ info: 'Ops-eval: 200 operations / month' }));
+    expect(wrapper.text()).toContain('Ops-eval: 200 operations / month');
   });
 
   it('does not render info paragraph when info is null', () => {
