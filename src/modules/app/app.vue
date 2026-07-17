@@ -1,5 +1,5 @@
 <template>
-  <v-app id="app" :theme="themeName">
+  <v-app id="app">
     <v-snackbar
       v-if="config.vuetify.theme.snackbar.status"
       v-model="snackbar.status"
@@ -57,6 +57,7 @@ import { useTheme } from 'vuetify';
 import { buildCanonicalUrl } from '@/lib/helpers/canonical.js';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { useBillingStore } from '../billing/stores/billing.store';
+import { useCoreStore } from '../core/stores/core.store';
 import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
 import devkitNav from '../core/components/core.navigation.component.vue';
@@ -90,14 +91,15 @@ export default {
   },
   /**
    * @desc Initialise Pinia stores once so computed properties reference them
-   * via `this.authStore` / `this.billingStore` instead of calling the store
-   * factory on every evaluation.
-   * @returns {{ authStore: Object, billingStore: Object }}
+   * via `this.authStore` / `this.billingStore` / `this.coreStore` instead of
+   * calling the store factory on every evaluation.
+   * @returns {{ authStore: Object, billingStore: Object, coreStore: Object }}
    */
   setup() {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
-    return { authStore, billingStore };
+    const coreStore = useCoreStore();
+    return { authStore, billingStore, coreStore };
   },
   data() {
     const theme = useTheme();
@@ -130,9 +132,6 @@ export default {
     };
   },
   computed: {
-    themeName() {
-      return this.theme.name;
-    },
     isLoggedIn() {
       return this.authStore.isLoggedIn;
     },
@@ -186,6 +185,23 @@ export default {
     },
   },
   watch: {
+    /**
+     * @desc Push the Pinia-computed theme (config `vuetify.theme.dark` value,
+     * re-derived on OS `prefers-color-scheme` change via `coreStore.syncOsTheme()`
+     * — see `main.js`) into Vuetify's global theme instance. `coreStore.theme`
+     * is the single source of truth; Vuetify itself has no independent notion
+     * of "current theme" beyond what this sets. `immediate: true` applies it
+     * on initial mount (covers hydration + prerender correction); the watch
+     * covers subsequent OS preference changes.
+     * @param {String} v - 'light' or 'dark'
+     * @returns {void}
+     */
+    'coreStore.theme': {
+      immediate: true,
+      handler(v) {
+        this.theme.global.name.value = v;
+      },
+    },
     /**
      * @desc Fire a warning toast once per week cycle when meter crosses 80 % / 100 %.
      * Uses `meterAlertedKeys` set to dedup — key format: `"{weekKey}:{level}"`.
