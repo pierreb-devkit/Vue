@@ -192,14 +192,17 @@ export default {
      * is the single source of truth; Vuetify itself has no independent notion
      * of "current theme" beyond what this sets. `immediate: true` applies it
      * on initial mount (covers hydration + prerender correction); the watch
-     * covers subsequent OS preference changes.
+     * covers subsequent OS preference changes. Uses `theme.change()` (the
+     * sanctioned Vuetify 4 API) rather than assigning `theme.global.name.value`
+     * directly — the latter trips a deprecation warning via Vuetify's Proxy
+     * set trap on 4.1.5+.
      * @param {String} v - 'light' or 'dark'
      * @returns {void}
      */
     'coreStore.theme': {
       immediate: true,
       handler(v) {
-        this.theme.global.name.value = v;
+        this.theme.change(v);
       },
     },
     /**

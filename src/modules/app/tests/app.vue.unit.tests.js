@@ -10,13 +10,18 @@ const useHeadMock = vi.hoisted(() => vi.fn());
 vi.mock('@unhead/vue', () => ({ useHead: useHeadMock }));
 
 // Mock vuetify composables. `global.name` mirrors real Vuetify's useTheme()
-// shape (a mutable ref-like holder) so the app.vue theme watch can assign
-// `.value` on it — see the "theme wiring" describe block below (#4462).
+// shape (a mutable ref-like holder); `change()` mirrors the sanctioned
+// Vuetify 4 API the app.vue theme watch calls, updating `global.name.value`
+// as its real counterpart does — see the "theme wiring" describe block below
+// (#4462).
 vi.mock('vuetify', () => ({
   useTheme: () => ({
     name: 'light',
     current: { colors: { background: '#ffffff' } },
     global: { name: { value: 'light' } },
+    change(v) {
+      this.global.name.value = v;
+    },
   }),
 }));
 
