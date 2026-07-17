@@ -1,17 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
+import { nextTick } from 'vue';
 import testConfig from '../../../config/defaults/test.config.js';
+import { useCoreStore } from '../../core/stores/core.store';
 
 // Mock @unhead/vue to capture useHead calls
 const useHeadMock = vi.hoisted(() => vi.fn());
 vi.mock('@unhead/vue', () => ({ useHead: useHeadMock }));
 
-// Mock vuetify composables
+// Mock vuetify composables. `global.name` mirrors real Vuetify's useTheme()
+// shape (a mutable ref-like holder); `change()` mirrors the sanctioned
+// Vuetify 4 API the app.vue theme watch calls, updating `global.name.value`
+// as its real counterpart does — see the "theme wiring" describe block below
+// (#4462).
 vi.mock('vuetify', () => ({
   useTheme: () => ({
     name: 'light',
     current: { colors: { background: '#ffffff' } },
+    global: { name: { value: 'light' } },
+    change(v) {
+      this.global.name.value = v;
+    },
   }),
 }));
 
@@ -236,5 +246,68 @@ describe('App.vue — SEO (useHead)', () => {
       mountApp(config);
       expect(resolveHead().script).toBeUndefined();
     });
+  });
+});
+
+describe('App.vue — theme wiring (#4462)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useHeadMock.mockClear();
+  });
+
+  /**
+   * @desc Mount App with a minimal config. Uses the real (un-mocked)
+   * `useCoreStore` so `coreStore.theme` is genuinely reactive — assigning
+   * `coreStore.theme` directly exercises the same reactivity path
+   * `syncOsTheme()` / `init()` use at runtime, without pulling in the config
+   * plumbing those actions depend on (already covered by
+   * `core.store.unit.tests.js`). This suite only proves the wiring: does
+   * app.vue's watch push `coreStore.theme` into Vuetify's global theme.
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
+  const mountApp = () => {
+    const config = {
+      ...makeConfig(),
+      vuetify: { theme: { snackbar: { status: false }, navigation: {} } },
+      header: { display: false },
+      footer: { links: [], variant: 'default' },
+    };
+    return mount(App, {
+      global: {
+        mocks: { config, $route: { path: '/' } },
+        stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
+      },
+    });
+  };
+
+  it('applies coreStore.theme to the Vuetify global theme on mount (immediate)', () => {
+    const coreStore = useCoreStore();
+    coreStore.theme = 'dark';
+
+    const wrapper = mountApp();
+
+    expect(wrapper.vm.theme.global.name.value).toBe('dark');
+  });
+
+  it('defaults to the light Vuetify theme on mount when coreStore.theme is light', () => {
+    const coreStore = useCoreStore();
+    coreStore.theme = 'light';
+
+    const wrapper = mountApp();
+
+    expect(wrapper.vm.theme.global.name.value).toBe('light');
+  });
+
+  it('flips the Vuetify theme when coreStore.theme changes after mount', async () => {
+    const coreStore = useCoreStore();
+    coreStore.theme = 'light';
+
+    const wrapper = mountApp();
+    expect(wrapper.vm.theme.global.name.value).toBe('light');
+
+    coreStore.theme = 'dark';
+    await nextTick();
+
+    expect(wrapper.vm.theme.global.name.value).toBe('dark');
   });
 });
