@@ -105,7 +105,10 @@ jobs:
           DEVKIT_NODE_cors_origin: '[http://localhost:8080]'
           DEVKIT_NODE_cors_credentials: "true"
       - name: Wait for Node backend
-        run: npx wait-on http://127.0.0.1:3000/api/home --timeout 60000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; exit 1)
+        # Poll /api/health (the real readiness route). /api/home was never a route —
+        # it only returned 2xx via the unmatched-route fallback; the content-negotiated
+        # 404 change made it return 404, so wait-on polled a permanent 404 until timeout.
+        run: npx wait-on http://127.0.0.1:3000/api/health --timeout 300000 || (echo "--- Node backend logs ---"; cat /tmp/node-backend.log; echo "--- curl /api/health ---"; curl -sv --max-time 10 http://127.0.0.1:3000/api/health 2>&1 | head -30; exit 1)
 
       # Install & start Vue dev server
       - name: Install Vue
