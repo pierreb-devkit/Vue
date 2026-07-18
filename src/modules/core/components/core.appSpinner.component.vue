@@ -12,9 +12,9 @@ import config from '../../../lib/services/config';
 
 /**
  * Glob of module-provided loader components, matched by filename convention.
- * Non-eager: each entry only becomes a build chunk when a config value actually
- * resolves to it, so an upstream repo that ships no `*.loader.component.vue`
- * pays zero bundle cost. Test fixtures are excluded.
+ * Non-eager: each entry is turned into a build chunk only when a config value
+ * actually resolves to it, so an upstream repo that ships no
+ * `*.loader.component.vue` pays zero bundle cost. Test fixtures are excluded.
  */
 const loaderModules = import.meta.glob(['/src/modules/*/components/**/*.loader.component.vue', '!**/tests/**']);
 
