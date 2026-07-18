@@ -100,11 +100,22 @@ const componentStubs = {
  * @param {Object} [opts]
  * @returns {import('@vue/test-utils').VueWrapper}
  */
+/**
+ * Mount BillingSubscriptionsComponent with test-controlled auth state, router, and config.
+ * @param {object} [options] Mount options.
+ * @param {object|null} [options.serverConfig] Server config injected into auth state.
+ * @param {boolean} [options.isLoggedIn] Logged-in auth state.
+ * @param {object} [options.routeQuery] Mocked route query.
+ * @param {object} [options.router] Mocked router with replace/push.
+ * @param {object} [options.config] Config object exposed to the component.
+ * @returns {import('@vue/test-utils').VueWrapper} The mounted component wrapper.
+ */
 function mountSubscriptions({
   serverConfig = null,
   isLoggedIn = true,
   routeQuery = {},
   router = { replace: vi.fn(), push: vi.fn() },
+  config = mockConfig,
 } = {}) {
   authState.serverConfig = serverConfig;
   authState.isLoggedIn = isLoggedIn;
@@ -112,7 +123,7 @@ function mountSubscriptions({
     global: {
       plugins: [vuetify],
       mocks: {
-        config: mockConfig,
+        config,
         $route: { path: '/users', query: routeQuery },
         $router: router,
       },
@@ -1540,5 +1551,41 @@ describe('BillingSubscriptionsComponent — extras modal packs (real static-cont
     expect(packsProp.map((p) => p.packId)).toEqual(realPacks.map((p) => p.id));
     expect(packsProp.map((p) => p.priceUsd)).toEqual(realPacks.map((p) => p.meta.priceUsd));
     expect(packsProp.map((p) => p.meterUnits)).toEqual(realPacks.map((p) => p.meta.meterUnits));
+  });
+});
+
+// ─── Suite: config-driven free-plan blurb (#4474) ────────────────────────────
+
+describe('BillingSubscriptionsComponent — config-driven free-plan blurb (#4474)', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    store.subscription = null; // free plan card
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('renders the exact devkit default blurb when config.billing.freePlanBlurb is unset', async () => {
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.text()).toContain(
+      "You're on the free plan. Upgrade to unlock more projects, team members, and advanced features.",
+    );
+  });
+
+  it('renders the overridden blurb and hides the default text', async () => {
+    const overrideConfig = { ...mockConfig, billing: { freePlanBlurb: 'Free tier active. Upgrade for extra capacity.' } };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } }, config: overrideConfig });
+    await flushPromises();
+    expect(wrapper.text()).toContain('Free tier active. Upgrade for extra capacity.');
+    expect(wrapper.text()).not.toContain("You're on the free plan");
   });
 });

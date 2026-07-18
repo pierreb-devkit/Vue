@@ -36,7 +36,7 @@
   <v-alert v-else type="info" variant="tonal" prominent class="my-4">
     <template #text>
       <span v-if="hasUsageInfo">{{ `You've used ${current} of ${limit} ${displayLabel}.` }}</span>
-      <span v-else-if="mode === 'meter'">You're out of compute. Buy more units or upgrade for monthly compute.</span>
+      <span v-else-if="mode === 'meter'">{{ `You're out of compute. Buy more units or upgrade for ${meterPeriodWord} compute.` }}</span>
       <span v-else>{{ `This feature requires the ${requiredPlan} plan.` }}</span>
     </template>
     <template #append>
@@ -195,7 +195,16 @@ export default {
      */
     grantDepletedMessage() {
       const packPhrase = this.primaryPack ? `a ${this.primaryPack.title}` : 'a compute pack';
-      return `You used your ${signupGrantConfig.label}. Buy ${packPhrase} to keep going, or upgrade for monthly compute.`;
+      return `You used your ${signupGrantConfig.label}. Buy ${packPhrase} to keep going, or upgrade for ${this.meterPeriodWord} compute.`;
+    },
+    /**
+     * @desc Billing period word used in the meter-mode upgrade copy (e.g. "monthly").
+     * Config-overridable so a downstream on a different billing period can rebrand this
+     * without editing the view.
+     * @returns {string}
+     */
+    meterPeriodWord() {
+      return this.config?.billing?.meterPeriodWord ?? 'monthly';
     },
     /**
      * @desc Primary pack CTA label, config-sourced from the resolved pack's own `cta` +

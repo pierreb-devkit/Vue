@@ -279,4 +279,53 @@ describe('BillingUpgradePrompt', () => {
       expect(text).toContain('Ultra');
     });
   });
+
+  describe('config-driven meter period word (#4474)', () => {
+    /**
+     * Mount the meter-mode prompt with an optional `this.config` override installed
+     * via global.mocks (the component reads `this.config`, not the imported config
+     * service — same pattern as home.notfound.view.vue).
+     * @param {Object} [config] - Value to install as `this.config` on the instance.
+     * @returns {import('@vue/test-utils').VueWrapper}
+     */
+    const mountMeterPrompt = (config) =>
+      mount(BillingUpgradePrompt, {
+        props: { requiredPlan: 'pro', mode: 'meter' },
+        global: {
+          plugins: [vuetify],
+          mocks: config ? { config } : {},
+          stubs: { RouterLink: true },
+        },
+      });
+
+    it('defaults to "monthly" when config.billing.meterPeriodWord is unset', () => {
+      const wrapper = mountMeterPrompt();
+      expect(wrapper.text()).toContain('upgrade for monthly compute');
+    });
+
+    it('uses the configured period word in the meter-mode prompt', () => {
+      const wrapper = mountMeterPrompt({ billing: { meterPeriodWord: 'quarterly' } });
+      expect(wrapper.text()).toContain('upgrade for quarterly compute');
+      expect(wrapper.text()).not.toContain('monthly compute');
+    });
+
+    it('applies the configured period word to BOTH occurrences (meter prompt + post-grant depletion message)', () => {
+      const store = useBillingStore();
+      Object.assign(store, {
+        subscription: { plan: 'free' },
+        extrasBalance: { balance: 0 },
+        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+      });
+      const wrapper = mount(BillingUpgradePrompt, {
+        props: { requiredPlan: 'pro', mode: 'meter' },
+        global: {
+          plugins: [vuetify],
+          mocks: { config: { billing: { meterPeriodWord: 'quarterly' } } },
+          stubs: { RouterLink: true },
+        },
+      });
+      expect(wrapper.text()).toContain('upgrade for quarterly compute');
+      expect(wrapper.text()).not.toContain('monthly compute');
+    });
+  });
 });

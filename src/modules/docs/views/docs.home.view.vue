@@ -18,7 +18,7 @@
 
     <!-- Loading -->
     <v-row v-if="loading" justify="center" class="py-12">
-      <v-progress-circular indeterminate color="primary" size="48" data-test="docs-home-loading" />
+      <AppSpinner color="primary" size="48" data-test="docs-home-loading" />
     </v-row>
 
     <!-- Error -->
@@ -174,6 +174,7 @@ import { useDocsStore } from '../stores/docs.store';
 import { resolveDocsTarget } from '../composables/useDocsNav';
 import DocsSearch from '../components/docs.search.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
 
 const home = config?.docs?.home || { icon: 'fa-solid fa-book', title: 'Documentation', subtitle: '' };

@@ -4,7 +4,7 @@
 
     <!-- Redirect in progress (single manageable org) -->
     <div v-if="redirecting" class="d-flex justify-center align-center pa-12">
-      <v-progress-circular indeterminate color="primary" />
+      <AppSpinner color="primary" />
     </div>
 
     <!-- Multiple manageable orgs → org selector -->
@@ -57,11 +57,13 @@
 <script>
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
 export default {
   name: 'BillingAccountView',
   components: {
     PageHeader,
+    AppSpinner,
   },
   /**
    * @desc Wire the organizations store so computed properties stay reactive.

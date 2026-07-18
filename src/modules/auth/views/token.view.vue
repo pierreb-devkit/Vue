@@ -4,7 +4,7 @@
       <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
         <template v-if="loading">
           <v-col cols="12" class="text-center py-8">
-            <v-progress-circular indeterminate color="primary" size="48" />
+            <AppSpinner color="primary" size="48" />
             <p class="mt-4">Signing you in…</p>
           </v-col>
         </template>
@@ -44,6 +44,7 @@
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
 import { createLogger } from '../../../lib/helpers/logger';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
 const logger = createLogger('auth');
 
@@ -60,6 +61,9 @@ function asNonEmptyString(value) {
  * Component definition.
  */
 export default {
+  components: {
+    AppSpinner,
+  },
   data() {
     const theme = useTheme();
     return {

@@ -17,7 +17,7 @@
 
         <!-- Loading -->
         <v-row v-if="loading" justify="center" class="py-12">
-          <v-progress-circular indeterminate color="primary" size="48" data-test="docs-article-loading" />
+          <AppSpinner color="primary" size="48" data-test="docs-article-loading" />
         </v-row>
 
         <!-- Not found -->
@@ -97,6 +97,7 @@ import { useDocsPage, EXAMPLE_MARKER_SOURCE } from '../composables/useDocsPage';
 import DocsNav from '../components/docs.nav.component.vue';
 import DocsToc from '../components/docs.toc.component.vue';
 import DocsCodeblock from '../components/docs.codeblock.component.vue';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
 const route = useRoute();
 const store = useDocsStore();

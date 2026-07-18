@@ -35,14 +35,15 @@ const makeFormStub = (valid = true) => ({
  * Mount the organization setup component with Vuetify and stubbed form.
  * @param {object} formStub - VForm component definition controlling validation outcome.
  * @param {object} props - Component props (e.g. suggestedOrganization).
+ * @param {object} [config] - `this.config` override (defaults to the shared mockConfig).
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
-const mountComponent = (formStub = makeFormStub(), props = {}) =>
+const mountComponent = (formStub = makeFormStub(), props = {}, config = mockConfig) =>
   mount(AuthOrganizationSetupComponent, {
     props,
     global: {
       plugins: [createVuetify()],
-      mocks: { config: mockConfig },
+      mocks: { config },
       stubs: { VForm: formStub },
     },
   });
@@ -285,5 +286,23 @@ describe('auth.organizationSetup.component', () => {
     await wrapper.vm.requestJoin();
 
     expect(createJoinRequestMock).not.toHaveBeenCalled();
+  });
+
+  // --- config-driven item noun (#4474) ---
+
+  it('defaults the workspace helper text to "projects" when config.app.itemNoun is unset', async () => {
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('keeps your projects and teammates together');
+  });
+
+  it('uses the configured item noun in the workspace helper text', async () => {
+    const overrideConfig = { ...mockConfig, app: { itemNoun: 'boards' } };
+    const wrapper = mountComponent(makeFormStub(), {}, overrideConfig);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('keeps your boards and teammates together');
+    expect(wrapper.text()).not.toContain('keeps your projects and teammates together');
   });
 });

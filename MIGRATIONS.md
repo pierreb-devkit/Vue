@@ -4,6 +4,23 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## config-ui-hooks: overridable loader, plan-badge set, and copy strings (2026-07-18, #4474)
+
+Three previously-hardcoded UI spots became config-overridable so a downstream project can rebrand/reconfigure them without editing the stack view (which caused byte-drift on every `/update-stack`). All three are no-ops for downstreams that don't opt in — every key is absent/null by default and every consumer falls back to the exact current behavior.
+
+### What changed (this repo)
+
+- **Loader** (new `config.ui.loader.component`, default `null`): new `CoreAppSpinner` component (`src/modules/core/components/core.appSpinner.component.vue`) renders the built-in `v-progress-circular` by default, or a project-provided loader SFC resolved via an `import.meta.glob` filename convention (`/src/modules/*/components/**/*.loader.component.vue`) when the config key is set — config values can only be strings, so the override is a Vite path, not a component reference. The 6 hardcoded `v-progress-circular` loading-state usages (auth token view, docs article/home/reference views, billing subscriptions + account view) now render `<AppSpinner>`, passing color/size/data-test through via Vue's automatic attribute fallthrough.
+- **Plan badge** (new `config.billing.planBadge.plans` / `config.billing.planBadge.fallbackColor`, both absent by default): `billing.planBadge.component.vue`'s hardcoded allowed-ids + color map (`free/starter/pro/enterprise`) is now the devkit default only, overridable by an ordered `{ id, color }[]` array (a downstream override fully replaces the set — `generateConfig`'s deepMerge replaces arrays wholesale, it does not union them).
+- **Copy** (new `config.billing.meterPeriodWord`, `config.billing.freePlanBlurb`, `config.app.itemNoun`, all absent by default): three hardcoded strings (the meter-period word in the upgrade-prompt copy, the free-plan upgrade blurb, and the "projects" noun in the workspace-setup helper text) now read `this.config?.X ?? currentDefault`. None of the three keys are seeded in any config fragment, so the generated `src/config/index.js` stays byte-identical.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. All files are devkit-owned → arrive via `/update-stack`. No action required — every key defaults to today's exact behavior.
+2. To customize: add any of `ui.loader.component`, `billing.planBadge.{plans,fallbackColor}`, `billing.meterPeriodWord`, `billing.freePlanBlurb`, `app.itemNoun` to your `src/config/defaults/<project>.config.js` (or a per-module `<module>.<project>.config.js` fragment). A custom loader SFC ships inside your own project module (e.g. `src/modules/<project>/components/<project>.loader.component.vue`) and is referenced by its literal absolute-from-root Vite path.
+
+---
+
 ## docs: Redoc /api/docs reference UI decommissioned (2026-06-17, #4333)
 
 The docs module's in-theme OpenAPI reference (`/docs/api`) renders the merged spec at `GET /api/spec.json` natively — it is now the **only** reference surface. The dead "Open in Redoc" affordance (a header button + an empty-state fallback link, both pointing at the decommissioned backend `/api/docs` Redoc UI) has been removed.

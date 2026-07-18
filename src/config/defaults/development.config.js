@@ -101,4 +101,16 @@ export default {
       capturePageleave: false, // opt-in: capture page-leave events
     },
   },
+  ui: {
+    loader: {
+      component: null, // Vite path of a custom loader SFC matching /src/modules/*/components/**/*.loader.component.vue; null = built-in v-progress-circular (see CoreAppSpinner)
+    },
+  },
+  // Config-driven copy — intentionally absent here (each consumer falls back to its
+  // current hardcoded default via `config.X ?? default`), so the generated config stays
+  // byte-identical until a downstream opts in via `src/config/defaults/<project>.config.js`:
+  //   app.itemNoun              — noun for the items a workspace groups, default 'projects'
+  //   billing.meterPeriodWord   — billing period word in meter-mode upgrade copy, default 'monthly'
+  //   billing.freePlanBlurb     — full free-plan upgrade paragraph (see billing.subscriptions.component.vue)
+  //   billing.planBadge.plans / billing.planBadge.fallbackColor — see billing.planBadge.component.vue
 };

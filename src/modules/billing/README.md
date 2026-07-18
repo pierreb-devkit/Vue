@@ -50,6 +50,24 @@ Auto-colored progress bar (green/orange/red). Shows "Unlimited" for uncapped pla
 <BillingPlanBadgeComponent :plan="currentPlan" />
 ```
 
+Allowed plan ids + chip colors default to `free`/`starter`/`pro`/`enterprise`. A
+downstream project can replace the whole set via config — the array replaces
+(does not merge with) the devkit default, so a downstream fully owns its plan
+vocabulary:
+
+```js
+// src/config/defaults/<project>.config.js
+billing: {
+  planBadge: {
+    plans: [
+      { id: 'team', color: 'info' },
+      { id: 'scale', color: 'error' },
+    ],
+    fallbackColor: 'grey', // color for a `plan` prop value not in `plans` (optional, default 'grey')
+  },
+},
+```
+
 ### `<BillingNavComputeGaugeComponent>`
 
 Sidenav compute-usage indicator (meter mode). A color-coded ring + `X% used`
