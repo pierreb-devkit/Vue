@@ -100,6 +100,16 @@ const componentStubs = {
  * @param {Object} [opts]
  * @returns {import('@vue/test-utils').VueWrapper}
  */
+/**
+ * Mount BillingSubscriptionsComponent with test-controlled auth state, router, and config.
+ * @param {object} [options] Mount options.
+ * @param {object|null} [options.serverConfig] Server config injected into auth state.
+ * @param {boolean} [options.isLoggedIn] Logged-in auth state.
+ * @param {object} [options.routeQuery] Mocked route query.
+ * @param {object} [options.router] Mocked router with replace/push.
+ * @param {object} [options.config] Config object exposed to the component.
+ * @returns {import('@vue/test-utils').VueWrapper} The mounted component wrapper.
+ */
 function mountSubscriptions({
   serverConfig = null,
   isLoggedIn = true,
