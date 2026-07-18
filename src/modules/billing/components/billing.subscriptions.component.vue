@@ -59,7 +59,7 @@
 
     <!-- ── Loading ──────────────────────────────────────────────────────── -->
     <v-row v-if="fetchLoading" justify="center" class="py-10">
-      <v-progress-circular indeterminate color="primary" />
+      <AppSpinner color="primary" />
     </v-row>
 
     <!-- ── P1-1: Subscription fetch error ─────────────────────────────── -->
@@ -111,7 +111,7 @@
               </div>
             </div>
             <p class="text-body-medium text-medium-emphasis mb-6">
-              You're on the free plan. Upgrade to unlock more projects, team members, and advanced features.
+              {{ freePlanBlurb }}
             </p>
             <v-btn
               color="primary"
@@ -302,6 +302,7 @@ import BillingMeterProgressComponent from './billing.meterProgress.component.vue
 import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.component.vue';
 import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
 const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
 
@@ -316,6 +317,7 @@ export default {
     BillingMeterBreakdownChartComponent,
     BillingExtrasLedgerComponent,
     BillingExtrasCheckoutModalComponent,
+    AppSpinner,
   },
   /**
    * @desc Wires billingStore + authStore + reactive meterMode + useMeter derived refs.
@@ -403,6 +405,18 @@ export default {
     },
     fetchLoading() {
       return this.billingStore.loading;
+    },
+    /**
+     * @desc Free-plan upgrade blurb, config-overridable. Devkit default: exact current
+     * copy (full paragraph, not just the second sentence) so a downstream missing a
+     * feature (e.g. no team members) can rewrite the whole thing.
+     * @returns {string}
+     */
+    freePlanBlurb() {
+      return (
+        this.config?.billing?.freePlanBlurb ??
+        "You're on the free plan. Upgrade to unlock more projects, team members, and advanced features."
+      );
     },
     subscription() {
       return this.billingStore.subscription;

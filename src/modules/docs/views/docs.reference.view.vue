@@ -17,8 +17,7 @@
 
         <!-- Loading -->
         <v-row v-if="loading" justify="center" class="py-12">
-          <v-progress-circular
-            indeterminate
+          <AppSpinner
             color="primary"
             size="48"
             data-test="docs-reference-loading"
@@ -217,6 +216,7 @@ import { parseSpec } from '../composables/useDocsReference';
 import { resolveDocsTarget } from '../composables/useDocsNav';
 import DocsNav from '../components/docs.nav.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
 
 /**
