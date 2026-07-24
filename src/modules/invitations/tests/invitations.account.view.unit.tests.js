@@ -217,6 +217,41 @@ describe('invitations.account.view', () => {
     expect(wrapper.text()).toContain('My referrals');
     expect(wrapper.find('[data-test="referrals-summary"]').exists()).toBe(true);
   });
+
+  // #4500: user-facing invitations opt-in — the invite form stays available
+  // even with public signup open, when the deployment exposes the flag.
+  it('signup closed: userFacingInvitations is false by default, form renders (unchanged)', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: false } };
+    const wrapper = mountView();
+    expect(wrapper.vm.userFacingInvitations).toBe(false);
+    expect(wrapper.find('[data-test="referrals-open-signup-alert"]').exists()).toBe(false);
+    expect(wrapper.find('form').exists()).toBe(true);
+  });
+
+  it('signup open + userFacing true: renders the form, alert absent', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: true }, invitations: { userFacing: true } };
+    const wrapper = mountView();
+    expect(wrapper.vm.userFacingInvitations).toBe(true);
+    expect(wrapper.find('[data-test="referrals-open-signup-alert"]').exists()).toBe(false);
+    expect(wrapper.find('form').exists()).toBe(true);
+  });
+
+  it('signup open + userFacing undefined (old backend, no exposure): renders the alert, form absent', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: true } };
+    const wrapper = mountView();
+    expect(wrapper.vm.userFacingInvitations).toBe(false);
+    const alert = wrapper.find('[data-test="referrals-open-signup-alert"]');
+    expect(alert.exists()).toBe(true);
+    expect(wrapper.find('form').exists()).toBe(false);
+  });
+
+  it('signup open + userFacing false: renders the alert, form absent', () => {
+    authStoreMock.serverConfig = { sign: { in: true, up: true }, invitations: { userFacing: false } };
+    const wrapper = mountView();
+    expect(wrapper.vm.userFacingInvitations).toBe(false);
+    expect(wrapper.find('[data-test="referrals-open-signup-alert"]').exists()).toBe(true);
+    expect(wrapper.find('form').exists()).toBe(false);
+  });
 });
 
 describe('invitations.account.view — one-time copy-link (#3834)', () => {
