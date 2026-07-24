@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.hoisted runs before vi.mock hoisting — safe to reference in factories
-const { mockPage, mockBrowser, mockCreateServer } = vi.hoisted(() => {
+const { mockPage, mockBrowser, mockCreateServer, mockFsFns } = vi.hoisted(() => {
   const mockPage = {
     goto: vi.fn().mockResolvedValue(undefined),
     content: vi.fn().mockResolvedValue('<html><body>rendered</body></html>'),
@@ -18,32 +18,34 @@ const { mockPage, mockBrowser, mockCreateServer } = vi.hoisted(() => {
     close: vi.fn((cb) => cb()),
     on: vi.fn(),
   }));
-  return { mockPage, mockBrowser, mockCreateServer };
-});
-
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    default: { ...actual, writeFileSync: vi.fn(), mkdirSync: vi.fn(), readFileSync: vi.fn(() => '<html></html>') },
-    ...actual,
+  const mockFsFns = {
     writeFileSync: vi.fn(),
     mkdirSync: vi.fn(),
     readFileSync: vi.fn(() => '<html></html>'),
   };
+  return { mockPage, mockBrowser, mockCreateServer, mockFsFns };
 });
+
+// NOTE: deliberately NOT using the `async (importOriginal) => { const actual = await
+// importOriginal(); ... }` factory shape here. For these two Node builtins that pattern
+// fails to intercept the *transitive* import inside prerender.js (readFileSync/
+// writeFileSync/createServer silently fall through to the REAL implementations —
+// verified by writing real files under dist/ during a plain unit test run). A
+// synchronous factory that doesn't call importOriginal() intercepts correctly; since
+// prerender.js only ever touches these explicitly-mocked functions, nothing is lost.
+vi.mock('node:fs', () => ({
+  ...mockFsFns,
+  default: { ...mockFsFns },
+}));
 
 vi.mock('puppeteer', () => ({
   default: { launch: vi.fn().mockResolvedValue(mockBrowser) },
 }));
 
-vi.mock('node:http', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    default: { ...actual, createServer: mockCreateServer },
-    ...actual,
-    createServer: mockCreateServer,
-  };
-});
+vi.mock('node:http', () => ({
+  createServer: mockCreateServer,
+  default: { createServer: mockCreateServer },
+}));
 
 import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
 
@@ -152,6 +154,40 @@ describe('prerenderPlugin', () => {
       'No chromium',
     );
     warnSpy.mockRestore();
+  });
+
+  it('strips the local prerender-server origin from captured HTML before writing (#4502)', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockPage.content.mockResolvedValue(
+      '<html><head><link rel="modulepreload" href="http://127.0.0.1:54321/assets/x.js"></head><body>rendered</body></html>',
+    );
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
+      'production',
+    );
+
+    await plugin.closeBundle();
+
+    const [, writtenHtml] = mockFsFns.writeFileSync.mock.calls[0];
+    expect(writtenHtml).not.toContain('127.0.0.1');
+    expect(writtenHtml).toContain('/assets/x.js');
+    logSpy.mockRestore();
+  });
+
+  it('fails hard (#4502) when a written prerendered file still leaks the local prerender origin', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockFsFns.readFileSync.mockReturnValueOnce(
+      '<html><body><link rel="modulepreload" href="http://127.0.0.1:54321/assets/x.js"></body></html>',
+    );
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
+      'production',
+    );
+
+    await expect(plugin.closeBundle()).rejects.toThrow(/4502/);
+    logSpy.mockRestore();
   });
 });
 
