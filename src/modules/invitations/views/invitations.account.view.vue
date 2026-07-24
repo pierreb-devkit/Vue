@@ -23,12 +23,15 @@
             <v-icon icon="fa-solid fa-gift" color="primary" class="mr-3"></v-icon>
             <span class="text-title-large">Invite a contact</span>
           </div>
-          <!-- #3833 open-signup state: the server never claims/finalizes an invite
-               token while public signup is open (invitation.accepted never fires),
-               so soliciting invites here would promise a referral that can never
-               convert. Informational state instead of the form; list stays below. -->
+          <!-- #3833/#4500 open-signup state: with signup open, the server never
+               claims/finalizes an invite token (invitation.accepted never fires),
+               so soliciting invites here would normally promise a referral that
+               can never convert — UNLESS the deployment explicitly opts in via
+               user-facing invitations (userFacingInvitations), in which case the
+               form is shown regardless of the signup state. Informational state
+               only when open signup AND that opt-in is off; list stays below. -->
           <v-alert
-            v-if="signupOpen"
+            v-if="signupOpen && !userFacingInvitations"
             type="info"
             variant="tonal"
             density="compact"
@@ -235,6 +238,17 @@ export default {
      */
     signupOpen() {
       return useAuthStore().serverConfig?.sign?.up === true;
+    },
+    /**
+     * @desc Whether this deployment opts in to user-facing invitations (the
+     * invite form stays available even with public signup open) from the
+     * server auth config. Defaults to false — an unknown/missing exposure
+     * (older backend, config not loaded yet) keeps today's behavior: the
+     * form is gated behind `signupOpen` alone.
+     * @returns {boolean}
+     */
+    userFacingInvitations() {
+      return useAuthStore().serverConfig?.invitations?.userFacing === true;
     },
   },
   methods: {
