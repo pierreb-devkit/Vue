@@ -67,10 +67,11 @@ export function prerenderPlugin(config, mode) {
 
       let browser;
       let server;
+      let distDir;
 
       try {
         const puppeteer = await import('puppeteer');
-        const distDir = join(process.cwd(), 'dist');
+        distDir = join(process.cwd(), 'dist');
 
         // Spin up a lightweight static file server for the dist/ folder
         server = await startStaticServer(distDir);
@@ -100,6 +101,32 @@ export function prerenderPlugin(config, mode) {
       } finally {
         if (browser) await browser.close().catch(() => {});
         if (server) await closeServer(server);
+      }
+
+      // Fail-hard build-time assert (#4502): re-read each written prerendered file and
+      // refuse to ship a build that still references the local prerender-server origin.
+      // Deliberately OUTSIDE the try/catch above — that block is fail-soft by design
+      // (a puppeteer/render hiccup must never break unrelated builds), so a leak thrown
+      // in there would be silently swallowed. Mirrors the docs fail-hard gate pattern:
+      // fail-soft render step, then a separate check afterward that always propagates.
+      if (distDir) {
+        const leakPattern = /https?:\/\/(?:127\.0\.0\.1|localhost):\d+/;
+        for (const route of routes) {
+          const outputPath = routeToOutputPath(distDir, route);
+          let written;
+          try {
+            written = readFileSync(outputPath, 'utf-8');
+          } catch {
+            continue; // route was never (re)written this run — nothing to assert on
+          }
+          if (leakPattern.test(written)) {
+            throw new Error(
+              `[prerender] FAIL-HARD: pre-rendered route "${route}" (${outputPath}) still contains ` +
+                'a reference to the local prerender-server origin (127.0.0.1/localhost) — see #4502. ' +
+                'Refusing to ship a build with a leaked internal URL.',
+            );
+          }
+        }
       }
     },
   };
@@ -173,10 +200,15 @@ async function renderRoute(browser, port, route, distDir) {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30_000 });
     const html = await page.content();
 
+    // Vite's __vitePreload absolutizes lazy-chunk deps via import.meta.resolve against
+    // the local prerender server origin (#4502); static chunks stay relative, so
+    // stripping the origin yields the same root-relative form.
+    const sanitized = html.replace(new RegExp('https?://(?:127\\.0\\.0\\.1|localhost):' + port, 'g'), '');
+
     const outputPath = routeToOutputPath(distDir, route);
 
     mkdirSync(dirname(outputPath), { recursive: true });
-    writeFileSync(outputPath, html, 'utf-8');
+    writeFileSync(outputPath, sanitized, 'utf-8');
     console.log(`[prerender] Rendered: ${route} → ${outputPath}`);
   } finally {
     await page.close();
