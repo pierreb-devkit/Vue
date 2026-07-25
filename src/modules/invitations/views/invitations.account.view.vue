@@ -203,7 +203,7 @@ export default {
      * @desc Referrals summary counts, derived from the invitations list through
      * the SAME per-row derivation as the table's status chips (`inviteStatus`)
      * so the header and the list can never disagree. Pure derivation — no
-     * endpoint, no credit math (rewards are a later phase, #5).
+     * endpoint, no credit math (reward grants live server-side, #4504).
      * @returns {{ total: number, joined: number, pending: number, expired: number, revoked: number }}
      */
     referralSummary() {
