@@ -179,13 +179,9 @@ describe('invitations.account.view', () => {
     expect(wrapper.find('[data-test="referrals-summary"]').text()).toContain('1 expired');
   });
 
-  it('renders the referral-rewards placeholder — honest, no numbers', () => {
+  it('no longer renders the referral-rewards placeholder (#4504 — reward path shipped)', () => {
     const wrapper = mountView();
-    const placeholder = wrapper.find('[data-test="referral-rewards-placeholder"]');
-    expect(placeholder.exists()).toBe(true);
-    expect(placeholder.text()).toContain('Referral rewards — coming soon');
-    // Scaffold contract (#5 not built): the placeholder must never show numbers/fake math
-    expect(placeholder.text()).not.toMatch(/\d/);
+    expect(wrapper.find('[data-test="referral-rewards-placeholder"]').exists()).toBe(false);
   });
 
   it('signup open: replaces the invite form with the informational alert', () => {
