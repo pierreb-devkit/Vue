@@ -130,13 +130,6 @@
               <v-chip :color="inviteStatus(item).color" size="small" variant="tonal">{{ inviteStatus(item).label }}</v-chip>
             </template>
           </coreDataTableComponent>
-          <!-- Referral rewards placeholder — credits land here in a later phase (#5). No numbers, no math. -->
-          <div class="d-flex align-center mt-4" data-test="referral-rewards-placeholder">
-            <v-chip size="small" variant="tonal" class="text-medium-emphasis">
-              <v-icon start icon="fa-solid fa-coins" size="x-small"></v-icon>
-              Referral rewards — coming soon
-            </v-chip>
-          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -162,9 +155,9 @@ import coreDataTableComponent from '../../core/components/core.datatable.compone
  * entry, both gated by `isModuleActive('invitations')`.
  *
  * P8b frames this as the referrals experience: a summary header (counts by
- * status, derived from the same list the table shows) + a "Referral rewards —
- * coming soon" placeholder marking where the credit grant (#5) will land.
- * Scaffold only — ZERO credit math/logic lives here.
+ * status, derived from the same list the table shows). The credit grant path
+ * lives server-side (billing referral service, #4504 removed the stale
+ * "coming soon" placeholder once it shipped) — ZERO credit math/logic here.
  */
 export default {
   name: 'InvitationsAccount',
