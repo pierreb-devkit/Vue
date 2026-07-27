@@ -43,6 +43,7 @@ export const ability = toReactiveAbility(createMongoAbility([]));
  * @returns {void}
  */
 export const updateAbilities = (rules) => {
+  if (!Array.isArray(rules)) return;
   ability.update(rules);
 };
 
