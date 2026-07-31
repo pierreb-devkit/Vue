@@ -112,11 +112,28 @@ For each user-facing flow this feature creates or modifies, identify:
 - Every UI action has visible feedback (success + error)
 - Feature works without mailer / without organizations enabled
 
+### 3b. Minimal-code ladder (run before presenting)
+
+Challenge every **mechanism** this change would introduce — a store field, a persisted flag, a composable, a wrapper component, a new field in the API contract. Stop at the first rung that holds:
+
+0. **Does a product decision remove it?** — accept the cost, accept the failure, do nothing, or surface it to the user.
+1. **Already in this codebase?** — reuse the composable, store or component.
+2. **In the standard library?** — use it.
+3. **A native platform feature?** (HTML input validation, CSS, a framework or design-system built-in) — use it.
+4. **An already-installed dependency?** — use it.
+5. **One line, a constant, or config?** — make it that.
+6. Only then: build it, minimal.
+
+**Persisted state is the expensive rung.** State that outlives the session (a persisted store slice, a `localStorage` key, a new field in the API contract) encoding a *policy* — a preference, a cap, a memo of a past failure — is not a code choice: code is deleted, persisted state has to be migrated or read forever. Rung 0 is mandatory for it, and it needs **explicit user confirmation in §4** before it is built.
+
+**Never traded away** (lazy ≠ negligent): understanding the problem before picking a rung, validation at trust boundaries, error handling that prevents data loss, security, accessibility, and anything the user explicitly asked for.
+
 ### 4. Present plan & ask questions
 
 **STOP and present to the user:**
 - Flows identified (happy + error + edge cases)
 - UI elements needed
+- **Ladder outcome (§3b)** — one line per rejected mechanism (`<mechanism> — simpler option <X> rejected because <reason>`), plus any persisted state awaiting confirmation. A change that adds a mechanism and rejects nothing means nobody looked.
 - Open questions or scope decisions
 
 **Wait for user validation before coding.** (Non-interactive runs: Phase 0.0
