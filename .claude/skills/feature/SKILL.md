@@ -116,7 +116,7 @@ For each user-facing flow this feature creates or modifies, identify:
 
 Challenge every **mechanism** this change would introduce — a store field, a persisted flag, a composable, a wrapper component, a new field in the API contract. Stop at the first rung that holds:
 
-0. **Does a product decision remove it?** — accept the cost, accept the failure, do nothing, or surface it to the user.
+0. **Does a product decision remove it?** — accept the cost, accept the failure, do nothing, or surface it to the user. This rung holds **only if the mechanism then disappears**; if the product still needs it (a message still has to be rendered, a state still has to be held), keep going down the ladder.
 1. **Already in this codebase?** — reuse the composable, store or component.
 2. **In the standard library?** — use it.
 3. **A native platform feature?** (HTML input validation, CSS, a framework or design-system built-in) — use it.
@@ -124,7 +124,7 @@ Challenge every **mechanism** this change would introduce — a store field, a p
 5. **One line, a constant, or config?** — make it that.
 6. Only then: build it, minimal.
 
-**Persisted state is the expensive rung.** State that outlives the session (a persisted store slice, a `localStorage` key, a new field in the API contract) encoding a *policy* — a preference, a cap, a memo of a past failure — is not a code choice: code is deleted, persisted state has to be migrated or read forever. Rung 0 is mandatory for it, and it needs **explicit user confirmation in §4** before it is built.
+**Persisted state is the expensive rung.** State that **outlives the session** — a persisted store slice, a `localStorage` key, an API field the backend retains and replays back — encoding a *policy* (a preference, a cap, a memo of a past failure) is not a code choice: code is deleted, persisted state has to be migrated or read forever. A transient request or response field is **not** this; only state that is retained or restored counts. Rung 0 is mandatory for it, and it needs an **explicit, blocking user confirmation in §4** before it is built — a yes on that specific state, never implied by the general plan validation.
 
 **Never traded away** (lazy ≠ negligent): understanding the problem before picking a rung, validation at trust boundaries, error handling that prevents data loss, security, accessibility, and anything the user explicitly asked for.
 
@@ -133,7 +133,8 @@ Challenge every **mechanism** this change would introduce — a store field, a p
 **STOP and present to the user:**
 - Flows identified (happy + error + edge cases)
 - UI elements needed
-- **Ladder outcome (§3b)** — one line per rejected mechanism (`<mechanism> — simpler option <X> rejected because <reason>`), plus any persisted state awaiting confirmation. A change that adds a mechanism and rejects nothing means nobody looked.
+- **Ladder outcome (§3b)** — the **selected rung** first (`<rung> — <what it resolves to>`, e.g. `1 reuse — existing composable`), then one line per rejected mechanism (`<mechanism> — simpler option <X> rejected because <reason>`). A change that adds a mechanism and rejects nothing means nobody looked.
+- **Persisted state, if any** — name it and **wait for an explicit yes on it**; a general "plan validated" does not cover it, and it is not built without that yes.
 - Open questions or scope decisions
 
 **Wait for user validation before coding.** (Non-interactive runs: Phase 0.0
