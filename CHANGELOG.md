@@ -1,3 +1,29 @@
+# [2.3.0](https://github.com/pierreb-devkit/Vue/compare/v2.2.0...v2.3.0) (2026-08-01)
+
+
+### Bug Fixes
+
+* **auth,organizations:** guard soft-refresh navigation and the signout race ([#4464](https://github.com/pierreb-devkit/Vue/issues/4464)) ([6a2546e](https://github.com/pierreb-devkit/Vue/commit/6a2546eab286ebb55da0ec452162116a0ca32142)), closes [#4451](https://github.com/pierreb-devkit/Vue/issues/4451) [#4459](https://github.com/pierreb-devkit/Vue/issues/4459)
+* **auth,organizations:** soft-refresh (token) at onboarding sites to prevent silent sign-out ([#4431](https://github.com/pierreb-devkit/Vue/issues/4431)) ([5d88766](https://github.com/pierreb-devkit/Vue/commit/5d887661a8ee43cdd4be4a0db7233e5efe6b47a2))
+* **auth,organizations:** surface failures in org-create and email-verification flows ([#4451](https://github.com/pierreb-devkit/Vue/issues/4451)) ([b161df5](https://github.com/pierreb-devkit/Vue/commit/b161df59eb58f7ba84003889a657755467067475)), closes [#4431](https://github.com/pierreb-devkit/Vue/issues/4431) [#4447](https://github.com/pierreb-devkit/Vue/issues/4447)
+* **auth:** surface requestJoin failures in the org-setup alert ([#4389](https://github.com/pierreb-devkit/Vue/issues/4389)) ([#4397](https://github.com/pierreb-devkit/Vue/issues/4397)) ([f92003d](https://github.com/pierreb-devkit/Vue/commit/f92003d5cd0ce5e3a17f8eb69ff5261b8027fca6))
+* **auth:** token() soft-refresh also carries pendingRequests ([#4436](https://github.com/pierreb-devkit/Vue/issues/4436)) ([0b40e8c](https://github.com/pierreb-devkit/Vue/commit/0b40e8c97aa2089e3146a447b0a6ec009cd5ef35))
+* **billing:** config-source the upgrade-prompt pricing copy ([#4465](https://github.com/pierreb-devkit/Vue/issues/4465)) ([9cb370d](https://github.com/pierreb-devkit/Vue/commit/9cb370dfe2e3400440a961d858751aad85f20bfd)), closes [#4460](https://github.com/pierreb-devkit/Vue/issues/4460)
+* **billing:** meter-mode upgrade prompt copy + single-entry route ([#4410](https://github.com/pierreb-devkit/Vue/issues/4410)) ([df396cf](https://github.com/pierreb-devkit/Vue/commit/df396cf06fdd6f5c6af26355cde8dc95cb40b8c9)), closes [pricing#units](https://github.com/pricing/issues/units) [pricing#units](https://github.com/pricing/issues/units)
+* **billing:** migrate default packs to the V4 pricing-card schema ([#4463](https://github.com/pierreb-devkit/Vue/issues/4463)) ([84789b8](https://github.com/pierreb-devkit/Vue/commit/84789b87118ce37da59dffbd62ba1fa63f0b2be0)), closes [pricing#units](https://github.com/pricing/issues/units) [#4458](https://github.com/pierreb-devkit/Vue/issues/4458)
+* **core,organizations:** config-gate org-required header + unify first-org redirect ([#4423](https://github.com/pierreb-devkit/Vue/issues/4423)) ([7adb298](https://github.com/pierreb-devkit/Vue/commit/7adb29820a6d14eed166e5e514a9ac65dec625ba)), closes [#4421](https://github.com/pierreb-devkit/Vue/issues/4421) [#4422](https://github.com/pierreb-devkit/Vue/issues/4422)
+* **core:** wire the computed theme into Vuetify so auto dark-mode works ([#4466](https://github.com/pierreb-devkit/Vue/issues/4466)) ([ed35252](https://github.com/pierreb-devkit/Vue/commit/ed35252b667b87ad3183d32b6e4c45644370e88f)), closes [#4462](https://github.com/pierreb-devkit/Vue/issues/4462)
+* **prerender:** strip local server origin from captured HTML + fail-hard leak assert ([#4502](https://github.com/pierreb-devkit/Vue/issues/4502)) ([#4503](https://github.com/pierreb-devkit/Vue/issues/4503)) ([dbcf8d7](https://github.com/pierreb-devkit/Vue/commit/dbcf8d7e8e4d1750b109e9cf07fd9b4dbcc2874a))
+* **skills:** flip PR to ready before waiting on CodeRabbit to avoid a draft deadlock ([#4473](https://github.com/pierreb-devkit/Vue/issues/4473)) ([a733998](https://github.com/pierreb-devkit/Vue/commit/a73399821053524b33cb3ba1b0a51565b3e972b3)), closes [#4450](https://github.com/pierreb-devkit/Vue/issues/4450)
+
+
+### Features
+
+* **billing:** pricing feature rows wrap + explicit ✗ not-included marker ([#4390](https://github.com/pierreb-devkit/Vue/issues/4390)) ([4bc2515](https://github.com/pierreb-devkit/Vue/commit/4bc2515df18ee8d7169529d4044932df1019b3f9))
+* **invitations:** show invite form when user-facing invitations enabled with open signup ([#4501](https://github.com/pierreb-devkit/Vue/issues/4501)) ([daa6688](https://github.com/pierreb-devkit/Vue/commit/daa6688a4762acb9539ffbc018492885e38bc45c)), closes [#4500](https://github.com/pierreb-devkit/Vue/issues/4500)
+* **skills:** /feature non-interactive invocation — structured SKIP/STOP instead of prompts ([#4455](https://github.com/pierreb-devkit/Vue/issues/4455)) ([197c5f3](https://github.com/pierreb-devkit/Vue/commit/197c5f30cbe6805f632238f7fdee821d8b560a14)), closes [#N](https://github.com/pierreb-devkit/Vue/issues/N) [#failure](https://github.com/pierreb-devkit/Vue/issues/failure) [#4454](https://github.com/pierreb-devkit/Vue/issues/4454)
+* **ui:** config-overridable loader, plan-badge set, and copy strings ([#4475](https://github.com/pierreb-devkit/Vue/issues/4475)) ([688911a](https://github.com/pierreb-devkit/Vue/commit/688911adb86f788ecc5cef8d1e2f6d91d828b513)), closes [#4474](https://github.com/pierreb-devkit/Vue/issues/4474)
+
 # [2.2.0](https://github.com/pierreb-devkit/Vue/compare/v2.1.0...v2.2.0) (2026-07-01)
 
 
