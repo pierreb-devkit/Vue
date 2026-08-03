@@ -362,7 +362,8 @@ describe('augmentSeoConfigWithDocs', () => {
       '/api/public/docs/welcome.md',
     ]);
     expect(snapshot['/api/public/docs/'].contentType).toBe('application/json');
-    expect(JSON.parse(snapshot['/api/public/docs/'].body)).toEqual(treeFixture);
+    // Wire-shape envelope, exactly what the real API returns.
+    expect(JSON.parse(snapshot['/api/public/docs/'].body)).toEqual({ data: treeFixture });
     expect(snapshot['/api/public/docs/welcome.md'].contentType).toBe('text/markdown');
     expect(snapshot['/api/public/docs/welcome.md'].body).toContain('welcome.md');
   });
@@ -413,8 +414,8 @@ describe('fetchDocsSnapshot', () => {
 
     expect(fetchImpl).toHaveBeenCalledTimes(3); // articles only, never the tree URL
     expect(fetchImpl).not.toHaveBeenCalledWith('https://api.example.com/api/public/docs', expect.anything());
-    expect(snapshot['/api/public/docs'].body).toBe(JSON.stringify(treeFixture));
-    expect(snapshot['/api/public/docs/'].body).toBe(JSON.stringify(treeFixture));
+    expect(snapshot['/api/public/docs'].body).toBe(JSON.stringify({ data: treeFixture }));
+    expect(snapshot['/api/public/docs/'].body).toBe(JSON.stringify({ data: treeFixture }));
     expect(snapshot['/api/public/docs/welcome.md']).toEqual({ body: '# body', contentType: 'text/markdown' });
   });
 

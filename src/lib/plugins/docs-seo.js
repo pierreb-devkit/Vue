@@ -235,7 +235,9 @@ export function deriveDocsSnapshotEntries(tree, contentUrl) {
 export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, fetchImpl = globalThis.fetch } = options;
   const snapshot = {};
-  const treeBody = JSON.stringify(tree);
+  // Mirror the real wire shape (`{ data: { categories } }` envelope) so any
+  // consumer reading the raw response sees exactly what the API would return.
+  const treeBody = JSON.stringify({ data: tree });
   // Mirror fetchDocsTree's guard: a missing/non-function fetch keeps the layer
   // fail-soft (tree entries need no I/O; articles are skipped with a warning).
   const canFetch = typeof fetchImpl === 'function';

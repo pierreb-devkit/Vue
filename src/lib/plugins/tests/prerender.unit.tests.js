@@ -324,6 +324,44 @@ describe('prerenderPlugin apiSnapshot interception', () => {
     expect(miss.continue).toHaveBeenCalled();
     logSpy.mockRestore();
   });
+
+  it('answers CORS preflights for snapshot-covered paths itself (204 + reflected origin)', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await prerenderPlugin(snapshotConfig(), 'production').closeBundle();
+    const handler = mockPage.on.mock.calls.find(([event]) => event === 'request')[1];
+
+    const preflight = {
+      url: () => 'https://api.example.com/api/public/docs/',
+      method: () => 'OPTIONS',
+      headers: () => ({ origin: 'http://127.0.0.1:54321', 'access-control-request-headers': 'x-custom' }),
+      respond: vi.fn(),
+      continue: vi.fn().mockResolvedValue(undefined),
+    };
+    handler(preflight);
+    expect(preflight.respond).toHaveBeenCalledWith({
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': 'http://127.0.0.1:54321',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'x-custom',
+        'Access-Control-Allow-Credentials': 'true',
+      },
+      body: '',
+    });
+    expect(preflight.continue).not.toHaveBeenCalled();
+
+    const preflightMiss = {
+      url: () => 'https://api.example.com/api/unrelated',
+      method: () => 'OPTIONS',
+      headers: () => ({ origin: 'http://127.0.0.1:54321' }),
+      respond: vi.fn(),
+      continue: vi.fn().mockResolvedValue(undefined),
+    };
+    handler(preflightMiss);
+    expect(preflightMiss.respond).not.toHaveBeenCalled();
+    expect(preflightMiss.continue).toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
 });
 
 describe('sanitizePath', () => {

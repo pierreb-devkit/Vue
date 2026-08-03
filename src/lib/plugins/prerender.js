@@ -227,6 +227,23 @@ async function renderRoute(browser, port, route, distDir, apiSnapshot) {
     if (apiSnapshot && Object.keys(apiSnapshot).length > 0) {
       await page.setRequestInterception(true);
       page.on('request', (req) => {
+        // Answer CORS preflights for snapshot-covered paths ourselves — a
+        // continue()d OPTIONS would depend on the real API being reachable,
+        // which is exactly what the snapshot exists to avoid.
+        if (req.method() === 'OPTIONS' && matchSnapshot(apiSnapshot, req.url(), 'GET')) {
+          const preflightOrigin = req.headers()?.origin;
+          req.respond({
+            status: 204,
+            headers: {
+              'Access-Control-Allow-Origin': preflightOrigin || '*',
+              'Access-Control-Allow-Methods': 'GET, OPTIONS',
+              'Access-Control-Allow-Headers': req.headers()?.['access-control-request-headers'] || '*',
+              ...(preflightOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
+            },
+            body: '',
+          });
+          return;
+        }
         const hit = matchSnapshot(apiSnapshot, req.url(), req.method());
         if (hit) {
           // Reflect the page origin instead of '*': the app's HTTP client may
