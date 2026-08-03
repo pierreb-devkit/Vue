@@ -128,10 +128,6 @@ export default {
     };
   },
   computed: {
-    auth() {
-      const authStore = useAuthStore();
-      return authStore.auth;
-    },
     /**
      * @desc Reactive lockout state from the auth store.
      * @returns {{ locked: boolean, retryAfter: number }} Current lockout status.
@@ -152,12 +148,6 @@ export default {
     },
   },
   watch: {
-    auth(auth) {
-      if (auth) {
-        const redirect = this.$route.query.redirect;
-        this.$router.push(redirect && redirect.startsWith('/') ? redirect : this.config.sign.route);
-      }
-    },
     /**
      * @desc Start a countdown timer when the account becomes locked.
      * @param {{ locked: boolean, retryAfter: number }} lockout - Updated lockout state.
@@ -194,6 +184,10 @@ export default {
             email: this.email,
             password: this.password,
           });
+          if (authStore.auth) {
+            const redirect = this.$route.query.redirect;
+            this.$router.push(redirect && redirect.startsWith('/') ? redirect : this.config.sign.route);
+          }
         } catch (err) {
           console.error(err);
         }
