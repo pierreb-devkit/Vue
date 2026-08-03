@@ -133,6 +133,12 @@ describe('warnUnknownModuleKeys', () => {
     expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 
+  it('does not warn for a core module using "display" only (no "activated") — activated is inert on core modules, so there is nothing to flag', () => {
+    mockConfig.modules = { home: { display: false } };
+    warnUnknownModuleKeys([]);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
   it('does not warn when config.modules is undefined', () => {
     mockConfig.modules = undefined;
     warnUnknownModuleKeys(['tasks']);

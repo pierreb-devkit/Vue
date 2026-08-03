@@ -131,6 +131,11 @@ const getRouter = () => {
   // Config-only module flags that aren't route-gated (no routes to activate/
   // deactivate, so they never appear in any registry below) — listed here so
   // the dev-mode `config.modules.*` key check doesn't flag them as unknown.
+  // Narrow by design: this list is stack-owned, not downstream-extensible —
+  // adding a new non-routed config-only flag downstream will trigger the
+  // dev-mode warning until it either ships an `activated`/gates a route (the
+  // supported pattern) or gets added here in a stack PR. Deliberately not
+  // generalized into a registration mechanism for a dev-mode-only nudge.
   const nonRoutedModuleNames = ['analytics'];
   // Names across every isModuleActive-gated registry — optionalModules PLUS
   // the admin/account/organization child-module registries (e.g. `invitations`

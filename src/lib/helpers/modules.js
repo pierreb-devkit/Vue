@@ -31,9 +31,19 @@ export const isModuleActive = (moduleName) => {
  * warns for each offending key:
  *  - the key matches no registered module name (wrong case or a typo) — the
  *    entry is never consulted by `isModuleActive` at all;
- *  - the key matches a registered module but its entry has no `activated`
- *    property — some other property (e.g. `display`, which independently
- *    toggles nav visibility) was set instead, so the module stays active.
+ *  - the key matches a registered (non-core) module but its entry has no
+ *    `activated` property — some other property was set instead, so the
+ *    module stays active.
+ *
+ * `config.modules.{name}` is a dual-purpose namespace: `useCoreStore.refreshNav`
+ * (`src/modules/core/stores/core.store.js`) separately reads
+ * `config.modules[routeName].display` to hide a nav item without touching
+ * activation — a legitimate, unrelated use of the same top-level key. Both
+ * messages below name that pattern explicitly so a project using `display`
+ * intentionally (nav-hide only, module still active) isn't misread as
+ * broken config; `activated` is only ever inert on a CORE module (always
+ * active regardless of config), so that combination is skipped entirely
+ * rather than telling the developer to add a property that would do nothing.
  *
  * No-op in production (checked via `import.meta.env.MODE`, mirroring the
  * idiom used by {@link module:lib/helpers/router}). Wrapped in `once()` so it
@@ -59,12 +69,13 @@ export const warnUnknownModuleKeys = once((registeredModuleNames = []) => {
 
   for (const [key, value] of Object.entries(modulesConfig)) {
     if (!known.has(key)) {
-      console.warn(`[isModuleActive] config.modules.${key} matches no registered module — check for a wrong case or a typo; the module stays ACTIVE by default.`);
+      console.warn(`[isModuleActive] config.modules.${key} matches no registered module — check for a wrong case or a typo. (If this key is a nav-only display override for a route named "${key}" — see useCoreStore.refreshNav — this warning is safe to ignore.) Otherwise the module stays ACTIVE by default.`);
       continue;
     }
+    if (CORE_MODULES.has(key)) continue; // activated is always inert on a core module — nothing to flag
     const hasActivatedProp = value !== null && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'activated');
     if (!hasActivatedProp) {
-      console.warn(`[isModuleActive] config.modules.${key} has no "activated" property — the module stays ACTIVE by default. A different property (e.g. "display") does not gate activation; use { activated: false } to deactivate it.`);
+      console.warn(`[isModuleActive] config.modules.${key} has no "activated" property — the module stays ACTIVE by default. If you're only using "display" to hide it from the nav (see useCoreStore.refreshNav) that's expected; if you meant to deactivate the module too, also add { activated: false }.`);
     }
   }
 });
