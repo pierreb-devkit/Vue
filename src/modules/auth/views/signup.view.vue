@@ -209,10 +209,6 @@ export default {
     };
   },
   computed: {
-    auth() {
-      const authStore = useAuthStore();
-      return authStore.auth;
-    },
     /**
      * @desc Compute the signup step title based on the current step.
      * @returns {string} Title for the current signup step.
@@ -255,16 +251,6 @@ export default {
     },
     themeName() {
       return this.theme.name;
-    },
-  },
-  watch: {
-    auth(auth) {
-      if (auth && this.signupStep === 'form') {
-        // Only auto-redirect if no org step is pending
-        if (!this.serverConfig?.organizations?.enabled) {
-          this.pushAfterAuth();
-        }
-      }
     },
   },
   /**
