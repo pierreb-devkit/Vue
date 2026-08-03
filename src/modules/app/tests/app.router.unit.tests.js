@@ -600,8 +600,8 @@ describe('app.router', () => {
       expect(router).toBeDefined();
       expect(mockWarnUnknownModuleKeys).toHaveBeenCalledTimes(1);
 
-      const [arg] = mockWarnUnknownModuleKeys.mock.calls[0];
-      const names = typeof arg === 'function' ? arg() : arg;
+      const [moduleArg] = mockWarnUnknownModuleKeys.mock.calls[0];
+      const names = typeof moduleArg === 'function' ? moduleArg() : moduleArg;
 
       // optionalModules
       expect(names).toContain('tasks');
@@ -611,6 +611,18 @@ describe('app.router', () => {
       // adminChildModules / accountChildModules — NOT in optionalModules,
       // only reachable via the child-module registries (regression guard).
       expect(names).toContain('invitations');
+    });
+
+    it('is also called with the mounted route names (same list useCoreStore.refreshNav consults), so a display-only nav override is not mistaken for an unregistered module', () => {
+      const router = getRouter();
+      const routePaths = router.options.routes.map((r) => r.path);
+      expect(routePaths).toContain('/tasks'); // sanity: tasks module is mounted in this test
+
+      const [, routeArg] = mockWarnUnknownModuleKeys.mock.calls[0];
+      const routeNames = typeof routeArg === 'function' ? routeArg() : routeArg;
+
+      expect(routeNames).toContain('Tasks');
+      expect(routeNames.length).toBeGreaterThan(0);
     });
   });
 });

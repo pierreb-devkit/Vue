@@ -95,12 +95,47 @@ describe('warnUnknownModuleKeys', () => {
     expect(consoleWarnSpy.mock.calls[0][0]).toContain('taskss');
   });
 
-  it('warns when a registered key has no "activated" property (e.g. wrong prop like display)', () => {
+  it('still warns for a wrong-case key with "activated" set (the original #4480 bug) even though a differently-cased route exists', () => {
+    // 'Tasks' has activation intent, so it must resolve against a MODULE
+    // name ('tasks'), not the route-name set — matching the route name here
+    // must NOT suppress the warning, or the original bug goes uncaught again.
+    mockConfig.modules = { Tasks: { activated: false } };
+    warnUnknownModuleKeys(['tasks', 'billing'], ['Tasks', 'Billing']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('Tasks');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('no registered module');
+  });
+
+  it('does NOT warn for a display-only key matching a real route name (PascalCase) that is not a module name — the legitimate nav-hide pattern', () => {
+    // useCoreStore.refreshNav keys config.modules by ROUTE name, e.g. the real
+    // shipped 'Tasks' route — not by the lowercase 'tasks' module name.
+    mockConfig.modules = { Tasks: { display: false } };
+    warnUnknownModuleKeys(['tasks', 'billing'], ['Tasks', 'Billing', 'Home']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('does NOT warn for a display-only key matching a module name even when it is not a real route name (coincidental match, treated as intentional)', () => {
     mockConfig.modules = { tasks: { display: false } };
+    warnUnknownModuleKeys(['tasks', 'billing'], ['Tasks', 'Billing']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('warns for a display-only key matching neither a registered route name nor a module name', () => {
+    mockConfig.modules = { Bogus: { display: false } };
+    warnUnknownModuleKeys(['tasks', 'billing'], ['Tasks', 'Billing']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('Bogus');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('no registered module or route name');
+  });
+
+  it('softens the activation-intent message to cover dead leftover config, not just typos', () => {
+    // e.g. a vestigial `analytics: { activated: true }` a downstream config
+    // still carries after the stack removed the (never-read) key.
+    mockConfig.modules = { analytics: { activated: true } };
     warnUnknownModuleKeys(['tasks', 'billing']);
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-    expect(consoleWarnSpy.mock.calls[0][0]).toContain('tasks');
-    expect(consoleWarnSpy.mock.calls[0][0]).toContain('activated');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('dead leftover config');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('module activation is NOT affected');
   });
 
   it('does not warn for a correctly-configured key (activated: false) and the module resolves inactive', async () => {

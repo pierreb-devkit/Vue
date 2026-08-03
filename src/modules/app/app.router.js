@@ -143,12 +143,23 @@ const getRouter = () => {
     ...accountChildModules.map((mod) => mod.name),
     ...organizationChildModules.map((mod) => mod.name),
   ];
-  warnUnknownModuleKeys(registeredModuleNames);
 
   const routes = optionalModules.reduce(
     (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
     coreRoutes,
   );
+
+  /**
+   * @desc Lazily collect the `name` of every route this composition actually
+   * mounts — the exact same array `useCoreStore.refreshNav` consults (set via
+   * `coreStore.init(router.options.routes)` in `main.js`), so the dev-mode
+   * unknown-key check can recognize a `config.modules.<RouteName>.display`
+   * nav-hide override without mistaking it for an unregistered module.
+   * @returns {string[]} Mounted route names for this composition.
+   */
+  const registeredRouteNames = () => routes.map((route) => route.name).filter(Boolean);
+
+  warnUnknownModuleKeys(registeredModuleNames, registeredRouteNames);
 
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
