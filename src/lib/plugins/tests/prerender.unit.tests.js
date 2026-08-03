@@ -270,6 +270,18 @@ describe('prerenderPlugin apiSnapshot interception', () => {
     logSpy.mockRestore();
   });
 
+  it('skips interception when the snapshot is an empty object', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/docs'], apiSnapshot: {} } } } },
+      'production',
+    ).closeBundle();
+
+    expect(mockPage.setRequestInterception).not.toHaveBeenCalled();
+    expect(mockPage.on).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
   it('the wired handler responds to snapshot hits and continues everything else', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await prerenderPlugin(snapshotConfig(), 'production').closeBundle();
@@ -280,7 +292,7 @@ describe('prerenderPlugin apiSnapshot interception', () => {
       url: () => 'https://api.example.com/api/public/docs/',
       method: () => 'GET',
       headers: () => ({ origin: 'http://127.0.0.1:54321' }),
-      respond: vi.fn(),
+      respond: vi.fn().mockResolvedValue(undefined),
       continue: vi.fn().mockResolvedValue(undefined),
     };
     handler(hit);
@@ -301,7 +313,7 @@ describe('prerenderPlugin apiSnapshot interception', () => {
       url: () => 'https://api.example.com/api/public/docs/',
       method: () => 'GET',
       headers: () => ({}),
-      respond: vi.fn(),
+      respond: vi.fn().mockResolvedValue(undefined),
       continue: vi.fn().mockResolvedValue(undefined),
     };
     handler(hitNoOrigin);
@@ -316,7 +328,7 @@ describe('prerenderPlugin apiSnapshot interception', () => {
       url: () => 'https://api.example.com/api/unrelated',
       method: () => 'GET',
       headers: () => ({}),
-      respond: vi.fn(),
+      respond: vi.fn().mockResolvedValue(undefined),
       continue: vi.fn().mockResolvedValue(undefined),
     };
     handler(miss);
@@ -334,7 +346,7 @@ describe('prerenderPlugin apiSnapshot interception', () => {
       url: () => 'https://api.example.com/api/public/docs/',
       method: () => 'OPTIONS',
       headers: () => ({ origin: 'http://127.0.0.1:54321', 'access-control-request-headers': 'x-custom' }),
-      respond: vi.fn(),
+      respond: vi.fn().mockResolvedValue(undefined),
       continue: vi.fn().mockResolvedValue(undefined),
     };
     handler(preflight);
@@ -354,7 +366,7 @@ describe('prerenderPlugin apiSnapshot interception', () => {
       url: () => 'https://api.example.com/api/unrelated',
       method: () => 'OPTIONS',
       headers: () => ({ origin: 'http://127.0.0.1:54321' }),
-      respond: vi.fn(),
+      respond: vi.fn().mockResolvedValue(undefined),
       continue: vi.fn().mockResolvedValue(undefined),
     };
     handler(preflightMiss);

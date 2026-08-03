@@ -232,16 +232,18 @@ async function renderRoute(browser, port, route, distDir, apiSnapshot) {
         // which is exactly what the snapshot exists to avoid.
         if (req.method() === 'OPTIONS' && matchSnapshot(apiSnapshot, req.url(), 'GET')) {
           const preflightOrigin = req.headers()?.origin;
-          req.respond({
-            status: 204,
-            headers: {
-              'Access-Control-Allow-Origin': preflightOrigin || '*',
-              'Access-Control-Allow-Methods': 'GET, OPTIONS',
-              'Access-Control-Allow-Headers': req.headers()?.['access-control-request-headers'] || '*',
-              ...(preflightOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
-            },
-            body: '',
-          });
+          req
+            .respond({
+              status: 204,
+              headers: {
+                'Access-Control-Allow-Origin': preflightOrigin || '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': req.headers()?.['access-control-request-headers'] || '*',
+                ...(preflightOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
+              },
+              body: '',
+            })
+            .catch(() => {});
           return;
         }
         const hit = matchSnapshot(apiSnapshot, req.url(), req.method());
@@ -250,15 +252,17 @@ async function renderRoute(browser, port, route, distDir, apiSnapshot) {
           // send credentialed (withCredentials) requests, and browsers reject a
           // wildcard ACAO for those.
           const origin = req.headers()?.origin;
-          req.respond({
-            status: 200,
-            contentType: hit.contentType,
-            headers: {
-              'Access-Control-Allow-Origin': origin || '*',
-              ...(origin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
-            },
-            body: hit.body,
-          });
+          req
+            .respond({
+              status: 200,
+              contentType: hit.contentType,
+              headers: {
+                'Access-Control-Allow-Origin': origin || '*',
+                ...(origin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
+              },
+              body: hit.body,
+            })
+            .catch(() => {});
           return;
         }
         req.continue().catch(() => {});
