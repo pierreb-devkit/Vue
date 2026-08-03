@@ -3,6 +3,8 @@ import {
   fetchDocsTree,
   deriveDocsRoutes,
   deriveDocsLlmsSections,
+  deriveDocsSnapshotEntries,
+  fetchDocsSnapshot,
   augmentSeoConfigWithDocs,
 } from '../docs-seo.js';
 
@@ -337,5 +339,115 @@ describe('augmentSeoConfigWithDocs', () => {
     const routes = deriveDocsRoutes(treeFixture, 42);
     // '42' starts with a digit, not '/', so normalizeBasePath prefixes '/'.
     expect(routes[0]).toBe('/42');
+  });
+
+  it('ON path: attaches the prerender apiSnapshot (tree + article entries)', async () => {
+    const fetchImpl = vi.fn().mockImplementation((url) => {
+      if (String(url).endsWith('.md')) {
+        return Promise.resolve({ ok: true, text: async () => `# md for ${url}` });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ data: treeFixture }) });
+    });
+    const config = baseConfig();
+    config.app.seo.docs = { enabled: true, contentUrl: 'https://api.example.com/api/public/docs', basePath: '/docs' };
+
+    const out = await augmentSeoConfigWithDocs(config, { fetchImpl });
+
+    const snapshot = out.app.seo.prerender.apiSnapshot;
+    expect(Object.keys(snapshot).sort()).toEqual([
+      '/api/public/docs',
+      '/api/public/docs/',
+      '/api/public/docs/quickstart.md',
+      '/api/public/docs/webhooks.md',
+      '/api/public/docs/welcome.md',
+    ]);
+    expect(snapshot['/api/public/docs/'].contentType).toBe('application/json');
+    // Wire-shape envelope, exactly what the real API returns.
+    expect(JSON.parse(snapshot['/api/public/docs/'].body)).toEqual({ data: treeFixture });
+    expect(snapshot['/api/public/docs/welcome.md'].contentType).toBe('text/markdown');
+    expect(snapshot['/api/public/docs/welcome.md'].body).toContain('welcome.md');
+  });
+});
+
+describe('deriveDocsSnapshotEntries', () => {
+  it('derives tree entries (both slash forms) plus one .md entry per guide, keyed by pathname', () => {
+    const entries = deriveDocsSnapshotEntries(treeFixture, 'https://api.example.com/api/public/docs');
+    expect(entries).toEqual([
+      { path: '/api/public/docs', url: 'https://api.example.com/api/public/docs', kind: 'tree' },
+      { path: '/api/public/docs/', url: 'https://api.example.com/api/public/docs', kind: 'tree' },
+      { path: '/api/public/docs/welcome.md', url: 'https://api.example.com/api/public/docs/welcome.md', kind: 'article' },
+      { path: '/api/public/docs/quickstart.md', url: 'https://api.example.com/api/public/docs/quickstart.md', kind: 'article' },
+      { path: '/api/public/docs/webhooks.md', url: 'https://api.example.com/api/public/docs/webhooks.md', kind: 'article' },
+    ]);
+  });
+
+  it('normalises a trailing slash on contentUrl', () => {
+    const entries = deriveDocsSnapshotEntries(treeFixture, 'https://api.example.com/api/public/docs/');
+    expect(entries[0].path).toBe('/api/public/docs');
+    expect(entries[2].path).toBe('/api/public/docs/welcome.md');
+  });
+
+  it('URL-encodes slugs, matching the encoded pathname the runtime client requests', () => {
+    const spaced = { categories: [{ id: 'c', label: 'C', guides: [{ slug: 'my guide', title: 'MG' }] }] };
+    const entries = deriveDocsSnapshotEntries(spaced, 'https://api.example.com/api/public/docs');
+    expect(entries[2]).toEqual({
+      path: '/api/public/docs/my%20guide.md',
+      url: 'https://api.example.com/api/public/docs/my%20guide.md',
+      kind: 'article',
+    });
+  });
+
+  it('returns an empty list for a missing or malformed contentUrl', () => {
+    expect(deriveDocsSnapshotEntries(treeFixture, '')).toEqual([]);
+    expect(deriveDocsSnapshotEntries(treeFixture, 'not a url')).toEqual([]);
+    expect(deriveDocsSnapshotEntries(null, 'https://api.example.com/docs')).toEqual([
+      { path: '/docs', url: 'https://api.example.com/docs', kind: 'tree' },
+      { path: '/docs/', url: 'https://api.example.com/docs', kind: 'tree' },
+    ]);
+  });
+});
+
+describe('fetchDocsSnapshot', () => {
+  it('serialises the already-fetched tree WITHOUT refetching it and fetches each article', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, text: async () => '# body' });
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3); // articles only, never the tree URL
+    expect(fetchImpl).not.toHaveBeenCalledWith('https://api.example.com/api/public/docs', expect.anything());
+    expect(snapshot['/api/public/docs'].body).toBe(JSON.stringify({ data: treeFixture }));
+    expect(snapshot['/api/public/docs/'].body).toBe(JSON.stringify({ data: treeFixture }));
+    expect(snapshot['/api/public/docs/welcome.md']).toEqual({ body: '# body', contentType: 'text/markdown' });
+  });
+
+  it('FAIL-SOFT: a non-OK article response is skipped with a warning, others survive', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchImpl = vi.fn().mockImplementation((url) => {
+      if (String(url).endsWith('/quickstart.md')) return Promise.resolve({ ok: false, status: 404 });
+      return Promise.resolve({ ok: true, text: async () => '# ok' });
+    });
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
+
+    expect(snapshot['/api/public/docs/quickstart.md']).toBeUndefined();
+    expect(snapshot['/api/public/docs/welcome.md']).toEqual({ body: '# ok', contentType: 'text/markdown' });
+    expect(snapshot['/api/public/docs/webhooks.md']).toEqual({ body: '# ok', contentType: 'text/markdown' });
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it('FAIL-SOFT: a rejecting article fetch is skipped with a warning, never throws', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchImpl = vi.fn().mockRejectedValue(new Error('offline'));
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
+
+    // Tree entries still present (no I/O needed), all articles skipped.
+    expect(Object.keys(snapshot).sort()).toEqual(['/api/public/docs', '/api/public/docs/']);
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it('FAIL-SOFT: a non-function fetchImpl keeps tree entries and skips articles with a warning', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl: 'not-a-fn' });
+
+    expect(Object.keys(snapshot).sort()).toEqual(['/api/public/docs', '/api/public/docs/']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No fetch implementation'));
   });
 });

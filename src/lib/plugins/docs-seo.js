@@ -180,6 +180,92 @@ export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PA
 }
 
 /**
+ * Derive the API-snapshot entries the prerender page will request at capture
+ * time: the docs tree endpoint (both slash forms, since runtime clients may
+ * request the trailing-slash form) plus one raw-markdown twin per guide.
+ * Entries are keyed by URL PATHNAME so the prerender-time match stays
+ * origin-agnostic — the runtime API origin can differ from `contentUrl`'s.
+ * Pure — no I/O.
+ *
+ * @param {object|null} tree - the docs tree (`{ categories: [...] }`)
+ * @param {string} contentUrl - absolute URL of the docs tree endpoint
+ * @returns {Array<{ path: string, url: string, kind: 'tree'|'article' }>}
+ *   snapshot entries (`path` = pathname the page will request, `url` = absolute
+ *   URL to fetch at build time); empty when contentUrl is absent or malformed
+ */
+export function deriveDocsSnapshotEntries(tree, contentUrl) {
+  if (!contentUrl) return [];
+  let parsed;
+  try {
+    parsed = new URL(contentUrl);
+  } catch {
+    return [];
+  }
+  const basePath = parsed.pathname.replace(/\/+$/, '');
+  const origin = parsed.origin;
+  const entries = [
+    { path: basePath, url: `${origin}${basePath}`, kind: 'tree' },
+    { path: `${basePath}/`, url: `${origin}${basePath}`, kind: 'tree' },
+  ];
+  for (const cat of normalizeCategories(tree)) {
+    for (const guide of cat.guides) {
+      // Encode the slug exactly like the runtime docs service does — the page
+      // requests the ENCODED pathname, and matchSnapshot compares literally.
+      const path = `${basePath}/${encodeURIComponent(guide.slug)}.md`;
+      entries.push({ path, url: `${origin}${path}`, kind: 'article' });
+    }
+  }
+  return entries;
+}
+
+/**
+ * Fetch the API-snapshot bodies at build time. The tree is NOT refetched — it
+ * is re-serialised from the already-fetched object. Articles are fetched
+ * FAIL-SOFT one by one: a failed article logs a warning and is skipped, so
+ * that page simply prerenders without a body (exactly today's behaviour).
+ *
+ * @param {object|null} tree - the already-fetched docs tree
+ * @param {string} contentUrl - absolute URL of the docs tree endpoint
+ * @param {object} [options]
+ * @param {number} [options.timeoutMs=5000] - per-request timeout in milliseconds
+ * @param {typeof fetch} [options.fetchImpl=globalThis.fetch] - injectable fetch (tests)
+ * @returns {Promise<Record<string, { body: string, contentType: string }>>}
+ *   pathname → response snapshot, served to the page during prerender capture
+ */
+export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, fetchImpl = globalThis.fetch } = options;
+  const snapshot = {};
+  // Mirror the real wire shape (`{ data: { categories } }` envelope) so any
+  // consumer reading the raw response sees exactly what the API would return.
+  const treeBody = JSON.stringify({ data: tree });
+  // Mirror fetchDocsTree's guard: a missing/non-function fetch keeps the layer
+  // fail-soft (tree entries need no I/O; articles are skipped with a warning).
+  const canFetch = typeof fetchImpl === 'function';
+  if (!canFetch) {
+    console.warn('[docs-seo] No fetch implementation available, article snapshot entries skipped.');
+  }
+  for (const entry of deriveDocsSnapshotEntries(tree, contentUrl)) {
+    if (entry.kind === 'tree') {
+      snapshot[entry.path] = { body: treeBody, contentType: 'application/json' };
+      continue;
+    }
+    if (!canFetch) continue;
+    try {
+      const res = await fetchImpl(entry.url, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!res?.ok) {
+        console.warn(`[docs-seo] Snapshot fetch HTTP ${res?.status ?? '??'} for ${entry.url}, page will prerender without this body.`);
+        continue;
+      }
+      snapshot[entry.path] = { body: await res.text(), contentType: 'text/markdown' };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[docs-seo] Snapshot fetch failed for ${entry.url}, page will prerender without this body:`, message);
+    }
+  }
+  return snapshot;
+}
+
+/**
  * Build-time entry point. When `app.seo.docs.enabled` and `app.seo.docs.contentUrl`
  * are set, fetch the docs tree and return a NEW config object whose `app.seo` has
  * the docs-derived prerender routes, sitemap routes, and llms.txt sections merged
@@ -212,6 +298,13 @@ export async function augmentSeoConfigWithDocs(config, options = {}) {
   if (routes.length === 0) return config;
 
   const llmsSections = deriveDocsLlmsSections(tree, baseUrl, basePath, { mdTwin: docs.mdTwin === true });
+  // Build-time API snapshot: served to the page by `prerenderPlugin` via request
+  // interception, so the capture never depends on the API being reachable from
+  // the build environment (container builds, origin mismatches).
+  const apiSnapshot = await fetchDocsSnapshot(tree, docs.contentUrl, {
+    timeoutMs: docs.timeoutMs,
+    fetchImpl: options.fetchImpl,
+  });
   const seo = app.seo || {};
 
   // Merge: append docs routes to whatever prerender/sitemap/llms already emit,
@@ -233,7 +326,7 @@ export async function augmentSeoConfigWithDocs(config, options = {}) {
       ...app,
       seo: {
         ...seo,
-        prerender: { ...seo.prerender, routes: mergedPrerender },
+        prerender: { ...seo.prerender, routes: mergedPrerender, apiSnapshot },
         sitemap: { ...seo.sitemap, routes: [...existingSitemap, ...docsSitemap] },
         llms: { ...seo.llms, sections: [...existingLlmsSections, ...llmsSections] },
       },

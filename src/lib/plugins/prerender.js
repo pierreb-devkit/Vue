@@ -34,9 +34,34 @@ export function routeToOutputPath(distDir, route) {
 }
 
 /**
+ * Match an intercepted page request against the build-time API snapshot by URL
+ * PATHNAME only — origin-agnostic, because the runtime API origin baked into
+ * the bundle can differ from the origin the snapshot was fetched from. GET only.
+ *
+ * @param {Record<string, { body: string, contentType: string }>|null|undefined} apiSnapshot
+ *   pathname → response snapshot (built by docs-seo's `fetchDocsSnapshot`)
+ * @param {string} url - the intercepted request's absolute URL
+ * @param {string} method - the intercepted request's HTTP method
+ * @returns {{ body: string, contentType: string }|null} the snapshot entry, or null
+ */
+export function matchSnapshot(apiSnapshot, url, method) {
+  if (!apiSnapshot || method !== 'GET') return null;
+  try {
+    return apiSnapshot[new URL(url).pathname] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Vite plugin — pre-renders configured routes at build time using Puppeteer.
  * Captures fully rendered HTML so crawlers receive meaningful content
  * without waiting for JavaScript execution.
+ *
+ * When `config.app.seo.prerender.apiSnapshot` is present (built by docs-seo's
+ * `fetchDocsSnapshot`), matching page API requests are served from that
+ * snapshot via request interception — the capture never depends on the API
+ * being reachable from the build environment.
  *
  * Only active when mode is 'production' AND config.app.seo.prerender.enabled is true.
  *
@@ -84,7 +109,7 @@ export function prerenderPlugin(config, mode) {
 
         for (const route of routes) {
           try {
-            await renderRoute(browser, port, route, distDir);
+            await renderRoute(browser, port, route, distDir, prerender?.apiSnapshot);
           } catch (routeError) {
             console.warn(
               `[prerender] Failed to pre-render route "${route}":`,
@@ -190,12 +215,59 @@ function startStaticServer(distDir) {
  * @param {number} port - local server port
  * @param {string} route - route path to render (e.g. '/')
  * @param {string} distDir - absolute path to the dist/ directory
+ * @param {Record<string, { body: string, contentType: string }>} [apiSnapshot]
+ *   build-time API snapshot served to the page instead of live API calls
  * @returns {Promise<void>}
  */
-async function renderRoute(browser, port, route, distDir) {
+async function renderRoute(browser, port, route, distDir, apiSnapshot) {
   const page = await browser.newPage();
   try {
     const url = `http://127.0.0.1:${port}${route}`;
+
+    if (apiSnapshot && Object.keys(apiSnapshot).length > 0) {
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        // Answer CORS preflights for snapshot-covered paths ourselves — a
+        // continue()d OPTIONS would depend on the real API being reachable,
+        // which is exactly what the snapshot exists to avoid.
+        if (req.method() === 'OPTIONS' && matchSnapshot(apiSnapshot, req.url(), 'GET')) {
+          const preflightOrigin = req.headers()?.origin;
+          req
+            .respond({
+              status: 204,
+              headers: {
+                'Access-Control-Allow-Origin': preflightOrigin || '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': req.headers()?.['access-control-request-headers'] || '*',
+                ...(preflightOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
+              },
+              body: '',
+            })
+            .catch(() => {});
+          return;
+        }
+        const hit = matchSnapshot(apiSnapshot, req.url(), req.method());
+        if (hit) {
+          // Reflect the page origin instead of '*': the app's HTTP client may
+          // send credentialed (withCredentials) requests, and browsers reject a
+          // wildcard ACAO for those.
+          const origin = req.headers()?.origin;
+          req
+            .respond({
+              status: 200,
+              contentType: hit.contentType,
+              headers: {
+                'Access-Control-Allow-Origin': origin || '*',
+                ...(origin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
+              },
+              body: hit.body,
+            })
+            .catch(() => {});
+          return;
+        }
+        req.continue().catch(() => {});
+      });
+    }
 
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30_000 });
     const html = await page.content();
