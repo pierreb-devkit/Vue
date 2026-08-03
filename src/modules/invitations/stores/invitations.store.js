@@ -6,21 +6,9 @@ import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 import { capture } from '../../../lib/helpers/analytics';
 import { createLogger } from '../../../lib/helpers/logger';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 const logger = createLogger('invitations');
-
-/**
- * Sanitize API error messages to avoid leaking internal details (stack traces, DB paths, etc.).
- * @param {unknown} err - The caught error object.
- * @returns {string} A safe, user-facing error message.
- */
-const sanitizeApiError = (err) => {
-  const msg = err?.response?.data?.message || '';
-  if (msg && msg.length <= 200 && !/\b(collection|stack)\b|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
-    return msg;
-  }
-  return 'Failed to load data. Please try again.';
-};
 
 /**
  * Build the base API URL from config.
