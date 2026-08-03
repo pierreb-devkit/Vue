@@ -83,7 +83,6 @@ export default {
     tasks: { activated: true }, // CRUD reference module
     billing: { activated: true }, // Stripe billing & pricing
     organizations: { activated: true }, // multi-org membership
-    analytics: { activated: true }, // usage analytics
     admin: { activated: true }, // admin panel
     legal: { activated: true }, // legal pages + cookie consent (routes gated by legal.pages.enabled)
     docs: { activated: false }, // in-app docs (3-persona home, OpenAPI reference, search) — off by default; enable + override config.docs.* downstream

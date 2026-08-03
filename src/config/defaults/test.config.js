@@ -85,7 +85,6 @@ export default {
     tasks: { activated: true },
     billing: { activated: true },
     organizations: { activated: true },
-    analytics: { activated: true },
     admin: { activated: true },
     legal: { activated: true },
     docs: { activated: false },
