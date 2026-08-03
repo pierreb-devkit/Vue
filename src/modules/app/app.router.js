@@ -129,10 +129,19 @@ const getRouter = () => {
   ];
 
   // Config-only module flags that aren't route-gated (no routes to activate/
-  // deactivate, so they never appear in `optionalModules` above) — listed here
-  // so the dev-mode `config.modules.*` key check doesn't flag them as unknown.
+  // deactivate, so they never appear in any registry below) — listed here so
+  // the dev-mode `config.modules.*` key check doesn't flag them as unknown.
   const nonRoutedModuleNames = ['analytics'];
-  warnUnknownModuleKeys([...optionalModules.map((mod) => mod.name), ...nonRoutedModuleNames]);
+  // Names across every isModuleActive-gated registry — optionalModules PLUS
+  // the admin/account/organization child-module registries (e.g. `invitations`
+  // is only gated via adminChildModules/accountChildModules, never optionalModules).
+  warnUnknownModuleKeys(() => [
+    ...optionalModules.map((mod) => mod.name),
+    ...adminChildModules.map((mod) => mod.name),
+    ...accountChildModules.map((mod) => mod.name),
+    ...organizationChildModules.map((mod) => mod.name),
+    ...nonRoutedModuleNames,
+  ]);
 
   const routes = optionalModules.reduce(
     (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
