@@ -5,7 +5,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
-import { isModuleActive } from '../../lib/helpers/modules';
+import { isModuleActive, warnUnknownModuleKeys } from '../../lib/helpers/modules';
 import { injectAdminChildren, injectModuleChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
 
@@ -128,10 +128,38 @@ const getRouter = () => {
     ..._downstreamOptionalModules,
   ];
 
+  /**
+   * @desc Lazily collect every name isModuleActive is ever called with across
+   * this composition — optionalModules PLUS the admin/account/organization
+   * child-module registries (e.g. `invitations` is only gated via
+   * adminChildModules/accountChildModules, never optionalModules). Built on
+   * demand so the map/spread work only happens on warnUnknownModuleKeys's
+   * single (dev-mode, once-per-load) call, never on a no-op call after.
+   * @returns {string[]} Registered module names for this composition.
+   */
+  const registeredModuleNames = () => [
+    ...optionalModules.map((mod) => mod.name),
+    ...adminChildModules.map((mod) => mod.name),
+    ...accountChildModules.map((mod) => mod.name),
+    ...organizationChildModules.map((mod) => mod.name),
+  ];
+
   const routes = optionalModules.reduce(
     (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),
     coreRoutes,
   );
+
+  /**
+   * @desc Lazily collect the `name` of every route this composition actually
+   * mounts — the exact same array `useCoreStore.refreshNav` consults (set via
+   * `coreStore.init(router.options.routes)` in `main.js`), so the dev-mode
+   * unknown-key check can recognize a `config.modules.<RouteName>.display`
+   * nav-hide override without mistaking it for an unregistered module.
+   * @returns {string[]} Mounted route names for this composition.
+   */
+  const registeredRouteNames = () => routes.map((route) => route.name).filter(Boolean);
+
+  warnUnknownModuleKeys(registeredModuleNames, registeredRouteNames);
 
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),

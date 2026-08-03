@@ -4,6 +4,23 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## modules: dev-mode warn on unregistered config.modules.* keys (2026-08-03, #4480)
+
+Not a breaking change — a new dev-only diagnostic. `isModuleActive()` (`src/lib/helpers/modules.js`) has always resolved any `config.modules.{name}` entry that isn't exactly `{ activated: false }` to "active" — so a mis-cased key or a typo'd module name silently left a module (and its routes) active with no signal. There's now a dev-mode-only `console.warn` (no-op in production, zero activation-semantics change) that flags a `config.modules.*` key matching neither a registered module name nor a mounted route name (the latter covers `useCoreStore.refreshNav`'s separate `config.modules[routeName].display` nav-hide pattern, so that's never misread as a typo).
+
+### What changed (this repo)
+
+- New `warnUnknownModuleKeys()` in `src/lib/helpers/modules.js`, called once from `app.router.js`'s `getRouter()`.
+- Removed the vestigial `analytics: { activated: true }` entry from `development.config.js` / `test.config.js` — it was never read anywhere in the stack (dead config predating this change).
+
+### Action for downstream
+
+1. Run `/update-stack` to pull the change — no code action required.
+2. If your dev console starts warning about a `config.modules.*` key: it's either a real typo/wrong-case key (fix it) or dead leftover config (safe to delete — activation is unaffected either way).
+3. **If your config still carries `modules.analytics`** (copied from an older stack version), it's dead config the stack never reads — safe to delete, or you'll see the new warning about it in dev mode.
+
+---
+
 ## config-ui-hooks: overridable loader, plan-badge set, and copy strings (2026-07-18, #4474)
 
 Three previously-hardcoded UI spots became config-overridable so a downstream project can rebrand/reconfigure them without editing the stack view (which caused byte-drift on every `/update-stack`). All three are no-ops for downstreams that don't opt in — every key is absent/null by default and every consumer falls back to the exact current behavior.
@@ -879,7 +896,7 @@ Per-module `activated: true/false` config flag. When `activated: false`, the mod
 - New `isModuleActive(moduleName)` helper in `src/lib/helpers/modules.js`
 - `src/modules/app/app.router.js` now conditionally includes routes based on activation status
 - Core modules (`home`, `auth`, `users`, `app`, `core`) are always active regardless of flag
-- New `modules` config block in `development.config.js` with `activated: true` defaults for: `tasks`, `billing`, `organizations`, `analytics`, `admin`
+- New `modules` config block in `development.config.js` with `activated: true` defaults for: `tasks`, `billing`, `organizations`, `admin` (originally also listed `analytics` here — removed 2026-08-03, see below)
 
 ### Action for downstream
 

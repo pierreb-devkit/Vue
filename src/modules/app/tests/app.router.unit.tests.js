@@ -9,8 +9,10 @@ import testConfig from '../../../config/defaults/test.config.js';
 const ORG_PARENT_PATH = '/users/organizations/:organizationId';
 
 let mockIsModuleActive = () => true;
+const mockWarnUnknownModuleKeys = vi.fn();
 vi.mock('../../../lib/helpers/modules', () => ({
   isModuleActive: (...args) => mockIsModuleActive(...args),
+  warnUnknownModuleKeys: (...args) => mockWarnUnknownModuleKeys(...args),
 }));
 
 // Mock dependencies used by the router
@@ -70,6 +72,7 @@ async function setupRouterModule() {
   }));
   vi.doMock('../../../lib/helpers/modules', () => ({
     isModuleActive: (...args) => mockIsModuleActive(...args),
+    warnUnknownModuleKeys: (...args) => mockWarnUnknownModuleKeys(...args),
   }));
   return import('../app.router.js');
 }
@@ -93,6 +96,7 @@ describe('app.router', () => {
     mockBillingStore.subscription = null;
     mockBillingStore.fetchSubscription.mockReset().mockResolvedValue();
     mockCapturePageview.mockReset();
+    mockWarnUnknownModuleKeys.mockReset();
     mockIsModuleActive = () => true;
 
     const module = await setupRouterModule();
@@ -589,6 +593,38 @@ describe('app.router', () => {
       expect(router.currentRoute.value.path).toBe('/');
     });
   });
+
+  describe('warnUnknownModuleKeys wiring', () => {
+    it('is called with names from every isModuleActive-gated registry (optionalModules + admin/account/organization child modules), not just optionalModules', () => {
+      const router = getRouter();
+      expect(router).toBeDefined();
+      expect(mockWarnUnknownModuleKeys).toHaveBeenCalledTimes(1);
+
+      const [moduleArg] = mockWarnUnknownModuleKeys.mock.calls[0];
+      const names = typeof moduleArg === 'function' ? moduleArg() : moduleArg;
+
+      // optionalModules
+      expect(names).toContain('tasks');
+      expect(names).toContain('billing');
+      expect(names).toContain('admin');
+      expect(names).toContain('organizations');
+      // adminChildModules / accountChildModules — NOT in optionalModules,
+      // only reachable via the child-module registries (regression guard).
+      expect(names).toContain('invitations');
+    });
+
+    it('is also called with the mounted route names (same list useCoreStore.refreshNav consults), so a display-only nav override is not mistaken for an unregistered module', () => {
+      const router = getRouter();
+      const routePaths = router.options.routes.map((r) => r.path);
+      expect(routePaths).toContain('/tasks'); // sanity: tasks module is mounted in this test
+
+      const [, routeArg] = mockWarnUnknownModuleKeys.mock.calls[0];
+      const routeNames = typeof routeArg === 'function' ? routeArg() : routeArg;
+
+      expect(routeNames).toContain('Tasks');
+      expect(routeNames.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 describe('registerDownstreamRoutes', () => {
@@ -616,6 +652,7 @@ describe('registerDownstreamRoutes', () => {
     }));
     vi.doMock('../../../lib/helpers/modules', () => ({
       isModuleActive: (...args) => mockIsModuleActive(...args),
+      warnUnknownModuleKeys: (...args) => mockWarnUnknownModuleKeys(...args),
     }));
     const mod = await import('../app.router.js');
     if (registerFn) registerFn(mod.registerDownstreamRoutes);
