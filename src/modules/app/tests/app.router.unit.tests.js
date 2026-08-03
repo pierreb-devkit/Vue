@@ -11,6 +11,7 @@ const ORG_PARENT_PATH = '/users/organizations/:organizationId';
 let mockIsModuleActive = () => true;
 vi.mock('../../../lib/helpers/modules', () => ({
   isModuleActive: (...args) => mockIsModuleActive(...args),
+  warnUnknownModuleKeys: vi.fn(),
 }));
 
 // Mock dependencies used by the router
@@ -70,6 +71,7 @@ async function setupRouterModule() {
   }));
   vi.doMock('../../../lib/helpers/modules', () => ({
     isModuleActive: (...args) => mockIsModuleActive(...args),
+    warnUnknownModuleKeys: vi.fn(),
   }));
   return import('../app.router.js');
 }
@@ -616,6 +618,7 @@ describe('registerDownstreamRoutes', () => {
     }));
     vi.doMock('../../../lib/helpers/modules', () => ({
       isModuleActive: (...args) => mockIsModuleActive(...args),
+      warnUnknownModuleKeys: vi.fn(),
     }));
     const mod = await import('../app.router.js');
     if (registerFn) registerFn(mod.registerDownstreamRoutes);

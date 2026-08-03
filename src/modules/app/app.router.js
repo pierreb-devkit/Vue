@@ -5,7 +5,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
-import { isModuleActive } from '../../lib/helpers/modules';
+import { isModuleActive, warnUnknownModuleKeys } from '../../lib/helpers/modules';
 import { injectAdminChildren, injectModuleChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
 
@@ -127,6 +127,12 @@ const getRouter = () => {
     { name: 'docs', routes: docs },
     ..._downstreamOptionalModules,
   ];
+
+  // Config-only module flags that aren't route-gated (no routes to activate/
+  // deactivate, so they never appear in `optionalModules` above) — listed here
+  // so the dev-mode `config.modules.*` key check doesn't flag them as unknown.
+  const nonRoutedModuleNames = ['analytics'];
+  warnUnknownModuleKeys([...optionalModules.map((mod) => mod.name), ...nonRoutedModuleNames]);
 
   const routes = optionalModules.reduce(
     (acc, mod) => (isModuleActive(mod.name) ? acc.concat(mod.routes) : acc),

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let mockConfig = {};
 vi.mock('../../services/config', () => ({
@@ -55,5 +55,87 @@ describe('isModuleActive', () => {
   it('returns true when module entry exists but has no activated property', () => {
     mockConfig.modules = { tasks: {} };
     expect(isModuleActive('tasks')).toBe(true);
+  });
+});
+
+describe('warnUnknownModuleKeys', () => {
+  let warnUnknownModuleKeys;
+  let consoleWarnSpy;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockConfig = {};
+
+    vi.doMock('../../services/config', () => ({
+      default: new Proxy({}, { get: (_, prop) => mockConfig[prop] }),
+    }));
+
+    const mod = await import('../modules.js');
+    warnUnknownModuleKeys = mod.warnUnknownModuleKeys;
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+    vi.unstubAllEnvs();
+  });
+
+  it('warns once for a wrong-case key that matches no registered module', () => {
+    mockConfig.modules = { Tasks: { activated: false } };
+    warnUnknownModuleKeys(['tasks', 'billing']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('Tasks');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('no registered module');
+  });
+
+  it('warns for a typo\'d module name that matches no registered module', () => {
+    mockConfig.modules = { taskss: { activated: false } };
+    warnUnknownModuleKeys(['tasks', 'billing']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('taskss');
+  });
+
+  it('warns when a registered key has no "activated" property (e.g. wrong prop like display)', () => {
+    mockConfig.modules = { tasks: { display: false } };
+    warnUnknownModuleKeys(['tasks', 'billing']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('tasks');
+    expect(consoleWarnSpy.mock.calls[0][0]).toContain('activated');
+  });
+
+  it('does not warn for a correctly-configured key (activated: false) and the module resolves inactive', async () => {
+    mockConfig.modules = { tasks: { activated: false } };
+    warnUnknownModuleKeys(['tasks', 'billing']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    const { isModuleActive } = await import('../modules.js');
+    expect(isModuleActive('tasks')).toBe(false);
+  });
+
+  it('does not warn in production mode, even with a wrong-case key', () => {
+    vi.stubEnv('MODE', 'production');
+    mockConfig.modules = { Tasks: { activated: false } };
+    warnUnknownModuleKeys(['tasks']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('warns at most once per module load, even if called multiple times', () => {
+    mockConfig.modules = { Tasks: { activated: false } };
+    warnUnknownModuleKeys(['tasks']);
+    warnUnknownModuleKeys(['tasks']);
+    warnUnknownModuleKeys(['tasks']);
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats core modules as always registered (no warning for core keys)', () => {
+    mockConfig.modules = { home: { activated: false } };
+    warnUnknownModuleKeys([]);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not warn when config.modules is undefined', () => {
+    mockConfig.modules = undefined;
+    warnUnknownModuleKeys(['tasks']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 });
