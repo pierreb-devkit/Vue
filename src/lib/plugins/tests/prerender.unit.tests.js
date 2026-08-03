@@ -7,6 +7,8 @@ const { mockPage, mockBrowser, mockCreateServer, mockFsFns } = vi.hoisted(() => 
     goto: vi.fn().mockResolvedValue(undefined),
     content: vi.fn().mockResolvedValue('<html><body>rendered</body></html>'),
     close: vi.fn().mockResolvedValue(undefined),
+    setRequestInterception: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
   };
   const mockBrowser = {
     newPage: vi.fn().mockResolvedValue(mockPage),
@@ -47,7 +49,7 @@ vi.mock('node:http', () => ({
   default: { createServer: mockCreateServer },
 }));
 
-import { prerenderPlugin, sanitizePath, routeToOutputPath } from '../prerender.js';
+import { prerenderPlugin, sanitizePath, routeToOutputPath, matchSnapshot } from '../prerender.js';
 
 describe('prerenderPlugin', () => {
   beforeEach(() => {
@@ -187,6 +189,139 @@ describe('prerenderPlugin', () => {
     );
 
     await expect(plugin.closeBundle()).rejects.toThrow(/4502/);
+    logSpy.mockRestore();
+  });
+});
+
+describe('matchSnapshot', () => {
+  const snapshot = {
+    '/api/public/docs/': { body: '{"categories":[]}', contentType: 'application/json' },
+    '/api/public/docs/welcome.md': { body: '# Welcome', contentType: 'text/markdown' },
+  };
+
+  it('matches a GET by pathname on ANY origin (origin-agnostic)', () => {
+    expect(matchSnapshot(snapshot, 'https://api.example.com/api/public/docs/welcome.md', 'GET')).toEqual({
+      body: '# Welcome',
+      contentType: 'text/markdown',
+    });
+    expect(matchSnapshot(snapshot, 'https://other-origin.example.org/api/public/docs/welcome.md', 'GET')).toEqual({
+      body: '# Welcome',
+      contentType: 'text/markdown',
+    });
+  });
+
+  it('never matches non-GET methods', () => {
+    expect(matchSnapshot(snapshot, 'https://api.example.com/api/public/docs/', 'POST')).toBeNull();
+  });
+
+  it('returns null for an unknown pathname', () => {
+    expect(matchSnapshot(snapshot, 'https://api.example.com/api/other', 'GET')).toBeNull();
+  });
+
+  it('returns null for a malformed URL or an absent snapshot', () => {
+    expect(matchSnapshot(snapshot, 'not a url', 'GET')).toBeNull();
+    expect(matchSnapshot(null, 'https://api.example.com/api/public/docs/', 'GET')).toBeNull();
+    expect(matchSnapshot(undefined, 'https://api.example.com/api/public/docs/', 'GET')).toBeNull();
+  });
+});
+
+describe('prerenderPlugin apiSnapshot interception', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPage.goto.mockResolvedValue(undefined);
+    mockPage.content.mockResolvedValue('<html><body>rendered</body></html>');
+    mockPage.close.mockResolvedValue(undefined);
+    mockBrowser.newPage.mockResolvedValue(mockPage);
+    mockBrowser.close.mockResolvedValue(undefined);
+  });
+
+  const snapshotConfig = () => ({
+    app: {
+      seo: {
+        prerender: {
+          enabled: true,
+          routes: ['/docs'],
+          apiSnapshot: {
+            '/api/public/docs/': { body: '{"categories":[]}', contentType: 'application/json' },
+          },
+        },
+      },
+    },
+  });
+
+  it('enables request interception and wires a request handler when a snapshot is present', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await prerenderPlugin(snapshotConfig(), 'production').closeBundle();
+
+    expect(mockPage.setRequestInterception).toHaveBeenCalledWith(true);
+    expect(mockPage.on).toHaveBeenCalledWith('request', expect.any(Function));
+    logSpy.mockRestore();
+  });
+
+  it('skips interception entirely when no snapshot is configured', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/docs'] } } } },
+      'production',
+    ).closeBundle();
+
+    expect(mockPage.setRequestInterception).not.toHaveBeenCalled();
+    expect(mockPage.on).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  it('the wired handler responds to snapshot hits and continues everything else', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await prerenderPlugin(snapshotConfig(), 'production').closeBundle();
+
+    const handler = mockPage.on.mock.calls.find(([event]) => event === 'request')[1];
+
+    const hit = {
+      url: () => 'https://api.example.com/api/public/docs/',
+      method: () => 'GET',
+      headers: () => ({ origin: 'http://127.0.0.1:54321' }),
+      respond: vi.fn(),
+      continue: vi.fn().mockResolvedValue(undefined),
+    };
+    handler(hit);
+    // Origin reflected (not '*') + credentials allowed: the app's HTTP client
+    // may send credentialed requests, and browsers reject wildcard ACAO there.
+    expect(hit.respond).toHaveBeenCalledWith({
+      status: 200,
+      contentType: 'application/json',
+      headers: {
+        'Access-Control-Allow-Origin': 'http://127.0.0.1:54321',
+        'Access-Control-Allow-Credentials': 'true',
+      },
+      body: '{"categories":[]}',
+    });
+    expect(hit.continue).not.toHaveBeenCalled();
+
+    const hitNoOrigin = {
+      url: () => 'https://api.example.com/api/public/docs/',
+      method: () => 'GET',
+      headers: () => ({}),
+      respond: vi.fn(),
+      continue: vi.fn().mockResolvedValue(undefined),
+    };
+    handler(hitNoOrigin);
+    expect(hitNoOrigin.respond).toHaveBeenCalledWith({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: '{"categories":[]}',
+    });
+
+    const miss = {
+      url: () => 'https://api.example.com/api/unrelated',
+      method: () => 'GET',
+      headers: () => ({}),
+      respond: vi.fn(),
+      continue: vi.fn().mockResolvedValue(undefined),
+    };
+    handler(miss);
+    expect(miss.respond).not.toHaveBeenCalled();
+    expect(miss.continue).toHaveBeenCalled();
     logSpy.mockRestore();
   });
 });
