@@ -386,6 +386,16 @@ describe('deriveDocsSnapshotEntries', () => {
     expect(entries[2].path).toBe('/api/public/docs/welcome.md');
   });
 
+  it('URL-encodes slugs, matching the encoded pathname the runtime client requests', () => {
+    const spaced = { categories: [{ id: 'c', label: 'C', guides: [{ slug: 'my guide', title: 'MG' }] }] };
+    const entries = deriveDocsSnapshotEntries(spaced, 'https://api.example.com/api/public/docs');
+    expect(entries[2]).toEqual({
+      path: '/api/public/docs/my%20guide.md',
+      url: 'https://api.example.com/api/public/docs/my%20guide.md',
+      kind: 'article',
+    });
+  });
+
   it('returns an empty list for a missing or malformed contentUrl', () => {
     expect(deriveDocsSnapshotEntries(treeFixture, '')).toEqual([]);
     expect(deriveDocsSnapshotEntries(treeFixture, 'not a url')).toEqual([]);
@@ -430,5 +440,13 @@ describe('fetchDocsSnapshot', () => {
     // Tree entries still present (no I/O needed), all articles skipped.
     expect(Object.keys(snapshot).sort()).toEqual(['/api/public/docs', '/api/public/docs/']);
     expect(warn).toHaveBeenCalled();
+  });
+
+  it('FAIL-SOFT: a non-function fetchImpl keeps tree entries and skips articles with a warning', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl: 'not-a-fn' });
+
+    expect(Object.keys(snapshot).sort()).toEqual(['/api/public/docs', '/api/public/docs/']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No fetch implementation'));
   });
 });

@@ -209,7 +209,9 @@ export function deriveDocsSnapshotEntries(tree, contentUrl) {
   ];
   for (const cat of normalizeCategories(tree)) {
     for (const guide of cat.guides) {
-      const path = `${basePath}/${guide.slug}.md`;
+      // Encode the slug exactly like the runtime docs service does — the page
+      // requests the ENCODED pathname, and matchSnapshot compares literally.
+      const path = `${basePath}/${encodeURIComponent(guide.slug)}.md`;
       entries.push({ path, url: `${origin}${path}`, kind: 'article' });
     }
   }
@@ -234,11 +236,18 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, fetchImpl = globalThis.fetch } = options;
   const snapshot = {};
   const treeBody = JSON.stringify(tree);
+  // Mirror fetchDocsTree's guard: a missing/non-function fetch keeps the layer
+  // fail-soft (tree entries need no I/O; articles are skipped with a warning).
+  const canFetch = typeof fetchImpl === 'function';
+  if (!canFetch) {
+    console.warn('[docs-seo] No fetch implementation available, article snapshot entries skipped.');
+  }
   for (const entry of deriveDocsSnapshotEntries(tree, contentUrl)) {
     if (entry.kind === 'tree') {
       snapshot[entry.path] = { body: treeBody, contentType: 'application/json' };
       continue;
     }
+    if (!canFetch) continue;
     try {
       const res = await fetchImpl(entry.url, { signal: AbortSignal.timeout(timeoutMs) });
       if (!res?.ok) {
