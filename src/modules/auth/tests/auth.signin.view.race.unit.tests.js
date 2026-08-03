@@ -100,6 +100,20 @@ const mountView = (routeQuery = {}) =>
     },
   });
 
+/**
+ * Fill the credentials into a mounted signin view and submit the form.
+ * @param {import('@vue/test-utils').VueWrapper} wrapper - Mounted signin view.
+ * @param {string} email - Email to submit.
+ * @param {string} password - Password to submit.
+ * @returns {Promise<void>}
+ */
+const submitSignin = async (wrapper, email, password) => {
+  wrapper.vm.email = email;
+  wrapper.vm.password = password;
+  await wrapper.vm.validate();
+  await flushPromises();
+};
+
 describe('auth.signin.view — auth-watcher race (#4533, real store)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -116,12 +130,7 @@ describe('auth.signin.view — auth-watcher race (#4533, real store)', () => {
 
     const wrapper = mountView();
     await flushPromises();
-
-    wrapper.vm.email = 'race@example.com';
-    wrapper.vm.password = 'password123';
-
-    await wrapper.vm.validate();
-    await flushPromises();
+    await submitSignin(wrapper, 'race@example.com', 'password123');
 
     expect(wrapper.vm.$router.push).toHaveBeenCalledTimes(1);
     expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
@@ -134,12 +143,7 @@ describe('auth.signin.view — auth-watcher race (#4533, real store)', () => {
 
     const wrapper = mountView({ redirect: '/somewhere' });
     await flushPromises();
-
-    wrapper.vm.email = 'race2@example.com';
-    wrapper.vm.password = 'password123';
-
-    await wrapper.vm.validate();
-    await flushPromises();
+    await submitSignin(wrapper, 'race2@example.com', 'password123');
 
     expect(wrapper.vm.$router.push).toHaveBeenCalledTimes(1);
     expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/somewhere');
@@ -152,12 +156,7 @@ describe('auth.signin.view — auth-watcher race (#4533, real store)', () => {
 
     const wrapper = mountView({ redirect: 'https://evil.example.com' });
     await flushPromises();
-
-    wrapper.vm.email = 'race3@example.com';
-    wrapper.vm.password = 'password123';
-
-    await wrapper.vm.validate();
-    await flushPromises();
+    await submitSignin(wrapper, 'race3@example.com', 'password123');
 
     expect(wrapper.vm.$router.push).toHaveBeenCalledTimes(1);
     expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
@@ -168,12 +167,7 @@ describe('auth.signin.view — auth-watcher race (#4533, real store)', () => {
 
     const wrapper = mountView();
     await flushPromises();
-
-    wrapper.vm.email = 'race4@example.com';
-    wrapper.vm.password = 'wrongpassword';
-
-    await wrapper.vm.validate();
-    await flushPromises();
+    await submitSignin(wrapper, 'race4@example.com', 'wrongpassword');
 
     expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
   });
