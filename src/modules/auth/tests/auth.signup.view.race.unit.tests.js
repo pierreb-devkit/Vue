@@ -19,6 +19,10 @@ import axios from '../../../lib/services/axios';
  * Only network/analytics/ability are mocked here; the auth store, its real signup()
  * action, and the component's real Vue reactivity all run unmocked.
  */
+/**
+ * @desc Real API endpoint config consumed directly by auth.store.js (protocol/host/port + cookie prefix).
+ * @returns {{default: object}} minimal config shape needed by the real auth store
+ */
 vi.mock('../../../lib/services/config', () => ({
   default: {
     api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
@@ -26,21 +30,44 @@ vi.mock('../../../lib/services/config', () => ({
   },
 }));
 
+/**
+ * @desc Stub axios so signup()/fetchServerConfig() network calls are mock-controlled per test.
+ * @returns {{default: {post: Function, get: Function}}} axios module shape
+ */
 vi.mock('../../../lib/services/axios', () => ({
   default: { post: vi.fn(), get: vi.fn() },
 }));
 
+/**
+ * @desc Stub the CASL ability helper consumed by core.store.js's refreshNav() (called from signup()).
+ * @returns {{ability: {can: Function}, updateAbilities: Function}} ability module shape
+ */
 vi.mock('../../../lib/helpers/ability', () => ({
-  ability: { can: () => false },
+  ability: {
+    /**
+     * @desc Always deny — refreshNav()'s guarded-route branch is not exercised by this suite.
+     * @returns {boolean} false
+     */
+    can: () => false,
+  },
   updateAbilities: vi.fn(),
 }));
 
+/**
+ * @desc Stub the analytics helpers invoked by auth.store.js's signup() action.
+ * @returns {{capture: Function, identify: Function, reset: Function}} analytics module shape
+ */
 vi.mock('../../../lib/helpers/analytics', () => ({
   capture: vi.fn(),
   identify: vi.fn(),
   reset: vi.fn(),
 }));
 
+/**
+ * @desc Stub the organizations store. signup.view.vue only reaches it via the stubbed
+ * AuthOrganizationSetupComponent, which this suite never instantiates.
+ * @returns {{useOrganizationsStore: Function}} organizations store module shape
+ */
 vi.mock('../../organizations/stores/organizations.store', () => ({
   useOrganizationsStore: () => ({ createOrganization: vi.fn() }),
 }));
