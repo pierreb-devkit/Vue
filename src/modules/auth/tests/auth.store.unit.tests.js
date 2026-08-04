@@ -1384,6 +1384,47 @@ describe('Auth Store', () => {
       expect(authStore.user).toBe(null);
       expect(axios.post).toHaveBeenCalledTimes(1);
     });
+
+    // #4540 (CodeRabbit finding on #4541): now that signout() nulls serverConfig,
+    // an in-flight fetchServerConfig() must not resurrect a stale authenticated
+    // payload once it resolves after signout() already ran — same generation
+    // guard as token()/refreshAbilities() above, applied to fetchServerConfig().
+    it('does NOT overwrite the post-signout null serverConfig when fetchServerConfig() resolves after a concurrent signout()', async () => {
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+      authStore.serverConfig = { sign: { in: true, up: true }, billing: { enabled: true, meterMode: true, equivalences: {} } };
+
+      let resolveConfigGet;
+      axios.get.mockImplementationOnce(() => new Promise((resolve) => { resolveConfigGet = resolve; }));
+      axios.post.mockResolvedValueOnce({ data: {} }); // signout()'s backend call
+
+      const fetchPromise = authStore.fetchServerConfig(); // generation captured BEFORE signout()
+      await authStore.signout(); // bumps generation + nulls serverConfig synchronously
+
+      expect(authStore.serverConfig).toBe(null);
+
+      // The in-flight /auth/config request now settles AFTER signout() ran,
+      // with an authenticated (billing-carrying) response.
+      resolveConfigGet({ data: { data: { sign: { in: true, up: true }, billing: { enabled: true, meterMode: true, equivalences: {} } } } });
+      const result = await fetchPromise;
+
+      expect(authStore.serverConfig).toBe(null);
+      expect(result).toBe(null);
+    });
+
+    it('a fresh fetchServerConfig() call after signout() still succeeds normally (generation bump does not break later fetches)', async () => {
+      const authStore = useAuthStore();
+
+      axios.post.mockResolvedValueOnce({ data: {} });
+      await authStore.signout();
+
+      axios.get.mockResolvedValueOnce({ data: { data: { sign: { in: true, up: true } } } });
+      const result = await authStore.fetchServerConfig();
+
+      expect(authStore.serverConfig).toEqual({ sign: { in: true, up: true } });
+      expect(result).toEqual({ sign: { in: true, up: true } });
+    });
   });
 });
 

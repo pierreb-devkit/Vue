@@ -109,8 +109,16 @@ export const useAuthStore = defineStore('auth', {
      */
     async fetchServerConfig() {
       const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      // Capture the generation BEFORE the network await — same rationale as
+      // refreshAbilities()/token() (#4459): a concurrent signout() bumps the
+      // generation and synchronously nulls serverConfig, so a fetchServerConfig()
+      // already in flight (e.g. the router guard, or signin/signup view mount)
+      // must not let its — possibly authenticated — response overwrite that
+      // null once it resolves after signout() has already run.
+      const generation = _authGeneration;
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/config`);
+        if (generation !== _authGeneration) return this.serverConfig; // signout() won the race
         const data = res.data.data;
         if (data && typeof data.sign === 'object' && typeof data.sign.in === 'boolean' && typeof data.sign.up === 'boolean') {
           this.serverConfig = data;
@@ -119,6 +127,7 @@ export const useAuthStore = defineStore('auth', {
         }
         return this.serverConfig;
       } catch {
+        if (generation !== _authGeneration) return this.serverConfig; // signout() won the race
         this.serverConfig = null;
         return null;
       }
