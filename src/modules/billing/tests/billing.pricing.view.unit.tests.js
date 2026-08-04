@@ -703,6 +703,12 @@ describe('BillingPricingView — prerender crawl detection', () => {
   it('still fetches plans and surfaces the error toast on a genuine failure in a real browser', async () => {
     // Regression lock: only the prerender crawl is suppressed — a real user whose
     // live fetch genuinely fails must still see the retry toast (pre-existing UX).
+    // UA set explicitly (not just inherited from the runner) so the assertion never
+    // depends on which environment this test happens to run under.
+    Object.defineProperty(navigator, 'userAgent', {
+      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+      configurable: true,
+    });
     vi.spyOn(store, 'fetchPlans').mockRejectedValue(new Error('network error'));
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
 

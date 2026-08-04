@@ -57,11 +57,11 @@ const theme = useTheme();
 const isMounted = ref(false);
 
 /**
- * Sets the isMounted flag after hydration, skipping the SEO prerender crawl (see
- * isPrerenderCrawl) to prevent the banner from being captured into static HTML and
- * duplicated on hydration via Vue's Teleport.
+ * Sets the isMounted flag after hydration, skipping the SEO prerender crawl.
  * @returns {void}
  */
+// Guards against the banner being captured into static HTML and duplicated on
+// hydration via Vue's Teleport (see isPrerenderCrawl).
 onMounted(() => {
   if (isPrerenderCrawl()) return;
   isMounted.value = true;

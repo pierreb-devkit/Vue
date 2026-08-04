@@ -390,10 +390,14 @@ export default {
           };
     },
   },
+  /**
+   * Fetches live plans and subscription on component creation, and handles the
+   * Stripe checkout redirect query params. The live plans fetch is skipped under
+   * the SEO prerender crawl (see isPrerenderCrawl) since its local static server
+   * has no API backend and static content already renders the cards.
+   * @returns {Promise<void>}
+   */
   async created() {
-    // The SEO prerender crawl hits a local static server with no API backend, so the
-    // live fetch would always fail and bake this error toast into the prerendered
-    // HTML. Static content already renders the cards, so skip the fetch under prerender.
     if (!isPrerenderCrawl()) {
       try {
         await this.billingStore.fetchPlans();

@@ -3,12 +3,12 @@
  */
 
 /**
- * @desc Detects a headless-Chrome SEO prerender crawl via UA sniffing. UA-based
- * detection is used instead of `navigator.webdriver`, which JSDOM/happy-dom also
- * set on the test `navigator`, which would otherwise break unit tests run under
- * those environments. SSR-safe: returns false when `navigator` is undefined.
+ * @desc Detects a headless-Chrome SEO prerender crawl via UA sniffing.
  * @returns {boolean} True when the current UA matches a HeadlessChrome crawl, false otherwise.
  */
+// UA-based detection is used instead of `navigator.webdriver`, which JSDOM/happy-dom
+// also set on the test `navigator` and would otherwise break unit tests. SSR-safe:
+// returns false when `navigator` is undefined.
 export const isPrerenderCrawl = () => typeof navigator !== 'undefined' && /HeadlessChrome/.test(navigator.userAgent || '');
 
 /**
