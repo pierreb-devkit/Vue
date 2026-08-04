@@ -391,12 +391,9 @@ export default {
     },
   },
   async created() {
-    // The SEO prerender crawl hits a local static server with no API backend — the
-    // live plans fetch always fails there, baking this error toast into the
-    // prerendered HTML (hydration's later successful fetch never clears the
-    // captured node). Static content (usePricing) already fully renders the cards
-    // without live data, so skip the fetch entirely under prerender instead of ever
-    // letting it fail.
+    // The SEO prerender crawl hits a local static server with no API backend, so the
+    // live fetch would always fail and bake this error toast into the prerendered
+    // HTML. Static content already renders the cards, so skip the fetch under prerender.
     if (!isPrerenderCrawl()) {
       try {
         await this.billingStore.fetchPlans();
