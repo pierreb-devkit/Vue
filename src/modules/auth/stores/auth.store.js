@@ -152,6 +152,18 @@ export const useAuthStore = defineStore('auth', {
 
         coreStore.refreshNav(this.isLoggedIn);
 
+        // Re-fetch server config now that we're authenticated: the earlier
+        // anonymous fetch (pre-login) never carries auth-gated keys such as
+        // billing.{enabled,meterMode,equivalences} (Node#3566), so without this
+        // the whole first in-SPA session runs on stale anonymous config. Must
+        // happen before the meterMode guard below so it evaluates the
+        // authenticated config, not the anonymous one. Failure semantics are
+        // unchanged: fetchServerConfig() sets serverConfig=null on failure.
+        // Deferred until here (not right after the auth-state block above) so
+        // it never delays the nav/abilities/pendingRequests updates above,
+        // which don't depend on it.
+        await this.fetchServerConfig();
+
         // Refresh compute meter immediately on login so the sidenav gauge
         // populates without waiting for mount/focus (guard: only when meterMode is on).
         if (this.serverConfig?.billing?.meterMode === true) {
@@ -262,6 +274,15 @@ export const useAuthStore = defineStore('auth', {
         coreStore.refreshNav(this.isLoggedIn);
         capture('signup_completed', { email: res.data.user.email });
         identify(res.data.user.id || res.data.user._id, { email: res.data.user.email, plan: res.data.user.plan });
+
+        // Re-fetch server config now that we're authenticated (same rationale
+        // as signin() above, see that comment) — deferred until here so it
+        // never delays suggestedJoin/nav/analytics above, none of which
+        // depend on it. signup() has no meterMode guard of its own; the
+        // point is that serverConfig is authenticated for the rest of the
+        // session.
+        await this.fetchServerConfig();
+
         return res.data;
       } catch (err) {
         localStorage.removeItem('token');

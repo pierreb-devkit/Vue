@@ -339,10 +339,13 @@ describe('Auth Store', () => {
 
     // ── #4261 — fetchUsageMeter called on signin when meterMode is on ────────
 
-    it('calls billingStore.fetchUsageMeter after signin when meterMode is true (#4261)', async () => {
+    it('calls billingStore.fetchUsageMeter after signin when the post-auth re-fetch returns meterMode true (#4261, #4538)', async () => {
       const authStore = useAuthStore();
-      // Pre-set serverConfig with meterMode enabled (simulates router guard having run before login)
-      authStore.serverConfig = { billing: { meterMode: true } };
+      // Anonymous pre-auth config: no auth-gated `billing` key (that key only
+      // ever appears once fetchServerConfig() re-runs authenticated below —
+      // pre-setting it here, as the old #4261 test did, was unreachable and
+      // is exactly what masked #4538).
+      authStore.serverConfig = { sign: { in: true, up: true } };
 
       const mockResponse = {
         data: {
@@ -351,6 +354,8 @@ describe('Auth Store', () => {
         },
       };
       axios.post.mockResolvedValueOnce(mockResponse);
+      // Post-auth fetchServerConfig() re-fetch: authenticated config now carries billing.
+      axios.get.mockResolvedValueOnce({ data: { data: { sign: { in: true, up: true }, billing: { meterMode: true } } } });
       // fetchUsageMeter uses GET /billing/usage — stub to avoid throwing
       axios.get.mockResolvedValue({ data: { data: { meterUsed: 0, meterQuota: 500 } } });
 
@@ -359,12 +364,13 @@ describe('Auth Store', () => {
 
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
+      expect(authStore.serverConfig).toEqual({ sign: { in: true, up: true }, billing: { meterMode: true } });
       expect(fetchUsageMeterSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('does NOT call billingStore.fetchUsageMeter after signin when meterMode is false (#4261)', async () => {
+    it('does NOT call billingStore.fetchUsageMeter after signin when the post-auth re-fetch returns meterMode false (#4261, #4538)', async () => {
       const authStore = useAuthStore();
-      authStore.serverConfig = { billing: { meterMode: false } };
+      authStore.serverConfig = { sign: { in: true, up: true } };
 
       const mockResponse = {
         data: {
@@ -373,18 +379,20 @@ describe('Auth Store', () => {
         },
       };
       axios.post.mockResolvedValueOnce(mockResponse);
+      axios.get.mockResolvedValueOnce({ data: { data: { sign: { in: true, up: true }, billing: { meterMode: false } } } });
 
       const billingStore = useBillingStore();
       const fetchUsageMeterSpy = vi.spyOn(billingStore, 'fetchUsageMeter');
 
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
+      expect(authStore.serverConfig).toEqual({ sign: { in: true, up: true }, billing: { meterMode: false } });
       expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
     });
 
-    it('does NOT call billingStore.fetchUsageMeter after signin when serverConfig is null (#4261)', async () => {
+    it('does NOT call billingStore.fetchUsageMeter and leaves serverConfig null when the post-auth re-fetch fails (#4261, #4538)', async () => {
       const authStore = useAuthStore();
-      authStore.serverConfig = null;
+      authStore.serverConfig = { sign: { in: true, up: true } };
 
       const mockResponse = {
         data: {
@@ -393,12 +401,16 @@ describe('Auth Store', () => {
         },
       };
       axios.post.mockResolvedValueOnce(mockResponse);
+      axios.get.mockRejectedValueOnce(new Error('Network error'));
 
       const billingStore = useBillingStore();
       const fetchUsageMeterSpy = vi.spyOn(billingStore, 'fetchUsageMeter');
 
-      await authStore.signin({ email: 'test@test.com', password: 'password' });
+      await expect(authStore.signin({ email: 'test@test.com', password: 'password' })).resolves.not.toThrow();
 
+      // Failure semantics unchanged (decision 2026-08-04): fetchServerConfig()
+      // sets serverConfig=null on failure — no keep-previous-value fallback.
+      expect(authStore.serverConfig).toBe(null);
       expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
     });
   });
@@ -465,6 +477,33 @@ describe('Auth Store', () => {
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
+    });
+
+    it('re-fetches serverConfig after a successful signup so auth-gated keys are present for the session (#4538)', async () => {
+      const authStore = useAuthStore();
+      const fetchServerConfigSpy = vi.spyOn(authStore, 'fetchServerConfig').mockResolvedValue(null);
+
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(fetchServerConfigSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does NOT re-fetch serverConfig when signup fails (#4538)', async () => {
+      const authStore = useAuthStore();
+      const fetchServerConfigSpy = vi.spyOn(authStore, 'fetchServerConfig').mockResolvedValue(null);
+
+      axios.post.mockRejectedValueOnce(new Error('Signup failed'));
+      await expect(authStore.signup({ email: 'new@test.com', password: 'password' })).rejects.toThrow('Signup failed');
+
+      expect(fetchServerConfigSpy).not.toHaveBeenCalled();
     });
   });
 
