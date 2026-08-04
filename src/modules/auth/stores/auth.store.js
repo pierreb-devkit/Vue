@@ -332,6 +332,13 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       this.pendingRequests = [];
       this.suggestedJoin = null;
+      // Reset the authenticated config (#4538 re-fetch may have populated
+      // auth-gated keys such as billing.{enabled,meterMode,equivalences})
+      // so it never leaks into the next anonymous session. Mirrors the
+      // router guard's `null → fetchServerConfig()` contract (app.router.js):
+      // the next guard-driven navigation re-fetches anonymously — no fetch
+      // call needed here.
+      this.serverConfig = null;
 
       updateAbilities([]);
 

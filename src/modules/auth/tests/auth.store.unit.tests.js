@@ -106,6 +106,24 @@ describe('Auth Store', () => {
     expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
   });
 
+  it('should reset the authenticated serverConfig to null on signout (#4540)', async () => {
+    // #4538 re-fetches serverConfig authenticated on signin (auth-gated keys
+    // such as billing.{enabled,meterMode,equivalences}); signout must
+    // downgrade it back to null so it never leaks into the next anonymous
+    // session — the mirror image of #4538.
+    const authStore = useAuthStore();
+
+    authStore.auth = true;
+    authStore.cookieExpire = Date.now() + 1000;
+    authStore.user = { id: '123', email: 'test@example.com' };
+    authStore.serverConfig = { sign: { in: true, up: true }, billing: { enabled: true, meterMode: true, equivalences: {} } };
+
+    axios.post.mockResolvedValueOnce({ data: {} });
+    await authStore.signout();
+
+    expect(authStore.serverConfig).toBe(null);
+  });
+
   describe('signout backend call', () => {
     it('should call backend signout endpoint with the correct URL (explicit logout — no __silent)', async () => {
       // Explicit user logout: signout() with no arg must NOT set __silent so the
@@ -203,6 +221,31 @@ describe('Auth Store', () => {
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
+    });
+
+    it('restores the router guard contract: post-signout null serverConfig triggers an anonymous re-fetch that gates the meter gauge off (#4540)', async () => {
+      // Full chain: signout() nulls serverConfig (this fix) → the router guard's
+      // `serverConfig === null` check (app.router.js) re-fetches — simulated here
+      // by calling fetchServerConfig() directly, guard-style — against an
+      // anonymous response (no `billing` key) → the meter-gauge gating
+      // expression used by the sidenav (`serverConfig?.billing?.meterMode === true`)
+      // evaluates false, same as #4538's anonymous-config guard.
+      const authStore = useAuthStore();
+      authStore.auth = true;
+      authStore.user = { id: 'u1' };
+      authStore.serverConfig = { sign: { in: true, up: true }, billing: { enabled: true, meterMode: true, equivalences: {} } };
+
+      axios.post.mockResolvedValueOnce({ data: {} }); // signout()'s backend call
+      await authStore.signout();
+
+      expect(authStore.serverConfig).toBe(null);
+
+      // Guard-style anonymous re-fetch (no billing key in the response).
+      axios.get.mockResolvedValueOnce({ data: { data: { sign: { in: true, up: true } } } });
+      await authStore.fetchServerConfig();
+
+      expect(authStore.serverConfig).toEqual({ sign: { in: true, up: true } });
+      expect(authStore.serverConfig?.billing?.meterMode === true).toBe(false);
     });
   });
 
