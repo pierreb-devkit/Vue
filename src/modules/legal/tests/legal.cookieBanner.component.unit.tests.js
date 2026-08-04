@@ -90,6 +90,21 @@ describe('legal.cookieBanner.component', () => {
     expect(buttons.some((b) => b.text() === 'Sounds good')).toBe(true);
   });
 
+  it('does not render banner content when the UA is a prerender crawl (isPrerenderCrawl guard)', async () => {
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(navigator, 'userAgent', {
+      value: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36',
+      configurable: true,
+    });
+    try {
+      mountBanner();
+      await flushPromises();
+      expect(document.body.innerHTML).not.toContain('Sounds good');
+    } finally {
+      Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true });
+    }
+  });
+
   it('does not render banner content when consentNeeded is false', async () => {
     consentNeeded.value = false;
     mountBanner();

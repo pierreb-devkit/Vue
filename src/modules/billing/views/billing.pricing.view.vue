@@ -159,6 +159,7 @@ import { usePricing } from '../composables/billing.usePricing.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
 import { computeAnnualSavingsPct } from '../lib/pricingMath.js';
+import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
@@ -389,12 +390,21 @@ export default {
           };
     },
   },
+  /**
+   * Fetches live plans and subscription on component creation, and handles the
+   * Stripe checkout redirect query params. The live plans fetch is skipped under
+   * the SEO prerender crawl (see isPrerenderCrawl) since its local static server
+   * has no API backend and static content already renders the cards.
+   * @returns {Promise<void>}
+   */
   async created() {
-    try {
-      await this.billingStore.fetchPlans();
-    } catch (err) {
-      console.error('Failed to load pricing plans:', err);
-      this.error = 'Failed to load pricing. Please try again.';
+    if (!isPrerenderCrawl()) {
+      try {
+        await this.billingStore.fetchPlans();
+      } catch (err) {
+        console.error('Failed to load pricing plans:', err);
+        this.error = 'Failed to load pricing. Please try again.';
+      }
     }
 
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;
