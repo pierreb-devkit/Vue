@@ -143,6 +143,15 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
         this.lockout = { locked: false, retryAfter: 0 };
 
+        // Re-fetch server config now that we're authenticated: the earlier
+        // anonymous fetch (pre-login) never carries auth-gated keys such as
+        // billing.{enabled,meterMode,equivalences} (Node#3566), so without this
+        // the whole first in-SPA session runs on stale anonymous config. Must
+        // happen before the meterMode guard below so it evaluates the
+        // authenticated config, not the anonymous one. Failure semantics are
+        // unchanged: fetchServerConfig() sets serverConfig=null on failure.
+        await this.fetchServerConfig();
+
         if (res.data.user.lastLoginAt) {
           localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, res.data.user.lastLoginAt);
         }
@@ -254,6 +263,11 @@ export const useAuthStore = defineStore('auth', {
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
+
+        // Re-fetch server config now that we're authenticated (same rationale
+        // as signin() above): signup() has no meterMode guard of its own, but
+        // serverConfig must be authenticated for the rest of the session.
+        await this.fetchServerConfig();
 
         if (res.data.suggestedJoin) {
           this.setSuggestedJoin(res.data.suggestedJoin);
