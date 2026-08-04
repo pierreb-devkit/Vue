@@ -660,3 +660,56 @@ describe('BillingPricingView — resolvedPlanItems sections + inheritsFrom resol
     expect(starter.sections).toBeNull();
   });
 });
+
+// ─── Suite: prerender crawl detection — skip live fetch, no error toast ─────
+
+describe('BillingPricingView — prerender crawl detection', () => {
+  let wrapper;
+  let store;
+  let originalUserAgent;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    store = useBillingStore();
+    originalUserAgent = navigator.userAgent;
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+    Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true });
+  });
+
+  it('skips the live plans fetch and never sets an error toast when UA is HeadlessChrome (prerender crawl)', async () => {
+    Object.defineProperty(navigator, 'userAgent', {
+      value: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36',
+      configurable: true,
+    });
+    vi.spyOn(store, 'fetchPlans').mockRejectedValue(new Error('no API on the local prerender static server'));
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+
+    // The plans fetch is never fired under the prerender crawl — static content
+    // (usePricing) already fully renders the cards, so there's nothing to fail on.
+    expect(store.fetchPlans).not.toHaveBeenCalled();
+    expect(wrapper.vm.error).toBeNull();
+  });
+
+  it('still fetches plans and surfaces the error toast on a genuine failure in a real browser', async () => {
+    // Regression lock: only the prerender crawl is suppressed — a real user whose
+    // live fetch genuinely fails must still see the retry toast (pre-existing UX).
+    vi.spyOn(store, 'fetchPlans').mockRejectedValue(new Error('network error'));
+    vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
+
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+
+    expect(store.fetchPlans).toHaveBeenCalledTimes(1);
+    expect(wrapper.vm.error).toBe('Failed to load pricing. Please try again.');
+  });
+});

@@ -159,6 +159,7 @@ import { usePricing } from '../composables/billing.usePricing.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
 import { computeAnnualSavingsPct } from '../lib/pricingMath.js';
+import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
@@ -390,11 +391,19 @@ export default {
     },
   },
   async created() {
-    try {
-      await this.billingStore.fetchPlans();
-    } catch (err) {
-      console.error('Failed to load pricing plans:', err);
-      this.error = 'Failed to load pricing. Please try again.';
+    // The SEO prerender crawl hits a local static server with no API backend — the
+    // live plans fetch always fails there, baking this error toast into the
+    // prerendered HTML (hydration's later successful fetch never clears the
+    // captured node). Static content (usePricing) already fully renders the cards
+    // without live data, so skip the fetch entirely under prerender instead of ever
+    // letting it fail.
+    if (!isPrerenderCrawl()) {
+      try {
+        await this.billingStore.fetchPlans();
+      } catch (err) {
+        console.error('Failed to load pricing plans:', err);
+        this.error = 'Failed to load pricing. Please try again.';
+      }
     }
 
     const orgsEnabled = this.authStore.serverConfig?.organizations?.enabled;

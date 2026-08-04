@@ -49,6 +49,7 @@ import { computed, getCurrentInstance, onMounted, ref } from 'vue';
 import { useTheme } from 'vuetify';
 import { useCookieConsent } from '../composables/useCookieConsent';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
+import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 
 const instance = getCurrentInstance();
 const theme = useTheme();
@@ -56,15 +57,13 @@ const theme = useTheme();
 const isMounted = ref(false);
 
 /**
- * Sets the isMounted flag after hydration, skipping Puppeteer prerender
- * environments (UA contains 'HeadlessChrome') to prevent the banner from being
- * captured into static HTML and duplicated on hydration via Vue's Teleport.
- * UA-based detection is more specific than navigator.webdriver (which JSDOM
- * also sets, breaking unit tests).
+ * Sets the isMounted flag after hydration, skipping the SEO prerender crawl (see
+ * isPrerenderCrawl) to prevent the banner from being captured into static HTML and
+ * duplicated on hydration via Vue's Teleport.
  * @returns {void}
  */
 onMounted(() => {
-  if (typeof navigator !== 'undefined' && /HeadlessChrome/.test(navigator.userAgent || '')) return;
+  if (isPrerenderCrawl()) return;
   isMounted.value = true;
 });
 
