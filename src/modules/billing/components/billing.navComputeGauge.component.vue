@@ -23,7 +23,7 @@
       <v-list-item
         v-bind="tooltipProps"
         :to="'/users/billing'"
-        :aria-label="isAdmin ? 'Compute usage: unlimited (admin)' : `Compute usage: ${usageMeter ? pctUsed + '% used' : '—'}`"
+        :aria-label="isAdmin ? 'Compute usage: unlimited (admin)' : `Compute usage: ${usageMeter ? pctUsed + '% of quota' : '—'}`"
         aria-haspopup="true"
         :aria-expanded="tooltipOpen ? 'true' : 'false'"
         @touchstart.passive="onTouchActivate"
@@ -46,7 +46,7 @@
         <v-list-item-title v-if="isAdmin">
           <span class="admin-rainbow admin-rainbow--text" aria-hidden="true">∞</span>
         </v-list-item-title>
-        <v-list-item-title v-else>{{ usageMeter ? `${pctUsed}% used` : '—' }}</v-list-item-title>
+        <v-list-item-title v-else>{{ usageMeter ? `${pctUsed}% of quota` : '—' }}</v-list-item-title>
       </v-list-item>
     </template>
     <div v-if="isAdmin">Admin — unlimited compute</div>
@@ -65,6 +65,7 @@
 <script>
 import { useBillingStore } from '../stores/billing.store.js';
 import { useAuthStore } from '../../auth/stores/auth.store.js';
+import { useMeter } from '../composables/billing.useMeter';
 import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
 
 export default {
@@ -72,10 +73,29 @@ export default {
 
   components: { BillingEquivalencesChipsComponent },
 
+  /**
+   * @desc Wires billingStore + authStore + useMeter's quota-only `progress`, exposed
+   * directly as `pctUsed` (matches the server's threshold-alert formula exactly —
+   * see the computed docblock removed from here, kept as this comment). Deliberately
+   * NOT based on totalQuota (quota + extras): mixing an extras-inclusive denominator
+   * into this figure is what let the gauge sit green while the server was alerting
+   * at 80%/100% on the same account. totalQuota (computed below) stays for
+   * totalRemaining/totalDisplay/equivalenceChips, which legitimately describe
+   * extras-inclusive capacity.
+   * pollIntervalMs: 0 disables the composable's own polling interval; refreshOnFocus:
+   * false skips its document-visibilitychange listener too — the mounted()/
+   * beforeUnmount() window-focus listener below already covers "refresh when the
+   * user returns to this tab", so enabling both would just be a second mechanism
+   * doing the same job. fetchMissingMeterData still runs immediately during
+   * composable creation to populate initial meter state, which supersedes this
+   * component's own former mount-time fetch (removed from mounted() below).
+   * @returns {Object}
+   */
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
-    return { billingStore, authStore };
+    const { progress: pctUsed } = useMeter({ pollIntervalMs: 0, refreshOnFocus: false });
+    return { billingStore, authStore, pctUsed };
   },
 
   data() {
@@ -128,11 +148,6 @@ export default {
       if (!this.usageMeter) return 0;
       const { meterQuota = 0, extrasRemaining = 0 } = this.usageMeter;
       return meterQuota + extrasRemaining;
-    },
-
-    pctUsed() {
-      if (this.totalQuota <= 0) return 0;
-      return Math.max(0, Math.min(100, Math.round((this.meterUsed / this.totalQuota) * 100)));
     },
 
     /**
@@ -225,8 +240,14 @@ export default {
     },
   },
 
+  /**
+   * @desc Installs a window-focus listener that re-fetches the usage meter when the
+   * user returns to this tab. The initial fetch itself is now owned by useMeter() in
+   * setup() (fetchMissingMeterData runs during composable creation, before this hook)
+   * — calling it again here would double the mount-time request.
+   * @returns {void}
+   */
   mounted() {
-    this.billingStore.fetchUsageMeter();
     this._onFocus = () => this.billingStore.fetchUsageMeter();
     window.addEventListener('focus', this._onFocus);
   },

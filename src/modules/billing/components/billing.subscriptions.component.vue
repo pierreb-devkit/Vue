@@ -211,10 +211,10 @@
               <p class="text-title-medium font-weight-medium mb-2">Weekly meter</p>
               <BillingMeterProgressComponent
                 :used="meterUsed"
-                :quota="combinedPool"
-                :extras="0"
-                :overage="0"
-                :net-remaining-raw="combinedPool - meterUsed"
+                :quota="meterQuota"
+                :extras="meterExtras"
+                :overage="meterQuota > 0 ? meterOverage : 0"
+                :net-remaining-raw="meterNetRemainingRaw"
                 label=""
               />
             </v-card>
@@ -394,15 +394,6 @@ export default {
     };
   },
   computed: {
-    /**
-     * @desc Combined compute pool = subscription quota + extras + already-used.
-     * Used as denominator for "Weekly compute" % so Free plan (quota=0) doesn't
-     * false-alarm 100% red. Matches the sidenav gauge formula.
-     * @returns {number}
-     */
-    combinedPool() {
-      return this.meterQuota + this.meterExtras + this.meterUsed;
-    },
     fetchLoading() {
       return this.billingStore.loading;
     },

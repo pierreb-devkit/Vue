@@ -178,12 +178,18 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
     expect(wrapper.find('.billing-meter-breakdown-chart').exists()).toBe(true);
   });
 
-  it('renders meter usage values against combinedPool denominator', async () => {
+  it('passes raw meter values as props to BillingMeterProgressComponent (no combinedPool blending)', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    // combinedPool = meterQuota(500) + meterExtras(50) + meterUsed(120) = 670
-    // used(120) / combinedPool(670) = ~18%
-    expect(wrapper.text()).toContain('18%');
+    // mockUsageMeterNormal: meterUsed=120, meterQuota=500, extrasRemaining=50
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.props('used')).toBe(120);
+    expect(meterProgress.props('quota')).toBe(500);
+    expect(meterProgress.props('extras')).toBe(50);
+    expect(meterProgress.props('overage')).toBe(0);
+    expect(meterProgress.props('netRemainingRaw')).toBe(430); // 500 - 120 + 50
+    // Quota-only %: 120 / 500 = 24% (previously blended combinedPool denominator gave ~18%)
+    expect(wrapper.text()).toContain('24%');
   });
 
   it('renders "Buy compute extras" CTA in meter mode (T6 redesign: /pricing#units redirect)', async () => {
@@ -853,13 +859,16 @@ describe('BillingSubscriptionsComponent — meterError (centralized snackbar, no
     expect(wrapper.text()).not.toContain('Could not refresh usage');
   });
 
-  it('combinedPool computed equals meterQuota + meterExtras + meterUsed', async () => {
-    // useMeter returns values seeded from billingStore.usageMeter
+  it('gates the overage prop to 0 when meterQuota is 0 (prevents pinned-100%/red bar on quota-0 plans funded by extras)', async () => {
+    // meterQuota: 0 with usage funded entirely from extras — meterOverage = max(0, used - quota)
+    // would be positive from the first action; the template must gate it to 0, since the
+    // server never alerts on quota 0 and the UI must not contradict it.
+    seedMeterStore(store, { ...mockUsageMeterNormal, meterQuota: 0, meterUsed: 30, extrasRemaining: 500 });
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    // mockUsageMeterNormal: meterUsed=120, meterQuota=500, extrasRemaining=50
-    // combinedPool = 500 + 50 + 120 = 670
-    expect(wrapper.vm.combinedPool).toBe(670);
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.props('quota')).toBe(0);
+    expect(meterProgress.props('overage')).toBe(0);
   });
 });
 
