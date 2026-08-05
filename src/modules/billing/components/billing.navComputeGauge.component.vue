@@ -74,7 +74,14 @@ export default {
   components: { BillingEquivalencesChipsComponent },
 
   /**
-   * @desc Wires billingStore + authStore + useMeter's quota-only `progress`.
+   * @desc Wires billingStore + authStore + useMeter's quota-only `progress`, exposed
+   * directly as `pctUsed` (matches the server's threshold-alert formula exactly —
+   * see the computed docblock removed from here, kept as this comment). Deliberately
+   * NOT based on totalQuota (quota + extras): mixing an extras-inclusive denominator
+   * into this figure is what let the gauge sit green while the server was alerting
+   * at 80%/100% on the same account. totalQuota (computed below) stays for
+   * totalRemaining/totalDisplay/equivalenceChips, which legitimately describe
+   * extras-inclusive capacity.
    * pollIntervalMs: 0 disables the composable's own polling interval; refreshOnFocus:
    * false skips its document-visibilitychange listener too — the mounted()/
    * beforeUnmount() window-focus listener below already covers "refresh when the
@@ -87,8 +94,8 @@ export default {
   setup() {
     const billingStore = useBillingStore();
     const authStore = useAuthStore();
-    const { progress: meterProgress } = useMeter({ pollIntervalMs: 0, refreshOnFocus: false });
-    return { billingStore, authStore, meterProgress };
+    const { progress: pctUsed } = useMeter({ pollIntervalMs: 0, refreshOnFocus: false });
+    return { billingStore, authStore, pctUsed };
   },
 
   data() {
@@ -141,19 +148,6 @@ export default {
       if (!this.usageMeter) return 0;
       const { meterQuota = 0, extrasRemaining = 0 } = this.usageMeter;
       return meterQuota + extrasRemaining;
-    },
-
-    /**
-     * @desc Percentage of the included weekly quota consumed — quota-only, matching
-     * the server's threshold-alert formula exactly (useMeter's `progress`). Deliberately
-     * NOT based on totalQuota (quota + extras): mixing an extras-inclusive denominator
-     * into this figure is what let the gauge sit green while the server was alerting
-     * at 80%/100% on the same account. totalQuota stays for totalRemaining/totalDisplay/
-     * equivalenceChips, which legitimately describe extras-inclusive capacity.
-     * @returns {number}
-     */
-    pctUsed() {
-      return this.meterProgress;
     },
 
     /**
