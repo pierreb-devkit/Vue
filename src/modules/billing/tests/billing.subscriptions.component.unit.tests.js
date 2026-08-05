@@ -471,6 +471,120 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
   });
 });
 
+// ─── Pending cancellation — "Cancelling" chip + cancelsOnDate fallback ──────
+
+describe('BillingSubscriptionsComponent — pending cancellation', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    vi.spyOn(store, 'openPortal').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+  });
+
+  it('active, not cancelling: shows unchanged "Next billing date" line, no cancellation UI', async () => {
+    store.subscription = {
+      status: 'active',
+      plan: 'starter',
+      currentPeriodEnd: '2026-09-01T00:00:00.000Z',
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Next billing date');
+    expect(wrapper.text()).not.toContain('Cancelling');
+    expect(wrapper.text()).not.toContain('Cancels on');
+  });
+
+  it('cancelAt set: shows Cancelling chip + Cancels on {cancelAt date}, replacing Next billing date', async () => {
+    // cancelAt deliberately differs from nextRenewalDate/currentPeriodEnd to pin that
+    // cancelAt wins the `cancelAt ?? nextRenewalDate ?? currentPeriodEnd` resolution.
+    store.subscription = {
+      status: 'active',
+      plan: 'starter',
+      currentPeriodEnd: '2026-09-01T00:00:00.000Z',
+      cancelAtPeriodEnd: true,
+      cancelAt: '2026-08-20T00:00:00.000Z',
+      nextRenewalDate: '2026-08-20T00:00:00.000Z',
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.text()).toContain('Cancelling');
+    expect(wrapper.text()).toContain("Cancels on August 20, 2026 — you'll keep access until then");
+    expect(wrapper.text()).toContain('Reactivate');
+    expect(wrapper.text()).not.toContain('Next billing date');
+  });
+
+  it('boolean-only cancelAtPeriodEnd (no cancelAt): date still renders via the nextRenewalDate fallback', async () => {
+    // Reachable while the webhook is in flight: cancel_at_period_end true, cancel_at absent.
+    // Server already resolves nextRenewalDate = cancelAt ?? currentPeriodEnd for this shape.
+    store.subscription = {
+      status: 'active',
+      plan: 'starter',
+      currentPeriodEnd: '2026-09-01T00:00:00.000Z',
+      cancelAtPeriodEnd: true,
+      cancelAt: null,
+      nextRenewalDate: '2026-09-01T00:00:00.000Z',
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.text()).toContain('Cancelling');
+    // Without the fallback this would render "Cancels on  — you'll keep access..." (blank date).
+    expect(wrapper.text()).toContain("Cancels on September 1, 2026 — you'll keep access until then");
+  });
+
+  it('already-ended (status: canceled): no Cancelling chip / cancellation notice even with stale cancelAt fields', async () => {
+    store.subscription = {
+      status: 'canceled',
+      plan: 'starter',
+      currentPeriodEnd: '2026-07-01T00:00:00.000Z',
+      cancelAtPeriodEnd: true,
+      cancelAt: '2026-07-01T00:00:00.000Z',
+      nextRenewalDate: '2026-07-01T00:00:00.000Z',
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.text()).not.toContain('Cancelling');
+    expect(chip.text()).toContain('canceled');
+    expect(wrapper.text()).not.toContain('Cancels on');
+    expect(wrapper.text()).not.toContain("you'll keep access until then");
+  });
+
+  it('past_due while a cancellation is pending: payment messaging wins, no combined messaging', async () => {
+    store.subscription = {
+      status: 'past_due',
+      plan: 'starter',
+      currentPeriodEnd: '2026-09-01T00:00:00.000Z',
+      cancelAtPeriodEnd: true,
+      cancelAt: '2026-08-20T00:00:00.000Z',
+      nextRenewalDate: '2026-08-20T00:00:00.000Z',
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.text()).toContain('past due');
+    expect(chip.text()).not.toContain('Cancelling');
+    expect(wrapper.text()).toContain('Update payment method');
+    expect(wrapper.text()).not.toContain('Reactivate');
+    expect(wrapper.text()).not.toContain('Cancels on');
+  });
+});
+
 // ─── Suite 5: Stripe success query handling ────────────────────────────────
 
 describe('BillingSubscriptionsComponent — checkout success query flow', () => {
