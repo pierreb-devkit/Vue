@@ -8,7 +8,7 @@ const API = API_URL;
  * etc.) surface as failures instead of silently skipping.
  * @type {RegExp}
  */
-export const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network error/i;
+export const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ECONNRESET|EPIPE|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network error/i;
 
 /**
  * @desc Safely extract a string message from an unknown thrown value.
@@ -33,7 +33,11 @@ export async function isApiAvailable(request) {
   try {
     await request.get(API);
     return true;
-  } catch {
+  } catch (err) {
+    // Log so a misconfigured API_URL (bad host, DNS typo, TLS rejection) surfaces in CI
+    // output instead of collapsing into an indistinguishable generic "backend not running"
+    // skip reason.
+    console.warn(`[isApiAvailable] request to ${API} failed: ${errorMessage(err)}`);
     return false;
   }
 }

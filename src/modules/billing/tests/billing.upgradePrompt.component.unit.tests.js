@@ -3,7 +3,6 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
-import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
 
 const vuetify = createVuetify();
@@ -212,25 +211,48 @@ describe('BillingUpgradePrompt', () => {
       expect(wrapper.text()).toMatch(/requires the|Upgrade/i);
     });
 
-    it('devkit default renders generic placeholder copy — no downstream-specific product literal', () => {
-      const wrapper = mountWithStore({
-        subscription: { plan: 'free' },
-        extrasBalance: { balance: 0 },
-        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
-      });
-      const text = wrapper.text();
-      // Read the expected grant label from the loaded/generated config (the same
-      // resolveStaticContent() source the component itself reads) instead of asserting
-      // a hardcoded devkit-default literal — this stays true whether this suite runs
-      // against the bare stack or a consumer's own generated config. (The rendered
-      // "$9.00" is the devkit's OWN generic demo pack price — same placeholder used
-      // module-wide, e.g. billing.subscriptions.component.vue — not a leaked literal;
-      // the component source itself no longer hardcodes any price.)
-      const { signupGrant } = resolveStaticContent();
-      expect(text.toLowerCase()).toContain(signupGrant.label.toLowerCase());
-      expect(text).not.toMatch(/\bboost\b/i);
-      expect(text).not.toMatch(/\bgrowth\b/i);
-      expect(text).not.toContain('500 compute');
+    it('devkit default renders generic placeholder copy — no downstream-specific product literal', async () => {
+      // This is a leak-guard for the DEVKIT'S OWN bare-stack default specifically — not
+      // "whatever's currently configured". Force config.billing.staticContent to empty so
+      // resolveStaticContent() falls through to the devkit defaults regardless of the real
+      // ambient generated config (bare stack today, a consumer's own build tomorrow) — a
+      // consumer whose OWN static content legitimately contains "growth"/"boost" must never
+      // make this assertion spuriously fail. Isolated the same way core.appSpinner's default-
+      // rendering contract is (mock the config service, not a consumer value, rule 2).
+      vi.resetModules();
+      vi.doMock('../../../lib/services/config.js', () => ({ default: { billing: { staticContent: {} } } }));
+      try {
+        const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
+        const { useBillingStore: useIsolatedBillingStore } = await import('../stores/billing.store.js');
+        const { resolveStaticContent: resolveIsolated } = await import('../lib/billing.resolveStaticContent.js');
+
+        setActivePinia(createPinia());
+        const store = useIsolatedBillingStore();
+        Object.assign(store, {
+          subscription: { plan: 'free' },
+          extrasBalance: { balance: 0 },
+          extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+        });
+        const wrapper = mount(Component, {
+          props: { requiredPlan: 'growth', mode: 'meter' },
+          global: { plugins: [vuetify], stubs: { RouterLink: true } },
+        });
+        const text = wrapper.text();
+        // Read the expected grant label from the loaded/generated config (the same
+        // resolveStaticContent() source the component itself reads) instead of asserting
+        // a hardcoded devkit-default literal. (The rendered "$9.00" is the devkit's OWN
+        // generic demo pack price — same placeholder used module-wide, e.g.
+        // billing.subscriptions.component.vue — not a leaked literal; the component source
+        // itself no longer hardcodes any price.)
+        const { signupGrant } = resolveIsolated();
+        expect(text.toLowerCase()).toContain(signupGrant.label.toLowerCase());
+        expect(text).not.toMatch(/\bboost\b/i);
+        expect(text).not.toMatch(/\bgrowth\b/i);
+        expect(text).not.toContain('500 compute');
+      } finally {
+        vi.doUnmock('../../../lib/services/config.js');
+        vi.resetModules();
+      }
     });
   });
 
