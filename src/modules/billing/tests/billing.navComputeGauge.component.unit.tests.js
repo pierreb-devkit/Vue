@@ -89,17 +89,16 @@ describe('BillingNavComputeGaugeComponent', () => {
     expect(wrapper.findComponent({ name: 'VProgressLinear' }).exists()).toBe(false);
   });
 
-  it('shows "X% used" in v-list-item-title when usageMeter is available', () => {
+  it('shows "X% of quota" in v-list-item-title when usageMeter is available', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = meterQuota + extrasRemaining = 1600 + 0 = 1600
-    // pctUsed = meterUsed / totalQuota = 800 / 1600 = 50%
+    // pctUsed = meterUsed / meterQuota (quota-only) = 800 / 1600 = 50%
     billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
     wrapper = mountComponent();
-    expect(wrapper.text()).toContain('50% used');
+    expect(wrapper.text()).toContain('50% of quota');
   });
 
   it('shows "—" in v-list-item-title when usageMeter is null', () => {
@@ -111,21 +110,21 @@ describe('BillingNavComputeGaugeComponent', () => {
     expect(wrapper.text()).toContain('—');
   });
 
-  // ── pctUsed formula: meterUsed / (meterQuota + extrasRemaining) ──────────
+  // ── pctUsed formula: quota-only (meterUsed / meterQuota), matches server ──
 
-  it('computes pctUsed = meterUsed / (meterQuota + extrasRemaining)', () => {
+  it('computes pctUsed = meterUsed / meterQuota (quota-only, ignores extrasRemaining)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 1600 + 400 = 2000, pct = 800 / 2000 = 40%
+    // quota-only: pct = 800 / 1600 = 50% (previously blended with extrasRemaining → 40%)
     billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 400, weekResetAt: null };
 
     wrapper = mountComponent();
-    expect(wrapper.vm.pctUsed).toBe(40);
+    expect(wrapper.vm.pctUsed).toBe(50);
   });
 
-  it('returns pctUsed=0 when totalQuota=0 (division-by-zero guard)', () => {
+  it('returns pctUsed=0 when meterQuota=0 (division-by-zero guard)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
@@ -136,28 +135,42 @@ describe('BillingNavComputeGaugeComponent', () => {
     expect(wrapper.vm.pctUsed).toBe(0);
   });
 
-  it('clamps pctUsed to 100 when meterUsed exceeds totalQuota', () => {
+  it('clamps pctUsed to 100 when meterUsed exceeds meterQuota', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 50 + 0 = 50, meterUsed = 200 → pct = 200/50 = 400% → clamp to 100
+    // meterQuota = 50, meterUsed = 200 → pct = 200/50 = 400% → clamp to 100
     billingStore.usageMeter = { meterUsed: 200, meterQuota: 50, extrasRemaining: 0, weekResetAt: null };
 
     wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(100);
   });
 
-  it('returns pctUsed=50 for meterUsed=800, meterQuota=1600, extrasRemaining=0', () => {
+  it('returns pctUsed=50 for meterUsed=800, meterQuota=1600, extrasRemaining=0 (no-op proof: extras absent)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // totalQuota = 1600 + 0 = 1600, pct = 800/1600 = 50%
     billingStore.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 0, weekResetAt: null };
 
     wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(50);
+  });
+
+  it('clamps pctUsed to 100 and iconColor to "error" when quota is exceeded while extras remain (#4548 regression)', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    // Reproduces the reported bug: meterQuota 1000, extrasRemaining 5000, meterUsed 1020.
+    // Blended formula rendered 17%; quota-only clamps to 100 and flags error, matching
+    // the server's quota-threshold alert on this same account.
+    billingStore.usageMeter = { meterUsed: 1020, meterQuota: 1000, extrasRemaining: 5000, weekResetAt: null };
+
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(100);
+    expect(wrapper.vm.iconColor).toBe('error');
   });
 
   // ── iconColor thresholds (matches billing.computeGauge: 80% / 100%) ──────
@@ -436,11 +449,11 @@ describe('BillingNavComputeGaugeComponent', () => {
       expect(wrapper.vm.isAdmin).toBe(false);
     });
 
-    it('renders ∞ glyph for admin instead of "X% used"', () => {
+    it('renders ∞ glyph for admin instead of "X% of quota"', () => {
       setupAdmin();
       wrapper = mountComponent();
       expect(wrapper.text()).toContain('∞');
-      expect(wrapper.text()).not.toContain('% used');
+      expect(wrapper.text()).not.toContain('% of quota');
       expect(wrapper.text()).not.toContain('—');
     });
 
