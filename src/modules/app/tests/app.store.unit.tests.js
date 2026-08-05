@@ -25,9 +25,15 @@ describe('initializeStores', () => {
     vi.clearAllMocks();
   });
 
+  // Self-contained fixture covering both route-meta conventions in use across the stack:
+  // role-list gating (`meta.roles`) and CASL action/subject gating (`meta.action`/`meta.subject`,
+  // e.g. organizations.development.config.js tabs). initializeStores only forwards routes to
+  // coreStore.init — it must stay agnostic to which meta shape a route (or a consumer's route)
+  // uses, so the fixture never assumes just one.
   const mockRoutes = [
     { path: '/', name: 'Home' },
     { path: '/secure', name: 'Secure', meta: { roles: ['user'] } },
+    { path: '/manage', name: 'Manage', meta: { action: 'manage', subject: 'Organization' } },
   ];
 
   it('calls coreStore.init with the provided routes', () => {
@@ -56,5 +62,12 @@ describe('initializeStores', () => {
   it('returned core store has init method', () => {
     const { core } = initializeStores(mockRoutes);
     expect(typeof core.init).toBe('function');
+  });
+
+  it('forwards routes verbatim regardless of route-meta shape (roles-based or action/subject-based)', () => {
+    initializeStores(mockRoutes);
+    const forwardedRoutes = coreInitMock.mock.calls[0][0];
+    expect(forwardedRoutes.find((r) => r.name === 'Secure').meta).toEqual({ roles: ['user'] });
+    expect(forwardedRoutes.find((r) => r.name === 'Manage').meta).toEqual({ action: 'manage', subject: 'Organization' });
   });
 });

@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
 
 const vuetify = createVuetify();
@@ -218,12 +219,15 @@ describe('BillingUpgradePrompt', () => {
         extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
       });
       const text = wrapper.text();
-      // Devkit generic default — numberless grant label, generic pack/plan names sourced
-      // from billing.static-content.js, not any real consumer's economics. (The rendered
+      // Read the expected grant label from the loaded/generated config (the same
+      // resolveStaticContent() source the component itself reads) instead of asserting
+      // a hardcoded devkit-default literal — this stays true whether this suite runs
+      // against the bare stack or a consumer's own generated config. (The rendered
       // "$9.00" is the devkit's OWN generic demo pack price — same placeholder used
       // module-wide, e.g. billing.subscriptions.component.vue — not a leaked literal;
       // the component source itself no longer hardcodes any price.)
-      expect(text).toMatch(/one-shot compute grant/i);
+      const { signupGrant } = resolveStaticContent();
+      expect(text.toLowerCase()).toContain(signupGrant.label.toLowerCase());
       expect(text).not.toMatch(/\bboost\b/i);
       expect(text).not.toMatch(/\bgrowth\b/i);
       expect(text).not.toContain('500 compute');
