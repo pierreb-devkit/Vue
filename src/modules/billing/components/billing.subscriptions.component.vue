@@ -139,22 +139,22 @@
               </div>
               <div class="d-flex align-center ga-2">
                 <v-icon
-                  :icon="subscriptionStatusIcon"
+                  :icon="displayStatusIcon"
                   size="x-small"
-                  :color="subscriptionStatusMeta.color"
+                  :color="displayStatusMeta.color"
                   aria-hidden="true"
                 />
                 <v-chip
-                  :color="subscriptionStatusMeta.color"
+                  :color="displayStatusMeta.color"
                   variant="tonal"
                   size="small"
                   class="text-capitalize"
                 >
-                  {{ subscriptionStatusMeta.label }}
+                  {{ displayStatusMeta.label }}
                 </v-chip>
                 <v-btn
-                  v-if="subscriptionStatusAction"
-                  :color="subscriptionStatusAction.color"
+                  v-if="displayStatusAction"
+                  :color="displayStatusAction.color"
                   variant="tonal"
                   size="small"
                   :class="config.vuetify.theme.rounded"
@@ -162,19 +162,19 @@
                   :loading="portalLoading"
                   @click="manageSubscription"
                 >
-                  {{ subscriptionStatusAction.label }}
+                  {{ displayStatusAction.label }}
                 </v-btn>
               </div>
             </div>
 
-            <!-- Next billing date -->
-            <div v-if="nextBillingDate" class="d-flex align-center ga-2 mb-6 text-body-medium text-medium-emphasis">
+            <!-- Next billing date, or — while a cancellation is pending — the cancellation notice -->
+            <div v-if="billingDateLine" class="d-flex align-center ga-2 mb-6 text-body-medium text-medium-emphasis">
               <v-icon icon="fa-solid fa-calendar" size="x-small" aria-hidden="true" />
-              <span>{{ `Next billing date: ${nextBillingDate}` }}</span>
+              <span>{{ billingDateLine }}</span>
             </div>
 
             <!-- CTAs (portal error surfaced via centralized snackbar — see lib/services/axios.js) -->
-            <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !nextBillingDate }">
+            <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !billingDateLine }">
               <v-btn
                 color="primary"
                 variant="flat"
@@ -305,6 +305,20 @@ import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.c
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
 const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
+
+/**
+ * @desc Format a date value as a long-form US date (e.g. "August 5, 2026"), or null when absent.
+ * @param {string|Date|null|undefined} date
+ * @returns {string|null}
+ */
+const formatLongDate = (date) => {
+  if (!date) return null;
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
 
 /**
  * Component definition.
@@ -548,13 +562,75 @@ export default {
      * @returns {string|null}
      */
     nextBillingDate() {
-      const date = this.subscription?.currentPeriodEnd;
-      if (!date) return null;
-      return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+      return formatLongDate(this.subscription?.currentPeriodEnd);
+    },
+    /**
+     * @desc Whether the subscription is active/trialing AND has a cancellation scheduled.
+     * Stripe expresses a customer-portal cancellation as `cancel_at` with
+     * `cancel_at_period_end` sometimes still `false` while the webhook is in flight —
+     * checking either field catches both shapes. Deliberately scoped to
+     * active/trialing so payment-urgency statuses (past_due, unpaid) always keep
+     * their own messaging instead of a combined/competing chip.
+     * @returns {boolean}
+     */
+    isPendingCancellation() {
+      if (!['active', 'trialing'].includes(this.subscriptionStatus)) return false;
+      return !!(this.subscription?.cancelAt || this.subscription?.cancelAtPeriodEnd);
+    },
+    /**
+     * @desc Date the pending cancellation takes effect, formatted for display.
+     * Resolves `cancelAt ?? nextRenewalDate ?? currentPeriodEnd` — never `cancelAt`
+     * alone — because the boolean-only shape (`cancelAtPeriodEnd: true`, `cancelAt`
+     * absent) is reachable while the webhook is in flight; `nextRenewalDate` already
+     * resolves this fallback server-side.
+     * @returns {string|null}
+     */
+    cancelsOnDate() {
+      const date = this.subscription?.cancelAt ?? this.subscription?.nextRenewalDate ?? this.subscription?.currentPeriodEnd;
+      return formatLongDate(date);
+    },
+    /**
+     * @desc Status chip color/label actually rendered — the "Cancelling" warning
+     * state while a cancellation is pending, otherwise the real per-status meta.
+     * Single source of truth so the icon and chip never disagree.
+     * @returns {{ color: string, label: string }}
+     */
+    displayStatusMeta() {
+      if (this.isPendingCancellation) return { color: 'warning', label: 'Cancelling' };
+      return this.subscriptionStatusMeta;
+    },
+    /**
+     * @desc Status action button actually rendered — "Reactivate" while a
+     * cancellation is pending, otherwise the real per-status action (or null).
+     * @returns {{ color: string, label: string }|null}
+     */
+    displayStatusAction() {
+      if (this.isPendingCancellation) return { color: 'warning', label: 'Reactivate' };
+      return this.subscriptionStatusAction;
+    },
+    /**
+     * @desc Status icon actually rendered — a clock while a cancellation is pending
+     * (distinct from the success checkmark, which would contradict the "Cancelling"
+     * chip), otherwise the real per-status icon.
+     * @returns {string}
+     */
+    displayStatusIcon() {
+      if (this.isPendingCancellation) return 'fa-solid fa-clock';
+      return this.subscriptionStatusIcon;
+    },
+    /**
+     * @desc Line shown under the plan header: the pending-cancellation notice while
+     * a cancellation is scheduled, otherwise the next billing date — never both.
+     * Guards against `cancelsOnDate` resolving to null (all three source fields
+     * absent) so the UI never renders the literal string "Cancels on null".
+     * @returns {string|null}
+     */
+    billingDateLine() {
+      if (this.isPendingCancellation && this.cancelsOnDate) {
+        return `Cancels on ${this.cancelsOnDate} — you'll keep access until then`;
+      }
+      if (this.nextBillingDate) return `Next billing date: ${this.nextBillingDate}`;
+      return null;
     },
   },
   /**
