@@ -15,6 +15,12 @@ const password = 'E2eTestPass99xyz';
 let orgId;
 let setupOk = false;
 
+/**
+ * @desc End-to-end suite covering the organization lifecycle: owner signup, org creation,
+ * and viewing the org detail page — each step skips gracefully (never hard-fails) when the
+ * live Node API backend prerequisite isn't met.
+ * @returns {void}
+ */
 test.describe('Organization Lifecycle E2E', () => {
   test.describe.configure({ mode: 'serial' });
 

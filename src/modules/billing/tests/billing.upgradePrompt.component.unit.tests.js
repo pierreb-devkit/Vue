@@ -234,7 +234,11 @@ describe('BillingUpgradePrompt', () => {
           extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
         });
         const wrapper = mount(Component, {
-          props: { requiredPlan: 'growth', mode: 'meter' },
+          // Neutral requiredPlan ('pro', not 'growth') — this prop isn't rendered by the
+          // post-grant (exhaustedAfterGrant) branch under test, but keeping it outside the
+          // words the assertions below check for removes any ambiguity between "resolved
+          // static text" and "prop passthrough".
+          props: { requiredPlan: 'pro', mode: 'meter' },
           global: { plugins: [vuetify], stubs: { RouterLink: true } },
         });
         const text = wrapper.text();

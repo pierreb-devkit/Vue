@@ -18,10 +18,15 @@ let orgId;
 test.describe('Organization Join Request E2E', () => {
   test.describe.configure({ mode: 'serial' });
 
-  // The API origin is read from the shared e2e config helper (via authenticatedContext /
-  // createOrgViaAPI / signupViaAPI, all sourced from API_URL) — never hardcoded here.
-  // The live-backend prerequisite is explicit: check it, and skip (not fail) when absent,
-  // matching organizations.domainJoin.e2e.tests.js's established pattern.
+  /**
+   * @desc Sign up an owner + requester via API and have the owner create an org. The API
+   * origin is read from the shared e2e config helper (via authenticatedContext /
+   * createOrgViaAPI / signupViaAPI, all sourced from API_URL) — never hardcoded here.
+   * The live-backend prerequisite is explicit: check it, and skip (not fail) when absent,
+   * matching organizations.domainJoin.e2e.tests.js's established pattern.
+   * @param {{ playwright: import('playwright').Playwright, request: import('@playwright/test').APIRequestContext }} fixtures
+   * @returns {Promise<void>}
+   */
   test('setup: create owner with org, and requester', async ({ playwright, request }) => {
     const apiUp = await isApiAvailable(request);
     test.skip(!apiUp, 'Node API backend not running');
