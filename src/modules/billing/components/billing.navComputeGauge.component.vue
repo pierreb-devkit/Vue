@@ -240,10 +240,14 @@ export default {
     },
   },
 
+  /**
+   * @desc Installs a window-focus listener that re-fetches the usage meter when the
+   * user returns to this tab. The initial fetch itself is now owned by useMeter() in
+   * setup() (fetchMissingMeterData runs during composable creation, before this hook)
+   * — calling it again here would double the mount-time request.
+   * @returns {void}
+   */
   mounted() {
-    // Initial fetch is now owned by useMeter() in setup() (fetchMissingMeterData
-    // runs during composable creation, before this hook) — calling it again here
-    // would double the mount-time request.
     this._onFocus = () => this.billingStore.fetchUsageMeter();
     window.addEventListener('focus', this._onFocus);
   },
