@@ -247,7 +247,8 @@ describe('BillingUpgradePrompt', () => {
       // ambient generated config (bare stack today, a consumer's own build tomorrow) — a
       // consumer whose OWN static content legitimately contains "growth"/"boost" must never
       // make this assertion spuriously fail. Isolated the same way core.appSpinner's default-
-      // rendering contract is (mock the config service, not a consumer value, rule 2).
+      // rendering contract is (mock the config service, not a consumer value — a rule-1
+      // default-certification exception, not rule-2 extension-point/hook-registry mocking).
       try {
         const { Component, useBillingStore: useIsolatedBillingStore, resolveStaticContent: resolveIsolated } = await loadWithConfig({});
 

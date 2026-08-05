@@ -1,27 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { signin, signupViaAPI } from '../../../lib/helpers/e2e/auth.js';
-import { authenticatedContext, createOrgViaAPI, API } from '../../../lib/helpers/e2e/api.js';
-import { API_URL, COOKIE_PREFIX } from '../../../lib/helpers/e2e/config.js';
-
-/**
- * @desc Patterns that identify a backend-unreachable / transport-level failure.
- * Used to scope `test.skip` so real backend regressions (4xx/5xx, schema drift,
- * etc.) surface as failures instead of silent skips.
- * @type {RegExp}
- */
-const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network error/i;
-
-/**
- * @desc Safely extract a string message from an unknown thrown value.
- * Avoids crashing when something throws `null` / `undefined` / a non-Error.
- * @param {unknown} err
- * @returns {string}
- */
-function errorMessage(err) {
-  if (err instanceof Error) return err.message;
-  if (err == null) return String(err);
-  return typeof err === 'string' ? err : String(err);
-}
+import {
+  authenticatedContext,
+  createOrgViaAPI,
+  API,
+  isApiAvailable,
+  errorMessage,
+  CONNECTIVITY_ERROR_RE,
+} from '../../../lib/helpers/e2e/api.js';
+import { COOKIE_PREFIX } from '../../../lib/helpers/e2e/config.js';
 
 const timestamp = Date.now();
 const domain = `domain${timestamp}.com`;
@@ -30,26 +17,6 @@ const memberEmail = `e2e-djmember-${timestamp}@${domain}`;
 const password = 'E2eTestPass99xyz';
 
 let orgId;
-
-/**
- * @desc Check whether the Node API backend is reachable at the transport level.
- * Reachability = a response came back at all (any HTTP status). A 4xx/5xx means
- * the backend IS running and answered — so we should NOT skip the suite; we
- * should let the test exercise the real code path. Only network/connection
- * errors (request.get throws) indicate the backend is genuinely unreachable.
- * @param {import('@playwright/test').APIRequestContext} request
- * @returns {Promise<boolean>}
- */
-async function isApiAvailable(request) {
-  try {
-    // Use the fully-configured API URL (honors api.protocol/host/port/base) so
-    // we don't false-negative on projects that customize `config.api.base`.
-    await request.get(API_URL);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * @desc Predicate for `page.waitForURL` — true once the SPA has left the auth /
