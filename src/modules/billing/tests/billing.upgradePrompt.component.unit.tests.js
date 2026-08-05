@@ -8,6 +8,27 @@ import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.
 const vuetify = createVuetify();
 
 /**
+ * Dynamically re-import the resolver + component after mocking the underlying config
+ * service, so the module-scope `resolveStaticContent()` call picks up the per-test
+ * override — an EMPTY `staticContent` isolates the devkit's own defaults regardless of
+ * the real ambient generated config. Mirrors the pattern in
+ * billing.resolveStaticContent.unit.tests.js. Callers must unmock + `vi.resetModules()`
+ * afterwards (see the `afterEach` in the describe block(s) below).
+ * @param {Object} staticContent - Value to install at config.billing.staticContent.
+ * @returns {Promise<{Component: Object, useBillingStore: Function, resolveStaticContent: Function}>}
+ */
+async function loadWithConfig(staticContent) {
+  vi.resetModules();
+  vi.doMock('../../../lib/services/config.js', () => ({
+    default: { billing: { staticContent } },
+  }));
+  const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
+  const storeModule = await import('../stores/billing.store.js');
+  const resolverModule = await import('../lib/billing.resolveStaticContent.js');
+  return { Component, useBillingStore: storeModule.useBillingStore, resolveStaticContent: resolverModule.resolveStaticContent };
+}
+
+/**
  * Mount the upgrade prompt component with Vuetify and Pinia installed.
  * @param {Object} props Component props.
  * @param {Object} [quotaData] Quota data to set on the store.
@@ -219,12 +240,8 @@ describe('BillingUpgradePrompt', () => {
       // consumer whose OWN static content legitimately contains "growth"/"boost" must never
       // make this assertion spuriously fail. Isolated the same way core.appSpinner's default-
       // rendering contract is (mock the config service, not a consumer value, rule 2).
-      vi.resetModules();
-      vi.doMock('../../../lib/services/config.js', () => ({ default: { billing: { staticContent: {} } } }));
       try {
-        const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
-        const { useBillingStore: useIsolatedBillingStore } = await import('../stores/billing.store.js');
-        const { resolveStaticContent: resolveIsolated } = await import('../lib/billing.resolveStaticContent.js');
+        const { Component, useBillingStore: useIsolatedBillingStore, resolveStaticContent: resolveIsolated } = await loadWithConfig({});
 
         setActivePinia(createPinia());
         const store = useIsolatedBillingStore();
@@ -267,23 +284,6 @@ describe('BillingUpgradePrompt', () => {
       vi.doUnmock('../../../lib/services/config.js');
       vi.resetModules();
     });
-
-    /**
-     * Dynamically re-import the resolver + component after mocking the underlying
-     * config service, so the module-scope `resolveStaticContent()` call picks up the
-     * per-test override. Mirrors the pattern in billing.resolveStaticContent.unit.tests.js.
-     * @param {Object} staticContent - Value to install at config.billing.staticContent.
-     * @returns {Promise<{Component: Object, useBillingStore: Function}>}
-     */
-    async function loadWithConfig(staticContent) {
-      vi.resetModules();
-      vi.doMock('../../../lib/services/config.js', () => ({
-        default: { billing: { staticContent } },
-      }));
-      const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
-      const storeModule = await import('../stores/billing.store.js');
-      return { Component, useBillingStore: storeModule.useBillingStore };
-    }
 
     it('renders copy DRIVEN by the resolved static content — changing config changes the rendered copy', async () => {
       const { Component, useBillingStore: useStore } = await loadWithConfig({
