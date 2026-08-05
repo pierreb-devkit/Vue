@@ -1,32 +1,25 @@
-import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+
+// The default/fallback contract certified by this file must hold regardless of
+// whatever `ui.loader.component` the REAL generated config resolves to for
+// whoever runs this suite (bare stack today, a consumer's own build tomorrow).
+// Isolate natively by mocking the config service to an empty loader — hoisted
+// above the import below, so `resolveLoaderComponent`'s module-scope wiring
+// (`configuredLoaderPath` / `resolvedLoader`) always sees `null` here — a
+// consumer inheriting this file needs no local copy of this isolation.
+vi.mock('../../../../lib/services/config.js', () => ({ default: { ui: { loader: { component: null } } } }));
+
+import CoreAppSpinner, { resolveLoaderComponent } from '../core.appSpinner.component.vue';
 
 /**
  * Vuetify instance with all components registered for component mount.
  * @returns {import('vuetify').Vuetify}
  */
 const makeVuetify = () => createVuetify({ components, directives });
-
-// The default/fallback contract certified by this file must hold regardless of
-// whatever `ui.loader.component` the REAL generated config resolves to for
-// whoever runs this suite (bare stack today, a consumer's own build tomorrow).
-// Isolate natively by mocking the config service to an empty loader BEFORE
-// importing the component, so `resolveLoaderComponent`'s module-scope wiring
-// (`configuredLoaderPath` / `resolvedLoader`) always sees `null` here — a
-// consumer inheriting this file needs no local copy of this isolation.
-let CoreAppSpinner;
-let resolveLoaderComponent;
-
-beforeAll(async () => {
-  vi.resetModules();
-  vi.doMock('../../../../lib/services/config.js', () => ({ default: { ui: { loader: { component: null } } } }));
-  const mod = await import('../core.appSpinner.component.vue');
-  CoreAppSpinner = mod.default;
-  resolveLoaderComponent = mod.resolveLoaderComponent;
-});
 
 /**
  * Mount CoreAppSpinner with sensible defaults; callers override via opts.

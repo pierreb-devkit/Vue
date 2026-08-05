@@ -50,31 +50,6 @@ function mountView(query, router, extraStubs) {
 }
 
 /**
- * Poll `assertion` until it stops throwing, or re-throw once `timeoutMs` elapses.
- * Loading-state assertions target the AppSpinner wrapper (see below), which can
- * resolve via `defineAsyncComponent` when a consumer configures a custom loader —
- * that resolution can take more than one microtask tick, so a single
- * `flushPromises()` is not always enough. Used instead of a fixed-tick wait so
- * this file stays tolerant of that extra tick rather than assuming none is needed.
- * @param {() => void} assertion
- * @param {number} [timeoutMs]
- * @returns {Promise<void>}
- */
-async function waitForAssertion(assertion, timeoutMs = 1000) {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    try {
-      assertion();
-      return;
-    } catch (err) {
-      if (Date.now() >= deadline) throw err;
-      await flushPromises();
-      await new Promise((resolve) => { setTimeout(resolve, 10); });
-    }
-  }
-}
-
-/**
  * Stable hook for "is the loader currently shown" — the AppSpinner wrapper's
  * declared component name, not the default spinner's own DOM class. A consumer
  * configuring `config.ui.loader.component` renders a different root inside
@@ -136,7 +111,7 @@ describe('auth.token.view', () => {
       const wrapper = mountView();
 
       expect(wrapper.vm.loading).toBe(true);
-      await waitForAssertion(() => expect(findAppSpinner(wrapper).exists()).toBe(true));
+      await vi.waitFor(() => expect(findAppSpinner(wrapper).exists()).toBe(true));
       expect(wrapper.text()).toContain('Signing you in');
       expect(wrapper.text()).not.toContain('Error during oAuth');
 
@@ -164,7 +139,7 @@ describe('auth.token.view', () => {
 
       expect(wrapper.vm.loading).toBe(false);
       expect(wrapper.vm.error.details.message).toBe('network error');
-      await waitForAssertion(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
+      await vi.waitFor(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
       expect(wrapper.text()).toContain('Error during oAuth');
       consoleSpy.mockRestore();
     });
@@ -189,7 +164,7 @@ describe('auth.token.view', () => {
       await flushPromises();
 
       expect(wrapper.vm.loading).toBe(false);
-      await waitForAssertion(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
+      await vi.waitFor(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
       expect(wrapper.text()).toContain('Error during oAuth');
       consoleSpy.mockRestore();
     });
@@ -264,7 +239,7 @@ describe('auth.token.view', () => {
       });
 
       expect(wrapper.vm.loading).toBe(true);
-      await waitForAssertion(() => expect(findAppSpinner(wrapper).exists()).toBe(true));
+      await vi.waitFor(() => expect(findAppSpinner(wrapper).exists()).toBe(true));
       expect(wrapper.find('.synthetic-consumer-loader').exists()).toBe(true);
       expect(wrapper.text()).not.toContain('Error during oAuth');
 
@@ -282,7 +257,7 @@ describe('auth.token.view', () => {
       await flushPromises();
 
       expect(wrapper.vm.loading).toBe(false);
-      await waitForAssertion(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
+      await vi.waitFor(() => expect(findAppSpinner(wrapper).exists()).toBe(false));
       expect(wrapper.text()).toContain('Error during oAuth');
       consoleSpy.mockRestore();
     });

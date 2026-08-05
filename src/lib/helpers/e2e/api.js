@@ -16,9 +16,7 @@ export const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|EAI_AGAIN
  * @returns {string}
  */
 export function errorMessage(err) {
-  if (err instanceof Error) return err.message;
-  if (err == null) return String(err);
-  return typeof err === 'string' ? err : String(err);
+  return err instanceof Error ? err.message : String(err);
 }
 
 /**
