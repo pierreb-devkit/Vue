@@ -3,9 +3,31 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
 
 const vuetify = createVuetify();
+
+/**
+ * Dynamically re-import the resolver + component after mocking the underlying config
+ * service, so the module-scope `resolveStaticContent()` call picks up the per-test
+ * override — an EMPTY `staticContent` isolates the devkit's own defaults regardless of
+ * the real ambient generated config. Mirrors the pattern in
+ * billing.resolveStaticContent.unit.tests.js. Callers must unmock + `vi.resetModules()`
+ * afterwards (see the `afterEach` in the describe block(s) below).
+ * @param {Object} staticContent - Value to install at config.billing.staticContent.
+ * @returns {Promise<{Component: Object, useBillingStore: Function, resolveStaticContent: Function}>}
+ */
+async function loadWithConfig(staticContent) {
+  vi.resetModules();
+  vi.doMock('../../../lib/services/config.js', () => ({
+    default: { billing: { staticContent } },
+  }));
+  const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
+  const storeModule = await import('../stores/billing.store.js');
+  const resolverModule = await import('../lib/billing.resolveStaticContent.js');
+  return { Component, useBillingStore: storeModule.useBillingStore, resolveStaticContent: resolverModule.resolveStaticContent };
+}
 
 /**
  * Mount the upgrade prompt component with Vuetify and Pinia installed.
@@ -139,7 +161,14 @@ describe('BillingUpgradePrompt', () => {
       });
       const packBtn = wrapper.find('[data-test="cta-pack"]');
       expect(packBtn.exists()).toBe(true);
-      expect(packBtn.text()).toMatch(/pack/i);
+      // Consumer-tolerance assertion: derive the expected CTA label from the loaded
+      // config (same formula the component's own packCtaLabel computed uses) instead
+      // of a coincidental /pack/i substring match — a consumer's own pack.cta ("Get
+      // Started", "Top up") need not contain the literal word "pack".
+      const { packs } = resolveStaticContent();
+      const primaryPack = packs[0] || null;
+      const expectedCta = primaryPack ? primaryPack.cta || 'Buy a compute pack' : 'Buy a compute pack';
+      expect(packBtn.text()).toContain(expectedCta);
       // Post-grant pack CTA routes to the single billing entry point, not a modal event.
       expect(wrapper.findComponent('[data-test="cta-pack"]').props('to')).toBe('/pricing#units');
     });
@@ -211,22 +240,56 @@ describe('BillingUpgradePrompt', () => {
       expect(wrapper.text()).toMatch(/requires the|Upgrade/i);
     });
 
-    it('devkit default renders generic placeholder copy — no downstream-specific product literal', () => {
-      const wrapper = mountWithStore({
-        subscription: { plan: 'free' },
-        extrasBalance: { balance: 0 },
-        extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
-      });
-      const text = wrapper.text();
-      // Devkit generic default — numberless grant label, generic pack/plan names sourced
-      // from billing.static-content.js, not any real consumer's economics. (The rendered
-      // "$9.00" is the devkit's OWN generic demo pack price — same placeholder used
-      // module-wide, e.g. billing.subscriptions.component.vue — not a leaked literal;
-      // the component source itself no longer hardcodes any price.)
-      expect(text).toMatch(/one-shot compute grant/i);
-      expect(text).not.toMatch(/\bboost\b/i);
-      expect(text).not.toMatch(/\bgrowth\b/i);
-      expect(text).not.toContain('500 compute');
+    it('devkit default renders generic placeholder copy — no downstream-specific product literal', async () => {
+      // This is a leak-guard for the DEVKIT'S OWN bare-stack default specifically — not
+      // "whatever's currently configured". Force config.billing.staticContent to empty so
+      // resolveStaticContent() falls through to the devkit defaults regardless of the real
+      // ambient generated config (bare stack today, a consumer's own build tomorrow) — a
+      // consumer whose OWN static content legitimately contains "growth"/"boost" must never
+      // make this assertion spuriously fail. Isolated the same way core.appSpinner's default-
+      // rendering contract is (mock the config service, not a consumer value, rule 2).
+      try {
+        const { Component, useBillingStore: useIsolatedBillingStore, resolveStaticContent: resolveIsolated } = await loadWithConfig({});
+
+        setActivePinia(createPinia());
+        const store = useIsolatedBillingStore();
+        Object.assign(store, {
+          subscription: { plan: 'free' },
+          extrasBalance: { balance: 0 },
+          extrasLedger: { entries: [{ source: 'signup_grant', amount: 500 }], total: 1, page: 1, limit: 20 },
+        });
+        const wrapper = mount(Component, {
+          // Neutral requiredPlan ('pro', not 'growth') — this prop isn't rendered by the
+          // post-grant (exhaustedAfterGrant) branch under test, but keeping it outside the
+          // words the assertions below check for removes any ambiguity between "resolved
+          // static text" and "prop passthrough".
+          props: { requiredPlan: 'pro', mode: 'meter' },
+          global: { plugins: [vuetify], stubs: { RouterLink: true } },
+        });
+        const text = wrapper.text();
+        // This IS a default-certification test (forced-empty config -> devkit's own
+        // hardcoded default), not a consumer-tolerance test — the literal below is the
+        // contract being certified, so pin it directly (rule 1's "assert against the
+        // loaded config" applies to consumer-tolerance tests; a bare-default cert needs
+        // an independent literal or a regression to empty/wrong copy would pass
+        // vacuously, since resolveIsolated() reads the exact same mocked path the
+        // component itself resolves against). (The rendered "$9.00" is the devkit's OWN
+        // generic demo pack price — same placeholder used module-wide, e.g.
+        // billing.subscriptions.component.vue — not a leaked literal; the component source
+        // itself no longer hardcodes any price.)
+        expect(text).toMatch(/one-shot compute grant/i);
+        // Secondary check: the rendered copy also matches whatever resolveStaticContent()
+        // resolves to under this forced-empty config — catches drift between the literal
+        // above and the devkit default in billing.static-content.js.
+        const { signupGrant } = resolveIsolated();
+        expect(text.toLowerCase()).toContain(signupGrant.label.toLowerCase());
+        expect(text).not.toMatch(/\bboost\b/i);
+        expect(text).not.toMatch(/\bgrowth\b/i);
+        expect(text).not.toContain('500 compute');
+      } finally {
+        vi.doUnmock('../../../lib/services/config.js');
+        vi.resetModules();
+      }
     });
   });
 
@@ -237,23 +300,6 @@ describe('BillingUpgradePrompt', () => {
       vi.doUnmock('../../../lib/services/config.js');
       vi.resetModules();
     });
-
-    /**
-     * Dynamically re-import the resolver + component after mocking the underlying
-     * config service, so the module-scope `resolveStaticContent()` call picks up the
-     * per-test override. Mirrors the pattern in billing.resolveStaticContent.unit.tests.js.
-     * @param {Object} staticContent - Value to install at config.billing.staticContent.
-     * @returns {Promise<{Component: Object, useBillingStore: Function}>}
-     */
-    async function loadWithConfig(staticContent) {
-      vi.resetModules();
-      vi.doMock('../../../lib/services/config.js', () => ({
-        default: { billing: { staticContent } },
-      }));
-      const { default: Component } = await import('../components/billing.upgradePrompt.component.vue');
-      const storeModule = await import('../stores/billing.store.js');
-      return { Component, useBillingStore: storeModule.useBillingStore };
-    }
 
     it('renders copy DRIVEN by the resolved static content — changing config changes the rendered copy', async () => {
       const { Component, useBillingStore: useStore } = await loadWithConfig({

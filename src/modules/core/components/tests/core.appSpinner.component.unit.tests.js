@@ -3,6 +3,16 @@ import { mount } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+
+// The default/fallback contract certified by this file must hold regardless of
+// whatever `ui.loader.component` the REAL generated config resolves to for
+// whoever runs this suite (bare stack today, a consumer's own build tomorrow).
+// Isolate natively by mocking the config service to an empty loader — hoisted
+// above the import below, so `resolveLoaderComponent`'s module-scope wiring
+// (`configuredLoaderPath` / `resolvedLoader`) always sees `null` here — a
+// consumer inheriting this file needs no local copy of this isolation.
+vi.mock('../../../../lib/services/config.js', () => ({ default: { ui: { loader: { component: null } } } }));
+
 import CoreAppSpinner, { resolveLoaderComponent } from '../core.appSpinner.component.vue';
 
 /**
@@ -25,7 +35,7 @@ const mountIt = (opts = {}) =>
     },
   });
 
-describe('CoreAppSpinner — default rendering (config unset)', () => {
+describe('CoreAppSpinner — default rendering (isolated from any configured loader)', () => {
   it('renders the built-in v-progress-circular with indeterminate=true', () => {
     const wrapper = mountIt();
     const spinner = wrapper.findComponent({ name: 'VProgressCircular' });
@@ -34,7 +44,7 @@ describe('CoreAppSpinner — default rendering (config unset)', () => {
   });
 });
 
-describe('CoreAppSpinner — attribute fallthrough', () => {
+describe('CoreAppSpinner — attribute fallthrough (isolated from any configured loader)', () => {
   it('forwards color/size/data-test to the rendered root (single-root branches, no declared visual props)', () => {
     const wrapper = mountIt({ attrs: { color: 'primary', size: '48', 'data-test': 'x' } });
     const spinner = wrapper.findComponent({ name: 'VProgressCircular' });

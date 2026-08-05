@@ -3,6 +3,46 @@ import { API_URL } from './config.js';
 const API = API_URL;
 
 /**
+ * @desc Patterns identifying a backend-unreachable / transport-level failure.
+ * Scope `test.skip` to these so real backend regressions (4xx/5xx, schema drift,
+ * etc.) surface as failures instead of silently skipping.
+ * @type {RegExp}
+ */
+export const CONNECTIVITY_ERROR_RE = /ECONNREFUSED|ECONNRESET|EPIPE|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network error/i;
+
+/**
+ * @desc Safely extract a string message from an unknown thrown value.
+ * @param {unknown} err
+ * @returns {string}
+ */
+export function errorMessage(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+
+/**
+ * @desc Check whether the Node API backend is reachable at the transport level.
+ * Reachability = a response came back at all (any HTTP status) — a 4xx/5xx means
+ * the backend IS running and answered, so callers should NOT skip and should let
+ * the test exercise the real code path. Only network/connection errors (the
+ * request itself throws) indicate the backend is genuinely unreachable — the
+ * explicit env prerequisite an org-flow E2E test depends on.
+ * @param {import('@playwright/test').APIRequestContext} request
+ * @returns {Promise<boolean>}
+ */
+export async function isApiAvailable(request) {
+  try {
+    await request.get(API);
+    return true;
+  } catch (err) {
+    // Log so a misconfigured API_URL (bad host, DNS typo, TLS rejection) surfaces in CI
+    // output instead of collapsing into an indistinguishable generic "backend not running"
+    // skip reason.
+    console.warn(`[isApiAvailable] request to ${API} failed: ${errorMessage(err)}`);
+    return false;
+  }
+}
+
+/**
  * @desc Create an authenticated API request context
  * @param {import('@playwright/test').Playwright} playwright - Playwright instance
  * @param {string} email
