@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
+import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
 
 const vuetify = createVuetify();
@@ -160,7 +161,14 @@ describe('BillingUpgradePrompt', () => {
       });
       const packBtn = wrapper.find('[data-test="cta-pack"]');
       expect(packBtn.exists()).toBe(true);
-      expect(packBtn.text()).toMatch(/pack/i);
+      // Consumer-tolerance assertion: derive the expected CTA label from the loaded
+      // config (same formula the component's own packCtaLabel computed uses) instead
+      // of a coincidental /pack/i substring match — a consumer's own pack.cta ("Get
+      // Started", "Top up") need not contain the literal word "pack".
+      const { packs } = resolveStaticContent();
+      const primaryPack = packs[0] || null;
+      const expectedCta = primaryPack ? primaryPack.cta || 'Buy a compute pack' : 'Buy a compute pack';
+      expect(packBtn.text()).toContain(expectedCta);
       // Post-grant pack CTA routes to the single billing entry point, not a modal event.
       expect(wrapper.findComponent('[data-test="cta-pack"]').props('to')).toBe('/pricing#units');
     });
@@ -259,12 +267,20 @@ describe('BillingUpgradePrompt', () => {
           global: { plugins: [vuetify], stubs: { RouterLink: true } },
         });
         const text = wrapper.text();
-        // Read the expected grant label from the loaded/generated config (the same
-        // resolveStaticContent() source the component itself reads) instead of asserting
-        // a hardcoded devkit-default literal. (The rendered "$9.00" is the devkit's OWN
+        // This IS a default-certification test (forced-empty config -> devkit's own
+        // hardcoded default), not a consumer-tolerance test — the literal below is the
+        // contract being certified, so pin it directly (rule 1's "assert against the
+        // loaded config" applies to consumer-tolerance tests; a bare-default cert needs
+        // an independent literal or a regression to empty/wrong copy would pass
+        // vacuously, since resolveIsolated() reads the exact same mocked path the
+        // component itself resolves against). (The rendered "$9.00" is the devkit's OWN
         // generic demo pack price — same placeholder used module-wide, e.g.
         // billing.subscriptions.component.vue — not a leaked literal; the component source
         // itself no longer hardcodes any price.)
+        expect(text).toMatch(/one-shot compute grant/i);
+        // Secondary check: the rendered copy also matches whatever resolveStaticContent()
+        // resolves to under this forced-empty config — catches drift between the literal
+        // above and the devkit default in billing.static-content.js.
         const { signupGrant } = resolveIsolated();
         expect(text.toLowerCase()).toContain(signupGrant.label.toLowerCase());
         expect(text).not.toMatch(/\bboost\b/i);
