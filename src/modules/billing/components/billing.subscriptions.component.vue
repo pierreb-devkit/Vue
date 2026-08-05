@@ -139,7 +139,7 @@
               </div>
               <div class="d-flex align-center ga-2">
                 <v-icon
-                  :icon="subscriptionStatusIcon"
+                  :icon="displayStatusIcon"
                   size="x-small"
                   :color="displayStatusMeta.color"
                   aria-hidden="true"
@@ -609,12 +609,26 @@ export default {
       return this.subscriptionStatusAction;
     },
     /**
+     * @desc Status icon actually rendered — a clock while a cancellation is pending
+     * (distinct from the success checkmark, which would contradict the "Cancelling"
+     * chip), otherwise the real per-status icon.
+     * @returns {string}
+     */
+    displayStatusIcon() {
+      if (this.isPendingCancellation) return 'fa-solid fa-clock';
+      return this.subscriptionStatusIcon;
+    },
+    /**
      * @desc Line shown under the plan header: the pending-cancellation notice while
      * a cancellation is scheduled, otherwise the next billing date — never both.
+     * Guards against `cancelsOnDate` resolving to null (all three source fields
+     * absent) so the UI never renders the literal string "Cancels on null".
      * @returns {string|null}
      */
     billingDateLine() {
-      if (this.isPendingCancellation) return `Cancels on ${this.cancelsOnDate} — you'll keep access until then`;
+      if (this.isPendingCancellation && this.cancelsOnDate) {
+        return `Cancels on ${this.cancelsOnDate} — you'll keep access until then`;
+      }
       if (this.nextBillingDate) return `Next billing date: ${this.nextBillingDate}`;
       return null;
     },

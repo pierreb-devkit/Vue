@@ -583,6 +583,23 @@ describe('BillingSubscriptionsComponent — pending cancellation', () => {
     expect(wrapper.text()).not.toContain('Reactivate');
     expect(wrapper.text()).not.toContain('Cancels on');
   });
+
+  it('pending cancellation with no resolvable date anywhere: does not render the literal string "null"', async () => {
+    // Defensive edge case: cancelAt/nextRenewalDate/currentPeriodEnd all absent while
+    // cancelAtPeriodEnd is true. The Node contract always sets nextRenewalDate, but the
+    // fallback chain must never leak a stringified `null` if that contract is violated.
+    store.subscription = {
+      status: 'active',
+      plan: 'starter',
+      cancelAtPeriodEnd: true,
+    };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    const chip = wrapper.findComponent({ name: 'v-chip' });
+    expect(chip.text()).toContain('Cancelling');
+    expect(wrapper.text()).not.toContain('null');
+  });
 });
 
 // ─── Suite 5: Stripe success query handling ────────────────────────────────
