@@ -74,7 +74,7 @@
         <span>{{ displayLabel || 'Weekly usage' }}</span>
         <span
           class="font-weight-medium"
-          :class="meterOverage > 0 ? 'text-error' : ''"
+          :class="hasOverage ? 'text-error' : ''"
         >{{ meterDisplay }}</span>
       </div>
       <BillingMeterProgressComponent
@@ -298,6 +298,19 @@ export default {
       if (this.meterQuota <= 0) return '0%';
       const pct = Math.max(0, Math.min(100, Math.round((this.meterUsed / this.meterQuota) * 100)));
       return `${pct}%`;
+    },
+
+    /**
+     * @desc True when genuinely over quota — mirrors the quota <= 0 neutralisation
+     * inside BillingMeterProgressComponent for this component's own summary span,
+     * which sits outside the child component and so isn't covered by its guard.
+     * quota <= 0 means there is no quota to exceed, so raw meterOverage (positive
+     * whenever usage on a zero-quota plan is funded from an extras balance) must
+     * not drive this local error styling either.
+     * @returns {boolean}
+     */
+    hasOverage() {
+      return this.meterQuota > 0 && this.meterOverage > 0;
     },
   },
 };

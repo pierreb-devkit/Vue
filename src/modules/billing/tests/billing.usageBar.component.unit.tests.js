@@ -352,6 +352,43 @@ describe('BillingUsageBarComponent', () => {
     expect(meterProgress.props('netRemainingRaw')).toBe(-100);
   });
 
+  // ── quota <= 0 overage guard (#4553) ──────────────────────────────────────
+  //
+  // meterOverage = max(0, used - quota) is positive from the first metered action
+  // on a quota-0 plan whose usage is funded from an extras balance. The bar itself
+  // is delegated to BillingMeterProgressComponent (guarded there), but this
+  // component also colors its own summary span from meterOverage directly — that
+  // local read must be guarded too, or a red "0%" survives the shared-component fix.
+
+  it('shows no red styling on its own summary span when quota is 0, even though raw meterOverage is positive', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 30, meterQuota: 0, extrasRemaining: 500 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    // Raw meterOverage is genuinely positive — quota <= 0 means it isn't meaningful
+    expect(wrapper.vm.meterOverage).toBe(30);
+    expect(wrapper.vm.hasOverage).toBe(false);
+    expect(wrapper.vm.meterDisplay).toBe('0%');
+    const summarySpan = wrapper.find('.billing-usage-bar__summary span.font-weight-medium');
+    expect(summarySpan.classes()).not.toContain('text-error');
+    // Delegated child must also render its non-pinned, non-error state
+    const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
+    expect(meterProgress.vm.clampedProgress).toBe(0);
+    expect(meterProgress.vm.thresholdColor).toBe('success');
+  });
+
+  it('leaves the positive-quota overage contract unchanged: red styling still applies when genuinely over quota', () => {
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 1100, meterQuota: 1000, extrasRemaining: 0 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    expect(wrapper.vm.hasOverage).toBe(true);
+    const summarySpan = wrapper.find('.billing-usage-bar__summary span.font-weight-medium');
+    expect(summarySpan.classes()).toContain('text-error');
+  });
+
   it('adds aria-live regions for standard meter summary and overage announcement', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();

@@ -213,7 +213,7 @@
                 :used="meterUsed"
                 :quota="meterQuota"
                 :extras="meterExtras"
-                :overage="meterQuota > 0 ? meterOverage : 0"
+                :overage="meterOverage"
                 :net-remaining-raw="meterNetRemainingRaw"
                 label=""
               />
