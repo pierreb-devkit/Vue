@@ -990,16 +990,21 @@ describe('BillingSubscriptionsComponent — meterError (centralized snackbar, no
     expect(wrapper.text()).not.toContain('Could not refresh usage');
   });
 
-  it('gates the overage prop to 0 when meterQuota is 0 (prevents pinned-100%/red bar on quota-0 plans funded by extras)', async () => {
+  it('renders no pinned-100%/error state when meterQuota is 0, even though raw meterOverage is positive (#4553: guard now lives inside BillingMeterProgressComponent, not this call site)', async () => {
     // meterQuota: 0 with usage funded entirely from extras — meterOverage = max(0, used - quota)
-    // would be positive from the first action; the template must gate it to 0, since the
-    // server never alerts on quota 0 and the UI must not contradict it.
+    // is positive from the first action; the raw value is now passed straight through (no
+    // call-site ternary), and BillingMeterProgressComponent's own quota <= 0 guard neutralises
+    // it before the pinned-100%/error branch. The server never alerts on quota 0, so the
+    // rendered UI must not contradict it either.
     seedMeterStore(store, { ...mockUsageMeterNormal, meterQuota: 0, meterUsed: 30, extrasRemaining: 500 });
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
     const meterProgress = wrapper.findComponent({ name: 'BillingMeterProgressComponent' });
     expect(meterProgress.props('quota')).toBe(0);
-    expect(meterProgress.props('overage')).toBe(0);
+    expect(meterProgress.props('overage')).toBe(30);
+    // Rendered state must not be pinned/error despite the positive raw overage prop
+    expect(meterProgress.vm.clampedProgress).toBe(0);
+    expect(meterProgress.vm.thresholdColor).toBe('success');
   });
 });
 

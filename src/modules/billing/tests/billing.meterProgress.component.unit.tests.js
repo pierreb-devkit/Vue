@@ -257,4 +257,59 @@ describe('BillingMeterProgressComponent', () => {
       expect(summary.text()).not.toContain('+20 over');
     });
   });
+
+  // ── quota <= 0 overage guard (#4553) ────────────────────────────────────
+  //
+  // quota <= 0 means there is no quota to exceed, so overage is not a meaningful
+  // concept. Raw overage is genuinely positive on a zero-quota plan whose usage is
+  // funded from an extras balance — the guard must neutralise it to 0 ahead of the
+  // pinned-100%/error branch, not after it (an earlier review pass flagged this
+  // exact ordering as the subtle part). Every assertion below reads the mounted
+  // component's rendered output, not the guard implementation.
+  describe('quota <= 0 overage guard', () => {
+    it('does not pin the bar to 100% or error color when quota is 0, even with positive raw overage', () => {
+      const wrapper = mountComponent({ used: 5, quota: 0, overage: 5, netRemainingRaw: -5 });
+      expect(wrapper.vm.clampedProgress).toBe(0);
+      expect(wrapper.vm.thresholdColor).toBe('success');
+      expect(wrapper.findComponent({ name: 'v-progress-linear' }).props('modelValue')).toBe(0);
+      expect(wrapper.findComponent({ name: 'v-progress-linear' }).props('color')).toBe('success');
+    });
+
+    it('does not pin the bar to 100% or error color when quota is negative, even with positive raw overage', () => {
+      // Regression guard: the component reads `quota <= 0`, not `quota === 0`.
+      // A future edit narrowing that check to `=== 0` would pass every other
+      // test in this describe block while still pinning a negative-quota bar.
+      const wrapper = mountComponent({ used: 5, quota: -1, overage: 5, netRemainingRaw: -5 });
+      expect(wrapper.vm.clampedProgress).toBe(0);
+      expect(wrapper.vm.thresholdColor).toBe('success');
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      expect(summary.find('.text-error').exists()).toBe(false);
+      expect(wrapper.findComponent({ name: 'v-tooltip' }).exists()).toBe(false);
+    });
+
+    it('shows no error-colored text and no overage tooltip icon when quota is 0', () => {
+      const wrapper = mountComponent({ used: 12, quota: 0, overage: 12 });
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      expect(summary.find('.text-error').exists()).toBe(false);
+      expect(wrapper.findComponent({ name: 'v-tooltip' }).exists()).toBe(false);
+      expect(summary.attributes('aria-live')).toBe('polite');
+    });
+
+    it('does not mention "over quota" in the accessible label when quota is 0', () => {
+      const wrapper = mountComponent({ used: 12, quota: 0, overage: 12 });
+      expect(wrapper.find('.billing-meter-progress').attributes('aria-label')).not.toContain('over quota');
+    });
+
+    it('still shows the extras badge on a quota-0 fixture (not an over-quota affordance)', () => {
+      const wrapper = mountComponent({ used: 12, quota: 0, overage: 12, extras: 30 });
+      expect(wrapper.text()).toContain('+30 compute');
+    });
+
+    it('leaves the positive-quota overage contract unchanged: pinned 100% + error state', () => {
+      const wrapper = mountComponent({ used: 120, quota: 100, overage: 20, netRemainingRaw: -20 });
+      expect(wrapper.vm.clampedProgress).toBe(100);
+      expect(wrapper.vm.thresholdColor).toBe('error');
+      expect(wrapper.findComponent({ name: 'v-tooltip' }).exists()).toBe(true);
+    });
+  });
 });

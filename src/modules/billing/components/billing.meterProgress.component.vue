@@ -52,7 +52,7 @@
       <span>{{ label }}</span>
       <span
         class="font-weight-medium"
-        :class="overage > 0 ? 'text-error' : ''"
+        :class="effectiveOverage > 0 ? 'text-error' : ''"
       >{{ clampedProgress }}%</span>
     </div>
 
@@ -84,20 +84,20 @@
     <!-- Summary text: % is primary, compute units in tooltip on overflow only -->
     <div
       class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1 d-flex align-center ga-1"
-      :aria-live="overage > 0 ? 'assertive' : 'polite'"
+      :aria-live="effectiveOverage > 0 ? 'assertive' : 'polite'"
     >
       <!-- Primary value: always percentage -->
       <span
         class="font-weight-medium"
-        :class="overage > 0 ? 'text-error' : ''"
+        :class="effectiveOverage > 0 ? 'text-error' : ''"
       >
         {{ clampedProgress }}%
       </span>
 
       <!-- Compute detail tooltip — shown only when in overage (overflow state) -->
       <v-tooltip
-        v-if="overage > 0"
-        :text="`${used} / ${quota} over by ${overage} compute`"
+        v-if="effectiveOverage > 0"
+        :text="`${used} / ${quota} over by ${effectiveOverage} compute`"
         location="top"
       >
         <template #activator="{ props: tp }">
@@ -108,7 +108,7 @@
             size="x-small"
             tabindex="0"
             role="img"
-            :aria-label="`${used} of ${quota} used, ${overage} over quota`"
+            :aria-label="`${used} of ${quota} used, ${effectiveOverage} over quota`"
             style="cursor: help"
           />
         </template>
@@ -212,13 +212,26 @@ export default {
 
   computed: {
     /**
+     * @desc Overage neutralised to 0 whenever quota <= 0. quota <= 0 means there is
+     * no quota to exceed, so overage is not a meaningful concept and must never drive
+     * the pinned-100%/error state below — this guard is evaluated first, ahead of
+     * every branch that reads overage, so a quota <= 0 read can never reach the
+     * overage > 0 branch. Positive overage on a quota <= 0 plan is expected: it means
+     * usage was funded from a balance outside this quota (e.g. an extras pack).
+     * @returns {number}
+     */
+    effectiveOverage() {
+      return this.quota <= 0 ? 0 : this.overage;
+    },
+
+    /**
      * @desc Usage percentage clamped to [0, 100].
      * When overage > 0 the bar is pinned to 100% to signal full consumption.
      * When quota is 0 (undefined quota), returns 0.
      * @returns {number}
      */
     clampedProgress() {
-      if (this.overage > 0) return 100;
+      if (this.effectiveOverage > 0) return 100;
       if (this.quota === 0) return 0;
       return Math.max(0, Math.min(100, Math.round((this.used / this.quota) * 100)));
     },
@@ -230,7 +243,7 @@ export default {
      * @returns {string}
      */
     thresholdColor() {
-      if (this.overage > 0) return 'error';
+      if (this.effectiveOverage > 0) return 'error';
       if (this.clampedProgress >= 90) return 'error';
       if (this.clampedProgress >= 70) return 'warning';
       return 'success';
@@ -244,7 +257,7 @@ export default {
      * @returns {number}
      */
     computedNetRemainingRaw() {
-      if (this.overage > 0 && this.netRemainingRaw === 0) {
+      if (this.effectiveOverage > 0 && this.netRemainingRaw === 0) {
         return this.quota - this.used + this.extras;
       }
       return this.netRemainingRaw;
@@ -256,8 +269,8 @@ export default {
      */
     ariaLabel() {
       const base = this.label ? `${this.label}: ` : '';
-      if (this.overage > 0) {
-        return `${base}${this.used} of ${this.quota} used, ${this.overage} over quota`;
+      if (this.effectiveOverage > 0) {
+        return `${base}${this.used} of ${this.quota} used, ${this.effectiveOverage} over quota`;
       }
       return `${base}${this.used} of ${this.quota} used (${this.clampedProgress}%)`;
     },
