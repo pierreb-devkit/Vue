@@ -378,6 +378,22 @@ describe('BillingUsageBarComponent', () => {
     expect(meterProgress.vm.thresholdColor).toBe('success');
   });
 
+  it('shows no red styling on its own summary span when quota is negative, even though raw meterOverage is positive', () => {
+    // Regression guard: hasOverage reads `meterQuota > 0`, not `meterQuota !== 0`.
+    // A future edit narrowing that check would pass the quota-0 test above while
+    // still coloring a negative-quota summary red.
+    authState.user = { roles: ['user'] };
+    const store = useBillingStore();
+    store.subscription = { status: 'active', plan: 'starter' };
+    store.usageMeter = { meterUsed: 30, meterQuota: -1, extrasRemaining: 500 };
+    const wrapper = mountComponent({ mode: 'meter' });
+    // meterOverage = max(0, meterUsed - meterQuota) = max(0, 30 - (-1)) = 31
+    expect(wrapper.vm.meterOverage).toBe(31);
+    expect(wrapper.vm.hasOverage).toBe(false);
+    const summarySpan = wrapper.find('.billing-usage-bar__summary span.font-weight-medium');
+    expect(summarySpan.classes()).not.toContain('text-error');
+  });
+
   it('leaves the positive-quota overage contract unchanged: red styling still applies when genuinely over quota', () => {
     authState.user = { roles: ['user'] };
     const store = useBillingStore();

@@ -275,6 +275,18 @@ describe('BillingMeterProgressComponent', () => {
       expect(wrapper.findComponent({ name: 'v-progress-linear' }).props('color')).toBe('success');
     });
 
+    it('does not pin the bar to 100% or error color when quota is negative, even with positive raw overage', () => {
+      // Regression guard: the component reads `quota <= 0`, not `quota === 0`.
+      // A future edit narrowing that check to `=== 0` would pass every other
+      // test in this describe block while still pinning a negative-quota bar.
+      const wrapper = mountComponent({ used: 5, quota: -1, overage: 5, netRemainingRaw: -5 });
+      expect(wrapper.vm.clampedProgress).toBe(0);
+      expect(wrapper.vm.thresholdColor).toBe('success');
+      const summary = wrapper.find('.billing-meter-progress__summary');
+      expect(summary.find('.text-error').exists()).toBe(false);
+      expect(wrapper.findComponent({ name: 'v-tooltip' }).exists()).toBe(false);
+    });
+
     it('shows no error-colored text and no overage tooltip icon when quota is 0', () => {
       const wrapper = mountComponent({ used: 12, quota: 0, overage: 12 });
       const summary = wrapper.find('.billing-meter-progress__summary');
