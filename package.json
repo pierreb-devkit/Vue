@@ -58,7 +58,7 @@
     "dompurify": "^3.4.13",
     "highlight.js": "^11.11.1",
     "lodash-es": "^4.18.1",
-    "marked": "^18.0.8",
+    "marked": "^18.0.9",
     "pinia": "^3.0.4",
     "posthog-js": "^1.410.6",
     "video.js": "^8.23.9",
