@@ -37,6 +37,12 @@ vi.mock('../../../lib/helpers/analytics', () => ({
   reset: (...args) => mockReset(...args),
 }));
 
+// Mock attribution helper
+const mockGetAttribution = vi.fn(() => null);
+vi.mock('../../../lib/helpers/attribution', () => ({
+  getAttribution: (...args) => mockGetAttribution(...args),
+}));
+
 describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -49,6 +55,7 @@ describe('Auth Store', () => {
     mockCapture.mockClear();
     mockIdentify.mockClear();
     mockReset.mockClear();
+    mockGetAttribution.mockReset().mockReturnValue(null);
   });
 
   it('should initialize with default state', () => {
@@ -470,6 +477,41 @@ describe('Auth Store', () => {
   });
 
   describe('signup', () => {
+    it('includes attribution in the POST payload when captured for this session (#4520)', async () => {
+      const authStore = useAuthStore();
+      const attribution = { landingPath: '/pricing', utmSource: 'newsletter' };
+      mockGetAttribution.mockReturnValue(attribution);
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      const body = axios.post.mock.calls[0][1];
+      expect(body.attribution).toEqual(attribution);
+    });
+
+    it('omits attribution from the POST payload when none was captured (#4520)', async () => {
+      const authStore = useAuthStore();
+      mockGetAttribution.mockReturnValue(null);
+      const mockResponse = {
+        data: {
+          user: { id: '456', email: 'new@test.com', roles: ['user'] },
+          tokenExpiresIn: Date.now() + 3600000,
+        },
+      };
+
+      axios.post.mockResolvedValueOnce(mockResponse);
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      const body = axios.post.mock.calls[0][1];
+      expect(body).not.toHaveProperty('attribution');
+    });
+
     it('should signup successfully and update store', async () => {
       const authStore = useAuthStore();
       const mockResponse = {

@@ -23,6 +23,7 @@ app.config.globalProperties.config = config;
 app.config.globalProperties.routes = routes;
 
 app
+  .use(plugins.attribution)
   .use(head)
   .use(pinia)
   .use(appRouter)

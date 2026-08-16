@@ -105,6 +105,7 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.set_config).toHaveBeenCalledWith({ persistence: 'localStorage+cookie' });
     expect(posthog.opt_in_capturing).toHaveBeenCalledOnce();
     expect(posthog.capture).toHaveBeenCalledWith('consent_given', { analytics: true });
+    expect(posthog.capture).toHaveBeenCalledWith('consent_choice', { accepted: true });
   });
 
   it('reject: writes LS, sets consent, calls posthog opt_out + reset, does NOT call set_config', () => {
@@ -118,6 +119,12 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.reset).toHaveBeenCalledOnce();
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
     expect(posthog.set_config).not.toHaveBeenCalled();
+  });
+
+  it('reject: does NOT emit consent_choice (blocked by opt_out_capturing_by_default, #4520 open question)', () => {
+    const { api, posthog } = mountComposable();
+    api.reject();
+    expect(posthog.capture).not.toHaveBeenCalled();
   });
 
   it('reopenSettings: flips consentNeeded to true without touching posthog or LS', () => {
