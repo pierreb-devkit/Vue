@@ -72,6 +72,24 @@ function isSameOrigin(referrer) {
   }
 }
 
+/** Query keys whose values are credentials/single-use tokens — never persisted in landingPath. */
+const SENSITIVE_QUERY_KEY_PATTERN = /token|secret|password|code|key/i;
+
+/**
+ * @desc Rebuild a search string with credential-carrying params removed, so a landing
+ * URL like `/signup?inviteToken=...` never duplicates the token into stored attribution.
+ * @param {string} search - `window.location.search` value.
+ * @returns {string} Sanitized search string ('' or '?...').
+ */
+function stripSensitiveParams(search) {
+  const params = new URLSearchParams(search);
+  [...params.keys()].forEach((key) => {
+    if (SENSITIVE_QUERY_KEY_PATTERN.test(key)) params.delete(key);
+  });
+  const rebuilt = params.toString();
+  return rebuilt ? `?${rebuilt}` : '';
+}
+
 /**
  * @desc Build the first-touch attribution record from the current document/location.
  * @returns {object|null} The record, or null when there is nothing to capture.
@@ -85,7 +103,7 @@ function buildAttribution() {
     if (capped) record.referrer = capped;
   }
 
-  const landingPath = trimAndCap(`${window.location.pathname}${window.location.search}`, URL_FIELD_MAX_LENGTH);
+  const landingPath = trimAndCap(`${window.location.pathname}${stripSensitiveParams(window.location.search)}`, URL_FIELD_MAX_LENGTH);
   if (landingPath) record.landingPath = landingPath;
 
   const params = new URLSearchParams(window.location.search);

@@ -54,6 +54,15 @@ describe('attribution helper', () => {
       expect(getAttribution()).toEqual({ landingPath: '/pricing?plan=pro' });
     });
 
+    it('strips credential-carrying query params from landingPath, keeps the rest', () => {
+      mockLocation({ pathname: '/signup', search: '?inviteToken=secret123&utm_source=news&promoCode=X1' });
+      captureFirstTouch();
+      const record = getAttribution();
+      expect(record.landingPath).toBe('/signup?utm_source=news');
+      expect(record.landingPath).not.toContain('secret123');
+      expect(record.utmSource).toBe('news');
+    });
+
     it('captures referrer when cross-origin', () => {
       mockLocation({ origin: 'https://app.example.com', pathname: '/', search: '' });
       setReferrer('https://google.com/search?q=test');
