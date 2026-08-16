@@ -1,23 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { captureFirstTouch, getAttribution, ATTRIBUTION_SS_KEY } from '../attribution';
 
 /**
+ * Real jsdom Location, captured once at module load, before any mock is installed.
+ * afterEach always restores to this — never to a previous mock — so the plain-object
+ * mock never leaks into subsequent test files (mockLocation can be called more than
+ * once per test, e.g. once in beforeEach and again in the test body).
+ */
+const realLocation = window.location;
+
+/**
  * Swaps window.location for a plain object with the given overrides, mirroring
- * the pattern used in billing.store.unit.tests.js. Returns a restore function.
+ * the pattern used in billing.store.unit.tests.js.
  * @param {object} overrides - Fields to override on window.location.
- * @returns {() => void} Restores the original window.location.
+ * @returns {() => void} Restores the real window.location.
  */
 const mockLocation = (overrides) => {
-  const originalLocation = window.location;
   delete window.location;
   window.location = {
-    ...originalLocation,
+    ...realLocation,
     origin: 'https://app.example.com',
     pathname: '/',
     search: '',
     ...overrides,
   };
-  return () => { window.location = originalLocation; };
+  return () => { window.location = realLocation; };
 };
 
 /**
@@ -34,6 +41,10 @@ describe('attribution helper', () => {
     sessionStorage.clear();
     setReferrer('');
     mockLocation({});
+  });
+
+  afterEach(() => {
+    window.location = realLocation;
   });
 
   describe('captureFirstTouch', () => {
@@ -165,6 +176,24 @@ describe('attribution helper', () => {
       });
       expect(getAttribution()).toBe(null);
       getItemSpy.mockRestore();
+    });
+
+    it('drops unknown keys and non-string values, keeping valid whitelisted fields (tampered record)', () => {
+      sessionStorage.setItem(ATTRIBUTION_SS_KEY, JSON.stringify({
+        landingPath: '/pricing',
+        utmSource: 'newsletter',
+        utmMedium: 12345,
+        injectedByExtension: 'malicious-value',
+      }));
+      expect(getAttribution()).toEqual({ landingPath: '/pricing', utmSource: 'newsletter' });
+    });
+
+    it('returns null when the record has no valid whitelisted string fields (fully-bogus record)', () => {
+      sessionStorage.setItem(ATTRIBUTION_SS_KEY, JSON.stringify({
+        injectedByExtension: 'malicious-value',
+        somethingElse: 42,
+      }));
+      expect(getAttribution()).toBe(null);
     });
   });
 });

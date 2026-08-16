@@ -27,6 +27,17 @@ const UTM_PARAM_MAP = {
   utm_content: 'utmContent',
 };
 
+/** Whitelist of the 7 known wire keys, mapped to their max length. Any other key is dropped. */
+const KNOWN_FIELDS = {
+  referrer: URL_FIELD_MAX_LENGTH,
+  landingPath: URL_FIELD_MAX_LENGTH,
+  utmSource: UTM_FIELD_MAX_LENGTH,
+  utmMedium: UTM_FIELD_MAX_LENGTH,
+  utmCampaign: UTM_FIELD_MAX_LENGTH,
+  utmTerm: UTM_FIELD_MAX_LENGTH,
+  utmContent: UTM_FIELD_MAX_LENGTH,
+};
+
 /**
  * @desc Returns true when running in a browser environment with sessionStorage available.
  * @returns {boolean}
@@ -87,6 +98,23 @@ function buildAttribution() {
 }
 
 /**
+ * @desc Sanitize a raw parsed attribution record read back from sessionStorage: whitelist
+ * to the 7 known wire keys, drop any other key, drop non-string values, re-apply trim +
+ * length caps. Guards against a tampered/extension-injected key reaching the strict Zod
+ * signup endpoint (an unexpected key would 422 the whole payload).
+ * @param {object} parsed - Raw parsed JSON object.
+ * @returns {object|null} Sanitized record, or null when nothing valid remains.
+ */
+function sanitizeAttribution(parsed) {
+  const record = {};
+  Object.entries(KNOWN_FIELDS).forEach(([key, maxLength]) => {
+    const capped = trimAndCap(parsed[key], maxLength);
+    if (capped) record[key] = capped;
+  });
+  return Object.keys(record).length > 0 ? record : null;
+}
+
+/**
  * @desc Capture first-touch attribution (referrer, landing path, UTM params) into
  * sessionStorage. Write-once: if a record already exists for this session, does
  * nothing. Never uses cookies or localStorage, never stores a persistent identifier.
@@ -115,7 +143,7 @@ export function getAttribution() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return null;
-    return parsed;
+    return sanitizeAttribution(parsed);
   } catch {
     return null;
   }
