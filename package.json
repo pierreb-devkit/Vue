@@ -56,7 +56,7 @@
     "axios": "^1.19.0",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.13",
-    "highlight.js": "^11.11.1",
+    "highlight.js": "^11.12.0",
     "lodash-es": "^4.18.1",
     "marked": "^18.0.9",
     "pinia": "^3.0.4",
