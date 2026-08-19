@@ -4,6 +4,24 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## analytics: first-touch attribution capture (2026-08-19, #4572)
+
+**REQUIRED ORDER: absorb the Node stack's signup attribution schema (Node PR #4024) BEFORE this Vue PR (#4572).** The Vue signup flow now attaches an `attribution` object (referrer / landing path / UTM params) to the signup payload whenever a first-touch record was captured for the session — `signup()` always sends at least `landingPath`. An older Node stack's `SignupUser` schema is `.strict()` and rejects unknown keys, so a downstream that absorbs this Vue change first, before the matching Node schema update, breaks every local signup with a 422 (`Unrecognized key: attribution`) until the Node side lands.
+
+**Mitigating condition:** the attribution plugin (`src/lib/plugins/attribution.js`) is gated on `config.analytics.posthog.key`, the same guard as the `posthog` plugin — with analytics unconfigured, nothing is ever captured to sessionStorage, `getAttribution()` has no record to read, and the client never attaches the `attribution` key at all. Only downstreams with PostHog configured are exposed to the ordering hazard above; an analytics-unconfigured downstream can absorb either side first with no signup impact.
+
+### What changed (this repo)
+
+- `src/lib/plugins/attribution.js`: `install(app)` now reads `app.config.globalProperties.config?.analytics?.posthog` and no-ops unless a `key` is set (mirrors the `posthog` plugin's own gating).
+- `src/lib/helpers/attribution.js` (`captureFirstTouch`/`getAttribution`) and `auth.store.js`'s `signup()` (attaches `payload.attribution` when a record exists) are unchanged — the gate sits entirely at the capture boundary, upstream of both.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. **Absorb Node PR #4024 (signup attribution schema) before this Vue PR (#4572).** If Vue has already landed and Node hasn't: either downstream has PostHog configured (fix the ordering now — signups are 422ing) or it doesn't (no impact yet, but land Node before ever enabling PostHog).
+2. No config action required — the gate needs no opt-in, every existing downstream keeps today's exact behavior until `analytics.posthog.key` is set.
+
+---
+
 ## modules: dev-mode warn on unregistered config.modules.* keys (2026-08-03, #4480)
 
 Not a breaking change — a new dev-only diagnostic. `isModuleActive()` (`src/lib/helpers/modules.js`) has always resolved any `config.modules.{name}` entry that isn't exactly `{ activated: false }` to "active" — so a mis-cased key or a typo'd module name silently left a module (and its routes) active with no signal. There's now a dev-mode-only `console.warn` (no-op in production, zero activation-semantics change) that flags a `config.modules.*` key matching neither a registered module name nor a mounted route name (the latter covers `useCoreStore.refreshNav`'s separate `config.modules[routeName].display` nav-hide pattern, so that's never misread as a typo).
