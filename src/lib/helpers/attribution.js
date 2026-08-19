@@ -40,10 +40,17 @@ const KNOWN_FIELDS = {
 
 /**
  * @desc Returns true when running in a browser environment with sessionStorage available.
+ * Guards against a throwing `sessionStorage` getter (e.g. sandboxed iframes / storage
+ * partitioning policies) so callers never see an uncaught exception before their own try/catch.
  * @returns {boolean}
  */
 function isBrowser() {
-  return typeof window !== 'undefined' && typeof sessionStorage !== 'undefined';
+  if (typeof window === 'undefined') return false;
+  try {
+    return typeof sessionStorage !== 'undefined';
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -91,6 +98,23 @@ function stripSensitiveParams(search) {
 }
 
 /**
+ * @desc Sanitize a cross-origin referrer for storage: parse it, strip credential-carrying
+ * query params (same rule as landingPath), and cap the result. A cross-origin referrer's
+ * own query string can carry `token`/`code`/reset values just like the landing URL does, so
+ * it needs the same filtering. Malformed referrers are dropped rather than stored raw.
+ * @param {string} referrer - `document.referrer` value (already confirmed cross-origin).
+ * @returns {string|undefined}
+ */
+function sanitizeReferrer(referrer) {
+  try {
+    const url = new URL(referrer);
+    return trimAndCap(`${url.origin}${url.pathname}${stripSensitiveParams(url.search)}`, URL_FIELD_MAX_LENGTH);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * @desc Build the first-touch attribution record from the current document/location.
  * @returns {object|null} The record, or null when there is nothing to capture.
  */
@@ -99,7 +123,7 @@ function buildAttribution() {
 
   const referrer = document.referrer;
   if (referrer && !isSameOrigin(referrer)) {
-    const capped = trimAndCap(referrer, URL_FIELD_MAX_LENGTH);
+    const capped = sanitizeReferrer(referrer);
     if (capped) record.referrer = capped;
   }
 

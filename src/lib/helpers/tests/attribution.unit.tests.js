@@ -83,10 +83,19 @@ describe('attribution helper', () => {
       expect(getAttribution()).not.toHaveProperty('referrer');
     });
 
-    it('does not throw on a malformed referrer, and captures it as-is (not same-origin)', () => {
+    it('does not throw on a malformed referrer, and drops it rather than storing unparseable input', () => {
       setReferrer('not-a-valid-url');
       expect(() => captureFirstTouch()).not.toThrow();
-      expect(getAttribution()).toMatchObject({ referrer: 'not-a-valid-url' });
+      expect(getAttribution()).not.toHaveProperty('referrer');
+    });
+
+    it('strips credential-carrying query params from a cross-origin referrer, keeps the rest', () => {
+      mockLocation({ origin: 'https://app.example.com', pathname: '/', search: '' });
+      setReferrer('https://partner.example.com/reset?token=secret123&utm_source=partner');
+      captureFirstTouch();
+      const record = getAttribution();
+      expect(record.referrer).toBe('https://partner.example.com/reset?utm_source=partner');
+      expect(record.referrer).not.toContain('secret123');
     });
 
     it('parses utm_* query params into camelCase fields', () => {
@@ -161,6 +170,20 @@ describe('attribution helper', () => {
       expect(() => captureFirstTouch()).not.toThrow();
       globalThis.window = originalWindow;
     });
+
+    it('is a silent no-op when the sessionStorage getter itself throws (e.g. sandboxed iframe / storage partitioning)', () => {
+      const original = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        get() { throw new Error('SecurityError'); },
+      });
+      try {
+        expect(() => captureFirstTouch()).not.toThrow();
+      } finally {
+        if (original) Object.defineProperty(globalThis, 'sessionStorage', original);
+        else delete globalThis.sessionStorage;
+      }
+    });
   });
 
   describe('getAttribution', () => {
@@ -185,6 +208,21 @@ describe('attribution helper', () => {
       });
       expect(getAttribution()).toBe(null);
       getItemSpy.mockRestore();
+    });
+
+    it('returns null when the sessionStorage getter itself throws (e.g. sandboxed iframe / storage partitioning)', () => {
+      const original = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+      Object.defineProperty(globalThis, 'sessionStorage', {
+        configurable: true,
+        get() { throw new Error('SecurityError'); },
+      });
+      try {
+        expect(() => getAttribution()).not.toThrow();
+        expect(getAttribution()).toBe(null);
+      } finally {
+        if (original) Object.defineProperty(globalThis, 'sessionStorage', original);
+        else delete globalThis.sessionStorage;
+      }
     });
 
     it('drops unknown keys and non-string values, keeping valid whitelisted fields (tampered record)', () => {
