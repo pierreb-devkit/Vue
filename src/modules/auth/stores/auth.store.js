@@ -8,6 +8,7 @@ import { useCoreStore } from '../../core/stores/core.store';
 import { useBillingStore } from '../../billing/stores/billing.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
+import { getAttribution } from '../../../lib/helpers/attribution';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -248,7 +249,8 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * @desc Sign up a new user and update auth state.
+     * @desc Sign up a new user and update auth state. When a first-touch attribution
+     * record was captured for this session, it is attached to the payload (#4520).
      * @param {Object} params - Signup payload (email, password, firstName, lastName)
      * @returns {Promise<Object|undefined>} Signup response data containing user, and optionally organization or organizationSetupRequired
      */
@@ -264,6 +266,10 @@ export const useAuthStore = defineStore('auth', {
         if (deduced.firstName) { payload.firstName = deduced.firstName; }
         if (deduced.lastName) { payload.lastName = deduced.lastName; }
       }
+
+      // Include first-touch attribution when captured for this session — omit entirely when absent (#4520).
+      const attribution = getAttribution();
+      if (attribution) { payload.attribution = attribution; }
 
       const signupUrl = `${api}/${config.api.endPoints.auth}/signup${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
 

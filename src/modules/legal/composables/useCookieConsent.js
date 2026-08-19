@@ -113,12 +113,25 @@ export function useCookieConsent() {
       ph.set_config({ persistence: 'localStorage+cookie' });
       ph.opt_in_capturing();
       ph.capture('consent_given', { analytics: true });
+      // Anonymous consent-decision event (#4520). Fired AFTER opt_in_capturing()
+      // so it goes through the same gate as consent_given above — it therefore
+      // carries the standard opted-in capture context, not a memory-only /
+      // fully anonymous one (see the reject() comment below for why the
+      // decline branch cannot mirror this).
+      ph.capture('consent_choice', { accepted: true });
     }
   };
 
   /**
    * Reject optional analytics cookies.
    * Persists the rejection to localStorage, updates singleton refs, and opts PostHog out.
+   *
+   * `consent_choice` is intentionally NOT emitted here (#4520 open question):
+   * PostHog is initialized with `opt_out_capturing_by_default: true`, so
+   * `posthog.capture()` is a no-op until `opt_in_capturing()` runs — and
+   * opting in first (even briefly, just to fire one event) persists a
+   * cookie/localStorage consent flag, which both weakens consent gating and
+   * violates the "cookieless" requirement for this event.
    * @returns {void}
    */
   const reject = () => {
