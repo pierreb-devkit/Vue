@@ -127,7 +127,10 @@ export function useCookieConsent() {
    * Persists the rejection to localStorage, updates singleton refs, and opts PostHog out.
    *
    * `consent_choice { accepted: false }` is emitted ONLY when the app config
-   * enables PostHog's `cookieless_mode` ('on_reject'; #4587). PostHog is
+   * enables PostHog's `cookieless_mode` ('on_reject'; #4587). That flag's
+   * blast radius is wider than this one event — it also enables anonymous
+   * pre-consent capture for undecided visitors (see the note in
+   * src/lib/plugins/posthog.js). PostHog is
    * initialized with `opt_out_capturing_by_default: true`, so
    * `posthog.capture()` is otherwise a no-op while opted out — opting in
    * first (even briefly, just to fire one event) would persist a

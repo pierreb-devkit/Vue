@@ -62,6 +62,13 @@ export default {
       // 'on_reject': stay on standard cookie/localStorage capture while the
       // user is opted in; switch to the anonymous cookieless sentinel
       // identity (no cookie, no persistent identifier) once they reject.
+      // NOTE the wider blast radius: because this stack inits with
+      // opt_out_capturing_by_default, the SDK treats a PENDING (undecided)
+      // visitor as rejected too — so enabling this flag starts anonymous
+      // pre-consent capture for ALL undecided traffic (one $pageview per
+      // load; $exception too since errorTracking defaults on), not just the
+      // consent_choice decline event. Identifying features (autocapture,
+      // replay, session ids) stay off; events carry the fixed sentinel id.
       ...(cookielessModeEnabled && { cookieless_mode: 'on_reject' }),
     });
 
