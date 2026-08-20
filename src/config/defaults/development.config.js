@@ -98,6 +98,7 @@ export default {
       surveys: false, // opt-in: show in-app PostHog surveys
       webVitals: false, // opt-in: capture Core Web Vitals
       capturePageleave: false, // opt-in: capture page-leave events
+      cookielessMode: false, // opt-in: anonymous consent_choice{accepted:false} capture on decline via PostHog cookieless_mode ('on_reject') — also requires cookieless mode enabled in the PostHog project dashboard, or events are silently ignored server-side
     },
   },
   ui: {

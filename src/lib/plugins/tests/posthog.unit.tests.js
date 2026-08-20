@@ -267,4 +267,38 @@ describe('posthog plugin', () => {
       expect.objectContaining({ opt_in_site_apps: false }),
     );
   });
+
+  describe('cookieless mode (#4587)', () => {
+    it('omits cookieless_mode entirely when cookielessMode is not set (default-safe)', () => {
+      const app = makeApp({ key: 'phc_testkey' });
+      posthogPlugin.install(app);
+      const [, options] = posthog.init.mock.calls[0];
+      expect(options).not.toHaveProperty('cookieless_mode');
+    });
+
+    it('omits cookieless_mode when cookielessMode=false', () => {
+      const app = makeApp({ key: 'phc_testkey', cookielessMode: false });
+      posthogPlugin.install(app);
+      const [, options] = posthog.init.mock.calls[0];
+      expect(options).not.toHaveProperty('cookieless_mode');
+    });
+
+    it("sets cookieless_mode: 'on_reject' when cookielessMode=true", () => {
+      const app = makeApp({ key: 'phc_testkey', cookielessMode: true });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ cookieless_mode: 'on_reject' }),
+      );
+    });
+
+    it('enables cookieless_mode on cookielessMode="true" (Docker string)', () => {
+      const app = makeApp({ key: 'phc_testkey', cookielessMode: 'true' });
+      posthogPlugin.install(app);
+      expect(posthog.init).toHaveBeenCalledWith(
+        'phc_testkey',
+        expect.objectContaining({ cookieless_mode: 'on_reject' }),
+      );
+    });
+  });
 });

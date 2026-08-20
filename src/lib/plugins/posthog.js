@@ -21,8 +21,8 @@ export default {
    *
    * Default-safe: with only `key` set, only pageviews and custom events are
    * captured. All advanced features (autocapture, session replay, error
-   * tracking, feature flags, surveys, web vitals, pageleave) are opt-in via
-   * config flags — all default to false.
+   * tracking, feature flags, surveys, web vitals, pageleave, cookieless
+   * mode) are opt-in via config flags — all default to false.
    *
    * String values ('true'/'false') from Docker build-args are normalised so
    * that downstream projects can pass flags as build-arg strings.
@@ -35,6 +35,7 @@ export default {
     if (!phConfig?.key) return;
 
     const sessionReplayEnabled = isEnabled(phConfig.sessionReplay);
+    const cookielessModeEnabled = isEnabled(phConfig.cookielessMode);
 
     posthog.init(phConfig.key, {
       api_host: phConfig.host || 'https://us.i.posthog.com',
@@ -55,6 +56,13 @@ export default {
 
       disable_surveys: !isEnabled(phConfig.surveys),
       capture_performance: isEnabled(phConfig.webVitals),
+
+      // Requires cookieless mode enabled in the PostHog project dashboard —
+      // otherwise cookieless events are silently ignored server-side.
+      // 'on_reject': stay on standard cookie/localStorage capture while the
+      // user is opted in; switch to the anonymous cookieless sentinel
+      // identity (no cookie, no persistent identifier) once they reject.
+      ...(cookielessModeEnabled && { cookieless_mode: 'on_reject' }),
     });
 
     app.config.globalProperties.$posthog = posthog;
