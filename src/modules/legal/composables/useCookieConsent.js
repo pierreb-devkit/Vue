@@ -154,6 +154,10 @@ export function useCookieConsent() {
     consentNeeded.value = false;
     const ph = getPosthog();
     if (ph) {
+      // A prior accept() upgraded persistence to 'localStorage+cookie'; drop
+      // back to the init default FIRST so the migration clears that storage
+      // and the opt-out/reset below can never write an anonymous id to disk.
+      ph.set_config({ persistence: 'memory' });
       ph.opt_out_capturing();
       if (ph.config?.cookieless_mode === 'on_reject') {
         ph.capture('consent_choice', { accepted: false });

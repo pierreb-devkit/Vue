@@ -111,17 +111,22 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.capture).toHaveBeenCalledWith('consent_choice', { accepted: true });
   });
 
-  it('reject: writes LS, sets consent, calls posthog opt_out + reset, does NOT call set_config', () => {
+  it('reject: writes LS, sets consent, downgrades persistence to memory BEFORE opt_out, then reset', () => {
     const { api, posthog } = mountComposable();
     api.reject();
     expect(api.consentNeeded.value).toBe(false);
     expect(api.consent.value).toEqual({ analytics: false });
     const stored = JSON.parse(localStorage.getItem(COOKIE_CONSENT_LS_KEY));
     expect(stored.analytics).toBe(false);
+    // A prior accept() may have upgraded persistence; reject must drop it back
+    // to memory before opting out so no anonymous id can be written to disk.
+    expect(posthog.set_config).toHaveBeenCalledExactlyOnceWith({ persistence: 'memory' });
+    const setConfigOrder = posthog.set_config.mock.invocationCallOrder[0];
+    const optOutOrder = posthog.opt_out_capturing.mock.invocationCallOrder[0];
+    expect(setConfigOrder).toBeLessThan(optOutOrder);
     expect(posthog.opt_out_capturing).toHaveBeenCalledOnce();
     expect(posthog.reset).toHaveBeenCalledOnce();
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
-    expect(posthog.set_config).not.toHaveBeenCalled();
   });
 
   it('reject: with cookieless_mode disabled (default), does NOT emit consent_choice (blocked by opt_out_capturing_by_default, #4520)', () => {
@@ -139,9 +144,10 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.capture).toHaveBeenCalledOnce();
     expect(posthog.capture).toHaveBeenCalledWith('consent_choice', { accepted: false });
     expect(posthog.reset).toHaveBeenCalledOnce();
-    // No opt-in and no persistence switch on the decline path, cookieless or not.
+    // No opt-in on the decline path; the only persistence change allowed is
+    // the downgrade back to memory (never an upgrade to persistent storage).
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
-    expect(posthog.set_config).not.toHaveBeenCalled();
+    expect(posthog.set_config).toHaveBeenCalledExactlyOnceWith({ persistence: 'memory' });
   });
 
   it('reject: with cookieless_mode enabled, captures BEFORE reset (ordering is load-bearing — reset() would overwrite the sentinel identity)', () => {
