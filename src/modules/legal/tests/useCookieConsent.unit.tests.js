@@ -5,14 +5,17 @@ import { useCookieConsent, COOKIE_CONSENT_LS_KEY, CONSENT_VERSION, __resetCookie
 
 /**
  * Returns a fresh PostHog mock with all tracked methods.
- * @returns {{ set_config: vi.Mock, opt_in_capturing: vi.Mock, opt_out_capturing: vi.Mock, reset: vi.Mock, capture: vi.Mock }}
+ * @param {object} [config] - Value exposed as the mock's `.config` property (mirrors the real
+ *   posthog-js instance's resolved init config, e.g. `{ cookieless_mode: 'on_reject' }`).
+ * @returns {{ set_config: vi.Mock, opt_in_capturing: vi.Mock, opt_out_capturing: vi.Mock, reset: vi.Mock, capture: vi.Mock, config: object }}
  */
-const posthogMock = () => ({
+const posthogMock = (config = {}) => ({
   set_config: vi.fn(),
   opt_in_capturing: vi.fn(),
   opt_out_capturing: vi.fn(),
   reset: vi.fn(),
   capture: vi.fn(),
+  config,
 });
 
 /**
@@ -108,21 +111,55 @@ describe('useCookieConsent — actions', () => {
     expect(posthog.capture).toHaveBeenCalledWith('consent_choice', { accepted: true });
   });
 
-  it('reject: writes LS, sets consent, calls posthog opt_out + reset, does NOT call set_config', () => {
+  it('reject: writes LS, sets consent, downgrades persistence to memory BEFORE opt_out, then reset', () => {
     const { api, posthog } = mountComposable();
     api.reject();
     expect(api.consentNeeded.value).toBe(false);
     expect(api.consent.value).toEqual({ analytics: false });
     const stored = JSON.parse(localStorage.getItem(COOKIE_CONSENT_LS_KEY));
     expect(stored.analytics).toBe(false);
+    // A prior accept() may have upgraded persistence; reject must drop it back
+    // to memory before opting out so no anonymous id can be written to disk.
+    expect(posthog.set_config).toHaveBeenCalledExactlyOnceWith({ persistence: 'memory' });
+    const setConfigOrder = posthog.set_config.mock.invocationCallOrder[0];
+    const optOutOrder = posthog.opt_out_capturing.mock.invocationCallOrder[0];
+    expect(setConfigOrder).toBeLessThan(optOutOrder);
     expect(posthog.opt_out_capturing).toHaveBeenCalledOnce();
     expect(posthog.reset).toHaveBeenCalledOnce();
     expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
-    expect(posthog.set_config).not.toHaveBeenCalled();
   });
 
-  it('reject: does NOT emit consent_choice (blocked by opt_out_capturing_by_default, #4520 open question)', () => {
+  it('reject: with cookieless_mode disabled (default), does NOT emit consent_choice (blocked by opt_out_capturing_by_default, #4520)', () => {
     const { api, posthog } = mountComposable();
+    api.reject();
+    expect(posthog.capture).not.toHaveBeenCalled();
+  });
+
+  it('reject: with cookieless_mode enabled, emits consent_choice{accepted:false} anonymously via the cookieless path (#4587)', () => {
+    const { api, posthog } = mountComposable(posthogMock({ cookieless_mode: 'on_reject' }));
+    api.reject();
+    expect(api.consentNeeded.value).toBe(false);
+    expect(api.consent.value).toEqual({ analytics: false });
+    expect(posthog.opt_out_capturing).toHaveBeenCalledOnce();
+    expect(posthog.capture).toHaveBeenCalledOnce();
+    expect(posthog.capture).toHaveBeenCalledWith('consent_choice', { accepted: false });
+    expect(posthog.reset).toHaveBeenCalledOnce();
+    // No opt-in on the decline path; the only persistence change allowed is
+    // the downgrade back to memory (never an upgrade to persistent storage).
+    expect(posthog.opt_in_capturing).not.toHaveBeenCalled();
+    expect(posthog.set_config).toHaveBeenCalledExactlyOnceWith({ persistence: 'memory' });
+  });
+
+  it('reject: with cookieless_mode enabled, captures BEFORE reset (ordering is load-bearing — reset() would overwrite the sentinel identity)', () => {
+    const { api, posthog } = mountComposable(posthogMock({ cookieless_mode: 'on_reject' }));
+    api.reject();
+    const captureOrder = posthog.capture.mock.invocationCallOrder[0];
+    const resetOrder = posthog.reset.mock.invocationCallOrder[0];
+    expect(captureOrder).toBeLessThan(resetOrder);
+  });
+
+  it('reject: with cookieless_mode set to a value other than on_reject, does NOT emit consent_choice', () => {
+    const { api, posthog } = mountComposable(posthogMock({ cookieless_mode: 'always' }));
     api.reject();
     expect(posthog.capture).not.toHaveBeenCalled();
   });

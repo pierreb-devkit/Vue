@@ -98,6 +98,7 @@ export default {
       surveys: false, // opt-in: show in-app PostHog surveys
       webVitals: false, // opt-in: capture Core Web Vitals
       capturePageleave: false, // opt-in: capture page-leave events
+      cookielessMode: false, // opt-in: PostHog cookieless_mode 'on_reject'. Scope is WIDER than the decline event: with opt_out_capturing_by_default, PENDING (undecided) and rejecting visitors emit anonymous sentinel-id events — one $pageview per load, $exception when errorTracking is on, and consent_choice{accepted:false} on decline. No cookie, no persistent identifier. Also requires cookieless mode enabled in the PostHog project dashboard, or events are silently ignored server-side
     },
   },
   ui: {

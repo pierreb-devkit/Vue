@@ -113,11 +113,11 @@ export function useCookieConsent() {
       ph.set_config({ persistence: 'localStorage+cookie' });
       ph.opt_in_capturing();
       ph.capture('consent_given', { analytics: true });
-      // Anonymous consent-decision event (#4520). Fired AFTER opt_in_capturing()
-      // so it goes through the same gate as consent_given above — it therefore
-      // carries the standard opted-in capture context, not a memory-only /
-      // fully anonymous one (see the reject() comment below for why the
-      // decline branch cannot mirror this).
+      // consent_choice pair (#4520 / #4587): this accept-side event fires as a
+      // normal opted-in capture (real distinct_id, standard capture context).
+      // The reject() branch below mirrors it anonymously through PostHog's
+      // cookieless_mode — never through opt_in_capturing() — so the pair stays
+      // measurable without weakening the consent gate on decline.
       ph.capture('consent_choice', { accepted: true });
     }
   };
@@ -126,12 +126,26 @@ export function useCookieConsent() {
    * Reject optional analytics cookies.
    * Persists the rejection to localStorage, updates singleton refs, and opts PostHog out.
    *
-   * `consent_choice` is intentionally NOT emitted here (#4520 open question):
-   * PostHog is initialized with `opt_out_capturing_by_default: true`, so
-   * `posthog.capture()` is a no-op until `opt_in_capturing()` runs — and
-   * opting in first (even briefly, just to fire one event) persists a
-   * cookie/localStorage consent flag, which both weakens consent gating and
-   * violates the "cookieless" requirement for this event.
+   * `consent_choice { accepted: false }` is emitted ONLY when the app config
+   * enables PostHog's `cookieless_mode` ('on_reject'; #4587). That flag's
+   * blast radius is wider than this one event — it also enables anonymous
+   * pre-consent capture for undecided visitors (see the note in
+   * src/lib/plugins/posthog.js). PostHog is
+   * initialized with `opt_out_capturing_by_default: true`, so
+   * `posthog.capture()` is otherwise a no-op while opted out — opting in
+   * first (even briefly, just to fire one event) would persist a
+   * cookie/localStorage identifier, which both weakens consent gating and
+   * violates the "cookieless" requirement for this event. With
+   * `cookieless_mode: 'on_reject'`, `opt_out_capturing()` above instead
+   * registers PostHog's anonymous cookieless sentinel distinct id (no
+   * cookie, no persistent identifier) and keeps capturing active under it.
+   *
+   * Ordering is load-bearing: capture() must run BEFORE reset() below.
+   * reset() re-derives a fresh (non-sentinel) anonymous id for any mode
+   * other than `cookieless_mode: 'always'`, which would overwrite the
+   * sentinel identity that opt_out_capturing() just registered. Capturing
+   * first fixes the event's properties — including the sentinel id — before
+   * reset() runs, so the emitted event stays anonymous regardless.
    * @returns {void}
    */
   const reject = () => {
@@ -140,7 +154,14 @@ export function useCookieConsent() {
     consentNeeded.value = false;
     const ph = getPosthog();
     if (ph) {
+      // A prior accept() upgraded persistence to 'localStorage+cookie'; drop
+      // back to the init default FIRST so the migration clears that storage
+      // and the opt-out/reset below can never write an anonymous id to disk.
+      ph.set_config({ persistence: 'memory' });
       ph.opt_out_capturing();
+      if (ph.config?.cookieless_mode === 'on_reject') {
+        ph.capture('consent_choice', { accepted: false });
+      }
       ph.reset();
     }
   };

@@ -33,6 +33,7 @@ ARG DEVKIT_VUE_analytics_posthog_featureFlags
 ARG DEVKIT_VUE_analytics_posthog_surveys
 ARG DEVKIT_VUE_analytics_posthog_webVitals
 ARG DEVKIT_VUE_analytics_posthog_capturePageleave
+ARG DEVKIT_VUE_analytics_posthog_cookielessMode
 
 # Install app dependencies & build
 # `npm ci` installs exactly from package-lock.json (reproducible builds);
