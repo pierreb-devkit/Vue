@@ -4,9 +4,11 @@
  *
  * The home module's "social proof" section (`social.content[].link`) ships
  * logo/name/link entries as a public-OSS default. A real third-party brand
- * name or domain must never be a shipped default here — only an RFC-2606
- * reserved placeholder (example.com/.org/.net/.edu, a `*.example` subdomain,
- * or a local `#`/`/`-relative link).
+ * name or domain must never be a shipped default here — only an RFC 2606
+ * reserved placeholder: example.com/.net/.org (the three reserved 2LDs,
+ * including subdomains like `partner.example.com`), a domain under one of
+ * the four reserved TLDs (.test/.example/.invalid/.localhost), or a local
+ * `#`/`/`-relative link.
  *
  * Allowlist-based, not a denylist of known-bad brands: any `link` value that
  * isn't one of the reserved forms fails, so the *next* real domain someone
@@ -21,7 +23,7 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 
-const RFC2606_LINK_RE = /^(https?:\/\/)?([a-z0-9-]+\.)*example\.(com|org|net|edu)(\/.*)?$/i;
+const RFC2606_LINK_RE = /^(https?:\/\/)?([a-z0-9-]+\.)*(example\.(com|net|org)|(example|test|invalid|localhost))(\/.*)?$/i;
 const LOCAL_LINK_RE = /^[#/]/;
 
 const isAllowedLink = (link) => typeof link === 'string' && (LOCAL_LINK_RE.test(link) || RFC2606_LINK_RE.test(link));
