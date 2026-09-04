@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Brand-default guard (Vue#4340).
  *
@@ -77,6 +76,15 @@ const RFC2606_LINK_RE = /^(https?:\/\/)?([a-z0-9-]+\.)*(example\.(com|net|org)|(
 // instead of enumerating each one.
 const LOCAL_SENTINEL = 'https://guard.invalid/';
 const LOCAL_SENTINEL_HOST = new URL(LOCAL_SENTINEL).host;
+
+/**
+ * @desc Check whether a link resolves to no host other than the page's own
+ * (a `#fragment`, or an absolute/relative `/path`), using the real WHATWG
+ * URL parser rather than a string prefix. See the block comment above for
+ * why a prefix heuristic is insufficient.
+ * @param {string} link - The raw link/img literal to check.
+ * @returns {boolean} True when the link is local to the page.
+ */
 const isLocalLink = (link) => {
   try {
     return new URL(link, LOCAL_SENTINEL).host === LOCAL_SENTINEL_HOST;
@@ -92,7 +100,21 @@ const isLocalLink = (link) => {
 // design, not an oversight.
 const PLACEHOLDER_NAME_RE = /^Example\b/;
 
+/**
+ * @desc Check whether a link/img literal is an allowed shipped default: a
+ * local link (see isLocalLink) or an RFC 2606 reserved domain.
+ * @param {string} link - The raw link/img literal to check.
+ * @returns {boolean} True when the link is allowed as a shipped default.
+ */
 const isAllowedLink = (link) => typeof link === 'string' && (isLocalLink(link) || RFC2606_LINK_RE.test(link));
+
+/**
+ * @desc Check whether a name literal starts with the "Example" placeholder
+ * prefix. Prefix match only — see PLACEHOLDER_NAME_RE comment above for the
+ * accepted "Example Nike" limit.
+ * @param {string} name - The raw name literal to check.
+ * @returns {boolean} True when the name is an allowed placeholder.
+ */
 const isPlaceholderName = (name) => typeof name === 'string' && PLACEHOLDER_NAME_RE.test(name);
 
 const LINK_ADVICE = 'Use https://example.com (or .net/.org), a domain under .example/.test/.invalid/.localhost, a #fragment, or a local /relative path — never a real third-party domain, and never a form (protocol-relative //host, a leading \\, or an embedded tab/CR/LF) that a URL parser resolves to a real host.';
@@ -198,6 +220,11 @@ const checkComponentDocComment = () => {
   return errors;
 };
 
+/**
+ * @desc Run the full guard: check both config sources and the component doc
+ * comment, print every error found, and exit non-zero if any exist.
+ * @returns {Promise<void>}
+ */
 const main = async () => {
   const errors = [...(await checkConfigFiles()), ...checkComponentDocComment()];
   if (errors.length > 0) {
@@ -209,4 +236,19 @@ const main = async () => {
   console.log('✓ Brand-default guard: home social-proof defaults are RFC-2606 clean.');
 };
 
-main();
+// Only run when executed directly (`node scripts/check-brand-defaults.js`,
+// including via `npm run check:brand-defaults`) — not when imported, so unit
+// tests can import the functions above without triggering a real scan/exit.
+const isMain = () => {
+  try {
+    return import.meta.url === pathToFileURL(process.argv[1]).href;
+  } catch {
+    return false;
+  }
+};
+
+if (isMain()) {
+  main();
+}
+
+export { isLocalLink, isAllowedLink, isPlaceholderName, checkContentItem, checkConfigFiles, checkComponentDocComment, main };
