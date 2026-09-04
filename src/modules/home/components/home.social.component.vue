@@ -17,13 +17,13 @@
     content: [
       {
         img: '/images/partner01.webp',
-        name: 'Comes.io',
-        link: 'https://comes.io',
+        name: 'Example Co',
+        link: 'https://example.com',
       },
       {
         img: '/images/partner02.webp',
-        name: 'FoxDeluxe',
-        link: 'https://foxdeluxe.com',
+        name: 'Example Corp',
+        link: 'https://example.org',
       },
     ],
   }

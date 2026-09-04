@@ -65,9 +65,9 @@ describe('attribution helper', () => {
 
     it('captures referrer when cross-origin', () => {
       mockLocation({ origin: 'https://app.example.com', pathname: '/', search: '' });
-      setReferrer('https://google.com/search?q=test');
+      setReferrer('https://example.com/search?q=test');
       captureFirstTouch();
-      expect(getAttribution()).toMatchObject({ referrer: 'https://google.com/search?q=test' });
+      expect(getAttribution()).toMatchObject({ referrer: 'https://example.com/search?q=test' });
     });
 
     it('omits referrer when same-origin', () => {
@@ -125,7 +125,7 @@ describe('attribution helper', () => {
     it('trims and caps referrer / landingPath at 2048 chars', () => {
       const longSuffix = 'a'.repeat(3000);
       mockLocation({ pathname: `/${longSuffix}`, search: '' });
-      setReferrer(`https://google.com/${longSuffix}`);
+      setReferrer(`https://example.com/${longSuffix}`);
       captureFirstTouch();
       const record = getAttribution();
       expect(record.landingPath.length).toBe(2048);
