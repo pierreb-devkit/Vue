@@ -111,22 +111,22 @@ export default {
       },
       content: [
         {
-          img: '/images/partner01.webp',
+          img: '/images/partner01.svg',
           name: 'Example Co',
           link: 'https://example.com',
         },
         {
-          img: '/images/partner02.webp',
+          img: '/images/partner02.svg',
           name: 'Example Corp',
           link: 'https://example.org',
         },
         {
-          img: '/images/partner01.webp',
+          img: '/images/partner01.svg',
           name: 'Example Co',
           link: 'https://example.com',
         },
         {
-          img: '/images/partner02.webp',
+          img: '/images/partner02.svg',
           name: 'Example Corp',
           link: 'https://example.org',
         },
