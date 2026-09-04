@@ -155,12 +155,17 @@ const CONFIG_SOURCES = [
 
 /**
  * @desc Check every scanned config file's `social.content` for non-clean
- * link/img/name literals. See CONFIG_SOURCES for exactly what's scanned and why.
+ * link/img/name literals. See CONFIG_SOURCES for exactly what's scanned and
+ * why, and for the default value of `sources`.
+ * @param {{dir: string, pattern: RegExp}[]} [sources] - Directories + file
+ * patterns to scan. Defaults to CONFIG_SOURCES (the guard's real scan
+ * targets); overridable so tests can point this at a fixture directory
+ * without touching real shipped config files.
  * @returns {Promise<string[]>} All error messages found.
  */
-const checkConfigFiles = async () => {
+const checkConfigFiles = async (sources = CONFIG_SOURCES) => {
   const errors = [];
-  for (const { dir, pattern } of CONFIG_SOURCES) {
+  for (const { dir, pattern } of sources) {
     if (!fs.existsSync(dir)) continue;
     for (const file of fs.readdirSync(dir)) {
       if (!pattern.test(file)) continue;
@@ -251,4 +256,13 @@ if (isMain()) {
   main();
 }
 
-export { isLocalLink, isAllowedLink, isPlaceholderName, checkContentItem, checkConfigFiles, checkComponentDocComment, main };
+export {
+  isLocalLink,
+  isAllowedLink,
+  isPlaceholderName,
+  checkContentItem,
+  CONFIG_SOURCES,
+  checkConfigFiles,
+  checkComponentDocComment,
+  main,
+};
