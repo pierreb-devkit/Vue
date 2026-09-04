@@ -13,6 +13,11 @@ node_modules/
 public/lib/
 app/tests/coverage/
 .bower-*/
+
+# Brand-defaults guard test fixtures (transient — see
+# scripts/tests/check-brand-defaults.unit.tests.js; a killed run could
+# otherwise leave a brand-violation fixture committable)
+scripts/tests/.fixtures-tmp/
 .idea/
 coverage/
 .coveralls.yml
