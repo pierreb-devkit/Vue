@@ -90,7 +90,7 @@
     "object-path": "^0.11.8",
     "prettier": "^3.9.6",
     "puppeteer": "^25.10.0",
-    "sass": "^1.103",
+    "sass": "^1.104",
     "semantic-release": "^25.0.9",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
