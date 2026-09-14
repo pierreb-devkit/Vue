@@ -93,7 +93,7 @@
     "sass": "^1.104",
     "semantic-release": "^25.0.9",
     "typescript": "^7.0.2",
-    "vite": "^8.2.2",
+    "vite": "^8.3.0",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-vuetify": "^2.1.3",
     "vitest": "^4.1.11",
