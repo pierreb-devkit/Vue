@@ -54,10 +54,22 @@ import {
  *
  * @param {Array<Object>} raw - Configured tabs (project override or devkit default).
  * @param {Array<Object>} defaultTabs - Devkit default tabs, used when `raw` is unusable.
+ * @param {boolean} [wasProvided] - True when the caller's config explicitly set the `tabs`
+ *   key (even to an unusable value). Absent-key callers omit this, which keeps the
+ *   devkit-default path silent — only an explicit-but-unusable value warns.
  * @returns {Array<{id: string, label: string, annualToggle: boolean, plans: Array|null, packs: Array|null}>}
  */
-export function normalizeTabs(raw, defaultTabs) {
-  const source = Array.isArray(raw) && raw.length > 0 ? raw : defaultTabs;
+export function normalizeTabs(raw, defaultTabs, wasProvided) {
+  const usable = Array.isArray(raw) && raw.length > 0;
+  if (wasProvided && !usable) {
+    // Explicitly configured but unusable (e.g. the pre-migration `{ plans, units }` object,
+    // or an empty array) — silently rendering the devkit demo catalogue would be worse than
+    // absent config, so this one warns while the absent-key path stays silent.
+    console.warn(
+      '[billing] config.billing.staticContent.tabs is not a non-empty array — falling back to the devkit default catalogue. Move your plans/packs into tabs[] entries; see MIGRATIONS.md.',
+    );
+  }
+  const source = usable ? raw : defaultTabs;
   if (!Array.isArray(source)) return [];
 
   return source
@@ -105,7 +117,9 @@ export function resolveStaticContent() {
     header: 'header' in o ? o.header : dHeader,
     halo: 'halo' in o ? o.halo : dHalo,
     // Structural: fall back to devkit default when resolved value is not the expected type.
-    tabs: normalizeTabs(rTabs, dTabs),
+    // `'tabs' in o` tells normalizeTabs whether an unusable value was explicitly configured
+    // (warn) versus simply absent (silent — every default install would otherwise log noise).
+    tabs: normalizeTabs(rTabs, dTabs, 'tabs' in o),
     faqs: rFaqs && typeof rFaqs === 'object' ? rFaqs : dFaqs,
     signupGrant: rSignupGrant && typeof rSignupGrant === 'object' ? rSignupGrant : dSignupGrant,
   };

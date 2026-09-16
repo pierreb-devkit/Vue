@@ -112,6 +112,48 @@ describe('billing.resolveStaticContent', () => {
   });
 });
 
+// ─── resolveStaticContent — warn only when tabs was PROVIDED but unusable ────
+// Regression guard: a consumer still on the pre-migration `tabs: { plans, units }`
+// object shape must not silently render the devkit demo catalogue with no signal.
+
+describe('resolveStaticContent — tabs fallback warning', () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    for (const k of Object.keys(configMock)) delete configMock[k];
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('warns and falls back when tabs is the pre-migration { plans, units } object shape', async () => {
+    configMock.billing = { staticContent: { tabs: { plans: 'P', units: 'U' } } };
+    const { resolveStaticContent } = await load();
+    const r = resolveStaticContent();
+    expect(r.tabs.map((t) => t.id)).toEqual(devkitDefaults.tabs.map((t) => t.id));
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(String(warnSpy.mock.calls[0][0])).toMatch(/tabs/i);
+  });
+
+  it('warns and falls back when tabs is explicitly an empty array', async () => {
+    configMock.billing = { staticContent: { tabs: [] } };
+    const { resolveStaticContent } = await load();
+    const r = resolveStaticContent();
+    expect(r.tabs.map((t) => t.id)).toEqual(devkitDefaults.tabs.map((t) => t.id));
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT warn when the tabs key is absent (regression guard against log noise)', async () => {
+    configMock.billing = { staticContent: { pricingMode: 'packs' } };
+    const { resolveStaticContent } = await load();
+    const r = resolveStaticContent();
+    expect(r.tabs.map((t) => t.id)).toEqual(devkitDefaults.tabs.map((t) => t.id));
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+});
+
 // ─── normalizeTabs — the single normalization site ───────────────────────────
 // This is the ONLY place tab normalization is reachable: the pricing view's test
 // mocks usePricing wholesale, so nothing there exercises these rules.
