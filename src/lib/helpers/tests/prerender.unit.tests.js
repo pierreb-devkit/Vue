@@ -26,11 +26,11 @@ describe('isPrerenderCrawl Helper', () => {
 
   it('returns false when navigator is undefined (SSR)', () => {
     const originalNavigator = globalThis.navigator;
-    globalThis.navigator = undefined;
+    Object.defineProperty(globalThis, 'navigator', { value: undefined, configurable: true });
     try {
       expect(isPrerenderCrawl()).toBe(false);
     } finally {
-      globalThis.navigator = originalNavigator;
+      Object.defineProperty(globalThis, 'navigator', { value: originalNavigator, configurable: true });
     }
   });
 
