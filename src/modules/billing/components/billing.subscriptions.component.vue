@@ -297,6 +297,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useMeter } from '../composables/billing.useMeter';
 import { useCheckoutPolling } from '../composables/billing.useCheckoutPolling';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
+import { findPlan, collectPacks, collectPlans } from '../lib/pricingMath.js';
 import BillingPlanBadgeComponent from './billing.planBadge.component.vue';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.component.vue';
@@ -304,7 +305,7 @@ import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
-const { plans: plansConfig, packs: packsConfig } = resolveStaticContent();
+const { tabs: tabsConfig } = resolveStaticContent();
 
 /**
  * @desc Format a date value as a long-form US date (e.g. "August 5, 2026"), or null when absent.
@@ -448,12 +449,25 @@ export default {
       return this.subscription?.plan || 'free';
     },
     /**
-     * @desc Ordered plan IDs from static content, used to decide if a paid plan can move up.
+     * @desc Ordered plan IDs used to decide if the current paid plan can move up.
+     *
+     * Scoped to the tab that OWNS the current plan — there is deliberately no global
+     * plan order across tabs, so "is there a higher plan?" is only ever asked among
+     * the plans sold alongside this one. A plan in another tab is a switch, not an
+     * upgrade.
+     *
+     * The Stripe-backed store list stays the fallback for "no configured catalogue at
+     * all", exactly as before — NOT for "the current plan isn't in the catalogue".
+     * A configured catalogue decides even when the current plan is absent from it;
+     * falling through there would rank the current plan against unrelated Stripe
+     * plans and present one of them as an upgrade.
      * @returns {Array<string>}
      */
     availablePlanIds() {
-      const staticIds = plansConfig.map((plan) => plan.id).filter(Boolean);
-      if (staticIds.length > 0) return staticIds;
+      if (collectPlans(tabsConfig).length > 0) {
+        const owningTab = findPlan(tabsConfig, this.currentPlan)?.tab;
+        return (owningTab?.plans ?? []).map((plan) => plan.id).filter(Boolean);
+      }
       return this.billingStore.plans
         .map((plan) => plan.planId || plan.name?.toLowerCase())
         .filter(Boolean);
@@ -484,7 +498,9 @@ export default {
         this.billingStore.extrasBalance?.packsAvailable ??
         null;
       if (fromStore && fromStore.length > 0) return fromStore;
-      return packsConfig.map((pack) => ({
+      // One pack catalogue for the account screen, however many tabs the pricing
+      // page splits them into.
+      return collectPacks(tabsConfig).map((pack) => ({
         packId: pack.meta?.packId ?? pack.id,
         label: pack.title,
         priceUsd: pack.meta?.priceUsd ?? null,

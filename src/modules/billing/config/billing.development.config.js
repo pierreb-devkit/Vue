@@ -3,4 +3,4 @@
  * re-export kept for downstream projects until they migrate.
  * Import from '../config/billing.static-content' instead.
  */
-export { plans, packs, default } from './billing.static-content.js';
+export { tabs, default } from './billing.static-content.js';

@@ -71,11 +71,16 @@
 import { useQuota } from '../composables/billing.useQuota';
 import { useBillingStore } from '../stores/billing.store.js';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
+import { collectPacks, collectPlans } from '../lib/pricingMath.js';
 
 // Static-content resolver call — same module-scope pattern as billing.subscriptions.component.vue.
 // config.billing.staticContent (project override) wins per key, devkit default otherwise —
 // see billing.resolveStaticContent.js for the resolution contract.
-const { packs: packsConfig, plans: plansConfig, signupGrant: signupGrantConfig } = resolveStaticContent();
+// The prompt's copy is page-agnostic: it names A pack and THE paid plans, wherever a
+// tab happens to carry them, so it flattens every tab rather than picking one.
+const { tabs: tabsConfig, signupGrant: signupGrantConfig } = resolveStaticContent();
+const packsConfig = collectPacks(tabsConfig);
+const plansConfig = collectPlans(tabsConfig);
 
 /**
  * Component definition.

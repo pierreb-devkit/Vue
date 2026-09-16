@@ -4,6 +4,43 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## billing: pricing tabs declared in config, each carrying its own content (2026-09-16, #4649)
+
+**BREAKING — there is no compatibility bridge.** The pricing page now renders any number of tabs declared in `config.billing.staticContent.tabs`, and each tab carries its own content. `tabs` becomes the single content source: the top-level `plans` and `packs` collections are **removed outright**, and the legacy `tabs: { plans, units }` label object no longer resolves to anything. A project that keeps the old shape gets the devkit's demo content on the pricing page, not its own — the resolver falls back to the devkit default when `tabs` is not a non-empty array.
+
+A tab carries its content in a typed **slot**, and the content kind is derived from which slot is filled — there is no `type` field:
+
+```js
+tabs: [
+  { id: 'plans', label: 'Plans',  annualToggle: true,  plans: [ /* ... */ ], packs: null },
+  { id: 'units', label: 'Extras', annualToggle: false, plans: null,          packs: [ /* ... */ ] },
+]
+```
+
+- A `null` slot means "this tab is not that kind" and is honoured verbatim — it is never back-filled with the devkit default (that would make a packs tab silently render the demo plans).
+- Filling **both** slots on one tab is a config mistake: the resolver warns and keeps the plans slot. It never throws — it runs at module load, where the contract is crash-safe coercion.
+- `annualToggle` is display-optional: absent or falsy means the annual toggle is disabled while that tab is active. **A single-tab subscription config must set `annualToggle: true`**, or the toggle renders disabled.
+- Plan ids must stay unique across tabs.
+
+### What changed (this repo)
+
+- `billing.resolveStaticContent.js`: new `normalizeTabs()` — the single normalization site (three consumers destructure the resolver at module load, so a second site would drift). `tabs` moves from a display-optional key to a structural one; `plans`/`packs` are gone from the resolver's return.
+- `pricingMath.js`: new `resolvePlanPricing()` (the Stripe match-and-normalize, extracted from `usePricing` so every tab's plans are enriched identically), `findPlan()` (returns the plan **and its owning tab**), `collectPlans()`, `collectPacks()`, and `resolveTabIndexFromHash()` (alias-first: `units` → the first packs-slot tab, then an exact tab id, then 0). `resolvePricingMode()` takes an optional `tabCount` and resolves `> 1` to `both-tabs` before the legacy heuristic; the mode enum is unchanged.
+- `billing.static-content.js`: devkit defaults restructured into `tabs[]`, rendering exactly what they rendered before. `plans`/`packs` are no longer named exports (`billing.development.config.js` re-exports `tabs` instead).
+- `billing.pricing.view.vue`: renders N tabs in config order and derives its body from the active tab's filled slot.
+- `BillingPacksComponent` takes a `packs` Array prop — components receive resolved arrays, never key names.
+- `billing.subscriptions.component.vue` and `billing.upgradePrompt.component.vue` read the same catalogue through `tabs`. Tier order is scoped to the tab owning the current plan: **a CTA on a plan in another tab is a switch, never an upgrade or a downgrade.**
+- The four hardcoded `#units` producers are untouched — alias-first hash resolution keeps them landing on the packs tab whatever a downstream names it.
+
+### Action required for downstream projects (`/update-stack`)
+
+1. **Move `staticContent.plans` and `staticContent.packs` into `staticContent.tabs[]` entries** in your project config, and delete the legacy `tabs: { plans, units }` label object. This is required in the same pass that absorbs this change — there is no fallback that keeps the old shape working.
+2. Set `annualToggle: true` on each tab whose plans are billed annually; leave it off (or `false`) on packs tabs.
+3. Deep links: `#units` keeps working with no change on your side. `#<tab id>` now selects any tab by its own id.
+4. If a project customizes billing copy in a `--ours`-protected config file, record the migration in that project's own patch log.
+
+---
+
 ## analytics: first-touch attribution capture (2026-08-19, #4572)
 
 **REQUIRED ORDER: absorb the Node stack's signup attribution schema (Node PR #4024) BEFORE this Vue PR (#4572).** The Vue signup flow now attaches an `attribution` object (referrer / landing path / UTM params) to the signup payload whenever a first-touch record was captured for the session — `signup()` always sends at least `landingPath`. An older Node stack's `SignupUser` schema is `.strict()` and rejects unknown keys, so a downstream that absorbs this Vue change first, before the matching Node schema update, breaks every local signup with a 422 (`Unrecognized key: attribution`) until the Node side lands.

@@ -16,62 +16,41 @@
           <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || 'Choose the plan that fits your needs.' }}</p>
         </div>
 
-        <!-- Mode: subscription -->
-        <template v-if="mode === 'subscription'">
-          <BillingPricingToggleComponent
-            v-if="hasPaidPlans"
-            :annual="annual"
-            class="mb-10"
-            data-test="pricing-toggle"
-            @update:annual="annual = $event"
+        <!-- Tab bar — rendered only when the config declares more than one tab -->
+        <div v-if="mode === 'both-tabs'" class="d-flex justify-center mb-6" data-test="pricing-tabs">
+          <HomeTabsComponent
+            :items="tabItems"
+            :model-value="activeTab"
+            color-mode="light"
+            @update:model-value="activeTab = $event"
           />
-          <v-row justify="center" data-test="pricing-plans-grid">
-            <v-col v-for="item in resolvedPlanItems" :key="item.id" cols="12" sm="6" md="4">
-              <BillingCardComponent
-                :item="item"
-                @cta-click="onCtaClick"
-              />
-            </v-col>
-          </v-row>
-        </template>
+        </div>
 
-        <!-- Mode: packs -->
-        <template v-else-if="mode === 'packs'">
-          <BillingPacksComponent data-test="pricing-packs-grid" />
-        </template>
+        <!-- Annual toggle — PRESENCE is a page-level fact (any paid plan, any tab);
+             ENABLED state is the active tab's own `annualToggle` option. -->
+        <BillingPricingToggleComponent
+          v-if="hasPaidPlans"
+          :annual="annual"
+          :disabled="!activeTabConfig?.annualToggle"
+          :class="mode === 'both-tabs' ? 'mb-8' : 'mb-10'"
+          data-test="pricing-toggle"
+          @update:annual="annual = $event"
+        />
 
-        <!-- Mode: both-tabs -->
-        <template v-else-if="mode === 'both-tabs'">
-          <div class="d-flex justify-center mb-6" data-test="pricing-tabs">
-            <HomeTabsComponent
-              :items="tabItems"
-              :model-value="activeTab"
-              color-mode="light"
-              @update:model-value="activeTab = $event"
+        <!-- Body — the active tab's filled slot derives what renders here -->
+        <v-row v-if="activeTabPlans.length" justify="center" data-test="pricing-plans-grid">
+          <v-col v-for="item in resolvedPlanItems" :key="item.id" cols="12" sm="6" md="4">
+            <BillingCardComponent
+              :item="item"
+              @cta-click="onCtaClick"
             />
-          </div>
-          <BillingPricingToggleComponent
-            v-if="hasPaidPlans"
-            :annual="annual"
-            :disabled="activeTab === 1"
-            class="mb-8"
-            data-test="pricing-toggle"
-            @update:annual="annual = $event"
-          />
-          <template v-if="activeTab === 0">
-            <v-row justify="center" data-test="pricing-plans-grid">
-              <v-col v-for="item in resolvedPlanItems" :key="item.id" cols="12" sm="6" md="4">
-                <BillingCardComponent
-                  :item="item"
-                  @cta-click="onCtaClick"
-                />
-              </v-col>
-            </v-row>
-          </template>
-          <template v-else-if="activeTab === 1">
-            <BillingPacksComponent data-test="pricing-packs-grid" />
-          </template>
-        </template>
+          </v-col>
+        </v-row>
+        <BillingPacksComponent
+          v-else-if="activeTabPacks.length"
+          :packs="activeTabPacks"
+          data-test="pricing-packs-grid"
+        />
       </v-container>
     </homeBlurBackgroundComponent>
 
@@ -158,7 +137,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
-import { computeAnnualSavingsPct } from '../lib/pricingMath.js';
+import { computeAnnualSavingsPct, findPlan, resolveTabIndexFromHash } from '../lib/pricingMath.js';
 import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
@@ -208,25 +187,43 @@ export default {
       return this.billingStore.subscription?.plan ?? 'free';
     },
     hasPaidPlans() {
-      return this.plans.some((p) => p.id !== 'free');
+      return this.allPlans.some((p) => p.id !== 'free');
     },
+    /**
+     * @desc Tab bar items, in config order. HomeTabsComponent stays index-based,
+     * so the view maps id↔index itself (same pattern as home.capabilities.component.vue).
+     * @returns {Array<{id: string, label: string}>}
+     */
     tabItems() {
-      return [
-        { id: 'plans', label: this.tabs?.plans || 'Plans' },
-        { id: 'units', label: this.tabs?.units || 'Units' },
-      ];
+      return this.tabs.map((tab) => ({ id: tab.id, label: tab.label || tab.id }));
     },
-    planTierOrder() {
-      return this.plans.map((p) => p.id).filter(Boolean);
+    /**
+     * @desc The currently selected tab's config entry.
+     * @returns {Object|null}
+     */
+    activeTabConfig() {
+      return this.tabs[this.activeTab] ?? null;
+    },
+    /**
+     * @desc Plans carried by the active tab ([] when it is not a plans tab).
+     * @returns {Array<Object>}
+     */
+    activeTabPlans() {
+      return this.activeTabConfig?.plans ?? [];
+    },
+    /**
+     * @desc Packs carried by the active tab ([] when it is not a packs tab).
+     * @returns {Array<Object>}
+     */
+    activeTabPacks() {
+      return this.activeTabConfig?.packs ?? [];
     },
     pendingDowngradePlanName() {
       if (!this.pendingDowngrade) return '';
-      const plan = this.plans.find((p) => p.id === this.pendingDowngrade.planId);
-      return plan?.title ?? this.pendingDowngrade.planId;
+      return findPlan(this.tabs, this.pendingDowngrade.planId)?.plan?.title ?? this.pendingDowngrade.planId;
     },
     currentPlanName() {
-      const plan = this.plans.find((p) => p.id === this.currentPlanId);
-      return plan?.title ?? this.currentPlanId;
+      return findPlan(this.tabs, this.currentPlanId)?.plan?.title ?? this.currentPlanId;
     },
     /**
      * @desc Whether the user is a guest (not signed-in).
@@ -247,7 +244,7 @@ export default {
      * @returns {Array<Object>}
      */
     resolvedPlanItems() {
-      return this.plans.map((plan) => {
+      return this.activeTabPlans.map((plan) => {
         const isFree = plan.id === 'free';
         const isCurrent = this.isCurrentPlan(plan.id);
 
@@ -325,8 +322,10 @@ export default {
         // the card renders them instead of the flat `features` list. `inheritsFrom` is the
         // parent plan id; resolve it to a display name HERE (the card stays dumb) so the card
         // can render a single "Everything in {parentPlanName}, plus" heading.
+        // Resolved across every tab — a parent plan's TITLE is a display fact, not a
+        // tier comparison, so a cross-tab `inheritsFrom` still resolves to a name.
         const parentPlanName = plan.inheritsFrom
-          ? (this.plans.find((p) => p.id === plan.inheritsFrom)?.title ?? null)
+          ? (findPlan(this.tabs, plan.inheritsFrom)?.plan?.title ?? null)
           : null;
 
         return {
@@ -427,7 +426,7 @@ export default {
         this.$router.replace({ path: this.$route.path, hash: this.$route.hash, query: { canceled: 'true' } });
       }
     }
-    if (this.$route.hash === '#units') this.activeTab = 1;
+    this.activeTab = resolveTabIndexFromHash({ hash: this.$route.hash, tabs: this.tabs });
   },
   methods: {
     isCurrentPlan(planId) {
@@ -470,12 +469,20 @@ export default {
       }
       if (!priceId || planId === 'free') return;
 
-      const targetTier = this.planTierOrder.indexOf(planId);
-      const currentTier = this.planTierOrder.indexOf(this.currentPlanId);
-      if (targetTier !== -1 && currentTier !== -1 && targetTier < currentTier) {
-        this.pendingDowngrade = { planId, priceId };
-        this.downgradeDialog = true;
-        return;
+      // Tier order is only meaningful WITHIN the tab that owns the current plan.
+      // A CTA on a plan in another tab is a SWITCH — never a downgrade — and takes
+      // the normal checkout path with no confirmation dialog.
+      const target = findPlan(this.tabs, planId);
+      const current = findPlan(this.tabs, this.currentPlanId);
+      if (target && current && target.tab === current.tab) {
+        const tierOrder = (target.tab.plans ?? []).map((p) => p.id).filter(Boolean);
+        const targetTier = tierOrder.indexOf(planId);
+        const currentTier = tierOrder.indexOf(this.currentPlanId);
+        if (targetTier !== -1 && currentTier !== -1 && targetTier < currentTier) {
+          this.pendingDowngrade = { planId, priceId };
+          this.downgradeDialog = true;
+          return;
+        }
       }
       await this.proceedCheckout({ planId, priceId });
     },

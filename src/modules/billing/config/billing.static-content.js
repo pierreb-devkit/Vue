@@ -7,8 +7,8 @@
  * customize via `config.billing.staticContent` (project config, e.g.
  * `src/config/defaults/<project>.config.js`), resolved per-key by
  * `billing.resolveStaticContent.js` (project value wins when present, even
- * `null`, for DISPLAY-OPTIONAL keys — pricingMode/tabs/header/halo. For the
- * STRUCTURAL keys below — plans/packs/faqs — an explicit `null` (or non-array/
+ * `null`, for DISPLAY-OPTIONAL keys — pricingMode/header/halo. For the
+ * STRUCTURAL keys below — tabs/faqs — an explicit `null` (or non-array/
  * non-object) is coerced back to the devkit default, since consumers `.map()`/
  * read properties on these unconditionally; the devkit default here is only
  * the fallback). No secrets or environment-specific values belong in either
@@ -16,9 +16,11 @@
  *
  * Schema (per-key resolver contract — see billing.resolveStaticContent.js):
  *   - pricingMode  : 'subscription' | 'packs' | 'both-tabs' | null
- *                    When null, mode is derived from server `meterMode` + presence of packs.
- *   - plans        : Plan[]
- *   - packs        : Pack[]
+ *                    When null, mode is derived from the tab count, then from server
+ *                    `meterMode` + presence of packs.
+ *   - tabs         : Tab[] — the single content source. Each tab carries its own
+ *                    content in a `plans` or `packs` slot; the filled slot derives the
+ *                    kind. A `null` slot is honoured verbatim, never back-filled.
  *   - faqs         : { title?: string, subtitle?: string, content: FAQ[] }
  *   - signupGrant  : { label: string }
  *                    Copy fragment for the meter-mode "signup grant depleted" prompt
@@ -89,13 +91,14 @@
 export const pricingMode = 'both-tabs';
 
 /**
- * @desc Marketing plans — devkit generic defaults. Downstream projects do NOT edit this
- * array directly — customize via `config.billing.staticContent.plans` (project config),
- * resolved by `billing.resolveStaticContent.js`. This file is stack-managed and is
+ * @desc Marketing plans — devkit generic defaults, carried by the `plans` tab below.
+ * Downstream projects do NOT edit this array directly — they customize via
+ * `config.billing.staticContent.tabs[].plans` (project config), resolved by
+ * `billing.resolveStaticContent.js`. This file is stack-managed and is
  * wiped by `/update-stack --theirs`.
  * @type {Array<Object>}
  */
-export const plans = [
+const plans = [
   {
     id: 'free',
     title: 'Free',
@@ -151,7 +154,7 @@ export const plans = [
  * @desc Extra credit packs — devkit generic demo defaults (V4 unified card schema,
  * same shape as `plans` — see BillingCardComponent's ITEM SCHEMA docblock). This file
  * is stack-managed — downstream projects do NOT edit it directly, they customize via
- * `config.billing.staticContent.packs` (project config), resolved per-key by
+ * `config.billing.staticContent.tabs[].packs` (project config), resolved per-key by
  * `billing.resolveStaticContent.js`. Direct edits here are wiped by `/update-stack --theirs`.
  *
  * Pack shape (V4 — unified with plans):
@@ -170,7 +173,7 @@ export const plans = [
  *
  * @type {Array<Object>}
  */
-export const packs = [
+const packs = [
   {
     id: 'demo_small',
     title: 'Small Pack',
@@ -263,17 +266,27 @@ export const signupGrant = {
 };
 
 /**
- * @desc Configurable tab labels (used in 'both-tabs' mode).
- * This devkit default ships `plans: 'Plans'` / `units: 'Extras'`.
- * Downstream projects can override either or both labels per project.
- * The view's hardcoded fallback (`'Plans'` / `'Units'`) only applies when
- * the field is entirely absent or falsy — it is not reached under the devkit default.
- * @type {{ plans?: string, units?: string }}
+ * @desc Pricing tabs — THE single content source for the pricing page.
+ *
+ * Each tab carries its own content in a typed SLOT, and the content kind is DERIVED
+ * from which slot is filled — there is no `type` field. A `null` slot means "this tab
+ * is not that kind" and is honoured verbatim (never back-filled with these defaults);
+ * filling both slots on one tab warns and keeps the plans slot. `annualToggle` is
+ * display-optional: absent or falsy ⇒ the annual toggle is disabled on that tab.
+ *
+ * Any number of tabs is supported, in the order declared here. Nothing in the stack
+ * knows what a tab sells — no tab id, label or count is special-cased.
+ *
+ * Example of a third tab selling other plans (do NOT add it to the live default below —
+ * the devkit ships the same two tabs it always rendered):
+ *   { id: 'teams', label: 'Teams', annualToggle: true, plans: [ ... ], packs: null }
+ *
+ * @type {Array<{id: string, label: string, annualToggle?: boolean, plans: Array<Object>|null, packs: Array<Object>|null}>}
  */
-export const tabs = {
-  plans: 'Plans',
-  units: 'Extras',
-};
+export const tabs = [
+  { id: 'plans', label: 'Plans', annualToggle: true, plans, packs: null },
+  { id: 'units', label: 'Extras', annualToggle: false, plans: null, packs },
+];
 
 /**
  * @desc Page header copy. Any falsy value (including `null`, `undefined`, or empty string)
@@ -298,8 +311,6 @@ export const halo = null;
 export default {
   billing: {
     pricingMode,
-    plans,
-    packs,
     faqs,
     signupGrant,
     tabs,
