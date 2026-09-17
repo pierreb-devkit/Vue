@@ -69,7 +69,10 @@ vi.mock('../composables/billing.usePricing.js', () => {
     return synthesized;
   }
 
-  /** Shared factory — builds the mocked usePricing return shape from pricingState. */
+  /**
+   * Shared factory — builds the mocked usePricing return shape from pricingState.
+   * @returns {Object} The mocked usePricing() return object.
+   */
   function buildPricingMock() {
     // Note: `computed` is imported at module scope; `pricingState` is from vi.hoisted().
     // Both are safely accessible inside the factory because vi.mock runs lazily.
@@ -890,5 +893,90 @@ describe('BillingPricingView — annual toggle follows the per-tab annualToggle 
     const toggle = wrapper.findComponent({ name: 'BillingPricingToggleComponent' });
     expect(toggle.exists()).toBe(true);
     expect(toggle.props('disabled')).toBe(true);
+  });
+});
+
+// ─── Suite: effectiveAnnual gates displayed pricing + checkout price id ──────
+
+describe('BillingPricingView — effectiveAnnual gates pricing + checkout on the active tab annualToggle', () => {
+  let wrapper;
+  let store;
+
+  // Carries both Stripe price objects so monthly vs annual resolution is unambiguous,
+  // and a meaningful spread so a non-zero savings chip is possible.
+  const planBothPrices = {
+    id: 'pro',
+    title: 'Pro',
+    subtitle: 'For pros',
+    highlight: false,
+    badge: null,
+    cta: 'Upgrade',
+    features: [],
+    monthlyPriceObject: { id: 'price_monthly', amount: 39 },
+    annualPriceObject: { id: 'price_annual', amount: 390 },
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'subscription';
+    pricingState.hasPlans = true;
+    pricingState.hasPacks = false;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    pricingState.tabs = null;
+    sessionStorage.clear();
+  });
+
+  // DISCRIMINATING CASE: annual=true but the active tab disables annualToggle.
+  // `this.annual` alone (the retired binding) would still pick the annual branch
+  // here — only effectiveAnnual knows the tab overrides it back to monthly.
+  it('falls back to monthly amount/period, no savings chip, and the monthly price id when annual=true but the active tab disables annualToggle', async () => {
+    pricingState.tabs = [{ id: 'plans', label: 'Plans', annualToggle: false, plans: [planBothPrices], packs: null }];
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+
+    // The raw toggle state is untouched — only what derives from it is gated.
+    expect(wrapper.vm.annual).toBe(true);
+    expect(wrapper.vm.effectiveAnnual).toBe(false);
+
+    const item = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(item).toBeDefined();
+    expect(item.price.amount).toBe('$39');
+    expect(item.price.period).toBe('/month');
+    expect(item.price.chip).toBeNull();
+    expect(item._activePriceId).toBe('price_monthly');
+  });
+
+  // POSITIVE CONTROL: same plan, but the active tab allows annual — annual=true
+  // must now resolve the annual branch everywhere. Guards against an
+  // effectiveAnnual that is simply hardcoded to false.
+  it('resolves annual amount/period, a savings chip, and the annual price id when the active tab allows annualToggle', async () => {
+    pricingState.tabs = [{ id: 'plans', label: 'Plans', annualToggle: true, plans: [planBothPrices], packs: null }];
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.annual).toBe(true);
+    expect(wrapper.vm.effectiveAnnual).toBe(true);
+
+    const item = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(item).toBeDefined();
+    expect(item.price.amount).toBe('$390');
+    expect(item.price.period).toBe('/year');
+    expect(item.price.chip).not.toBeNull();
+    expect(item.price.chip.color).toBe('success');
+    expect(item._activePriceId).toBe('price_annual');
   });
 });

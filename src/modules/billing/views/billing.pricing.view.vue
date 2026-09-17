@@ -30,7 +30,7 @@
              ENABLED state is the active tab's own `annualToggle` option. -->
         <BillingPricingToggleComponent
           v-if="hasPaidPlans"
-          :annual="annual"
+          :annual="effectiveAnnual"
           :disabled="!activeTabConfig?.annualToggle"
           :class="mode === 'both-tabs' ? 'mb-8' : 'mb-10'"
           data-test="pricing-toggle"
@@ -186,6 +186,10 @@ export default {
       if (!this.authStore.isLoggedIn) return null;
       return this.billingStore.subscription?.plan ?? 'free';
     },
+    /**
+     * @desc Whether any plan across all tabs is a paid plan (drives toggle visibility).
+     * @returns {boolean}
+     */
     hasPaidPlans() {
       return this.allPlans.some((p) => p.id !== 'free');
     },
@@ -218,10 +222,25 @@ export default {
     activeTabPacks() {
       return this.activeTabConfig?.packs ?? [];
     },
+    /**
+     * @desc Whether annual pricing is actually in effect — the `annual` toggle gated by the active tab's own `annualToggle` option.
+     * @returns {boolean}
+     */
+    effectiveAnnual() {
+      return this.annual && !!this.activeTabConfig?.annualToggle;
+    },
+    /**
+     * @desc Display name of the plan the user is downgrading to, for the confirm dialog.
+     * @returns {string}
+     */
     pendingDowngradePlanName() {
       if (!this.pendingDowngrade) return '';
       return findPlan(this.tabs, this.pendingDowngrade.planId)?.plan?.title ?? this.pendingDowngrade.planId;
     },
+    /**
+     * @desc Display name of the user's current plan, for the downgrade confirm dialog.
+     * @returns {string|null}
+     */
     currentPlanName() {
       return findPlan(this.tabs, this.currentPlanId)?.plan?.title ?? this.currentPlanId;
     },
@@ -248,8 +267,10 @@ export default {
         const isFree = plan.id === 'free';
         const isCurrent = this.isCurrentPlan(plan.id);
 
-        // Raw Stripe price from usePricing() composable (may be absent for free plan)
-        const activePriceId = this.annual
+        // Raw Stripe price from usePricing() composable (may be absent for free plan).
+        // Gated by effectiveAnnual, not the raw toggle — a tab with annualToggle: false
+        // must never let an annual price id reach checkout.
+        const activePriceId = this.effectiveAnnual
           ? (plan.annualPriceObject?.id ?? plan.annualPrice?.id ?? null)
           : (plan.monthlyPriceObject?.id ?? plan.monthlyPrice?.id ?? null);
 
@@ -264,12 +285,12 @@ export default {
         } else {
           const staticMonthly = (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : null) ?? plan.meta?.monthlyPrice ?? null;
           const staticAnnual = (typeof plan.annualPrice === 'number' ? plan.annualPrice : null) ?? plan.meta?.annualPrice ?? null;
-          const displayAmt = this.annual
+          const displayAmt = this.effectiveAnnual
             ? (plan.annualPriceObject?.amount ?? (typeof staticAnnual === 'number' && staticAnnual > 0 ? staticAnnual : null))
             : (plan.monthlyPriceObject?.amount ?? (typeof staticMonthly === 'number' && staticMonthly > 0 ? staticMonthly : null));
           if (displayAmt != null) {
             priceAmount = this.formatPrice(displayAmt);
-            pricePeriod = this.annual ? '/year' : '/month';
+            pricePeriod = this.effectiveAnnual ? '/year' : '/month';
           } else {
             priceAmount = 'Pricing unavailable';
           }
@@ -314,7 +335,7 @@ export default {
           const ap = plan.annualPriceObject?.amount ?? (typeof plan.annualPrice === 'number' ? plan.annualPrice : (typeof metaA === 'number' ? metaA : 0));
           return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
         })();
-        const priceChip = (this.annual && annualSavingsPct > 0)
+        const priceChip = (this.effectiveAnnual && annualSavingsPct > 0)
           ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
           : null;
 

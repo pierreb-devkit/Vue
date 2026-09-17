@@ -81,7 +81,9 @@ export function resolvePlanPricing(staticPlan, billingPlans) {
   const candidates = Array.isArray(billingPlans) ? billingPlans : [];
   const stripePlan =
     candidates.find(
-      (p) => p.planId === staticPlan.id || p.name?.toLowerCase() === staticPlan.id,
+      (p) =>
+        p.planId === staticPlan.id ||
+        (typeof p.name === 'string' && p.name.toLowerCase() === String(staticPlan.id).toLowerCase()),
     ) || {};
 
   // Resolve scalar prices — supports both modern number format and legacy { amount, id } objects.
