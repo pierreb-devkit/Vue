@@ -3,19 +3,22 @@
   =====================
   Cards grid for purchasing extra compute units.
 
-  Data source: static `billing.static-content` packs array (V4 unified schema).
-  Downstream projects populate it with their own marketing copy and Stripe pack IDs.
-  Store `packsAvailable` is NOT used for rendering — static-content is the single
-  source of truth for display. Pack IDs must match backend Stripe product IDs.
+  Data source: the RESOLVED packs array passed in by the parent (V4 unified schema).
+  The component never re-resolves config — the pricing view owns tab resolution and
+  hands down the active tab's packs slot. Store `packsAvailable` is NOT used for
+  rendering. Pack IDs must match backend Stripe product IDs.
 
   On click → calls `billingStore.createExtrasCheckout(packId)` which initiates a
   Stripe Checkout session and redirects the user.
 
   Uses BillingCardComponent — same visual structure as plan cards for visual
-  consistency across Plans + Extras tabs.
+  consistency across tabs.
+
+  PROPS:
+  - packs (Array): resolved pack entries to render. Empty → empty-state copy.
 
   USAGE:
-  <BillingPacksComponent />
+  <BillingPacksComponent :packs="activeTabPacks" />
 -->
 <template>
   <div class="billing-packs">
@@ -51,10 +54,7 @@
  */
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import BillingCardComponent from './billing.card.component.vue';
-
-const { packs: packsConfig } = resolveStaticContent();
 
 /**
  * Component definition.
@@ -63,6 +63,17 @@ export default {
   name: 'BillingPacksComponent',
   components: {
     BillingCardComponent,
+  },
+
+  props: {
+    /**
+     * @desc Resolved pack entries to render (V4 unified card schema). The parent
+     * resolves these from config; this component takes the array, never a key name.
+     */
+    packs: {
+      type: Array,
+      default: () => [],
+    },
   },
 
   /**
@@ -84,13 +95,13 @@ export default {
 
   computed: {
     /**
-     * @desc Packs config. Static-content is source of truth for display
-     * (V4 unified schema). Backend `packsAvailable` only used at checkout
-     * for Stripe price lookup — packIds must match between FE + BE.
+     * @desc Packs to render, from the `packs` prop (V4 unified schema). Backend
+     * `packsAvailable` is only used at checkout for Stripe price lookup — packIds
+     * must match between FE + BE.
      * @returns {Array<Object>}
      */
     resolvedItems() {
-      return packsConfig.map((pack) => {
+      return this.packs.map((pack) => {
         const isLoading = this.purchasingId === pack.id;
         const isDisabled = !!this.purchasingId && !isLoading;
         return {

@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
+import { collectPacks } from '../lib/pricingMath.js';
 import BillingUpgradePrompt from '../components/billing.upgradePrompt.component.vue';
 
 const vuetify = createVuetify();
@@ -165,8 +166,8 @@ describe('BillingUpgradePrompt', () => {
       // config (same formula the component's own packCtaLabel computed uses) instead
       // of a coincidental /pack/i substring match — a consumer's own pack.cta ("Get
       // Started", "Top up") need not contain the literal word "pack".
-      const { packs } = resolveStaticContent();
-      const primaryPack = packs[0] || null;
+      const { tabs } = resolveStaticContent();
+      const primaryPack = collectPacks(tabs)[0] || null;
       const expectedCta = primaryPack ? primaryPack.cta || 'Buy a compute pack' : 'Buy a compute pack';
       expect(packBtn.text()).toContain(expectedCta);
       // Post-grant pack CTA routes to the single billing entry point, not a modal event.
@@ -305,8 +306,24 @@ describe('BillingUpgradePrompt', () => {
     it('renders copy DRIVEN by the resolved static content — changing config changes the rendered copy', async () => {
       const { Component, useBillingStore: useStore } = await loadWithConfig({
         signupGrant: { label: 'custom test grant' },
-        packs: [{ id: 'x', title: 'Custom Test Pack', cta: 'Buy Custom Test Pack', price: { amount: '$42.00', period: null } }],
-        plans: [{ id: 'free', title: 'Free' }, { id: 'ultra', title: 'Ultra' }],
+        // The prompt reads the catalogue through tabs[] — it names A pack and THE paid
+        // plans wherever a tab happens to carry them.
+        tabs: [
+          {
+            id: 'plans',
+            label: 'Plans',
+            annualToggle: true,
+            plans: [{ id: 'free', title: 'Free' }, { id: 'ultra', title: 'Ultra' }],
+            packs: null,
+          },
+          {
+            id: 'units',
+            label: 'Extras',
+            annualToggle: false,
+            plans: null,
+            packs: [{ id: 'x', title: 'Custom Test Pack', cta: 'Buy Custom Test Pack', price: { amount: '$42.00', period: null } }],
+          },
+        ],
       });
       setActivePinia(createPinia());
       const store = useStore();

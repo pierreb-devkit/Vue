@@ -33,18 +33,38 @@ vi.mock('../../auth/stores/auth.store', () => ({
 
 const livePacks = vi.hoisted(() => []);
 
+// liveTabs is the tabs[] the component resolves at module load. It stays a live
+// array so a suite can install its own tab shape (see the owning-tab suite below);
+// the default is one plans tab plus the packs tab backed by livePacks.
+const liveTabs = vi.hoisted(() => []);
+
 vi.mock('../lib/billing.resolveStaticContent.js', () => ({
-  resolveStaticContent: () => ({
-    plans: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }],
-    packs: livePacks,
-  }),
+  resolveStaticContent: () => ({ tabs: liveTabs }),
 }));
 
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
 import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
-import { packs as realPacks } from '../config/billing.static-content.js';
+import { tabs as devkitTabs } from '../config/billing.static-content.js';
+import { collectPacks } from '../lib/pricingMath.js';
+
+/** Devkit default packs, read through the tab that now carries them. */
+const realPacks = collectPacks(devkitTabs);
+
+/**
+ * @desc Default tabs fixture: the three-plan tab every pre-existing suite assumes,
+ * plus the packs tab backed by the live packs array.
+ * @returns {Array<Object>}
+ */
+const defaultTabsFixture = () => [
+  { id: 'plans', label: 'Plans', annualToggle: true, plans: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }], packs: null },
+  { id: 'units', label: 'Extras', annualToggle: false, plans: null, packs: livePacks },
+];
+
+// Installed immediately: the component resolves tabs at MODULE LOAD, so the default
+// fixture has to be in place before the first mount, not in a beforeEach.
+liveTabs.splice(0, liveTabs.length, ...defaultTabsFixture());
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -430,6 +450,58 @@ describe('BillingSubscriptionsComponent — status and paid plan CTAs', () => {
     store.subscription = { status: 'active', plan: 'pro', currentPeriodEnd: new Date().toISOString() };
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
     await flushPromises();
+    expect(wrapper.text()).not.toContain('Change Plan');
+  });
+
+  // ─── availablePlanIds is scoped to the tab that OWNS the current plan ───────
+  // The account screen is the SECOND consumer of the same catalogue. There is
+  // deliberately no global plan order across tabs: a plan sold in another tab is a
+  // switch, never "a higher plan", so it must not make a top-of-its-own-tab plan
+  // look upgradable.
+
+  it('offers a change when a higher plan exists IN THE SAME tab', async () => {
+    liveTabs.splice(
+      0,
+      liveTabs.length,
+      { id: 'plans', label: 'Plans', annualToggle: true, plans: [{ id: 'basic' }, { id: 'advanced' }], packs: null },
+      { id: 'teams', label: 'Teams', annualToggle: true, plans: [{ id: 'team_s' }, { id: 'team_l' }], packs: null },
+    );
+    store.subscription = { status: 'active', plan: 'basic', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.vm.availablePlanIds).toEqual(['basic', 'advanced']);
+    expect(wrapper.text()).toContain('Change Plan');
+    liveTabs.splice(0, liveTabs.length, ...defaultTabsFixture());
+  });
+
+  it('does NOT offer an upgrade from the top of its own tab, even when another tab sells more plans', async () => {
+    liveTabs.splice(
+      0,
+      liveTabs.length,
+      { id: 'plans', label: 'Plans', annualToggle: true, plans: [{ id: 'basic' }, { id: 'advanced' }], packs: null },
+      { id: 'teams', label: 'Teams', annualToggle: true, plans: [{ id: 'team_s' }, { id: 'team_l' }], packs: null },
+    );
+    store.subscription = { status: 'active', plan: 'advanced', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    // Scoped to the owning tab — the teams tab's plans are absent, so 'advanced'
+    // is last and nothing is presented as an upgrade.
+    expect(wrapper.vm.availablePlanIds).toEqual(['basic', 'advanced']);
+    expect(wrapper.vm.availablePlanIds).not.toContain('team_l');
+    expect(wrapper.text()).not.toContain('Change Plan');
+    liveTabs.splice(0, liveTabs.length, ...defaultTabsFixture());
+  });
+
+  it('does NOT fall back to the Stripe plan order when a catalogue exists but the current plan belongs to no tab', async () => {
+    // Pre-existing gate, preserved through the tabs migration: the store list is the
+    // fallback for "no configured catalogue at all", NOT for "current plan absent from
+    // it". Falling through here would rank the current plan against unrelated Stripe
+    // plans and present one of them as an upgrade.
+    store.subscription = { status: 'active', plan: 'ghost', currentPeriodEnd: new Date().toISOString() };
+    store.plans = [{ planId: 'ghost' }, { planId: 'bigger' }];
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+    expect(wrapper.vm.availablePlanIds).toEqual([]);
     expect(wrapper.text()).not.toContain('Change Plan');
   });
 

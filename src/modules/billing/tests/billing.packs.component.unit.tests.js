@@ -3,23 +3,12 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
-// ─── Static-content mock ─────────────────────────────────────────────────────
-// livePacks is a hoisted live-array so per-suite tests can splice() test data in.
-// resolveStaticContent() returns { packs: livePacks } — same reference, mutations are seen.
+// ─── Packs fixture ───────────────────────────────────────────────────────────
+// The component no longer resolves config — it takes a resolved `packs` Array prop.
+// livePacks stays a live array each suite splices its fixture into; mountPacks()
+// passes it down as that prop.
 
 const livePacks = vi.hoisted(() => []);
-
-vi.mock('../lib/billing.resolveStaticContent.js', () => ({
-  resolveStaticContent: () => ({
-    packs: livePacks,
-    plans: [],
-    faqs: [],
-    pricingMode: null,
-    tabs: null,
-    header: null,
-    halo: null,
-  }),
-}));
 
 vi.mock('../../../lib/services/axios', () => ({
   default: { get: vi.fn(), post: vi.fn() },
@@ -46,7 +35,11 @@ vi.mock('../../auth/stores/auth.store', () => ({
 import { useBillingStore } from '../stores/billing.store';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
-import { packs as realPacks } from '../config/billing.static-content.js';
+import { tabs as devkitTabs } from '../config/billing.static-content.js';
+import { collectPacks } from '../lib/pricingMath.js';
+
+/** Devkit default packs, read through the tab that now carries them. */
+const realPacks = collectPacks(devkitTabs);
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -116,6 +109,7 @@ function mountPacks(overrides = {}) {
     ...overrides,
   });
   return mount(BillingPacksComponent, {
+    props: { packs: [...livePacks] },
     global: {
       plugins: [vuetify],
       mocks: {
@@ -143,13 +137,13 @@ describe('BillingPacksComponent — empty state', () => {
     wrapper = null;
   });
 
-  it('renders empty state message when packsConfig is empty', async () => {
+  it('renders empty state message when the packs prop is empty', async () => {
     wrapper = mountPacks();
     await flushPromises();
     expect(wrapper.text()).toContain('No unit packs available at this time.');
   });
 
-  it('does not render any BillingCardComponent when packsConfig is empty', async () => {
+  it('does not render any BillingCardComponent when the packs prop is empty', async () => {
     wrapper = mountPacks();
     await flushPromises();
     const cards = wrapper.findAllComponents(BillingCardComponent);
@@ -175,7 +169,7 @@ describe('BillingPacksComponent — BillingCardComponent rendering', () => {
     livePacks.splice(0);
   });
 
-  it('renders one BillingCardComponent per pack in packsConfig', async () => {
+  it('renders one BillingCardComponent per pack in the packs prop', async () => {
     wrapper = mountPacks();
     await flushPromises();
     const cards = wrapper.findAllComponents(BillingCardComponent);
@@ -224,7 +218,7 @@ describe('BillingPacksComponent — BillingCardComponent rendering', () => {
     expect(cards[1].props('item').cta.color).toBe('primary');
   });
 
-  it('resolvedItems always comes from static-content, never from store', async () => {
+  it('resolvedItems always comes from the packs prop, never from store', async () => {
     // Populate store with different items to confirm they are not rendered
     const store = useBillingStore();
     store.usageMeter = {

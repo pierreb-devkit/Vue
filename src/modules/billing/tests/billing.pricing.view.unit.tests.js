@@ -37,7 +37,10 @@ const pricingState = vi.hoisted(() => ({
   ],
   packs: [],
   faqs: { title: '', subtitle: null, content: [] },
-  tabs: {},
+  // `null` means "synthesize tabs from plans/packs below" — a suite that cares about
+  // the tab shape itself assigns an explicit ARRAY here. It must never be `{}`: the
+  // view maps over tabs, and an object would throw `.map is not a function`.
+  tabs: null,
   header: {},
   halo: null,
   maxAnnualSavingsPct: 0,
@@ -47,16 +50,40 @@ const pricingState = vi.hoisted(() => ({
 }));
 
 vi.mock('../composables/billing.usePricing.js', () => {
-  /** Shared factory — builds the mocked usePricing return shape from pricingState. */
+  /**
+   * @desc Resolve the tabs the view sees.
+   * A suite that sets `pricingState.tabs` to an ARRAY owns the tab shape outright.
+   * Otherwise tabs are synthesized from plans/packs, so the many single-grid suites
+   * keep expressing their intent as "these plans" without restating a tab wrapper.
+   * @returns {Array<Object>}
+   */
+  function resolveTabs() {
+    if (Array.isArray(pricingState.tabs)) return pricingState.tabs;
+    const synthesized = [];
+    if (pricingState.plans?.length) {
+      synthesized.push({ id: 'plans', label: 'Plans', annualToggle: true, plans: pricingState.plans, packs: null });
+    }
+    if (pricingState.packs?.length) {
+      synthesized.push({ id: 'units', label: 'Extras', annualToggle: false, plans: null, packs: pricingState.packs });
+    }
+    return synthesized;
+  }
+
+  /**
+   * Shared factory — builds the mocked usePricing return shape from pricingState.
+   * @returns {Object} The mocked usePricing() return object.
+   */
   function buildPricingMock() {
     // Note: `computed` is imported at module scope; `pricingState` is from vi.hoisted().
     // Both are safely accessible inside the factory because vi.mock runs lazily.
+    // These keys must match usePricing's real return shape exactly — a key the view
+    // reads but the mock omits is silently `undefined`.
     return {
       mode: computed(() => pricingState.mode),
-      plans: computed(() => pricingState.plans),
-      packs: computed(() => pricingState.packs),
+      tabs: computed(() => resolveTabs()),
+      allPlans: computed(() => resolveTabs().flatMap((t) => t.plans ?? [])),
+      allPacks: computed(() => resolveTabs().flatMap((t) => t.packs ?? [])),
       faqs: computed(() => pricingState.faqs),
-      tabs: computed(() => pricingState.tabs),
       header: computed(() => pricingState.header),
       halo: computed(() => pricingState.halo),
       maxAnnualSavingsPct: computed(() => pricingState.maxAnnualSavingsPct),
@@ -159,6 +186,10 @@ describe('BillingPricingView — Stripe cancel-redirect intentId cleanup', () =>
     setActivePinia(createPinia());
     vi.clearAllMocks();
     sessionStorage.clear();
+    // Explicit baseline — this file shares one hoisted pricingState across suites.
+    pricingState.tabs = null;
+    pricingState.packs = [];
+    pricingState.hasPacks = false;
     store = useBillingStore();
     seedStore(store);
   });
@@ -247,7 +278,11 @@ describe('BillingPricingView — Stripe cancel-redirect intentId cleanup', () =>
     expect(router.replace).not.toHaveBeenCalled();
   });
 
-  it('selects the units tab when hash is #units (regression check)', async () => {
+  it('selects the packs tab when hash is #units (legacy alias, regression check)', async () => {
+    // The alias only means something once a packs tab exists, so the fixture declares one.
+    pricingState.mode = 'both-tabs';
+    pricingState.packs = [{ id: 'p1' }];
+    pricingState.hasPacks = true;
     wrapper = mountPricing({ routeQuery: {}, routeHash: '#units' });
     await flushPromises();
     expect(wrapper.vm.activeTab).toBe(1);
@@ -282,11 +317,16 @@ describe('BillingPricingView — mode-aware layout', () => {
    */
   async function mountPricingView({ pricingMode, faqs = [], plans } = {}) {
     pricingState.mode = pricingMode;
+    pricingState.tabs = null; // synthesize from plans/packs below
     pricingState.faqs = { title: '', subtitle: null, content: faqs };
     pricingState.hasFaqs = faqs.length > 0;
     if (plans !== undefined) {
       pricingState.plans = plans;
       pricingState.hasPlans = plans.length > 0;
+    } else if (pricingMode === 'packs') {
+      // A packs-mode page sells no subscriptions — it has no plans tab at all.
+      pricingState.plans = [];
+      pricingState.hasPlans = false;
     } else {
       // V4 schema — title/subtitle/highlight (matches static-content & BillingCardComponent contract).
       pricingState.plans = [
@@ -717,5 +757,226 @@ describe('BillingPricingView — prerender crawl detection', () => {
 
     expect(store.fetchPlans).toHaveBeenCalledTimes(1);
     expect(wrapper.vm.error).toBe('Failed to load pricing. Please try again.');
+  });
+});
+
+// ─── Suite: N tabs declared in config ────────────────────────────────────────
+
+describe('BillingPricingView — N tabs from config', () => {
+  let wrapper;
+  let store;
+
+  const threeTabs = [
+    { id: 'plans', label: 'Plans', annualToggle: true, plans: [{ id: 'free', title: 'Free', subtitle: '', cta: 'Start', features: [], badge: null, highlight: false }], packs: null },
+    { id: 'teams', label: 'Teams', annualToggle: true, plans: [{ id: 'team', title: 'Team', subtitle: '', cta: 'Upgrade', features: [], badge: null, highlight: false }], packs: null },
+    { id: 'extras', label: 'Extras', annualToggle: false, plans: null, packs: [{ id: 'pack_a' }] },
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'both-tabs';
+    pricingState.tabs = threeTabs;
+    pricingState.hasPlans = true;
+    pricingState.hasPacks = true;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    pricingState.tabs = null;
+    sessionStorage.clear();
+  });
+
+  it('renders every configured tab, in config order — not a fixed pair', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    expect(wrapper.vm.tabItems).toEqual([
+      { id: 'plans', label: 'Plans' },
+      { id: 'teams', label: 'Teams' },
+      { id: 'extras', label: 'Extras' },
+    ]);
+  });
+
+  it('renders the selected tab OWN plans, not a global list', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.activeTab = 1;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.resolvedPlanItems.map((i) => i.id)).toEqual(['team']);
+  });
+
+  it('renders the packs grid (not a plans grid) when a packs-slot tab is selected', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.activeTab = 2;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="pricing-packs-grid"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(false);
+  });
+
+  it('deep link #<tab id> selects that tab', async () => {
+    wrapper = mountPricing({ routeHash: '#teams' });
+    await flushPromises();
+    expect(wrapper.vm.activeTab).toBe(1);
+  });
+
+  it('the legacy #units alias lands on the packs tab whatever that tab is named', async () => {
+    // No tab is called "units" here — the alias resolves by SLOT, not by id.
+    wrapper = mountPricing({ routeHash: '#units' });
+    await flushPromises();
+    expect(wrapper.vm.activeTab).toBe(2);
+  });
+
+  it('an unknown hash falls back to the first tab', async () => {
+    wrapper = mountPricing({ routeHash: '#nope' });
+    await flushPromises();
+    expect(wrapper.vm.activeTab).toBe(0);
+  });
+});
+
+// ─── Suite: the annual toggle follows the active tab's own annualToggle ──────
+
+describe('BillingPricingView — annual toggle follows the per-tab annualToggle option', () => {
+  let wrapper;
+  let store;
+
+  // DISCRIMINATING FIXTURE: annualToggle is TRUE at INDEX 1. The retired binding was
+  // `:disabled="activeTab === 1"`, so the first test below FAILS under the old code.
+  // A fixture at any other index would pass under both and prove nothing.
+  const tabsToggleAtIndexOne = [
+    { id: 'monthly', label: 'Monthly only', annualToggle: false, plans: [{ id: 'pro', title: 'Pro', subtitle: '', cta: 'Upgrade', features: [], badge: null, highlight: false }], packs: null },
+    { id: 'annual', label: 'Annual', annualToggle: true, plans: [{ id: 'pro_annual', title: 'Pro annual', subtitle: '', cta: 'Upgrade', features: [], badge: null, highlight: false }], packs: null },
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'both-tabs';
+    pricingState.tabs = tabsToggleAtIndexOne;
+    pricingState.hasPlans = true;
+    pricingState.hasPacks = false;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    pricingState.tabs = null;
+    sessionStorage.clear();
+  });
+
+  it('toggle is ENABLED on tab index 1 when that tab sets annualToggle: true', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.activeTab = 1;
+    await wrapper.vm.$nextTick();
+    const toggle = wrapper.findComponent({ name: 'BillingPricingToggleComponent' });
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.props('disabled')).toBe(false);
+  });
+
+  it('toggle is DISABLED on tab index 0 when that tab sets annualToggle: false', async () => {
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.activeTab = 0;
+    await wrapper.vm.$nextTick();
+    const toggle = wrapper.findComponent({ name: 'BillingPricingToggleComponent' });
+    expect(toggle.exists()).toBe(true);
+    expect(toggle.props('disabled')).toBe(true);
+  });
+});
+
+// ─── Suite: effectiveAnnual gates displayed pricing + checkout price id ──────
+
+describe('BillingPricingView — effectiveAnnual gates pricing + checkout on the active tab annualToggle', () => {
+  let wrapper;
+  let store;
+
+  // Carries both Stripe price objects so monthly vs annual resolution is unambiguous,
+  // and a meaningful spread so a non-zero savings chip is possible.
+  const planBothPrices = {
+    id: 'pro',
+    title: 'Pro',
+    subtitle: 'For pros',
+    highlight: false,
+    badge: null,
+    cta: 'Upgrade',
+    features: [],
+    monthlyPriceObject: { id: 'price_monthly', amount: 39 },
+    annualPriceObject: { id: 'price_annual', amount: 390 },
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'subscription';
+    pricingState.hasPlans = true;
+    pricingState.hasPacks = false;
+    authState.isLoggedIn = true;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    pricingState.tabs = null;
+    sessionStorage.clear();
+  });
+
+  // DISCRIMINATING CASE: annual=true but the active tab disables annualToggle.
+  // `this.annual` alone (the retired binding) would still pick the annual branch
+  // here — only effectiveAnnual knows the tab overrides it back to monthly.
+  it('falls back to monthly amount/period, no savings chip, and the monthly price id when annual=true but the active tab disables annualToggle', async () => {
+    pricingState.tabs = [{ id: 'plans', label: 'Plans', annualToggle: false, plans: [planBothPrices], packs: null }];
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+
+    // The raw toggle state is untouched — only what derives from it is gated.
+    expect(wrapper.vm.annual).toBe(true);
+    expect(wrapper.vm.effectiveAnnual).toBe(false);
+
+    const item = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(item).toBeDefined();
+    expect(item.price.amount).toBe('$39');
+    expect(item.price.period).toBe('/month');
+    expect(item.price.chip).toBeNull();
+    expect(item._activePriceId).toBe('price_monthly');
+  });
+
+  // POSITIVE CONTROL: same plan, but the active tab allows annual — annual=true
+  // must now resolve the annual branch everywhere. Guards against an
+  // effectiveAnnual that is simply hardcoded to false.
+  it('resolves annual amount/period, a savings chip, and the annual price id when the active tab allows annualToggle', async () => {
+    pricingState.tabs = [{ id: 'plans', label: 'Plans', annualToggle: true, plans: [planBothPrices], packs: null }];
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.annual = true;
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.annual).toBe(true);
+    expect(wrapper.vm.effectiveAnnual).toBe(true);
+
+    const item = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(item).toBeDefined();
+    expect(item.price.amount).toBe('$390');
+    expect(item.price.period).toBe('/year');
+    expect(item.price.chip).not.toBeNull();
+    expect(item.price.chip.color).toBe('success');
+    expect(item._activePriceId).toBe('price_annual');
   });
 });

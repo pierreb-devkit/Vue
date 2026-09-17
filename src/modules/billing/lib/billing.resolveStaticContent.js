@@ -12,19 +12,23 @@
  * /update-stack --theirs).
  *
  * Key tiers:
- *   - Structural collections (plans, packs): after presence resolution, coerce to devkit
- *     default when the resolved value is not an array. Prevents consumer .map()/.length
- *     crashes when a downstream explicitly sets the key to null or a non-array value.
+ *   - Structural collection (tabs): the single content source for the pricing page.
+ *     After presence resolution, coerce to the devkit default when the resolved value
+ *     is not a non-empty array. Prevents consumer .map()/.length crashes, exactly as
+ *     the former top-level plans/packs collections did.
  *   - Structural object (faqs, signupGrant): coerce to devkit default when the resolved
  *     value is not a non-null object. Prevents consumer property-access crashes on null.
- *   - Display-optional (pricingMode, tabs, header, halo): pure presence-check — explicit
+ *   - Display-optional (pricingMode, header, halo): pure presence-check — explicit
  *     null is a legitimate suppression signal and consumers tolerate it gracefully.
+ *
+ * NOTE the tier boundary INSIDE a tab entry: a tab's `plans`/`packs` slots are NOT
+ * treated like the structural collection above. A `null` slot is a structural
+ * statement ("this tab is not that kind") and is honoured verbatim — coercing it to
+ * the devkit default would make every packs tab silently render the demo plans.
  */
 import config from '../../../lib/services/config.js';
 import {
   pricingMode as dPricingMode,
-  plans as dPlans,
-  packs as dPacks,
   faqs as dFaqs,
   signupGrant as dSignupGrant,
   tabs as dTabs,
@@ -33,15 +37,75 @@ import {
 } from '../config/billing.static-content.js';
 
 /**
+ * @desc Normalize configured pricing tabs into the canonical tab-entry shape.
+ *
+ * THE SINGLE NORMALIZATION SITE. Several consumers destructure `resolveStaticContent()`
+ * at MODULE LOAD (usePricing, the account screen, the upgrade prompt), so a second
+ * normalization site would drift from this one silently.
+ *
+ * Contract, per entry:
+ *   - `plans` / `packs` are content SLOTS. An array is kept verbatim; anything else
+ *     (including `null`) resolves to `null`, meaning "this tab is not that kind".
+ *     A slot is NEVER back-filled with the devkit default.
+ *   - Both slots filled is a config mistake: warn and keep the plans slot. This runs at
+ *     module load, where the contract is crash-safe coercion — so it warns, never throws.
+ *   - `annualToggle` is display-optional: absent or falsy ⇒ the annual toggle is disabled
+ *     while that tab is active.
+ *
+ * @param {Array<Object>} raw - Configured tabs (project override or devkit default).
+ * @param {Array<Object>} defaultTabs - Devkit default tabs, used when `raw` is unusable.
+ * @param {boolean} [wasProvided] - True when the caller's config explicitly set the `tabs`
+ *   key (even to an unusable value). Absent-key callers omit this, which keeps the
+ *   devkit-default path silent — only an explicit-but-unusable value warns.
+ * @returns {Array<{id: string, label: string, annualToggle: boolean, plans: Array|null, packs: Array|null}>}
+ */
+export function normalizeTabs(raw, defaultTabs, wasProvided) {
+  const usable = Array.isArray(raw) && raw.length > 0;
+  if (wasProvided && !usable) {
+    // Explicitly configured but unusable (e.g. the pre-migration `{ plans, units }` object,
+    // or an empty array) — silently rendering the devkit demo catalogue would be worse than
+    // absent config, so this one warns while the absent-key path stays silent.
+    console.warn(
+      '[billing] config.billing.staticContent.tabs is not a non-empty array — falling back to the devkit default catalogue. Move your plans/packs into tabs[] entries; see MIGRATIONS.md.',
+    );
+  }
+  const source = usable ? raw : defaultTabs;
+  if (!Array.isArray(source)) return [];
+
+  return source
+    .filter((tab) => tab && typeof tab === 'object')
+    .map((tab, index) => {
+      const plans = Array.isArray(tab.plans) ? tab.plans : null;
+      let packs = Array.isArray(tab.packs) ? tab.packs : null;
+
+      if (plans && packs) {
+        // Ambiguous content kind — the filled slot is what derives it, so two filled
+        // slots have no answer. Keep plans and carry on (module-load, crash-safe).
+        console.warn(
+          `[billing] pricing tab "${tab.id ?? index}" fills both the plans and the packs slot; keeping plans. A tab carries exactly one kind of content.`,
+        );
+        packs = null;
+      }
+
+      return {
+        id: typeof tab.id === 'string' && tab.id ? tab.id : String(index),
+        label: typeof tab.label === 'string' ? tab.label : '',
+        annualToggle: !!tab.annualToggle,
+        plans,
+        packs,
+      };
+    });
+}
+
+/**
  * @desc Resolve effective billing static content (project override or devkit default), per key.
- * @returns {{ pricingMode: string, plans: Array, packs: Array, faqs: object, signupGrant: {label: string}, tabs: object, header: object, halo: object|null }}
+ * @returns {{ pricingMode: string, tabs: Array<Object>, faqs: object, signupGrant: {label: string}, header: object, halo: object|null }}
  */
 export function resolveStaticContent() {
   const o = config?.billing?.staticContent ?? {};
 
-  // Structural collections — coerce null/non-array to devkit default (crash-safe).
-  const rPlans = 'plans' in o ? o.plans : dPlans;
-  const rPacks = 'packs' in o ? o.packs : dPacks;
+  // Structural collection — coerce a null/non-array/empty value to the devkit default.
+  const rTabs = 'tabs' in o ? o.tabs : dTabs;
 
   // Structural objects — coerce null/non-object to devkit default (crash-safe).
   const rFaqs = 'faqs' in o ? o.faqs : dFaqs;
@@ -50,12 +114,12 @@ export function resolveStaticContent() {
   return {
     // Display-optional: pure presence-check — explicit null honored by consumers.
     pricingMode: 'pricingMode' in o ? o.pricingMode : dPricingMode,
-    tabs: 'tabs' in o ? o.tabs : dTabs,
     header: 'header' in o ? o.header : dHeader,
     halo: 'halo' in o ? o.halo : dHalo,
     // Structural: fall back to devkit default when resolved value is not the expected type.
-    plans: Array.isArray(rPlans) ? rPlans : dPlans,
-    packs: Array.isArray(rPacks) ? rPacks : dPacks,
+    // `'tabs' in o` tells normalizeTabs whether an unusable value was explicitly configured
+    // (warn) versus simply absent (silent — every default install would otherwise log noise).
+    tabs: normalizeTabs(rTabs, dTabs, 'tabs' in o),
     faqs: rFaqs && typeof rFaqs === 'object' ? rFaqs : dFaqs,
     signupGrant: rSignupGrant && typeof rSignupGrant === 'object' ? rSignupGrant : dSignupGrant,
   };
