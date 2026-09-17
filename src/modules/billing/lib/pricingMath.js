@@ -64,6 +64,18 @@ function toAmount(price) {
 }
 
 /**
+ * @desc Match a Stripe-backed plan candidate against a static plan entry.
+ *       Compares `planId` first, then falls back to a case-insensitive `name` comparison.
+ * @param {Object} candidate - Stripe-backed plan from the billing store.
+ * @param {string} staticPlanId - Plan id declared in static content.
+ * @returns {boolean} True when the candidate describes the same plan.
+ */
+function matchesStaticPlan(candidate, staticPlanId) {
+  if (candidate.planId === staticPlanId) return true;
+  return typeof candidate.name === 'string' && candidate.name.toLowerCase() === String(staticPlanId).toLowerCase();
+}
+
+/**
  * @desc Enrich one static plan with its Stripe-backed runtime pricing.
  *
  * Single match-and-normalize site: every plans collection (whichever tab owns it)
@@ -79,12 +91,7 @@ function toAmount(price) {
  */
 export function resolvePlanPricing(staticPlan, billingPlans) {
   const candidates = Array.isArray(billingPlans) ? billingPlans : [];
-  const stripePlan =
-    candidates.find(
-      (p) =>
-        p.planId === staticPlan.id ||
-        (typeof p.name === 'string' && p.name.toLowerCase() === String(staticPlan.id).toLowerCase()),
-    ) || {};
+  const stripePlan = candidates.find((candidate) => matchesStaticPlan(candidate, staticPlan.id)) || {};
 
   // Resolve scalar prices — supports both modern number format and legacy { amount, id } objects.
   const resolvedMonthly =
