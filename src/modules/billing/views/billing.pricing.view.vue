@@ -47,7 +47,7 @@
           </v-col>
         </v-row>
         <BillingPacksComponent
-          v-else-if="activeTabPacks.length"
+          v-else-if="activeTabConfig?.packs"
           :packs="activeTabPacks"
           data-test="pricing-packs-grid"
         />

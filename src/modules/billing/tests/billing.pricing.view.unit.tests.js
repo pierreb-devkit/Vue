@@ -820,6 +820,24 @@ describe('BillingPricingView — N tabs from config', () => {
     expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(false);
   });
 
+  // DISCRIMINATING FIXTURE: `packs: []` is a FILLED-but-empty slot — distinct from
+  // `packs: null` (not a packs tab at all). The retired condition was
+  // `activeTabPacks.length`, which is 0 for an empty array, so it never mounted
+  // BillingPacksComponent and the tab rendered a blank body. This fixture fails
+  // under the old code (#4658).
+  it('renders the packs empty-state (not a blank body) for a tab with packs: []', async () => {
+    pricingState.tabs = [
+      { id: 'plans', label: 'Plans', annualToggle: true, plans: [{ id: 'free', title: 'Free', subtitle: '', cta: 'Start', features: [], badge: null, highlight: false }], packs: null },
+      { id: 'extras', label: 'Extras', annualToggle: false, plans: null, packs: [] },
+    ];
+    wrapper = mountPricing();
+    await flushPromises();
+    wrapper.vm.activeTab = 1;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="pricing-packs-grid"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(false);
+  });
+
   it('deep link #<tab id> selects that tab', async () => {
     wrapper = mountPricing({ routeHash: '#teams' });
     await flushPromises();
