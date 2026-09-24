@@ -19,7 +19,7 @@ const DEV_PORTS = new Set(['3000', '3001', '3010', '4000', '5000', '8000', '8080
  * Behavior in production mode:
  *   - By DEFAULT (warn-only): logs a console.warn for each violation and continues.
  *     This preserves the '{project}.config.js as local-usable template, overridden at
- *     build time via Docker build-args' pattern used by some downstreams (e.g. pierreb_vue).
+ *     build time via Docker build-args' pattern used by some downstream projects.
  *   - STRICT (opt-in): pass `strict: true` or set DEVKIT_VUE_assert_strict=true in the
  *     build environment and read it in vite.config.js before calling this function.
  *     Recommended for projects that were burned by a dev-default leak.

@@ -37,7 +37,7 @@ tabs: [
 1. **Move `staticContent.plans` and `staticContent.packs` into `staticContent.tabs[]` entries** in your project config, and delete the legacy `tabs: { plans, units }` label object. This is required in the same pass that absorbs this change — there is no fallback that keeps the old shape working.
 2. Set `annualToggle: true` on each tab whose plans are billed annually; leave it off (or `false`) on packs tabs.
 3. Deep links: `#units` keeps working with no change on your side. `#<tab id>` now selects any tab by its own id.
-4. If a project customizes billing copy in a `--ours`-protected config file, record the migration in that project's own patch log.
+4. Project config in `src/config/defaults/<project>.config.js` is downstream-only; no record needed.
 
 ---
 
