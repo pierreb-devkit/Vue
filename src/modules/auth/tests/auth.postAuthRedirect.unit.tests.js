@@ -13,28 +13,30 @@ const mockConfig = { cookie: { prefix: 'devkit' } };
 const STORAGE_KEY = 'devkitPostAuthRedirect';
 
 describe('isSafeRedirect', () => {
-  it('accepts a single-slash same-origin path', () => {
-    expect(isSafeRedirect('/pricing')).toBe(true);
-    expect(isSafeRedirect('/')).toBe(true);
-  });
-
-  it('rejects a protocol-relative //host target', () => {
-    expect(isSafeRedirect('//evil.example.com')).toBe(false);
-  });
-
-  it('rejects a backslash-prefixed target (browser-normalized like //)', () => {
-    expect(isSafeRedirect('/\\evil.example.com')).toBe(false);
-  });
-
-  it('rejects an absolute URL', () => {
-    expect(isSafeRedirect('https://evil.example.com/phish')).toBe(false);
-  });
-
-  it('rejects non-string and empty values', () => {
-    expect(isSafeRedirect(undefined)).toBe(false);
-    expect(isSafeRedirect(null)).toBe(false);
-    expect(isSafeRedirect('')).toBe(false);
-    expect(isSafeRedirect(['/pricing'])).toBe(false);
+  describe.each([
+    // [label, value, expected]
+    ['a protocol-relative //host target', '//evil.example.com', false],
+    ['a backslash-prefixed target (browser-normalized like //)', '/\\evil.example.com', false],
+    ['a raw backslash anywhere (not just index 1)', '/\\evil', false],
+    ['an absolute URL', 'https://evil.example.com/phish', false],
+    ['a tab before the //host (control-char smuggling)', '/\t//evil.example.com', false],
+    ['a newline before the //host (control-char smuggling)', '/\n//evil.example.com', false],
+    ['a carriage return before the //host (control-char smuggling)', '/\r//evil.example.com', false],
+    ['a percent-encoded //host (decodes to protocol-relative)', '/%2F%2Fevil.example.com', false],
+    ['a percent-encoded backslash pair (decodes to /\\\\)', '/%5C%5Cevil.example.com', false],
+    ['malformed percent-encoding (decodeURIComponent throws)', '/%', false],
+    ['undefined', undefined, false],
+    ['null', null, false],
+    ['an empty string', '', false],
+    ['a non-string (array)', ['/pricing'], false],
+    ['a bare same-origin path', '/pricing', true],
+    ['a same-origin path with a query string', '/pricing?x=1', true],
+    ['a same-origin path with a hash', '/users/organizations#tab', true],
+    ['the root path', '/', true],
+  ])('%s', (label, value, expected) => {
+    it(`isSafeRedirect(${JSON.stringify(value)}) -> ${expected}`, () => {
+      expect(isSafeRedirect(value)).toBe(expected);
+    });
   });
 });
 

@@ -144,6 +144,31 @@ describe('auth.signin.view', () => {
       expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
     });
 
+    it('clears an existing record on mount when ?redirect= is absent (cross-session leak guard)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      mountView(makeFormStub(), {});
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('clears an existing record on mount when ?redirect= is unsafe (cross-session leak guard)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('saves a safe ?redirect= on mount, replacing any prior record', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/old', ts: Date.now() }));
+      mountView(makeFormStub(), { redirect: '/pricing' });
+      await flushPromises();
+
+      const stored = JSON.parse(localStorage.getItem('devkitPostAuthRedirect'));
+      expect(stored.path).toBe('/pricing');
+    });
+
     it('redirects to $route.query.redirect after a successful signin', async () => {
       signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
       const wrapper = mountView(makeFormStub(), { redirect: '/pricing' });
@@ -180,18 +205,21 @@ describe('auth.signin.view', () => {
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
     });
 
-    it('falls back to the persisted redirect when the query is absent (new-tab / OAuth path)', async () => {
+    it('does NOT honor a pre-existing persisted redirect when this mount has no ?redirect= — created() already cleared it (#4675 cross-session leak guard)', async () => {
+      // A record left over from an earlier, unrelated visit (or an attacker-planted
+      // link) must not survive into a fresh mount with no `?redirect=` query.
       localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
       signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
       const wrapper = mountView(makeFormStub(), {});
       await flushPromises();
 
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+
       wrapper.vm.email = 'test@example.com';
       wrapper.vm.password = 'password123';
       await wrapper.vm.validate();
 
-      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
-      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
     });
   });
 

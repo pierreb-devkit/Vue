@@ -32,14 +32,33 @@ function storageKey(config) {
 
 /**
  * @desc Whether a value is safe to redirect to after auth: a same-origin path.
- * Accepts only strings starting with a SINGLE `/` — rejects `//host` and `/\host`
- * (both browser-normalized to a protocol-relative URL, i.e. an open redirect) and
- * anything that isn't a path (absolute URLs, non-strings, empty strings).
+ * Accepts only strings starting with a SINGLE `/`. Rejects: any ASCII control
+ * character (tab/CR/LF smuggling, e.g. `/\t//evil.example.com`) or raw backslash;
+ * a value that, once percent-decoded, starts with `//` or `/\` (e.g.
+ * `/%2F%2Fevil.example.com`, `/%5C%5Cevil.example.com` — both browser-normalized
+ * to a protocol-relative URL, i.e. an open redirect); and anything that isn't a
+ * path (absolute URLs, non-strings, empty strings) — enforced by re-parsing
+ * `value` against a placeholder origin and requiring that origin to survive.
  * @param {*} value - Candidate redirect target (typically `$route.query.redirect`).
  * @returns {boolean}
  */
 export function isSafeRedirect(value) {
-  return typeof value === 'string' && value.length > 0 && value[0] === '/' && value[1] !== '/' && value[1] !== '\\';
+  if (typeof value !== 'string' || value.length === 0) return false;
+  if (value[0] !== '/' || value[1] === '/') return false;
+  // ASCII control chars are exactly the tab/CR/LF-smuggling open-redirect surface this check exists to reject.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001F\u007F]/.test(value) || value.includes('\\')) return false;
+
+  let decoded;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return false; // Malformed percent-encoding — never a valid path.
+  }
+  if (decoded.startsWith('//') || decoded.startsWith('/\\')) return false;
+
+  // A same-origin path can never change the origin when resolved against any base.
+  return new URL(value, 'https://placeholder.invalid').origin === 'https://placeholder.invalid';
 }
 
 /**
@@ -95,8 +114,10 @@ export function consumePostAuthRedirect(config, { ttlMs = POST_AUTH_REDIRECT_TTL
 }
 
 /**
- * @desc Clear the persisted redirect without reading it — used on signout so a
- * guest's abandoned redirect never resurfaces for the next, unrelated session.
+ * @desc Clear the persisted redirect without reading it — used on signout, and on
+ * every signup/signin mount whose `?redirect=` is absent or unsafe, so a record
+ * planted by an attacker link (opened, then abandoned) never outlives its author
+ * and hijacks the next unrelated person who authenticates on the same browser.
  * @param {{ cookie: { prefix: string } }} config
  * @returns {void}
  */

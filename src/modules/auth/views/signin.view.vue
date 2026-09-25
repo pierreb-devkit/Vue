@@ -105,7 +105,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
-import { savePostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
+import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
@@ -172,10 +172,18 @@ export default {
    * Fetch server auth config on component creation. Persists a safe `?redirect=`
    * to localStorage FIRST (covers the OAuth/Google/Apple buttons below, which
    * navigate away and drop the query string entirely — see postAuthRedirect.js).
+   * When `?redirect=` is absent or unsafe, CLEARS any existing record instead —
+   * on a shared browser, a record planted by an attacker link (opened, then
+   * abandoned) must not outlive its author and hijack the next unrelated
+   * person who lands here and authenticates.
    * @returns {Promise<void>}
    */
   async created() {
-    savePostAuthRedirect(this.config, this.$route.query.redirect);
+    if (isSafeRedirect(this.$route.query.redirect)) {
+      savePostAuthRedirect(this.config, this.$route.query.redirect);
+    } else {
+      clearPostAuthRedirect(this.config);
+    }
     const authStore = useAuthStore();
     this.serverConfig = await authStore.fetchServerConfig();
   },
