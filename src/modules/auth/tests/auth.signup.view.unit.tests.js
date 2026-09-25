@@ -31,6 +31,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
   vuetify: { theme: { flat: true, maxWidth: '1200px', rounded: 'rounded-lg' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -70,6 +71,7 @@ describe('auth.signup.view', () => {
     resendVerificationMock.mockReset().mockResolvedValue();
     verifyInviteMock.mockReset().mockResolvedValue({ valid: false, email: null });
     createOrganizationMock.mockReset();
+    localStorage.clear();
   });
 
   describe('serverConfig rendering', () => {
@@ -445,6 +447,84 @@ describe('auth.signup.view', () => {
       await flushPromises();
 
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+    });
+
+    it('persists a safe ?redirect= to localStorage on mount (survives OAuth/new-tab round-trips)', async () => {
+      mountView(makeFormStub(), { redirect: '/pricing' });
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).not.toBeNull();
+      const stored = JSON.parse(localStorage.getItem('devkitPostAuthRedirect'));
+      expect(stored.path).toBe('/pricing');
+    });
+
+    it('never persists an unsafe ?redirect= to localStorage', async () => {
+      mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('clears an existing record on mount when ?redirect= is absent (cross-session leak guard)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      mountView(makeFormStub(), {});
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('clears an existing record on mount when ?redirect= is unsafe (cross-session leak guard)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('saves a safe ?redirect= on mount, replacing any prior record', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/old', ts: Date.now() }));
+      mountView(makeFormStub(), { redirect: '/pricing' });
+      await flushPromises();
+
+      const stored = JSON.parse(localStorage.getItem('devkitPostAuthRedirect'));
+      expect(stored.path).toBe('/pricing');
+    });
+
+    it('does NOT honor a pre-existing persisted redirect when this mount has no ?redirect= — created() already cleared it (#4675 cross-session leak guard)', async () => {
+      // A record left over from an earlier, unrelated visit (or an attacker-planted
+      // link) must not survive into a fresh mount with no `?redirect=` query.
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      signupMock.mockResolvedValueOnce({ user: { roles: ['user'] }, tokenExpiresIn: 123 });
+      const wrapper = mountView(makeFormStub(), {});
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true } };
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+  });
+
+  describe('signinLinkTo (cross-link forwards ?redirect=)', () => {
+    it('forwards a safe redirect to the /signin cross-link', () => {
+      const wrapper = mountView(makeFormStub(), { redirect: '/pricing' });
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: { redirect: '/pricing' } });
+    });
+
+    it('drops an unsafe redirect from the /signin cross-link', () => {
+      const wrapper = mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+    });
+
+    it('carries no query when there is no redirect', () => {
+      const wrapper = mountView();
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
     });
   });
 

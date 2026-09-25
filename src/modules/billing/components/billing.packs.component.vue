@@ -123,8 +123,9 @@ export default {
     /**
      * @desc Initiate Stripe checkout for the selected pack.
      * Reuses the same auth/org guard as onSelectPlan() in billing.pricing.view.vue:
-     * unauthenticated users are redirected to sign-in; logged-in users without a
-     * current organization are redirected to org setup. On success Stripe redirects;
+     * unauthenticated users are redirected to signup (never sign-in — a guest here
+     * has no account yet); logged-in users without a current organization are
+     * redirected to org setup. On success Stripe redirects;
      * Errors are surfaced via the centralized snackbar (lib/services/axios.js
      * interceptor) — no inline error alert rendered here.
      * @param {{ id: string }} payload emitted by BillingCardComponent
@@ -133,9 +134,9 @@ export default {
     async onCtaClick({ id: packId }) {
       if (!packId || this.purchasingId) return;
 
-      // Guest → redirect to sign-in with return URL
+      // Guest → redirect to signup with return URL (a guest has no account yet)
       if (!this.authStore.isLoggedIn) {
-        this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
+        this.$router.push({ path: '/signup', query: { redirect: '/pricing' } });
         return;
       }
 

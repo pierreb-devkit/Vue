@@ -22,7 +22,7 @@
             </v-col>
           </v-row>
           <p class="text-body-medium mt-6">
-            <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">
+            <router-link :to="signinLinkTo" class="text-primary font-weight-bold text-decoration-none">
               Back to Sign In
             </router-link>
           </p>
@@ -38,6 +38,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { consumePostAuthRedirect, peekPostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
@@ -57,6 +58,18 @@ export default {
   computed: {
     themeName() {
       return this.theme.name;
+    },
+    /**
+     * @desc Cross-link back to /signin, forwarding a still-valid persisted
+     * redirect (if any) so the guest's original `?redirect=` intent — dropped
+     * by the new-tab email-verification link — carries forward via this OWN
+     * internal link instead of being silently lost. `signin.view.vue`'s
+     * `created()` re-saves it from the query. Peeking never consumes the
+     * record, so it still expires/clears normally if this link isn't used.
+     * @returns {{ path: string, query: Object }}
+     */
+    signinLinkTo() {
+      return withRedirectQuery('/signin', peekPostAuthRedirect(this.config));
     },
   },
   /**
@@ -121,7 +134,11 @@ export default {
         if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {
           this.$router.push('/organization-required');
         } else {
-          this.$router.push(this.config.sign.route);
+          // The verification link opens in a NEW TAB — the original `?redirect=`
+          // query is gone. Honor the localStorage record saved by signup.view.vue
+          // instead (see postAuthRedirect.js); fall back to config.sign.route.
+          const redirect = consumePostAuthRedirect(this.config);
+          this.$router.push(redirect || this.config.sign.route);
         }
       }
       // Not logged in — keep default message with sign-in link

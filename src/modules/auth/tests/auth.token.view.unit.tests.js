@@ -14,6 +14,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks' },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -66,6 +67,7 @@ describe('auth.token.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     tokenMock.mockReset();
+    localStorage.clear();
   });
 
   describe('created()', () => {
@@ -128,6 +130,33 @@ describe('auth.token.view', () => {
 
       expect(push).toHaveBeenCalledWith('/tasks');
       expect(wrapper.text()).not.toContain('Error during oAuth');
+    });
+
+    // The OAuth provider round-trip drops the original `?redirect=` query entirely —
+    // only the localStorage record persisted by signup/signin.view.vue survives
+    // (#4675, postAuthRedirect.js).
+    it('honors a persisted redirect over sign.route when token() resolves', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockResolvedValue(undefined);
+
+      mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/pricing');
+      // Single-use — consumed, not left behind for a later, unrelated auth event.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('ignores an expired persisted redirect and falls back to sign.route', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockResolvedValue(undefined);
+
+      mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/tasks');
     });
 
     it('surfaces the caught error and renders the error UI when token() rejects', async () => {
@@ -399,6 +428,41 @@ describe('auth.token.view', () => {
 
       expect(wrapper.vm.error.details.message).toBe('Signup error');
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('signinLinkTo / signupLinkTo (OAuth-error recovery links carry the redirect forward)', () => {
+    // The OAuth provider round-trip drops the original `?redirect=` query entirely.
+    // Without forwarding the persisted record on these OWN internal recovery links,
+    // a guest retrying sign-in after an OAuth failure would silently lose their
+    // intended destination — signin/signup.view.vue's created() clears an
+    // unqueried record on mount (#4675 cross-session leak guard).
+    it('forwards a still-valid persisted redirect as ?redirect= on both recovery links', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: '{}' });
+      await flushPromises();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: { redirect: '/pricing' } });
+      expect(wrapper.vm.signupLinkTo).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
+      // Peeking must not consume it.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).not.toBeNull();
+    });
+
+    it('carries no redirect query on either link when no record is persisted', async () => {
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: '{}' });
+      await flushPromises();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+      expect(wrapper.vm.signupLinkTo).toEqual({ path: '/signup', query: {} });
+    });
+
+    it('carries no redirect query when the persisted record is expired', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      const wrapper = mountView({ message: 'Unprocessable Entity', error: '{}' });
+      await flushPromises();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+      expect(wrapper.vm.signupLinkTo).toEqual({ path: '/signup', query: {} });
     });
   });
 });

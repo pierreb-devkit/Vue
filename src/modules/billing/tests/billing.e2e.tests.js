@@ -114,20 +114,24 @@ billingDescribe('Pricing Page E2E', () => {
 
 billingDescribe('Pricing Page - Unauthenticated CTA', () => {
   /**
-   * @desc Verify that an unauthenticated click on a plan CTA redirects to signin.
+   * @desc Verify that an unauthenticated click on a PAID plan CTA redirects to
+   * signup (never signin — a guest has no account yet, #4675). Every guest CTA
+   * is a plain router-link (`cta.to` set), so it renders as an <a>, not a
+   * <button>.
    * @param {{ page: import('playwright').Page }} fixtures
    * @returns {Promise<void>}
    */
-  test('CTA redirects unauthenticated user to signin', async ({ page }) => {
+  test('CTA redirects unauthenticated user to signup', async ({ page }) => {
     await mockPlansAPI(page);
     await page.goto('/pricing');
     await page.waitForLoadState('domcontentloaded');
 
-    const ctaButtons = page.locator('.billing-pricing-card button:has-text("Get Started"):not([disabled])');
-    await ctaButtons.first().click();
-    await page.waitForURL((url) => url.pathname.includes('/signin'), { timeout: 10000 });
+    const ctaLinks = page.locator('.billing-card a:has-text("Get Started")');
+    await ctaLinks.first().click();
+    await page.waitForURL((url) => url.pathname.includes('/signup'), { timeout: 10000 });
 
-    expect(page.url()).toContain('/signin');
+    expect(page.url()).toContain('/signup');
+    expect(page.url()).toContain('redirect=%2Fpricing');
   });
 });
 

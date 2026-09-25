@@ -24,6 +24,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -53,6 +54,7 @@ describe('auth.verifyEmail.view', () => {
     storeMock.isLoggedIn = false;
     storeMock.user = null;
     storeMock.serverConfig = null;
+    localStorage.clear();
   });
 
   it('calls verifyEmail with the token from route params on creation', async () => {
@@ -188,6 +190,90 @@ describe('auth.verifyEmail.view', () => {
       expect(wrapper.vm.redirecting).toBe(false);
       expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain('Your email has been verified successfully. You can now sign in.');
+    });
+
+    // The verification link opens in a NEW TAB, so the original `?redirect=` query
+    // (present on signup.view.vue when the user clicked a paid pricing plan) is
+    // gone here — only the localStorage record persisted by signup.view.vue
+    // survives (#4675, postAuthRedirect.js).
+    it('honors the persisted redirect when logged in with an org', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true, currentOrganization: { _id: '123' } };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+      // Single-use — consumed, not left behind for a later, unrelated auth event.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('ignores an expired persisted redirect and falls back to config.sign.route', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true, currentOrganization: { _id: '123' } };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('never honors a persisted redirect on the organization-required branch (org views unchanged)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/organization-required');
+    });
+  });
+
+  describe('signinLinkTo ("Back to Sign In" carries the redirect forward)', () => {
+    // Common case: guest signup with ?redirect=/pricing, verification link opens in
+    // a new tab where the browser isn't authenticated yet — handlePostVerificationRedirect
+    // stays put (`isLoggedIn` false) and the guest must click "Back to Sign In" to
+    // actually authenticate. Without forwarding the persisted redirect on this OWN
+    // internal link, that intent would be silently dropped by signin.view.vue's
+    // created() clearing an unqueried record (#4675).
+    it('forwards a still-valid persisted redirect as ?redirect= on the /signin link', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: { redirect: '/pricing' } });
+      // Peeking must not consume it — still there for signin.view.vue's created() to re-save.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).not.toBeNull();
+    });
+
+    it('carries no redirect query when no record is persisted', async () => {
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+    });
+
+    it('carries no redirect query when the persisted record is expired', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
     });
   });
 });

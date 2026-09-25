@@ -7,7 +7,7 @@
       <p class="text-body-medium text-medium-emphasis text-center mt-1" :class="signupStep === 'form' ? 'mb-8' : 'mb-4'">
         <template v-if="signupStep === 'form'">
           Already have an account?
-          <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Sign in</router-link>
+          <router-link :to="signinLinkTo" class="text-primary font-weight-bold text-decoration-none">Sign in</router-link>
         </template>
         <template v-else-if="signupStep === 'emailVerification'">We sent a verification link to <strong>{{ email }}</strong></template>
         <template v-else-if="signupStep === 'organizationSetup'">One last step — set up the workspace where your work will live.</template>
@@ -169,6 +169,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
+import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
 /**
  * Component definition.
@@ -252,12 +253,32 @@ export default {
     themeName() {
       return this.theme.name;
     },
+    /**
+     * @desc Cross-link to /signin, forwarding the current `?redirect=` when it's a
+     * safe same-origin path — a guest who already has an account must not lose the
+     * intended destination by taking the "Sign in" link instead of submitting here.
+     * @returns {{ path: string, query: Object }}
+     */
+    signinLinkTo() {
+      return withRedirectQuery('/signin', this.$route.query.redirect);
+    },
   },
   /**
-   * Fetch server auth config on component creation.
+   * Fetch server auth config on component creation. Persists a safe `?redirect=`
+   * to localStorage FIRST (covers the OAuth/Google/Apple buttons below, which
+   * navigate away and drop the query string entirely — see postAuthRedirect.js).
+   * When `?redirect=` is absent or unsafe, CLEARS any existing record instead —
+   * on a shared browser, a record planted by an attacker link (opened, then
+   * abandoned) must not outlive its author and hijack the next unrelated
+   * person who lands here and authenticates.
    * @returns {Promise<void>}
    */
   async created() {
+    if (isSafeRedirect(this.$route.query.redirect)) {
+      savePostAuthRedirect(this.config, this.$route.query.redirect);
+    } else {
+      clearPostAuthRedirect(this.config);
+    }
     const authStore = useAuthStore();
     this.serverConfig = await authStore.fetchServerConfig();
     if (this.inviteToken) {
@@ -276,15 +297,18 @@ export default {
   },
   methods: {
     /**
-     * @desc Navigate to the post-auth destination. Honors ?redirect= when it's a
-     * same-origin path (starts with '/') — used by the pricing page CTA to bring
-     * the user back to pricing after signup. Falls back to config.sign.route.
+     * @desc Navigate to the post-auth destination. Prefers the live `?redirect=`
+     * query (same-tab form submit) and falls back to the persisted record — the
+     * only source left once a step away from the tab dropped the query string.
+     * `consumePostAuthRedirect` always clears the record, so an honored query
+     * never leaves a stale one behind for a later, unrelated auth event.
+     * Falls back to config.sign.route when neither is present.
      * Matches signin.view.vue's redirect-honor pattern.
      * @returns {void}
      */
     pushAfterAuth() {
-      const redirect = this.$route.query.redirect;
-      this.$router.push(typeof redirect === 'string' && redirect.startsWith('/') ? redirect : this.config.sign.route);
+      const redirect = resolvePostAuthRedirect(this.config, this.$route.query.redirect);
+      this.$router.push(redirect || this.config.sign.route);
     },
     /**
      * @desc Validate and submit the signup form, then handle organization flow.
