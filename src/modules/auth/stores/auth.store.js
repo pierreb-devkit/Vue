@@ -9,6 +9,7 @@ import { useBillingStore } from '../../billing/stores/billing.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 import { getAttribution } from '../../../lib/helpers/attribution';
+import { clearPostAuthRedirect } from '../lib/postAuthRedirect';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -364,6 +365,9 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
       localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
       localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
+      // An abandoned redirect (e.g. a guest who started signup but signed out
+      // elsewhere first) must never resurface for the next, unrelated session.
+      clearPostAuthRedirect(config);
 
       coreStore.refreshNav(false);
     },

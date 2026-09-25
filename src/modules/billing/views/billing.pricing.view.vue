@@ -306,15 +306,18 @@ export default {
           ctaColor = 'success';
           ctaDisabled = true;
           ctaTo = null;
-        } else if (isFree && this.isGuest) {
-          ctaLabel = 'Sign up';
-          ctaVariant = 'outlined';
-          ctaColor = null;
+        } else if (this.isGuest) {
+          // EVERY guest CTA (free or paid) is a plain navigation to signup — a
+          // guest never reaches checkout directly, so it's never gated on
+          // pricing/checkout loading state. Preserve the `redirect` query param so
+          // the user lands back on the pricing page after signup. v-btn's :to
+          // accepts the same shape as $router.push(). The card skips its cta-click
+          // emit when cta.to is set (router-link owns the navigation), so the
+          // view's onCtaClick guest branch is intentionally a defensive fallback.
+          ctaLabel = isFree ? 'Sign up' : plan.cta;
+          ctaVariant = plan.highlight ? 'flat' : 'outlined';
+          ctaColor = plan.highlight ? 'primary' : null;
           ctaDisabled = false;
-          // Preserve the `redirect` query param so the user lands back on the pricing
-          // page after signup. v-btn's :to accepts the same shape as $router.push().
-          // The card skips its cta-click emit when cta.to is set (router-link owns
-          // the navigation), so the view's onCtaClick fallback is intentionally bypassed.
           ctaTo = { path: '/signup', query: { redirect: '/pricing' } };
         } else {
           ctaLabel = plan.cta;
@@ -474,14 +477,10 @@ export default {
 
       const { _activePriceId: priceId } = resolvedItem;
 
-      // Free + guest — CTA has `to: '/signup'` so router-link handles navigation;
-      // if click fires anyway (e.g. programmatic), guard here too.
-      if (planId === 'free' && this.isGuest) {
+      // Guest (free or paid) — CTA has `to: '/signup'` so router-link handles
+      // navigation; if click fires anyway (e.g. programmatic), guard here too.
+      if (this.isGuest) {
         this.$router.push({ path: '/signup', query: { redirect: '/pricing' } });
-        return;
-      }
-      if (!this.authStore.isLoggedIn) {
-        this.$router.push({ path: '/signin', query: { redirect: '/pricing' } });
         return;
       }
       if (this.authStore.serverConfig?.organizations?.enabled && !this.authStore.user?.currentOrganization) {

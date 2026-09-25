@@ -191,6 +191,8 @@ describe('Auth Store', () => {
       localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user');
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
       localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
+      // An abandoned post-auth redirect (#4675) must not resurface for the next session.
+      localStorage.setItem(`${config.cookie.prefix}PostAuthRedirect`, JSON.stringify({ path: '/pricing', ts: Date.now() }));
 
       const backendError = new Error('Backend unreachable');
       backendError.response = { status: 500 };
@@ -212,6 +214,7 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
       expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
       expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
+      expect(localStorage.getItem(`${config.cookie.prefix}PostAuthRedirect`)).toBe(null);
       expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
     });
 

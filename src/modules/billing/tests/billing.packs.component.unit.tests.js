@@ -314,7 +314,7 @@ describe('BillingPacksComponent — purchase flow', () => {
     }
   });
 
-  it('redirects guest to /signin instead of initiating checkout', async () => {
+  it('redirects guest to /signup instead of initiating checkout (a guest has no account yet — #4675)', async () => {
     vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
     const pushFn = vi.fn();
     wrapper = mountPacks({ isLoggedIn: false, user: null, serverConfig: null });
@@ -324,7 +324,7 @@ describe('BillingPacksComponent — purchase flow', () => {
     firstCard.vm.$emit('cta-click', { id: 'pack_starter' });
     await flushPromises();
     expect(store.createExtrasCheckout).not.toHaveBeenCalled();
-    expect(pushFn).toHaveBeenCalledWith({ path: '/signin', query: { redirect: '/pricing' } });
+    expect(pushFn).toHaveBeenCalledWith({ path: '/signup', query: { redirect: '/pricing' } });
   });
 
   it('redirects logged-in user without org to /organization-required', async () => {

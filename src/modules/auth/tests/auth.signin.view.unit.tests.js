@@ -6,9 +6,13 @@ import { createVuetify } from 'vuetify';
 const signinMock = vi.hoisted(() => vi.fn());
 const clearLockoutMock = vi.hoisted(() => vi.fn());
 const lockoutState = vi.hoisted(() => ({ locked: false, retryAfter: 0 }));
+// `authFlags` is the SAME object every `useAuthStore()` call (not spread) so a
+// signinMock implementation that flips `authFlags.auth = true` mid-test is
+// visible to the `authStore` reference validate() already captured.
+const authFlags = vi.hoisted(() => ({ auth: false }));
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({
-    auth: false,
+    get auth() { return authFlags.auth; },
     signin: signinMock,
     clearLockout: clearLockoutMock,
     lockout: lockoutState,
@@ -23,6 +27,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -41,13 +46,14 @@ const makeFormStub = (valid = true) => ({
 /**
  * Mount the signin view with Vuetify installed and VForm controlled by a stub.
  * @param {object} formStub - VForm component definition controlling validation outcome.
+ * @param {object} [routeQuery] - Optional $route.query override (e.g. { redirect: '/pricing' }).
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
-const mountView = (formStub = makeFormStub()) =>
+const mountView = (formStub = makeFormStub(), routeQuery = {}) =>
   mount(AuthSigninView, {
     global: {
       plugins: [createVuetify()],
-      mocks: { config: mockConfig, $route: { query: {} }, $router: { push: vi.fn() } },
+      mocks: { config: mockConfig, $route: { query: routeQuery }, $router: { push: vi.fn() } },
       stubs: { RouterLink: true, VForm: formStub },
     },
   });
@@ -59,6 +65,8 @@ describe('auth.signin.view', () => {
     clearLockoutMock.mockReset();
     lockoutState.locked = false;
     lockoutState.retryAfter = 0;
+    authFlags.auth = false;
+    localStorage.clear();
   });
 
   describe('serverConfig rendering', () => {
@@ -117,6 +125,85 @@ describe('auth.signin.view', () => {
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('post-auth redirect honoring (#4675)', () => {
+    it('persists a safe ?redirect= to localStorage on mount', async () => {
+      mountView(makeFormStub(), { redirect: '/pricing' });
+      await flushPromises();
+
+      const stored = JSON.parse(localStorage.getItem('devkitPostAuthRedirect'));
+      expect(stored.path).toBe('/pricing');
+    });
+
+    it('never persists an unsafe ?redirect= to localStorage', async () => {
+      mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      await flushPromises();
+
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('redirects to $route.query.redirect after a successful signin', async () => {
+      signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
+      const wrapper = mountView(makeFormStub(), { redirect: '/pricing' });
+      await flushPromises();
+
+      wrapper.vm.email = 'test@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+    });
+
+    it('falls back to config.sign.route when redirect query is absent and nothing is stored', async () => {
+      signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.email = 'test@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('ignores an open-redirect query and falls back to config.sign.route', async () => {
+      signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
+      const wrapper = mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      await flushPromises();
+
+      wrapper.vm.email = 'test@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('falls back to the persisted redirect when the query is absent (new-tab / OAuth path)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      signinMock.mockImplementationOnce(async () => { authFlags.auth = true; });
+      const wrapper = mountView(makeFormStub(), {});
+      await flushPromises();
+
+      wrapper.vm.email = 'test@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+  });
+
+  describe('signupLinkTo (cross-link forwards ?redirect=)', () => {
+    it('forwards a safe redirect to the /signup cross-link', () => {
+      const wrapper = mountView(makeFormStub(), { redirect: '/pricing' });
+      expect(wrapper.vm.signupLinkTo).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
+    });
+
+    it('drops an unsafe redirect from the /signup cross-link', () => {
+      const wrapper = mountView(makeFormStub(), { redirect: '//evil.example.com' });
+      expect(wrapper.vm.signupLinkTo).toEqual({ path: '/signup', query: {} });
     });
   });
 

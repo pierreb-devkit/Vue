@@ -38,6 +38,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { consumePostAuthRedirect } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
@@ -121,7 +122,11 @@ export default {
         if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {
           this.$router.push('/organization-required');
         } else {
-          this.$router.push(this.config.sign.route);
+          // The verification link opens in a NEW TAB — the original `?redirect=`
+          // query is gone. Honor the localStorage record saved by signup.view.vue
+          // instead (see postAuthRedirect.js); fall back to config.sign.route.
+          const redirect = consumePostAuthRedirect(this.config);
+          this.$router.push(redirect || this.config.sign.route);
         }
       }
       // Not logged in — keep default message with sign-in link

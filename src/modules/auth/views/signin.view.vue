@@ -4,7 +4,7 @@
       <h4 class="text-headline-small font-weight-bold text-center">Sign in to your account</h4>
       <p v-if="config.sign.up" class="text-body-medium text-medium-emphasis text-center mt-1 mb-8">
         Don't have an account?
-        <router-link to="/signup" class="text-primary font-weight-bold text-decoration-none">Sign up</router-link>
+        <router-link :to="signupLinkTo" class="text-primary font-weight-bold text-decoration-none">Sign up</router-link>
       </p>
 
       <!-- OAuth providers -->
@@ -105,6 +105,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { isSafeRedirect, savePostAuthRedirect, consumePostAuthRedirect } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
@@ -146,6 +147,15 @@ export default {
     themeName() {
       return this.theme.name;
     },
+    /**
+     * @desc Cross-link to /signup, forwarding the current `?redirect=` when it's a
+     * safe same-origin path — mirrors signup.view.vue's signinLinkTo.
+     * @returns {{ path: string, query: Object }}
+     */
+    signupLinkTo() {
+      const redirect = this.$route.query.redirect;
+      return { path: '/signup', query: isSafeRedirect(redirect) ? { redirect } : {} };
+    },
   },
   watch: {
     /**
@@ -160,10 +170,13 @@ export default {
     },
   },
   /**
-   * Fetch server auth config on component creation.
+   * Fetch server auth config on component creation. Persists a safe `?redirect=`
+   * to localStorage FIRST (covers the OAuth/Google/Apple buttons below, which
+   * navigate away and drop the query string entirely — see postAuthRedirect.js).
    * @returns {Promise<void>}
    */
   async created() {
+    savePostAuthRedirect(this.config, this.$route.query.redirect);
     const authStore = useAuthStore();
     this.serverConfig = await authStore.fetchServerConfig();
   },
@@ -185,8 +198,13 @@ export default {
             password: this.password,
           });
           if (authStore.auth) {
-            const redirect = this.$route.query.redirect;
-            this.$router.push(redirect && redirect.startsWith('/') ? redirect : this.config.sign.route);
+            // Prefer the live query (same-tab submit); fall back to the persisted
+            // record for a redirect that only survives via localStorage. Always
+            // consumes the record so an honored query never leaves a stale one.
+            const queryRedirect = this.$route.query.redirect;
+            const stored = consumePostAuthRedirect(this.config);
+            const redirect = isSafeRedirect(queryRedirect) ? queryRedirect : stored;
+            this.$router.push(redirect || this.config.sign.route);
           }
         } catch (err) {
           console.error(err);

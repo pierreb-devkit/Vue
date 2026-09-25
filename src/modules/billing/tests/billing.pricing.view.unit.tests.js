@@ -998,3 +998,80 @@ describe('BillingPricingView — effectiveAnnual gates pricing + checkout on the
     expect(item._activePriceId).toBe('price_annual');
   });
 });
+
+// ─── Suite: guest CTA — every guest plan routes to signup, not signin (#4675) ─
+
+describe('BillingPricingView — guest CTA routes to signup (free AND paid)', () => {
+  let wrapper;
+  let store;
+
+  const guestPlans = [
+    { id: 'free', title: 'Free', subtitle: 'For starters', highlight: false, badge: null, cta: 'Get started', features: [] },
+    { id: 'pro', title: 'Pro', subtitle: 'For pros', highlight: true, badge: null, cta: 'Get Started', features: [], monthlyPriceObject: { id: 'price_pro_m', amount: 39 } },
+  ];
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    pricingState.mode = 'subscription';
+    pricingState.plans = guestPlans;
+    pricingState.hasPlans = true;
+    authState.isLoggedIn = false;
+    authState.serverConfig = { billing: { meterMode: false } };
+    store = useBillingStore();
+    seedStore(store);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    sessionStorage.clear();
+  });
+
+  it('gives the paid plan ctaTo=/signup?redirect=/pricing, same as the free plan', async () => {
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+    const items = wrapper.vm.resolvedPlanItems;
+    const free = items.find((i) => i.id === 'free');
+    const pro = items.find((i) => i.id === 'pro');
+    expect(free.cta.to).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
+    expect(pro.cta.to).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
+  });
+
+  it('never disables the paid plan guest CTA, even before pricing has loaded', async () => {
+    wrapper = mountPricing({ isLoggedIn: false });
+    // Assert before flushPromises() resolves fetchPlans — this is the "still loading" window.
+    const pro = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
+    expect(pro.cta.disabled).toBe(false);
+    await flushPromises();
+  });
+
+  it('keeps the free plan CTA label "Sign up" but uses the plan\'s own cta label for a paid guest plan', async () => {
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+    const items = wrapper.vm.resolvedPlanItems;
+    expect(items.find((i) => i.id === 'free').cta.label).toBe('Sign up');
+    expect(items.find((i) => i.id === 'pro').cta.label).toBe('Get Started');
+  });
+
+  it('onCtaClick pushes a guest straight to /signup for a PAID plan (defensive fallback — the card itself never emits when cta.to is set)', async () => {
+    const push = vi.fn();
+    wrapper = mountPricing({ isLoggedIn: false, router: { replace: vi.fn(), push } });
+    await flushPromises();
+
+    await wrapper.vm.onCtaClick({ id: 'pro' });
+
+    expect(push).toHaveBeenCalledWith({ path: '/signup', query: { redirect: '/pricing' } });
+  });
+
+  it('onCtaClick pushes a guest to /signup for the FREE plan too (collapsed branch)', async () => {
+    const push = vi.fn();
+    wrapper = mountPricing({ isLoggedIn: false, router: { replace: vi.fn(), push } });
+    await flushPromises();
+
+    await wrapper.vm.onCtaClick({ id: 'free' });
+
+    expect(push).toHaveBeenCalledWith({ path: '/signup', query: { redirect: '/pricing' } });
+  });
+});

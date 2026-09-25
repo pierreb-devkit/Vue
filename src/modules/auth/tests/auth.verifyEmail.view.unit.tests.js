@@ -24,6 +24,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks', in: true, up: true },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -53,6 +54,7 @@ describe('auth.verifyEmail.view', () => {
     storeMock.isLoggedIn = false;
     storeMock.user = null;
     storeMock.serverConfig = null;
+    localStorage.clear();
   });
 
   it('calls verifyEmail with the token from route params on creation', async () => {
@@ -188,6 +190,54 @@ describe('auth.verifyEmail.view', () => {
       expect(wrapper.vm.redirecting).toBe(false);
       expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain('Your email has been verified successfully. You can now sign in.');
+    });
+
+    // The verification link opens in a NEW TAB, so the original `?redirect=` query
+    // (present on signup.view.vue when the user clicked a paid pricing plan) is
+    // gone here — only the localStorage record persisted by signup.view.vue
+    // survives (#4675, postAuthRedirect.js).
+    it('honors the persisted redirect when logged in with an org', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true, currentOrganization: { _id: '123' } };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/pricing');
+      // Single-use — consumed, not left behind for a later, unrelated auth event.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('ignores an expired persisted redirect and falls back to config.sign.route', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true, currentOrganization: { _id: '123' } };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+    });
+
+    it('never honors a persisted redirect on the organization-required branch (org views unchanged)', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/organization-required');
     });
   });
 });

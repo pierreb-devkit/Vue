@@ -14,6 +14,7 @@ const mockConfig = {
   api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
   sign: { route: '/tasks' },
   vuetify: { theme: { flat: true, maxWidth: '1200px' } },
+  cookie: { prefix: 'devkit' },
 };
 
 /**
@@ -66,6 +67,7 @@ describe('auth.token.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     tokenMock.mockReset();
+    localStorage.clear();
   });
 
   describe('created()', () => {
@@ -128,6 +130,33 @@ describe('auth.token.view', () => {
 
       expect(push).toHaveBeenCalledWith('/tasks');
       expect(wrapper.text()).not.toContain('Error during oAuth');
+    });
+
+    // The OAuth provider round-trip drops the original `?redirect=` query entirely —
+    // only the localStorage record persisted by signup/signin.view.vue survives
+    // (#4675, postAuthRedirect.js).
+    it('honors a persisted redirect over sign.route when token() resolves', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockResolvedValue(undefined);
+
+      mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/pricing');
+      // Single-use — consumed, not left behind for a later, unrelated auth event.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).toBeNull();
+    });
+
+    it('ignores an expired persisted redirect and falls back to sign.route', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      tokenMock.mockResolvedValueOnce(undefined);
+      const push = vi.fn().mockResolvedValue(undefined);
+
+      mountView({}, { push });
+      await flushPromises();
+
+      expect(push).toHaveBeenCalledWith('/tasks');
     });
 
     it('surfaces the caught error and renders the error UI when token() rejects', async () => {

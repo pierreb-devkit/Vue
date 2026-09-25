@@ -43,6 +43,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { consumePostAuthRedirect } from '../lib/postAuthRedirect';
 import { createLogger } from '../../../lib/helpers/logger';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
@@ -91,7 +92,11 @@ export default {
       try {
         await authStore.token();
         try {
-          await this.$router.push(this.config.sign.route);
+          // OAuth landing, same tab, but the provider round-trip already dropped
+          // the original `?redirect=` query — honor the localStorage record saved
+          // by signup/signin.view.vue instead (see postAuthRedirect.js).
+          const redirect = consumePostAuthRedirect(this.config);
+          await this.$router.push(redirect || this.config.sign.route);
         } catch (navErr) {
           logger.error(navErr);
           this.error = {
