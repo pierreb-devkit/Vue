@@ -1008,6 +1008,11 @@ describe('BillingPricingView — guest CTA routes to signup (free AND paid)', ()
   const guestPlans = [
     { id: 'free', title: 'Free', subtitle: 'For starters', highlight: false, badge: null, cta: 'Get started', features: [] },
     { id: 'pro', title: 'Pro', subtitle: 'For pros', highlight: true, badge: null, cta: 'Get Started', features: [], monthlyPriceObject: { id: 'price_pro_m', amount: 39 } },
+    // No monthlyPriceObject/annualPriceObject/meta price on purpose: pre-fix,
+    // `pricingUnavailable` (`!isFree && !activePriceId`) would have disabled
+    // this exact plan's CTA for a guest — the discriminating case for
+    // "ctaDisabled must not disable the guest link while prices load" (#4675).
+    { id: 'team', title: 'Team', subtitle: 'For teams', highlight: false, badge: null, cta: 'Get Started', features: [] },
   ];
 
   beforeEach(() => {
@@ -1039,12 +1044,12 @@ describe('BillingPricingView — guest CTA routes to signup (free AND paid)', ()
     expect(pro.cta.to).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
   });
 
-  it('never disables the paid plan guest CTA, even before pricing has loaded', async () => {
+  it('never disables a guest CTA even when the plan has no resolvable price yet (discriminating: pre-fix this was disabled)', async () => {
     wrapper = mountPricing({ isLoggedIn: false });
-    // Assert before flushPromises() resolves fetchPlans — this is the "still loading" window.
-    const pro = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro');
-    expect(pro.cta.disabled).toBe(false);
     await flushPromises();
+    const team = wrapper.vm.resolvedPlanItems.find((i) => i.id === 'team');
+    expect(team.cta.disabled).toBe(false);
+    expect(team.cta.to).toEqual({ path: '/signup', query: { redirect: '/pricing' } });
   });
 
   it('keeps the free plan CTA label "Sign up" but uses the plan\'s own cta label for a paid guest plan', async () => {
