@@ -4,6 +4,8 @@ import {
   savePostAuthRedirect,
   consumePostAuthRedirect,
   clearPostAuthRedirect,
+  resolvePostAuthRedirect,
+  withRedirectQuery,
   POST_AUTH_REDIRECT_TTL_MS,
 } from '../lib/postAuthRedirect.js';
 
@@ -126,5 +128,49 @@ describe('clearPostAuthRedirect', () => {
 
   it('is a no-op when nothing was persisted', () => {
     expect(() => clearPostAuthRedirect(mockConfig)).not.toThrow();
+  });
+});
+
+describe('resolvePostAuthRedirect', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('prefers a safe query redirect over a persisted one', () => {
+    savePostAuthRedirect(mockConfig, '/stored');
+    expect(resolvePostAuthRedirect(mockConfig, '/query')).toBe('/query');
+  });
+
+  it('always consumes the persisted record, even when the query wins', () => {
+    savePostAuthRedirect(mockConfig, '/stored');
+    resolvePostAuthRedirect(mockConfig, '/query');
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it('falls back to the persisted redirect when the query is unsafe or absent', () => {
+    savePostAuthRedirect(mockConfig, '/stored');
+    expect(resolvePostAuthRedirect(mockConfig, undefined)).toBe('/stored');
+  });
+
+  it('returns null when neither source has a safe redirect', () => {
+    expect(resolvePostAuthRedirect(mockConfig, '//evil.example.com')).toBeNull();
+  });
+});
+
+describe('withRedirectQuery', () => {
+  it('carries a safe redirect as the query', () => {
+    expect(withRedirectQuery('/signin', '/pricing')).toEqual({ path: '/signin', query: { redirect: '/pricing' } });
+  });
+
+  it('drops an unsafe redirect', () => {
+    expect(withRedirectQuery('/signin', '//evil.example.com')).toEqual({ path: '/signin', query: {} });
+  });
+
+  it('carries no query when there is no redirect', () => {
+    expect(withRedirectQuery('/signin', undefined)).toEqual({ path: '/signin', query: {} });
   });
 });

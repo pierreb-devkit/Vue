@@ -105,7 +105,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
-import { isSafeRedirect, savePostAuthRedirect, consumePostAuthRedirect } from '../lib/postAuthRedirect';
+import { savePostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
@@ -153,8 +153,7 @@ export default {
      * @returns {{ path: string, query: Object }}
      */
     signupLinkTo() {
-      const redirect = this.$route.query.redirect;
-      return { path: '/signup', query: isSafeRedirect(redirect) ? { redirect } : {} };
+      return withRedirectQuery('/signup', this.$route.query.redirect);
     },
   },
   watch: {
@@ -198,12 +197,7 @@ export default {
             password: this.password,
           });
           if (authStore.auth) {
-            // Prefer the live query (same-tab submit); fall back to the persisted
-            // record for a redirect that only survives via localStorage. Always
-            // consumes the record so an honored query never leaves a stale one.
-            const queryRedirect = this.$route.query.redirect;
-            const stored = consumePostAuthRedirect(this.config);
-            const redirect = isSafeRedirect(queryRedirect) ? queryRedirect : stored;
+            const redirect = resolvePostAuthRedirect(this.config, this.$route.query.redirect);
             this.$router.push(redirect || this.config.sign.route);
           }
         } catch (err) {

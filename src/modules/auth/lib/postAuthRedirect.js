@@ -107,3 +107,33 @@ export function clearPostAuthRedirect(config) {
     // Nothing to clean up if storage is unavailable.
   }
 }
+
+/**
+ * @desc Resolve the post-auth destination shared by signup.view.vue's
+ * `pushAfterAuth` and signin.view.vue's `validate()`: prefer the live
+ * `?redirect=` query (same-tab form submit), else fall back to the persisted
+ * record (the only source left once a step away from the tab dropped the
+ * query string). ALWAYS consumes the persisted record — even when the query
+ * wins — so an honored query never leaves a stale one behind for a later,
+ * unrelated auth event.
+ * @param {{ cookie: { prefix: string } }} config
+ * @param {*} queryRedirect - `$route.query.redirect`, typically.
+ * @returns {string|null} A safe path, or `null` when neither source has one
+ *   (caller falls back to `config.sign.route`).
+ */
+export function resolvePostAuthRedirect(config, queryRedirect) {
+  const stored = consumePostAuthRedirect(config);
+  return isSafeRedirect(queryRedirect) ? queryRedirect : stored;
+}
+
+/**
+ * @desc Build a `router-link` `:to` target that forwards the current
+ * `?redirect=` when it's safe — used by the signup ↔ signin cross-links so a
+ * guest who takes the "other" link doesn't lose the intended destination.
+ * @param {string} path - Cross-link target, e.g. '/signin'.
+ * @param {*} queryRedirect - `$route.query.redirect`, typically.
+ * @returns {{ path: string, query: Object }}
+ */
+export function withRedirectQuery(path, queryRedirect) {
+  return { path, query: isSafeRedirect(queryRedirect) ? { redirect: queryRedirect } : {} };
+}

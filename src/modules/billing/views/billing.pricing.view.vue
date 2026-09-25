@@ -298,12 +298,15 @@ export default {
 
         // Resolve CTA
         const pricingUnavailable = !this.loading && !isFree && !activePriceId;
-        let ctaLabel, ctaVariant, ctaColor, ctaDisabled, ctaTo;
+        // Variant/color derive from highlight in every case except "Current Plan"
+        // (a fixed, tonal/success treatment) — computed once instead of repeating
+        // the same ternary in the guest and logged-in branches below.
+        const ctaVariant = isCurrent ? 'tonal' : (plan.highlight ? 'flat' : 'outlined');
+        const ctaColor = isCurrent ? 'success' : (plan.highlight ? 'primary' : null);
+        let ctaLabel, ctaDisabled, ctaTo;
 
         if (isCurrent) {
           ctaLabel = 'Current Plan';
-          ctaVariant = 'tonal';
-          ctaColor = 'success';
           ctaDisabled = true;
           ctaTo = null;
         } else if (this.isGuest) {
@@ -315,14 +318,10 @@ export default {
           // emit when cta.to is set (router-link owns the navigation), so the
           // view's onCtaClick guest branch is intentionally a defensive fallback.
           ctaLabel = isFree ? 'Sign up' : plan.cta;
-          ctaVariant = plan.highlight ? 'flat' : 'outlined';
-          ctaColor = plan.highlight ? 'primary' : null;
           ctaDisabled = false;
           ctaTo = { path: '/signup', query: { redirect: '/pricing' } };
         } else {
           ctaLabel = plan.cta;
-          ctaVariant = plan.highlight ? 'flat' : 'outlined';
-          ctaColor = plan.highlight ? 'primary' : null;
           ctaDisabled = pricingUnavailable || this.checkoutLoading || (!isFree && !activePriceId);
           ctaTo = null;
         }

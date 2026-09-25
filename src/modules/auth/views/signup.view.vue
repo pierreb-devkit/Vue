@@ -169,7 +169,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
-import { isSafeRedirect, savePostAuthRedirect, consumePostAuthRedirect } from '../lib/postAuthRedirect';
+import { savePostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
 /**
  * Component definition.
@@ -260,8 +260,7 @@ export default {
      * @returns {{ path: string, query: Object }}
      */
     signinLinkTo() {
-      const redirect = this.$route.query.redirect;
-      return { path: '/signin', query: isSafeRedirect(redirect) ? { redirect } : {} };
+      return withRedirectQuery('/signin', this.$route.query.redirect);
     },
   },
   /**
@@ -300,9 +299,7 @@ export default {
      * @returns {void}
      */
     pushAfterAuth() {
-      const queryRedirect = this.$route.query.redirect;
-      const stored = consumePostAuthRedirect(this.config);
-      const redirect = isSafeRedirect(queryRedirect) ? queryRedirect : stored;
+      const redirect = resolvePostAuthRedirect(this.config, this.$route.query.redirect);
       this.$router.push(redirect || this.config.sign.route);
     },
     /**
