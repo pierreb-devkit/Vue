@@ -80,6 +80,29 @@ export function savePostAuthRedirect(config, path) {
 }
 
 /**
+ * @desc Shared validation for a raw localStorage record: malformed JSON, a
+ * missing/non-numeric `ts`, an expired `ts`, or a `path` that no longer passes
+ * `isSafeRedirect` all resolve to `null`. Used by both `consumePostAuthRedirect`
+ * (which additionally deletes the record) and `peekPostAuthRedirect` (which
+ * never does) so the validity rule can't drift between the two readers.
+ * @param {string|null} raw - The raw `localStorage.getItem` result.
+ * @param {number} ttlMs - How long a record stays valid, in ms.
+ * @returns {string|null}
+ */
+function readValidPath(raw, ttlMs) {
+  if (!raw) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed.ts !== 'number' || !isSafeRedirect(parsed.path)) return null;
+  if (Date.now() - parsed.ts > ttlMs) return null;
+  return parsed.path;
+}
+
+/**
  * @desc Read and CONSUME (single-use) the persisted redirect: valid, unexpired,
  * still-safe record → its path; anything else (absent, malformed, expired, or a
  * path that no longer passes `isSafeRedirect`) → `null`. Always clears the record
@@ -101,16 +124,30 @@ export function consumePostAuthRedirect(config, { ttlMs = POST_AUTH_REDIRECT_TTL
   } catch {
     // Best-effort cleanup — a failed removeItem still returns whatever was read.
   }
-  if (!raw) return null;
-  let parsed;
+  return readValidPath(raw, ttlMs);
+}
+
+/**
+ * @desc Read (but do NOT consume) the persisted redirect: same validity rule as
+ * `consumePostAuthRedirect` (unexpired, still-safe), but never deletes the
+ * record either way. Used by the app's OWN internal auth links (verifyEmail's
+ * "Back to Sign In", token's OAuth-error "Sign In"/"Sign Up") so the guest's
+ * original intent carries forward via `?redirect=` when navigating within the
+ * app — the next view's `created()` re-saves it. A bare external visit to
+ * `/signin` or `/signup` (no `?redirect=` query) still gets any record cleared
+ * by that view's `created()` — peeking never prevents that.
+ * @param {{ cookie: { prefix: string } }} config
+ * @param {{ ttlMs?: number }} [options]
+ * @returns {string|null}
+ */
+export function peekPostAuthRedirect(config, { ttlMs = POST_AUTH_REDIRECT_TTL_MS } = {}) {
+  let raw;
   try {
-    parsed = JSON.parse(raw);
+    raw = localStorage.getItem(storageKey(config));
   } catch {
     return null;
   }
-  if (!parsed || typeof parsed.ts !== 'number' || !isSafeRedirect(parsed.path)) return null;
-  if (Date.now() - parsed.ts > ttlMs) return null;
-  return parsed.path;
+  return readValidPath(raw, ttlMs);
 }
 
 /**

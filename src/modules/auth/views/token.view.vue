@@ -22,11 +22,11 @@
             <p>
               Back to
               <b>
-                <router-link to="/signin">Sign In</router-link>
+                <router-link :to="signinLinkTo">Sign In</router-link>
               </b>
               or
               <b>
-                <router-link to="/signup">Sign Up</router-link>
+                <router-link :to="signupLinkTo">Sign Up</router-link>
               </b>
               !
             </p>
@@ -43,7 +43,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
-import { consumePostAuthRedirect } from '../lib/postAuthRedirect';
+import { consumePostAuthRedirect, peekPostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import { createLogger } from '../../../lib/helpers/logger';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
@@ -76,6 +76,26 @@ export default {
   computed: {
     themeName() {
       return this.theme.name;
+    },
+    /**
+     * @desc Cross-link to /signin on the OAuth-error recovery page, forwarding
+     * a still-valid persisted redirect (if any) so the guest's original
+     * `?redirect=` intent — dropped by the OAuth provider round-trip — carries
+     * forward via this OWN internal link instead of being silently lost.
+     * `signin.view.vue`'s `created()` re-saves it from the query. Peeking
+     * never consumes the record, so it still expires/clears normally if
+     * neither recovery link is used.
+     * @returns {{ path: string, query: Object }}
+     */
+    signinLinkTo() {
+      return withRedirectQuery('/signin', peekPostAuthRedirect(this.config));
+    },
+    /**
+     * @desc Same as `signinLinkTo`, for the "Sign Up" recovery link.
+     * @returns {{ path: string, query: Object }}
+     */
+    signupLinkTo() {
+      return withRedirectQuery('/signup', peekPostAuthRedirect(this.config));
     },
   },
   /**

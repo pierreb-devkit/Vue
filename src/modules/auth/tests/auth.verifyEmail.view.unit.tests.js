@@ -240,4 +240,40 @@ describe('auth.verifyEmail.view', () => {
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/organization-required');
     });
   });
+
+  describe('signinLinkTo ("Back to Sign In" carries the redirect forward)', () => {
+    // Common case: guest signup with ?redirect=/pricing, verification link opens in
+    // a new tab where the browser isn't authenticated yet — handlePostVerificationRedirect
+    // stays put (`isLoggedIn` false) and the guest must click "Back to Sign In" to
+    // actually authenticate. Without forwarding the persisted redirect on this OWN
+    // internal link, that intent would be silently dropped by signin.view.vue's
+    // created() clearing an unqueried record (#4675).
+    it('forwards a still-valid persisted redirect as ?redirect= on the /signin link', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() }));
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: { redirect: '/pricing' } });
+      // Peeking must not consume it — still there for signin.view.vue's created() to re-save.
+      expect(localStorage.getItem('devkitPostAuthRedirect')).not.toBeNull();
+    });
+
+    it('carries no redirect query when no record is persisted', async () => {
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+    });
+
+    it('carries no redirect query when the persisted record is expired', async () => {
+      localStorage.setItem('devkitPostAuthRedirect', JSON.stringify({ path: '/pricing', ts: Date.now() - (25 * 60 * 60 * 1000) }));
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.signinLinkTo).toEqual({ path: '/signin', query: {} });
+    });
+  });
 });

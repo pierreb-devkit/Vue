@@ -3,6 +3,7 @@ import {
   isSafeRedirect,
   savePostAuthRedirect,
   consumePostAuthRedirect,
+  peekPostAuthRedirect,
   clearPostAuthRedirect,
   resolvePostAuthRedirect,
   withRedirectQuery,
@@ -109,6 +110,69 @@ describe('savePostAuthRedirect / consumePostAuthRedirect', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(consumePostAuthRedirect(mockConfig)).toBeNull();
     expect(consumePostAuthRedirect({ cookie: { prefix: 'other' } })).toBe('/pricing');
+  });
+});
+
+describe('peekPostAuthRedirect', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    vi.useRealTimers();
+  });
+
+  it('reads a safe path without deleting it', () => {
+    savePostAuthRedirect(mockConfig, '/pricing');
+    expect(peekPostAuthRedirect(mockConfig)).toBe('/pricing');
+    // Still there — a second peek returns the SAME value (non-destructive).
+    expect(peekPostAuthRedirect(mockConfig)).toBe('/pricing');
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('returns null when nothing was ever saved', () => {
+    expect(peekPostAuthRedirect(mockConfig)).toBeNull();
+  });
+
+  it('ignores an expired record without deleting it', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    savePostAuthRedirect(mockConfig, '/pricing');
+    vi.setSystemTime(POST_AUTH_REDIRECT_TTL_MS + 1);
+
+    expect(peekPostAuthRedirect(mockConfig)).toBeNull();
+    // Never deletes — the raw record is still in storage (unlike consume).
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('accepts a record right at the TTL boundary', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    savePostAuthRedirect(mockConfig, '/pricing');
+    vi.setSystemTime(POST_AUTH_REDIRECT_TTL_MS);
+
+    expect(peekPostAuthRedirect(mockConfig)).toBe('/pricing');
+  });
+
+  it('ignores a hand-tampered record whose path is no longer safe, without deleting it', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ path: '//evil.example.com', ts: Date.now() }));
+    expect(peekPostAuthRedirect(mockConfig)).toBeNull();
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('returns null on malformed JSON without throwing or deleting it', () => {
+    localStorage.setItem(STORAGE_KEY, 'not-json{');
+    expect(() => peekPostAuthRedirect(mockConfig)).not.toThrow();
+    expect(peekPostAuthRedirect(mockConfig)).toBeNull();
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('a peek followed by consume still honors the record (peek never invalidates it)', () => {
+    savePostAuthRedirect(mockConfig, '/pricing');
+    expect(peekPostAuthRedirect(mockConfig)).toBe('/pricing');
+    expect(consumePostAuthRedirect(mockConfig)).toBe('/pricing');
+    expect(peekPostAuthRedirect(mockConfig)).toBeNull();
   });
 });
 
