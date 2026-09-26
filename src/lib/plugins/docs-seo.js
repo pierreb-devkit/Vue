@@ -141,27 +141,54 @@ export function deriveDocsRoutes(tree, basePath = DEFAULT_BASE_PATH) {
 }
 
 /**
+ * Parse a docs content-API URL into an origin + base path, stripping any
+ * trailing slash. Shared by the llms.txt raw-markdown twin and the prerender
+ * API-snapshot entries so both target the exact same `{origin}{basePath}/
+ * {slug}.md` shape. Returns `null` on a missing or malformed URL so callers
+ * can omit whatever they were about to build instead of emitting a wrong link.
+ *
+ * @param {string} [contentUrl] - absolute URL of the docs content-API endpoint
+ * @returns {{ origin: string, basePath: string } | null}
+ */
+function parseContentUrl(contentUrl) {
+  if (!contentUrl) return null;
+  try {
+    const parsed = new URL(contentUrl);
+    return { origin: parsed.origin, basePath: parsed.pathname.replace(/\/+$/, '') };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Derive llms.txt sections from a guide tree — one section per category, each
- * guide as a `- [title](URL): summary` bullet. When `mdTwin` is true, an extra
- * `- [title (Markdown)](URL.md)` bullet is appended per guide (the raw-markdown
- * twin for answer engines). Pure — no I/O.
+ * guide as a `- [title](URL): summary` bullet against the human-readable
+ * frontend page. When `mdTwin` is true, an extra `- [title (Markdown)](URL)`
+ * bullet is appended per guide, pointing at the RAW-MARKDOWN docs content-API
+ * endpoint (`{contentUrl}/{slug}.md`, slug only — no category segment; same
+ * shape `deriveDocsSnapshotEntries` prerenders) — never the frontend SPA route,
+ * which answers 200 with the HTML shell, not markdown. A missing or malformed
+ * `contentUrl` disables the twin for every guide rather than emit a wrong
+ * link; the human-readable bullet is unaffected either way. Pure — no I/O.
  *
  * Section shape matches `buildLlmsTxt`'s `{ title, items: [{ label, url, note }] }`
  * so the result can be concatenated onto the existing static sections.
  *
  * @param {object|null} tree - the docs tree (`{ categories: [...] }`)
  * @param {string} baseUrl - canonical absolute base URL (no trailing slash), e.g. 'https://example.com'
- * @param {string} [basePath='/docs'] - the docs base path
+ * @param {string} [basePath='/docs'] - the docs base path (frontend route prefix)
  * @param {object} [options]
- * @param {boolean} [options.mdTwin=false] - also emit the `.md` twin bullet per guide
+ * @param {boolean} [options.mdTwin=false] - also emit the raw-markdown twin bullet per guide
+ * @param {string} [options.contentUrl] - absolute URL of the docs content-API endpoint, required for the twin
  * @returns {Array<{ title: string, items: Array<{ label: string, url: string, note: string }> }>}
  *   llms.txt-shaped sections (empty when the tree is empty)
  */
 export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PATH, options = {}) {
-  const { mdTwin = false } = options;
+  const { mdTwin = false, contentUrl } = options;
   const base = normalizeBasePath(basePath);
   const origin = (baseUrl || '').replace(/\/+$/, '');
   const categories = normalizeCategories(tree);
+  const content = mdTwin ? parseContentUrl(contentUrl) : null;
 
   return categories
     .filter((cat) => cat.guides.length > 0)
@@ -171,8 +198,11 @@ export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PA
         const path = `${base}/${cat.id}/${guide.slug}`;
         const url = `${origin}${path}`;
         items.push({ label: guide.title, url, note: guide.summary });
-        if (mdTwin) {
-          items.push({ label: `${guide.title} (Markdown)`, url: `${url}.md`, note: '' });
+        if (content) {
+          // Encode the slug exactly like deriveDocsSnapshotEntries does — the
+          // twin link must resolve to the same encoded pathname the API serves.
+          const mdUrl = `${content.origin}${content.basePath}/${encodeURIComponent(guide.slug)}.md`;
+          items.push({ label: `${guide.title} (Markdown)`, url: mdUrl, note: '' });
         }
       }
       return { title: cat.label, items };
@@ -194,15 +224,9 @@ export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PA
  *   URL to fetch at build time); empty when contentUrl is absent or malformed
  */
 export function deriveDocsSnapshotEntries(tree, contentUrl) {
-  if (!contentUrl) return [];
-  let parsed;
-  try {
-    parsed = new URL(contentUrl);
-  } catch {
-    return [];
-  }
-  const basePath = parsed.pathname.replace(/\/+$/, '');
-  const origin = parsed.origin;
+  const parsed = parseContentUrl(contentUrl);
+  if (!parsed) return [];
+  const { origin, basePath } = parsed;
   const entries = [
     { path: basePath, url: `${origin}${basePath}`, kind: 'tree' },
     { path: `${basePath}/`, url: `${origin}${basePath}`, kind: 'tree' },
@@ -297,7 +321,10 @@ export async function augmentSeoConfigWithDocs(config, options = {}) {
   const routes = deriveDocsRoutes(tree, basePath);
   if (routes.length === 0) return config;
 
-  const llmsSections = deriveDocsLlmsSections(tree, baseUrl, basePath, { mdTwin: docs.mdTwin === true });
+  const llmsSections = deriveDocsLlmsSections(tree, baseUrl, basePath, {
+    mdTwin: docs.mdTwin === true,
+    contentUrl: docs.contentUrl,
+  });
   // Build-time API snapshot: served to the page by `prerenderPlugin` via request
   // interception, so the capture never depends on the API being reachable from
   // the build environment (container builds, origin mismatches).

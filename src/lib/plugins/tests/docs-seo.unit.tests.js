@@ -144,11 +144,56 @@ describe('deriveDocsLlmsSections', () => {
     expect(sections[0].items[0].url).toBe('https://example.com/docs/get-started/welcome');
   });
 
-  it('appends a .md twin bullet per guide when mdTwin is on', () => {
-    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', { mdTwin: true });
+  it('appends the RAW-MARKDOWN twin bullet (content API, not the SPA route) when mdTwin is on', () => {
+    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'https://api.example.com/api/public/docs',
+    });
     expect(sections[0].items).toContainEqual({
       label: 'Welcome (Markdown)',
-      url: 'https://example.com/docs/get-started/welcome.md',
+      url: 'https://api.example.com/api/public/docs/welcome.md',
+      note: '',
+    });
+    // the human-readable bullet is unaffected — still the frontend page URL
+    expect(sections[0].items).toContainEqual({
+      label: 'Welcome',
+      url: 'https://example.com/docs/get-started/welcome',
+      note: 'What the API is.',
+    });
+  });
+
+  it('does not emit a twin bullet when mdTwin is off, even with a contentUrl', () => {
+    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      contentUrl: 'https://api.example.com/api/public/docs',
+    });
+    expect(sections[0].items.some((i) => i.label.endsWith('(Markdown)'))).toBe(false);
+  });
+
+  it('omits the twin bullet when mdTwin is on but contentUrl is missing (never a wrong link)', () => {
+    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', { mdTwin: true });
+    expect(sections[0].items).toEqual([
+      { label: 'Welcome', url: 'https://example.com/docs/get-started/welcome', note: 'What the API is.' },
+      { label: 'Quickstart', url: 'https://example.com/docs/get-started/quickstart', note: 'One HTTP call.' },
+    ]);
+  });
+
+  it('omits the twin bullet when contentUrl is malformed', () => {
+    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'not a url',
+    });
+    expect(sections[0].items.some((i) => i.label.endsWith('(Markdown)'))).toBe(false);
+  });
+
+  it('URL-encodes the twin slug the same way deriveDocsSnapshotEntries does', () => {
+    const spaced = { categories: [{ id: 'c', label: 'C', guides: [{ slug: 'my guide', title: 'MG', summary: '' }] }] };
+    const sections = deriveDocsLlmsSections(spaced, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'https://api.example.com/api/public/docs',
+    });
+    expect(sections[0].items[1]).toEqual({
+      label: 'MG (Markdown)',
+      url: 'https://api.example.com/api/public/docs/my%20guide.md',
       note: '',
     });
   });
@@ -339,6 +384,35 @@ describe('augmentSeoConfigWithDocs', () => {
     const routes = deriveDocsRoutes(treeFixture, 42);
     // '42' starts with a digit, not '/', so normalizeBasePath prefixes '/'.
     expect(routes[0]).toBe('/42');
+  });
+
+  it('ON path: mdTwin threads docs.contentUrl into llms sections as the raw-markdown twin', async () => {
+    const fetchImpl = vi.fn().mockImplementation((url) => {
+      if (String(url).endsWith('.md')) return Promise.resolve({ ok: true, text: async () => '# md' });
+      return Promise.resolve({ ok: true, json: async () => ({ data: treeFixture }) });
+    });
+    const config = baseConfig();
+    config.app.seo.docs = {
+      enabled: true,
+      contentUrl: 'https://api.example.com/api/public/docs',
+      basePath: '/docs',
+      mdTwin: true,
+    };
+
+    const out = await augmentSeoConfigWithDocs(config, { fetchImpl });
+
+    const getStarted = out.app.seo.llms.sections.find((s) => s.title === 'Get Started');
+    expect(getStarted.items).toContainEqual({
+      label: 'Welcome (Markdown)',
+      url: 'https://api.example.com/api/public/docs/welcome.md',
+      note: '',
+    });
+    // human-readable bullet stays on the frontend URL, unaffected by mdTwin
+    expect(getStarted.items).toContainEqual({
+      label: 'Welcome',
+      url: 'https://example.com/docs/get-started/welcome',
+      note: 'What the API is.',
+    });
   });
 
   it('ON path: attaches the prerender apiSnapshot (tree + article entries)', async () => {
