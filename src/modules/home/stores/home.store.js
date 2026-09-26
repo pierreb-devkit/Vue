@@ -5,7 +5,7 @@ import { defineStore } from 'pinia';
 import { merge } from 'lodash-es';
 import GhostContentAPI from '@tryghost/content-api';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const log = createLogger('home');
@@ -28,7 +28,7 @@ export const useHomeStore = defineStore('home', {
     },
 
     async getTeam() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       try {
         const team = await axios.get(`${api}/${config.api.endPoints.home}/team`);
@@ -39,7 +39,7 @@ export const useHomeStore = defineStore('home', {
     },
 
     async getPages(name) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       try {
         const pages = await axios.get(`${api}/${config.api.endPoints.home}/pages/${name}`);
@@ -82,7 +82,7 @@ export const useHomeStore = defineStore('home', {
      * @returns {Promise<void>}
      */
     async getStatistics() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       try {
         const tasks = await axios.get(`${api}/${config.api.endPoints.tasks}/stats`);

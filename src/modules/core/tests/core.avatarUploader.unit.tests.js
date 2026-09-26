@@ -8,6 +8,12 @@ vi.mock('../../../lib/services/axios', () => ({
   default: { post: vi.fn().mockResolvedValue({ data: { ok: true } }) },
 }));
 
+vi.mock('../../../lib/services/config', async () => {
+  const { formatApiUrl } = await import('../../../lib/services/apiUrl.js');
+  const api = { protocol: 'http', host: 'localhost', port: 3000, base: 'api/v1' };
+  return { apiBase: () => formatApiUrl(api) };
+});
+
 import coreAvatarUploader from '../components/core.avatarUploader.component.vue';
 import axios from '../../../lib/services/axios';
 
@@ -15,7 +21,6 @@ const vuetify = createVuetify({ components, directives });
 
 const baseGlobal = {
   plugins: [vuetify],
-  mocks: { config: { api: { protocol: 'http', host: 'localhost', port: 3000, base: 'api/v1' } } },
   stubs: { userAvatarComponent: { template: '<div class="stub-avatar"></div>' } },
 };
 
@@ -42,7 +47,7 @@ describe('core.avatarUploader.component', () => {
     await input.trigger('change');
     await flushPromises();
     expect(axios.post).toHaveBeenCalledTimes(1);
-    expect(axios.post.mock.calls[0][0]).toContain('/users/avatar');
+    expect(axios.post.mock.calls[0][0]).toBe('http://localhost:3000/api/v1/users/avatar');
     expect(wrapper.emitted('uploaded')).toBeTruthy();
   });
 });

@@ -3,15 +3,9 @@
  */
 import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import { capture } from '../../../lib/helpers/analytics';
 import { validateStripeUrl } from '../lib/stripeRedirect';
-
-/**
- * @desc Build the base API URL from config.
- * @returns {string} Base API URL
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
 /**
  * @desc sessionStorage key prefix for per-pack extras checkout intent IDs.

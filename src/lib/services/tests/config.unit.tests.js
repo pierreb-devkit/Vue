@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import config from '../config.js';
+import config, { apiBase } from '../config.js';
 
 describe('Config Service', () => {
   it('should export config object', () => {
@@ -35,5 +35,9 @@ describe('Config Service', () => {
     const config1 = config;
     const config2 = config;
     expect(config1).toBe(config2);
+  });
+
+  it('apiBase() should build the protocol://host:port/base prefix from config.api', () => {
+    expect(apiBase()).toBe('http://localhost:3000/api');
   });
 });

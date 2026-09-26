@@ -13,12 +13,14 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mock config
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
-    cookie: { prefix: 'devkit' },
-  },
-}));
+vi.mock('../../../lib/services/config', async () => {
+  const { formatApiUrl } = await import('../../../lib/services/apiUrl.js');
+  const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api' };
+  return {
+    default: { api, cookie: { prefix: 'devkit' } },
+    apiBase: () => formatApiUrl(api),
+  };
+});
 
 describe('Users Store', () => {
   beforeEach(() => {

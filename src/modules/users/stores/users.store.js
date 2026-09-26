@@ -3,13 +3,7 @@
  */
 import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
-
-/**
- * @desc Build the base API URL from config.
- * @returns {string} Base API URL
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+import { apiBase } from '../../../lib/services/config';
 
 /**
  * Store definition.

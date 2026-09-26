@@ -4,16 +4,10 @@
 import { defineStore } from 'pinia';
 import posthog from 'posthog-js';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture } from '../../../lib/helpers/analytics';
-
-/**
- * @desc Build the base API URL from config.
- * @returns {string} Base API URL
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
 /**
  * Store definition.

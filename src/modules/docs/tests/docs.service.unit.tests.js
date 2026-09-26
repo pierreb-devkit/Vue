@@ -12,17 +12,20 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mutable config mock so we can exercise the endpoint-key fallback branch.
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: {
-      protocol: 'http',
-      host: 'localhost',
-      port: '3010',
-      base: 'api',
-      endPoints: { docs: 'docs' },
-    },
-  },
-}));
+vi.mock('../../../lib/services/config', async () => {
+  const { formatApiUrl } = await import('../../../lib/services/apiUrl.js');
+  const api = {
+    protocol: 'http',
+    host: 'localhost',
+    port: '3010',
+    base: 'api',
+    endPoints: { docs: 'docs' },
+  };
+  return {
+    default: { api },
+    apiBase: () => formatApiUrl(api),
+  };
+});
 
 describe('docs.service', () => {
   beforeEach(() => {
