@@ -6,6 +6,8 @@
 
 import { execSync } from 'node:child_process';
 
+import { formatApiUrl } from '../../services/apiUrl.js';
+
 // Ensure the generated config exists before importing it —
 // playwright.config.js resolves imports before webServer.command runs.
 try {
@@ -39,7 +41,7 @@ const cookiePrefix = _config?.cookie?.prefix ?? 'devkit';
 export const BASE_URL = `http://localhost:${port}`;
 
 /** @type {string} API base URL with path, e.g. `http://localhost:3000/api` */
-export const API_URL = `${apiProtocol}://${apiHost}:${apiPort}/${apiBase}`;
+export const API_URL = formatApiUrl({ protocol: apiProtocol, host: apiHost, port: apiPort, base: apiBase });
 
 /** @type {string} API origin without path, e.g. `http://localhost:3000` */
 export const API_ORIGIN = `${apiProtocol}://${apiHost}:${apiPort}`;
