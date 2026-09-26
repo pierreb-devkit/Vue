@@ -145,6 +145,29 @@ describe('docs.article.view', () => {
     expect(body.findAll('.docs-table-scroll table tbody td')).toHaveLength(2);
   });
 
+  it('preserves column alignment on a wrapped table', async () => {
+    const md = '# Alpha\n\n| Left | Center |\n| --- | :-: |\n| a | b |\n';
+    const { wrapper } = await mountArticle('alpha', {
+      fetchArticle: vi.fn().mockResolvedValue(md),
+    });
+    await flushPromises();
+    const body = wrapper.find('[data-test="docs-article-body"]');
+    const headers = body.findAll('.docs-table-scroll table thead th');
+    expect(headers[0].attributes('align')).toBeUndefined();
+    expect(headers[1].attributes('align')).toBe('center');
+  });
+
+  it('wraps a header-only table (no body rows) without an empty tbody', async () => {
+    const md = '# Alpha\n\n| Field | Notes |\n| --- | --- |\n';
+    const { wrapper } = await mountArticle('alpha', {
+      fetchArticle: vi.fn().mockResolvedValue(md),
+    });
+    await flushPromises();
+    const body = wrapper.find('[data-test="docs-article-body"]');
+    expect(body.find('.docs-table-scroll table thead th').exists()).toBe(true);
+    expect(body.find('.docs-table-scroll table tbody').exists()).toBe(false);
+  });
+
   it('styles prose tables with borders, padding and a scroll wrapper using theme tokens only', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const sfc = readFileSync(resolve(here, '../views/docs.article.view.vue'), 'utf8');
@@ -158,6 +181,11 @@ describe('docs.article.view', () => {
     // The table keeps its native display (no `display: block`) so screen
     // readers retain table semantics; the wrapper below owns the scroll.
     expect(table).not.toMatch(/display:/);
+    // No `width: max-content` either — that would force every cell onto one
+    // line (a prose column never wraps). The table sizes and wraps like any
+    // normal block table, only overflowing into the wrapper when a cell
+    // truly cannot shrink.
+    expect(table).not.toMatch(/width:/);
     expect(table).toMatch(/border-collapse: collapse;/);
     const scroll = rule('.docs-prose :deep(.docs-table-scroll)');
     expect(scroll).toMatch(/max-width: 100%;/);

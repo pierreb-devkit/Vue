@@ -224,14 +224,17 @@ watch(slug, (s) => load(s), { immediate: true });
 }
 
 /*
- * Columns size to content; the wrapper (emitted by useDocsPage's table
- * renderer) scrolls horizontally so a wide table doesn't force the whole
- * article sideways. The table itself keeps its native `display: table` —
+ * The table sizes and wraps like any normal block table (no `width:
+ * max-content` — that would force every cell onto one line, so a prose
+ * column never wraps and even a short table goes wide). The wrapper
+ * (emitted by useDocsPage's table renderer) scrolls horizontally so the
+ * table only overflows sideways when a cell truly cannot shrink (e.g. a
+ * long unbreakable code span), instead of forcing the whole article
+ * sideways. The table itself keeps its native `display: table` —
  * overriding it (e.g. `display: block`) can strip table semantics from the
  * accessibility tree in some browser/screen-reader combinations.
  */
 .docs-prose :deep(table) {
-  width: max-content;
   border-collapse: collapse;
 }
 
