@@ -100,8 +100,9 @@ export const slugifyHeading = (text) =>
  * Build a marked renderer that:
  *  - assigns stable anchor ids to h2/h3 headings (so the ToC can deep-link),
  *  - rewrites bare `#anchor` links that target *another* guide to that guide's
- *    `/docs/:category/:slug#anchor` route (cross-guide deep-links), and
- *  - syntax-highlights fenced code blocks via highlight.js.
+ *    `/docs/:category/:slug#anchor` route (cross-guide deep-links),
+ *  - syntax-highlights fenced code blocks via highlight.js, and
+ *  - wraps rendered tables in a horizontally-scrollable container.
  *
  * Collects the heading anchors into `toc` as a side effect.
  *
@@ -175,6 +176,38 @@ const buildRenderer = (toc, { localIds, resolveCrossLink } = {}) => ({
       }
       const cls = language ? ` class="language-${encodeAttr(language)}"` : '';
       return `<pre class="hljs"><code${cls}>${highlighted}</code></pre>\n`;
+    },
+    /**
+     * Render a GFM table wrapped in a `.docs-table-scroll` container.
+     *
+     * A wide table needs to scroll on its own so it doesn't force the whole
+     * article body sideways — but the CSS that used to enable that (`display:
+     * block` on the `<table>` itself) can strip the element's table semantics
+     * from the accessibility tree in some browser/assistive-tech combinations,
+     * so screen reader users lose table navigation. Scrolling the WRAPPER
+     * instead keeps `<table>` at its native `display: table`.
+     *
+     * Mirrors marked's own default table assembly (`tablerow`/`tablecell` stay
+     * the untouched defaults) so cell/row markup is unchanged — only the outer
+     * wrapper is added.
+     *
+     * @param {{ header: Array, rows: Array }} token - marked table token.
+     * @returns {string} HTML for the table, wrapped in `.docs-table-scroll`.
+     */
+    table({ header, rows }) {
+      let headCells = '';
+      for (const cell of header) headCells += this.tablecell(cell);
+      const thead = this.tablerow({ text: headCells });
+
+      let bodyRows = '';
+      for (const row of rows) {
+        let rowCells = '';
+        for (const cell of row) rowCells += this.tablecell(cell);
+        bodyRows += this.tablerow({ text: rowCells });
+      }
+      const tbody = bodyRows ? `<tbody>${bodyRows}</tbody>` : '';
+
+      return `<div class="docs-table-scroll"><table>\n<thead>\n${thead}</thead>\n${tbody}</table>\n</div>\n`;
     },
   },
 });

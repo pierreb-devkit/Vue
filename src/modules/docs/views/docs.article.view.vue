@@ -222,4 +222,50 @@ watch(slug, (s) => load(s), { immediate: true });
   /* offset for the sticky header when deep-linking via the ToC */
   scroll-margin-top: 96px;
 }
+
+/*
+ * The table sizes and wraps like any normal block table (no `width:
+ * max-content` — that would force every cell onto one line, so a prose
+ * column never wraps and even a short table goes wide). The wrapper
+ * (emitted by useDocsPage's table renderer) scrolls horizontally so the
+ * table only overflows sideways when a cell truly cannot shrink (e.g. a
+ * long unbreakable code span), instead of forcing the whole article
+ * sideways. The table itself keeps its native `display: table` —
+ * overriding it (e.g. `display: block`) can strip table semantics from the
+ * accessibility tree in some browser/screen-reader combinations.
+ */
+.docs-prose :deep(table) {
+  border-collapse: collapse;
+}
+
+.docs-prose :deep(.docs-table-scroll) {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+.docs-prose :deep(th),
+.docs-prose :deep(td) {
+  border: 1px solid rgba(var(--v-border-color), 0.24);
+  padding: 10px 14px;
+  vertical-align: top;
+}
+
+/*
+ * A column-aligned header (marked's `:-:` / `--:` syntax emits `align="..."`)
+ * must keep the browser's attribute-driven alignment — an unconditional
+ * `text-align` here would override it, so every column would render
+ * left-aligned regardless of the markdown source. Left-align only the
+ * headers with NO explicit alignment (browsers default a bare `<th>` to
+ * `center`, which would otherwise mismatch the left-aligned body cells).
+ */
+.docs-prose :deep(th:not([align])) {
+  text-align: start;
+}
+
+.docs-prose :deep(thead th) {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-weight: 600;
+  white-space: nowrap;
+}
 </style>

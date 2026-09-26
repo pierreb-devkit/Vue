@@ -1,6 +1,9 @@
 import {
   describe, it, expect, beforeEach, vi,
 } from 'vitest';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
@@ -126,5 +129,80 @@ describe('docs.article.view', () => {
 
     // The view should show beta, not alpha (stale result discarded).
     expect(wrapper.find('[data-test="docs-article-title"]').text()).toBe('Beta');
+  });
+
+  it('renders a markdown table with a header row wrapped in a scroll container', async () => {
+    const md = '# Alpha\n\n| Field | Notes |\n| --- | --- |\n| a | line one<br>line two |\n';
+    const { wrapper } = await mountArticle('alpha', {
+      fetchArticle: vi.fn().mockResolvedValue(md),
+    });
+    await flushPromises();
+    const body = wrapper.find('[data-test="docs-article-body"]');
+    expect(body.classes()).toContain('docs-prose');
+    // The table stays a real <table> (native accessibility semantics) inside
+    // a `.docs-table-scroll` wrapper that owns the horizontal scroll instead.
+    expect(body.find('.docs-table-scroll table thead th').exists()).toBe(true);
+    expect(body.findAll('.docs-table-scroll table tbody td')).toHaveLength(2);
+  });
+
+  it('preserves column alignment on a wrapped table', async () => {
+    const md = '# Alpha\n\n| Left | Center |\n| --- | :-: |\n| a | b |\n';
+    const { wrapper } = await mountArticle('alpha', {
+      fetchArticle: vi.fn().mockResolvedValue(md),
+    });
+    await flushPromises();
+    const body = wrapper.find('[data-test="docs-article-body"]');
+    const headers = body.findAll('.docs-table-scroll table thead th');
+    expect(headers[0].attributes('align')).toBeUndefined();
+    expect(headers[1].attributes('align')).toBe('center');
+  });
+
+  it('wraps a header-only table (no body rows) without an empty tbody', async () => {
+    const md = '# Alpha\n\n| Field | Notes |\n| --- | --- |\n';
+    const { wrapper } = await mountArticle('alpha', {
+      fetchArticle: vi.fn().mockResolvedValue(md),
+    });
+    await flushPromises();
+    const body = wrapper.find('[data-test="docs-article-body"]');
+    expect(body.find('.docs-table-scroll table thead th').exists()).toBe(true);
+    expect(body.find('.docs-table-scroll table tbody').exists()).toBe(false);
+  });
+
+  it('styles prose tables with borders, padding and a scroll wrapper using theme tokens only', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sfc = readFileSync(resolve(here, '../views/docs.article.view.vue'), 'utf8');
+    const style = sfc.slice(sfc.indexOf('<style scoped>'));
+    const rule = (selector) => {
+      const start = style.indexOf(`${selector} {`);
+      expect(start).toBeGreaterThan(-1);
+      return style.slice(start, style.indexOf('}', start));
+    };
+    const table = rule('.docs-prose :deep(table)');
+    // The table keeps its native display (no `display: block`) so screen
+    // readers retain table semantics; the wrapper below owns the scroll.
+    expect(table).not.toMatch(/display:/);
+    // No `width: max-content` either — that would force every cell onto one
+    // line (a prose column never wraps). The table sizes and wraps like any
+    // normal block table, only overflowing into the wrapper when a cell
+    // truly cannot shrink.
+    expect(table).not.toMatch(/width:/);
+    expect(table).toMatch(/border-collapse: collapse;/);
+    const scroll = rule('.docs-prose :deep(.docs-table-scroll)');
+    expect(scroll).toMatch(/max-width: 100%;/);
+    expect(scroll).toMatch(/overflow-x: auto;/);
+    const cell = rule('.docs-prose :deep(td)');
+    expect(style).toMatch(/\.docs-prose :deep\(th\),\s*\.docs-prose :deep\(td\) \{/);
+    expect(cell).toMatch(/border: 1px solid rgba\(var\(--v-border-color\), [\d.]+\);/);
+    expect(cell).toMatch(/padding: 10px 14px;/);
+    // No unconditional `text-align` on th/td: that would override marked's
+    // `align="center"`/`align="right"` attribute on an aligned column, so
+    // every column would render left-aligned regardless of the markdown.
+    expect(cell).not.toMatch(/text-align:/);
+    const unalignedHeader = rule('.docs-prose :deep(th:not([align]))');
+    expect(unalignedHeader).toMatch(/text-align: start;/);
+    const head = rule('.docs-prose :deep(thead th)');
+    expect(head).toMatch(/background: rgba\(var\(--v-theme-on-surface\), [\d.]+\);/);
+    // theme tokens only: no hardcoded hex colors, so light and dark both work
+    expect(style).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 });
