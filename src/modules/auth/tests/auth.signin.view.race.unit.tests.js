@@ -24,13 +24,13 @@ import axios from '../../../lib/services/axios';
  * @desc Real API endpoint config consumed directly by auth.store.js (protocol/host/port + cookie prefix).
  * @returns {{default: object}} minimal config shape needed by the real auth store
  */
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
-    cookie: { prefix: 'devkit' },
-  },
-  apiBase: () => 'http://localhost:3000/api',
-}));
+vi.mock('../../../lib/services/config', () => {
+  const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } };
+  return {
+    default: { api, cookie: { prefix: 'devkit' } },
+    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+  };
+});
 
 /**
  * @desc Stub axios so signin()/fetchServerConfig() network calls are mock-controlled per test.

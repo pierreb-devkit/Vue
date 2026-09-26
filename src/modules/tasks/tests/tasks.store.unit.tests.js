@@ -14,18 +14,19 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mock config
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: {
-      protocol: 'http',
-      host: 'localhost',
-      port: '3000',
-      base: 'api',
-      endPoints: { tasks: 'tasks' },
-    },
-  },
-  apiBase: () => 'http://localhost:3000/api',
-}));
+vi.mock('../../../lib/services/config', () => {
+  const api = {
+    protocol: 'http',
+    host: 'localhost',
+    port: '3000',
+    base: 'api',
+    endPoints: { tasks: 'tasks' },
+  };
+  return {
+    default: { api },
+    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+  };
+});
 
 describe('Tasks Store', () => {
   beforeEach(() => {

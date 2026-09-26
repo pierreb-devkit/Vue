@@ -6,13 +6,13 @@ import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 
 // Mock config
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
-    cookie: { prefix: 'devkit' },
-  },
-  apiBase: () => 'http://localhost:3000/api',
-}));
+vi.mock('../../../lib/services/config', () => {
+  const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } };
+  return {
+    default: { api, cookie: { prefix: 'devkit' } },
+    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+  };
+});
 
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({

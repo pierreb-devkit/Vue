@@ -16,13 +16,13 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mock config
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
-    cookie: { prefix: 'devkit' },
-  },
-  apiBase: () => 'http://localhost:3000/api',
-}));
+vi.mock('../../../lib/services/config', () => {
+  const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api' };
+  return {
+    default: { api, cookie: { prefix: 'devkit' } },
+    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+  };
+});
 
 // Mock auth store — return one shared object so mutations are observable
 const mockAuthStore = { user: null, cookieExpire: null };

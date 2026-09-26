@@ -14,13 +14,13 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mock config
-vi.mock('../../../lib/services/config', () => ({
-  default: {
-    api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
-    cookie: { prefix: 'devkit' },
-  },
-  apiBase: () => 'http://localhost:3000/api',
-}));
+vi.mock('../../../lib/services/config', () => {
+  const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api' };
+  return {
+    default: { api, cookie: { prefix: 'devkit' } },
+    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+  };
+});
 
 // Mock analytics so the PostHog re-emit can be asserted without a live SDK.
 vi.mock('../../../lib/helpers/analytics', () => ({
