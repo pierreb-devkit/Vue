@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import testConfig from '../../../config/defaults/test.config.js';
 
@@ -229,6 +229,106 @@ describe('app.router', () => {
     await router.push('/pricing');
     await router.isReady();
     expect(router.currentRoute.value.path).toBe('/pricing');
+  });
+
+  describe('config-provided org-exempt routes (config.app.orgExemptRoutes)', () => {
+    // orgExemptConfigured is read from `config.app.orgExemptRoutes` fresh on every
+    // getRouter() call (not cached at import time), so mutating the mocked
+    // testConfig object directly before calling getRouter() is enough — no need
+    // to vi.resetModules()/re-import between these tests.
+    afterEach(() => {
+      delete testConfig.app.orgExemptRoutes;
+    });
+
+    it('default behavior unchanged: a non-listed path still redirects to /organization-required when no extra routes are configured', async () => {
+      delete testConfig.app.orgExemptRoutes;
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/not-exempt', name: 'NotExempt', component: { template: '<div />' } });
+      await router.push('/not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a configured extra path is exempt for a logged-in user without an organization', async () => {
+      testConfig.app.orgExemptRoutes = ['/extra-public'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/extra-public', name: 'ExtraPublic', component: { template: '<div />' } });
+      await router.push('/extra-public');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/extra-public');
+    });
+
+    it('a configured extra path also exempts its sub-paths (path + "/" prefix, same semantics as the default list)', async () => {
+      testConfig.app.orgExemptRoutes = ['/extra-public'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/extra-public/sub', name: 'ExtraPublicSub', component: { template: '<div />' } });
+      await router.push('/extra-public/sub');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/extra-public/sub');
+    });
+
+    it('a non-listed path still redirects to /organization-required even when other extra routes are configured', async () => {
+      testConfig.app.orgExemptRoutes = ['/extra-public'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/still-not-exempt', name: 'StillNotExempt', component: { template: '<div />' } });
+      await router.push('/still-not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('an empty-string entry does not exempt every path (fail-open guard)', async () => {
+      testConfig.app.orgExemptRoutes = [''];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/still-not-exempt', name: 'StillNotExemptEmptyEntry', component: { template: '<div />' } });
+      await router.push('/still-not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a non-array config value does not exempt anything (and does not crash)', async () => {
+      testConfig.app.orgExemptRoutes = '/extra-public';
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/still-not-exempt', name: 'StillNotExemptNonArray', component: { template: '<div />' } });
+      await router.push('/still-not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a configured trailing-slash entry ("/public/") exempts both "/public" and "/public/child"', async () => {
+      testConfig.app.orgExemptRoutes = ['/public/'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/public', name: 'PublicTrailingSlash', component: { template: '<div />' } });
+      router.addRoute({ path: '/public/child', name: 'PublicTrailingSlashChild', component: { template: '<div />' } });
+
+      await router.push('/public');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/public');
+
+      await router.push('/public/child');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/public/child');
+    });
   });
 
   it('/pricing has meta.marketing true (renders outside app shell — no drawer)', async () => {
