@@ -19,6 +19,7 @@ vi.mock('../../../lib/services/config', () => ({
     api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
     cookie: { prefix: 'devkit' },
   },
+  apiBase: () => 'http://localhost:3000/api',
 }));
 
 // Mock analytics so the PostHog re-emit can be asserted without a live SDK.

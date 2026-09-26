@@ -21,6 +21,7 @@ vi.mock('../../../lib/services/config', () => ({
     api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api' },
     cookie: { prefix: 'devkit' },
   },
+  apiBase: () => 'http://localhost:3000/api',
 }));
 
 // Mock auth store — return one shared object so mutations are observable

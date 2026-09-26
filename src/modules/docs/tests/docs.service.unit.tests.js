@@ -22,6 +22,7 @@ vi.mock('../../../lib/services/config', () => ({
       endPoints: { docs: 'docs' },
     },
   },
+  apiBase: () => 'http://localhost:3010/api',
 }));
 
 describe('docs.service', () => {

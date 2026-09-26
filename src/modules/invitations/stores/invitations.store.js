@@ -3,18 +3,12 @@
  */
 import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import { apiBase } from '../../../lib/services/config';
 import { capture } from '../../../lib/helpers/analytics';
 import { createLogger } from '../../../lib/helpers/logger';
 import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 const logger = createLogger('invitations');
-
-/**
- * Build the base API URL from config.
- * @returns {string} The base API URL.
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
 /**
  * Store definition — platform signup invitations (admin management + account

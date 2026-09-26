@@ -3,7 +3,7 @@
  */
 import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
 import { useBillingStore } from '../../billing/stores/billing.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
@@ -110,7 +110,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Object|null} Server auth config or null on failure
      */
     async fetchServerConfig() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       // Capture the generation BEFORE the network await — same rationale as
       // refreshAbilities()/token() (#4459): a concurrent signout() bumps the
       // generation and synchronously nulls serverConfig, so a fetchServerConfig()
@@ -141,7 +141,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<void>}
      */
     async signin(params) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
 
       try {
@@ -256,7 +256,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<Object|undefined>} Signup response data containing user, and optionally organization or organizationSetupRequired
      */
     async signup(params) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
 
       const { inviteToken, ...payload } = params;
@@ -318,7 +318,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<void>}
      */
     async signout(silent = false) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
 
       // Bump the generation FIRST (synchronously, before any await) so any
@@ -373,7 +373,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async refreshAbilities() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
       // Capture the generation BEFORE the network await — if a concurrent
       // signout() bumps it while this request is in flight, the response
@@ -405,7 +405,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async token() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
       // Capture the generation BEFORE the network await — see refreshAbilities()
       // for the shared rationale (a soft-refresh continuation resolving after
@@ -440,7 +440,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async forgot(params) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       try {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
@@ -453,7 +453,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async reset(params) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       const coreStore = useCoreStore();
 
       try {
@@ -480,7 +480,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<Object>} Resolved API response data on success.
      */
     async verifyEmail(token) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       const encodedToken = encodeURIComponent(token);
       const res = await axios.post(`${api}/${config.api.endPoints.auth}/verify-email/${encodedToken}`);
@@ -492,7 +492,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<Object>} Resolved API response data on success.
      */
     async resendVerification() {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
 
       const res = await axios.post(`${api}/${config.api.endPoints.auth}/resend-verification`);
       return res.data;
@@ -507,7 +507,7 @@ export const useAuthStore = defineStore('auth', {
      * @returns {Promise<{valid: boolean, email: string|null}>}
      */
     async verifyInvite(token) {
-      const api = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+      const api = apiBase();
       try {
         const res = await axios.get(`${api}/invitations/verify/${encodeURIComponent(token)}`);
         return res.data.data;

@@ -4,19 +4,13 @@
 import { defineStore } from 'pinia';
 import { assign } from 'lodash-es';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
 
 /**
  * Whitelists.
  */
 const whitelists = ['title', 'description'];
-
-/**
- * @desc Build the base API URL from config.
- * @returns {string} Base API URL
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 
 /**
  * Store definition.

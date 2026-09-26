@@ -168,6 +168,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { apiBase } from '../../../lib/services/config';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
@@ -201,7 +202,7 @@ export default {
       password: '',
       signupError: null,
       showPassword: false,
-      oAuth: `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}/${this.config.api.endPoints.auth}`,
+      oAuth: `${apiBase()}/${this.config.api.endPoints.auth}`,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',

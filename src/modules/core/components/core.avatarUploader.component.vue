@@ -36,6 +36,7 @@
 
 <script>
 import axios from '../../../lib/services/axios';
+import { apiBase } from '../../../lib/services/config';
 import userAvatarComponent from './user.avatar.component.vue';
 
 export default {
@@ -69,7 +70,7 @@ export default {
       if (!file) return;
       const formData = new FormData();
       formData.append(this.field, file);
-      const api = `${this.config.api.protocol}://${this.config.api.host}:${this.config.api.port}/${this.config.api.base}`;
+      const api = apiBase();
       try {
         await axios.post(`${api}${this.endpoint}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },

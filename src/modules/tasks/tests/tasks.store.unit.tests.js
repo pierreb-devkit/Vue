@@ -24,6 +24,7 @@ vi.mock('../../../lib/services/config', () => ({
       endPoints: { tasks: 'tasks' },
     },
   },
+  apiBase: () => 'http://localhost:3000/api',
 }));
 
 describe('Tasks Store', () => {

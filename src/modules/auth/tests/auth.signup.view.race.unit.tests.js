@@ -28,6 +28,7 @@ vi.mock('../../../lib/services/config', () => ({
     api: { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } },
     cookie: { prefix: 'devkit' },
   },
+  apiBase: () => 'http://localhost:3000/api',
 }));
 
 /**

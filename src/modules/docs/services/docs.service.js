@@ -12,14 +12,7 @@
  *   GET /api/spec.json              → merged OpenAPI 3 spec (JSON)
  */
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
-
-/**
- * Resolve the fully-qualified API base URL from runtime config.
- * @returns {string} The `protocol://host:port/base` prefix (e.g. `http://localhost:3010/api`).
- */
-const apiBaseUrl = () =>
-  `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
+import config, { apiBase } from '../../../lib/services/config';
 
 /**
  * Resolve the fully-qualified public docs base URL from runtime config.
@@ -27,7 +20,7 @@ const apiBaseUrl = () =>
  */
 const docsBase = () => {
   const endpoint = config.api.endPoints?.docs || 'docs';
-  return `${apiBaseUrl()}/public/${endpoint}`;
+  return `${apiBase()}/public/${endpoint}`;
 };
 
 /**
@@ -53,7 +46,7 @@ export const getDocArticle = (slug) =>
  * same merged spec the in-theme `/docs/api` reference renders.
  * @returns {Promise<import('axios').AxiosResponse>}
  */
-export const getSpec = () => axios.get(`${apiBaseUrl()}/spec.json`);
+export const getSpec = () => axios.get(`${apiBase()}/spec.json`);
 
 export default {
   getDocsTree,

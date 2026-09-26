@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia';
 import { assign } from 'lodash-es';
 import axios from '../../../lib/services/axios';
-import config from '../../../lib/services/config';
+import { apiBase } from '../../../lib/services/config';
 import model from '../../../lib/middlewares/model';
 import { createLogger } from '../../../lib/helpers/logger';
 import { sanitizeApiError } from '../../../lib/helpers/apiError';
@@ -16,11 +16,6 @@ const logger = createLogger('admin');
  */
 const whitelists = ['firstName', 'lastName', 'bio', 'position', 'email', 'avatar', 'roles'];
 
-/**
- * Build the base API URL from config.
- * @returns {string} The base API URL.
- */
-const apiBase = () => `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
 const defaultUser = () => ({
   firstName: '',
   lastName: '',
