@@ -131,7 +131,7 @@ describe('docs.article.view', () => {
     expect(wrapper.find('[data-test="docs-article-title"]').text()).toBe('Beta');
   });
 
-  it('renders a markdown table with a header row inside the prose container', async () => {
+  it('renders a markdown table with a header row wrapped in a scroll container', async () => {
     const md = '# Alpha\n\n| Field | Notes |\n| --- | --- |\n| a | line one<br>line two |\n';
     const { wrapper } = await mountArticle('alpha', {
       fetchArticle: vi.fn().mockResolvedValue(md),
@@ -139,11 +139,13 @@ describe('docs.article.view', () => {
     await flushPromises();
     const body = wrapper.find('[data-test="docs-article-body"]');
     expect(body.classes()).toContain('docs-prose');
-    expect(body.find('table thead th').exists()).toBe(true);
-    expect(body.findAll('table tbody td')).toHaveLength(2);
+    // The table stays a real <table> (native accessibility semantics) inside
+    // a `.docs-table-scroll` wrapper that owns the horizontal scroll instead.
+    expect(body.find('.docs-table-scroll table thead th').exists()).toBe(true);
+    expect(body.findAll('.docs-table-scroll table tbody td')).toHaveLength(2);
   });
 
-  it('styles prose tables with borders, padding and a scroll container using theme tokens only', () => {
+  it('styles prose tables with borders, padding and a scroll wrapper using theme tokens only', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const sfc = readFileSync(resolve(here, '../views/docs.article.view.vue'), 'utf8');
     const style = sfc.slice(sfc.indexOf('<style scoped>'));
@@ -153,10 +155,13 @@ describe('docs.article.view', () => {
       return style.slice(start, style.indexOf('}', start));
     };
     const table = rule('.docs-prose :deep(table)');
-    expect(table).toMatch(/display: block;/);
-    expect(table).toMatch(/max-width: 100%;/);
-    expect(table).toMatch(/overflow-x: auto;/);
+    // The table keeps its native display (no `display: block`) so screen
+    // readers retain table semantics; the wrapper below owns the scroll.
+    expect(table).not.toMatch(/display:/);
     expect(table).toMatch(/border-collapse: collapse;/);
+    const scroll = rule('.docs-prose :deep(.docs-table-scroll)');
+    expect(scroll).toMatch(/max-width: 100%;/);
+    expect(scroll).toMatch(/overflow-x: auto;/);
     const cell = rule('.docs-prose :deep(td)');
     expect(style).toMatch(/\.docs-prose :deep\(th\),\s*\.docs-prose :deep\(td\) \{/);
     expect(cell).toMatch(/border: 1px solid rgba\(var\(--v-border-color\), [\d.]+\);/);

@@ -223,13 +223,21 @@ watch(slug, (s) => load(s), { immediate: true });
   scroll-margin-top: 96px;
 }
 
-/* columns size to content; a wide table scrolls inside itself, not the article */
+/*
+ * Columns size to content; the wrapper (emitted by useDocsPage's table
+ * renderer) scrolls horizontally so a wide table doesn't force the whole
+ * article sideways. The table itself keeps its native `display: table` —
+ * overriding it (e.g. `display: block`) can strip table semantics from the
+ * accessibility tree in some browser/screen-reader combinations.
+ */
 .docs-prose :deep(table) {
-  display: block;
   width: max-content;
+  border-collapse: collapse;
+}
+
+.docs-prose :deep(.docs-table-scroll) {
   max-width: 100%;
   overflow-x: auto;
-  border-collapse: collapse;
   margin: 20px 0;
 }
 
