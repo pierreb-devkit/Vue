@@ -222,4 +222,28 @@ watch(slug, (s) => load(s), { immediate: true });
   /* offset for the sticky header when deep-linking via the ToC */
   scroll-margin-top: 96px;
 }
+
+/* columns size to content; a wide table scrolls inside itself, not the article */
+.docs-prose :deep(table) {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.docs-prose :deep(th),
+.docs-prose :deep(td) {
+  border: 1px solid rgba(var(--v-border-color), 0.24);
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-prose :deep(thead th) {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-weight: 600;
+  white-space: nowrap;
+}
 </style>
