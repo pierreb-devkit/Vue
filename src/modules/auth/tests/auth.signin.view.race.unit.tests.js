@@ -24,11 +24,12 @@ import axios from '../../../lib/services/axios';
  * @desc Real API endpoint config consumed directly by auth.store.js (protocol/host/port + cookie prefix).
  * @returns {{default: object}} minimal config shape needed by the real auth store
  */
-vi.mock('../../../lib/services/config', () => {
+vi.mock('../../../lib/services/config', async () => {
+  const { formatApiUrl } = await import('../../../lib/services/apiUrl.js');
   const api = { protocol: 'http', host: 'localhost', port: '3000', base: 'api', endPoints: { auth: 'auth' } };
   return {
     default: { api, cookie: { prefix: 'devkit' } },
-    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+    apiBase: () => formatApiUrl(api),
   };
 });
 

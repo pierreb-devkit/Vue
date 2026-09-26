@@ -14,7 +14,8 @@ vi.mock('../../../lib/services/axios', () => ({
 }));
 
 // Mock config
-vi.mock('../../../lib/services/config', () => {
+vi.mock('../../../lib/services/config', async () => {
+  const { formatApiUrl } = await import('../../../lib/services/apiUrl.js');
   const api = {
     protocol: 'http',
     host: 'localhost',
@@ -24,7 +25,7 @@ vi.mock('../../../lib/services/config', () => {
   };
   return {
     default: { api },
-    apiBase: () => `${api.protocol}://${api.host}:${api.port}/${api.base}`,
+    apiBase: () => formatApiUrl(api),
   };
 });
 

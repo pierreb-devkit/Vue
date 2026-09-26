@@ -7,8 +7,9 @@ import { formatApiUrl } from './apiUrl.js';
 
 /**
  * Build the fully-qualified API base URL from runtime config.
- * Single source for the `protocol://host:port/base` prefix — every store/service/view
- * that talks to the API derives its URL from this instead of inlining the expression.
+ * Single source for the `protocol://host:port/base` prefix — every API call except
+ * image URLs (images.js hardcodes a different path and drops the port when empty)
+ * derives its URL from this instead of inlining the expression.
  * @returns {string} The `protocol://host:port/base` prefix (e.g. `http://localhost:3000/api`).
  */
 export const apiBase = () => formatApiUrl(config.api);

@@ -38,7 +38,6 @@ describe('Config Service', () => {
   });
 
   it('apiBase() should build the protocol://host:port/base prefix from config.api', () => {
-    const expected = `${config.api.protocol}://${config.api.host}:${config.api.port}/${config.api.base}`;
-    expect(apiBase()).toBe(expected);
+    expect(apiBase()).toBe('http://localhost:3000/api');
   });
 });

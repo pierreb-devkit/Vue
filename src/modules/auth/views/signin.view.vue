@@ -104,7 +104,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
-import { apiBase } from '../../../lib/services/config';
+import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
@@ -121,7 +121,7 @@ export default {
       password: '',
       showPassword: false,
       lockoutTimer: null,
-      oAuth: `${apiBase()}/${this.config.api.endPoints.auth}`,
+      oAuth: `${apiBase()}/${config.api.endPoints.auth}`,
       rules: {
         required: (v) => !!v || 'Required',
         mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
