@@ -171,7 +171,11 @@ const getRouter = () => {
   // Config-provided additions to the exact-match list above (config.app.orgExemptRoutes,
   // default []) — lets a downstream project exempt an extra public route without
   // editing this stack file. Same matching semantics: exact path or `path + '/'` prefix.
-  const orgExemptConfigured = config.app.orgExemptRoutes || [];
+  // Sanitized: a non-array value would crash `.some` below, and an empty-string entry
+  // would make `'' + '/' === '/'` match every path, silently disabling the org guard.
+  const orgExemptConfigured = (Array.isArray(config.app.orgExemptRoutes) ? config.app.orgExemptRoutes : [])
+    .filter((p) => typeof p === 'string' && p.startsWith('/') && p.length > 1)
+    .map((p) => (p.endsWith('/') ? p.slice(0, -1) : p));
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).

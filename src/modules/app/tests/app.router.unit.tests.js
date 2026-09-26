@@ -287,6 +287,48 @@ describe('app.router', () => {
       await router.isReady();
       expect(router.currentRoute.value.path).toBe('/organization-required');
     });
+
+    it('an empty-string entry does not exempt every path (fail-open guard)', async () => {
+      testConfig.app.orgExemptRoutes = [''];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/still-not-exempt', name: 'StillNotExemptEmptyEntry', component: { template: '<div />' } });
+      await router.push('/still-not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a non-array config value does not exempt anything (and does not crash)', async () => {
+      testConfig.app.orgExemptRoutes = '/extra-public';
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/still-not-exempt', name: 'StillNotExemptNonArray', component: { template: '<div />' } });
+      await router.push('/still-not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a configured trailing-slash entry ("/public/") exempts both "/public" and "/public/child"', async () => {
+      testConfig.app.orgExemptRoutes = ['/public/'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/public', name: 'PublicTrailingSlash', component: { template: '<div />' } });
+      router.addRoute({ path: '/public/child', name: 'PublicTrailingSlashChild', component: { template: '<div />' } });
+
+      await router.push('/public');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/public');
+
+      await router.push('/public/child');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/public/child');
+    });
   });
 
   it('/pricing has meta.marketing true (renders outside app shell — no drawer)', async () => {
