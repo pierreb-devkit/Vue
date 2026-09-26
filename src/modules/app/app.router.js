@@ -168,6 +168,10 @@ const getRouter = () => {
   // Routes that don't require an organization
   const orgExemptPrefixes = ['/users', '/admin'];
   const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/pricing'];
+  // Config-provided additions to the exact-match list above (config.app.orgExemptRoutes,
+  // default []) — lets a downstream project exempt an extra public route without
+  // editing this stack file. Same matching semantics: exact path or `path + '/'` prefix.
+  const orgExemptConfigured = config.app.orgExemptRoutes || [];
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).
@@ -209,6 +213,7 @@ const getRouter = () => {
       && !authStore.user?.currentOrganization
       && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
       && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))
+      && !orgExemptConfigured.some((p) => to.path === p || to.path.startsWith(p + '/'))
     ) {
       return '/organization-required';
     }

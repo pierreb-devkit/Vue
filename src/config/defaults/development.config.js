@@ -10,6 +10,7 @@ export default {
     lang: 'en', // html lang attribute — 'en' | 'fr' | 'de' | 'es' | etc.
     url: 'http://localhost:8080', // canonical base URL — override in production
     version: 'dev', // app release version — overridden at build time via DEVKIT_VUE_app_version build-arg
+    orgExemptRoutes: [], // extra paths exempt from the "organization required" router guard, on top of the built-in list (app.router.js) — same matching: exact path or `path + '/'` prefix
     notFound: {
       title: 'Page Not Found', // heading displayed on the 404 page
       message: 'The page you are looking for does not exist.', // body text below the heading
