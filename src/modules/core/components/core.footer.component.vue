@@ -176,17 +176,18 @@ export default {
     /**
      * @desc Sections from allLinks that have items, used by the template to
      * avoid double-filtering (previously called twice inline in the template).
-     * Items whose `url` resolves to the app's not-found route are dropped —
-     * e.g. a static footer link pointing at a stack route a downstream
-     * project switched off (`config.home.routes.*.activated: false`) — so
-     * the footer never advertises a dead link. External URLs and
-     * `onClick`-only items (no `url`) are never checked.
+     * Items pointing at `/team` or `/pages/:name` are dropped when the
+     * matching home route is switched off (same `config.home.routes.{team,pages}.activated`
+     * read by `home.router.js`), so a static footer link to a disabled route
+     * never renders as a dead link. Any other internal link, external URL, or
+     * `onClick`-only item (no `url`) is never checked. A section is kept even
+     * when its `items` end up empty — unchanged from before this filter existed.
      * @returns {Array}
      */
     visibleSections() {
       return this.allLinks
-        .map((section) => ({ ...section, items: (section.items || []).filter((item) => !this.isDeadLink(item)) }))
-        .filter((section) => section.items.length > 0);
+        .map((section) => ({ ...section, items: (section.items || []).filter((item) => !this.isDisabledHomeRouteLink(item)) }))
+        .filter((section) => section.items);
     },
   },
   watch: {
@@ -201,22 +202,24 @@ export default {
   },
   methods: {
     /**
-     * @desc Whether an internal footer link points at a route the app does
-     * not (or no longer) register — resolved via the live router so it
-     * automatically tracks any route de/activation, not just home's.
-     * Fails open (never hides) when there's no `url`, the link is external,
-     * or no router is available (e.g. minimal test mounts).
+     * @desc Whether an internal footer link points at a home route this PR's
+     * config switches off — `/team` when `config.home.routes.team.activated`
+     * is `false`, or anything under `/pages/` when
+     * `config.home.routes.pages.activated` is `false` (same config, same
+     * `!== false` default, as `home.router.js`). Query/hash are ignored when
+     * matching the path. Never hides anything else: a dead link to some other
+     * path, an external URL, or an `onClick`-only item (no `url`) all stay.
      * @param {{url?: string}} item
      * @returns {boolean}
      */
-    isDeadLink(item) {
+    isDisabledHomeRouteLink(item) {
       if (!item?.url || typeof item.url !== 'string' || !item.url.startsWith('/')) return false;
-      if (typeof this.$router?.resolve !== 'function') return false;
-      try {
-        return this.$router.resolve(item.url)?.name === 'NotFound';
-      } catch {
-        return false;
-      }
+      const path = item.url.split(/[?#]/)[0];
+      const teamActivated = this.config?.home?.routes?.team?.activated !== false;
+      const pagesActivated = this.config?.home?.routes?.pages?.activated !== false;
+      if (!teamActivated && path === '/team') return true;
+      if (!pagesActivated && path.startsWith('/pages/')) return true;
+      return false;
     },
     navigate(link) {
       if (link.startsWith('http')) {

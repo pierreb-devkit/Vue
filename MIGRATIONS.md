@@ -6,7 +6,7 @@ Breaking changes and upgrade notes for downstream projects.
 
 ## home: per-route activation for `/team` and `/pages/:name` (2026-09-26, #4684)
 
-Non-breaking, additive. Each route now switches off independently via `config.home.routes.{team,pages}.activated` (both default `true` — unset behaves exactly like today, no `/update-stack` action needed). When set to `false`, the route is not registered at all — navigating to it falls through to the normal not-found handling. `core.footer.component.vue` also now hides any internal footer link whose `url` resolves to the not-found route, not only these two — so a static link left pointing at a disabled route never renders as a dead link (this also means a placeholder link to a path that doesn't exist yet will disappear rather than show, which is the intended behavior).
+Non-breaking, additive. Each route now switches off independently via `config.home.routes.{team,pages}.activated` (both default `true` — unset behaves exactly like today, no `/update-stack` action needed). When set to `false`, the route is not registered at all — navigating to it falls through to the normal not-found handling. `core.footer.component.vue` also hides a static footer link matching the disabled route — `/team` when `team.activated: false`, anything under `/pages/` when `pages.activated: false` — so it never renders as a dead link. Every other footer link, including one pointing at any other unregistered path, is untouched.
 
 ```js
 // src/config/defaults/<project>.config.js

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createRouter, createMemoryHistory } from 'vue-router';
 
 vi.mock('../views/home.view.vue', () => ({ default: { name: 'HomeView', template: '<div />' } }));
@@ -39,14 +39,11 @@ describe('home.router — both routes activated (default config)', () => {
 });
 
 describe('home.router — team deactivated', () => {
-  beforeAll(() => {
+  it('does not register the Team route (Pages stays on)', async () => {
     vi.resetModules();
     vi.doMock('@/config', () => ({
       default: { home: { routes: { team: { activated: false } } } },
     }));
-  });
-
-  it('does not register the Team route (Pages stays on)', async () => {
     const { default: routes } = await import('../router/home.router');
     const names = routes.map((r) => r.name);
     expect(names).not.toContain('Team');
@@ -54,6 +51,10 @@ describe('home.router — team deactivated', () => {
   });
 
   it('falls through to NotFound when navigating to /team', async () => {
+    vi.resetModules();
+    vi.doMock('@/config', () => ({
+      default: { home: { routes: { team: { activated: false } } } },
+    }));
     const { default: routes } = await import('../router/home.router');
     const router = buildRouter(routes);
     await router.push('/team');
@@ -62,14 +63,11 @@ describe('home.router — team deactivated', () => {
 });
 
 describe('home.router — pages deactivated', () => {
-  beforeAll(() => {
+  it('does not register the Pages route (Team stays on)', async () => {
     vi.resetModules();
     vi.doMock('@/config', () => ({
       default: { home: { routes: { pages: { activated: false } } } },
     }));
-  });
-
-  it('does not register the Pages route (Team stays on)', async () => {
     const { default: routes } = await import('../router/home.router');
     const names = routes.map((r) => r.name);
     expect(names).not.toContain('Pages');
@@ -77,6 +75,10 @@ describe('home.router — pages deactivated', () => {
   });
 
   it('falls through to NotFound when navigating to /pages/:name', async () => {
+    vi.resetModules();
+    vi.doMock('@/config', () => ({
+      default: { home: { routes: { pages: { activated: false } } } },
+    }));
     const { default: routes } = await import('../router/home.router');
     const router = buildRouter(routes);
     await router.push('/pages/legal');

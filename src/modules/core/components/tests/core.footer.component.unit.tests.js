@@ -42,17 +42,16 @@ const baseConfig = () => ({
 /**
  * Mounts CoreFooter with the given config, simulating an active footer route.
  * @param {object} config
- * @param {{resolve?: Function}} [routerOverrides] - Extra `$router` mock methods (e.g. `resolve`).
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountFooter = (config, routerOverrides = {}) =>
+const mountFooter = (config) =>
   mount(CoreFooter, {
     global: {
       plugins: [vuetify()],
       mocks: {
         config,
         $route: { path: '/', meta: { footer: true } },
-        $router: { push: vi.fn(), ...routerOverrides },
+        $router: { push: vi.fn() },
       },
       stubs: {
         RouterLink: { template: '<a><slot /></a>', props: ['to'] },
@@ -216,41 +215,79 @@ describe('core.footer.component — registry extras', () => {
     expect(legalHeadings.length).toBe(1);
   });
 
-  it('hides an internal link that resolves to the NotFound route (e.g. a stack route switched off)', () => {
-    const resolve = (path) => ({ name: path === '/team' ? 'NotFound' : 'SomeRoute' });
-    const wrapper = mountFooter(
-      {
-        footer: {
-          links: [
-            { title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] },
-          ],
-        },
-        vuetify: { theme: { flat: false } },
+  it('hides a /team footer link only when config.home.routes.team.activated is false', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
       },
-      { resolve },
-    );
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
     expect(wrapper.text()).not.toContain('Team');
     expect(wrapper.text()).toContain('Blog');
   });
 
-  it('drops the whole section when filtering a dead link empties its items', () => {
-    const resolve = () => ({ name: 'NotFound' });
-    const wrapper = mountFooter(
-      {
-        footer: {
-          links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
-        },
-        vuetify: { theme: { flat: false } },
+  it('hides /team even with a query/hash suffix when team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team?x=1#a' }] }],
       },
-      { resolve },
-    );
-    expect(wrapper.text()).not.toContain('About');
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
     expect(wrapper.text()).not.toContain('Team');
   });
 
-  it('keeps an internal link when $router has no resolve method (fail-open, e.g. minimal test mounts)', () => {
-    const wrapper = mountFooter(baseConfig());
-    expect(wrapper.text()).toContain('Docs');
+  it('keeps a /team link when team is activated (default) even if pages is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Team');
+  });
+
+  it('hides a /pages/:name footer link only when config.home.routes.pages.activated is false', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Terms', icon: 'fa-solid fa-file', url: '/pages/terms' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Terms');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('keeps a dead link to an unrelated path visible even when both team and pages are off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Nope', icon: 'fa-solid fa-question', url: '/nope' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false }, pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Nope');
+  });
+
+  it('keeps the section heading when filtering a disabled route link empties its items (unchanged from before this filter existed)', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('About');
+    expect(wrapper.text()).not.toContain('Team');
   });
 
   it('calls item.onClick when item has an onClick callback', async () => {
