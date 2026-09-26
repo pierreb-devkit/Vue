@@ -1,6 +1,22 @@
 export default {
   home: {
     // ============================================================
+    // OPTIONAL ROUTES — activation switches
+    // ============================================================
+    // `/team` and `/pages/:name` are declared in home.router.js. Both ship
+    // ON by default (stack behavior unchanged); set `activated: false` on
+    // either to skip registering that route — the path then falls through
+    // to the normal not-found handling instead of rendering the view.
+    routes: {
+      team: {
+        activated: true, // '/team'
+      },
+      pages: {
+        activated: true, // '/pages/:name'
+      },
+    },
+
+    // ============================================================
     // HOME PAGE SECTIONS CONFIGURATION
     // ============================================================
     // Each section is optional and can be reordered in your view component.

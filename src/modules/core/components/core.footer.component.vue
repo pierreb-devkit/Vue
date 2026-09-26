@@ -176,10 +176,17 @@ export default {
     /**
      * @desc Sections from allLinks that have items, used by the template to
      * avoid double-filtering (previously called twice inline in the template).
+     * Items whose `url` resolves to the app's not-found route are dropped —
+     * e.g. a static footer link pointing at a stack route a downstream
+     * project switched off (`config.home.routes.*.activated: false`) — so
+     * the footer never advertises a dead link. External URLs and
+     * `onClick`-only items (no `url`) are never checked.
      * @returns {Array}
      */
     visibleSections() {
-      return this.allLinks.filter((section) => section.items);
+      return this.allLinks
+        .map((section) => ({ ...section, items: (section.items || []).filter((item) => !this.isDeadLink(item)) }))
+        .filter((section) => section.items.length > 0);
     },
   },
   watch: {
@@ -193,6 +200,24 @@ export default {
     if (route?.meta?.footer) this.enabled = true;
   },
   methods: {
+    /**
+     * @desc Whether an internal footer link points at a route the app does
+     * not (or no longer) register — resolved via the live router so it
+     * automatically tracks any route de/activation, not just home's.
+     * Fails open (never hides) when there's no `url`, the link is external,
+     * or no router is available (e.g. minimal test mounts).
+     * @param {{url?: string}} item
+     * @returns {boolean}
+     */
+    isDeadLink(item) {
+      if (!item?.url || typeof item.url !== 'string' || !item.url.startsWith('/')) return false;
+      if (typeof this.$router?.resolve !== 'function') return false;
+      try {
+        return this.$router.resolve(item.url)?.name === 'NotFound';
+      } catch {
+        return false;
+      }
+    },
     navigate(link) {
       if (link.startsWith('http')) {
         window.open(link, '_blank');

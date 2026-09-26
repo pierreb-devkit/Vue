@@ -42,16 +42,17 @@ const baseConfig = () => ({
 /**
  * Mounts CoreFooter with the given config, simulating an active footer route.
  * @param {object} config
+ * @param {{resolve?: Function}} [routerOverrides] - Extra `$router` mock methods (e.g. `resolve`).
  * @returns {import('@vue/test-utils').VueWrapper}
  */
-const mountFooter = (config) =>
+const mountFooter = (config, routerOverrides = {}) =>
   mount(CoreFooter, {
     global: {
       plugins: [vuetify()],
       mocks: {
         config,
         $route: { path: '/', meta: { footer: true } },
-        $router: { push: vi.fn() },
+        $router: { push: vi.fn(), ...routerOverrides },
       },
       stubs: {
         RouterLink: { template: '<a><slot /></a>', props: ['to'] },
@@ -213,6 +214,43 @@ describe('core.footer.component — registry extras', () => {
     // Single "Legal" column heading, not two
     const legalHeadings = wrapper.findAll('.v-card-title').filter((c) => c.text().trim() === 'Legal');
     expect(legalHeadings.length).toBe(1);
+  });
+
+  it('hides an internal link that resolves to the NotFound route (e.g. a stack route switched off)', () => {
+    const resolve = (path) => ({ name: path === '/team' ? 'NotFound' : 'SomeRoute' });
+    const wrapper = mountFooter(
+      {
+        footer: {
+          links: [
+            { title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] },
+          ],
+        },
+        vuetify: { theme: { flat: false } },
+      },
+      { resolve },
+    );
+    expect(wrapper.text()).not.toContain('Team');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('drops the whole section when filtering a dead link empties its items', () => {
+    const resolve = () => ({ name: 'NotFound' });
+    const wrapper = mountFooter(
+      {
+        footer: {
+          links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
+        },
+        vuetify: { theme: { flat: false } },
+      },
+      { resolve },
+    );
+    expect(wrapper.text()).not.toContain('About');
+    expect(wrapper.text()).not.toContain('Team');
+  });
+
+  it('keeps an internal link when $router has no resolve method (fail-open, e.g. minimal test mounts)', () => {
+    const wrapper = mountFooter(baseConfig());
+    expect(wrapper.text()).toContain('Docs');
   });
 
   it('calls item.onClick when item has an onClick callback', async () => {

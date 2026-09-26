@@ -4,6 +4,17 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## home: per-route activation for `/team` and `/pages/:name` (2026-09-26, #4684)
+
+Non-breaking, additive. Each route now switches off independently via `config.home.routes.{team,pages}.activated` (both default `true` — unset behaves exactly like today, no `/update-stack` action needed). When set to `false`, the route is not registered at all — navigating to it falls through to the normal not-found handling, and any internal footer link pointing at it (`core.footer.component.vue`) is hidden automatically.
+
+```js
+// src/config/defaults/<project>.config.js
+home: { routes: { team: { activated: false } } }
+```
+
+---
+
 ## billing: pricing tabs declared in config, each carrying its own content (2026-09-16, #4649)
 
 **BREAKING — there is no compatibility bridge.** The pricing page now renders any number of tabs declared in `config.billing.staticContent.tabs`, and each tab carries its own content. `tabs` becomes the single content source: the top-level `plans` and `packs` collections are **removed outright**, and the legacy `tabs: { plans, units }` label object no longer resolves to anything. A project that keeps the old shape gets the devkit's demo content on the pricing page, not its own — the resolver falls back to the devkit default when `tabs` is not a non-empty array.
