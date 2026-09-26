@@ -202,8 +202,8 @@ export default {
   },
   methods: {
     /**
-     * @desc Whether an internal footer link points at a home route this PR's
-     * config switches off — `/team` when `config.home.routes.team.activated`
+     * @desc Whether an internal footer link points at a home route switched
+     * off by config — `/team` when `config.home.routes.team.activated`
      * is `false`, or anything under `/pages/` when
      * `config.home.routes.pages.activated` is `false` (same config, same
      * `!== false` default, as `home.router.js`). Query/hash are ignored when

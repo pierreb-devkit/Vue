@@ -252,6 +252,18 @@ describe('core.footer.component — registry extras', () => {
     expect(wrapper.text()).toContain('Team');
   });
 
+  it('keeps a /pages/:name link when pages is activated (default) even if team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Terms', icon: 'fa-solid fa-file', url: '/pages/terms' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Terms');
+  });
+
   it('hides a /pages/:name footer link only when config.home.routes.pages.activated is false', () => {
     const config = {
       footer: {
