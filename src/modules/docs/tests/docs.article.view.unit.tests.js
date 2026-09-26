@@ -194,6 +194,12 @@ describe('docs.article.view', () => {
     expect(style).toMatch(/\.docs-prose :deep\(th\),\s*\.docs-prose :deep\(td\) \{/);
     expect(cell).toMatch(/border: 1px solid rgba\(var\(--v-border-color\), [\d.]+\);/);
     expect(cell).toMatch(/padding: 10px 14px;/);
+    // No unconditional `text-align` on th/td: that would override marked's
+    // `align="center"`/`align="right"` attribute on an aligned column, so
+    // every column would render left-aligned regardless of the markdown.
+    expect(cell).not.toMatch(/text-align:/);
+    const unalignedHeader = rule('.docs-prose :deep(th:not([align]))');
+    expect(unalignedHeader).toMatch(/text-align: start;/);
     const head = rule('.docs-prose :deep(thead th)');
     expect(head).toMatch(/background: rgba\(var\(--v-theme-on-surface\), [\d.]+\);/);
     // theme tokens only: no hardcoded hex colors, so light and dark both work

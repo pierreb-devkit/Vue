@@ -248,8 +248,19 @@ watch(slug, (s) => load(s), { immediate: true });
 .docs-prose :deep(td) {
   border: 1px solid rgba(var(--v-border-color), 0.24);
   padding: 10px 14px;
-  text-align: left;
   vertical-align: top;
+}
+
+/*
+ * A column-aligned header (marked's `:-:` / `--:` syntax emits `align="..."`)
+ * must keep the browser's attribute-driven alignment — an unconditional
+ * `text-align` here would override it, so every column would render
+ * left-aligned regardless of the markdown source. Left-align only the
+ * headers with NO explicit alignment (browsers default a bare `<th>` to
+ * `center`, which would otherwise mismatch the left-aligned body cells).
+ */
+.docs-prose :deep(th:not([align])) {
+  text-align: start;
 }
 
 .docs-prose :deep(thead th) {
