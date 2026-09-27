@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import config, { apiBase } from '../config.js';
+import { formatApiUrl } from '../apiUrl.js';
 
 describe('Config Service', () => {
   it('should export config object', () => {
@@ -38,6 +39,8 @@ describe('Config Service', () => {
   });
 
   it('apiBase() should build the protocol://host:port/base prefix from config.api', () => {
-    expect(apiBase()).toBe('http://localhost:3000/api');
+    // Derived from the loaded config, not a literal: downstream projects override api.port.
+    expect(apiBase()).toBe(formatApiUrl(config.api));
+    expect(apiBase()).toMatch(/^https?:\/\/[^/:]+:\d+\/.+/);
   });
 });
