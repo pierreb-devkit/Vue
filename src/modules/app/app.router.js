@@ -173,9 +173,12 @@ const getRouter = () => {
   // editing this stack file. Same matching semantics: exact path or `path + '/'` prefix.
   // Sanitized: a non-array value would crash `.some` below, and an empty-string entry
   // would make `'' + '/' === '/'` match every path, silently disabling the org guard.
+  // Trailing slashes are stripped BEFORE validating, so `'//'` normalizes to `''` and is
+  // rejected (not `'/'`, which would exempt the home page).
   const orgExemptConfigured = (Array.isArray(config.app.orgExemptRoutes) ? config.app.orgExemptRoutes : [])
-    .filter((p) => typeof p === 'string' && p.startsWith('/') && p.length > 1)
-    .map((p) => (p.endsWith('/') ? p.slice(0, -1) : p));
+    .filter((p) => typeof p === 'string')
+    .map((p) => p.replace(/\/+$/, ''))
+    .filter((p) => p.startsWith('/') && p.length > 1);
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).

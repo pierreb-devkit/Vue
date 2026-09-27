@@ -252,6 +252,18 @@ describe('app.router', () => {
       expect(router.currentRoute.value.path).toBe('/organization-required');
     });
 
+    it('default behavior unchanged with the shipped default ([]) as well as when the key is absent', async () => {
+      testConfig.app.orgExemptRoutes = [];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/not-exempt', name: 'NotExemptDefaultArray', component: { template: '<div />' } });
+      await router.push('/not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
     it('a configured extra path is exempt for a logged-in user without an organization', async () => {
       testConfig.app.orgExemptRoutes = ['/extra-public'];
       mockAuthStore.isLoggedIn = true;
@@ -328,6 +340,29 @@ describe('app.router', () => {
       await router.push('/public/child');
       await router.isReady();
       expect(router.currentRoute.value.path).toBe('/public/child');
+    });
+
+    it('a "//" entry does not normalize to "/" and does not exempt the home page', async () => {
+      testConfig.app.orgExemptRoutes = ['//'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      await router.push('/');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/organization-required');
+    });
+
+    it('a configured entry with multiple trailing slashes ("/public//") is normalized to "/public"', async () => {
+      testConfig.app.orgExemptRoutes = ['/public//'];
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/public', name: 'PublicDoubleTrailingSlash', component: { template: '<div />' } });
+      await router.push('/public');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/public');
     });
   });
 
