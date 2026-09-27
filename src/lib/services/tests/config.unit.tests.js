@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import config, { apiBase } from '../config.js';
+import { formatApiUrl } from '../apiUrl.js';
 
 describe('Config Service', () => {
   it('should export config object', () => {
@@ -38,6 +39,13 @@ describe('Config Service', () => {
   });
 
   it('apiBase() should build the protocol://host:port/base prefix from config.api', () => {
-    expect(apiBase()).toBe('http://localhost:3000/api');
+    // Derived from the loaded config, not a literal: api.port is overridable per project.
+    expect(apiBase()).toBe(formatApiUrl(config.api));
+    expect(() => new URL(apiBase())).not.toThrow();
+  });
+
+  it('apiBase() format stays a valid URL for a bracketed IPv6 host', () => {
+    const url = formatApiUrl({ ...config.api, host: '[::1]' });
+    expect(new URL(url).hostname).toBe('[::1]');
   });
 });
