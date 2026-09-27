@@ -168,6 +168,17 @@ const getRouter = () => {
   // Routes that don't require an organization
   const orgExemptPrefixes = ['/users', '/admin'];
   const orgExemptExact = ['/signin', '/signup', '/forgot', '/reset', '/token', '/verify-email', '/organization-required', '/pricing'];
+  // Config-provided additions to the exact-match list above (config.app.orgExemptRoutes,
+  // default []) — lets a downstream project exempt an extra public route without
+  // editing this stack file. Same matching semantics: exact path or `path + '/'` prefix.
+  // Sanitized: a non-array value would crash `.some` below, and an empty-string entry
+  // would make `'' + '/' === '/'` match every path, silently disabling the org guard.
+  // Trailing slashes are stripped BEFORE validating, so `'//'` normalizes to `''` and is
+  // rejected (not `'/'`, which would exempt the home page).
+  const orgExemptConfigured = (Array.isArray(config.app.orgExemptRoutes) ? config.app.orgExemptRoutes : [])
+    .filter((p) => typeof p === 'string')
+    .map((p) => p.replace(/\/+$/, ''))
+    .filter((p) => p.startsWith('/') && p.length > 1);
 
   /**
    * Handle global navigation checks (title, auth, org requirement, CASL access).
@@ -209,6 +220,7 @@ const getRouter = () => {
       && !authStore.user?.currentOrganization
       && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
       && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))
+      && !orgExemptConfigured.some((p) => to.path === p || to.path.startsWith(p + '/'))
     ) {
       return '/organization-required';
     }
