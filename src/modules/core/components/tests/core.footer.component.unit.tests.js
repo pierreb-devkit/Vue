@@ -215,6 +215,126 @@ describe('core.footer.component — registry extras', () => {
     expect(legalHeadings.length).toBe(1);
   });
 
+  it('hides a /team footer link only when config.home.routes.team.activated is false', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Team');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('hides /team even with a query/hash suffix when team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team?x=1#a' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Team');
+  });
+
+  it('hides /team with a trailing slash when team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team/' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Team');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('hides /Team regardless of case when team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/Team' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Team');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('keeps a /team link when team is activated (default) even if pages is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Team');
+  });
+
+  it('keeps a /pages/:name link when pages is activated (default) even if team is off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Terms', icon: 'fa-solid fa-file', url: '/pages/terms' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Terms');
+  });
+
+  it('hides a /pages/:name footer link only when config.home.routes.pages.activated is false', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Terms', icon: 'fa-solid fa-file', url: '/pages/terms' }, { label: 'Blog', icon: 'fa-solid fa-rss', url: 'https://blog.example.com' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('Terms');
+    expect(wrapper.text()).toContain('Blog');
+  });
+
+  it('keeps a dead link to an unrelated path visible even when both team and pages are off', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Nope', icon: 'fa-solid fa-question', url: '/nope' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false }, pages: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).toContain('Nope');
+  });
+
+  it('drops the section entirely when filtering a disabled route link empties its items (no empty heading column)', () => {
+    const config = {
+      footer: {
+        links: [{ title: 'About', items: [{ label: 'Team', icon: 'fa-solid fa-users', url: '/team' }] }],
+      },
+      vuetify: { theme: { flat: false } },
+      home: { routes: { team: { activated: false } } },
+    };
+    const wrapper = mountFooter(config);
+    expect(wrapper.text()).not.toContain('About');
+    expect(wrapper.text()).not.toContain('Team');
+  });
+
+  it('still renders no column for a section registered without items (guard unchanged from master)', () => {
+    const { register } = useFooterExtras();
+    register('no-items-module', { title: 'NoItems' });
+    const wrapper = mountFooter(baseConfig());
+    expect(wrapper.text()).not.toContain('NoItems');
+  });
+
   it('calls item.onClick when item has an onClick callback', async () => {
     const { register } = useFooterExtras();
     const onClick = vi.fn();
