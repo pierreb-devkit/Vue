@@ -39,7 +39,7 @@ export default {
         contentUrl: '', // absolute URL of the public docs tree endpoint (e.g. 'https://api.example.com/api/public/docs'); empty = layer inert
         basePath: '/docs', // frontend base path the docs module serves guides under (e.g. '/docs' → /docs/:category/:slug)
         timeoutMs: 5000, // build-time fetch timeout (ms) before falling back to static config
-        mdTwin: false, // true to also list the raw-markdown `.md` twin of each guide in llms.txt
+        mdTwin: false, // true to also list the raw-markdown `.md` twin of each guide in llms.txt — the twin link is built from docs.contentUrl, which MUST therefore be the PUBLIC API URL (never an internal build-network host), since it is published verbatim in llms.txt
       },
       robots: {
         enabled: true, // true to generate robots.txt at build time

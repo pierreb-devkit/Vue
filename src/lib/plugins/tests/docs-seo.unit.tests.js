@@ -198,6 +198,18 @@ describe('deriveDocsLlmsSections', () => {
     });
   });
 
+  it('normalises a trailing slash on contentUrl when building the twin URL', () => {
+    const sections = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'https://api.example.com/api/public/docs/',
+    });
+    expect(sections[0].items).toContainEqual({
+      label: 'Welcome (Markdown)',
+      url: 'https://api.example.com/api/public/docs/welcome.md',
+      note: '',
+    });
+  });
+
   it('returns nothing for an empty tree and skips categories with no guides', () => {
     expect(deriveDocsLlmsSections(null, 'https://example.com')).toEqual([]);
     const empty = { categories: [{ id: 'c', label: 'C', guides: [] }] };
