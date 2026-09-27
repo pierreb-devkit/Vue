@@ -180,14 +180,23 @@ export default {
      * matching home route is switched off (same `config.home.routes.{team,pages}.activated`
      * read by `home.router.js`), so a static footer link to a disabled route
      * never renders as a dead link. Any other internal link, external URL, or
-     * `onClick`-only item (no `url`) is never checked. A section is kept even
-     * when its `items` end up empty — unchanged from before this filter existed.
+     * `onClick`-only item (no `url`) is never checked. The original `section.items`
+     * guard runs first — as on master, a section registered without `items`
+     * (e.g. an extra that never declared any) stays hidden. A section is then
+     * dropped only when this filter is what emptied it (it had items before
+     * filtering, none after); a section already declared with `items: []`
+     * keeps master's behaviour and still renders its (empty) heading.
      * @returns {Array}
      */
     visibleSections() {
       return this.allLinks
-        .map((section) => ({ ...section, items: (section.items || []).filter((item) => !this.isDisabledHomeRouteLink(item)) }))
-        .filter((section) => section.items);
+        .filter((section) => section.items)
+        .reduce((visible, section) => {
+          const items = section.items.filter((item) => !this.isDisabledHomeRouteLink(item));
+          if (items.length === 0 && section.items.length > 0) return visible;
+          visible.push({ ...section, items });
+          return visible;
+        }, []);
     },
   },
   watch: {
@@ -206,15 +215,17 @@ export default {
      * off by config — `/team` when `config.home.routes.team.activated`
      * is `false`, or anything under `/pages/` when
      * `config.home.routes.pages.activated` is `false` (same config, same
-     * `!== false` default, as `home.router.js`). Query/hash are ignored when
-     * matching the path. Never hides anything else: a dead link to some other
-     * path, an external URL, or an `onClick`-only item (no `url`) all stay.
+     * `!== false` default, as `home.router.js`). Query/hash are stripped and
+     * the path is trimmed of trailing slashes and lower-cased before matching,
+     * so `/team/`, `/Team` and `/team?x=1#a` all match the same as `/team`.
+     * Never hides anything else: a dead link to some other path, an external
+     * URL, or an `onClick`-only item (no `url`) all stay.
      * @param {{url?: string}} item
      * @returns {boolean}
      */
     isDisabledHomeRouteLink(item) {
       if (!item?.url || typeof item.url !== 'string' || !item.url.startsWith('/')) return false;
-      const path = item.url.split(/[?#]/)[0];
+      const path = item.url.split(/[?#]/)[0].replace(/\/+$/, '').toLowerCase();
       const teamActivated = this.config?.home?.routes?.team?.activated !== false;
       const pagesActivated = this.config?.home?.routes?.pages?.activated !== false;
       if (!teamActivated && path === '/team') return true;
