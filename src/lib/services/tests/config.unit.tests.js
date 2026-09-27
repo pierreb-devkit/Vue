@@ -43,4 +43,9 @@ describe('Config Service', () => {
     expect(apiBase()).toBe(formatApiUrl(config.api));
     expect(() => new URL(apiBase())).not.toThrow();
   });
+
+  it('apiBase() format stays a valid URL for a bracketed IPv6 host', () => {
+    const url = formatApiUrl({ ...config.api, host: '[::1]' });
+    expect(new URL(url).hostname).toBe('[::1]');
+  });
 });
