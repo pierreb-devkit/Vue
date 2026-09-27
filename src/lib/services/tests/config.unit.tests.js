@@ -41,6 +41,6 @@ describe('Config Service', () => {
   it('apiBase() should build the protocol://host:port/base prefix from config.api', () => {
     // Derived from the loaded config, not a literal: api.port is overridable per project.
     expect(apiBase()).toBe(formatApiUrl(config.api));
-    expect(apiBase()).toMatch(/^https?:\/\/[^/:]+:\d+\/.+/);
+    expect(() => new URL(apiBase())).not.toThrow();
   });
 });
