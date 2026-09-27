@@ -154,6 +154,10 @@ function parseContentUrl(contentUrl) {
   if (!contentUrl) return null;
   try {
     const parsed = new URL(contentUrl);
+    // Reject non-http(s) schemes (mailto:, file:, etc.) up front — `new URL()`
+    // happily parses them, but their `.origin` is the opaque string "null",
+    // which would silently produce a broken twin / snapshot URL.
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
     return { origin: parsed.origin, basePath: parsed.pathname.replace(/\/+$/, '') };
   } catch {
     return null;

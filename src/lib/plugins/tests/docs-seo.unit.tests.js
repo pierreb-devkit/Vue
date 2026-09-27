@@ -185,6 +185,20 @@ describe('deriveDocsLlmsSections', () => {
     expect(sections[0].items.some((i) => i.label.endsWith('(Markdown)'))).toBe(false);
   });
 
+  it('omits the twin bullet for a non-http(s) contentUrl (mailto:, file:)', () => {
+    const mailto = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'mailto:docs@example.com',
+    });
+    expect(mailto[0].items.some((i) => i.label.endsWith('(Markdown)'))).toBe(false);
+
+    const file = deriveDocsLlmsSections(treeFixture, 'https://example.com', '/docs', {
+      mdTwin: true,
+      contentUrl: 'file:///etc/docs',
+    });
+    expect(file[0].items.some((i) => i.label.endsWith('(Markdown)'))).toBe(false);
+  });
+
   it('URL-encodes the twin slug the same way deriveDocsSnapshotEntries does', () => {
     const spaced = { categories: [{ id: 'c', label: 'C', guides: [{ slug: 'my guide', title: 'MG', summary: '' }] }] };
     const sections = deriveDocsLlmsSections(spaced, 'https://example.com', '/docs', {
@@ -490,6 +504,11 @@ describe('deriveDocsSnapshotEntries', () => {
       { path: '/docs', url: 'https://api.example.com/docs', kind: 'tree' },
       { path: '/docs/', url: 'https://api.example.com/docs', kind: 'tree' },
     ]);
+  });
+
+  it('returns an empty list for a non-http(s) contentUrl (mailto:, file:)', () => {
+    expect(deriveDocsSnapshotEntries(treeFixture, 'mailto:docs@example.com')).toEqual([]);
+    expect(deriveDocsSnapshotEntries(treeFixture, 'file:///etc/docs')).toEqual([]);
   });
 });
 
