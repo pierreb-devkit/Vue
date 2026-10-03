@@ -133,8 +133,8 @@ export default {
       if (this.savingEmailPreferences) return;
       this.savingEmailPreferences = true;
       const previous = this.authStore.user?.emailPreferences;
-      this.authStore.patchUser({ emailPreferences: { ...prefs } });
       try {
+        this.authStore.patchUser({ emailPreferences: { ...prefs } });
         const updated = await this.usersStore.updateEmailPreferences(prefs);
         this.authStore.patchUser({ emailPreferences: updated?.emailPreferences ?? { ...prefs } });
       } catch {
