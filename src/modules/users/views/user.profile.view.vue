@@ -126,6 +126,12 @@ export default {
      *       switches are disabled (passed down as the `saving` prop) and a
      *       re-entrant call is a no-op, so a slow first PUT's revert can never
      *       clobber a second, already-confirmed toggle.
+     *
+     *       Also guarded against a shared-device replacement-user race: if the
+     *       signed-in user changes while this save is in flight (sign-out +
+     *       a different sign-in, same tab, no reload — same race class as
+     *       auth.store's `_authGeneration`, #4459), the identity check below
+     *       drops the stale response instead of patching the new user's state.
      * @param {{ onboarding: boolean, news: boolean }} prefs
      * @returns {Promise<void>}
      */
@@ -133,12 +139,16 @@ export default {
       if (this.savingEmailPreferences) return;
       this.savingEmailPreferences = true;
       const previous = this.authStore.user?.emailPreferences;
+      const signedInUserId = this.authStore.user?.id ?? this.authStore.user?._id;
+      const isStaleUser = () => (this.authStore.user?.id ?? this.authStore.user?._id) !== signedInUserId;
       try {
         this.authStore.patchUser({ emailPreferences: { ...prefs } });
         const updated = await this.usersStore.updateEmailPreferences(prefs);
+        if (isStaleUser()) return;
         this.authStore.patchUser({ emailPreferences: updated?.emailPreferences ?? { ...prefs } });
       } catch {
         // interceptor handles snackbar
+        if (isStaleUser()) return;
         this.authStore.patchUser({ emailPreferences: previous });
       } finally {
         this.savingEmailPreferences = false;

@@ -367,6 +367,64 @@ describe('user.profile.view', () => {
 
     expect(authStore.user.emailPreferences).toBeUndefined();
   });
+
+  test('updateEmailPreferences drops a stale PUT response if a different user signed in while it was pending (shared-device race)', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let resolvePut;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(
+      () => new Promise((resolve) => { resolvePut = resolve; }),
+    );
+
+    const pending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    // A different user signs in on the same tab before the PUT settles.
+    authStore.user = { _id: 'u2', emailPreferences: { onboarding: true, news: false } };
+
+    resolvePut({ emailPreferences: { onboarding: false, news: true } });
+    await pending;
+
+    // u1's stale response must not touch u2's state.
+    expect(authStore.user).toEqual({ _id: 'u2', emailPreferences: { onboarding: true, news: false } });
+  });
+
+  test('updateEmailPreferences drops a stale revert if a different user signed in while the PUT was pending', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let rejectPut;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(
+      () => new Promise((_resolve, reject) => { rejectPut = reject; }),
+    );
+
+    const pending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    // A different user signs in on the same tab before the PUT settles.
+    authStore.user = { _id: 'u2', emailPreferences: { onboarding: true, news: false } };
+
+    rejectPut(new Error('Server error'));
+    await pending;
+
+    // u1's failed save must not revert u2's (unrelated) state.
+    expect(authStore.user).toEqual({ _id: 'u2', emailPreferences: { onboarding: true, news: false } });
+  });
 });
 
 describe('user.profile.view — no direct axios import (routed through users.store)', () => {
