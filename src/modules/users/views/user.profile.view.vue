@@ -13,7 +13,7 @@
 
         <!-- Email preferences -->
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="mt-4 pa-6">
-          <userEmailPreferencesComponent :user="user" @save="updateEmailPreferences" />
+          <userEmailPreferencesComponent :user="user" :saving="savingEmailPreferences" @save="updateEmailPreferences" />
         </v-card>
 
         <!-- Danger zone -->
@@ -77,6 +77,10 @@ export default {
   data() {
     return {
       confirmDeleteAccount: false,
+      // Transient UI-only flag — never persisted — true while an email-preferences
+      // PUT is in flight. Disables both switches so a second toggle can't start
+      // until the first settles (see updateEmailPreferences).
+      savingEmailPreferences: false,
     };
   },
   computed: {
@@ -117,10 +121,17 @@ export default {
      *       `/api/auth/token` is not involved here, so this never depends on
      *       whether that payload carries `emailPreferences`). On failure, restores
      *       the pre-toggle snapshot so the switch reverts.
+     *
+     *       Guarded by `savingEmailPreferences`: while a PUT is in flight the
+     *       switches are disabled (passed down as the `saving` prop) and a
+     *       re-entrant call is a no-op, so a slow first PUT's revert can never
+     *       clobber a second, already-confirmed toggle.
      * @param {{ onboarding: boolean, news: boolean }} prefs
      * @returns {Promise<void>}
      */
     async updateEmailPreferences(prefs) {
+      if (this.savingEmailPreferences) return;
+      this.savingEmailPreferences = true;
       const previous = this.authStore.user?.emailPreferences;
       this.authStore.patchUser({ emailPreferences: { ...prefs } });
       try {
@@ -129,6 +140,8 @@ export default {
       } catch {
         // interceptor handles snackbar
         this.authStore.patchUser({ emailPreferences: previous });
+      } finally {
+        this.savingEmailPreferences = false;
       }
     },
     /**

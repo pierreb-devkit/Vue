@@ -81,6 +81,37 @@ describe('user.emailPreferences.component — toggle emits full payload', () => 
   });
 });
 
+describe('user.emailPreferences.component — saving state disables the switches', () => {
+  it('disables both switches when saving is true', () => {
+    const wrapper = mountPrefs({ saving: true });
+    const switches = getSwitches(wrapper);
+    expect(switches[0].props('disabled')).toBe(true);
+    expect(switches[1].props('disabled')).toBe(true);
+  });
+
+  it('leaves both switches enabled when saving is false (default)', () => {
+    const wrapper = mountPrefs();
+    const switches = getSwitches(wrapper);
+    expect(switches[0].props('disabled')).toBe(false);
+    expect(switches[1].props('disabled')).toBe(false);
+  });
+});
+
+describe('user.emailPreferences.component — accessibility', () => {
+  it('wraps both switches in a role="group" labelled by the Emails heading', () => {
+    const wrapper = mountPrefs();
+    const headingId = wrapper.find('h3').attributes('id');
+    expect(headingId).toBeTruthy();
+
+    const group = wrapper.find('[role="group"]');
+    expect(group.exists()).toBe(true);
+    expect(group.attributes('aria-labelledby')).toBe(headingId);
+
+    const switches = getSwitches(wrapper);
+    switches.forEach((s) => expect(group.element.contains(s.element)).toBe(true));
+  });
+});
+
 describe('user.emailPreferences.component — controlled by the user prop (save confirms, failure reverts)', () => {
   it('reflects the new value once the parent confirms it on the user prop (save succeeds)', async () => {
     const wrapper = mountPrefs({ user: { emailPreferences: { onboarding: true, news: true } } });

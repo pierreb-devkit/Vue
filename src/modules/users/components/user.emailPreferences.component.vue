@@ -1,25 +1,29 @@
 <template>
   <div>
-    <h3 class="text-title-medium font-weight-medium mb-1">Emails</h3>
+    <h3 id="user-email-preferences-heading" class="text-title-medium font-weight-medium mb-1">Emails</h3>
     <p class="text-body-small text-medium-emphasis mb-4">
       Choose which product emails you receive. Account emails (password reset, verification, invitations) are always sent.
     </p>
-    <v-switch
-      :model-value="prefs.onboarding"
-      color="primary"
-      inset
-      hide-details
-      label="Onboarding emails"
-      @update:model-value="update('onboarding', $event)"
-    ></v-switch>
-    <v-switch
-      :model-value="prefs.news"
-      color="primary"
-      inset
-      hide-details
-      label="News and product updates"
-      @update:model-value="update('news', $event)"
-    ></v-switch>
+    <div role="group" aria-labelledby="user-email-preferences-heading">
+      <v-switch
+        :model-value="prefs.onboarding"
+        :disabled="saving"
+        color="primary"
+        inset
+        hide-details
+        label="Onboarding emails"
+        @update:model-value="update('onboarding', $event)"
+      ></v-switch>
+      <v-switch
+        :model-value="prefs.news"
+        :disabled="saving"
+        color="primary"
+        inset
+        hide-details
+        label="News and product updates"
+        @update:model-value="update('news', $event)"
+      ></v-switch>
+    </div>
   </div>
 </template>
 
@@ -28,6 +32,9 @@ export default {
   name: 'UserEmailPreferencesComponent',
   props: {
     user: { type: Object, required: true },
+    // Transient UI-only flag owned by the parent view — true while a PUT for
+    // this user's email preferences is in flight. Never persisted.
+    saving: { type: Boolean, default: false },
   },
   emits: ['save'],
   computed: {

@@ -28,7 +28,11 @@ vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 
 const sharedStubs = {
   userProfileComponent: { template: '<div data-test="user-profile-component" />', name: 'UserProfileComponent' },
-  userEmailPreferencesComponent: { template: '<div data-test="user-email-preferences-component" />', name: 'UserEmailPreferencesComponent' },
+  userEmailPreferencesComponent: {
+    template: '<div data-test="user-email-preferences-component" />',
+    name: 'UserEmailPreferencesComponent',
+    props: ['user', 'saving'],
+  },
   coreConfirmDialog: { template: '<div data-test="core-confirm-dialog" />', name: 'CoreConfirmDialog' },
   'v-container': { template: '<div><slot /></div>' },
   'v-row': { template: '<div><slot /></div>' },
@@ -246,6 +250,104 @@ describe('user.profile.view', () => {
     await expect(wrapper.vm.updateEmailPreferences({ onboarding: false, news: true })).resolves.toBeUndefined();
 
     expect(authStore.user.emailPreferences).toEqual({ onboarding: true, news: true });
+  });
+
+  test('savingEmailPreferences defaults to false and is passed to userEmailPreferencesComponent as "saving"', () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    expect(wrapper.vm.savingEmailPreferences).toBe(false);
+    expect(wrapper.findComponent({ name: 'UserEmailPreferencesComponent' }).props('saving')).toBe(false);
+  });
+
+  test('updateEmailPreferences sets savingEmailPreferences while the PUT is pending, then clears it on success', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let resolvePut;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(
+      () => new Promise((resolve) => { resolvePut = resolve; }),
+    );
+
+    const pending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    expect(wrapper.vm.savingEmailPreferences).toBe(true);
+
+    resolvePut({ emailPreferences: { onboarding: false, news: true } });
+    await pending;
+
+    expect(wrapper.vm.savingEmailPreferences).toBe(false);
+  });
+
+  test('updateEmailPreferences clears savingEmailPreferences even when the PUT fails', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let rejectPut;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(
+      () => new Promise((_resolve, reject) => { rejectPut = reject; }),
+    );
+
+    const pending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+    expect(wrapper.vm.savingEmailPreferences).toBe(true);
+
+    rejectPut(new Error('Server error'));
+    await pending;
+
+    expect(wrapper.vm.savingEmailPreferences).toBe(false);
+  });
+
+  test('updateEmailPreferences ignores a re-entrant call while the first PUT is still pending (a second toggle cannot start)', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let rejectFirst;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(
+      () => new Promise((_resolve, reject) => { rejectFirst = reject; }),
+    );
+
+    const firstPending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: false, news: true });
+
+    // Attempted while the first PUT is still in flight — must be a no-op, not a second request.
+    await wrapper.vm.updateEmailPreferences({ onboarding: false, news: false });
+    expect(wrapper.vm.usersStore.updateEmailPreferences).toHaveBeenCalledTimes(1);
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: false, news: true });
+
+    // The first PUT now fails and reverts — nothing from the blocked second call to clobber.
+    rejectFirst(new Error('Server error'));
+    await firstPending;
+
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: true, news: true });
+    expect(wrapper.vm.savingEmailPreferences).toBe(false);
   });
 
   test('updateEmailPreferences reverts to absent emailPreferences on failure when the user never had any', async () => {
