@@ -23,6 +23,10 @@ Create a new module by copying and renaming the `tasks` template module.
 
 Prompt user for the new module name in kebab-case (e.g., `my-feature`, `user-settings`)
 
+### 1b. Crud-only option
+
+Ask: is this module pure CRUD (list/get/create/update/delete, no business logic beyond the standard pass-through actions)? If yes, scaffold crud-only — same files, but the generated store test (step 4) uses the thin form: one test that exercises each action once, no dedicated happy/error-path block per action (see `/feature` Phase 1 §5 — pass-through store actions). If the module will carry any custom logic beyond CRUD, scaffold normally and let `/feature` add tests as that logic lands.
+
 ### 2. Derive naming conventions
 
 Follow `/naming` for the full reference. Quick summary from the module name (e.g., `my-feature`):
@@ -71,6 +75,10 @@ Business values (plans, roles, feature flags) should be driven by module config,
 Pattern:
 - Define in `src/modules/{module}/config/{module}.development.config.js` (and env-specific variants)
 - Access via the centralized config service (`import config from '@/lib/services/config'`)
+
+### 6b. Crud-only: trim the store test
+
+If step 1b chose crud-only, replace the copied `{module}.store.unit.tests.js` with the thin form: a single test that calls each renamed action once (mocking `axios` as the template does) and asserts the resulting state, instead of the template's per-action `describe` blocks with happy- and error-path cases. Run `/feature`'s reachability check (Phase 1 §5) if in doubt — the thin form must still clear `vitest.config.js`'s per-file thresholds; if it doesn't for a given action, keep that action's own test.
 
 ### 7. Verify & report
 

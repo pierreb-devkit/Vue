@@ -149,6 +149,9 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 - Use Vue 3 Composition API + Vuetify 4
 - Follow `/naming` conventions
 - Follow existing module patterns
+- When an edge case or bug affects more than one call site, fix the root cause once in the shared function (store action, helper, service) — not a guard repeated at each caller.
+
+**Pass-through store actions:** a store action that only forwards an API call (one request, no branching, no derived computation) needs no dedicated test beyond being exercised once in the module's store test — skip the separate happy/error-path block for it. Keep the store's own test file; only the per-action boilerplate goes. This is reachable under this repo's per-file coverage thresholds (`vitest.config.js`) without lowering or excluding anything, because a zero-logic action has no branches to miss. If an action can't clear the thresholds from a single exercising call, give it its own test instead of skipping coverage.
 
 ### 6. UI rules
 
@@ -203,7 +206,7 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 - [ ] Isolated in ONE module (or justified)
 - [ ] No cross-module Store imports except `useAuthStore`/`useCoreStore`
 - [ ] Tests added
-- [ ] Tests: unit tests (`*.unit.tests.js`) for all changes. E2E (`*.e2e.tests.js`) only if the change affects a critical user flow (auth, org onboarding, invite/join).
+- [ ] Tests: unit tests (`*.unit.tests.js`) for all changes, except a pass-through store action (see Phase 1 §5) which only needs to be exercised once in the module's store test. E2E (`*.e2e.tests.js`) only if the change affects a critical user flow (auth, org onboarding, invite/join).
 
 **Error documentation:**
 - [ ] If a non-obvious bug was fixed, document it in `ERRORS.md` (root of repo) with: symptom, root cause, fix
