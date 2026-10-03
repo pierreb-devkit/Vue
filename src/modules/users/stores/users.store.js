@@ -37,6 +37,26 @@ export const useUsersStore = defineStore('users', {
     },
 
     /**
+     * @desc Persist the current user's product-email preferences. Both kinds
+     *       are always sent together — the API's `emailPreferences` sub-object
+     *       is a whole-object replace, so an omitted key resets to its
+     *       server-side default of `true`.
+     * @param {{ onboarding: boolean, news: boolean }} prefs
+     * @returns {Promise<Object>} Resolved updated user data
+     */
+    async updateEmailPreferences(prefs) {
+      try {
+        const res = await axios.put(`${apiBase()}/users`, {
+          emailPreferences: { onboarding: prefs.onboarding, news: prefs.news },
+        });
+        return res.data.data;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
+    },
+
+    /**
      * @desc Permanently delete the current user's account.
      * @returns {Promise<void>}
      */

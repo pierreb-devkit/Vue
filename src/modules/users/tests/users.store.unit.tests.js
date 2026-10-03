@@ -72,6 +72,35 @@ describe('Users Store', () => {
     });
   });
 
+  describe('updateEmailPreferences', () => {
+    it('PUTs both emailPreferences keys together and returns the response data', async () => {
+      const usersStore = useUsersStore();
+      const updatedUser = { emailPreferences: { onboarding: false, news: true } };
+      axios.put.mockResolvedValueOnce({ data: { data: updatedUser } });
+
+      const result = await usersStore.updateEmailPreferences({ onboarding: false, news: true });
+
+      expect(axios.put).toHaveBeenCalledWith(
+        expect.stringContaining('/users'),
+        { emailPreferences: { onboarding: false, news: true } },
+      );
+      expect(result).toEqual(updatedUser);
+    });
+
+    it('logs and rethrows on failure', async () => {
+      const usersStore = useUsersStore();
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      axios.put.mockRejectedValueOnce(new Error('Failed to update email preferences'));
+
+      await expect(
+        usersStore.updateEmailPreferences({ onboarding: true, news: false }),
+      ).rejects.toThrow('Failed to update email preferences');
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
   describe('deleteAccount', () => {
     it('DELETEs /users', async () => {
       const usersStore = useUsersStore();

@@ -106,6 +106,21 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
+     * @desc Shallow-merge fields into the current `user` without a network
+     *       round-trip — lets a caller apply an already-known value (e.g. an
+     *       optimistic update after a PUT, or a revert on failure) without
+     *       waiting on token()/refreshAbilities()'s full-payload refresh, and
+     *       without reaching into `authStore.user` directly from outside the
+     *       store. No-ops if there is no signed-in user yet.
+     * @param {Object} partial - Fields to shallow-merge into `user`.
+     * @returns {void}
+     */
+    patchUser(partial) {
+      if (!this.user) return;
+      this.user = { ...this.user, ...partial };
+    },
+
+    /**
      * @desc Fetch public auth config flags from the API
      * @returns {Object|null} Server auth config or null on failure
      */
