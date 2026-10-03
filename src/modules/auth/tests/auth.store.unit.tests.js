@@ -1475,6 +1475,28 @@ describe('Auth Store', () => {
   });
 });
 
+describe('patchUser', () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  it('shallow-merges the given fields into the current user', () => {
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', firstName: 'Jane', emailPreferences: { onboarding: true, news: true } };
+
+    authStore.patchUser({ emailPreferences: { onboarding: false, news: true } });
+
+    expect(authStore.user).toEqual({ _id: 'u1', firstName: 'Jane', emailPreferences: { onboarding: false, news: true } });
+  });
+
+  it('no-ops when there is no signed-in user', () => {
+    const authStore = useAuthStore();
+    authStore.user = null;
+
+    authStore.patchUser({ emailPreferences: { onboarding: false, news: true } });
+
+    expect(authStore.user).toBe(null);
+  });
+});
+
 describe('auth store — beta seat getters', () => {
   beforeEach(() => setActivePinia(createPinia()));
 

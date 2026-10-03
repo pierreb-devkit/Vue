@@ -166,7 +166,7 @@ describe('user.profile.view', () => {
     expect(wrapper.findComponent({ name: 'UserEmailPreferencesComponent' }).exists()).toBe(true);
   });
 
-  test('updateEmailPreferences calls the users store then refreshes abilities', async () => {
+  test('updateEmailPreferences calls the users store and merges the response into authStore.user (never depends on refreshAbilities)', async () => {
     const wrapper = shallowMount(UserProfileView, {
       global: {
         mocks: sharedMocks(),
@@ -176,17 +176,19 @@ describe('user.profile.view', () => {
 
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
     authStore.refreshAbilities = vi.fn().mockResolvedValue();
-    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockResolvedValue({});
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockResolvedValue({ emailPreferences: { onboarding: false, news: true } });
 
     const prefs = { onboarding: false, news: true };
     await wrapper.vm.updateEmailPreferences(prefs);
 
     expect(wrapper.vm.usersStore.updateEmailPreferences).toHaveBeenCalledWith(prefs);
-    expect(authStore.refreshAbilities).toHaveBeenCalled();
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: false, news: true });
+    expect(authStore.refreshAbilities).not.toHaveBeenCalled();
   });
 
-  test('updateEmailPreferences swallows a store error (interceptor handles the snackbar)', async () => {
+  test('updateEmailPreferences writes the toggle optimistically — the new value is already on authStore.user while the PUT is still pending', async () => {
     const wrapper = shallowMount(UserProfileView, {
       global: {
         mocks: sharedMocks(),
@@ -194,9 +196,74 @@ describe('user.profile.view', () => {
       },
     });
 
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+
+    let resolvePut;
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn(() => new Promise((resolve) => { resolvePut = resolve; }));
+
+    const pending = wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    // Still pending — the optimistic write already flipped the switch.
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: false, news: true });
+
+    resolvePut({});
+    await pending;
+  });
+
+  test('updateEmailPreferences falls back to the sent values when the PUT response omits emailPreferences', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockResolvedValue({});
+
+    await wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: false, news: true });
+  });
+
+  test('updateEmailPreferences reverts authStore.user.emailPreferences on failure (interceptor handles the snackbar)', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1', emailPreferences: { onboarding: true, news: true } };
     wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockRejectedValue(new Error('Server error'));
 
     await expect(wrapper.vm.updateEmailPreferences({ onboarding: false, news: true })).resolves.toBeUndefined();
+
+    expect(authStore.user.emailPreferences).toEqual({ onboarding: true, news: true });
+  });
+
+  test('updateEmailPreferences reverts to absent emailPreferences on failure when the user never had any', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.user = { _id: 'u1' };
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockRejectedValue(new Error('Server error'));
+
+    await wrapper.vm.updateEmailPreferences({ onboarding: false, news: true });
+
+    expect(authStore.user.emailPreferences).toBeUndefined();
   });
 });
 

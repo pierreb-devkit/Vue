@@ -80,3 +80,26 @@ describe('user.emailPreferences.component — toggle emits full payload', () => 
     expect(wrapper.emitted('save')[0][0]).toEqual({ onboarding: false, news: true });
   });
 });
+
+describe('user.emailPreferences.component — controlled by the user prop (save confirms, failure reverts)', () => {
+  it('reflects the new value once the parent confirms it on the user prop (save succeeds)', async () => {
+    const wrapper = mountPrefs({ user: { emailPreferences: { onboarding: true, news: true } } });
+
+    await wrapper.setProps({ user: { emailPreferences: { onboarding: false, news: true } } });
+
+    const [onboardingSwitch] = getSwitches(wrapper);
+    expect(onboardingSwitch.props('modelValue')).toBe(false);
+  });
+
+  it('snaps back to the prior value when the parent reverts the user prop (save fails)', async () => {
+    const wrapper = mountPrefs({ user: { emailPreferences: { onboarding: true, news: true } } });
+
+    // Parent optimistically mirrors the toggle onto the prop...
+    await wrapper.setProps({ user: { emailPreferences: { onboarding: false, news: true } } });
+    // ...then reverts it after the PUT rejects.
+    await wrapper.setProps({ user: { emailPreferences: { onboarding: true, news: true } } });
+
+    const [onboardingSwitch] = getSwitches(wrapper);
+    expect(onboardingSwitch.props('modelValue')).toBe(true);
+  });
+});

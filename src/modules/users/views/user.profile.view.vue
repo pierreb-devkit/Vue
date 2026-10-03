@@ -110,18 +110,25 @@ export default {
       }
     },
     /**
-     * @desc Persist updated email preferences via the users store and refresh
-     *       CASL abilities (which also re-syncs `authStore.user`, so the
-     *       switches reflect the confirmed server state).
+     * @desc Persist updated email preferences via the users store. Optimistically
+     *       patches `prefs` onto `authStore.user.emailPreferences` so the switches
+     *       flip immediately, then confirms with the PUT response on success (or
+     *       falls back to the sent values if the response omits the field —
+     *       `/api/auth/token` is not involved here, so this never depends on
+     *       whether that payload carries `emailPreferences`). On failure, restores
+     *       the pre-toggle snapshot so the switch reverts.
      * @param {{ onboarding: boolean, news: boolean }} prefs
      * @returns {Promise<void>}
      */
     async updateEmailPreferences(prefs) {
+      const previous = this.authStore.user?.emailPreferences;
+      this.authStore.patchUser({ emailPreferences: { ...prefs } });
       try {
-        await this.usersStore.updateEmailPreferences(prefs);
-        await this.authStore.refreshAbilities();
+        const updated = await this.usersStore.updateEmailPreferences(prefs);
+        this.authStore.patchUser({ emailPreferences: updated?.emailPreferences ?? { ...prefs } });
       } catch {
         // interceptor handles snackbar
+        this.authStore.patchUser({ emailPreferences: previous });
       }
     },
     /**
