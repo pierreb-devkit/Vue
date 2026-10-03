@@ -11,6 +11,11 @@
           />
         </v-card>
 
+        <!-- Email preferences -->
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="mt-4 pa-6">
+          <userEmailPreferencesComponent :user="user" @save="updateEmailPreferences" />
+        </v-card>
+
         <!-- Danger zone -->
         <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
           <div class="d-flex align-center flex-wrap ga-4">
@@ -52,11 +57,12 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useUsersStore } from '../stores/users.store';
 import userProfileComponent from '../components/user.profile.component.vue';
+import userEmailPreferencesComponent from '../components/user.emailPreferences.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
 
 export default {
   name: 'UserProfileView',
-  components: { userProfileComponent, coreConfirmDialog },
+  components: { userProfileComponent, userEmailPreferencesComponent, coreConfirmDialog },
   /**
    * @desc Wires auth, organizations, and users stores for computed properties and methods.
    * @returns {{ authStore: Object, organizationsStore: Object, usersStore: Object }}
@@ -98,6 +104,21 @@ export default {
     async updateProfile(formData) {
       try {
         await this.usersStore.updateProfile(formData);
+        await this.authStore.refreshAbilities();
+      } catch {
+        // interceptor handles snackbar
+      }
+    },
+    /**
+     * @desc Persist updated email preferences via the users store and refresh
+     *       CASL abilities (which also re-syncs `authStore.user`, so the
+     *       switches reflect the confirmed server state).
+     * @param {{ onboarding: boolean, news: boolean }} prefs
+     * @returns {Promise<void>}
+     */
+    async updateEmailPreferences(prefs) {
+      try {
+        await this.usersStore.updateEmailPreferences(prefs);
         await this.authStore.refreshAbilities();
       } catch {
         // interceptor handles snackbar

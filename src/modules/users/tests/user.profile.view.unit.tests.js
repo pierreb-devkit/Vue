@@ -28,6 +28,7 @@ vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 
 const sharedStubs = {
   userProfileComponent: { template: '<div data-test="user-profile-component" />', name: 'UserProfileComponent' },
+  userEmailPreferencesComponent: { template: '<div data-test="user-email-preferences-component" />', name: 'UserEmailPreferencesComponent' },
   coreConfirmDialog: { template: '<div data-test="core-confirm-dialog" />', name: 'CoreConfirmDialog' },
   'v-container': { template: '<div><slot /></div>' },
   'v-row': { template: '<div><slot /></div>' },
@@ -153,6 +154,49 @@ describe('user.profile.view', () => {
     wrapper.vm.usersStore.updateProfile = vi.fn().mockRejectedValue(new Error('Server error'));
 
     await expect(wrapper.vm.updateProfile({ firstName: 'Jane' })).resolves.toBeUndefined();
+  });
+
+  test('renders the userEmailPreferencesComponent', () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+    expect(wrapper.findComponent({ name: 'UserEmailPreferencesComponent' }).exists()).toBe(true);
+  });
+
+  test('updateEmailPreferences calls the users store then refreshes abilities', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    const { useAuthStore } = await import('../../auth/stores/auth.store');
+    const authStore = useAuthStore();
+    authStore.refreshAbilities = vi.fn().mockResolvedValue();
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockResolvedValue({});
+
+    const prefs = { onboarding: false, news: true };
+    await wrapper.vm.updateEmailPreferences(prefs);
+
+    expect(wrapper.vm.usersStore.updateEmailPreferences).toHaveBeenCalledWith(prefs);
+    expect(authStore.refreshAbilities).toHaveBeenCalled();
+  });
+
+  test('updateEmailPreferences swallows a store error (interceptor handles the snackbar)', async () => {
+    const wrapper = shallowMount(UserProfileView, {
+      global: {
+        mocks: sharedMocks(),
+        stubs: sharedStubs,
+      },
+    });
+
+    wrapper.vm.usersStore.updateEmailPreferences = vi.fn().mockRejectedValue(new Error('Server error'));
+
+    await expect(wrapper.vm.updateEmailPreferences({ onboarding: false, news: true })).resolves.toBeUndefined();
   });
 });
 
