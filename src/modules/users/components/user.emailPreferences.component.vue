@@ -5,7 +5,7 @@
       Choose which product emails you receive. Account emails (password reset, verification, invitations) are always sent.
     </p>
     <v-switch
-      :model-value="onboarding"
+      :model-value="prefs.onboarding"
       color="primary"
       inset
       hide-details
@@ -13,7 +13,7 @@
       @update:model-value="update('onboarding', $event)"
     ></v-switch>
     <v-switch
-      :model-value="news"
+      :model-value="prefs.news"
       color="primary"
       inset
       hide-details
@@ -32,20 +32,15 @@ export default {
   emits: ['save'],
   computed: {
     /**
-     * @desc Onboarding-email switch state. Absent `user.emailPreferences`
-     *       (never touched by the user) reads as on, mirroring the API's default.
-     * @returns {boolean}
+     * @desc Switch states. Absent `user.emailPreferences` (never touched by
+     *       the user) reads as both on, mirroring the API's default.
+     * @returns {{ onboarding: boolean, news: boolean }}
      */
-    onboarding() {
-      return this.user.emailPreferences?.onboarding ?? true;
-    },
-    /**
-     * @desc News/announcement-email switch state. Absent `user.emailPreferences`
-     *       (never touched by the user) reads as on, mirroring the API's default.
-     * @returns {boolean}
-     */
-    news() {
-      return this.user.emailPreferences?.news ?? true;
+    prefs() {
+      return {
+        onboarding: this.user.emailPreferences?.onboarding ?? true,
+        news: this.user.emailPreferences?.news ?? true,
+      };
     },
   },
   methods: {
@@ -59,7 +54,7 @@ export default {
      * @returns {void}
      */
     update(kind, value) {
-      this.$emit('save', { onboarding: this.onboarding, news: this.news, [kind]: value });
+      this.$emit('save', { ...this.prefs, [kind]: value });
     },
   },
 };
