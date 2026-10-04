@@ -8,7 +8,7 @@ Breaking changes and upgrade notes for downstream projects.
 
 Non-breaking, skill text only — no `/update-stack` action needed.
 
-- A store action that only forwards an API call (one request, no branching, no derived computation, no state change after the `await`) is exercised once in the module's store test instead of its own happy/error-path block. Actions that change state after the call keep their error-path test.
+- A store action that only forwards an API call (one request, no branching, no derived computation, no state change after the `await`) can use one exercise instead of its own happy/error-path block if it meets per-file coverage thresholds; keep an action-specific test if it does not. Actions that change state after the call keep their error-path test.
 - `/create-module` gained a `crud-only` option: same files, thin store test (one `it()` per action).
 - `/feature`: fix the root cause once in the shared function, not a guard per caller.
 - Coverage thresholds in `vitest.config.js` are unchanged.
