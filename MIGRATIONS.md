@@ -4,6 +4,17 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## skills: pass-through store actions, `create-module` `crud-only` option (2026-10-03, #4712)
+
+Non-breaking, skill text only — no `/update-stack` action needed.
+
+- A store action that only forwards an API call (one request, no branching, no derived computation, no state change after the `await`) is exercised once in the module's store test instead of its own happy/error-path block. Actions that change state after the call keep their error-path test.
+- `/create-module` gained a `crud-only` option: same files, thin store test (one `it()` per action).
+- `/feature`: fix the root cause once in the shared function, not a guard per caller.
+- Coverage thresholds in `vitest.config.js` are unchanged.
+
+---
+
 ## home: per-route activation for `/team` and `/pages/:name` (2026-09-26, #4684)
 
 Non-breaking, additive. Each route now switches off independently via `config.home.routes.{team,pages}.activated` (both default `true` — unset behaves exactly like today, no `/update-stack` action needed). When set to `false`, the route is not registered at all — navigating to it falls through to the normal not-found handling. `core.footer.component.vue` also hides a static footer link matching the disabled route — `/team` when `team.activated: false`, anything under `/pages/` when `pages.activated: false` — so it never renders as a dead link. Every other footer link, including one pointing at any other unregistered path, is untouched.
