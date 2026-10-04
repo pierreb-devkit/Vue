@@ -25,6 +25,8 @@ Prompt user for the new module name in kebab-case (e.g., `my-feature`, `user-set
 
 ### 1b. Crud-only option
 
+On this stack `crud-only` keeps every file and only thins the store test (the Node stack's option of the same name removes files its template carries and this one does not).
+
 Ask: is this module pure CRUD (list/get/create/update/delete, no business logic beyond the standard pass-through actions)? If yes, scaffold crud-only — same files, but the generated store test uses the thin form (step 6b): one test that exercises each action once, no dedicated happy/error-path block per action (see `/feature` Phase 1 §5 — pass-through store actions). If the module will carry any custom logic beyond CRUD, scaffold normally and let `/feature` add tests as that logic lands.
 
 ### 2. Derive naming conventions
