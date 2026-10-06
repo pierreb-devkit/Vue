@@ -50,6 +50,21 @@ vi.mock('../../billing/stores/billing.store', () => ({
   useBillingStore: () => mockBillingStore,
 }));
 
+// Delegates to the REAL isSafeRedirect by default (so most tests exercise the
+// real open-redirect guard end to end) but lets a single test force a verdict
+// to assert the router guard actually RESPECTS isSafeRedirect's answer —
+// isSafeRedirect's own edge cases (control chars, `//`, decoded `//`, etc.)
+// already have a dedicated suite in auth.postAuthRedirect.unit.tests.js.
+let mockIsSafeRedirectOverride = null;
+async function mockPostAuthRedirect() {
+  const actual = await vi.importActual('../../auth/lib/postAuthRedirect');
+  return {
+    ...actual,
+    isSafeRedirect: (value) => (mockIsSafeRedirectOverride ? mockIsSafeRedirectOverride(value) : actual.isSafeRedirect(value)),
+  };
+}
+vi.mock('../../auth/lib/postAuthRedirect', mockPostAuthRedirect);
+
 /**
  * Re-registers all doMock calls and re-imports the router module.
  * Call after vi.resetModules() to get a fresh router with custom mock overrides.
@@ -74,6 +89,7 @@ async function setupRouterModule() {
     isModuleActive: (...args) => mockIsModuleActive(...args),
     warnUnknownModuleKeys: (...args) => mockWarnUnknownModuleKeys(...args),
   }));
+  vi.doMock('../../auth/lib/postAuthRedirect', mockPostAuthRedirect);
   return import('../app.router.js');
 }
 
@@ -96,6 +112,7 @@ describe('app.router', () => {
     mockBillingStore.subscription = null;
     mockBillingStore.fetchSubscription.mockReset().mockResolvedValue();
     mockCapturePageview.mockReset();
+    mockIsSafeRedirectOverride = null;
     mockWarnUnknownModuleKeys.mockReset();
     mockIsModuleActive = () => true;
 
@@ -152,6 +169,94 @@ describe('app.router', () => {
     await router.push('/tasks');
     await router.isReady();
     expect(router.currentRoute.value.path).toBe('/signin');
+  });
+
+  describe('?redirect= on the /signin bounce (keeps the requested page across sign-in)', () => {
+    it('carries ?redirect=<fullPath> (query + hash preserved) for an action-gated route (e.g. /tasks)', async () => {
+      mockAuthStore.isLoggedIn = false;
+      const router = getRouter();
+      const target = { path: '/tasks', query: { foo: 'bar' }, hash: '#section' };
+      const expectedFullPath = router.resolve(target).fullPath;
+      await router.push(target);
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/signin');
+      expect(router.currentRoute.value.query.redirect).toBe(expectedFullPath);
+    });
+
+    it('carries ?redirect=<fullPath> for a plain requiresAuth route (no CASL action)', async () => {
+      mockAuthStore.isLoggedIn = false;
+      const router = getRouter();
+      router.addRoute({
+        path: '/protected-requires-auth',
+        name: 'ProtectedRequiresAuth',
+        component: { template: '<div />' },
+        meta: { requiresAuth: true },
+      });
+      const target = { path: '/protected-requires-auth', query: { a: '1' }, hash: '#frag' };
+      const expectedFullPath = router.resolve(target).fullPath;
+      await router.push(target);
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/signin');
+      expect(router.currentRoute.value.query.redirect).toBe(expectedFullPath);
+    });
+
+    it('does NOT carry ?redirect= when the target is itself an auth page (would just loop back to /signin)', async () => {
+      mockAuthStore.isLoggedIn = false;
+      const router = getRouter();
+      router.addRoute({
+        path: '/signup/confirm',
+        name: 'FakeAuthProtected',
+        component: { template: '<div />' },
+        meta: { requiresAuth: true },
+      });
+      await router.push('/signup/confirm');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/signin');
+      expect(router.currentRoute.value.query.redirect).toBeUndefined();
+    });
+
+    it('does NOT carry ?redirect= when the protected target is the home page ("/")', async () => {
+      vi.resetModules();
+      vi.doMock('../../home/router/home.router', () => ({
+        default: [
+          { path: '/', name: 'Home', component: { template: '<div />' }, meta: { requiresAuth: true } },
+          { path: '/:catchAll(.*)', name: 'NotFound', component: { template: '<div />' }, meta: { display: false, title: 'Page Not Found' } },
+        ],
+      }));
+      try {
+        mockAuthStore.isLoggedIn = false;
+        const mod = await setupRouterModule();
+        const router = mod.default();
+        await router.push('/');
+        await router.isReady();
+        expect(router.currentRoute.value.path).toBe('/signin');
+        expect(router.currentRoute.value.query.redirect).toBeUndefined();
+      } finally {
+        vi.doUnmock('../../home/router/home.router');
+      }
+    });
+
+    it('does NOT carry ?redirect= when isSafeRedirect rejects the target (open-redirect guard wiring)', async () => {
+      mockAuthStore.isLoggedIn = false;
+      mockIsSafeRedirectOverride = () => false;
+      const router = getRouter();
+      await router.push('/tasks');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/signin');
+      expect(router.currentRoute.value.query.redirect).toBeUndefined();
+    });
+
+    it('does not change the logged-in behavior (still allowed through, no /signin involved)', async () => {
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.user = { currentOrganization: null };
+      mockAbility.rules = [{ action: 'read', subject: 'Task' }];
+      mockAbility.can.mockReturnValue(true);
+      const router = getRouter();
+      await router.push('/tasks');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/tasks');
+      expect(router.currentRoute.value.query.redirect).toBeUndefined();
+    });
   });
 
   it('allows guarded routes when logged in with matching ability', async () => {
@@ -789,6 +894,7 @@ describe('registerDownstreamRoutes', () => {
       isModuleActive: (...args) => mockIsModuleActive(...args),
       warnUnknownModuleKeys: (...args) => mockWarnUnknownModuleKeys(...args),
     }));
+    vi.doMock('../../auth/lib/postAuthRedirect', mockPostAuthRedirect);
     const mod = await import('../app.router.js');
     if (registerFn) registerFn(mod.registerDownstreamRoutes);
     return mod;
@@ -798,6 +904,7 @@ describe('registerDownstreamRoutes', () => {
     mockIsModuleActive = () => true;
     mockAuthStore.isLoggedIn = false;
     mockAuthStore.serverConfig = null;
+    mockIsSafeRedirectOverride = null;
     mockAuthStore.user = null;
   });
 
