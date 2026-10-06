@@ -3,6 +3,7 @@
  */
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../auth/stores/auth.store';
+import { isSafeRedirect } from '../auth/lib/postAuthRedirect';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
 import { isModuleActive, warnUnknownModuleKeys } from '../../lib/helpers/modules';
@@ -213,6 +214,23 @@ const getRouter = () => {
       return config.sign.route;
     }
 
+    /**
+     * @desc Redirect target for a route that requires login. Carries
+     * `?redirect=<to.fullPath>` back to the originally-requested page so the
+     * sign-in view can restore it after auth (see postAuthRedirect.js) — but
+     * only when that target is safe (`isSafeRedirect`) and worth restoring:
+     * not the home page, and not an auth page itself (bouncing back to
+     * sign-in would just loop). Otherwise the bare page, same as before.
+     * @returns {string|{ path: string, query: Object }}
+     */
+    const signinRedirectTarget = () => (
+      isSafeRedirect(to.fullPath)
+        && to.path !== '/'
+        && !authPages.some((p) => to.path === p || to.path.startsWith(`${p}/`))
+        ? { path: '/signin', query: { redirect: to.fullPath } }
+        : '/signin'
+    );
+
     // Organization membership required: if orgs enabled, user logged in, no org, and not on an exempt page → block
     if (
       authStore.isLoggedIn
@@ -227,7 +245,7 @@ const getRouter = () => {
 
     // Auth-only routes (no CASL check, just require login)
     if (to.matched.some((record) => record.meta.requiresAuth && !record.meta.action)) {
-      if (!authStore.isLoggedIn) return '/signin';
+      if (!authStore.isLoggedIn) return signinRedirectTarget();
     }
 
     // billing plan gate
@@ -269,7 +287,7 @@ const getRouter = () => {
         // Fallback: abilities still empty after refresh, deny access
         return '/';
       }
-      return '/signin';
+      return signinRedirectTarget();
     }
   });
 
