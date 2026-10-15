@@ -158,6 +158,7 @@
             Continue
           </v-btn>
         </v-form>
+        <p v-if="config.sign?.upNotice" class="text-body-small text-medium-emphasis text-center mt-4 mb-0" data-test="signup-notice">{{ config.sign.upNotice }}</p>
       </template>
     </v-card>
   </v-container>
