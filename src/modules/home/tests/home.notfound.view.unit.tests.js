@@ -27,6 +27,18 @@ describe('home.notfound.view — image', () => {
     expect(img.element.style.width).toBe('240px');
   });
 
+  it('reads a digits-only string width as px', () => {
+    expect(mountView({ image: '/a.svg', imageWidth: '240' }).find('img').element.style.width).toBe('240px');
+  });
+
+  it('passes a CSS length string through', () => {
+    expect(mountView({ image: '/a.svg', imageWidth: '50%' }).find('img').element.style.width).toBe('50%');
+  });
+
+  it('sets no width when imageWidth is empty', () => {
+    expect(mountView({ image: '/a.svg', imageWidth: '' }).find('img').element.style.width).toBe('');
+  });
+
   it('renders no image when unset', () => {
     expect(mountView({}).find('img').exists()).toBe(false);
     expect(mountView({ image: '' }).find('img').exists()).toBe(false);

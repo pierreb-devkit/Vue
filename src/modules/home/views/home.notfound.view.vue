@@ -23,7 +23,7 @@ export default {
   computed: {
     /**
      * Resolved not-found configuration with fallback defaults.
-     * `imageWidth` is a CSS length (a bare number is read as px).
+     * `imageWidth` is a CSS length; a number or digit string (env vars arrive as strings) is read as px.
      * @returns {object} Object containing title, message, buttonText, and the optional image / imageWidth.
      */
     notFoundConfig() {
@@ -34,7 +34,7 @@ export default {
       };
       const merged = { ...defaults, ...(this.config?.app?.notFound || {}) };
       const { imageWidth } = merged;
-      merged.imageWidth = typeof imageWidth === 'number' ? `${imageWidth}px` : imageWidth || undefined;
+      merged.imageWidth = /^\d+(\.\d+)?$/.test(imageWidth) ? `${imageWidth}px` : imageWidth || undefined;
       return merged;
     },
   },
