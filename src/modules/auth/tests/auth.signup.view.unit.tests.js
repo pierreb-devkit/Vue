@@ -90,6 +90,27 @@ describe('auth.signup.view', () => {
       expect(notice.find('b').exists()).toBe(false);
     });
 
+    it('shows the accent image above the title when sign.accentImage is set', async () => {
+      const wrapper = mount(AuthSignupView, {
+        global: {
+          plugins: [createVuetify()],
+          mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, accentImage: '/img/accent.png' } }, $route: { query: {} }, $router: { push: vi.fn() } },
+          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+        },
+      });
+      await flushPromises();
+      const img = wrapper.find('[data-test="sign-accent-image"]');
+      expect(img.exists()).toBe(true);
+      expect(img.attributes('src')).toBe('/img/accent.png');
+      expect(img.attributes('alt')).toBe('');
+    });
+
+    it('renders no accent image when sign.accentImage is unset', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      expect(wrapper.find('[data-test="sign-accent-image"]').exists()).toBe(false);
+    });
+
     it('renders no sign-up notice when sign.upNotice is unset', async () => {
       const wrapper = mountView();
       await flushPromises();
