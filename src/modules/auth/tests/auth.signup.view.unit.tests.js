@@ -75,6 +75,27 @@ describe('auth.signup.view', () => {
   });
 
   describe('serverConfig rendering', () => {
+    it('shows the sign-up notice under the form when sign.upNotice is set', async () => {
+      const wrapper = mount(AuthSignupView, {
+        global: {
+          plugins: [createVuetify()],
+          mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, upNotice: 'We send tips. <b>Unsubscribe</b> any time.' } }, $route: { query: {} }, $router: { push: vi.fn() } },
+          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+        },
+      });
+      await flushPromises();
+      const notice = wrapper.find('[data-test="signup-notice"]');
+      expect(notice.exists()).toBe(true);
+      expect(notice.text()).toBe('We send tips. <b>Unsubscribe</b> any time.');
+      expect(notice.find('b').exists()).toBe(false);
+    });
+
+    it('renders no sign-up notice when sign.upNotice is unset', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      expect(wrapper.find('[data-test="signup-notice"]').exists()).toBe(false);
+    });
+
     it('hides form and shows alert when sign.up is false', async () => {
       const wrapper = mountView();
       await flushPromises();
