@@ -15,6 +15,8 @@ export default {
       title: 'Page Not Found', // heading displayed on the 404 page
       message: 'The page you are looking for does not exist.', // body text below the heading
       buttonText: 'Go Home', // label for the call-to-action button
+      image: '', // Optional: path or URL of a decorative image (e.g. '/images/404.svg') shown above the title, empty = none
+      imageWidth: '', // Optional: image width — CSS length ('240px', '50%') or a number of px, empty = natural size
     },
     seo: {
       og: {
