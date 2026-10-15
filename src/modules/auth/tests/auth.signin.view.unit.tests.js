@@ -59,6 +59,28 @@ const mountView = (formStub = makeFormStub(), routeQuery = {}) =>
   });
 
 describe('auth.signin.view', () => {
+
+    it('shows the accent image above the title when sign.accentImage is set', async () => {
+      const wrapper = mount(AuthSigninView, {
+        global: {
+          plugins: [createVuetify()],
+          mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, accentImage: '/img/accent.png' } }, $route: { query: {} }, $router: { push: vi.fn() } },
+          stubs: { RouterLink: true, VForm: makeFormStub() },
+        },
+      });
+      await flushPromises();
+      const img = wrapper.find('[data-test="sign-accent-image"]');
+      expect(img.exists()).toBe(true);
+      expect(img.attributes('src')).toBe('/img/accent.png');
+      expect(img.attributes('alt')).toBe('');
+    });
+
+    it('renders no accent image when sign.accentImage is unset', async () => {
+      const wrapper = mountView();
+      await flushPromises();
+      expect(wrapper.find('[data-test="sign-accent-image"]').exists()).toBe(false);
+    });
+
   beforeEach(() => {
     setActivePinia(createPinia());
     signinMock.mockReset();

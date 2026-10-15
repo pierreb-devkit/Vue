@@ -56,6 +56,7 @@ This repository is open source. **Never reference downstream consumers** — pro
 - **Config layering**: Module configs (`*.development.config.js`) load first, then global overrides (`{env}.config.js`). Override in global config, not module configs, to avoid stack merge conflicts.
 - **Post-login redirect**: Set `sign.route` in global config override. Used by signin, signup, and org flows. Default: `/tasks`.
 - **Sign-up notice**: Set `sign.upNotice` (plain text) in global config override to show one short line under the sign-up form. Empty by default (nothing rendered).
+- **Sign accent image**: Set `sign.accentImage` (path or URL) in global config override to show a decorative image centered above the title on the sign-in and sign-up views only. Empty by default (nothing rendered).
 - **Custom home page**: Replace `home.router.js` with a project-specific router that maps `/` to a custom view. Set `display: false` in route meta to hide from sidenav.
 
 ## Stack-managed entry points
