@@ -25,6 +25,7 @@ describe('home.notfound.view — image', () => {
     expect(img.attributes('src')).toBe('/images/404.svg');
     expect(img.attributes('alt')).toBe('');
     expect(img.element.style.width).toBe('240px');
+    expect(img.element.style.maxWidth).toBe('100%');
   });
 
   it('reads a digits-only string width as px', () => {
