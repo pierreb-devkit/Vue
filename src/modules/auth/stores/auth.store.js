@@ -9,6 +9,7 @@ import { useBillingStore } from '../../billing/stores/billing.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 import { getAttribution } from '../../../lib/helpers/attribution';
+import { getRef, clearRef } from '../../../lib/helpers/referral';
 import { clearPostAuthRedirect } from '../lib/postAuthRedirect';
 
 /**
@@ -296,10 +297,15 @@ export const useAuthStore = defineStore('auth', {
       const attribution = getAttribution();
       if (attribution) { payload.attribution = attribution; }
 
+      // Referral link code kept from the landing URL (#4754) — omit entirely when absent.
+      const ref = getRef();
+      if (ref) { payload.ref = ref; }
+
       const signupUrl = `${api}/${config.api.endPoints.auth}/signup${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
 
       try {
         const res = await axios.post(signupUrl, payload);
+        clearRef();
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 

@@ -16,6 +16,35 @@
         </v-alert>
       </v-col>
 
+      <!-- Personal shareable referral link (Node#4212): hidden when referral is disabled
+           (the server then returns no code). Credit only, no reward. -->
+      <v-col v-if="referralLink" cols="12">
+        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+          <div class="d-flex align-center mb-2">
+            <v-icon icon="fa-solid fa-link" color="primary" class="mr-3"></v-icon>
+            <span class="text-title-large">Your referral link</span>
+          </div>
+          <p class="text-body-medium text-medium-emphasis mb-4">
+            Share this link anywhere. Whoever signs up through it is credited to you as referred.
+          </p>
+          <div class="d-flex align-center flex-wrap ga-2">
+            <code class="text-body-small flex-grow-1" data-test="referral-link">{{ referralLink }}</code>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              size="small"
+              :class="config.vuetify.theme.rounded"
+              class="text-none"
+              data-test="copy-referral-link"
+              @click="copyReferralLink"
+            >
+              <v-icon start icon="fa-solid fa-copy" size="x-small"></v-icon>
+              {{ referralCopied ? 'Copied' : 'Copy link' }}
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col>
+
       <!-- Invite a contact -->
       <v-col cols="12">
         <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
@@ -172,6 +201,7 @@ export default {
       // One-time copy-link state — set from the create response only.
       createdLink: null,
       linkCopied: false,
+      referralCopied: false,
       inviteHeaders: [
         { text: 'Email', value: 'email', kind: 'email' },
         { text: 'Status', value: 'status', kind: 'slot', slotName: 'status' },
@@ -220,6 +250,17 @@ export default {
       );
     },
     /**
+     * @desc The personal shareable signup link, or null when the server exposes
+     * no referral code (referral disabled) so the card stays hidden.
+     * @returns {string|null}
+     */
+    referralLink() {
+      const code = useInvitationsStore().referralCode;
+      if (!code) return null;
+      const base = (this.config.app?.url || window.location.origin).replace(/\/+$/, '');
+      return `${base}/signup?ref=${encodeURIComponent(code)}`;
+    },
+    /**
      * @desc Whether the deployment has PUBLIC signup open, from the server auth
      * config (GET /api/auth/config → authStore.serverConfig.sign.up; loaded by the
      * global router guard for any logged-in navigation). When open, the referral
@@ -244,7 +285,22 @@ export default {
       return useAuthStore().serverConfig?.invitations?.userFacing === true;
     },
   },
+  created() {
+    useInvitationsStore().getReferralCode();
+  },
   methods: {
+    /**
+     * @desc Copy the personal referral link — local 'Copy link' → 'Copied' flip.
+     * @returns {Promise<void>}
+     */
+    async copyReferralLink() {
+      try {
+        await navigator.clipboard.writeText(this.referralLink);
+        this.referralCopied = true;
+      } catch {
+        // Clipboard unavailable: the link stays visible for manual selection.
+      }
+    },
     /**
      * @desc Load the invitations list (passed to the datatable's fetch-action).
      * @returns {Promise<void>}

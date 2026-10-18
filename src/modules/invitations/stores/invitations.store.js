@@ -20,10 +20,28 @@ const logger = createLogger('invitations');
 export const useInvitationsStore = defineStore('invitations', {
   state: () => ({
     invitations: [],
+    // Personal referral code (Node#4212): null until loaded, and stays null when the
+    // referral feature is disabled (the server then omits it) — the link is hidden.
+    referralCode: null,
     error: null,
   }),
 
   actions: {
+    /**
+     * @desc Load the signed-in user's personal referral code from `GET /users/me`.
+     * Failure is silent by design: no code means the shareable link stays hidden.
+     * @returns {Promise<void>}
+     */
+    async getReferralCode() {
+      try {
+        const res = await axios.get(`${apiBase()}/users/me`);
+        this.referralCode = res.data?.data?.referralCode || null;
+      } catch (err) {
+        this.referralCode = null;
+        logger.error(err);
+      }
+    },
+
     /**
      * @desc Load all signup invitations (admin). Backend returns the full list
      * (no server pagination), newest first, with token stripped.

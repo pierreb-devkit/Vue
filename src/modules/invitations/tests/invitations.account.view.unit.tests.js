@@ -53,6 +53,7 @@ describe('invitations.account.view', () => {
     setActivePinia(createPinia());
     store = useInvitationsStore();
     store.getInvitations = vi.fn().mockResolvedValue();
+    store.getReferralCode = vi.fn().mockResolvedValue();
     store.createInvitation = vi.fn().mockResolvedValue({ id: '9', email: 'x@y.co' });
   });
 
@@ -60,6 +61,33 @@ describe('invitations.account.view', () => {
     store.invitations = [{ id: '1', email: 'a@b.co', usedAt: null, expiresAt: null }];
     const wrapper = mountView();
     expect(wrapper.vm.invitations).toEqual([{ id: '1', email: 'a@b.co', usedAt: null, expiresAt: null }]);
+  });
+
+  it('loads the referral code on mount and builds the shareable link from it (#4754)', () => {
+    store.referralCode = 'abcdefghijklmnop';
+    const wrapper = mountView();
+    expect(store.getReferralCode).toHaveBeenCalled();
+    expect(wrapper.vm.referralLink).toBe('https://app.example.test/signup?ref=abcdefghijklmnop');
+    expect(wrapper.find('[data-test="referral-link"]').text()).toContain('/signup?ref=abcdefghijklmnop');
+  });
+
+  it('hides the referral link card when the server exposes no code (referral disabled)', () => {
+    store.referralCode = null;
+    const wrapper = mountView();
+    expect(wrapper.vm.referralLink).toBeNull();
+    expect(wrapper.find('[data-test="referral-link"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="copy-referral-link"]').exists()).toBe(false);
+  });
+
+  it('copies the personal link and flips the button label', async () => {
+    store.referralCode = 'abcdefghijklmnop';
+    const writeText = vi.fn().mockResolvedValue();
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const wrapper = mountView();
+    await wrapper.find('[data-test="copy-referral-link"]').trigger('click');
+    await wrapper.vm.$nextTick();
+    expect(writeText).toHaveBeenCalledWith('https://app.example.test/signup?ref=abcdefghijklmnop');
+    expect(wrapper.vm.referralCopied).toBe(true);
   });
 
   it('exposes the store error (surfaced as a banner)', () => {
