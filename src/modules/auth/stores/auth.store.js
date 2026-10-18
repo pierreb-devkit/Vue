@@ -403,8 +403,6 @@ export const useAuthStore = defineStore('auth', {
       // signout() bumps it while this request is in flight, the response
       // below is a stale continuation and must not resurrect state.
       const generation = _authGeneration;
-      // No user in memory before the call = session restored on app load: identify once below.
-      const restoring = !this.user;
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
         if (generation !== _authGeneration) return; // signout() won the race
@@ -412,6 +410,10 @@ export const useAuthStore = defineStore('auth', {
           updateAbilities(res.data.abilities);
         }
         if (res.data.user) {
+          // No user in memory when the response lands = session restored on app
+          // load: identify once. Read here, not before the await, so a signin that
+          // landed meanwhile (it already identified) does not identify again.
+          const restoring = !this.user;
           this.user = res.data.user;
           if (restoring) identifyUser(res.data.user);
         }
