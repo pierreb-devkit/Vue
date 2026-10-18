@@ -37,6 +37,24 @@ describe('invitations store', () => {
     capture.mockReset();
   });
 
+  it('getReferralCode reads the personal code from /users/me; absent code or failure leaves it null', async () => {
+    const store = useInvitationsStore();
+    expect(store.referralCode).toBeNull();
+    axios.get.mockResolvedValueOnce({ data: { data: { id: '1', referralCode: 'abcdefghijklmnop' } } });
+    await store.getReferralCode();
+    expect(axios.get).toHaveBeenCalledWith(expect.stringMatching(/\/api\/users\/me$/));
+    expect(store.referralCode).toBe('abcdefghijklmnop');
+
+    axios.get.mockResolvedValueOnce({ data: { data: { id: '1' } } });
+    await store.getReferralCode();
+    expect(store.referralCode).toBeNull();
+
+    store.referralCode = 'x';
+    axios.get.mockRejectedValueOnce(new Error('boom'));
+    await store.getReferralCode();
+    expect(store.referralCode).toBeNull();
+  });
+
   it('initializes with empty state', () => {
     const store = useInvitationsStore();
     expect(store.invitations).toEqual([]);

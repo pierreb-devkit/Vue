@@ -45,6 +45,14 @@ vi.mock('../../../lib/helpers/attribution', () => ({
   getAttribution: (...args) => mockGetAttribution(...args),
 }));
 
+// Mock referral helper
+const mockGetRef = vi.fn(() => null);
+const mockClearRef = vi.fn();
+vi.mock('../../../lib/helpers/referral', () => ({
+  getRef: (...args) => mockGetRef(...args),
+  clearRef: (...args) => mockClearRef(...args),
+}));
+
 describe('Auth Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -498,6 +506,32 @@ describe('Auth Store', () => {
 
       const body = axios.post.mock.calls[0][1];
       expect(body.attribution).toEqual(attribution);
+    });
+
+    it('sends the captured referral code as ref and clears it after signup (#4754)', async () => {
+      const authStore = useAuthStore();
+      mockGetRef.mockReturnValue('code123');
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '456', email: 'new@test.com', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000 } });
+      await authStore.signup({ email: 'new@test.com', password: 'password123' });
+
+      expect(axios.post.mock.calls[0][1].ref).toBe('code123');
+      expect(mockClearRef).toHaveBeenCalledTimes(1);
+      mockGetRef.mockReturnValue(null);
+    });
+
+    it('omits ref from the payload and keeps the code when signup fails (#4754)', async () => {
+      const authStore = useAuthStore();
+      mockClearRef.mockClear();
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'] }, tokenExpiresIn: 1 } });
+      await authStore.signup({ email: 'a@test.com', password: 'password123' });
+      expect(axios.post.mock.calls[0][1]).not.toHaveProperty('ref');
+
+      mockGetRef.mockReturnValue('code123');
+      mockClearRef.mockClear();
+      axios.post.mockRejectedValueOnce({ response: { status: 422, data: {} } });
+      await authStore.signup({ email: 'b@test.com', password: 'password123' }).catch(() => {});
+      expect(mockClearRef).not.toHaveBeenCalled();
+      mockGetRef.mockReturnValue(null);
     });
 
     it('omits attribution from the POST payload when none was captured (#4520)', async () => {

@@ -24,6 +24,7 @@ app.config.globalProperties.routes = routes;
 
 app
   .use(plugins.attribution)
+  .use(plugins.referral)
   .use(head)
   .use(pinia)
   .use(appRouter)
