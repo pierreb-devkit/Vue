@@ -852,6 +852,43 @@ describe('Auth Store', () => {
       expect(authStore.user).toEqual(mockUser);
     });
 
+    it('identifies the user on refreshAbilities when none was in memory (session restore)', async () => {
+      const authStore = useAuthStore();
+      mockIdentify.mockClear();
+      axios.get.mockResolvedValueOnce({
+        data: { user: { id: 'u9', email: 'jane.roe@test.com', firstName: 'Jane', lastName: 'Roe' }, abilities: [] },
+      });
+      await authStore.refreshAbilities();
+
+      expect(mockIdentify).toHaveBeenCalledTimes(1);
+      expect(mockIdentify).toHaveBeenCalledWith('u9', { email: 'jane.roe@test.com', name: 'Jane Roe' });
+    });
+
+    it('does not identify on refreshAbilities when a user is already in memory', async () => {
+      const authStore = useAuthStore();
+      authStore.user = { id: 'u9', email: 'jane@test.com' };
+      mockIdentify.mockClear();
+      axios.get.mockResolvedValueOnce({ data: { user: { id: 'u9', email: 'jane@test.com' }, abilities: [] } });
+      await authStore.refreshAbilities();
+
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
+    it('does not identify when the refreshAbilities response is stale after signout', async () => {
+      const authStore = useAuthStore();
+      mockIdentify.mockClear();
+      let resolveGet;
+      axios.get.mockImplementationOnce(() => new Promise((resolve) => { resolveGet = resolve; }));
+      axios.post.mockResolvedValueOnce({ data: {} });
+
+      const refreshPromise = authStore.refreshAbilities();
+      await authStore.signout();
+      resolveGet({ data: { user: { id: 'ghost', email: 'g@test.com' }, abilities: [] } });
+      await refreshPromise;
+
+      expect(mockIdentify).not.toHaveBeenCalled();
+    });
+
     it('should not call updateAbilities on refreshAbilities when abilities are absent', async () => {
       const authStore = useAuthStore();
       const mockResponse = {

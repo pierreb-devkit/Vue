@@ -41,6 +41,23 @@ function deduceNamesFromEmail(email) {
 }
 
 /**
+ * PostHog identify for a signed-in user: id (or `_id`), email, and a display
+ * name from first + last name, else deduced from the email. Consent is handled
+ * by the analytics plugin; this only links the events to the account.
+ * @param {Object} u - user payload from the API
+ */
+function identifyUser(u) {
+  let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+  if (!name && u.email) {
+    const deduced = deduceNamesFromEmail(u.email);
+    name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
+  }
+  const identifyProps = { email: u.email };
+  if (name) identifyProps.name = name;
+  identify(u.id || u._id, identifyProps);
+}
+
+/**
  * Monotonically-increasing generation counter shared by token()/
  * refreshAbilities() and signout() (module scope, mirrors the
  * isRefreshingAbilities dedup flag in lib/services/axios.js). token() and
@@ -198,15 +215,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         // PostHog identify on signin
-        const u = res.data.user;
-        let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
-        if (!name && u.email) {
-          const deduced = deduceNamesFromEmail(u.email);
-          name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
-        }
-        const identifyProps = { email: u.email };
-        if (name) identifyProps.name = name;
-        identify(u.id || u._id, identifyProps);
+        identifyUser(res.data.user);
       } catch (err) {
         if (err.response && err.response.status === 423) {
           const retryAfter = Number(err.response.data?.retryAfter) || 0;
@@ -394,6 +403,8 @@ export const useAuthStore = defineStore('auth', {
       // signout() bumps it while this request is in flight, the response
       // below is a stale continuation and must not resurrect state.
       const generation = _authGeneration;
+      // No user in memory before the call = session restored on app load: identify once below.
+      const restoring = !this.user;
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
         if (generation !== _authGeneration) return; // signout() won the race
@@ -402,6 +413,7 @@ export const useAuthStore = defineStore('auth', {
         }
         if (res.data.user) {
           this.user = res.data.user;
+          if (restoring) identifyUser(res.data.user);
         }
         this.pendingRequests = res.data.pendingRequests || [];
         coreStore.refreshNav(this.isLoggedIn);
