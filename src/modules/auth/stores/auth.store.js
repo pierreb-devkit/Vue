@@ -42,6 +42,23 @@ function deduceNamesFromEmail(email) {
 }
 
 /**
+ * PostHog identify for a signed-in user: id (or `_id`), email, and a display
+ * name from first + last name, else deduced from the email. Consent is handled
+ * by the analytics plugin; this only links the events to the account.
+ * @param {Object} u - user payload from the API
+ */
+function identifyUser(u) {
+  let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
+  if (!name && u.email) {
+    const deduced = deduceNamesFromEmail(u.email);
+    name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
+  }
+  const identifyProps = { email: u.email };
+  if (name) identifyProps.name = name;
+  identify(u.id || u._id, identifyProps);
+}
+
+/**
  * Monotonically-increasing generation counter shared by token()/
  * refreshAbilities() and signout() (module scope, mirrors the
  * isRefreshingAbilities dedup flag in lib/services/axios.js). token() and
@@ -199,15 +216,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         // PostHog identify on signin
-        const u = res.data.user;
-        let name = [u.firstName, u.lastName].filter(Boolean).join(' ');
-        if (!name && u.email) {
-          const deduced = deduceNamesFromEmail(u.email);
-          name = [deduced.firstName, deduced.lastName].filter(Boolean).join(' ');
-        }
-        const identifyProps = { email: u.email };
-        if (name) identifyProps.name = name;
-        identify(u.id || u._id, identifyProps);
+        identifyUser(res.data.user);
       } catch (err) {
         if (err.response && err.response.status === 423) {
           const retryAfter = Number(err.response.data?.retryAfter) || 0;
@@ -407,7 +416,12 @@ export const useAuthStore = defineStore('auth', {
           updateAbilities(res.data.abilities);
         }
         if (res.data.user) {
+          // No user in memory when the response lands = session restored on app
+          // load: identify once. Read here, not before the await, so a signin that
+          // landed meanwhile (it already identified) does not identify again.
+          const restoring = !this.user;
           this.user = res.data.user;
+          if (restoring) identifyUser(res.data.user);
         }
         this.pendingRequests = res.data.pendingRequests || [];
         coreStore.refreshNav(this.isLoggedIn);
