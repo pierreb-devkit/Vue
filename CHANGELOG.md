@@ -1,3 +1,98 @@
+# [3.0.0](https://github.com/pierreb-devkit/Vue/compare/v2.3.0...v3.0.0) (2026-10-21)
+
+
+* feat(billing)!: declare pricing tabs in config, each carrying its own content ([#4654](https://github.com/pierreb-devkit/Vue/issues/4654)) ([e04ef23](https://github.com/pierreb-devkit/Vue/commit/e04ef23355ea92fd1978dc1be9ffe36e3386645e))
+
+
+### Bug Fixes
+
+* **analytics:** gate attribution capture on posthog config + stack-update ordering note ([#4584](https://github.com/pierreb-devkit/Vue/issues/4584)) ([9e61b85](https://github.com/pierreb-devkit/Vue/commit/9e61b851dd98f1f00a6e76cb9dffcad8c8e06da7)), closes [#4024](https://github.com/pierreb-devkit/Vue/issues/4024)
+* **app:** keep the requested page across sign-in ([#4725](https://github.com/pierreb-devkit/Vue/issues/4725)) ([713b464](https://github.com/pierreb-devkit/Vue/commit/713b464742d8c72e6ad503e7b2278e06a7f25977))
+* **auth:** identify the signed-in user again on session restore ([#4752](https://github.com/pierreb-devkit/Vue/issues/4752)) ([#4755](https://github.com/pierreb-devkit/Vue/issues/4755)) ([1447360](https://github.com/pierreb-devkit/Vue/commit/144736033983917c2cdf9d1cceee95cdf8e082ae))
+* **auth:** re-fetch serverConfig after in-SPA signin/signup ([#4539](https://github.com/pierreb-devkit/Vue/issues/4539)) ([1cb1c98](https://github.com/pierreb-devkit/Vue/commit/1cb1c98ef663385c787fe2fc98d18774a4f4b4ed)), closes [Node#3566](https://github.com/Node/issues/3566) [#4261](https://github.com/pierreb-devkit/Vue/issues/4261) [#4538](https://github.com/pierreb-devkit/Vue/issues/4538)
+* **auth:** signout resets serverConfig to null ([#4541](https://github.com/pierreb-devkit/Vue/issues/4541)) ([2c02fac](https://github.com/pierreb-devkit/Vue/commit/2c02fac1134bd9b2862d5d1d2ebbcccb4d23cca9)), closes [#4539](https://github.com/pierreb-devkit/Vue/issues/4539) [#4540](https://github.com/pierreb-devkit/Vue/issues/4540) [#4459](https://github.com/pierreb-devkit/Vue/issues/4459)
+* **auth:** stop signin auth-watcher from racing navigation past validate() ([#4534](https://github.com/pierreb-devkit/Vue/issues/4534)) ([0addeb9](https://github.com/pierreb-devkit/Vue/commit/0addeb93f0c2ccaa3fbce37f8f96e9fd114bcc49)), closes [#4528](https://github.com/pierreb-devkit/Vue/issues/4528) [#4533](https://github.com/pierreb-devkit/Vue/issues/4533) [#4533](https://github.com/pierreb-devkit/Vue/issues/4533)
+* **auth:** stop signup auth-watcher from racing past email verification ([#4528](https://github.com/pierreb-devkit/Vue/issues/4528)) ([cbf4947](https://github.com/pierreb-devkit/Vue/commit/cbf4947799454008b12726aa8424ec67f7260be8)), closes [#4437](https://github.com/pierreb-devkit/Vue/issues/4437)
+* **billing:** [#4654](https://github.com/pierreb-devkit/Vue/issues/4654) follow-ups (packs empty-state, stale comments, migration note) ([#4674](https://github.com/pierreb-devkit/Vue/issues/4674)) ([62eaedc](https://github.com/pierreb-devkit/Vue/commit/62eaedccd4619a3006f88c4ee720fb4daf579a3b))
+* **billing:** compute gauge and weekly meter go quota-only, matching quota-threshold alerts ([#4550](https://github.com/pierreb-devkit/Vue/issues/4550)) ([7d881f6](https://github.com/pierreb-devkit/Vue/commit/7d881f62872df16b178a331ca49972dac0f62ac5)), closes [#4548](https://github.com/pierreb-devkit/Vue/issues/4548)
+* **billing:** guest plan CTAs go to sign-up and return to pricing ([#4678](https://github.com/pierreb-devkit/Vue/issues/4678)) ([cf553ad](https://github.com/pierreb-devkit/Vue/commit/cf553ad6018d02816865d5bf7ef29c15ff421489))
+* **billing:** move the zero-quota overage guard into BillingMeterProgressComponent ([#4554](https://github.com/pierreb-devkit/Vue/issues/4554)) ([7effea0](https://github.com/pierreb-devkit/Vue/commit/7effea0b80ff10946f76d22bb3aeffa267dbb746)), closes [#4553](https://github.com/pierreb-devkit/Vue/issues/4553)
+* **billing:** render pending cancellation on the subscriptions panel ([#4551](https://github.com/pierreb-devkit/Vue/issues/4551)) ([1318444](https://github.com/pierreb-devkit/Vue/commit/131844481f345d51792beef493abb3da4e76d3a5))
+* **config:** derive the apiBase() test expectation from the loaded config ([#4690](https://github.com/pierreb-devkit/Vue/issues/4690)) ([53e064f](https://github.com/pierreb-devkit/Vue/commit/53e064f6e57cf4666576a13ffb3569f8ff323247)), closes [#4689](https://github.com/pierreb-devkit/Vue/issues/4689)
+* **home:** replace real third-party brand defaults with RFC-2606 placeholders ([#4623](https://github.com/pierreb-devkit/Vue/issues/4623)) ([b0de8a5](https://github.com/pierreb-devkit/Vue/commit/b0de8a51501ce7d5e49ed902df9c1d08f235a88a)), closes [Vue#4340](https://github.com/Vue/issues/4340)
+* **modules:** warn on config.modules.* keys that match no registered module ([#4529](https://github.com/pierreb-devkit/Vue/issues/4529)) ([1ab89c4](https://github.com/pierreb-devkit/Vue/commit/1ab89c4b35e87750df8bb7a80c396ed2654c3bd5)), closes [#4480](https://github.com/pierreb-devkit/Vue/issues/4480) [#4480](https://github.com/pierreb-devkit/Vue/issues/4480)
+
+
+### Features
+
+* **analytics:** consent_choice on decline via PostHog cookieless mode ([#4588](https://github.com/pierreb-devkit/Vue/issues/4588)) ([319a5fd](https://github.com/pierreb-devkit/Vue/commit/319a5fdfd76708e5eba2dc65e26098cbde2cdf05)), closes [#4587](https://github.com/pierreb-devkit/Vue/issues/4587)
+* **analytics:** first-touch attribution capture + consent_choice event ([#4572](https://github.com/pierreb-devkit/Vue/issues/4572)) ([c6feca7](https://github.com/pierreb-devkit/Vue/commit/c6feca703c21628112b442910a5e6e2d00497efe)), closes [#4520](https://github.com/pierreb-devkit/Vue/issues/4520)
+* **auth:** optional sign.accentImage above the sign-in/sign-up title ([#4744](https://github.com/pierreb-devkit/Vue/issues/4744)) ([e7ed70f](https://github.com/pierreb-devkit/Vue/commit/e7ed70f7026ff16098ae4ab27caaa86fb7c49819))
+* **auth:** optional sign.upNotice line under the sign-up form ([#4742](https://github.com/pierreb-devkit/Vue/issues/4742)) ([1689f17](https://github.com/pierreb-devkit/Vue/commit/1689f1752bc954810fa7fe587cc4636f8416d4a7)), closes [#4730](https://github.com/pierreb-devkit/Vue/issues/4730)
+* **billing:** skip live plans fetch under SEO prerender + shared isPrerenderCrawl helper ([#4543](https://github.com/pierreb-devkit/Vue/issues/4543)) ([779eb10](https://github.com/pierreb-devkit/Vue/commit/779eb1082d744750b3cd0ad9cafcbde6af03e088)), closes [#4542](https://github.com/pierreb-devkit/Vue/issues/4542)
+* **home:** configurable image on the not-found page ([#4743](https://github.com/pierreb-devkit/Vue/issues/4743)) ([1fe5ed4](https://github.com/pierreb-devkit/Vue/commit/1fe5ed495ae8aabea01a6a6521606b28ae68def4))
+* **invitations:** shareable referral link, capture ref and show personal link ([#4754](https://github.com/pierreb-devkit/Vue/issues/4754)) ([#4756](https://github.com/pierreb-devkit/Vue/issues/4756)) ([c637db5](https://github.com/pierreb-devkit/Vue/commit/c637db5e9be093a4441c326cffaecb578b4030af))
+* **seo:** serve a build-time docs API snapshot during prerender capture ([#4531](https://github.com/pierreb-devkit/Vue/issues/4531)) ([ea3e6b9](https://github.com/pierreb-devkit/Vue/commit/ea3e6b903b1b49e27b2babc83f1581ab5a559da5)), closes [#4530](https://github.com/pierreb-devkit/Vue/issues/4530) [#4530](https://github.com/pierreb-devkit/Vue/issues/4530) [#4530](https://github.com/pierreb-devkit/Vue/issues/4530) [#4530](https://github.com/pierreb-devkit/Vue/issues/4530)
+* **skills:** thin store actions and crud-only module scaffold ([#4712](https://github.com/pierreb-devkit/Vue/issues/4712)) ([f54158e](https://github.com/pierreb-devkit/Vue/commit/f54158e142a1c063e218890d59a46e39c7d99480)), closes [pierreb-devkit/Vue#4711](https://github.com/pierreb-devkit/Vue/issues/4711) [pierreb-devkit/Node#4173](https://github.com/pierreb-devkit/Node/issues/4173)
+* **users:** email preference switches on account page ([#4709](https://github.com/pierreb-devkit/Vue/issues/4709)) ([7f6adac](https://github.com/pierreb-devkit/Vue/commit/7f6adaca0d7cb7f7d69e3c8c658357d1ac8a38a8)), closes [#4708](https://github.com/pierreb-devkit/Vue/issues/4708) [#4459](https://github.com/pierreb-devkit/Vue/issues/4459)
+
+
+### BREAKING CHANGES
+
+* the top-level `plans`/`packs` static-content collections and the
+legacy `tabs: { plans, units }` label object are removed, with no compatibility
+bridge. A downstream project moves its plans and packs into `tabs[]` entries in
+the same pass that absorbs this change, and sets `annualToggle: true` on each
+tab billed annually. See MIGRATIONS.md.
+
+Claude-Session: https://claude.ai/code/session_01VAeEZbYQnihV4gcnGFnc6L
+
+* fix(billing): warn when tabs config is provided but unusable
+
+normalizeTabs() silently fell back to the devkit demo catalogue
+whenever the resolved tabs value was not a non-empty array, with no
+signal — unlike the neighbouring both-slots-filled case, which
+already warns. A downstream consumer still on the pre-migration
+tabs: { plans, units } object shape would render demo plans and
+packs on a live pricing page with nothing telling them why.
+
+Thread whether the tabs key was explicitly present in config (vs.
+simply absent) into normalizeTabs so it can warn only on an
+explicit-but-unusable value, keeping the default-install path silent.
+
+Claude-Session: https://claude.ai/code/session_01VAeEZbYQnihV4gcnGFnc6L
+
+* fix(billing): gate pricing and checkout on the active tab's annual option
+
+Apply the pre-merge review findings on the pricing tabs change.
+
+- `effectiveAnnual` now gates every annual-dependent decision: the displayed
+  amount, the /year period, the savings chip, and the price id that reaches
+  checkout. A tab declaring `annualToggle: false` could previously still send
+  an annual price id to checkout while rendering a disabled toggle.
+- `resolvePlanPricing` lowercases both sides of the case-insensitive Stripe
+  name fallback, so a static id like `Pro` matches a Stripe name `PRO` instead
+  of silently losing its price objects and leaving checkout unavailable.
+- JSDoc headers on the modified computeds.
+
+Claude-Session: https://claude.ai/code/session_01VAeEZbYQnihV4gcnGFnc6L
+
+* refactor(billing): name the Stripe plan match predicate
+
+The match logic passed to `candidates.find()` moves into a named
+`matchesStaticPlan()` helper carrying a full JSDoc header, leaving a
+one-line callback at the call site.
+
+Review feedback asked for a JSDoc header on the inline predicate. The
+repository documents named functions rather than inline callbacks (7 of
+459 array callbacks in src/ carry one), and `toAmount()` sits directly
+above as that same pattern, so extracting satisfies the guideline in the
+codebase's own idiom instead of introducing an outlier.
+
+Pure refactor: no behaviour change, 2755/2755 unit tests unchanged.
+
+Claude-Session: https://claude.ai/code/session_01VAeEZbYQnihV4gcnGFnc6L
+
 # [2.3.0](https://github.com/pierreb-devkit/Vue/compare/v2.2.0...v2.3.0) (2026-08-01)
 
 
