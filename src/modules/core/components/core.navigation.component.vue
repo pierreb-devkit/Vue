@@ -39,7 +39,7 @@
               :alt="config.app.title"
               :width="config.header.logo?.width || '32px'"
               :height="config.header.logo?.width || '32px'"
-              class="ms-n1"
+              :style="logoOffsetStyle"
               inline
             ></v-img>
             <v-icon
@@ -187,6 +187,16 @@ export default {
      */
     logoFile() {
       return this.config.header?.logo?.file || this.config.app.logoFile || null;
+    },
+    /**
+     * @desc Keeps the logo centered in the rail whatever its configured width:
+     * the base -4px offset centers a 32px logo, wider ones are pulled back by half the extra width.
+     * `maxWidth: none` lifts v-img's `max-width: 100%`, which would shrink a wide logo to the rail's prepend slot.
+     * @returns {Object}
+     */
+    logoOffsetStyle() {
+      const width = this.config.header?.logo?.width || '32px';
+      return { marginInlineStart: `calc(-4px - (${width} - 32px) / 2)`, maxWidth: 'none' };
     },
     /**
      * @desc Whether the liquid glass mode is enabled.

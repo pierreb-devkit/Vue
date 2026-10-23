@@ -50,7 +50,7 @@ import CoreNavigation from '../components/core.navigation.component.vue';
  */
 const makeConfig = (overrides = {}) => ({
   app: { title: 'Test App', icon: 'fa-solid fa-cube', logoFile: null, ...(overrides.app || {}) },
-  header: { socials: [] },
+  header: { socials: [], ...(overrides.header || {}) },
   vuetify: {
     theme: {
       flat: false,
@@ -370,5 +370,11 @@ describe('core.navigation.component — sidenav logo', () => {
     const wrapperImg = mountNav({ configOverrides: { app: { logoFile: '/images/logo.svg' } } });
     const logoItemImg = wrapperImg.findAllComponents({ name: 'VListItem' })[0];
     expect(logoItemImg.props('to')).toBe('/');
+  });
+
+  it('offsets the logo by half its extra width so it stays centered in the rail', () => {
+    const wrapper = mountNav({ configOverrides: { app: { logoFile: '/images/logo.svg' }, header: { logo: { width: '42px' } } } });
+    expect(wrapper.vm.logoOffsetStyle.marginInlineStart).toBe('calc(-4px - (42px - 32px) / 2)');
+    expect(wrapper.vm.logoOffsetStyle.maxWidth).toBe('none');
   });
 });
