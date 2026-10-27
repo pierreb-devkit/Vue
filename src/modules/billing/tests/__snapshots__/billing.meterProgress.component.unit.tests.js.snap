@@ -9,6 +9,7 @@ exports[`BillingMeterProgressComponent > matches the overage snapshot 1`] = `
     <!---->
     <div class="v-progress-linear__background bg-surface-variant"></div>
     <div class="v-progress-linear__buffer bg-surface-variant" style="width: 0%;"></div>
+    <!---->
     <transition-stub name="slide-x-transition" appear="false" persisted="false" css="true">
       <div class="v-progress-linear__determinate bg-error" style="width: 100%;"></div>
     </transition-stub>
