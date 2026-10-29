@@ -25,9 +25,10 @@ vi.mock('vuetify', () => ({
   }),
 }));
 
-// Mock auth store
+// Mock auth store — `authState.isLoggedIn` is flipped per test, reset in beforeEach
+const authState = vi.hoisted(() => ({ isLoggedIn: false }));
 vi.mock('../../auth/stores/auth.store', () => ({
-  useAuthStore: () => ({ isLoggedIn: false }),
+  useAuthStore: () => authState,
 }));
 
 // Mock axios interceptors
@@ -60,15 +61,17 @@ describe('App.vue — mainStyle', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     useHeadMock.mockClear();
+    authState.isLoggedIn = false;
   });
 
   /**
    * @desc Mount App component with a mocked route and optional config overrides.
    * @param {String} path - Route path to mock (e.g. '/', '/tasks')
    * @param {Object} configOverrides - Navigation config overrides (merged into navigation)
+   * @param {Array} matched - Mocked $route.matched (default: one record, a resolved route)
    * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
    */
-  const mountWithRoute = (path, configOverrides = {}) => {
+  const mountWithRoute = (path, configOverrides = {}, matched = [{ path }]) => {
     const config = {
       ...makeConfig(),
       vuetify: {
@@ -82,7 +85,7 @@ describe('App.vue — mainStyle', () => {
     };
     return mount(App, {
       global: {
-        mocks: { config, $route: { path } },
+        mocks: { config, $route: { path, matched } },
         stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
       },
     });
@@ -107,6 +110,19 @@ describe('App.vue — mainStyle', () => {
     const style = wrapper.vm.mainStyle;
     expect(style['padding-left']).toBeUndefined();
   });
+
+  it('removes padding-left on the resolved home route when logged in', () => {
+    authState.isLoggedIn = true;
+    const wrapper = mountWithRoute('/');
+    expect(wrapper.vm.mainStyle['padding-left']).toBe('0px');
+  });
+
+  it('keeps default padding on the start location before the first route resolves (#4787)', () => {
+    // vue-router's START_LOCATION reads path '/' with no matched record
+    authState.isLoggedIn = true;
+    const wrapper = mountWithRoute('/', {}, []);
+    expect(wrapper.vm.mainStyle['padding-left']).toBeUndefined();
+  });
 });
 
 describe('App.vue — SEO (useHead)', () => {
@@ -126,7 +142,7 @@ describe('App.vue — SEO (useHead)', () => {
   const mountApp = (config, path = '/') =>
     mount(App, {
       global: {
-        mocks: { config, $route: { path } },
+        mocks: { config, $route: { path, matched: [{ path }] } },
         stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
       },
     });
@@ -274,7 +290,7 @@ describe('App.vue — theme wiring (#4462)', () => {
     };
     return mount(App, {
       global: {
-        mocks: { config, $route: { path: '/' } },
+        mocks: { config, $route: { path: '/', matched: [{ path: '/' }] } },
         stubs: { RouterView: true, 'v-app': true, 'v-snackbar': true, 'v-main': true },
       },
     });
