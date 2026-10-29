@@ -180,11 +180,14 @@ export default {
     },
     /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
+     * Only once the route is resolved: the router's start location also reads `path: '/'`
+     * (with no matched record), so a deep link would load unpadded, under the drawer (#4787).
      * @returns {Object} CSS style object
      */
     mainStyle() {
       const base = { background: this.theme.current.colors.background };
-      if (this.config.vuetify.theme.navigation.glass && this.isLoggedIn && this.$route.path === '/') {
+      const isHome = this.$route.path === '/' && this.$route.matched.length > 0;
+      if (this.config.vuetify.theme.navigation.glass && this.isLoggedIn && isHome) {
         base['padding-left'] = '0px';
       }
       return base;
