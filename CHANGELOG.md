@@ -1,3 +1,12 @@
+## [3.0.1](https://github.com/pierreb-devkit/Vue/compare/v3.0.0...v3.0.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* **app:** keep the drawer offset until the first route resolves ([#4788](https://github.com/pierreb-devkit/Vue/issues/4788)) ([3d6fff3](https://github.com/pierreb-devkit/Vue/commit/3d6fff32535f9b5f23f1281906d7f084edd78bfe)), closes [#4787](https://github.com/pierreb-devkit/Vue/issues/4787)
+* **core:** center the sidenav logo in rail mode whatever its width ([#4776](https://github.com/pierreb-devkit/Vue/issues/4776)) ([8e661d9](https://github.com/pierreb-devkit/Vue/commit/8e661d9c3b9f2a06d0f19fefc7b5a242f6621165))
+* **nginx:** relative Location on every redirect behind a TLS proxy ([#4786](https://github.com/pierreb-devkit/Vue/issues/4786)) ([aa99044](https://github.com/pierreb-devkit/Vue/commit/aa99044882d56f7acc00eebc9b7870241625413a)), closes [#4784](https://github.com/pierreb-devkit/Vue/issues/4784)
+
 # [3.0.0](https://github.com/pierreb-devkit/Vue/compare/v2.3.0...v3.0.0) (2026-10-21)
 
 
