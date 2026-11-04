@@ -123,6 +123,100 @@ describe('CoreHeaderComponent', () => {
     });
   });
 
+  // #4803 — the mobile menu is one glass panel: a group with sublinks renders
+  // as a subheader + flat items (no nested opaque v-list), and the burger icon
+  // inherits the bar text color instead of a forced inline one.
+  describe('mobile menu (#4803)', () => {
+    /**
+     * @desc Mount with one plain link, one item with sublinks and a shortcut;
+     *       v-menu is stubbed to render its activator and content inline.
+     * @returns {import('@vue/test-utils').VueWrapper}
+     */
+    const mountWithLinks = () => {
+      const vuetify = createVuetify({ components, directives });
+      const config = makeConfig();
+      config.header.links = [
+        { title: 'Pricing', url: '/pricing' },
+        {
+          title: 'Product',
+          sublinks: [
+            { title: 'Docs', url: '/docs', icon: 'fa-solid fa-book', subtitle: 'Read the docs' },
+            { title: 'Blog', url: '/blog', icon: 'fa-solid fa-pen' },
+          ],
+        },
+      ];
+      config.header.shortcuts = [{ title: 'Start', url: '/signup', variant: 'flat' }];
+      config.vuetify.theme.header.color = '#ffffff';
+      return mount(CoreHeaderComponent, {
+        global: {
+          plugins: [vuetify],
+          mocks: { $router: { push: vi.fn() }, $route: { path: '/', meta: {} } },
+          config: { globalProperties: { config } },
+          stubs: {
+            'v-app-bar': { template: '<header><slot /></header>' },
+            'v-menu': { template: '<div class="menu-stub"><slot name="activator" :props="{}" /><slot /></div>' },
+          },
+        },
+      });
+    };
+
+    it('renders a group with sublinks as a subheader + flat items on transparent lists', () => {
+      const wrapper = mountWithLinks();
+      const card = wrapper.find('.v-card');
+      expect(card.exists()).toBe(true);
+      const subheader = card.find('.v-list-subheader');
+      expect(subheader.exists()).toBe(true);
+      expect(subheader.text()).toBe('Product');
+      const [groupList, linkList] = card.findAll('.v-list');
+      expect(groupList.findAll('.v-list-item-title').map((t) => t.text())).toEqual(['Docs', 'Blog']);
+      expect(linkList.text()).toContain('Pricing');
+      // no nested list, every list transparent on the glass card
+      expect(card.find('.v-list .v-list').exists()).toBe(false);
+      card.findAll('.v-list').forEach((list) => expect(list.classes()).toContain('bg-transparent'));
+    });
+
+    it('does not force an inline color on the burger icon', () => {
+      const wrapper = mountWithLinks();
+      const burger = wrapper.find('.fa-bars');
+      expect(burger.exists()).toBe(true);
+      expect(burger.attributes('style') || '').not.toContain('color');
+    });
+
+    it('sizes the sublinks activator like the plain links', () => {
+      const wrapper = mountWithLinks();
+      const activator = wrapper.findAll('.v-btn').find((b) => b.text().startsWith('Product'));
+      expect(activator.classes()).toContain('text-body-medium');
+      expect(activator.classes()).not.toContain('text-body-large');
+    });
+
+    describe('Sign In tap target', () => {
+      const originalWidth = window.innerWidth;
+      afterEach(() => {
+        window.innerWidth = originalWidth;
+      });
+
+      /**
+       * @desc Find the Sign In button height style at a given viewport width.
+       * @param {Number} width - window.innerWidth before Vuetify is created.
+       * @returns {String}
+       */
+      const signInStyle = (width) => {
+        window.innerWidth = width;
+        const wrapper = mountWithLinks();
+        const signIn = wrapper.findAll('.v-btn').find((b) => b.text() === 'Sign In');
+        return signIn.attributes('style') || '';
+      };
+
+      it('is 44px tall on phones', () => {
+        expect(signInStyle(375)).toContain('height: 44px');
+      });
+
+      it('keeps the default height on desktop', () => {
+        expect(signInStyle(1280)).not.toContain('height: 44px');
+      });
+    });
+  });
+
   describe('navigate', () => {
     it('opens external links with noopener,noreferrer (reverse-tabnabbing guard)', () => {
       const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);

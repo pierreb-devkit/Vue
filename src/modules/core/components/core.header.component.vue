@@ -34,7 +34,7 @@
         </v-btn>
         <v-menu v-if="sublinks" location="bottom" max-width="400px">
           <template #activator="{ props }">
-            <v-btn v-bind="props" class="text-none text-body-large">
+            <v-btn v-bind="props" class="text-none text-body-medium">
               {{ title }}
               <v-icon class="mt-1 ml-2" size="x-small">fa-solid fa-angle-down</v-icon>
             </v-btn>
@@ -58,7 +58,7 @@
       <!-- Space -->
       <v-spacer></v-spacer>
       <!-- Login buttons -->
-      <v-btn v-if="!isLoggedIn && config.sign.in" class="text-none" @click="navigate('/signin')"> Sign In </v-btn>
+      <v-btn v-if="!isLoggedIn && config.sign.in" class="text-none" :height="$vuetify.display.smAndDown ? 44 : undefined" @click="navigate('/signin')"> Sign In </v-btn>
       <!-- shortcut buttons -->
       <v-btn
         v-for="({ title, url, variant }, i) in config.header.shortcuts"
@@ -75,28 +75,26 @@
       <v-menu location="bottom" offset="20px">
         <template #activator="{ props }">
           <v-btn v-bind="props" class="hidden-md-and-up" icon>
-            <v-icon :style="{ color: config.vuetify.theme.header?.color }">fa-solid fa-bars</v-icon>
+            <v-icon>fa-solid fa-bars</v-icon>
           </v-btn>
         </template>
         <v-card min-width="300px" class="gradient-border-menu" :class="config.vuetify.theme.rounded" :style="glassStyle()">
           <!-- Menu -->
-          <v-list density="compact">
-            <v-list-item v-for="({ title, sublinks }, i) in config.header.links.filter((v) => v.sublinks)" :key="i">
-              <v-list-item-title class="text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-list-item-title>
-              <v-list lines="one" density="compact">
-                <v-list-item v-for="({ icon, title: linkTitle, url: linkUrl, color, subtitle }, j) in sublinks" :key="j" @click="navigate(linkUrl)">
-                  <template #prepend>
-                    <v-icon :color="color" size="small">{{ icon }}</v-icon>
-                  </template>
-                  <v-list-item-title class="text-body-medium font-weight-medium">{{ linkTitle }}</v-list-item-title>
-                  <v-list-item-subtitle v-if="subtitle" class="text-label-small">{{ subtitle }}</v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-            </v-list-item>
+          <v-list density="compact" class="bg-transparent">
+            <template v-for="({ title, sublinks }, i) in config.header.links.filter((v) => v.sublinks)" :key="i">
+              <v-list-subheader class="text-label-large font-weight-bold">{{ title }}</v-list-subheader>
+              <v-list-item v-for="({ icon, title: linkTitle, url: linkUrl, color, subtitle }, j) in sublinks" :key="j" @click="navigate(linkUrl)">
+                <template #prepend>
+                  <v-icon :color="color" size="small">{{ icon }}</v-icon>
+                </template>
+                <v-list-item-title class="text-body-medium font-weight-medium">{{ linkTitle }}</v-list-item-title>
+                <v-list-item-subtitle v-if="subtitle" class="text-label-small">{{ subtitle }}</v-list-item-subtitle>
+              </v-list-item>
+            </template>
           </v-list>
           <v-divider></v-divider>
           <!-- Menu 2 -->
-          <v-list class="mx-2" density="compact">
+          <v-list density="compact" class="bg-transparent">
             <v-list-item v-for="({ title, url }, i) in config.header.links.filter((v) => !v.sublinks)" :key="i" @click="navigate(url)">
               <v-list-item-title class="text-body-medium font-weight-medium">{{ title }}</v-list-item-title>
             </v-list-item>
