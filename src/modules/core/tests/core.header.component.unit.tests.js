@@ -180,6 +180,40 @@ describe('CoreHeaderComponent', () => {
       expect(burger.exists()).toBe(true);
       expect(burger.attributes('style') || '').not.toContain('color');
     });
+
+    it('sizes the sublinks activator like the plain links', () => {
+      const wrapper = mountWithLinks();
+      const activator = wrapper.findAll('.v-btn').find((b) => b.text().startsWith('Product'));
+      expect(activator.classes()).toContain('text-body-medium');
+      expect(activator.classes()).not.toContain('text-body-large');
+    });
+
+    describe('Sign In tap target', () => {
+      const originalWidth = window.innerWidth;
+      afterEach(() => {
+        window.innerWidth = originalWidth;
+      });
+
+      /**
+       * @desc Find the Sign In button height style at a given viewport width.
+       * @param {Number} width - window.innerWidth before Vuetify is created.
+       * @returns {String}
+       */
+      const signInStyle = (width) => {
+        window.innerWidth = width;
+        const wrapper = mountWithLinks();
+        const signIn = wrapper.findAll('.v-btn').find((b) => b.text() === 'Sign In');
+        return signIn.attributes('style') || '';
+      };
+
+      it('is 44px tall on phones', () => {
+        expect(signInStyle(375)).toContain('height: 44px');
+      });
+
+      it('keeps the default height on desktop', () => {
+        expect(signInStyle(1280)).not.toContain('height: 44px');
+      });
+    });
   });
 
   describe('navigate', () => {
