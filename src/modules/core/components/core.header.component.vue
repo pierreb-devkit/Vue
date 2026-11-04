@@ -32,7 +32,7 @@
         <v-btn v-if="!sublinks" class="text-none text-body-medium" @click="navigate(url)">
           {{ title }}
         </v-btn>
-        <v-menu v-if="sublinks" location="bottom" max-width="400px">
+        <v-menu v-if="sublinks" location="bottom" max-width="400px" transition="header-menu-transition">
           <template #activator="{ props }">
             <v-btn v-bind="props" class="text-none text-body-medium">
               {{ title }}
@@ -72,7 +72,7 @@
         {{ title }}
       </v-btn>
       <!-- Mobile Menu -->
-      <v-menu location="bottom" offset="20px">
+      <v-menu location="bottom" offset="20px" transition="header-menu-transition">
         <template #activator="{ props }">
           <v-btn v-bind="props" class="hidden-md-and-up" icon>
             <v-icon>fa-solid fa-bars</v-icon>
@@ -335,5 +335,29 @@ export default {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+/*
+ * Header menus open with a transform-only transition: WebKit skips backdrop-filter
+ * while the element (or an ancestor) has opacity < 1, so a fade would show the
+ * glass panel unblurred until it ends. Close is instant.
+ */
+.header-menu-transition-enter-active {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top center;
+}
+
+.header-menu-transition-enter-from {
+  transform: translateY(-8px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-menu-transition-enter-active {
+    transition: none;
+  }
+
+  .header-menu-transition-enter-from {
+    transform: none;
+  }
 }
 </style>

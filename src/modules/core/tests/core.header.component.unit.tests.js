@@ -24,6 +24,7 @@ vi.mock('../../auth/stores/auth.store', () => ({
 }));
 
 import CoreHeaderComponent from '../components/core.header.component.vue';
+import headerSource from '../components/core.header.component.vue?raw';
 
 /**
  * @desc Minimal config mock — only the keys the component reads.
@@ -173,6 +174,19 @@ describe('CoreHeaderComponent', () => {
       // no nested list, every list transparent on the glass card
       expect(card.find('.v-list .v-list').exists()).toBe(false);
       card.findAll('.v-list').forEach((list) => expect(list.classes()).toContain('bg-transparent'));
+    });
+
+    it('opens both header menus with the transform-only transition (glass blur from the first frame)', () => {
+      const wrapper = mountWithLinks();
+      const menus = wrapper.findAll('.menu-stub');
+      expect(menus).toHaveLength(2);
+      menus.forEach((menu) => expect(menu.attributes('transition')).toBe('header-menu-transition'));
+    });
+
+    it('never transitions opacity in the header menu transition', () => {
+      const rules = headerSource.match(/\.header-menu-transition[^{]*\{[^}]*\}/g) || [];
+      expect(rules.length).toBeGreaterThan(0);
+      rules.forEach((rule) => expect(rule).not.toMatch(/opacity/));
     });
 
     it('does not force an inline color on the burger icon', () => {
