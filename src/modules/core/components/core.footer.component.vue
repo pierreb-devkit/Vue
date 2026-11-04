@@ -5,14 +5,22 @@
         <v-col
           v-for="({ items, title }, i) in visibleSections"
           :key="i"
-          cols="12"
+          cols="6"
           :md="12 / visibleSections.length"
           class="text-center"
         >
           <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list class="bg-transparent" :style="custom && custom.section ? custom.section : null" density="compact">
-              <v-list-item v-for="(item, idx) in items" :key="idx" class="justify-center" @click="onItemClick(item)">
+              <v-list-item
+                v-for="(item, idx) in items"
+                :key="idx"
+                v-bind="itemLinkProps(item)"
+                class="justify-center"
+                min-height="44"
+                :active="false"
+                @click="onItemClick(item)"
+              >
                 <v-list-item-title>
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
                   <span class="text-onSurface text-high-emphasis text-label-small"> {{ item.label }} </span>
@@ -232,24 +240,25 @@ export default {
       if (!pagesActivated && path.startsWith('/pages/')) return true;
       return false;
     },
-    navigate(link) {
-      if (link.startsWith('http')) {
-        window.open(link, '_blank');
-      } else {
-        this.$router.push(link);
-      }
+    /**
+     * @desc Link props for a footer item so it renders as a real link: `to` for
+     * an internal route, `href` + new tab for an external http(s) URL. Items
+     * carrying an `onClick` action (no link) get none and keep the click handler.
+     * @param {{ onClick?: Function, url?: string }} item
+     * @returns {Object}
+     */
+    itemLinkProps(item) {
+      if (typeof item.onClick === 'function' || !item.url) return {};
+      if (/^https?:\/\//i.test(item.url)) return { href: item.url, target: '_blank', rel: 'noopener noreferrer' };
+      return { to: item.url };
     },
     /**
-     * @desc Handle footer item click — dispatches `onClick` callback when present
-     * (injected by optional modules), otherwise navigates to `url`.
-     * @param {{ onClick?: Function, url?: string }} item
+     * @desc Handle footer item click — dispatches the `onClick` callback when
+     * present (injected by optional modules). Link items navigate natively.
+     * @param {{ onClick?: Function }} item
      */
     onItemClick(item) {
-      if (typeof item.onClick === 'function') {
-        item.onClick();
-      } else if (item.url) {
-        this.navigate(item.url);
-      }
+      if (typeof item.onClick === 'function') item.onClick();
     },
   },
 };

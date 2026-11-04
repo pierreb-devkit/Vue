@@ -349,6 +349,40 @@ describe('core.footer.component — registry extras', () => {
     await actionItem.trigger('click');
     expect(onClick).toHaveBeenCalledOnce();
   });
+
+  it('renders an internal url as a router link (to)', () => {
+    const wrapper = mountFooter(baseConfig());
+    const item = wrapper.findAllComponents({ name: 'VListItem' }).find((li) => li.text().includes('Docs'));
+    expect(item.props('to')).toBe('/docs');
+    expect(item.props('href')).toBeUndefined();
+  });
+
+  it('renders an external url as a real <a> opening in a new tab', () => {
+    const config = baseConfig();
+    config.footer.links = [{ title: 'Social', items: [{ label: 'GitHub', icon: 'fa-brands fa-github', url: 'https://example.com/repo' }] }];
+    const wrapper = mountFooter(config);
+    const link = wrapper.find('a[href="https://example.com/repo"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes('target')).toBe('_blank');
+    expect(link.attributes('rel')).toBe('noopener noreferrer');
+  });
+
+  it('keeps an onClick item as a click action with no link', () => {
+    const { register } = useFooterExtras();
+    register('clickable', { title: 'Clickable', items: [{ label: 'Action', icon: 'fa-solid fa-play', onClick: vi.fn() }] });
+    const wrapper = mountFooter(baseConfig());
+    const item = wrapper.findAllComponents({ name: 'VListItem' }).find((li) => li.text().includes('Action'));
+    expect(item.props('to')).toBeUndefined();
+    expect(item.props('href')).toBeUndefined();
+  });
+
+  it('renders sections two per row on phones and gives items a 44px tap height', () => {
+    const wrapper = mountFooter(baseConfig());
+    const col = wrapper.findComponent({ name: 'VCol' });
+    expect(col.props('cols')).toBe('6');
+    const item = wrapper.findComponent({ name: 'VListItem' });
+    expect(String(item.props('minHeight'))).toBe('44');
+  });
 });
 
 describe('core.footer.component — layout + backend version (Parts A + C)', () => {
