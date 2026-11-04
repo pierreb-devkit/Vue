@@ -46,14 +46,15 @@
 <template>
   <section id="statistics" ref="sectionRef" :style="sectionStyle">
     <homeBlurBackgroundComponent
-      :ratio="statsRatio"
+      :ratio="2.5"
+      :fit-content="isMobile"
       :animation-speed="animationSpeed"
       :background-colors="backgroundColors"
       :halo-colors="haloColors"
       :halo-count="haloCount"
       no-margin
     >
-      <v-container class="fill-height" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+      <v-container class="fill-height" :class="{ 'py-12': isMobile }" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
         <v-row v-if="setup && setup.length > 0" class="fill-height" align="center" justify="center">
           <v-col v-for="({ value, title }, i) in setup" :key="i" cols="6" md="3">
             <div class="text-center" :class="colorMode ? '' : 'text-white'" data-aos="fade">
@@ -172,9 +173,9 @@ export default {
     };
   },
   computed: {
-    statsRatio() {
-      // Smaller ratio for stats section (taller)
-      return this.$vuetify?.display?.smAndDown ? 1.5 : 2.5;
+    // On phones the band follows its content height instead of a fixed vh ratio
+    isMobile() {
+      return Boolean(this.$vuetify?.display?.smAndDown);
     },
     /**
      * Builds the inline styles for the statistics section.

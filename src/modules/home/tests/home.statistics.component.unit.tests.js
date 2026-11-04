@@ -10,7 +10,7 @@ vi.mock('../components/utils/home.blur.background.component.vue', () => ({
   default: {
     name: 'HomeBlurBackgroundComponent',
     template: '<div><slot /></div>',
-    props: ['ratio', 'animationSpeed', 'backgroundColors', 'haloColors', 'haloCount', 'noMargin'],
+    props: ['ratio', 'fitContent', 'animationSpeed', 'backgroundColors', 'haloColors', 'haloCount', 'noMargin'],
   },
 }));
 
@@ -235,6 +235,37 @@ describe('HomeStatisticsComponent', () => {
         });
         expect(wrapper.vm.haloCount).toBe(count);
       });
+    });
+  });
+
+  describe('band height (mobile vs desktop)', () => {
+    const originalWidth = window.innerWidth;
+
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+    });
+
+    const mountAtWidth = (width) => {
+      window.innerWidth = width;
+      return mount(HomeStatisticsComponent, {
+        props: { setup: [{ value: '100', title: 'Test' }], animated: false },
+        global: globalOpts(createVuetify({ components, directives })),
+      });
+    };
+
+    it('follows its content height on phones', () => {
+      const wrapper = mountAtWidth(375);
+      const blur = wrapper.findComponent({ name: 'HomeBlurBackgroundComponent' });
+      expect(blur.props('fitContent')).toBe(true);
+      expect(wrapper.find('.v-container').classes()).toContain('py-12');
+    });
+
+    it('keeps the fixed 2.5 ratio on desktop', () => {
+      const wrapper = mountAtWidth(1280);
+      const blur = wrapper.findComponent({ name: 'HomeBlurBackgroundComponent' });
+      expect(blur.props('fitContent')).toBe(false);
+      expect(blur.props('ratio')).toBe(2.5);
+      expect(wrapper.find('.v-container').classes()).not.toContain('py-12');
     });
   });
 });
