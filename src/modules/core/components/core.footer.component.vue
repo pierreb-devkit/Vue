@@ -21,7 +21,7 @@
                 :active="false"
                 @click="onItemClick(item)"
               >
-                <v-list-item-title>
+                <v-list-item-title class="text-wrap">
                   <v-icon size="14" class="mr-2 text-onSurface text-medium-emphasis">{{ item.icon }}</v-icon>
                   <span class="text-onSurface text-high-emphasis text-label-small"> {{ item.label }} </span>
                 </v-list-item-title>
