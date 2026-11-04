@@ -167,8 +167,9 @@ describe('CoreHeaderComponent', () => {
       const subheader = card.find('.v-list-subheader');
       expect(subheader.exists()).toBe(true);
       expect(subheader.text()).toBe('Product');
-      const titles = card.findAll('.v-list-item-title').map((t) => t.text());
-      expect(titles).toEqual(expect.arrayContaining(['Docs', 'Blog', 'Pricing']));
+      const [groupList, linkList] = card.findAll('.v-list');
+      expect(groupList.findAll('.v-list-item-title').map((t) => t.text())).toEqual(['Docs', 'Blog']);
+      expect(linkList.text()).toContain('Pricing');
       // no nested list, every list transparent on the glass card
       expect(card.find('.v-list .v-list').exists()).toBe(false);
       card.findAll('.v-list').forEach((list) => expect(list.classes()).toContain('bg-transparent'));
