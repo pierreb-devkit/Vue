@@ -344,7 +344,6 @@ export default {
  */
 .header-menu-transition-enter-active {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: top center;
 }
 
 .header-menu-transition-enter-from {
