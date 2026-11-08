@@ -28,6 +28,14 @@ const orderedArticles = (category) => {
 };
 
 /**
+ * The guide tree as shown: categories in order, each with its articles in order.
+ * @param {Object|null} tree - The guide tree.
+ * @returns {Array} Order-sorted categories with order-sorted `articles`.
+ */
+export const sortedCategories = (tree) =>
+  orderedCategories(tree).map((cat) => ({ ...cat, articles: orderedArticles(cat) }));
+
+/**
  * Resolve a docs link target to a concrete router path (internal routing only).
  *
  * Resolution order:
@@ -66,4 +74,4 @@ export const flattenArticles = (tree) =>
       category: art?.category ?? cat?.slug,
     })));
 
-export default { resolveDocsTarget, flattenArticles };
+export default { resolveDocsTarget, flattenArticles, sortedCategories };

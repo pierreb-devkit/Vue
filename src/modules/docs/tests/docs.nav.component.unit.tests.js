@@ -71,7 +71,7 @@ describe('docs.nav.component', () => {
     const wrapper = mountNav();
     const groups = wrapper.findAll('[data-test="docs-nav-category"]');
     expect(groups).toHaveLength(2);
-    const headings = wrapper.findAll('.docs-nav__heading').map((n) => n.text());
+    const headings = wrapper.findAll('[data-test="docs-nav-group"]').map((n) => n.text());
     expect(headings).toEqual(['Getting Started', 'Integrate']);
   });
 
@@ -98,5 +98,24 @@ describe('docs.nav.component', () => {
     const wrapper = mountNav({ categories: [] });
     expect(wrapper.find('[data-test="docs-nav-empty"]').exists()).toBe(true);
     expect(wrapper.findAll('[data-test="docs-nav-category"]')).toHaveLength(0);
+  });
+
+  it('opens the first group when no guide is open, and folds a group on click', async () => {
+    await router.push('/docs');
+    const wrapper = mountNav();
+    const toggles = wrapper.findAll('[data-test="docs-nav-group"]');
+    expect(toggles.map((t) => t.attributes('aria-expanded'))).toEqual(['true', 'false']);
+    await toggles[0].trigger('click');
+    expect(toggles[0].attributes('aria-expanded')).toBe('false');
+    await toggles[1].trigger('click');
+    expect(toggles[1].attributes('aria-expanded')).toBe('true');
+  });
+
+  it('opens the group of the current guide', async () => {
+    await router.push('/docs/integrate/webhooks');
+    const wrapper = mountNav();
+    const toggles = wrapper.findAll('[data-test="docs-nav-group"]');
+    expect(toggles.map((t) => t.attributes('aria-expanded'))).toEqual(['false', 'true']);
+    await router.push('/docs');
   });
 });

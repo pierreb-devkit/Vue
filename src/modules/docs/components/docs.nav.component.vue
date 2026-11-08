@@ -1,75 +1,63 @@
 <template>
-  <nav class="docs-nav" aria-label="Documentation" data-test="docs-nav">
-    <DocsSearch block class="mb-4" data-test="docs-nav-search" />
+  <nav
+    class="docs-nav d-flex flex-column ga-1 position-sticky mt-n8 pt-13 pe-3 border-e"
+    :style="railPlace"
+    aria-label="Documentation"
+    data-test="docs-nav"
+  >
+    <DocsSearch block data-test="docs-nav-search" />
 
-    <RouterLink
-      to="/docs"
-      class="docs-nav__home d-flex align-center ga-2 mb-4 text-none"
-      data-test="docs-nav-home"
-    >
-      <v-icon icon="fa-solid fa-book" size="small" color="primary" />
-      <span class="text-title-small font-weight-medium">{{ homeTitle }}</span>
-    </RouterLink>
-
-    <!-- Persistent link to the in-theme OpenAPI reference (/docs/api). The route
-         is hidden from the MAIN app sidenav (meta.display:false), so this is the
-         in-surface entry point. Always shown — the module ships the view. -->
-    <v-list
-      density="compact"
-      bg-color="transparent"
-      nav
-      class="docs-nav__list py-0 mb-5"
-      slim
-    >
-      <v-list-item
-        to="/docs/api"
-        :title="referenceTitle"
-        :prepend-icon="referenceIcon"
-        rounded="lg"
-        color="primary"
-        class="docs-nav__item text-body-medium"
-        data-test="docs-nav-reference"
-      />
-    </v-list>
-
-    <div
-      v-for="category in categories"
-      :key="category.slug"
-      class="docs-nav__group mb-5"
-      data-test="docs-nav-category"
-    >
-      <p class="docs-nav__heading text-overline text-medium-emphasis mb-1">
-        {{ category.title }}
-      </p>
+    <div ref="navRef" class="flex-1-1-0 overflow-y-auto mx-n1 px-1 pt-1 pb-4" style="min-height: 0">
       <v-list
+        v-model:opened="opened"
+        open-strategy="single"
         density="compact"
         bg-color="transparent"
         nav
-        class="docs-nav__list py-0"
         slim
+        indent="0"
+        expand-icon="fa-solid fa-chevron-right"
+        collapse-icon="fa-solid fa-chevron-down"
+        class="pa-0"
       >
-        <v-list-item
-          v-for="article in category.articles"
-          :key="article.slug"
-          :to="`/docs/${category.slug}/${article.slug}`"
-          :title="article.title"
-          rounded="lg"
-          color="primary"
-          class="docs-nav__item text-body-medium"
-          data-test="docs-nav-article"
-        />
-      </v-list>
-    </div>
+        <v-list-item to="/docs" exact :title="homeTitle" v-bind="ROW" data-test="docs-nav-home" />
 
-    <v-alert
-      v-if="!categories.length"
-      type="info"
-      variant="tonal"
-      density="compact"
-      data-test="docs-nav-empty"
-    >
-      No guides yet.
-    </v-alert>
+        <!-- The API reference route is hidden from the main sidenav: this is its entry point. -->
+        <v-list-item to="/docs/api" :title="referenceTitle" v-bind="ROW" data-test="docs-nav-reference" />
+        <DocsNavSections v-if="onReference && sections.length" :sections="sections" :active-id="activeId" />
+
+        <v-list-group v-for="category in categories" :key="category.slug" :value="category.slug" data-test="docs-nav-category">
+          <template #activator="{ props: group, isOpen: groupOpen }">
+            <v-list-item
+              v-bind="{ ...group, ...ROW }"
+              :title="category.title"
+              :aria-expanded="groupOpen"
+              class="font-weight-medium"
+              data-test="docs-nav-group"
+            />
+          </template>
+          <template v-for="article in category.articles" :key="article.slug">
+            <v-list-item
+              :to="`/docs/${category.slug}/${article.slug}`"
+              :title="article.title"
+              v-bind="ROW"
+              data-test="docs-nav-article"
+            />
+            <DocsNavSections v-if="isOpen(article)" :sections="sections" :active-id="activeId" />
+          </template>
+        </v-list-group>
+      </v-list>
+
+      <v-alert
+        v-if="!categories.length"
+        type="info"
+        variant="tonal"
+        density="compact"
+        data-test="docs-nav-empty"
+      >
+        No guides yet.
+      </v-alert>
+    </div>
   </nav>
 </template>
 
@@ -79,48 +67,107 @@
  *
  * Renders the backend guide tree grouped by category (contract order: each
  * category and its articles sorted by `order`). The active article is
- * highlighted by Vuetify's `v-list-item` router-link active state (`color`
- * applies when the route matches), so deep navigation stays in sync.
+ * highlighted by Vuetify's `v-list-item` router-link active state, so deep
+ * navigation stays in sync; the current page's sections open under it.
  */
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useDocsStore } from '../stores/docs.store';
+import { sortedCategories } from '../composables/useDocsNav';
 import DocsSearch from './docs.search.component.vue';
+import DocsNavSections from './docs.navsections.component.vue';
 import config from '@/config';
+
+const props = defineProps({
+  /** The current page's sections: `{ id, nav, group? }`. */
+  sections: { type: Array, default: () => [] },
+  /** The current section's id. */
+  activeId: { type: String, default: null },
+});
+
+/** One rail row. */
+const ROW = { minHeight: 28, rounded: 'lg', class: 'px-3 py-0 my-0' };
+
+/** The rail hangs from the app bar and runs to the bottom of the window. */
+const railPlace = { top: 'var(--v-layout-top, 0px)', height: 'calc(100vh - var(--v-layout-top, 0px))' };
 
 const store = useDocsStore();
 
 const homeTitle = computed(() => config?.docs?.home?.title || 'Documentation');
 const referenceTitle = computed(() => config?.docs?.reference?.title || 'API reference');
-const referenceIcon = computed(() => config?.docs?.reference?.icon || 'fa-solid fa-code');
+
+const categories = computed(() => sortedCategories(store.tree));
+
+const route = useRoute();
+const navRef = ref(null);
+const onReference = computed(() => route?.path === '/docs/api');
 
 /**
- * Categories in contract order, each with its articles order-sorted.
- * @returns {Array<{ slug: string, title: string, articles: Array }>}
+ * Whether this article is the current page and has sections to open.
+ * @param {{slug: string}} article - An article of the tree
+ * @returns {boolean} True when its sections show under it
  */
-const categories = computed(() => {
-  const cats = Array.isArray(store.tree?.categories) ? store.tree.categories : [];
-  return [...cats]
-    .sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
-    .map((cat) => ({
-      ...cat,
-      articles: Array.isArray(cat?.articles)
-        ? [...cat.articles].sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0))
-        : [],
-    }));
-});
+const isOpen = (article) => route?.params?.slug === article.slug && props.sections.length > 0;
+
+/** The one open group: opened by hand, or by arriving on one of its guides. */
+const opened = ref([]);
+
+/** Arriving on a guide opens its group; a page outside the groups opens the first one. */
+watch(
+  () => [route?.params?.category, categories.value[0]?.slug],
+  ([current, first]) => {
+    opened.value = current || first ? [current || first] : [];
+  },
+  { immediate: true },
+);
+
+/**
+ * Keep the current entry visible in the rail, which scrolls on its own. Sets the
+ * rail's scrollTop rather than scrollIntoView, which would also scroll the page.
+ */
+watch(
+  () => [route?.path, categories.value.length, props.sections.length, props.activeId],
+  () => {
+    const nav = navRef.value;
+    const active = nav?.querySelector?.('[aria-current="location"]')
+      || nav?.querySelector?.('.v-list-item--active');
+    if (!active) return;
+    const top = active.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+    if (top < 0 || top > nav.clientHeight - 32) nav.scrollTop += top - nav.clientHeight / 2;
+  },
+  { flush: 'post', immediate: true },
+);
 </script>
 
 <style scoped>
-.docs-nav {
-  position: sticky;
-  top: 88px;
+/* The rail's 13 px text sits between two Vuetify type steps. */
+.docs-nav :deep(.v-list-item-title) {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: inherit;
+  white-space: normal;
 }
 
-.docs-nav__home {
-  color: rgb(var(--v-theme-on-surface));
+/* Vuetify's list group has no icon size prop. */
+.docs-nav :deep(.v-list-item__append .v-icon) {
+  font-size: 0.625rem;
 }
 
-.docs-nav__heading {
-  letter-spacing: 0.06em;
+/* The selected item, the one glass thing in the rail. Vuetify has no glass item. */
+.docs-nav :deep(a.v-list-item--active) {
+  --docs-pill-edge: rgba(var(--v-theme-surface), 0.75);
+  font-weight: 500;
+  background:
+    linear-gradient(rgba(var(--v-theme-surface), 0.55), rgba(var(--v-theme-surface), 0.15)),
+    rgba(var(--v-theme-primary), 0.16);
+  box-shadow:
+    inset 0 1px 0 var(--docs-pill-edge),
+    inset 0 0 0 1px rgba(var(--v-theme-on-surface), 0.06),
+    0 4px 12px rgba(var(--v-theme-primary), 0.14);
+  backdrop-filter: blur(12px) saturate(1.5);
+}
+
+.docs-nav :deep(a.v-list-item--active .v-list-item__overlay) {
+  opacity: 0;
 }
 </style>
