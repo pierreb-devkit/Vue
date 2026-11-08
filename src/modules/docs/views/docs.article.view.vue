@@ -240,7 +240,15 @@ watch(slug, (s) => load(s), { immediate: true });
 .docs-prose :deep(h3),
 .docs-prose :deep(a[id]) {
   /* offset for the sticky header when deep-linking from the rail */
-  scroll-margin-top: 72px;
+  scroll-margin-top: 128px;
+}
+
+@media (min-width: 840px) {
+  .docs-prose :deep(h2),
+  .docs-prose :deep(h3),
+  .docs-prose :deep(a[id]) {
+    scroll-margin-top: 72px;
+  }
 }
 
 .docs-prose :deep(pre code) {

@@ -55,6 +55,18 @@ describe('docs.panes component', () => {
     expect(text.find('b').exists()).toBe(false);
   });
 
+  it('stays on the answer tab picked, and leaves the guide language alone', async () => {
+    const wrapper = await mountPanes();
+    const cards = wrapper.findAllComponents(DocsCodeblock);
+    const answer = cards.find((card) => card.props('examples')[1]?.label === '404');
+    answer.vm.active = 1;
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    expect(answer.vm.current.label).toBe('404');
+    const request = cards.find((card) => card.props('examples').length === 3);
+    expect(request.vm.current.lang).toBe('bash');
+  });
+
   it('moves every code card to the language picked on one', async () => {
     const wrapper = await mountPanes();
     const requestCards = wrapper.findAllComponents(DocsCodeblock)

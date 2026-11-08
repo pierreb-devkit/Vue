@@ -231,12 +231,13 @@ const groups = computed(() => parsed.value.groups || []);
 
 /** Each group's anchor on this page, in order; tags that slug alike get a numbered suffix. */
 const groupIds = computed(() => {
-  const seen = new Map();
+  const used = new Set();
   return groups.value.map((g) => {
-    const id = `api-${slugifyHeading(g.name)}`;
-    const n = (seen.get(id) || 0) + 1;
-    seen.set(id, n);
-    return n > 1 ? `${id}-${n}` : id;
+    const base = `api-${slugifyHeading(g.name)}`;
+    let id = base;
+    for (let n = 2; used.has(id); n += 1) id = `${base}-${n}`;
+    used.add(id);
+    return id;
   });
 });
 

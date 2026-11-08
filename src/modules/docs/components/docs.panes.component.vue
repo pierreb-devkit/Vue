@@ -70,7 +70,7 @@
           <p v-for="note in section.notes" :key="note" class="mb-2"><InlineText :text="note" /></p>
         </div>
 
-        <p v-if="section.links" class="mt-4">
+        <p v-if="section.links" class="d-flex flex-wrap ga-3 mt-4">
           <RouterLink v-for="link in section.links" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
         </p>
       </v-col>
@@ -91,7 +91,6 @@
         />
         <DocsCodeblock
           v-if="section.aside.answer?.length"
-          v-model:lang="lang"
           :examples="answerExamples(section.aside)"
         />
       </v-col>

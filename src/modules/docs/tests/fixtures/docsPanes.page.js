@@ -38,7 +38,7 @@ export default {
       path: '/api/items/:id',
       list: { title: 'Fields', rows: [{ name: 'id', type: 'string', text: 'Listed in `itemIds`.' }] },
       errors: [{ code: '404', text: 'No such item.' }],
-      aside: { examples, answer: [{ lang: 'json', code: '{ "data": {} }' }] },
+      aside: { examples, answer: [{ lang: 'json', label: '200', code: '{ "data": {} }' }, { lang: 'json', label: '404', code: '{ "error": true }' }] },
     },
   ],
 };
