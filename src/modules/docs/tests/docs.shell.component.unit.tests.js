@@ -168,8 +168,13 @@ describe('docs.shell component', () => {
 
   it('keeps the place when the link names a section', async () => {
     document.documentElement.scrollTop = 500;
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
     const wrapper = await mountShell({ sections }, '/docs/guides/alpha#two');
+    await flushPromises();
     expect(document.documentElement.scrollTop).toBe(500);
+    expect(scrollIntoView).toHaveBeenCalled();
+    delete Element.prototype.scrollIntoView;
     wrapper.unmount();
     document.documentElement.scrollTop = 0;
   });

@@ -163,6 +163,7 @@ const openAtTop = () => {
 
 watch(() => props.sections, arrive);
 watch(() => route?.path, openAtTop);
+watch(() => route?.hash, arrive);
 
 onMounted(() => {
   window.addEventListener('scroll', markCurrent, { passive: true });

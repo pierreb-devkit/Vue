@@ -73,7 +73,7 @@ const page = ref({ title: '', html: '', toc: [], examples: [], notFound: false }
 const loading = computed(() => store.loading);
 
 /** This page's sections in the rail: the two-pane page's, or the guide's headings. */
-const railSections = computed(() => panes.value?.sections
+const railSections = computed(() => panes.value?.sections?.map((s) => ({ ...s, nav: s.nav ?? s.title }))
   || page.value.toc.map((h) => ({ id: h.id, nav: h.text, depth: h.level - 2 })));
 
 /**

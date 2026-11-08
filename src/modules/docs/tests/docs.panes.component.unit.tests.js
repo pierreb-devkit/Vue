@@ -48,6 +48,13 @@ describe('docs.panes component', () => {
     wrapper.findAll('[data-test="docs-panes-text"]').forEach((text) => expect(text.text()).not.toContain('`'));
   });
 
+  it('keeps markup-like text literal', async () => {
+    const wrapper = await mountPanes();
+    const text = wrapper.find('#start [data-test="docs-panes-text"]');
+    expect(text.text()).toContain('<b>new</b>');
+    expect(text.find('b').exists()).toBe(false);
+  });
+
   it('moves every code card to the language picked on one', async () => {
     const wrapper = await mountPanes();
     const requestCards = wrapper.findAllComponents(DocsCodeblock)

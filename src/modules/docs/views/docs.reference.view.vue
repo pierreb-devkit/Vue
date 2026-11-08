@@ -44,8 +44,8 @@
 
           <!-- Tag groups -->
           <section
-            v-for="group in groups"
-            :id="groupId(group.name)"
+            v-for="(group, index) in groups"
+            :id="groupIds[index]"
             :key="group.name"
             class="docs-row py-10 border-t"
             data-test="docs-reference-group"
@@ -229,14 +229,18 @@ const parsed = ref({ info: {}, groups: [], notFound: false });
 const info = computed(() => parsed.value.info || {});
 const groups = computed(() => parsed.value.groups || []);
 
-/**
- * A group's anchor on this page.
- * @param {string} name - The OpenAPI tag (group) name.
- * @returns {string} The anchor id.
- */
-const groupId = (name) => `api-${slugifyHeading(name)}`;
+/** Each group's anchor on this page, in order; tags that slug alike get a numbered suffix. */
+const groupIds = computed(() => {
+  const seen = new Map();
+  return groups.value.map((g) => {
+    const id = `api-${slugifyHeading(g.name)}`;
+    const n = (seen.get(id) || 0) + 1;
+    seen.set(id, n);
+    return n > 1 ? `${id}-${n}` : id;
+  });
+});
 
-const railSections = computed(() => groups.value.map((g) => ({ id: groupId(g.name), nav: g.name })));
+const railSections = computed(() => groups.value.map((g, i) => ({ id: groupIds.value[i], nav: g.name })));
 
 /**
  * Resolve a tag's cross-link to a guide route, or null when no mapping exists

@@ -198,6 +198,14 @@ export default {
       },
     },
     /**
+     * @desc A new set of examples (another guide, same card): follow the picked language again.
+     * @returns {void}
+     */
+    examples() {
+      const i = this.examples.findIndex((ex) => ex.lang === this.lang);
+      if (i >= 0) this.active = i;
+    },
+    /**
      * @desc Tell the other cards which language was picked here.
      * @param {number} i - The active tab.
      * @returns {void}

@@ -18,7 +18,7 @@ export default {
       title: 'Start',
       aliases: ['statuses'],
       text: 'Send your key with every call.',
-      steps: ['Create a key.', 'Call `/api/items`.'],
+      steps: ['Create a <b>new</b> key.', 'Call `/api/items`.'],
       aside: { examples },
     },
     {

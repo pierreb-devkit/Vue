@@ -70,7 +70,7 @@
  * highlighted by Vuetify's `v-list-item` router-link active state, so deep
  * navigation stays in sync; the current page's sections open under it.
  */
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDocsStore } from '../stores/docs.store';
 import { sortedCategories } from '../composables/useDocsNav';
@@ -125,18 +125,21 @@ watch(
  * Keep the current entry visible in the rail, which scrolls on its own. Sets the
  * rail's scrollTop rather than scrollIntoView, which would also scroll the page.
  */
+const keepActiveVisible = () => {
+  const nav = navRef.value;
+  const active = nav?.querySelector?.('[aria-current="location"]')
+    || nav?.querySelector?.('.v-list-item--active');
+  if (!active) return;
+  const top = active.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+  if (top < 0 || top > nav.clientHeight - 32) nav.scrollTop += top - nav.clientHeight / 2;
+};
+
 watch(
   () => [route?.path, categories.value.length, props.sections.length, props.activeId],
-  () => {
-    const nav = navRef.value;
-    const active = nav?.querySelector?.('[aria-current="location"]')
-      || nav?.querySelector?.('.v-list-item--active');
-    if (!active) return;
-    const top = active.getBoundingClientRect().top - nav.getBoundingClientRect().top;
-    if (top < 0 || top > nav.clientHeight - 32) nav.scrollTop += top - nav.clientHeight / 2;
-  },
-  { flush: 'post', immediate: true },
+  keepActiveVisible,
+  { flush: 'post' },
 );
+onMounted(keepActiveVisible);
 </script>
 
 <style scoped>

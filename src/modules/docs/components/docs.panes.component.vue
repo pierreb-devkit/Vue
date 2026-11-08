@@ -22,7 +22,7 @@
       data-test="docs-panes-section"
     >
       <v-col cols="12" lg="6" class="pe-lg-6" data-test="docs-panes-text">
-        <a v-for="alias in section.aliases" :id="alias" :key="alias" />
+        <a v-for="alias in section.aliases" :id="alias" :key="alias" class="docs-row" />
         <h2 class="text-title-large font-weight-medium mb-2">{{ section.title }}</h2>
         <p v-if="section.path" class="text-mono text-body-medium">
           <span class="text-medium-emphasis">{{ section.method }}</span> {{ section.path }}
@@ -90,7 +90,8 @@
           :examples="section.aside.examples"
         />
         <DocsCodeblock
-          v-if="section.aside.answer"
+          v-if="section.aside.answer?.length"
+          v-model:lang="lang"
           :examples="answerExamples(section.aside)"
         />
       </v-col>
