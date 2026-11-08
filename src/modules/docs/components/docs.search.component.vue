@@ -3,17 +3,18 @@
     <!-- Trigger: opens the search modal (also bound to ⌘K / Ctrl+K / "/"). -->
     <v-btn
       variant="tonal"
-      rounded="lg"
+      :rounded="compact ? 'pill' : 'lg'"
       class="docs-search__trigger text-none justify-start"
-      prepend-icon="fa-solid fa-magnifying-glass"
       :block="block"
       :size="size"
+      :min-width="block ? undefined : compact ? 0 : 180"
       data-test="docs-search-trigger"
       @click="open"
     >
+      <template #prepend><v-icon icon="fa-solid fa-magnifying-glass" size="14" /></template>
       <span class="text-medium-emphasis">{{ triggerLabel }}</span>
       <v-spacer />
-      <span class="docs-search__kbd d-none d-sm-inline-flex text-caption">{{ shortcutHint }}</span>
+      <v-kbd v-if="!compact" class="docs-search__kbd d-none d-sm-inline-flex">{{ shortcutHint }}</v-kbd>
     </v-btn>
 
     <!-- Search modal — a client-side fuzzy match over the guide tree. -->
@@ -24,7 +25,7 @@
       :scrim="true"
       data-test="docs-search-dialog"
     >
-      <v-card rounded="xl" class="docs-search__card">
+      <v-card rounded="xl" class="docs-search__card docs-glass" :style="glass">
         <v-card-item class="pb-1">
           <v-text-field
             ref="inputRef"
@@ -122,6 +123,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocsStore } from '../stores/docs.store';
+import { useDocsGlass } from '../composables/useDocsGlass';
 import config from '@/config';
 
 defineProps({
@@ -129,10 +131,13 @@ defineProps({
   block: { type: Boolean, default: false },
   /** Vuetify size for the trigger button (e.g. 'large' for the home hero). */
   size: { type: String, default: undefined },
+  /** Phone bar: pill trigger, no keyboard hint. */
+  compact: { type: Boolean, default: false },
 });
 
 const router = useRouter();
 const store = useDocsStore();
+const glass = useDocsGlass(0.85);
 
 const searchConfig = computed(() => config?.docs?.search || {});
 const placeholder = computed(() => searchConfig.value.placeholder || 'Search the docs…');
@@ -308,24 +313,9 @@ defineExpose({ open, close });
 </script>
 
 <style scoped>
-/* Floor only the inline (non-block) trigger; block usages (nav sidebar + home
-   hero) fill their container, so this must not override Vuetify's block width. */
-.docs-search__trigger:not(.v-btn--block) {
-  min-width: 180px;
-}
-
-.docs-search__kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 6px;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  font-size: 0.7rem;
-  line-height: 1;
+/* Lets the spacer push the shortcut hint to the button's end. */
+.docs-search__trigger :deep(.v-btn__content) {
+  flex: 1;
 }
 
 .docs-search__results {

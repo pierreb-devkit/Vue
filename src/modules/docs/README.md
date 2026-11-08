@@ -37,7 +37,7 @@ truth for this contract.
 ```text
 /docs                  — guide home (persona doors + quickstart + category grid)
 /docs/api              — in-theme OpenAPI reference (renders /api/spec.json natively)
-/docs/:category/:slug  — article (markdown body + ToC + prev/next)
+/docs/:category/:slug  — article (markdown body + section list + prev/next)
 ```
 
 ## Rendering (`composables/useDocsPage.js`)
@@ -45,7 +45,7 @@ truth for this contract.
 `useDocsPage(slug, { fetcher, meta, tree })` resolves a slug → sanitized HTML + a
 heading ToC + extracted runnable examples. One pipeline (marked + DOMPurify), with:
 
-- **Heading anchors** — h2/h3 ids feed the ToC (`<DocsToc>`); deep-linkable.
+- **Heading anchors** — h2/h3 ids feed the left menu's section list; deep-linkable.
 - **Runnable examples** — consecutive fenced blocks are lifted into `examples` and
   replaced with a `data-docs-example="N"` marker the article view splits on to mount a
   `<DocsCodeblock>` (language tabs + copy-with-my-key). Each emitted marker carries a
@@ -72,4 +72,12 @@ Downstream overrides `config.docs.*`:
 ## Search · Nav
 
 `<DocsSearch>` (⌘K / Ctrl+K / `/`) · `useDocsNav` resolves a category to its first article
-(robust to content changes) · `<DocsNav>` renders the persistent sidebar tree.
+(robust to content changes) · `<DocsNav>` renders the left menu: one group open, the page's headings folded under the current guide.
+
+## Frame
+
+`<DocsShell>` wraps the home, guide and API pages under the app's own top nav: left menu, search, a phone bar and prev/next. `<DocsNavSections>` lists the current page's sections. `useDocsGlass` draws the glass on the selected item only.
+
+## Two-pane guides (optional)
+
+Add `src/modules/docs/content/docs.<slug>.content.js` with a default export `{ title, lead, base, sections }` and the guide of that slug renders through `<DocsPanes>`: explanation on the left, code and answer held on the right. The module ships no content, so every guide stays markdown until a project adds a file.

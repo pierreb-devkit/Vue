@@ -21,10 +21,12 @@
     optional tab label (defaults to a friendly name derived from `lang`); `code`
     is the raw snippet (already containing the `<YOUR_API_KEY>` placeholder where
     relevant). Required, non-empty.
+  - lang (String, v-model): The language picked on a sibling card. Followed when
+    this card has it, and updated when a tab is clicked here.
 -->
 <template>
-  <div class="docs-codeblock" data-test="docs-codeblock">
-    <div class="docs-codeblock__bar d-flex align-center px-1">
+  <v-theme-provider theme="dark" with-background class="docs-codeblock rounded-lg overflow-hidden border" data-test="docs-codeblock">
+    <div class="d-flex align-center px-1 border-b">
       <!-- Language tabs (hidden when there is only one example) -->
       <v-tabs
         v-if="examples.length > 1"
@@ -32,7 +34,7 @@
         density="compact"
         height="38"
         color="primary"
-        class="docs-codeblock__tabs flex-grow-1"
+        class="flex-grow-1"
         data-test="docs-codeblock-tabs"
       >
         <v-tab
@@ -47,7 +49,7 @@
       </v-tabs>
       <span
         v-else
-        class="docs-codeblock__lang text-caption text-medium-emphasis px-2 flex-grow-1"
+        class="text-body-small text-medium-emphasis px-2 flex-grow-1"
         data-test="docs-codeblock-lang"
       >
         {{ tabLabel(examples[0]) }}
@@ -77,9 +79,8 @@
         :icon="copied === 'plain' ? 'fa-solid fa-check' : 'fa-regular fa-copy'"
         :color="copied === 'plain' ? 'success' : undefined"
         variant="text"
-        size="small"
-        density="comfortable"
-        class="ml-1"
+        size="x-small"
+        class="ml-1 mr-1"
         data-test="docs-codeblock-copy"
         :aria-label="`Copy ${tabLabel(current)} example`"
         @click="copy(false)"
@@ -93,7 +94,7 @@
       data-test="docs-codeblock-code"
     ><code :class="`language-${current.lang}`" v-html="highlightedHtml" /></pre>
     <!-- eslint-enable vue/no-v-html -->
-  </div>
+  </v-theme-provider>
 </template>
 
 <script>
@@ -135,7 +136,9 @@ export default {
       validator: (rows) => Array.isArray(rows) && rows.length > 0
         && rows.every((r) => r && typeof r.lang === 'string' && typeof r.code === 'string'),
     },
+    lang: { type: String, default: undefined },
   },
+  emits: ['update:lang'],
   setup() {
     const authStore = useAuthStore();
     return { authStore };
@@ -179,6 +182,37 @@ export default {
         html = hljs.highlightAuto(code).value;
       }
       return DOMPurify.sanitize(html);
+    },
+  },
+  watch: {
+    lang: {
+      immediate: true,
+      /**
+       * @desc Follow the language picked elsewhere, when this card has it.
+       * @param {string|undefined} lang - The picked language.
+       * @returns {void}
+       */
+      handler(lang) {
+        const i = this.examples.findIndex((ex) => ex.lang === lang);
+        if (i >= 0) this.active = i;
+      },
+    },
+    /**
+     * @desc A new set of examples (another guide, same card): follow the picked language again.
+     * @returns {void}
+     */
+    examples() {
+      const i = this.examples.findIndex((ex) => ex.lang === this.lang);
+      if (i >= 0) this.active = i;
+    },
+    /**
+     * @desc Tell the other cards which language was picked here.
+     * @param {number} i - The active tab.
+     * @returns {void}
+     */
+    active(i) {
+      const lang = this.examples[i]?.lang;
+      if (lang && lang !== this.lang) this.$emit('update:lang', lang);
     },
   },
   beforeUnmount() {
@@ -230,37 +264,34 @@ export default {
 </script>
 
 <style scoped>
-.docs-codeblock {
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgb(var(--v-theme-surface));
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  margin-block: 1.25rem;
-}
-
-.docs-codeblock__bar {
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  min-height: 38px;
-}
-
-.docs-codeblock__lang {
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
+/* A code block is raw <pre> output: no Vuetify component renders it. */
 .docs-codeblock__code {
   margin: 0;
   padding: 14px 16px;
   font-size: 0.8125rem;
-  line-height: 1.55;
+  line-height: 1.6;
   overflow-x: auto;
   white-space: pre;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: monospace;
 }
 
-.docs-codeblock__tabs :deep(.v-tab) {
-  min-width: 0;
-  padding-inline: 12px;
+/* highlight.js only tags the tokens; no highlight theme is loaded. */
+.docs-codeblock__code :deep(.hljs-string) {
+  color: rgb(var(--v-theme-success));
+}
+
+.docs-codeblock__code :deep(.hljs-number),
+.docs-codeblock__code :deep(.hljs-literal) {
+  color: rgb(var(--v-theme-warning));
+}
+
+.docs-codeblock__code :deep(.hljs-keyword),
+.docs-codeblock__code :deep(.hljs-built_in),
+.docs-codeblock__code :deep(.hljs-attr) {
+  font-weight: 500;
+}
+
+.docs-codeblock__code :deep(.hljs-comment) {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 }
 </style>

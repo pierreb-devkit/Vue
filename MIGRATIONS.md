@@ -4,6 +4,16 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## docs: new frame, optional two-pane guides (2026-11-08, #4818)
+
+Non-breaking for config: no key added or renamed. The docs home, guide and API pages move to `DocsShell` (app top nav, short left menu, glass on the selected item, search and phone bar).
+
+- `docs.toc.component.vue` is removed; a project importing `DocsToc` directly uses `DocsNavSections` instead.
+- A project overriding a docs view or component in its own tree re-checks it against the new frame.
+- Optional: add `src/modules/docs/content/docs.<slug>.content.js` (`{ title, lead, base, sections }`) to render that guide in two panes. See the module README.
+
+---
+
 ## skills: pass-through store actions, `create-module` `crud-only` option (2026-10-03, #4712)
 
 Non-breaking, skill text only — no `/update-stack` action needed.

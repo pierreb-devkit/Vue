@@ -1,19 +1,9 @@
 <template>
-  <v-container class="docs-reference py-8">
-    <v-row>
-      <!-- Left sidebar nav (persistent, shared with the article surface) -->
-      <v-col cols="12" md="3" lg="3" order="1" class="d-none d-md-block">
-        <DocsNav />
-      </v-col>
-
-      <!-- Reference body -->
-      <v-col cols="12" md="9" lg="9" order="2">
-        <PageHeader
-          :icon="header.icon"
-          :title="header.title"
-          :subtitle="header.subtitle"
-          avatar-color="primary"
-        />
+  <DocsShell class="docs-reference" :sections="railSections" :title="header.title">
+        <v-sheet tag="header" color="transparent" max-width="640" class="pb-6">
+          <h1 class="text-headline-large font-weight-medium mb-3" data-test="docs-reference-title">{{ header.title }}</h1>
+          <p class="text-body-large text-medium-emphasis">{{ header.subtitle }}</p>
+        </v-sheet>
 
         <!-- Loading -->
         <v-row v-if="loading" justify="center" class="py-12">
@@ -46,7 +36,7 @@
           <!-- Spec meta -->
           <p
             v-if="info.version"
-            class="text-body-small text-medium-emphasis mt-2 mb-6"
+            class="text-body-small text-medium-emphasis mb-6"
             data-test="docs-reference-version"
           >
             OpenAPI spec · v{{ info.version }}
@@ -54,13 +44,14 @@
 
           <!-- Tag groups -->
           <section
-            v-for="group in groups"
+            v-for="(group, index) in groups"
+            :id="groupIds[index]"
             :key="group.name"
-            class="docs-reference__group mb-10"
+            class="docs-row py-10 border-t"
             data-test="docs-reference-group"
           >
             <div class="d-flex align-center flex-wrap ga-3 mb-2">
-              <h2 class="text-headline-small font-weight-medium" data-test="docs-reference-group-title">
+              <h2 class="text-title-large font-weight-medium mb-0" data-test="docs-reference-group-title">
                 {{ group.name }}
               </h2>
               <v-btn
@@ -83,29 +74,20 @@
             />
 
             <!-- Endpoints -->
-            <v-expansion-panels variant="accordion" class="docs-reference__panels">
+            <v-expansion-panels variant="accordion" >
               <v-expansion-panel
                 v-for="endpoint in group.endpoints"
                 :key="endpoint.id"
                 :value="endpoint.id"
                 elevation="0"
                 rounded="lg"
-                class="docs-reference__endpoint mb-2"
+                class="border mb-2"
                 data-test="docs-reference-endpoint"
               >
-                <v-expansion-panel-title class="docs-reference__endpoint-title">
+                <v-expansion-panel-title>
                   <div class="d-flex align-center ga-3 flex-grow-1" style="min-width: 0">
-                    <v-chip
-                      :color="methodColor(endpoint.method)"
-                      size="small"
-                      variant="flat"
-                      label
-                      class="docs-reference__method font-weight-bold flex-shrink-0"
-                      data-test="docs-reference-method"
-                    >
-                      {{ endpoint.method }}
-                    </v-chip>
-                    <code class="docs-reference__path text-body-medium text-truncate">{{ endpoint.path }}</code>
+                    <span class="text-mono text-body-medium text-medium-emphasis flex-shrink-0" data-test="docs-reference-method">{{ endpoint.method }}</span>
+                    <code class="text-mono text-body-medium text-truncate">{{ endpoint.path }}</code>
                     <span
                       v-if="endpoint.summary"
                       class="text-body-medium text-medium-emphasis text-truncate d-none d-sm-inline"
@@ -153,8 +135,8 @@
 
                   <!-- Parameters -->
                   <div v-if="endpoint.parameters.length" class="mb-4" data-test="docs-reference-params">
-                    <p class="text-overline text-medium-emphasis mb-1">Parameters</p>
-                    <v-table density="compact" class="docs-reference__table">
+                    <p class="text-title-small mb-1">Parameters</p>
+                    <v-table density="compact" >
                       <thead>
                         <tr>
                           <th class="text-left">Name</th>
@@ -179,7 +161,7 @@
 
                   <!-- Responses -->
                   <div v-if="endpoint.responses.length" data-test="docs-reference-responses">
-                    <p class="text-overline text-medium-emphasis mb-1">Responses</p>
+                    <p class="text-title-small mb-1">Responses</p>
                     <div class="d-flex flex-column ga-1">
                       <div
                         v-for="response in endpoint.responses"
@@ -204,9 +186,7 @@
             </v-expansion-panels>
           </section>
         </template>
-      </v-col>
-    </v-row>
-  </v-container>
+  </DocsShell>
 </template>
 
 <script setup>
@@ -214,8 +194,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useDocsStore } from '../stores/docs.store';
 import { parseSpec } from '../composables/useDocsReference';
 import { resolveDocsTarget } from '../composables/useDocsNav';
-import DocsNav from '../components/docs.nav.component.vue';
-import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import { slugifyHeading } from '../composables/useDocsPage';
+import DocsShell from '../components/docs.shell.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
 
@@ -226,7 +206,6 @@ import config from '@/config';
  */
 const reference = config?.docs?.reference || {};
 const header = {
-  icon: reference.icon || 'fa-solid fa-code',
   title: reference.title || 'API reference',
   subtitle: reference.subtitle || 'Every endpoint, grouped by resource. Generated from the live OpenAPI spec.',
 };
@@ -250,6 +229,20 @@ const parsed = ref({ info: {}, groups: [], notFound: false });
 const info = computed(() => parsed.value.info || {});
 const groups = computed(() => parsed.value.groups || []);
 
+/** Each group's anchor on this page, in order; tags that slug alike get a numbered suffix. */
+const groupIds = computed(() => {
+  const used = new Set();
+  return groups.value.map((g) => {
+    const base = `api-${slugifyHeading(g.name)}`;
+    let id = base;
+    for (let n = 2; used.has(id); n += 1) id = `${base}-${n}`;
+    used.add(id);
+    return id;
+  });
+});
+
+const railSections = computed(() => groups.value.map((g, i) => ({ id: groupIds.value[i], nav: g.name })));
+
 /**
  * Resolve a tag's cross-link to a guide route, or null when no mapping exists
  * (or the mapped category is absent from the loaded tree).
@@ -264,19 +257,6 @@ const guideLink = (tagName) => {
   // that as "no guide" so we never render a link that lands on the home page.
   return to === '/docs' ? null : to;
 };
-
-/**
- * Vuetify color for an HTTP method chip.
- * @param {string} method - The uppercase HTTP method.
- * @returns {string} A theme color name.
- */
-const methodColor = (method) => ({
-  GET: 'info',
-  POST: 'success',
-  PUT: 'warning',
-  PATCH: 'warning',
-  DELETE: 'error',
-}[method] || 'secondary');
 
 /**
  * Vuetify color for a response status chip.
@@ -302,24 +282,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Rendered markdown: its paragraphs cannot take Vuetify classes. */
 .docs-reference__group-desc :deep(p) {
   margin-bottom: 0.5rem;
-}
-
-.docs-reference__endpoint {
-  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-}
-
-.docs-reference__method {
-  min-width: 56px;
-  justify-content: center;
-}
-
-.docs-reference__path {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-}
-
-.docs-reference__table :deep(code) {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 </style>

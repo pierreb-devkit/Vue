@@ -86,6 +86,12 @@ describe('docs.article.view', () => {
     expect(wrapper.find('[data-test="docs-article-title"]').text()).toBe('Alpha');
   });
 
+  it('treats a slug named like an object key as a normal guide', async () => {
+    const { store } = await mountArticle('constructor');
+    await flushPromises();
+    expect(store.fetchArticle).toHaveBeenCalledWith('constructor');
+  });
+
   it('shows the loading spinner while the store is fetching', async () => {
     // Set loading manually (simulating an in-flight action) then verify the
     // spinner appears. The store's `loading` ref drives the spinner.
@@ -185,15 +191,15 @@ describe('docs.article.view', () => {
     // line (a prose column never wraps). The table sizes and wraps like any
     // normal block table, only overflowing into the wrapper when a cell
     // truly cannot shrink.
-    expect(table).not.toMatch(/width:/);
+    expect(table).not.toMatch(/max-content/);
     expect(table).toMatch(/border-collapse: collapse;/);
     const scroll = rule('.docs-prose :deep(.docs-table-scroll)');
     expect(scroll).toMatch(/max-width: 100%;/);
     expect(scroll).toMatch(/overflow-x: auto;/);
     const cell = rule('.docs-prose :deep(td)');
     expect(style).toMatch(/\.docs-prose :deep\(th\),\s*\.docs-prose :deep\(td\) \{/);
-    expect(cell).toMatch(/border: 1px solid rgba\(var\(--v-border-color\), [\d.]+\);/);
-    expect(cell).toMatch(/padding: 10px 14px;/);
+    expect(cell).toMatch(/border-bottom: 1px solid rgba\(var\(--v-border-color\), var\(--v-border-opacity\)\);/);
+    expect(cell).toMatch(/padding: 10px 24px 10px 0;/);
     // No unconditional `text-align` on th/td: that would override marked's
     // `align="center"`/`align="right"` attribute on an aligned column, so
     // every column would render left-aligned regardless of the markdown.
@@ -201,7 +207,9 @@ describe('docs.article.view', () => {
     const unalignedHeader = rule('.docs-prose :deep(th:not([align]))');
     expect(unalignedHeader).toMatch(/text-align: start;/);
     const head = rule('.docs-prose :deep(thead th)');
-    expect(head).toMatch(/background: rgba\(var\(--v-theme-on-surface\), [\d.]+\);/);
+    // Ledger look: a stronger rule under the header, never a filled one.
+    expect(head).toMatch(/border-bottom-color: rgba\(var\(--v-theme-on-surface\), [\d.]+\);/);
+    expect(head).not.toMatch(/background:/);
     // theme tokens only: no hardcoded hex colors, so light and dark both work
     expect(style).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
