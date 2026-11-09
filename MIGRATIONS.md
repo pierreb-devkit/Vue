@@ -9,7 +9,7 @@ Breaking changes and upgrade notes for downstream projects.
 Non-breaking for app code and config. A consumer's CI, Docker images and local tooling move to Node 26. `.nvmrc` is now the one declared version: `CI.yml` and `release.yml` read it through `node-version-file`, and `Dockerfile` / `Dockerfile.dev` pin `node:26-alpine` instead of the floating `node:lts-alpine`.
 
 - Run `nvm use` after `/update-stack` so local tooling matches.
-- A consumer that pinned `setup-node` to 24 as a workaround returns to `node-version-file: .nvmrc` after updating.
+- A consumer that pinned `setup-node` to 24 as a workaround returns to `node-version-file` after updating. Use `.nvmrc` for a root checkout or `Vue/.nvmrc` when Vue is checked out under `Vue/`.
 - A consumer whose self-hosted runner image cannot start Node 26 fixes that image first.
 
 ---
