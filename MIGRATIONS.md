@@ -4,6 +4,16 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## tooling: Node 26 for CI, images and local development (2026-11-09, #4826)
+
+Non-breaking for app code and config. A consumer's CI, Docker images and local tooling move to Node 26. `.nvmrc` is now the one declared version: `CI.yml` and `release.yml` read it through `node-version-file`, and `Dockerfile` / `Dockerfile.dev` pin `node:26-alpine` instead of the floating `node:lts-alpine`.
+
+- Run `nvm use` after `/update-stack` so local tooling matches.
+- A consumer that pinned `setup-node` to 24 as a workaround returns to `node-version-file: .nvmrc` after updating.
+- A consumer whose self-hosted runner image cannot start Node 26 fixes that image first.
+
+---
+
 ## docs: new frame, optional two-pane guides (2026-11-08, #4818)
 
 Non-breaking for config: no key added or renamed. The docs home, guide and API pages move to `DocsShell` (app top nav, short left menu, glass on the selected item, search and phone bar).
