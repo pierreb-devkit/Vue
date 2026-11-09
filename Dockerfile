@@ -1,5 +1,5 @@
 # build step
-FROM node:lts-alpine as build-stage
+FROM node:26-alpine as build-stage
 
 # Create app directory
 WORKDIR /app
