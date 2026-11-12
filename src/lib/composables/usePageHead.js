@@ -41,5 +41,3 @@ export const buildPageHead = (page, appTitle = config?.app?.title || '') => {
  * @returns {object} the unhead entry
  */
 export const usePageHead = (page) => useHead(() => buildPageHead(toValue(page)));
-
-export default usePageHead;
