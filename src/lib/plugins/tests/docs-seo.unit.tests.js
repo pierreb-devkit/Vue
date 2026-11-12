@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { matchSnapshot } from '../prerender.js';
 import {
   fetchDocsTree,
   deriveDocsRoutes,
@@ -539,6 +540,8 @@ describe('fetchDocsSnapshot', () => {
 
     expect(fetchImpl).toHaveBeenCalledWith('https://api.example.com/api/spec.json', expect.anything());
     expect(snapshot['/api/spec.json']).toEqual({ body: spec, contentType: 'application/json' });
+    // The page asks its own API origin at prerender time: the pathname match still serves the spec.
+    expect(matchSnapshot(snapshot, 'http://localhost:3000/api/spec.json', 'GET')).toEqual(snapshot['/api/spec.json']);
   });
 
   it('FAIL-SOFT: an unreachable spec is skipped with a warning (the prerender gate then fails the page)', async () => {
