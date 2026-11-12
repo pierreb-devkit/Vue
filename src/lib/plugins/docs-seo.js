@@ -216,14 +216,18 @@ export function deriveDocsLlmsSections(tree, baseUrl, basePath = DEFAULT_BASE_PA
 /**
  * Derive the API-snapshot entries the prerender page will request at capture
  * time: the docs tree endpoint (both slash forms, since runtime clients may
- * request the trailing-slash form) plus one raw-markdown twin per guide.
+ * request the trailing-slash form), one raw-markdown twin per guide, and the
+ * merged OpenAPI spec the `/docs/api` reference renders. The spec lives at
+ * `{api base}/spec.json`, a sibling of `public/` — derived from `contentUrl`
+ * (`{api base}/public/{docs}`); skipped when `contentUrl` has no `/public/`
+ * segment to derive it from.
  * Entries are keyed by URL PATHNAME so the prerender-time match stays
  * origin-agnostic — the runtime API origin can differ from `contentUrl`'s.
  * Pure — no I/O.
  *
  * @param {object|null} tree - the docs tree (`{ categories: [...] }`)
  * @param {string} contentUrl - absolute URL of the docs tree endpoint
- * @returns {Array<{ path: string, url: string, kind: 'tree'|'article' }>}
+ * @returns {Array<{ path: string, url: string, kind: 'tree'|'article'|'spec' }>}
  *   snapshot entries (`path` = pathname the page will request, `url` = absolute
  *   URL to fetch at build time); empty when contentUrl is absent or malformed
  */
@@ -243,14 +247,20 @@ export function deriveDocsSnapshotEntries(tree, contentUrl) {
       entries.push({ path, url: `${origin}${path}`, kind: 'article' });
     }
   }
+  const publicAt = basePath.lastIndexOf('/public/');
+  if (publicAt >= 0) {
+    const path = `${basePath.slice(0, publicAt)}/spec.json`;
+    entries.push({ path, url: `${origin}${path}`, kind: 'spec' });
+  }
   return entries;
 }
 
 /**
  * Fetch the API-snapshot bodies at build time. The tree is NOT refetched — it
- * is re-serialised from the already-fetched object. Articles are fetched
- * FAIL-SOFT one by one: a failed article logs a warning and is skipped, so
- * that page simply prerenders without a body (exactly today's behaviour).
+ * is re-serialised from the already-fetched object. Articles and the OpenAPI
+ * spec are fetched FAIL-SOFT one by one: a failed entry logs a warning and is
+ * skipped. An article page then prerenders without a body; the API reference
+ * page shows its error state, which `prerenderPlugin` refuses to ship.
  *
  * @param {object|null} tree - the already-fetched docs tree
  * @param {string} contentUrl - absolute URL of the docs tree endpoint
@@ -284,7 +294,10 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
         console.warn(`[docs-seo] Snapshot fetch HTTP ${res?.status ?? '??'} for ${entry.url}, page will prerender without this body.`);
         continue;
       }
-      snapshot[entry.path] = { body: await res.text(), contentType: 'text/markdown' };
+      snapshot[entry.path] = {
+        body: await res.text(),
+        contentType: entry.kind === 'spec' ? 'application/json' : 'text/markdown',
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.warn(`[docs-seo] Snapshot fetch failed for ${entry.url}, page will prerender without this body:`, message);

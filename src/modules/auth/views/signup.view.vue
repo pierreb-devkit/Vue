@@ -172,6 +172,7 @@
 import { useTheme } from 'vuetify';
 import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
+import { usePageHead } from '../../../lib/composables/usePageHead';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
 /**
@@ -180,6 +181,17 @@ import AuthOrganizationSetupComponent from '../components/organizationSetup.comp
 export default {
   components: {
     AuthOrganizationSetupComponent,
+  },
+  /**
+   * @desc Give the sign-up page its own search title and description.
+   * @returns {Object} No bindings.
+   */
+  setup() {
+    usePageHead({
+      title: 'Sign up',
+      description: config.app?.title ? `Create your ${config.app.title} account.` : 'Create your account.',
+    });
+    return {};
   },
   /**
    * @desc Initialize signup view reactive state including form fields, OAuth URL,

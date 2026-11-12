@@ -15,6 +15,9 @@
  * other happy-dom internals.
  */
 /* global Node */
+import { config as vtuConfig } from '@vue/test-utils';
+import { createHead } from '@unhead/vue/client';
+
 if (typeof Node !== 'undefined') {
   const nodeProto = Node.prototype;
   const nodeProtoNodeNameDesc = Object.getOwnPropertyDescriptor(nodeProto, 'nodeName');
@@ -37,3 +40,10 @@ if (typeof Node !== 'undefined') {
     configurable: true,
   });
 }
+
+/**
+ * Provide an unhead instance to every mounted component: views call `useHead`
+ * (through `usePageHead`) from `setup()`, which throws without a provided head.
+ * Mount options that pass their own `global.plugins` are merged with this one.
+ */
+vtuConfig.global.plugins = [...(vtuConfig.global.plugins || []), createHead()];

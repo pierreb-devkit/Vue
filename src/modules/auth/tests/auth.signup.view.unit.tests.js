@@ -772,3 +772,28 @@ describe('auth.signup.view', () => {
     });
   });
 });
+
+describe('auth.signup.view — page head', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    fetchServerConfigMock.mockReset().mockResolvedValue(null);
+  });
+
+  it('gives the sign-up page its own search title and description, named after the app', async () => {
+    const { createHead } = await import('@unhead/vue/client');
+    const { renderSSRHead } = await import('@unhead/vue/server');
+    const { default: appConfig } = await import('../../../lib/services/config');
+    const head = createHead();
+    mount(AuthSignupView, {
+      global: {
+        plugins: [createVuetify(), head],
+        mocks: { config: mockConfig, $route: { query: {} }, $router: { push: vi.fn() } },
+        stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+      },
+    });
+    await flushPromises();
+    const { headTags } = await renderSSRHead(head);
+    expect(headTags).toContain(`<title>Sign up | ${appConfig.app.title}</title>`);
+    expect(headTags).toContain(`<meta name="description" content="Create your ${appConfig.app.title} account.">`);
+  });
+});

@@ -5,6 +5,8 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createRouter, createWebHistory } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
+import { createHead } from '@unhead/vue/client';
+import { renderSSRHead } from '@unhead/vue/server';
 import { useDocsStore } from '../stores/docs.store';
 
 vi.mock('@/config', () => ({
@@ -79,6 +81,17 @@ const mountHome = (seedTree = tree) => {
 describe('docs.home.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+  });
+
+  it('gives the docs home its own search title and description from config', async () => {
+    const head = createHead();
+    const store = useDocsStore();
+    store.tree = tree;
+    mount(DocsHome, { global: { plugins: [vuetify(), router, head] } });
+    await flushPromises();
+    const { headTags } = await renderSSRHead(head);
+    expect(headTags).toContain('<title>Documentation</title>');
+    expect(headTags).toContain('<meta name="description" content="Guides.">');
   });
 
   it('renders exactly three persona doors', async () => {

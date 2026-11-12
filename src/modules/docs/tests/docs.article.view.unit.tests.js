@@ -10,6 +10,8 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createRouter, createWebHistory } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
+import { createHead } from '@unhead/vue/client';
+import { renderSSRHead } from '@unhead/vue/server';
 import { useDocsStore } from '../stores/docs.store';
 
 vi.mock('@/config', () => ({
@@ -42,7 +44,7 @@ const tree = {
       title: 'Guide',
       order: 1,
       articles: [
-        { slug: 'alpha', title: 'Alpha', category: 'guide', order: 1 },
+        { slug: 'alpha', title: 'Alpha', category: 'guide', order: 1, summary: 'Alpha summary.' },
         { slug: 'beta', title: 'Beta', category: 'guide', order: 2 },
       ],
     },
@@ -67,15 +69,24 @@ const mountArticle = async (slug, overrides = {}) => {
   await router.push(`/docs/guide/${slug}`);
   await router.isReady();
 
+  const head = createHead();
   const wrapper = mount(DocsArticle, {
-    global: { plugins: [vuetify(), router] },
+    global: { plugins: [vuetify(), router, head] },
   });
-  return { wrapper, store, router };
+  return { wrapper, store, router, head };
 };
 
 describe('docs.article.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+  });
+
+  it('gives the page the guide search title and summary', async () => {
+    const { head } = await mountArticle('alpha');
+    await flushPromises();
+    const { headTags } = await renderSSRHead(head);
+    expect(headTags).toContain('<title>Alpha</title>');
+    expect(headTags).toContain('<meta name="description" content="Alpha summary.">');
   });
 
   it('renders the article title and body for the current slug', async () => {

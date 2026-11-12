@@ -208,7 +208,7 @@ describe('seoInjectPlugin', () => {
   describe('noscript fallback', () => {
     it('injects noscript block before </body> with title and description', () => {
       const result = transform(testConfig);
-      expect(result).toContain('<noscript><h1>Test App</h1><p>Test description</p></noscript>');
+      expect(result).toContain('<noscript><p>Test App</p><p>Test description</p></noscript>');
       const noscriptIndex = result.indexOf('<noscript>');
       const bodyCloseIndex = result.indexOf('</body>');
       expect(noscriptIndex).toBeLessThan(bodyCloseIndex);
@@ -221,14 +221,15 @@ describe('seoInjectPlugin', () => {
 
     it('injects noscript with only title when description is missing', () => {
       const result = transform({ app: { title: 'Only Title' } });
-      expect(result).toContain('<noscript><h1>Only Title</h1></noscript>');
+      expect(result).toContain('<noscript><p>Only Title</p></noscript>');
       expect(result).not.toContain('<p></p>');
     });
 
     it('injects noscript with only description when title is missing', () => {
       const result = transform({ app: { description: 'Only Desc' } });
       expect(result).toContain('<noscript><p>Only Desc</p></noscript>');
-      expect(result).not.toContain('<h1></h1>');
+      expect(result).not.toContain('<p></p>');
+      expect(result).not.toContain('<h1>');
     });
 
     it('escapes HTML in noscript content', () => {
