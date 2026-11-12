@@ -273,6 +273,36 @@ describe('HomeImgComponent', () => {
     expect(wrapper.find('.home-img-svg').attributes('style')).toContain('height: 50vh');
   });
 
+  it('uses the phone height on the xs breakpoint', () => {
+    // jsdom width (1024) sits below the sm threshold, so display.xs is true
+    const phoneVuetify = createVuetify({
+      components,
+      directives,
+      display: { thresholds: { sm: 2000, md: 3000, lg: 4000, xl: 5000, xxl: 6000 } },
+    });
+    const wrapper = mount(HomeImgComponent, {
+      props: { img: uniqueSvgUrl() },
+      global: globalOpts(phoneVuetify),
+    });
+    expect(phoneVuetify.display.xs.value).toBe(true);
+    expect(wrapper.find('.home-img-svg').attributes('style')).toContain('height: 225px');
+  });
+
+  it('uses the small-screen height on sm (not xs)', () => {
+    // jsdom width (1024) sits in the sm range, so xs is false and smAndDown is true
+    const smVuetify = createVuetify({
+      components,
+      directives,
+      display: { thresholds: { sm: 500, md: 2000, lg: 3000, xl: 4000, xxl: 5000 } },
+    });
+    const wrapper = mount(HomeImgComponent, {
+      props: { img: uniqueSvgUrl() },
+      global: globalOpts(smVuetify),
+    });
+    expect(smVuetify.display.xs.value).toBe(false);
+    expect(wrapper.find('.home-img-svg').attributes('style')).toContain('height: 300px');
+  });
+
   it('calls DOMPurify.sanitize when rendering SVG content', async () => {
     const DOMPurify = (await import('dompurify')).default;
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');

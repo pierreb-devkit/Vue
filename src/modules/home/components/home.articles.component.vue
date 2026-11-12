@@ -62,7 +62,7 @@
                       gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.7)"
                       :title="item.title"
                       :text="item.excerpt"
-                      :height="$vuetify.display.xsAndDown ? '275px' : $vuetify.display.smAndDown ? '350px' : '500px'"
+                      :height="$vuetify.display.xs ? '275px' : $vuetify.display.smAndDown ? '350px' : '500px'"
                     ></homeImgComponent>
                   </a>
                 </v-hover>
