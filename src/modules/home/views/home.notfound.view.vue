@@ -16,10 +16,20 @@
 </template>
 
 <script>
+import { useHead } from '@unhead/vue';
+
 /**
  * NotFound view — displayed when no route matches.
  */
 export default {
+  /**
+   * The server answers 200 with the app shell for any unknown path (it cannot know the
+   * client routes), so tell crawlers not to index this page. Removed when the view unmounts.
+   * @returns {void}
+   */
+  setup() {
+    useHead({ meta: [{ name: 'robots', content: 'noindex' }] });
+  },
   computed: {
     /**
      * Resolved not-found configuration with fallback defaults.
