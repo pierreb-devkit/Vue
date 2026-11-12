@@ -178,7 +178,7 @@ export default {
      */
     computedHeight() {
       if (this.height) return this.height;
-      if (this.$vuetify.display.xsAndDown) return '225px';
+      if (this.$vuetify.display.xs) return '225px';
       if (this.$vuetify.display.smAndDown) return '300px';
       return '350px';
     },

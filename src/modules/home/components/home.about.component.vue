@@ -65,7 +65,7 @@
             <homeImgComponent
               :img="item.img"
               :img-mode="item.imgMode || 'contain'"
-              :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
+              :height="$vuetify.display.xs ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
               :alt="item.subtitle || item.title || 'content'"
             ></homeImgComponent>
           </div>
@@ -73,7 +73,7 @@
             v-else-if="item.img"
             :img="item.img"
             :img-mode="item.imgMode"
-            :height="$vuetify.display.xsAndDown ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
+            :height="$vuetify.display.xs ? '250px' : $vuetify.display.smAndDown ? '325px' : '375px'"
             :alt="item.subtitle || item.title || 'content'"
             class="my-6"
           ></homeImgComponent>
