@@ -308,7 +308,7 @@ async function renderRoute(browser, port, route, distDir, apiSnapshot, docsInten
     if (!docsIntended && sanitized.includes(PRERENDER_ERROR_MARKER)) {
       console.warn(
         `[prerender] Skipped route "${route}": it captured an error state and the docs layer is off ` +
-          '(app.seo.docs.enabled with a non-empty contentUrl). The route keeps the SPA shell.',
+          '(it needs app.seo.docs.enabled and a non-empty contentUrl). The route keeps the SPA shell.',
       );
       return;
     }
