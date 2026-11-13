@@ -7,6 +7,7 @@ import {
   deriveDocsSnapshotEntries,
   fetchDocsSnapshot,
   augmentSeoConfigWithDocs,
+  isDocsLayerIntended,
 } from '../docs-seo.js';
 
 /**
@@ -311,6 +312,21 @@ describe('fetchDocsTree (fail-soft)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     await expect(fetchDocsTree('https://api.example.com/x', { fetchImpl: null })).resolves.toBeNull();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('No fetch implementation'));
+  });
+});
+
+describe('isDocsLayerIntended', () => {
+  it.each([
+    [undefined, false],
+    [{}, false],
+    [{ enabled: false, contentUrl: 'https://api.example.com/api/public/docs' }, false],
+    [{ enabled: true, contentUrl: '' }, false],
+    [{ enabled: true }, false],
+    [{ enabled: true, contentUrl: 42 }, false],
+    [{ enabled: true, contentUrl: { url: 'x' } }, false],
+    [{ enabled: true, contentUrl: 'https://api.example.com/api/public/docs' }, true],
+  ])('%j → %s', (docs, expected) => {
+    expect(isDocsLayerIntended(docs)).toBe(expected);
   });
 });
 
