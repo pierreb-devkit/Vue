@@ -2,6 +2,7 @@
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { isDocsLayerIntended } from './docs-seo.js';
 
 /**
  * Strips leading slashes and removes '..' segments from a path to prevent traversal.
@@ -100,6 +101,9 @@ export function prerenderPlugin(config, mode) {
       let browser;
       let server;
       let distDir;
+      // Docs layer switched off on purpose (no contentUrl): a capture that shows
+      // the data error state is expected, so it is skipped instead of failing.
+      const docsIntended = isDocsLayerIntended(config?.app?.seo?.docs);
 
       try {
         const puppeteer = await import('puppeteer');
@@ -120,7 +124,7 @@ export function prerenderPlugin(config, mode) {
 
         for (const route of routes) {
           try {
-            await renderRoute(browser, port, route, distDir, prerender?.apiSnapshot);
+            await renderRoute(browser, port, route, distDir, prerender?.apiSnapshot, docsIntended);
           } catch (routeError) {
             console.warn(
               `[prerender] Failed to pre-render route "${route}":`,
@@ -237,9 +241,11 @@ export function startStaticServer(distDir, shell) {
  * @param {string} distDir - absolute path to the dist/ directory
  * @param {Record<string, { body: string, contentType: string }>} [apiSnapshot]
  *   build-time API snapshot served to the page instead of live API calls
+ * @param {boolean} [docsIntended=true] - false when the docs layer is off on purpose:
+ *   a capture carrying the error marker is then not written (the route keeps the shell)
  * @returns {Promise<void>}
  */
-async function renderRoute(browser, port, route, distDir, apiSnapshot) {
+async function renderRoute(browser, port, route, distDir, apiSnapshot, docsIntended = true) {
   const page = await browser.newPage();
   try {
     const url = `http://127.0.0.1:${port}${route}`;
@@ -298,6 +304,14 @@ async function renderRoute(browser, port, route, distDir, apiSnapshot) {
     const sanitized = html.replace(new RegExp('https?://(?:127\\.0\\.0\\.1|localhost):' + port, 'g'), '');
 
     const outputPath = routeToOutputPath(distDir, route);
+
+    if (!docsIntended && sanitized.includes(PRERENDER_ERROR_MARKER)) {
+      console.warn(
+        `[prerender] Skipped route "${route}": it captured an error state and the docs layer is off ` +
+          '(app.seo.docs.enabled with a non-empty contentUrl). The route keeps the SPA shell.',
+      );
+      return;
+    }
 
     mkdirSync(dirname(outputPath), { recursive: true });
     writeFileSync(outputPath, sanitized, 'utf-8');

@@ -307,6 +307,19 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
 }
 
 /**
+ * Whether the docs layer is meant to run: `enabled` is truthy AND `contentUrl`
+ * is a non-empty string. A non-string `contentUrl` (number, boolean, object)
+ * counts as absent. Single source for `augmentSeoConfigWithDocs` and the
+ * prerender error-state gate, so both treat "docs off" the same way.
+ *
+ * @param {object} [docs] - `app.seo.docs`
+ * @returns {boolean} true when the docs layer is intended
+ */
+export function isDocsLayerIntended(docs) {
+  return Boolean(docs?.enabled) && typeof docs?.contentUrl === 'string' && docs.contentUrl !== '';
+}
+
+/**
  * Build-time entry point. When `app.seo.docs.enabled` and `app.seo.docs.contentUrl`
  * are set, fetch the docs tree and return a NEW config object whose `app.seo` has
  * the docs-derived prerender routes, sitemap routes, and llms.txt sections merged
@@ -326,9 +339,7 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
 export async function augmentSeoConfigWithDocs(config, options = {}) {
   const app = config?.app || {};
   const docs = app.seo?.docs;
-  // Guard: contentUrl must be a non-empty string; a non-string value (number,
-  // boolean, object) is treated as absent so the layer stays off and safe.
-  if (!docs?.enabled || typeof docs?.contentUrl !== 'string' || !docs.contentUrl) return config;
+  if (!isDocsLayerIntended(docs)) return config;
 
   const tree = await fetchDocsTree(docs.contentUrl, { timeoutMs: docs.timeoutMs, fetchImpl: options.fetchImpl });
   if (!tree) return config; // fetch failed → static fallback

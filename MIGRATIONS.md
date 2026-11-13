@@ -4,6 +4,12 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## prerender: docs layer off no longer fails the build (2026-11-13, #4843)
+
+Non-breaking, no key added. A build with the docs layer switched off on purpose (`app.seo.docs.enabled` false or an empty `contentUrl`) that still lists `/docs/api` in `app.seo.prerender.routes` now skips that capture with a warning (the route keeps the SPA shell) instead of failing. To prerender the API reference, enable `app.seo.docs` with a reachable `contentUrl`; with the layer on, a missing spec still fails the build.
+
+---
+
 ## seo: own head per page, real prerendered API reference (2026-11-12, #4835)
 
 Non-breaking for config: no key added. Prerendered pages now carry their own title and description (docs home, guides, API reference, pricing, sign-up), and home-only head tags (FAQPage JSON-LD) no longer land on every prerendered route.

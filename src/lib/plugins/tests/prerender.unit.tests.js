@@ -206,18 +206,64 @@ describe('prerenderPlugin error-state gate', () => {
     mockBrowser.newPage.mockResolvedValue(mockPage);
   });
 
+  const errorCapture = `<html><body><div ${PRERENDER_ERROR_MARKER}>Network Error</div></body></html>`;
+  const docsOn = { enabled: true, contentUrl: 'https://api.example.com/api/public/docs' };
+
   it('fails hard when a captured page still shows a data error state (never ships "Network Error" as content)', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    mockFsFns.readFileSync
-      .mockReturnValueOnce('<html></html>')
-      .mockReturnValueOnce(`<html><body><div ${PRERENDER_ERROR_MARKER}>Network Error</div></body></html>`);
+    mockPage.content.mockResolvedValue(errorCapture);
+    mockFsFns.readFileSync.mockReturnValueOnce('<html></html>').mockReturnValueOnce(errorCapture);
 
     const plugin = prerenderPlugin(
-      { app: { seo: { prerender: { enabled: true, routes: ['/docs/api'] } } } },
+      { app: { seo: { docs: docsOn, prerender: { enabled: true, routes: ['/docs/api'] } } } },
       'production',
     );
 
     await expect(plugin.closeBundle()).rejects.toThrow(/"\/docs\/api".*error state/);
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledWith(
+      routeToOutputPath(join(process.cwd(), 'dist'), '/docs/api'),
+      errorCapture,
+      'utf-8',
+    );
+    logSpy.mockRestore();
+  });
+
+  it.each([
+    ['contentUrl is empty', { enabled: true, contentUrl: '' }],
+    ['docs is disabled', { enabled: false, contentUrl: docsOn.contentUrl }],
+    ['docs is not configured', undefined],
+  ])('skips an error-state capture with a warning when %s (docs layer off on purpose)', async (_label, docs) => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockPage.content.mockResolvedValue(errorCapture);
+    // Only the built shell exists: the skipped route was never written.
+    mockFsFns.readFileSync.mockReturnValueOnce('<html></html>').mockImplementationOnce(() => {
+      throw new Error('ENOENT');
+    });
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { docs, prerender: { enabled: true, routes: ['/docs/api'] } } } },
+      'production',
+    );
+
+    await expect(plugin.closeBundle()).resolves.toBeUndefined();
+    expect(mockFsFns.writeFileSync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/Skipped route "\/docs\/api".*docs layer is off/));
+    logSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it('still writes a clean capture when the docs layer is off', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockPage.content.mockResolvedValue('<html><body>rendered</body></html>');
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { docs: { enabled: false }, prerender: { enabled: true, routes: ['/'] } } } },
+      'production',
+    );
+
+    await plugin.closeBundle();
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledTimes(1);
     logSpy.mockRestore();
   });
 });
