@@ -8,6 +8,10 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ mail: { status: false, message: '' }, reset: resetMock }),
 }));
 
+const usePageHeadMock = vi.hoisted(() => vi.fn());
+vi.mock('../../../lib/composables/usePageHead', () => ({ usePageHead: usePageHeadMock }));
+
+import config from '../../../lib/services/config';
 import AuthResetView from '../views/reset.view.vue';
 
 const mockConfig = {
@@ -49,6 +53,15 @@ const mountView = (token = 'reset-token-abc', formStub = makeFormStub()) =>
   });
 
 describe('auth.reset.view', () => {
+  it('gives the page its own head title and description', () => {
+    usePageHeadMock.mockClear();
+    mountView();
+    expect(usePageHeadMock).toHaveBeenCalledWith({
+      title: 'Reset password',
+      description: config.app?.title ? `Choose a new password for your ${config.app.title} account.` : 'Choose a new password for your account.',
+    });
+  });
+
   beforeEach(() => {
     setActivePinia(createPinia());
     resetMock.mockReset();

@@ -21,6 +21,10 @@ vi.mock('../stores/auth.store', () => ({
   }),
 }));
 
+const usePageHeadMock = vi.hoisted(() => vi.fn());
+vi.mock('../../../lib/composables/usePageHead', () => ({ usePageHead: usePageHeadMock }));
+
+import config from '../../../lib/services/config';
 import AuthSigninView from '../views/signin.view.vue';
 
 const mockConfig = {
@@ -59,6 +63,15 @@ const mountView = (formStub = makeFormStub(), routeQuery = {}) =>
   });
 
 describe('auth.signin.view', () => {
+  it('gives the page its own head title and description', () => {
+    usePageHeadMock.mockClear();
+    mountView();
+    expect(usePageHeadMock).toHaveBeenCalledWith({
+      title: 'Sign in',
+      description: config.app?.title ? `Sign in to your ${config.app.title} account.` : 'Sign in to your account.',
+    });
+  });
+
 
     it('shows the accent image above the title when sign.accentImage is set', async () => {
       const wrapper = mount(AuthSigninView, {
