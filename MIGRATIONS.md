@@ -8,7 +8,7 @@ Breaking changes and upgrade notes for downstream projects.
 
 Non-breaking for config: no key added. Prerendered pages now carry their own title and description (docs home, guides, API reference, pricing, sign-up), and home-only head tags (FAQPage JSON-LD) no longer land on every prerendered route.
 
-- A project that lists `/docs/api` in `app.seo.prerender.routes` needs `app.seo.docs.enabled` with a reachable `contentUrl`: the OpenAPI spec (`{api base}/spec.json`) is now snapshotted at build. When it cannot be fetched, the build fails with a clear message instead of shipping an error text as the page.
+- A project that lists `/docs/api` in `app.seo.prerender.routes` needs `app.seo.docs.enabled` with a reachable `contentUrl` of the shape `{api base}/public/{docs}` (the spec URL is derived from its `/public/` segment): the OpenAPI spec (`{api base}/spec.json`) is now snapshotted at build. When it cannot be fetched, the build fails with a clear message instead of shipping an error text as the page.
 - Re-run the build after `/update-stack` so the prerendered pages pick up their own head tags.
 - A project view that renders its own page can call `usePageHead({ title, description })` from `src/lib/composables/usePageHead.js`.
 - Unit tests that mount a component using `useHead` get a head instance from `vitest.setup.js`; a project with its own setup file adds the same plugin.

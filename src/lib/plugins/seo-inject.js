@@ -51,7 +51,7 @@ function buildPreconnectTags(urls) {
 /**
  * Build a noscript fallback block with the app title and description.
  * Tags are only emitted when their value is non-empty to avoid
- * semantically incorrect empty elements (e.g. an empty paragraph).
+ * semantically incorrect empty elements (e.g. empty h1).
  *
  * @param {string} title - page title (will be escaped)
  * @param {string} description - page description (will be escaped)
@@ -59,8 +59,7 @@ function buildPreconnectTags(urls) {
  */
 function buildNoscriptBlock(title, description) {
   let innerHtml = '';
-  // A paragraph, not an h1: the page's own content carries the one h1.
-  if (title) innerHtml += `<p>${escapeHtml(title)}</p>`;
+  if (title) innerHtml += `<h1>${escapeHtml(title)}</h1>`;
   if (description) innerHtml += `<p>${escapeHtml(description)}</p>`;
   if (!innerHtml) return '';
   return `<noscript>${innerHtml}</noscript>`;

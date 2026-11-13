@@ -22,10 +22,10 @@
           inline
           alt="logo"
         />
-        <div v-if="config.header.title" class="text-headline-small font-weight-bold ml-2">{{ config.app.title }}</div>
+        <h1 v-if="config.header.title" class="text-headline-small font-weight-bold ml-2">{{ config.app.title }}</h1>
       </router-link>
       <router-link v-else-if="config.header.title" to="/" class="text-decoration-none mr-4" :style="{ color: 'inherit' }">
-        <div class="text-headline-small font-weight-bold">{{ config.app.title }}</div>
+        <h1 class="text-headline-small font-weight-bold">{{ config.app.title }}</h1>
       </router-link>
       <!-- Menu -->
       <span v-for="({ title, url, sublinks }, i) in config.header.links" :key="i" class="hidden-sm-and-down">
