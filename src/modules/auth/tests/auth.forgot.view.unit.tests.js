@@ -8,6 +8,10 @@ vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => ({ mail: { status: false, message: '' }, forgot: forgotMock }),
 }));
 
+const usePageHeadMock = vi.hoisted(() => vi.fn());
+vi.mock('../../../lib/composables/usePageHead', () => ({ usePageHead: usePageHeadMock }));
+
+import config from '../../../lib/services/config';
 import AuthForgotView from '../views/forgot.view.vue';
 
 const mockConfig = {
@@ -44,6 +48,15 @@ const mountView = (formStub = makeFormStub()) =>
   });
 
 describe('auth.forgot.view', () => {
+  it('gives the page its own head title and description', () => {
+    usePageHeadMock.mockClear();
+    mountView();
+    expect(usePageHeadMock).toHaveBeenCalledWith({
+      title: 'Forgot password',
+      description: config.app?.title ? `Reset the password of your ${config.app.title} account.` : 'Reset the password of your account.',
+    });
+  });
+
   beforeEach(() => {
     setActivePinia(createPinia());
     forgotMock.mockReset();

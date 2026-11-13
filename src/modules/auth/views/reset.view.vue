@@ -46,7 +46,9 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import config from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
+import { usePageHead } from '../../../lib/composables/usePageHead';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const logger = createLogger('auth');
@@ -54,6 +56,17 @@ const logger = createLogger('auth');
  * Component definition.
  */
 export default {
+  /**
+   * @desc Give the reset-password page its own search title and description.
+   * @returns {Object} No bindings.
+   */
+  setup() {
+    usePageHead({
+      title: 'Reset password',
+      description: config.app?.title ? `Choose a new password for your ${config.app.title} account.` : 'Choose a new password for your account.',
+    });
+    return {};
+  },
   data() {
     const theme = useTheme();
     return {

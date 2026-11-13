@@ -107,11 +107,23 @@
 import { useTheme } from 'vuetify';
 import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
+import { usePageHead } from '../../../lib/composables/usePageHead';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
  * Component definition.
  */
 export default {
+  /**
+   * @desc Give the sign-in page its own search title and description.
+   * @returns {Object} No bindings.
+   */
+  setup() {
+    usePageHead({
+      title: 'Sign in',
+      description: config.app?.title ? `Sign in to your ${config.app.title} account.` : 'Sign in to your account.',
+    });
+    return {};
+  },
   data() {
     const theme = useTheme();
     return {
