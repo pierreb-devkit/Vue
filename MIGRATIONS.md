@@ -4,6 +4,30 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## prerender: SPA fallback serves the built shell, not the rendered home (2026-11-13, #4844)
+
+Non-breaking for config: no key added. Every build now writes `dist/_shell.html`, a copy of the built `index.html` taken before any route is prerendered (prerender on or off). With prerender on, `dist/index.html` holds the rendered home page, so a server that falls back to `/index.html` gives every non-prerendered path the home page's title, description, canonical and JSON-LD.
+
+- Using the stack `nginx.example.conf`: nothing to do, `/update-stack` brings the new fallback.
+- With your own server file (a custom nginx conf, another web server, a CDN or host SPA rewrite): change the SPA fallback target from `/index.html` to `/_shell.html`. In nginx:
+
+  ```nginx
+  location / {
+    expires -1;
+    try_files $uri $uri/index.html /_shell.html;
+  }
+
+  location = /_shell.html {
+    internal;
+    expires -1;
+  }
+  ```
+
+  `/` still answers the rendered home through `$uri/index.html`. The `internal` line keeps `/_shell.html` from answering as a page of its own (a direct request gets a 404).
+- Meta descriptions set through `usePageHead` / `buildPageHead` now have markdown markers removed (bold, italic, inline code, links, images, heading / quote / list signs).
+
+---
+
 ## prerender: docs layer off no longer fails the build (2026-11-13, #4843)
 
 Non-breaking, no key added. A build with the docs layer switched off on purpose (`app.seo.docs.enabled` false or an empty `contentUrl`) that still lists `/docs/api` in `app.seo.prerender.routes` now skips that capture with a warning (the route keeps the SPA shell) instead of failing. To prerender the API reference, enable `app.seo.docs` with a reachable `contentUrl`; with the layer on, a missing spec still fails the build.

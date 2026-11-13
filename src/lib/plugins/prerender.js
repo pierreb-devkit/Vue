@@ -42,6 +42,14 @@ export function routeToOutputPath(distDir, route) {
 export const PRERENDER_ERROR_MARKER = 'data-prerender-error';
 
 /**
+ * Copy of the pristine built `index.html`, written to dist/ on every build before
+ * any route is rendered. Rendering '/' overwrites dist/index.html with the home
+ * page, so the web server's SPA fallback must point here instead (see
+ * nginx.example.conf), or every non-prerendered path gets the home page's head.
+ */
+export const SHELL_FILE = '_shell.html';
+
+/**
  * Match an intercepted page request against the build-time API snapshot by URL
  * PATHNAME only — origin-agnostic, because the runtime API origin baked into
  * the bundle can differ from the origin the snapshot was fetched from. GET only.
@@ -93,6 +101,20 @@ export function prerenderPlugin(config, mode) {
      * @returns {Promise<void>}
      */
     async closeBundle() {
+      const distDir = join(process.cwd(), 'dist');
+      // Keep the built shell before any route renders: rendering '/' overwrites
+      // dist/index.html. Written on every build so the server fallback file always exists.
+      // Fail loud: the server falls back to this file, so a build without it
+      // would answer 404 on every client-side route once deployed.
+      let shell;
+      try {
+        shell = readFileSync(join(distDir, 'index.html'));
+        writeFileSync(join(distDir, SHELL_FILE), shell);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`[prerender] FAIL-HARD: could not write dist/${SHELL_FILE}, the SPA fallback file: ${message}`);
+      }
+
       if (!enabled) return;
 
       const routes = prerender?.routes;
@@ -100,19 +122,17 @@ export function prerenderPlugin(config, mode) {
 
       let browser;
       let server;
-      let distDir;
+      // Set once puppeteer loads: the gate below only checks a run that rendered.
+      let rendered = false;
       // Docs layer switched off on purpose (no contentUrl): a capture that shows
       // the data error state is expected, so it is skipped instead of failing.
       const docsIntended = isDocsLayerIntended(config?.app?.seo?.docs);
 
       try {
         const puppeteer = await import('puppeteer');
-        distDir = join(process.cwd(), 'dist');
-        // Keep the built shell in memory: rendering '/' overwrites dist/index.html,
-        // and every later route must boot from the clean shell, not from the
-        // rendered home page (its head tags would leak into every capture).
-        const shell = readFileSync(join(distDir, 'index.html'));
+        rendered = true;
 
+        // Every route boots from the in-memory shell, never from the rendered home page.
         // Spin up a lightweight static file server for the dist/ folder
         server = await startStaticServer(distDir, shell);
         const port = server.address().port;
@@ -149,7 +169,7 @@ export function prerenderPlugin(config, mode) {
       // (a puppeteer/render hiccup must never break unrelated builds), so a leak thrown
       // in there would be silently swallowed. Mirrors the docs fail-hard gate pattern:
       // fail-soft render step, then a separate check afterward that always propagates.
-      if (distDir) {
+      if (rendered) {
         const leakPattern = /https?:\/\/(?:127\.0\.0\.1|localhost):\d+/;
         for (const route of routes) {
           const outputPath = routeToOutputPath(distDir, route);
