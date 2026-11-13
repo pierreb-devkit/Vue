@@ -1080,3 +1080,32 @@ describe('BillingPricingView — guest CTA routes to signup (free AND paid)', ()
     expect(push).toHaveBeenCalledWith({ path: '/signup', query: { redirect: '/pricing' } });
   });
 });
+
+describe('BillingPricingView — page head', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    seedStore(useBillingStore());
+    pricingState.tabs = null;
+    pricingState.header = {};
+  });
+
+  it('gives the pricing page its own search title and description from the pricing header', async () => {
+    const { createHead } = await import('@unhead/vue/client');
+    const { renderSSRHead } = await import('@unhead/vue/server');
+    pricingState.header = { title: 'Plans', subtitle: 'Pick one.' };
+    const head = createHead();
+    const wrapper = mount(BillingPricingView, {
+      global: {
+        plugins: [vuetify, head],
+        mocks: { config: mockConfig, $route: { path: '/pricing', hash: '', query: {} }, $router: { replace: vi.fn(), push: vi.fn() } },
+        stubs: componentStubs,
+      },
+    });
+    await flushPromises();
+    const { headTags } = await renderSSRHead(head);
+    expect(headTags).toMatch(/<title>Plans( \| .+)?<\/title>/);
+    expect(headTags).toContain('<meta name="description" content="Pick one.">');
+    wrapper.unmount();
+    pricingState.header = {};
+  });
+});

@@ -54,6 +54,7 @@ import DocsShell from '../components/docs.shell.component.vue';
 import DocsCodeblock from '../components/docs.codeblock.component.vue';
 import DocsPanes from '../components/docs.panes.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
+import { usePageHead } from '@/lib/composables/usePageHead';
 
 /**
  * Two-pane guides, by slug. A consumer adds `content/docs.<slug>.content.js`
@@ -115,6 +116,12 @@ const slug = computed(() => route.params.slug);
  */
 const meta = computed(() =>
   store.orderedArticles.find((a) => a.slug === slug.value) || {});
+
+/** Search title + summary: the guide's own, from the two-pane page or the guide tree. */
+usePageHead(() => ({
+  title: panes.value?.title || meta.value.title || page.value.title,
+  description: panes.value?.lead || meta.value.summary,
+}));
 
 /**
  * Prev/next from the flattened, order-sorted article list.

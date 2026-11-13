@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { matchSnapshot } from '../prerender.js';
 import {
   fetchDocsTree,
   deriveDocsRoutes,
@@ -470,7 +471,7 @@ describe('augmentSeoConfigWithDocs', () => {
 });
 
 describe('deriveDocsSnapshotEntries', () => {
-  it('derives tree entries (both slash forms) plus one .md entry per guide, keyed by pathname', () => {
+  it('derives tree entries (both slash forms), one .md entry per guide and the OpenAPI spec, keyed by pathname', () => {
     const entries = deriveDocsSnapshotEntries(treeFixture, 'https://api.example.com/api/public/docs');
     expect(entries).toEqual([
       { path: '/api/public/docs', url: 'https://api.example.com/api/public/docs', kind: 'tree' },
@@ -478,7 +479,14 @@ describe('deriveDocsSnapshotEntries', () => {
       { path: '/api/public/docs/welcome.md', url: 'https://api.example.com/api/public/docs/welcome.md', kind: 'article' },
       { path: '/api/public/docs/quickstart.md', url: 'https://api.example.com/api/public/docs/quickstart.md', kind: 'article' },
       { path: '/api/public/docs/webhooks.md', url: 'https://api.example.com/api/public/docs/webhooks.md', kind: 'article' },
+      { path: '/api/spec.json', url: 'https://api.example.com/api/spec.json', kind: 'spec' },
     ]);
+  });
+
+  it('derives the spec from the last /public/ segment, and skips it when contentUrl has none', () => {
+    const nested = deriveDocsSnapshotEntries(null, 'https://api.example.com/v1/api/public/guides');
+    expect(nested.at(-1)).toEqual({ path: '/v1/api/spec.json', url: 'https://api.example.com/v1/api/spec.json', kind: 'spec' });
+    expect(deriveDocsSnapshotEntries(null, 'https://api.example.com/docs').some((e) => e.kind === 'spec')).toBe(false);
   });
 
   it('normalises a trailing slash on contentUrl', () => {
@@ -517,11 +525,36 @@ describe('fetchDocsSnapshot', () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true, text: async () => '# body' });
     const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
 
-    expect(fetchImpl).toHaveBeenCalledTimes(3); // articles only, never the tree URL
+    expect(fetchImpl).toHaveBeenCalledTimes(4); // articles + spec, never the tree URL
     expect(fetchImpl).not.toHaveBeenCalledWith('https://api.example.com/api/public/docs', expect.anything());
     expect(snapshot['/api/public/docs'].body).toBe(JSON.stringify({ data: treeFixture }));
     expect(snapshot['/api/public/docs/'].body).toBe(JSON.stringify({ data: treeFixture }));
     expect(snapshot['/api/public/docs/welcome.md']).toEqual({ body: '# body', contentType: 'text/markdown' });
+  });
+
+  it('snapshots the OpenAPI spec as JSON so the prerendered API reference holds the real spec', async () => {
+    const spec = JSON.stringify({ openapi: '3.0.0', paths: {} });
+    const fetchImpl = vi.fn().mockImplementation((url) =>
+      Promise.resolve({ ok: true, text: async () => (String(url).endsWith('/spec.json') ? spec : '# body') }));
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.example.com/api/spec.json', expect.anything());
+    expect(snapshot['/api/spec.json']).toEqual({ body: spec, contentType: 'application/json' });
+    // The page asks its own API origin at prerender time: the pathname match still serves the spec.
+    expect(matchSnapshot(snapshot, 'http://localhost:3000/api/spec.json', 'GET')).toEqual(snapshot['/api/spec.json']);
+  });
+
+  it('FAIL-SOFT: an unreachable spec is skipped with a warning (the prerender gate then fails the page)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchImpl = vi.fn().mockImplementation((url) =>
+      (String(url).endsWith('/spec.json')
+        ? Promise.reject(new Error('Network Error'))
+        : Promise.resolve({ ok: true, text: async () => '# ok' })));
+    const snapshot = await fetchDocsSnapshot(treeFixture, 'https://api.example.com/api/public/docs', { fetchImpl });
+
+    expect(snapshot['/api/spec.json']).toBeUndefined();
+    expect(snapshot['/api/public/docs/welcome.md']).toEqual({ body: '# ok', contentType: 'text/markdown' });
+    expect(warn).toHaveBeenCalled();
   });
 
   it('FAIL-SOFT: a non-OK article response is skipped with a warning, others survive', async () => {

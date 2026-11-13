@@ -49,7 +49,14 @@ vi.mock('node:http', () => ({
   default: { createServer: mockCreateServer },
 }));
 
-import { prerenderPlugin, sanitizePath, routeToOutputPath, matchSnapshot } from '../prerender.js';
+import {
+  prerenderPlugin,
+  sanitizePath,
+  routeToOutputPath,
+  matchSnapshot,
+  startStaticServer,
+  PRERENDER_ERROR_MARKER,
+} from '../prerender.js';
 
 describe('prerenderPlugin', () => {
   beforeEach(() => {
@@ -179,9 +186,9 @@ describe('prerenderPlugin', () => {
 
   it('fails hard (#4502) when a written prerendered file still leaks the local prerender origin', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    mockFsFns.readFileSync.mockReturnValueOnce(
-      '<html><body><link rel="modulepreload" href="http://127.0.0.1:54321/assets/x.js"></body></html>',
-    );
+    mockFsFns.readFileSync
+      .mockReturnValueOnce('<html></html>') // the built shell, read before rendering
+      .mockReturnValueOnce('<html><body><link rel="modulepreload" href="http://127.0.0.1:54321/assets/x.js"></body></html>');
 
     const plugin = prerenderPlugin(
       { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
@@ -190,6 +197,80 @@ describe('prerenderPlugin', () => {
 
     await expect(plugin.closeBundle()).rejects.toThrow(/4502/);
     logSpy.mockRestore();
+  });
+});
+
+describe('prerenderPlugin error-state gate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBrowser.newPage.mockResolvedValue(mockPage);
+  });
+
+  it('fails hard when a captured page still shows a data error state (never ships "Network Error" as content)', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockFsFns.readFileSync
+      .mockReturnValueOnce('<html></html>')
+      .mockReturnValueOnce(`<html><body><div ${PRERENDER_ERROR_MARKER}>Network Error</div></body></html>`);
+
+    const plugin = prerenderPlugin(
+      { app: { seo: { prerender: { enabled: true, routes: ['/docs/api'] } } } },
+      'production',
+    );
+
+    await expect(plugin.closeBundle()).rejects.toThrow(/"\/docs\/api".*error state/);
+    logSpy.mockRestore();
+  });
+});
+
+describe('startStaticServer', () => {
+  /**
+   * Start the server and return its request handler with a fake response recorder.
+   * @param {string} shell - The in-memory built shell.
+   * @returns {(url: string) => { status: number, body: unknown }} Request runner.
+   */
+  const serve = async (shell) => {
+    await startStaticServer('/dist', shell);
+    const handler = mockCreateServer.mock.calls.at(-1)[0];
+    return (url) => {
+      const out = {};
+      handler({ url }, { writeHead: (status) => { out.status = status; }, end: (body) => { out.body = body; } });
+      return out;
+    };
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('serves the in-memory shell for "/" and "/index.html", never the rendered dist/index.html', async () => {
+    const get = await serve('<html>shell</html>');
+    expect(get('/').body).toBe('<html>shell</html>');
+    expect(get('/index.html').body).toBe('<html>shell</html>');
+    expect(mockFsFns.readFileSync).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the shell for SPA routes so a later route never boots from the rendered home page', async () => {
+    mockFsFns.readFileSync.mockImplementation(() => { throw new Error('ENOENT'); });
+    const get = await serve('<html>shell</html>');
+    expect(get('/signup')).toEqual({ status: 200, body: '<html>shell</html>' });
+    mockFsFns.readFileSync.mockImplementation(() => '<html></html>');
+  });
+
+  it('never leaks a head tag of the rendered home page into another route', async () => {
+    // dist/index.html now holds the rendered home page (with its FAQPage JSON-LD).
+    mockFsFns.readFileSync.mockImplementation((path) => {
+      if (String(path).endsWith('index.html')) return '<html><script type="application/ld+json">FAQPage</script></html>';
+      throw new Error('ENOENT');
+    });
+    const get = await serve('<html>shell</html>');
+    expect(get('/signup').body).not.toContain('FAQPage');
+    expect(get('/docs/api').body).not.toContain('FAQPage');
+    expect(get('/').body).toBe('<html>shell</html>');
+    mockFsFns.readFileSync.mockImplementation(() => '<html></html>');
+  });
+
+  it('serves real asset files from dist', async () => {
+    mockFsFns.readFileSync.mockReturnValueOnce('console.log(1)');
+    const get = await serve('<html>shell</html>');
+    expect(get('/assets/app.js')).toEqual({ status: 200, body: 'console.log(1)' });
   });
 });
 

@@ -17,7 +17,7 @@
         <!-- Error -->
         <v-row v-else-if="error" class="pa-2 mt-2">
           <v-col>
-            <v-alert type="error" variant="tonal" data-test="docs-reference-error">
+            <v-alert type="error" variant="tonal" data-test="docs-reference-error" data-prerender-error>
               {{ error }}
             </v-alert>
           </v-col>
@@ -26,7 +26,7 @@
         <!-- Empty / unavailable -->
         <v-row v-else-if="!groups.length" class="pa-2 mt-2">
           <v-col>
-            <v-alert type="info" variant="tonal" data-test="docs-reference-empty">
+            <v-alert type="info" variant="tonal" data-test="docs-reference-empty" data-prerender-error>
               The API reference is not available right now. Please try again later.
             </v-alert>
           </v-col>
@@ -198,6 +198,7 @@ import { slugifyHeading } from '../composables/useDocsPage';
 import DocsShell from '../components/docs.shell.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
+import { usePageHead } from '@/lib/composables/usePageHead';
 
 /**
  * Reference surface config (header copy + tag→guide cross-links). Defaults are
@@ -209,6 +210,8 @@ const header = {
   title: reference.title || 'API reference',
   subtitle: reference.subtitle || 'Every endpoint, grouped by resource. Generated from the live OpenAPI spec.',
 };
+
+usePageHead({ title: header.title, description: header.subtitle });
 
 /**
  * Map of OpenAPI tag name → docs category slug. When a tag has a mapping AND the

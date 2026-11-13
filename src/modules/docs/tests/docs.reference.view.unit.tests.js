@@ -5,6 +5,8 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { createRouter, createWebHistory } from 'vue-router';
 import { setActivePinia, createPinia } from 'pinia';
+import { createHead } from '@unhead/vue/client';
+import { renderSSRHead } from '@unhead/vue/server';
 import { useDocsStore } from '../stores/docs.store';
 
 vi.mock('@/config', () => ({
@@ -104,6 +106,32 @@ describe('docs.reference.view', () => {
     expect(wrapper.find('[data-test="docs-reference-method"]').text()).toBe('GET');
   });
 
+  it('gives the API reference its own search title and description from config', async () => {
+    const head = createHead();
+    const store = useDocsStore();
+    store.tree = tree;
+    store.spec = spec;
+    mount(DocsReference, { global: { plugins: [vuetify(), router, head], components: { VMarkdown } } });
+    await flushPromises();
+    const { headTags } = await renderSSRHead(head);
+    expect(headTags).toContain('<title>API reference</title>');
+    expect(headTags).toContain('<meta name="description" content="Every endpoint.">');
+  });
+
+  it('marks the error and empty states so the prerender build refuses to ship them', async () => {
+    const store = useDocsStore();
+    store.fetchTree = vi.fn().mockResolvedValue(tree);
+    store.fetchSpec = vi.fn().mockImplementation(async () => {
+      store.error = 'Network Error';
+      return null;
+    });
+    const wrapper = mount(DocsReference, {
+      global: { plugins: [vuetify(), router], components: { VMarkdown } },
+    });
+    await flushPromises();
+    expect(wrapper.find('[data-test="docs-reference-error"]').attributes()).toHaveProperty('data-prerender-error');
+  });
+
   it('shows the spec version', async () => {
     const wrapper = mountReference();
     await flushPromises();
@@ -135,6 +163,7 @@ describe('docs.reference.view', () => {
     });
     await flushPromises();
     expect(wrapper.find('[data-test="docs-reference-empty"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="docs-reference-empty"]').attributes()).toHaveProperty('data-prerender-error');
     expect(wrapper.find('[data-test="docs-reference-group"]').exists()).toBe(false);
   });
 });

@@ -139,6 +139,7 @@ import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
 import { computeAnnualSavingsPct, findPlan, resolveTabIndexFromHash } from '../lib/pricingMath.js';
 import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
+import { usePageHead } from '../../../lib/composables/usePageHead';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
 import BillingCardComponent from '../components/billing.card.component.vue';
 import BillingPacksComponent from '../components/billing.packs.component.vue';
@@ -162,6 +163,10 @@ export default {
     const pricing = usePricing();
     const { formatPrice } = useCurrencyFormat();
     const theme = useTheme();
+    usePageHead(() => ({
+      title: pricing.header.value.title || 'Pricing',
+      description: pricing.header.value.subtitle || 'Choose the plan that fits your needs.',
+    }));
     return { billingStore, authStore, ...pricing, formatPrice, theme };
   },
   data() {

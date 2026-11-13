@@ -112,10 +112,13 @@ import DocsShell from '../components/docs.shell.component.vue';
 import DocsCodeblock from '../components/docs.codeblock.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
+import { usePageHead } from '@/lib/composables/usePageHead';
 
 const home = config?.docs?.home || { title: 'Documentation', subtitle: '' };
 const quickstart = config?.docs?.quickstart || null;
 const referenceTitle = config?.docs?.reference?.title || 'API reference';
+
+usePageHead({ title: home.title, description: home.subtitle });
 
 /**
  * Resolve the quickstart command snippet from config, joining array-of-lines

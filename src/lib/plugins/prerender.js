@@ -34,6 +34,13 @@ export function routeToOutputPath(distDir, route) {
 }
 
 /**
+ * Attribute a view puts on the element it shows when its data failed to load.
+ * A prerendered page that still carries it captured an error state instead of
+ * its content, so the build refuses to ship it.
+ */
+export const PRERENDER_ERROR_MARKER = 'data-prerender-error';
+
+/**
  * Match an intercepted page request against the build-time API snapshot by URL
  * PATHNAME only — origin-agnostic, because the runtime API origin baked into
  * the bundle can differ from the origin the snapshot was fetched from. GET only.
@@ -97,9 +104,13 @@ export function prerenderPlugin(config, mode) {
       try {
         const puppeteer = await import('puppeteer');
         distDir = join(process.cwd(), 'dist');
+        // Keep the built shell in memory: rendering '/' overwrites dist/index.html,
+        // and every later route must boot from the clean shell, not from the
+        // rendered home page (its head tags would leak into every capture).
+        const shell = readFileSync(join(distDir, 'index.html'));
 
         // Spin up a lightweight static file server for the dist/ folder
-        server = await startStaticServer(distDir);
+        server = await startStaticServer(distDir, shell);
         const port = server.address().port;
 
         browser = await puppeteer.default.launch({
@@ -144,6 +155,14 @@ export function prerenderPlugin(config, mode) {
           } catch {
             continue; // route was never (re)written this run — nothing to assert on
           }
+          if (written.includes(PRERENDER_ERROR_MARKER)) {
+            throw new Error(
+              `[prerender] FAIL-HARD: pre-rendered route "${route}" (${outputPath}) captured an error state ` +
+                'instead of its content — the page could not load its data at build time. Make that data ' +
+                'reachable from the build (for the API reference: enable app.seo.docs with a contentUrl so the ' +
+                'OpenAPI spec is snapshotted) or remove the route from app.seo.prerender.routes.',
+            );
+          }
           if (leakPattern.test(written)) {
             throw new Error(
               `[prerender] FAIL-HARD: pre-rendered route "${route}" (${outputPath}) still contains ` +
@@ -159,18 +178,25 @@ export function prerenderPlugin(config, mode) {
 
 /**
  * Starts a lightweight Node HTTP server that serves static files from a directory.
- * Falls back to index.html for SPA routes.
+ * Serves the in-memory built shell for '/', '/index.html' and every SPA route.
  *
  * @param {string} distDir - absolute path to the dist/ directory
+ * @param {Buffer|string} shell - the built index.html, read before any route is rendered
  * @returns {Promise<import('node:http').Server>} running server instance
  */
-function startStaticServer(distDir) {
+export function startStaticServer(distDir, shell) {
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       const requestUrl = new URL(req.url || '/', 'http://localhost');
       let pathname = requestUrl.pathname === '/' ? '/index.html' : requestUrl.pathname;
       pathname = sanitizePath(pathname);
       const filePath = join(distDir, pathname);
+
+      if (!pathname || pathname === 'index.html') {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(shell);
+        return;
+      }
 
       try {
         const content = readFileSync(filePath);
@@ -191,15 +217,9 @@ function startStaticServer(distDir) {
         res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
         res.end(content);
       } catch {
-        // SPA fallback — serve index.html for any unresolved path
-        try {
-          const fallback = readFileSync(join(distDir, 'index.html'));
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(fallback);
-        } catch {
-          res.writeHead(404);
-          res.end('Not Found');
-        }
+        // SPA fallback — serve the built shell for any unresolved path
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(shell);
       }
     });
 

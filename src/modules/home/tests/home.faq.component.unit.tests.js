@@ -3,6 +3,8 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { createHead } from '@unhead/vue/client';
+import { renderSSRHead } from '@unhead/vue/server';
 import HomeFaqComponent from '../components/home.faq.component.vue';
 
 /**
@@ -22,11 +24,12 @@ vi.mock('../../../lib/helpers/theme', () => ({
 }));
 
 /**
- * Mock @unhead/vue to prevent SSR side-effects.
+ * Spy on @unhead/vue while keeping the real head behaviour (removed on unmount).
  */
-vi.mock('@unhead/vue', () => ({
-  useHead: vi.fn(),
-}));
+vi.mock('@unhead/vue', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useHead: vi.fn((...args) => actual.useHead(...args)) };
+});
 
 const mockConfig = {
   vuetify: { theme: { rounded: 'rounded-xl', maxWidth: '1200px', flat: false } },
@@ -226,6 +229,18 @@ describe('HomeFaqComponent', () => {
     expect(json['@type']).toBe('FAQPage');
     expect(json.mainEntity).toHaveLength(2);
     expect(json.mainEntity[0]['@type']).toBe('Question');
+  });
+
+  it('scopes the FAQPage JSON-LD to the component: present while mounted, gone after unmount', async () => {
+    const head = createHead();
+    const wrapper = mount(HomeFaqComponent, {
+      props: { setup: makeFaq() },
+      global: { ...globalOpts(vuetify), plugins: [vuetify, head] },
+    });
+    expect((await renderSSRHead(head)).headTags).toContain('"@type":"FAQPage"');
+
+    wrapper.unmount();
+    expect((await renderSSRHead(head)).headTags).not.toContain('FAQPage');
   });
 
   it('does not call useHead when content is empty', async () => {
