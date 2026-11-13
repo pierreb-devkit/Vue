@@ -315,19 +315,16 @@ describe('prerenderPlugin shell copy (SPA fallback file)', () => {
     logSpy.mockRestore();
   });
 
-  it('warns and skips without throwing when dist/index.html is missing', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('fails the build when dist/index.html is missing (no SPA fallback file)', async () => {
     mockFsFns.readFileSync.mockImplementation(() => {
       throw new Error('ENOENT');
     });
 
     await expect(
       prerenderPlugin({ app: { seo: { prerender: { enabled: true, routes: ['/'] } } } }, 'production').closeBundle(),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow(SHELL_FILE);
     expect(mockFsFns.writeFileSync).not.toHaveBeenCalled();
     expect(mockBrowser.newPage).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(SHELL_FILE), 'ENOENT');
-    warnSpy.mockRestore();
     mockFsFns.readFileSync.mockImplementation(() => '<html></html>');
   });
 });

@@ -104,14 +104,15 @@ export function prerenderPlugin(config, mode) {
       const distDir = join(process.cwd(), 'dist');
       // Keep the built shell before any route renders: rendering '/' overwrites
       // dist/index.html. Written on every build so the server fallback file always exists.
+      // Fail loud: the server falls back to this file, so a build without it
+      // would answer 404 on every client-side route once deployed.
       let shell;
       try {
         shell = readFileSync(join(distDir, 'index.html'));
         writeFileSync(join(distDir, SHELL_FILE), shell);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.warn(`[prerender] Could not write dist/${SHELL_FILE}, the SPA fallback file is missing:`, message);
-        return;
+        throw new Error(`[prerender] FAIL-HARD: could not write dist/${SHELL_FILE}, the SPA fallback file: ${message}`);
       }
 
       if (!enabled) return;

@@ -23,7 +23,7 @@ Non-breaking for config: no key added. Every build now writes `dist/_shell.html`
   }
   ```
 
-  `/` still answers the rendered home through `$uri/index.html`. Without `internal`, `/_shell.html` stays reachable directly; harmless, but it is a duplicate page.
+  `/` still answers the rendered home through `$uri/index.html`. The `internal` line keeps `/_shell.html` from answering as a page of its own (a direct request gets a 404).
 - Meta descriptions set through `usePageHead` / `buildPageHead` now have markdown markers removed (bold, italic, inline code, links, images, heading / quote / list signs).
 
 ---

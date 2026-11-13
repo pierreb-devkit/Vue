@@ -12,13 +12,13 @@ import config from '../../config/index.js';
  */
 export const stripMarkdown = (text) =>
   String(text ?? '')
-    .replace(/^[ \t]*(?:#{1,6}|>|[-*+]|\d+\.)[ \t]+/gm, '')
+    .replace(/^[ \t]*(?:#{1,6}|>|[-*+])[ \t]+/gm, '')
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\*\*(?=\S)(.+?)(?<=\S)\*\*/g, '$1')
     .replace(/(?<!\w)__(?=\S)(.+?)(?<=\S)__(?!\w)/g, '$1')
-    .replace(/\*(?=[^\s*])([^*]+?)(?<=\S)\*/g, '$1')
+    .replace(/(?<!\w)\*(?=[^\s*])([^*]+?)(?<=\S)\*(?!\w)/g, '$1')
     .replace(/(?<!\w)_(?=[^\s_])([^_]+?)(?<=\S)_(?!\w)/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();

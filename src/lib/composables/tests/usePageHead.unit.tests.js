@@ -62,7 +62,7 @@ describe('stripMarkdown', () => {
     ['an image', '![a diagram](/img/d.png) here', 'a diagram here'],
     ['a heading sign', '## Getting started', 'Getting started'],
     ['a quote sign', '> quoted line', 'quoted line'],
-    ['list markers', '- one\n* two\n+ three\n1. four', 'one two three four'],
+    ['list markers', '- one\n* two\n+ three', 'one two three'],
     ['extra whitespace and newlines', '  first line\n\n  second   line ', 'first line second line'],
   ])('removes %s', (_label, input, expected) => {
     expect(stripMarkdown(input)).toBe(expected);
@@ -74,6 +74,8 @@ describe('stripMarkdown', () => {
     ['a multiplication', 'it costs 2 * 3 euros'],
     ['apostrophes', "it's the user's page"],
     ['a lone star', 'rated 5 * by users'],
+    ['unspaced multiplications', '5*3 and 4*2'],
+    ['a year at the start', '2024. Year in review'],
     ['a lone underscore', 'a _ b'],
     ['an issue number at a line start', '#4844 fixed'],
   ])('keeps %s', (_label, input) => {
