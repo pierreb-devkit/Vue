@@ -56,6 +56,7 @@ import {
   matchSnapshot,
   startStaticServer,
   PRERENDER_ERROR_MARKER,
+  SHELL_FILE,
 } from '../prerender.js';
 
 describe('prerenderPlugin', () => {
@@ -75,7 +76,7 @@ describe('prerenderPlugin', () => {
     expect(typeof plugin.closeBundle).toBe('function');
   });
 
-  it('is a no-op when mode is not production', async () => {
+  it('renders no route when mode is not production', async () => {
     const plugin = prerenderPlugin(
       { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } },
       'development',
@@ -83,7 +84,7 @@ describe('prerenderPlugin', () => {
     await plugin.closeBundle();
   });
 
-  it('is a no-op when prerender is disabled', async () => {
+  it('renders no route when prerender is disabled', async () => {
     const plugin = prerenderPlugin(
       { app: { seo: { prerender: { enabled: false, routes: ['/'] } } } },
       'production',
@@ -91,12 +92,12 @@ describe('prerenderPlugin', () => {
     await plugin.closeBundle();
   });
 
-  it('is a no-op when config is empty', async () => {
+  it('renders no route when config is empty', async () => {
     const plugin = prerenderPlugin({}, 'production');
     await plugin.closeBundle();
   });
 
-  it('is a no-op when routes array is empty', async () => {
+  it('renders no route when routes array is empty', async () => {
     const plugin = prerenderPlugin(
       { app: { seo: { prerender: { enabled: true, routes: [] } } } },
       'production',
@@ -178,7 +179,7 @@ describe('prerenderPlugin', () => {
 
     await plugin.closeBundle();
 
-    const [, writtenHtml] = mockFsFns.writeFileSync.mock.calls[0];
+    const [, writtenHtml] = mockFsFns.writeFileSync.mock.calls.at(-1);
     expect(writtenHtml).not.toContain('127.0.0.1');
     expect(writtenHtml).toContain('/assets/x.js');
     logSpy.mockRestore();
@@ -247,7 +248,9 @@ describe('prerenderPlugin error-state gate', () => {
     );
 
     await expect(plugin.closeBundle()).resolves.toBeUndefined();
-    expect(mockFsFns.writeFileSync).not.toHaveBeenCalled();
+    // Only the shell copy is written, never the error-state capture.
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledTimes(1);
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledWith(join(process.cwd(), 'dist', SHELL_FILE), '<html></html>');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/Skipped route "\/docs\/api".*docs layer is off/));
     logSpy.mockRestore();
     warnSpy.mockRestore();
@@ -263,8 +266,69 @@ describe('prerenderPlugin error-state gate', () => {
     );
 
     await plugin.closeBundle();
-    expect(mockFsFns.writeFileSync).toHaveBeenCalledTimes(1);
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledTimes(2); // shell copy + the capture
     logSpy.mockRestore();
+  });
+});
+
+describe('prerenderPlugin shell copy (SPA fallback file)', () => {
+  const distDir = join(process.cwd(), 'dist');
+  const shellPath = join(distDir, SHELL_FILE);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBrowser.newPage.mockResolvedValue(mockPage);
+    mockFsFns.readFileSync.mockImplementation(() => '<html></html>');
+  });
+
+  it.each([
+    ['prerender is disabled', { app: { seo: { prerender: { enabled: false, routes: ['/'] } } } }, 'production'],
+    ['mode is not production', { app: { seo: { prerender: { enabled: true, routes: ['/'] } } } }, 'development'],
+    ['config is empty', {}, 'production'],
+  ])('writes the built shell to dist/_shell.html when %s', async (_label, config, mode) => {
+    mockFsFns.readFileSync.mockReturnValueOnce('<html>built shell</html>');
+    await prerenderPlugin(config, mode).closeBundle();
+    expect(mockFsFns.readFileSync).toHaveBeenCalledWith(join(distDir, 'index.html'));
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledTimes(1);
+    expect(mockFsFns.writeFileSync).toHaveBeenCalledWith(shellPath, '<html>built shell</html>');
+    expect(mockBrowser.newPage).not.toHaveBeenCalled();
+  });
+
+  it('keeps the pre-render index.html in the shell file even after "/" is rendered', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // dist/index.html holds the built shell until '/' is rendered, then the home page.
+    let indexHtml = '<html><title>App</title></html>';
+    mockFsFns.readFileSync.mockImplementation(() => indexHtml);
+    mockFsFns.writeFileSync.mockImplementation((path, data) => {
+      if (path === join(distDir, 'index.html')) indexHtml = data;
+    });
+    mockPage.content.mockResolvedValue('<html><title>Home | App</title></html>');
+
+    await prerenderPlugin({ app: { seo: { prerender: { enabled: true, routes: ['/'] } } } }, 'production').closeBundle();
+
+    expect(indexHtml).toBe('<html><title>Home | App</title></html>');
+    const shellWrites = mockFsFns.writeFileSync.mock.calls.filter(([path]) => path === shellPath);
+    expect(shellWrites).toEqual([[shellPath, '<html><title>App</title></html>']]);
+    // The shell is written before the first route renders.
+    expect(mockFsFns.writeFileSync.mock.calls[0][0]).toBe(shellPath);
+    mockFsFns.writeFileSync.mockReset();
+    logSpy.mockRestore();
+  });
+
+  it('warns and skips without throwing when dist/index.html is missing', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockFsFns.readFileSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
+
+    await expect(
+      prerenderPlugin({ app: { seo: { prerender: { enabled: true, routes: ['/'] } } } }, 'production').closeBundle(),
+    ).resolves.toBeUndefined();
+    expect(mockFsFns.writeFileSync).not.toHaveBeenCalled();
+    expect(mockBrowser.newPage).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(SHELL_FILE), 'ENOENT');
+    warnSpy.mockRestore();
+    mockFsFns.readFileSync.mockImplementation(() => '<html></html>');
   });
 });
 
