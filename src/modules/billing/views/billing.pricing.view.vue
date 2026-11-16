@@ -534,6 +534,7 @@ export default {
       this.pendingDowngrade = null;
     },
     async proceedCheckout({ priceId }) {
+      if (this.checkoutBlocked) return;
       this.checkoutLoading = true;
       try {
         const checkout = await this.billingStore.createCheckout(priceId);

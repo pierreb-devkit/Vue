@@ -1196,6 +1196,17 @@ describe('BillingPricingView — checkout gated on the server ability', () => {
     expect(wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro').cta.disabled).toBe(true);
   });
 
+  it('a confirmed downgrade does not start checkout once abilities load and block the member', async () => {
+    wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
+    await flushPromises();
+    wrapper.vm.pendingDowngrade = { planId: 'pro', priceId: 'price_pro' };
+    updateAbilities([{ action: 'read', subject: 'BillingSubscription' }]);
+    await wrapper.vm.$nextTick();
+
+    await wrapper.vm.confirmDowngrade();
+    expect(store.createCheckout).not.toHaveBeenCalled();
+  });
+
   it('guest keeps the signup CTA even with no pay right', async () => {
     updateAbilities([{ action: 'read', subject: 'BillingPlans' }]);
     authState.user = null;
