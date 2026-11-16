@@ -1172,6 +1172,17 @@ describe('BillingPricingView — checkout gated on the server ability', () => {
     vi.unstubAllGlobals();
   });
 
+  it('re-evaluates when abilities arrive after mount (hard reload)', async () => {
+    wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
+    await flushPromises();
+    expect(wrapper.vm.checkoutBlocked).toBe(false);
+
+    updateAbilities([{ action: 'read', subject: 'BillingSubscription' }]);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.checkoutBlocked).toBe(true);
+    expect(wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro').cta.disabled).toBe(true);
+  });
+
   it('guest keeps the signup CTA even with no pay right', async () => {
     updateAbilities([{ action: 'read', subject: 'BillingPlans' }]);
     authState.user = null;
