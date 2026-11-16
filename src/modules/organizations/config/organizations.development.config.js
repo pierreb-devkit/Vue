@@ -6,7 +6,7 @@ export default {
     // action + subject are the CASL pair filtered by resolveSurfaceTabs.
     tabs: [
       { value: 'organization', label: 'Organization', icon: 'fa-solid fa-building', route: 'general', action: 'read', subject: 'Organization' },
-      { value: 'billing', label: 'Billing', icon: 'fa-solid fa-credit-card', route: 'billing', action: 'manage', subject: 'Organization' },
+      { value: 'billing', label: 'Billing', icon: 'fa-solid fa-credit-card', route: 'billing', action: 'create', subject: 'BillingPortal' },
     ],
   },
 };

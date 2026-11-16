@@ -51,6 +51,9 @@
           :packs="activeTabPacks"
           data-test="pricing-packs-grid"
         />
+        <p v-if="activeTabPlans.length && checkoutBlocked" class="text-body-medium text-white text-center mt-4" data-test="pricing-checkout-blocked">
+          Only organization owners and admins can change the plan.
+        </p>
       </v-container>
     </homeBlurBackgroundComponent>
 
@@ -137,6 +140,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { usePricing } from '../composables/billing.usePricing.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
+import { lacksPayRight } from '../lib/payRights.js';
 import { computeAnnualSavingsPct, findPlan, resolveTabIndexFromHash } from '../lib/pricingMath.js';
 import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 import { usePageHead } from '../../../lib/composables/usePageHead';
@@ -256,6 +260,14 @@ export default {
     isGuest() {
       return !this.authStore.isLoggedIn;
     },
+    /**
+     * @desc Whether the signed-in user cannot start a plan checkout for their organization
+     * (plain member — only owners and admins can pay).
+     * @returns {boolean}
+     */
+    checkoutBlocked() {
+      return lacksPayRight(this.authStore, 'BillingCheckout');
+    },
 
     /**
      * @desc Build fully-resolved BillingCardComponent items from plans (V4 unified schema).
@@ -327,7 +339,7 @@ export default {
           ctaTo = { path: '/signup', query: { redirect: '/pricing' } };
         } else {
           ctaLabel = plan.cta;
-          ctaDisabled = pricingUnavailable || this.checkoutLoading || (!isFree && !activePriceId);
+          ctaDisabled = pricingUnavailable || this.checkoutLoading || (!isFree && !activePriceId) || this.checkoutBlocked;
           ctaTo = null;
         }
 
@@ -491,7 +503,7 @@ export default {
         this.$router.push({ path: '/organization-required' });
         return;
       }
-      if (!priceId || planId === 'free') return;
+      if (!priceId || planId === 'free' || this.checkoutBlocked) return;
 
       // Tier order is only meaningful WITHIN the tab that owns the current plan.
       // A CTA on a plan in another tab is a SWITCH — never a downgrade — and takes
@@ -522,6 +534,7 @@ export default {
       this.pendingDowngrade = null;
     },
     async proceedCheckout({ priceId }) {
+      if (this.checkoutBlocked) return;
       this.checkoutLoading = true;
       try {
         const checkout = await this.billingStore.createCheckout(priceId);

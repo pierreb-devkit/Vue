@@ -26,10 +26,11 @@ export const organizationRoutes = [
     path: 'billing',
     name: 'Account Organization Billing',
     component: () => import('../components/billing.subscriptions.component.vue'),
+    // Owners and admins only — the same right the API needs to open the Stripe portal.
     meta: {
       display: false,
-      action: 'manage',
-      subject: 'Organization',
+      action: 'create',
+      subject: 'BillingPortal',
     },
   },
 ];
