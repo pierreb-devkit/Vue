@@ -46,14 +46,14 @@
             />
           </v-col>
         </v-row>
-        <p v-if="activeTabPlans.length && checkoutBlocked" class="text-body-medium text-white text-center mt-4" data-test="pricing-checkout-blocked">
-          Only organization owners and admins can change the plan.
-        </p>
         <BillingPacksComponent
           v-else-if="activeTabConfig?.packs"
           :packs="activeTabPacks"
           data-test="pricing-packs-grid"
         />
+        <p v-if="activeTabPlans.length && checkoutBlocked" class="text-body-medium text-white text-center mt-4" data-test="pricing-checkout-blocked">
+          Only organization owners and admins can change the plan.
+        </p>
       </v-container>
     </homeBlurBackgroundComponent>
 

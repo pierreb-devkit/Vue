@@ -1172,6 +1172,19 @@ describe('BillingPricingView — checkout gated on the server ability', () => {
     vi.unstubAllGlobals();
   });
 
+  it('a tab with both plans and packs still renders only the plans grid, whatever the pay right', async () => {
+    pricingState.tabs = [{ id: 'plans', label: 'Plans', annualToggle: false, plans: pricedPlans, packs: [{ id: 'p1', units: 10, price: 5 }] }];
+    for (const rules of [[{ action: 'create', subject: 'BillingCheckout' }], [{ action: 'read', subject: 'BillingSubscription' }]]) {
+      updateAbilities(rules);
+      wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
+      await flushPromises();
+      expect(wrapper.find('[data-test="pricing-plans-grid"]').exists()).toBe(true);
+      expect(wrapper.find('[data-test="pricing-packs-grid"]').exists()).toBe(false);
+      wrapper.unmount();
+      wrapper = null;
+    }
+  });
+
   it('re-evaluates when abilities arrive after mount (hard reload)', async () => {
     wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
     await flushPromises();
