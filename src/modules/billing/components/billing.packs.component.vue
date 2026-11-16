@@ -45,6 +45,13 @@
         />
       </v-col>
     </v-row>
+    <p
+      v-if="resolvedItems.length && purchaseBlocked"
+      class="text-body-medium text-white text-center mt-4"
+      data-test="packs-purchase-blocked"
+    >
+      Only organization owners and admins can buy extra units.
+    </p>
   </div>
 </template>
 
@@ -55,6 +62,7 @@
 import { useBillingStore } from '../stores/billing.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import BillingCardComponent from './billing.card.component.vue';
+import { lacksPayRight } from '../lib/payRights.js';
 
 /**
  * Component definition.
@@ -95,6 +103,14 @@ export default {
 
   computed: {
     /**
+     * @desc Whether the signed-in user cannot buy extras for their organization
+     * (plain member — only owners and admins can pay).
+     * @returns {boolean}
+     */
+    purchaseBlocked() {
+      return lacksPayRight(this.authStore, 'BillingExtrasCheckout');
+    },
+    /**
      * @desc Packs to render, from the `packs` prop (V4 unified schema). Backend
      * `packsAvailable` is only used at checkout for Stripe price lookup — packIds
      * must match between FE + BE.
@@ -103,7 +119,7 @@ export default {
     resolvedItems() {
       return this.packs.map((pack) => {
         const isLoading = this.purchasingId === pack.id;
-        const isDisabled = !!this.purchasingId && !isLoading;
+        const isDisabled = (!!this.purchasingId && !isLoading) || this.purchaseBlocked;
         return {
           ...pack,
           cta: {
@@ -145,6 +161,8 @@ export default {
         this.$router.push({ path: '/organization-required' });
         return;
       }
+
+      if (this.purchaseBlocked) return;
 
       this.purchasingId = packId;
       try {

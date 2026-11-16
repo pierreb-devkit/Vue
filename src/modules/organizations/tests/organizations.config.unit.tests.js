@@ -23,8 +23,8 @@ describe('organizations module config — organizations.tabs', () => {
       label: 'Billing',
       icon: 'fa-solid fa-credit-card',
       route: 'billing',
-      action: 'manage',
-      subject: 'Organization',
+      action: 'create',
+      subject: 'BillingPortal',
     });
   });
 
@@ -40,8 +40,8 @@ describe('organizations module config — organizations.tabs', () => {
 
   it('billing tab descriptor carries the CASL pair (action + subject) for resolveSurfaceTabs', () => {
     const billingTab = organizationsDefaultConfig.organizations.tabs.find((t) => t.value === 'billing');
-    expect(billingTab.action).toBe('manage');
-    expect(billingTab.subject).toBe('Organization');
+    expect(billingTab.action).toBe('create');
+    expect(billingTab.subject).toBe('BillingPortal');
   });
 
   it('billing descriptor passes isValidTab validation', () => {

@@ -74,7 +74,7 @@
           color="primary"
           variant="flat"
           class="text-none"
-          :disabled="!selectedPackId || purchasing"
+          :disabled="!selectedPackId || purchasing || purchaseBlocked"
           :loading="purchasing"
           @click="onBuy"
         >
@@ -98,6 +98,8 @@
  * Module dependencies.
  */
 import { useBillingStore } from '../stores/billing.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { lacksPayRight } from '../lib/payRights.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 
 /**
@@ -127,13 +129,14 @@ export default {
   emits: ['update:modelValue'],
 
   /**
-   * @desc Injects billingStore and currency formatter.
-   * @returns {{ billingStore: Object, formatPrice: Function }}
+   * @desc Injects billingStore, authStore and currency formatter.
+   * @returns {{ billingStore: Object, authStore: Object, formatPrice: Function }}
    */
   setup() {
     const billingStore = useBillingStore();
+    const authStore = useAuthStore();
     const { formatPrice } = useCurrencyFormat();
-    return { billingStore, formatPrice };
+    return { billingStore, authStore, formatPrice };
   },
 
   data() {
@@ -148,6 +151,13 @@ export default {
   },
 
   computed: {
+    /**
+     * @desc Whether the signed-in user cannot buy extras (plain member — only owners and admins can pay).
+     * @returns {boolean}
+     */
+    purchaseBlocked() {
+      return lacksPayRight(this.authStore, 'BillingExtrasCheckout');
+    },
     /**
      * @desc Label of the currently selected pack (for CTA text).
      * @returns {string}

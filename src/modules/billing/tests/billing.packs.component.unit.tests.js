@@ -405,3 +405,59 @@ describe('BillingPacksComponent — real static-content export (not a hand-writt
     expect(store.createExtrasCheckout).toHaveBeenCalledWith(expectedId);
   });
 });
+
+// ─── Suite: only owners and admins can buy extras ────────────────────────────
+
+describe('BillingPacksComponent — purchase gated on the server ability', () => {
+  let wrapper;
+  let store;
+  let updateAbilities;
+
+  beforeEach(async () => {
+    ({ updateAbilities } = await import('../../../lib/helpers/ability'));
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    livePacks.splice(0, livePacks.length, ...mockPacksV4);
+    store = useBillingStore();
+    vi.spyOn(store, 'createExtrasCheckout').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    livePacks.splice(0);
+    updateAbilities([]);
+  });
+
+  it('member without create BillingExtrasCheckout: CTAs disabled, hint shown, click does nothing', async () => {
+    updateAbilities([{ action: 'read', subject: 'BillingExtrasBalance' }]);
+    wrapper = mountPacks();
+    await flushPromises();
+
+    expect(wrapper.vm.resolvedItems.every((i) => i.cta.disabled)).toBe(true);
+    expect(wrapper.find('[data-test="packs-purchase-blocked"]').exists()).toBe(true);
+    await wrapper.vm.onCtaClick({ id: 'pack_starter' });
+    expect(store.createExtrasCheckout).not.toHaveBeenCalled();
+  });
+
+  it('owner or admin with the right: CTAs enabled, no hint, click starts the extras checkout', async () => {
+    updateAbilities([{ action: 'create', subject: 'BillingExtrasCheckout' }]);
+    wrapper = mountPacks();
+    await flushPromises();
+
+    expect(wrapper.vm.resolvedItems.some((i) => i.cta.disabled)).toBe(false);
+    expect(wrapper.find('[data-test="packs-purchase-blocked"]').exists()).toBe(false);
+    await wrapper.vm.onCtaClick({ id: 'pack_starter' });
+    expect(store.createExtrasCheckout).toHaveBeenCalledWith('pack_starter');
+  });
+
+  it('guest is still sent to signup', async () => {
+    updateAbilities([{ action: 'read', subject: 'BillingPlans' }]);
+    wrapper = mountPacks({ isLoggedIn: false, user: null });
+    await flushPromises();
+
+    expect(wrapper.find('[data-test="packs-purchase-blocked"]').exists()).toBe(false);
+    await wrapper.vm.onCtaClick({ id: 'pack_starter' });
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ path: '/signup', query: { redirect: '/pricing' } });
+  });
+});

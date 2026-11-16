@@ -8,7 +8,7 @@ describe('billing.router', () => {
     expect(route.path).toBe('billing');
     expect(route.name).toBe('Account Organization Billing');
     expect(typeof route.component).toBe('function'); // lazy import
-    expect(route.meta).toMatchObject({ display: false, action: 'manage', subject: 'Organization' });
+    expect(route.meta).toMatchObject({ display: false, action: 'create', subject: 'BillingPortal' });
   });
 
   it('default export contains only absolute top-level routes and does not leak the org child', () => {

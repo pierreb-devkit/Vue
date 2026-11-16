@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 import { useBillingStore } from '../stores/billing.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { updateAbilities } from '../../../lib/helpers/ability';
 import BillingExtrasCheckoutModalComponent from '../components/billing.extrasCheckoutModal.component.vue';
 
 const vuetify = createVuetify();
@@ -300,5 +302,43 @@ describe('BillingExtrasCheckoutModalComponent', () => {
     wrapper = mountComponent({ modelValue: false });
     const dialog = wrapper.findComponent({ name: 'v-dialog' });
     expect(dialog.props('modelValue')).toBe(false);
+  });
+});
+
+describe('BillingExtrasCheckoutModalComponent — Buy gated on the server ability', () => {
+  let wrapper;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    const authStore = useAuthStore();
+    authStore.cookieExpire = Date.now() + 60000;
+    authStore.user = { currentOrganization: 'org1' };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    updateAbilities([]);
+  });
+
+  /**
+   * @returns {import('@vue/test-utils').DOMWrapper} the Buy button
+   */
+  const buyButton = () => wrapper.findAll('button').find((b) => b.text().startsWith('Buy'));
+
+  it('disables Buy for a member without create BillingExtrasCheckout', async () => {
+    updateAbilities([{ action: 'read', subject: 'BillingExtrasBalance' }]);
+    wrapper = mountComponent({ modelValue: true });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseBlocked).toBe(true);
+    expect(buyButton().attributes('disabled')).toBeDefined();
+  });
+
+  it('enables Buy for an owner or admin', async () => {
+    updateAbilities([{ action: 'create', subject: 'BillingExtrasCheckout' }]);
+    wrapper = mountComponent({ modelValue: true });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.purchaseBlocked).toBe(false);
+    expect(buyButton().attributes('disabled')).toBeUndefined();
   });
 });

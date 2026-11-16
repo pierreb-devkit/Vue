@@ -1109,3 +1109,88 @@ describe('BillingPricingView — page head', () => {
     pricingState.header = {};
   });
 });
+
+// ─── Suite: only owners and admins can start a plan checkout ────────────────
+
+describe('BillingPricingView — checkout gated on the server ability', () => {
+  let wrapper;
+  let store;
+  let updateAbilities;
+
+  const pricedPlans = [
+    { id: 'free', title: 'Free', highlight: false, badge: null, cta: 'Get started', features: [] },
+    { id: 'pro', title: 'Pro', highlight: false, badge: null, cta: 'Upgrade', features: [], monthlyPriceObject: { id: 'price_pro', amount: 10 } },
+  ];
+
+  beforeEach(async () => {
+    ({ updateAbilities } = await import('../../../lib/helpers/ability'));
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    pricingState.mode = 'subscription';
+    pricingState.tabs = null;
+    pricingState.plans = pricedPlans;
+    pricingState.hasPlans = true;
+    authState.user = { currentOrganization: 'org1' };
+    store = useBillingStore();
+    seedStore(store);
+    vi.spyOn(store, 'createCheckout').mockResolvedValue({ url: 'https://checkout.stripe.com/x' });
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    updateAbilities([]);
+    authState.user = null;
+  });
+
+  it('member without create BillingCheckout: paid CTA disabled, hint shown, click does not start checkout', async () => {
+    updateAbilities([{ action: 'read', subject: 'BillingSubscription' }]);
+    wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutBlocked).toBe(true);
+    expect(wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro').cta.disabled).toBe(true);
+    expect(wrapper.find('[data-test="pricing-checkout-blocked"]').exists()).toBe(true);
+
+    await wrapper.vm.onCtaClick({ id: 'pro' });
+    expect(store.createCheckout).not.toHaveBeenCalled();
+  });
+
+  it('owner or admin with create BillingCheckout: CTA enabled, no hint, click starts checkout', async () => {
+    updateAbilities([{ action: 'create', subject: 'BillingCheckout' }]);
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } } });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutBlocked).toBe(false);
+    expect(wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro').cta.disabled).toBe(false);
+    expect(wrapper.find('[data-test="pricing-checkout-blocked"]').exists()).toBe(false);
+
+    await wrapper.vm.onCtaClick({ id: 'pro' });
+    expect(store.createCheckout).toHaveBeenCalledWith('price_pro');
+    vi.unstubAllGlobals();
+  });
+
+  it('guest keeps the signup CTA even with no pay right', async () => {
+    updateAbilities([{ action: 'read', subject: 'BillingPlans' }]);
+    authState.user = null;
+    wrapper = mountPricing({ isLoggedIn: false });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutBlocked).toBe(false);
+    expect(wrapper.vm.resolvedPlanItems.find((i) => i.id === 'pro').cta.to).toMatchObject({ path: '/signup' });
+  });
+
+  it('signed-in user without an organization is still sent to /organization-required', async () => {
+    updateAbilities([{ action: 'read', subject: 'Organization' }]);
+    authState.user = {};
+    const router = { replace: vi.fn(), push: vi.fn() };
+    wrapper = mountPricing({ serverConfig: { organizations: { enabled: true } }, router });
+    await flushPromises();
+
+    expect(wrapper.vm.checkoutBlocked).toBe(false);
+    await wrapper.vm.onCtaClick({ id: 'pro' });
+    expect(router.push).toHaveBeenCalledWith({ path: '/organization-required' });
+  });
+});

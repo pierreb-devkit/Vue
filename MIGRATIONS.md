@@ -4,6 +4,16 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## billing: checkout, extras and the org billing tab are for owners and admins only (2026-11-16, #4858)
+
+Ships with Node#4290, which returns 403 to plain organization members on plan checkout, extras checkout and the Stripe portal. Update both stacks in the same batch.
+
+- The org billing tab (route `organizationRoutes` `billing` and the default `organizations.tabs` billing entry) now needs `create BillingPortal` instead of `manage Organization`: owners **and admins** see it, members do not.
+- If you override `organizations.tabs` in your project config: change the billing entry to `action: 'create', subject: 'BillingPortal'`.
+- The pricing page and the packs grid disable the checkout buttons for a signed-in member and show one line saying only owners and admins can pay. Guests and users without an organization are unchanged. The extras modal's Buy button is disabled the same way.
+
+---
+
 ## prerender: SPA fallback serves the built shell, not the rendered home (2026-11-13, #4844)
 
 Non-breaking for config: no key added. Every build now writes `dist/_shell.html`, a copy of the built `index.html` taken before any route is prerendered (prerender on or off). With prerender on, `dist/index.html` holds the rendered home page, so a server that falls back to `/index.html` gives every non-prerendered path the home page's title, description, canonical and JSON-LD.
