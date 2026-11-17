@@ -64,7 +64,7 @@
     "posthog-js": "^1.448.0",
     "video.js": "^8.24.2",
     "vue": "^3.5.45",
-    "vue-router": "^5.5.0",
+    "vue-router": "^5.5.1",
     "vuetify": "^4.3.3"
   },
   "devDependencies": {
