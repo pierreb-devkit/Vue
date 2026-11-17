@@ -8,7 +8,7 @@
     </div>
 
     <!-- Plain member of the current org → read-only usage of that org, pay actions hidden -->
-    <BillingSubscriptionsComponent v-else-if="memberView" />
+    <BillingSubscriptionsComponent v-else-if="memberView" :key="currentOrgKey" />
 
     <!-- Multiple manageable orgs → org selector -->
     <template v-else-if="manageableOrgs.length > 1">
@@ -62,6 +62,7 @@ import { defineAsyncComponent } from 'vue';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { lacksPayRight } from '../lib/payRights.js';
+import { ability } from '../../../lib/helpers/ability';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
@@ -103,6 +104,14 @@ export default {
       return lacksPayRight(this.authStore, 'BillingPortal');
     },
     /**
+     * @desc Key of the member panel: remounts it (subscription, ledger, usage) on an org switch.
+     * @returns {string}
+     */
+    currentOrgKey() {
+      const org = this.authStore.user?.currentOrganization;
+      return String(org?.id || org?._id || org || '');
+    },
+    /**
      * @desc The subset of the user's organizations where they can manage billing
      * (role owner or admin). Mirrors the guard used in user.view.vue's hasOwnerOrAdminRole.
      * @returns {Array}
@@ -117,6 +126,10 @@ export default {
      * @returns {string|null}
      */
     redirectOrgId() {
+      // can() first: the reactive read that re-runs this once abilities load.
+      ability.can('create', 'BillingPortal');
+      // Abilities of the current org not loaded yet: cannot tell a member from an admin, so wait.
+      if (this.authStore.user?.currentOrganization && !ability.rules?.length) return null;
       if (this.memberView || this.manageableOrgs.length !== 1) return null;
       const org = this.manageableOrgs[0];
       return org.id || org._id;

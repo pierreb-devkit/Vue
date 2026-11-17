@@ -421,6 +421,22 @@ describe('BillingAccountView – plain member of the current org → read-only u
     expect(routerReplace).toHaveBeenCalledWith('/users/organizations/org-own/billing');
   });
 
+  it('does not redirect while the current org abilities are not loaded yet', async () => {
+    updateAbilities([]);
+    organizationsStore.organizations = [
+      { id: 'org-current', name: 'Current', role: 'member' },
+      { id: 'org-own', name: 'Own', role: 'owner' },
+    ];
+
+    const wrapper = shallowMount(BillingAccountView, {
+      global: { mocks: sharedMocks({ replace: routerReplace }), stubs: { ...sharedStubs, ...subsStub } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(wrapper.vm.redirecting).toBe(false);
+  });
+
   it('keeps the owner redirect when the user holds the pay right in the current org', async () => {
     updateAbilities([
       { action: 'read', subject: 'BillingSubscription' },
