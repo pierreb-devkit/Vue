@@ -401,6 +401,26 @@ describe('BillingAccountView – plain member of the current org → read-only u
     expect(wrapper.html()).toContain('data-billing-subs');
   });
 
+  it('redirects once an org switch (view still mounted) gives the pay right', async () => {
+    organizationsStore.organizations = [
+      { id: 'org-current', name: 'Current', role: 'member' },
+      { id: 'org-own', name: 'Own', role: 'owner' },
+    ];
+
+    const wrapper = shallowMount(BillingAccountView, {
+      global: { mocks: sharedMocks({ replace: routerReplace }), stubs: { ...sharedStubs, ...subsStub } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(routerReplace).not.toHaveBeenCalled();
+
+    // Switch to the owned org: new current org + its abilities.
+    authStore.user = { id: 'u1', currentOrganization: 'org-own' };
+    updateAbilities([{ action: 'create', subject: 'BillingPortal' }]);
+    await wrapper.vm.$nextTick();
+
+    expect(routerReplace).toHaveBeenCalledWith('/users/organizations/org-own/billing');
+  });
+
   it('keeps the owner redirect when the user holds the pay right in the current org', async () => {
     updateAbilities([
       { action: 'read', subject: 'BillingSubscription' },

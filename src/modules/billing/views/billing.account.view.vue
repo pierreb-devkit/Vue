@@ -111,20 +111,32 @@ export default {
       const orgs = this.organizationsStore.organizations || [];
       return orgs.filter((org) => org.role === 'owner' || org.role === 'admin');
     },
-  },
-  /**
-   * @desc Auto-redirect to a single manageable org's billing page on mount.
-   * Sets `redirecting` before the first render so the spinner shows immediately.
-   * Requires the org store to be pre-hydrated by the global beforeEach guard.
-   * @returns {void}
-   */
-  created() {
-    if (!this.memberView && this.manageableOrgs.length === 1) {
+    /**
+     * @desc The org to auto-redirect to: the single manageable org, unless the user
+     * is a plain member of the current org (they read its usage in place).
+     * @returns {string|null}
+     */
+    redirectOrgId() {
+      if (this.memberView || this.manageableOrgs.length !== 1) return null;
       const org = this.manageableOrgs[0];
-      const orgId = org.id || org._id;
-      this.redirecting = true;
-      this.$router.replace(`/users/organizations/${orgId}/billing`);
-    }
+      return org.id || org._id;
+    },
+  },
+  watch: {
+    /**
+     * @desc Auto-redirect to a single manageable org's billing page. Immediate, so it
+     * runs before the first render and the spinner shows at once; also re-runs when an
+     * org switch (which keeps this view mounted) turns a member into an owner.
+     * Requires the org store to be pre-hydrated by the global beforeEach guard.
+     */
+    redirectOrgId: {
+      immediate: true,
+      handler(orgId) {
+        if (!orgId) return;
+        this.redirecting = true;
+        this.$router.replace(`/users/organizations/${orgId}/billing`);
+      },
+    },
   },
 };
 </script>
