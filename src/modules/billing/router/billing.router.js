@@ -39,7 +39,8 @@ export const organizationRoutes = [
  * Router configuration (top-level routes).
  *
  * `/users/billing` — canonical account billing entry point (C4).
- *   Detects the user's manageable orgs and either auto-redirects (single org)
+ *   A plain member of the current org sees that org's usage, read-only. Otherwise
+ *   detects the user's manageable orgs and either auto-redirects (single org)
  *   or renders an org-selector (multiple orgs) or a read-only "ask admin" state.
  *
  * `/billing` — legacy entry point. Redirects to `/users/billing` (C5 will add

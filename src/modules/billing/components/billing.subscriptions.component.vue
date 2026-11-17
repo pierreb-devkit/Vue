@@ -4,6 +4,8 @@
   Self-contained subscriptions panel rendered inside the user account "Subscriptions" tab.
   Always renders the current plan card + Stripe portal button; meter / extras sections are
   gated by `serverConfig.billing.meterMode === true`.
+  Pay actions (upgrade, portal, change plan, buy extras) show only to users holding the
+  matching pay right (organization owners and admins); a plain member reads the usage only.
 
   USAGE:
   <BillingSubscriptionsComponent />
@@ -113,7 +115,11 @@
             <p class="text-body-medium text-medium-emphasis mb-6">
               {{ freePlanBlurb }}
             </p>
+            <p v-if="payBlocked" class="text-body-medium text-medium-emphasis" data-test="billing-pay-blocked">
+              Only organization owners and admins can change the plan.
+            </p>
             <v-btn
+              v-if="!checkoutBlocked"
               color="primary"
               variant="flat"
               :class="config.vuetify.theme.rounded"
@@ -153,7 +159,7 @@
                   {{ displayStatusMeta.label }}
                 </v-chip>
                 <v-btn
-                  v-if="displayStatusAction"
+                  v-if="displayStatusAction && !portalBlocked"
                   :color="displayStatusAction.color"
                   variant="tonal"
                   size="small"
@@ -174,8 +180,12 @@
             </div>
 
             <!-- CTAs (portal error surfaced via centralized snackbar — see lib/services/axios.js) -->
+            <p v-if="payBlocked" class="text-body-medium text-medium-emphasis" data-test="billing-pay-blocked">
+              Only organization owners and admins can change the plan.
+            </p>
             <div class="d-flex ga-3 flex-wrap" :class="{ 'mt-6': !billingDateLine }">
               <v-btn
+                v-if="!portalBlocked"
                 color="primary"
                 variant="flat"
                 :class="config.vuetify.theme.rounded"
@@ -186,7 +196,7 @@
                 Manage Subscription
               </v-btn>
               <v-btn
-                v-if="canUpgrade"
+                v-if="canUpgrade && !checkoutBlocked"
                 variant="outlined"
                 :class="config.vuetify.theme.rounded"
                 class="text-none text-body-medium"
@@ -254,6 +264,7 @@
             </div>
             <!-- CTA: /pricing#units — single source of truth for pack pricing (feedback #7) -->
             <v-btn
+              v-if="!extrasBlocked"
               color="primary"
               variant="flat"
               :class="config.vuetify.theme.rounded"
@@ -298,6 +309,7 @@ import { useMeter } from '../composables/billing.useMeter';
 import { useCheckoutPolling } from '../composables/billing.useCheckoutPolling';
 import { resolveStaticContent } from '../lib/billing.resolveStaticContent.js';
 import { findPlan, collectPacks, collectPlans } from '../lib/pricingMath.js';
+import { lacksPayRight } from '../lib/payRights.js';
 import BillingPlanBadgeComponent from './billing.planBadge.component.vue';
 import BillingMeterProgressComponent from './billing.meterProgress.component.vue';
 import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.component.vue';
@@ -471,6 +483,34 @@ export default {
       return this.billingStore.plans
         .map((plan) => plan.planId || plan.name?.toLowerCase())
         .filter(Boolean);
+    },
+    /**
+     * @desc Whether the user cannot start a plan checkout for the current organization.
+     * @returns {boolean}
+     */
+    checkoutBlocked() {
+      return lacksPayRight(this.authStore, 'BillingCheckout');
+    },
+    /**
+     * @desc Whether the user cannot open the Stripe portal for the current organization.
+     * @returns {boolean}
+     */
+    portalBlocked() {
+      return lacksPayRight(this.authStore, 'BillingPortal');
+    },
+    /**
+     * @desc Whether the user cannot buy compute extras for the current organization.
+     * @returns {boolean}
+     */
+    extrasBlocked() {
+      return lacksPayRight(this.authStore, 'BillingExtrasCheckout');
+    },
+    /**
+     * @desc Whether a plan action is hidden — drives the one "owners and admins only" line.
+     * @returns {boolean}
+     */
+    payBlocked() {
+      return this.checkoutBlocked || this.portalBlocked;
     },
     /**
      * @desc Whether the current paid plan has a higher plan available.

@@ -7,6 +7,9 @@
       <AppSpinner color="primary" />
     </div>
 
+    <!-- Plain member of the current org → read-only usage of that org, pay actions hidden -->
+    <BillingSubscriptionsComponent v-else-if="memberView" :key="currentOrgKey" />
+
     <!-- Multiple manageable orgs → org selector -->
     <template v-else-if="manageableOrgs.length > 1">
       <v-row class="pa-2 mt-0">
@@ -55,7 +58,11 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { lacksPayRight } from '../lib/payRights.js';
+import { ability } from '../../../lib/helpers/ability';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
@@ -64,14 +71,16 @@ export default {
   components: {
     PageHeader,
     AppSpinner,
+    BillingSubscriptionsComponent: defineAsyncComponent(() => import('../components/billing.subscriptions.component.vue')),
   },
   /**
-   * @desc Wire the organizations store so computed properties stay reactive.
-   * @returns {{ organizationsStore: Object }}
+   * @desc Wire the organizations + auth stores so computed properties stay reactive.
+   * @returns {{ organizationsStore: Object, authStore: Object }}
    */
   setup() {
     const organizationsStore = useOrganizationsStore();
-    return { organizationsStore };
+    const authStore = useAuthStore();
+    return { organizationsStore, authStore };
   },
   /**
    * @desc Component local state.
@@ -85,6 +94,24 @@ export default {
   },
   computed: {
     /**
+     * @desc Whether the user is a plain member of the current organization (no pay
+     * right there). Members may read the usage but never pay, so they get the usage
+     * view of the current organization in place — never a redirect to another org's
+     * billing route, which the current org's abilities would refuse.
+     * @returns {boolean}
+     */
+    memberView() {
+      return lacksPayRight(this.authStore, 'BillingPortal');
+    },
+    /**
+     * @desc Key of the member panel: remounts it (subscription, ledger, usage) on an org switch.
+     * @returns {string}
+     */
+    currentOrgKey() {
+      const org = this.authStore.user?.currentOrganization;
+      return String(org?.id || org?._id || org || '');
+    },
+    /**
      * @desc The subset of the user's organizations where they can manage billing
      * (role owner or admin). Mirrors the guard used in user.view.vue's hasOwnerOrAdminRole.
      * @returns {Array}
@@ -93,20 +120,36 @@ export default {
       const orgs = this.organizationsStore.organizations || [];
       return orgs.filter((org) => org.role === 'owner' || org.role === 'admin');
     },
-  },
-  /**
-   * @desc Auto-redirect to a single manageable org's billing page on mount.
-   * Sets `redirecting` before the first render so the spinner shows immediately.
-   * Requires the org store to be pre-hydrated by the global beforeEach guard.
-   * @returns {void}
-   */
-  created() {
-    if (this.manageableOrgs.length === 1) {
+    /**
+     * @desc The org to auto-redirect to: the single manageable org, unless the user
+     * is a plain member of the current org (they read its usage in place).
+     * @returns {string|null}
+     */
+    redirectOrgId() {
+      // can() first: the reactive read that re-runs this once abilities load.
+      ability.can('create', 'BillingPortal');
+      // Abilities of the current org not loaded yet: cannot tell a member from an admin, so wait.
+      if (this.authStore.user?.currentOrganization && !ability.rules?.length) return null;
+      if (this.memberView || this.manageableOrgs.length !== 1) return null;
       const org = this.manageableOrgs[0];
-      const orgId = org.id || org._id;
-      this.redirecting = true;
-      this.$router.replace(`/users/organizations/${orgId}/billing`);
-    }
+      return org.id || org._id;
+    },
+  },
+  watch: {
+    /**
+     * @desc Auto-redirect to a single manageable org's billing page. Immediate, so it
+     * runs before the first render and the spinner shows at once; also re-runs when an
+     * org switch (which keeps this view mounted) turns a member into an owner.
+     * Requires the org store to be pre-hydrated by the global beforeEach guard.
+     */
+    redirectOrgId: {
+      immediate: true,
+      handler(orgId) {
+        if (!orgId) return;
+        this.redirecting = true;
+        this.$router.replace(`/users/organizations/${orgId}/billing`);
+      },
+    },
   },
 };
 </script>
