@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import BillingAccountView from '../views/billing.account.view.vue';
+import { updateAbilities } from '../../../lib/helpers/ability';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
@@ -16,7 +17,6 @@ vi.mock('../../../lib/services/config', () => ({
 
 vi.mock('../../../lib/helpers/roleColor', () => ({ default: () => 'primary' }));
 vi.mock('../../../lib/helpers/orgColor', () => ({ default: () => 'blue' }));
-vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 
 // ─── Stubs ───────────────────────────────────────────────────────────────────
 
@@ -320,9 +320,9 @@ describe('BillingAccountView – non-admin / no manageable org → read-only', (
   });
 });
 
-// ─── billing.account.view does NOT import BillingSubscriptionsComponent ───────
+// ─── Owner / admin never get the in-place usage view ──────────────────────────
 
-describe('BillingAccountView – no billing.subscriptions coupling', () => {
+describe('BillingAccountView – owner does not render the usage view in place', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     const organizationsStore = useOrganizationsStore();
@@ -341,6 +341,79 @@ describe('BillingAccountView – no billing.subscriptions coupling', () => {
     });
 
     // BillingSubscriptionsComponent must not appear in the rendered output
+    expect(wrapper.html()).not.toContain('data-billing-subs');
+  });
+});
+
+// ─── Branch 0: plain member of the current org → usage view in place ─────────
+
+describe('BillingAccountView – plain member of the current org → read-only usage', () => {
+  let organizationsStore;
+  let authStore;
+  let routerReplace;
+
+  const subsStub = { BillingSubscriptionsComponent: { template: '<div data-billing-subs />' } };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    organizationsStore = useOrganizationsStore();
+    authStore = useAuthStore();
+    organizationsStore.fetchOrganizations = vi.fn().mockResolvedValue([]);
+    routerReplace = vi.fn();
+    authStore.cookieExpire = Date.now() + 3600000; // isLoggedIn getter
+    authStore.user = { id: 'u1', currentOrganization: 'org-current' };
+    authStore.serverConfig = { billing: { enabled: true } };
+    // Member rights: read billing, no pay right.
+    updateAbilities([
+      { action: 'read', subject: 'BillingSubscription' },
+      { action: 'read', subject: 'BillingUsage' },
+    ]);
+  });
+
+  afterEach(() => updateAbilities([]));
+
+  it('renders the usage view, not the "ask admin" card, for a member with no other org', async () => {
+    organizationsStore.organizations = [{ id: 'org-current', name: 'Current', role: 'member' }];
+
+    const wrapper = shallowMount(BillingAccountView, {
+      global: { mocks: sharedMocks({ replace: routerReplace }), stubs: { ...sharedStubs, ...subsStub } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(wrapper.html()).toContain('data-billing-subs');
+    expect(wrapper.html()).not.toContain('Ask your organization admin');
+    expect(routerReplace).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect a member of the current org who owns another org', async () => {
+    organizationsStore.organizations = [
+      { id: 'org-current', name: 'Current', role: 'member' },
+      { id: 'org-own', name: 'Own', role: 'owner' },
+    ];
+
+    const wrapper = shallowMount(BillingAccountView, {
+      global: { mocks: sharedMocks({ replace: routerReplace }), stubs: { ...sharedStubs, ...subsStub } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(routerReplace).not.toHaveBeenCalled();
+    expect(wrapper.vm.redirecting).toBe(false);
+    expect(wrapper.html()).toContain('data-billing-subs');
+  });
+
+  it('keeps the owner redirect when the user holds the pay right in the current org', async () => {
+    updateAbilities([
+      { action: 'read', subject: 'BillingSubscription' },
+      { action: 'create', subject: 'BillingPortal' },
+    ]);
+    organizationsStore.organizations = [{ id: 'org-current', name: 'Current', role: 'owner' }];
+
+    const wrapper = shallowMount(BillingAccountView, {
+      global: { mocks: sharedMocks({ replace: routerReplace }), stubs: { ...sharedStubs, ...subsStub } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(routerReplace).toHaveBeenCalledWith('/users/organizations/org-current/billing');
     expect(wrapper.html()).not.toContain('data-billing-subs');
   });
 });

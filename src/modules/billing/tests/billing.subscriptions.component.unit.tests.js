@@ -48,6 +48,7 @@ import { useBillingStore } from '../stores/billing.store';
 import BillingSubscriptionsComponent from '../components/billing.subscriptions.component.vue';
 import { tabs as devkitTabs } from '../config/billing.static-content.js';
 import { collectPacks } from '../lib/pricingMath.js';
+import { updateAbilities } from '../../../lib/helpers/ability';
 
 /** Devkit default packs, read through the tab that now carries them. */
 const realPacks = collectPacks(devkitTabs);
@@ -1804,5 +1805,78 @@ describe('BillingSubscriptionsComponent — config-driven free-plan blurb (#4474
     await flushPromises();
     expect(wrapper.text()).toContain('Free tier active. Upgrade for extra capacity.');
     expect(wrapper.text()).not.toContain("You're on the free plan");
+  });
+});
+
+// ─── Pay rights: a plain member reads the usage, never pays ──────────────────
+
+describe('BillingSubscriptionsComponent — pay actions need the pay right', () => {
+  let wrapper;
+  let store;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    store = useBillingStore();
+    seedMeterStore(store);
+    authState.user = { currentOrganization: 'org1' };
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+    wrapper = null;
+    authState.user = null;
+    updateAbilities([]);
+  });
+
+  const memberRules = [
+    { action: 'read', subject: 'BillingSubscription' },
+    { action: 'read', subject: 'BillingUsage' },
+  ];
+  const ownerRules = [
+    ...memberRules,
+    { action: 'create', subject: 'BillingCheckout' },
+    { action: 'create', subject: 'BillingExtrasCheckout' },
+    { action: 'create', subject: 'BillingPortal' },
+  ];
+  const btnTexts = (w) => w.findAllComponents({ name: 'v-btn' }).map((b) => b.text());
+
+  it('member on a paid plan: usage shown, portal / status action / change plan / buy extras hidden', async () => {
+    updateAbilities(memberRules);
+    store.subscription = { status: 'past_due', plan: 'p2', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+
+    const texts = btnTexts(wrapper);
+    expect(texts.some((t) => t.includes('Manage Subscription'))).toBe(false);
+    expect(texts.some((t) => t.includes('Update payment method'))).toBe(false);
+    expect(texts.some((t) => t.includes('Change Plan'))).toBe(false);
+    expect(texts.some((t) => t.includes('Buy compute extras'))).toBe(false);
+    expect(wrapper.find('[data-test="billing-pay-blocked"]').text()).toBe('Only organization owners and admins can change the plan.');
+    expect(wrapper.find('.billing-meter-progress').exists()).toBe(true);
+  });
+
+  it('member on the free plan: no Upgrade button, the owners-and-admins line instead', async () => {
+    updateAbilities(memberRules);
+    store.subscription = null;
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: false } } });
+    await flushPromises();
+
+    expect(btnTexts(wrapper).some((t) => t.includes('Upgrade'))).toBe(false);
+    expect(wrapper.find('[data-test="billing-pay-blocked"]').exists()).toBe(true);
+  });
+
+  it('owner keeps every pay action and sees no owners-and-admins line', async () => {
+    updateAbilities(ownerRules);
+    store.subscription = { status: 'past_due', plan: 'p2', currentPeriodEnd: new Date().toISOString() };
+    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
+    await flushPromises();
+
+    const texts = btnTexts(wrapper);
+    expect(texts.some((t) => t.includes('Manage Subscription'))).toBe(true);
+    expect(texts.some((t) => t.includes('Update payment method'))).toBe(true);
+    expect(texts.some((t) => t.includes('Change Plan'))).toBe(true);
+    expect(texts.some((t) => t.includes('Buy compute extras'))).toBe(true);
+    expect(wrapper.find('[data-test="billing-pay-blocked"]').exists()).toBe(false);
   });
 });

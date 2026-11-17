@@ -7,6 +7,9 @@
       <AppSpinner color="primary" />
     </div>
 
+    <!-- Plain member of the current org → read-only usage of that org, pay actions hidden -->
+    <BillingSubscriptionsComponent v-else-if="memberView" />
+
     <!-- Multiple manageable orgs → org selector -->
     <template v-else-if="manageableOrgs.length > 1">
       <v-row class="pa-2 mt-0">
@@ -55,7 +58,10 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { lacksPayRight } from '../lib/payRights.js';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 
@@ -64,14 +70,16 @@ export default {
   components: {
     PageHeader,
     AppSpinner,
+    BillingSubscriptionsComponent: defineAsyncComponent(() => import('../components/billing.subscriptions.component.vue')),
   },
   /**
-   * @desc Wire the organizations store so computed properties stay reactive.
-   * @returns {{ organizationsStore: Object }}
+   * @desc Wire the organizations + auth stores so computed properties stay reactive.
+   * @returns {{ organizationsStore: Object, authStore: Object }}
    */
   setup() {
     const organizationsStore = useOrganizationsStore();
-    return { organizationsStore };
+    const authStore = useAuthStore();
+    return { organizationsStore, authStore };
   },
   /**
    * @desc Component local state.
@@ -84,6 +92,16 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc Whether the user is a plain member of the current organization (no pay
+     * right there). Members may read the usage but never pay, so they get the usage
+     * view of the current organization in place — never a redirect to another org's
+     * billing route, which the current org's abilities would refuse.
+     * @returns {boolean}
+     */
+    memberView() {
+      return lacksPayRight(this.authStore, 'BillingPortal');
+    },
     /**
      * @desc The subset of the user's organizations where they can manage billing
      * (role owner or admin). Mirrors the guard used in user.view.vue's hasOwnerOrAdminRole.
@@ -101,7 +119,7 @@ export default {
    * @returns {void}
    */
   created() {
-    if (this.manageableOrgs.length === 1) {
+    if (!this.memberView && this.manageableOrgs.length === 1) {
       const org = this.manageableOrgs[0];
       const orgId = org.id || org._id;
       this.redirecting = true;

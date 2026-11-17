@@ -4,6 +4,12 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## billing: a plain member sees the current organization's usage at /users/billing (2026-11-17, #4865)
+
+Non-breaking: no config key, no API change. `/users/billing` used to send a plain member to the home page (when they owned another organization) or to an "ask your admin" card. A user without the `create BillingPortal` right in the current organization now gets that organization's usage view in place, read-only: Upgrade, Manage Subscription, the status action, Change Plan and Buy compute extras are hidden, with one line saying only owners and admins can change the plan. Owners and admins are unchanged.
+
+---
+
 ## billing: checkout, extras and the org billing tab are for owners and admins only (2026-11-16, #4858)
 
 Ships with Node#4290, which returns 403 to plain organization members on plan checkout, extras checkout and the Stripe portal. Update both stacks in the same batch.
