@@ -267,6 +267,14 @@ describe('Auth Store', () => {
   });
 
   describe('signin', () => {
+    it('stays signed out when the signin reply has no user', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { tokenExpiresIn: 1 } });
+      await authStore.signin({ email: 'test@test.com', password: 'password' });
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+    });
+
     it('should signin successfully and update store', async () => {
       const authStore = useAuthStore();
       const mockResponse = {
@@ -481,6 +489,13 @@ describe('Auth Store', () => {
   });
 
   describe('signup', () => {
+    it('rejects and stays signed out when the signup reply has no user', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { tokenExpiresIn: 1 } });
+      await expect(authStore.signup({ email: 'new@test.com', password: 'password' })).rejects.toThrow('signup reply carries no user');
+      expect(authStore.auth).toBe(false);
+    });
+
     it('includes attribution in the POST payload when captured for this session (#4520)', async () => {
       const authStore = useAuthStore();
       const attribution = { landingPath: '/pricing', utmSource: 'newsletter' };
@@ -623,6 +638,14 @@ describe('Auth Store', () => {
   });
 
   describe('token', () => {
+    it('stays signed out when the token reply has no user', async () => {
+      const authStore = useAuthStore();
+      axios.get.mockResolvedValueOnce({ data: { tokenExpiresIn: 1 } });
+      await authStore.token();
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBe(null);
+    });
+
     it('should refresh token successfully and update store', async () => {
       const authStore = useAuthStore();
       const mockResponse = {

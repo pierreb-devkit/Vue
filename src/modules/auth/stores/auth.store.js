@@ -180,6 +180,8 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
+        // A reply without a user cannot open a session: stay signed out.
+        if (!res?.data?.user) throw new Error('signin reply carries no user');
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
         this.auth = true;
@@ -289,6 +291,8 @@ export const useAuthStore = defineStore('auth', {
 
       const res = await axios.post(signupUrl, payload);
       clearRef();
+      // A reply without a user cannot open a session: stay signed out.
+      if (!res?.data?.user) throw new Error('signup reply carries no user');
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
       this.auth = true;
@@ -426,6 +430,8 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
         if (generation !== _authGeneration) return; // signout() won the race
+        // A reply without a user cannot open a session: stay signed out.
+        if (!res?.data?.user) throw new Error('token reply carries no user');
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
         this.auth = true;
