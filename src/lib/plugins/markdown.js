@@ -6,14 +6,6 @@ import DOMPurify from 'dompurify';
 import { h } from 'vue';
 
 /**
- * Configure marked options
- */
-marked.setOptions({
-  mangle: false,
-  headerIds: false,
-});
-
-/**
  * Plugin setup.
  */
 export default {

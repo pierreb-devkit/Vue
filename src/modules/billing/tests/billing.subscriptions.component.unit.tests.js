@@ -704,7 +704,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
       router,
     });
     await flushPromises();
@@ -715,7 +715,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     // URL cleanup fires after 100ms
     vi.advanceTimersByTime(100);
     expect(router.replace).toHaveBeenCalledWith({
-      query: { tab: 'subscriptions', success: undefined, type: undefined, packPurchased: undefined },
+      query: { success: undefined, type: undefined, packPurchased: undefined },
     });
   });
 
@@ -723,7 +723,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', success: 'true', type: 'extras' },
+      routeQuery: { success: 'true', type: 'extras' },
       router,
     });
     await flushPromises();
@@ -735,7 +735,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', packPurchased: 'true' },
+      routeQuery: { packPurchased: 'true' },
       router,
     });
     await flushPromises();
@@ -747,7 +747,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', packPurchased: 'false' },
+      routeQuery: { packPurchased: 'false' },
       router,
     });
     await flushPromises();
@@ -891,7 +891,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
   it('shows processing spinner when ?success=true (non-extras)', async () => {
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
     expect(wrapper.vm.checkoutProcessing).toBe(true);
@@ -909,7 +909,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
     expect(wrapper.vm.checkoutProcessing).toBe(true);
@@ -931,7 +931,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -947,7 +947,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -963,7 +963,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -997,7 +997,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -1013,7 +1013,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', success: 'true', type: 'extras' },
+      routeQuery: { success: 'true', type: 'extras' },
     });
     await flushPromises();
 
@@ -1622,7 +1622,7 @@ describe('BillingSubscriptionsComponent — pollAborted abort flag', () => {
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 

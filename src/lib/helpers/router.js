@@ -52,8 +52,7 @@ const isValidChildRoute = (route, moduleName, parentPath, callerName = 'injectMo
  * @desc Inject routes from downstream modules as children of a named parent route.
  *
  * Finds the parent route in `routes` by matching `parentPath`, then pushes
- * valid, active-module children into its `children` array. This is the
- * generalized form of {@link injectAdminChildren} — it works for any
+ * valid, active-module children into its `children` array. It works for any
  * surface (admin, org-settings, etc.) by letting callers specify `parentPath`.
  *
  * Modules that are not active are silently skipped. The function is a no-op
@@ -77,7 +76,7 @@ const isValidChildRoute = (route, moduleName, parentPath, callerName = 'injectMo
  *   activation predicate. When omitted, all provided modules are treated
  *   as active and injected unconditionally.
  * @param {string} [parentPath='/admin'] - The `path` of the parent route to
- *   inject into. Defaults to `'/admin'` for back-compat with injectAdminChildren.
+ *   inject into. Defaults to `'/admin'`.
  * @param {string} [callerName='injectModuleChildren'] - Name of the calling function
  *   included in dev-mode warnings so diagnostics identify the right entry point.
  * @returns {Array<object>} The same `routes` reference (mutated) for chaining.
@@ -96,25 +95,6 @@ export const injectModuleChildren = (routes, childModules, isModuleActive, paren
 };
 
 /**
- * @desc Inject routes from downstream modules as children of the admin parent route.
- *
- * Back-compat wrapper around {@link injectModuleChildren} targeting `'/admin'`.
- * Downstream projects depend on this signature — it must remain
- * behaviorally identical to the original implementation.
- *
- * @param {Array<object>} adminRoutes - Admin module routes (the array exported by admin.router.js).
- * @param {Array<{ name: string, routes: Array<object> }>} adminChildModules - Modules to inject.
- * @param {(name: string) => boolean} [isModuleActive] - Optional module
- *   activation predicate. When omitted, all provided modules are treated
- *   as active and injected unconditionally.
- * @param {string} [callerName='injectAdminChildren'] - Caller name forwarded to
- *   {@link injectModuleChildren} so dev-mode warnings identify the admin wrapper.
- * @returns {Array<object>} The same `adminRoutes` reference (mutated) for chaining.
- */
-export const injectAdminChildren = (adminRoutes, adminChildModules, isModuleActive, callerName = 'injectAdminChildren') =>
-  injectModuleChildren(adminRoutes, adminChildModules, isModuleActive, '/admin', callerName);
-
-/**
  * Exports.
  */
-export default { injectAdminChildren, injectModuleChildren };
+export default { injectModuleChildren };

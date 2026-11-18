@@ -115,7 +115,7 @@ export default {
         status: false,
         color: 'error',
         timeout: 4000,
-        text: 'toto',
+        text: '',
       },
       /**
        * @desc In-app compute threshold toast state.

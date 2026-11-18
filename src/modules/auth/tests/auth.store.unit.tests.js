@@ -102,15 +102,13 @@ describe('Auth Store', () => {
     expect(authStore.cookieExpire).toBe(expireTime.toString());
   });
 
-  it('should clear auth data and lastLoginAt on signout', async () => {
+  it('should clear auth data on signout', async () => {
     const authStore = useAuthStore();
 
     authStore.auth = true;
     authStore.cookieExpire = Date.now() + 1000;
     authStore.user = { id: '123', email: 'test@example.com' };
-    localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user,admin');
     localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
-    localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
 
     axios.post.mockResolvedValueOnce({ data: {} });
     await authStore.signout();
@@ -118,9 +116,7 @@ describe('Auth Store', () => {
     expect(authStore.auth).toBe(false);
     expect(authStore.cookieExpire).toBe(0);
     expect(authStore.user).toBe(null);
-    expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
-    expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
   });
 
   it('should reset the authenticated serverConfig to null on signout (#4540)', async () => {
@@ -198,9 +194,7 @@ describe('Auth Store', () => {
       authStore.cookieExpire = Date.now() + 1000;
       authStore.user = { id: 'u1' };
       authStore.pendingRequests = [{ id: 'r1' }];
-      localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user');
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
-      localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, '2026-01-01T00:00:00Z');
       // An abandoned post-auth redirect (#4675) must not resurface for the next session.
       localStorage.setItem(`${config.cookie.prefix}PostAuthRedirect`, JSON.stringify({ path: '/pricing', ts: Date.now() }));
 
@@ -221,9 +215,7 @@ describe('Auth Store', () => {
       expect(authStore.cookieExpire).toBe(0);
       expect(authStore.user).toBe(null);
       expect(authStore.pendingRequests).toEqual([]);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
       expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
-      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
       expect(localStorage.getItem(`${config.cookie.prefix}PostAuthRedirect`)).toBe(null);
       expect(mockUpdateAbilities).toHaveBeenCalledWith([]);
     });
@@ -290,7 +282,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     });
 
     it('should clear lockout on successful signin', async () => {
@@ -309,7 +301,7 @@ describe('Auth Store', () => {
       expect(authStore.lockout).toEqual({ locked: false, retryAfter: 0 });
     });
 
-    it('should store lastLoginAt when present in response', async () => {
+    it('does not persist lastLoginAt to localStorage (nothing reads it)', async () => {
       const authStore = useAuthStore();
       const lastLogin = '2026-03-09T14:30:00Z';
       const mockResponse = {
@@ -322,7 +314,7 @@ describe('Auth Store', () => {
       axios.post.mockResolvedValueOnce(mockResponse);
       await authStore.signin({ email: 'test@test.com', password: 'password' });
 
-      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
     });
 
     it('should populate pendingRequests from the signin response', async () => {
@@ -392,7 +384,6 @@ describe('Auth Store', () => {
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
-      expect(localStorage.getItem('token')).toBe(null);
       // The submitted credentials must never reach the console: the axios
       // interceptor surfaces the user-facing message instead.
       expect(consoleErrorSpy).not.toHaveBeenCalled();
@@ -566,7 +557,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     });
 
     it('should capture signup_completed event on success', async () => {
@@ -647,10 +638,10 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user,admin');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     });
 
-    it('should store lastLoginAt on token refresh', async () => {
+    it('does not persist lastLoginAt on token refresh (nothing reads it)', async () => {
       const authStore = useAuthStore();
       const lastLogin = '2026-03-09T10:00:00Z';
       const mockResponse = {
@@ -663,7 +654,7 @@ describe('Auth Store', () => {
       axios.get.mockResolvedValueOnce(mockResponse);
       await authStore.token();
 
-      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(lastLogin);
+      expect(localStorage.getItem(`${config.cookie.prefix}LastLoginAt`)).toBe(null);
     });
 
     it('should populate pendingRequests from the token response (soft-refresh superset)', async () => {
@@ -754,7 +745,7 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(true);
       expect(authStore.user).toEqual(mockResponse.data.user);
       expect(authStore.cookieExpire).toBe(mockResponse.data.tokenExpiresIn);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
+      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
     });
 
     it('does not report a completed reset as failed when local storage throws', async () => {
@@ -1136,26 +1127,6 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}SuggestedJoin`)).toBe(null);
     });
 
-    it('clearSuggestedJoinIfMember clears when orgId matches', () => {
-      const authStore = useAuthStore();
-      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
-      authStore.clearSuggestedJoinIfMember('o1');
-      expect(authStore.suggestedJoin).toBe(null);
-    });
-
-    it('clearSuggestedJoinIfMember does NOT clear when orgId differs', () => {
-      const authStore = useAuthStore();
-      authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
-      authStore.clearSuggestedJoinIfMember('o2');
-      expect(authStore.suggestedJoin).toEqual({ orgId: 'o1', orgName: 'Acme' });
-    });
-
-    it('clearSuggestedJoinIfMember is a no-op when suggestedJoin is null', () => {
-      const authStore = useAuthStore();
-      expect(() => authStore.clearSuggestedJoinIfMember('o1')).not.toThrow();
-      expect(authStore.suggestedJoin).toBe(null);
-    });
-
     it('signout clears suggestedJoin', async () => {
       const authStore = useAuthStore();
       authStore.setSuggestedJoin({ orgId: 'o1', orgName: 'Acme' });
@@ -1467,7 +1438,6 @@ describe('Auth Store', () => {
       authStore.auth = true;
       authStore.cookieExpire = Date.now() + 1000;
       authStore.user = { id: 'u1' };
-      localStorage.setItem(`${config.cookie.prefix}UserRoles`, 'user');
       localStorage.setItem(`${config.cookie.prefix}CookieExpire`, '12345');
 
       let resolveTokenGet;
@@ -1490,7 +1460,6 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
       expect(authStore.cookieExpire).toBe(0);
-      expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe(null);
       expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe(null);
     });
 

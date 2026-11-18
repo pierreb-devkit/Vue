@@ -59,7 +59,7 @@ export const useHomeStore = defineStore('home', {
 
     async getNews() {
       try {
-        // Vérifier que la configuration existe avant d'accéder aux propriétés
+        // Check the articles config exists before reading its properties
         if (!config.home?.articles?.url || !config.home?.articles?.key) {
           log.warn('articles configuration is missing url or key');
           return;
@@ -95,10 +95,6 @@ export const useHomeStore = defineStore('home', {
       } catch (err) {
         log.error(err);
       }
-    },
-
-    setContact(data) {
-      this.contact = data;
     },
 
     updateContact(data) {

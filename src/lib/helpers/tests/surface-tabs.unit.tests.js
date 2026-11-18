@@ -6,14 +6,13 @@ import { isValidTab, resolveSurfaceTabs } from '../surface-tabs';
  *
  * Accepted:
  *  - Relative path (no leading slash), non-empty, no dot segments, no whitespace, no `?` / `#`.
- *  - Legacy absolute `/admin/<something>` (still valid during migration).
  *
  * Rejected:
  *  - Missing required keys (value, label, route) or non-string route.
  *  - Whitespace, `?`, `#` in route.
  *  - Empty string, `'/'`, `'.'`, `'..'` as the whole route.
  *  - Segments of `'.'` or `'..'` anywhere in the path.
- *  - Absolute paths NOT under `/admin/`.
+ *  - Absolute paths (a leading `/`), `/admin/...` included.
  */
 describe('isValidTab', () => {
   // ── well-formed descriptors ──────────────────────────────────────────────
@@ -25,8 +24,8 @@ describe('isValidTab', () => {
     expect(isValidTab({ value: 'billing', label: 'Billing', route: 'billing', icon: 'fa-solid fa-credit-card' })).toBe(true);
   });
 
-  it('accepts a legacy /admin/* absolute path', () => {
-    expect(isValidTab({ value: 'knowledge', label: 'Knowledge', route: '/admin/knowledge' })).toBe(true);
+  it('rejects an absolute /admin/* path (relative routes only)', () => {
+    expect(isValidTab({ value: 'knowledge', label: 'Knowledge', route: '/admin/knowledge' })).toBe(false);
   });
 
   it('accepts a nested relative path (e.g. billing/invoices)', () => {
@@ -98,7 +97,7 @@ describe('isValidTab', () => {
     expect(isValidTab({ value: 'x', label: 'X', route: 'billing/./secret' })).toBe(false);
   });
 
-  // ── absolute non-admin paths ─────────────────────────────────────────────
+  // ── absolute paths ───────────────────────────────────────────────────────
   it('rejects an absolute path not under /admin/', () => {
     expect(isValidTab({ value: 'x', label: 'X', route: '/org/billing' })).toBe(false);
   });
@@ -107,11 +106,8 @@ describe('isValidTab', () => {
     expect(isValidTab({ value: 'x', label: 'X', route: '/admin' })).toBe(false);
   });
 
-  // ── legacy /admin/ edge case ─────────────────────────────────────────────
-  it('accepts /admin/ (trailing slash, no child segment) — matches legacy admin behavior', () => {
-    // The original admin.layout.vue accepted any route starting with '/admin/',
-    // including '/admin/' itself. Byte-identical parity requires this stays true.
-    expect(isValidTab({ value: 'x', label: 'X', route: '/admin/' })).toBe(true);
+  it('rejects /admin/ (absolute, trailing slash)', () => {
+    expect(isValidTab({ value: 'x', label: 'X', route: '/admin/' })).toBe(false);
   });
 });
 

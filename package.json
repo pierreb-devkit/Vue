@@ -45,7 +45,6 @@
     "format": "prettier --write .",
     "commit": "npx cz",
     "generateConfig": "node ./scripts/generateConfig.js",
-    "check:migration": "node ./scripts/check-vite-migration.js",
     "check:brand-defaults": "node ./scripts/check-brand-defaults.js",
     "release:auto": "npx semantic-release",
     "snyk-protect": "snyk protect"
@@ -81,7 +80,6 @@
     "@vitest/coverage-v8": "^5.1.0",
     "@vue/test-utils": "^2.6.0",
     "autoprefixer": "^10.6.2",
-    "chalk": "^6.0.1",
     "commitizen": "^4.3.2",
     "cz-git": "^1.14.0",
     "eslint": "^9.39.5",

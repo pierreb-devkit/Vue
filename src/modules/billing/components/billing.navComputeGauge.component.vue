@@ -124,7 +124,6 @@ export default {
     /**
      * @desc True when the authenticated user has the 'admin' role.
      * Admins have unlimited quota — show ∞ rainbow state instead of a progress ring.
-     * Mirrors the `displayMode === 'admin'` branch in billing.usageBar.component.vue.
      * @returns {boolean}
      */
     isAdmin() {
@@ -141,7 +140,7 @@ export default {
 
     /**
      * @desc Total available compute quota: base allocation + extras purchased.
-     * Excludes meterUsed (consumed units); consistent with billing.computeGauge.component.
+     * Excludes meterUsed (consumed units).
      * @returns {number}
      */
     totalQuota() {
@@ -151,8 +150,7 @@ export default {
     },
 
     /**
-     * @desc Vuetify color token based on usage threshold.
-     * Matches billing.computeGauge.component thresholds.
+     * @desc Vuetify color token based on usage threshold (80% warning, 100% error).
      * @returns {string}
      */
     iconColor() {
@@ -279,7 +277,7 @@ export default {
 </script>
 
 <style scoped>
-/* ── Admin rainbow — reused from billing.usageBar.component ──────────────── */
+/* ── Admin rainbow ──────────────────────────────────────────────────────── */
 .admin-rainbow {
   background: linear-gradient(
     90deg,

@@ -180,17 +180,12 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
         this.auth = true;
         this.cookieExpire = res.data.tokenExpiresIn;
         this.user = res.data.user;
         this.lockout = { locked: false, retryAfter: 0 };
-
-        if (res.data.user.lastLoginAt) {
-          localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, res.data.user.lastLoginAt);
-        }
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
         this.pendingRequests = res.data.pendingRequests || [];
@@ -232,7 +227,6 @@ export const useAuthStore = defineStore('auth', {
         // credentials (request payload) and would leak them to the browser
         // console / any console-forwarding error tracker. The axios response
         // interceptor already surfaces a user-facing failure message.
-        localStorage.removeItem('token');
       }
     },
 
@@ -265,17 +259,6 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * @desc Clear suggestedJoin if the user just joined the suggested org.
-     * @param {string} orgId - The org the user became a member of.
-     * @returns {void}
-     */
-    clearSuggestedJoinIfMember(orgId) {
-      if (this.suggestedJoin?.orgId === orgId) {
-        this.dismissSuggestedJoin();
-      }
-    },
-
-    /**
      * @desc Sign up a new user and update auth state. When a first-touch attribution
      * record was captured for this session, it is attached to the payload (#4520).
      * @param {Object} params - Signup payload (email, password, firstName, lastName)
@@ -304,37 +287,31 @@ export const useAuthStore = defineStore('auth', {
 
       const signupUrl = `${api}/${config.api.endPoints.auth}/signup${inviteToken ? `?inviteToken=${encodeURIComponent(inviteToken)}` : ''}`;
 
-      try {
-        const res = await axios.post(signupUrl, payload);
-        clearRef();
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
+      const res = await axios.post(signupUrl, payload);
+      clearRef();
+      localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
-        this.auth = true;
-        this.cookieExpire = res.data.tokenExpiresIn;
-        this.user = res.data.user;
+      this.auth = true;
+      this.cookieExpire = res.data.tokenExpiresIn;
+      this.user = res.data.user;
 
-        if (res.data.suggestedJoin) {
-          this.setSuggestedJoin(res.data.suggestedJoin);
-        }
-
-        coreStore.refreshNav(this.isLoggedIn);
-        capture('signup_completed', { email: res.data.user.email });
-        identify(res.data.user.id || res.data.user._id, { email: res.data.user.email, plan: res.data.user.plan });
-
-        // Re-fetch server config now that we're authenticated (same rationale
-        // as signin() above, see that comment) — deferred until here so it
-        // never delays suggestedJoin/nav/analytics above, none of which
-        // depend on it. signup() has no meterMode guard of its own; the
-        // point is that serverConfig is authenticated for the rest of the
-        // session.
-        await this.fetchServerConfig();
-
-        return res.data;
-      } catch (err) {
-        localStorage.removeItem('token');
-        throw err;
+      if (res.data.suggestedJoin) {
+        this.setSuggestedJoin(res.data.suggestedJoin);
       }
+
+      coreStore.refreshNav(this.isLoggedIn);
+      capture('signup_completed', { email: res.data.user.email });
+      identify(res.data.user.id || res.data.user._id, { email: res.data.user.email, plan: res.data.user.plan });
+
+      // Re-fetch server config now that we're authenticated (same rationale
+      // as signin() above, see that comment) — deferred until here so it
+      // never delays suggestedJoin/nav/analytics above, none of which
+      // depend on it. signup() has no meterMode guard of its own; the
+      // point is that serverConfig is authenticated for the rest of the
+      // session.
+      await this.fetchServerConfig();
+
+      return res.data;
     },
 
     /**
@@ -392,9 +369,7 @@ export const useAuthStore = defineStore('auth', {
       // PostHog reset on signout
       analyticsReset();
 
-      localStorage.removeItem(`${config.cookie.prefix}UserRoles`);
       localStorage.removeItem(`${config.cookie.prefix}CookieExpire`);
-      localStorage.removeItem(`${config.cookie.prefix}LastLoginAt`);
       localStorage.removeItem(`${config.cookie.prefix}SuggestedJoin`);
       // An abandoned redirect (e.g. a guest who started signup but signed out
       // elsewhere first) must never resurface for the next, unrelated session.
@@ -451,7 +426,6 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await axios.get(`${api}/${config.api.endPoints.auth}/token`);
         if (generation !== _authGeneration) return; // signout() won the race
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
         this.auth = true;
@@ -463,9 +437,6 @@ export const useAuthStore = defineStore('auth', {
         this.pendingRequests = res.data.pendingRequests || [];
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
-        if (res.data.user.lastLoginAt) {
-          localStorage.setItem(`${config.cookie.prefix}LastLoginAt`, res.data.user.lastLoginAt);
-        }
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch {
@@ -503,7 +474,6 @@ export const useAuthStore = defineStore('auth', {
         // `__silent`: the view shows a failure inline, so no error snackbar on top.
         res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params, { __silent: true });
       } catch (err) {
-        localStorage.removeItem('token');
         // Re-throw a sanitized Error so the caller knows the reset failed: the
         // raw `err` carries the submitted reset token + new password (request
         // payload) and must never reach the caller or a log.
@@ -513,7 +483,8 @@ export const useAuthStore = defineStore('auth', {
       // The reset already succeeded server-side: a client-side storage failure
       // must not be reported as a rejected reset.
       try {
-        localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
+        // A reply without a user cannot open a session: stay signed out.
+        if (!res?.data?.user) throw new Error('reset reply carries no user');
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
         this.auth = true;

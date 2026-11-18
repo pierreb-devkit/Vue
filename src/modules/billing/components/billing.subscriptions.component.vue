@@ -209,7 +209,7 @@
 
             <!-- Meter polling error surfaced via centralized snackbar (lib/services/axios.js) -->
 
-            <!-- ── Usage meter card (T4 % bar — single source, no BillingUsageBarComponent) -->
+            <!-- ── Usage meter card (T4 % bar — single source) -->
             <v-card
               class="billing-subscriptions__meter-card px-6 py-3 mb-0"
               elevation="0"
@@ -839,7 +839,7 @@ export default {
     scheduleQueryCleanup() {
       this.successCleanupTimer = setTimeout(() => {
         this.$router.replace({
-          query: { ...this.$route.query, success: undefined, type: undefined, packPurchased: undefined, tab: 'subscriptions' },
+          query: { ...this.$route.query, success: undefined, type: undefined, packPurchased: undefined },
         });
       }, 100);
     },

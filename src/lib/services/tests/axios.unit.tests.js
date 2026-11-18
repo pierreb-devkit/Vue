@@ -101,26 +101,6 @@ describe('Axios Service', () => {
       expect(result).toEqual(response);
     });
 
-    it('should fall back to legacy sucessColor when successColor is missing', () => {
-      // When successColor is undefined, should fall back to legacy sucessColor
-      delete mockConfig.vuetify.theme.snackbar.successColor;
-      mockConfig.vuetify.theme.snackbar.sucessColor = 'legacySuccess';
-      setupInterceptors(mockConfig, mockSnackbar, mockOnSignout);
-
-      const mockInstance = axios.create();
-      const interceptorCall = mockInstance.interceptors.response.use.mock.calls[1];
-      const legacyResponseInterceptor = interceptorCall[0];
-
-      const response = {
-        config: { method: 'post' },
-        data: { type: 'success', message: 'Done' },
-      };
-
-      legacyResponseInterceptor(response);
-
-      expect(mockSnackbar.color).toBe('legacySuccess');
-    });
-
     it('should not show snackbar on successful response with disallowed method', () => {
       const response = {
         config: {

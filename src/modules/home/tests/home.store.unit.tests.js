@@ -44,23 +44,10 @@ describe('Home Store', () => {
     expect(homeStore.statistics).toBeDefined();
   });
 
-  it('should set contact data', () => {
-    const homeStore = useHomeStore();
-    const contactData = {
-      name: 'John Doe',
-      email: 'john@example.com',
-      message: 'Hello',
-    };
-
-    homeStore.setContact(contactData);
-
-    expect(homeStore.contact).toEqual(contactData);
-  });
-
   it('should update contact data', () => {
     const homeStore = useHomeStore();
 
-    homeStore.setContact({
+    homeStore.updateContact({
       name: 'John Doe',
       email: 'john@example.com',
     });
