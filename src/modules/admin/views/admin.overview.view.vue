@@ -48,7 +48,7 @@
             <span>Couldn't load activity.</span>
             <v-btn variant="text" size="small" class="text-none" @click="load(['audit'])">Retry</v-btn>
           </div>
-          <div v-else-if="stats.audit && !stats.audit.topActions.length" class="text-body-medium text-medium-emphasis">No activity recorded yet.</div>
+          <div v-else-if="stats.audit && !stats.audit.topActions?.length" class="text-body-medium text-medium-emphasis">No activity recorded yet.</div>
           <ul v-else-if="stats.audit" class="admin-overview__list">
             <li v-for="item in stats.audit.topActions" :key="item.action" class="mb-3" data-test="action-row">
               <div class="d-flex align-baseline text-body-medium">
@@ -100,14 +100,16 @@ import AdminWeeklyBarsComponent from '../components/admin.weeklyBars.component.v
 const DEFAULT_PERIOD_WEEKS = 4;
 
 /**
- * @desc Sum of the counts in the last `n` weeks of a series, `offset` periods back.
- * @param {Array<{count: number}>} weeks - weekly series, oldest first
+ * @desc Sum of the counts over `n` finished weeks, `offset` periods back. The last
+ *       entry of a series is the week in progress: it is left out, so a period
+ *       never compares a partial week with full ones.
+ * @param {Array<{count: number}>} [weeks] - weekly series, oldest first, current week last
  * @param {number} n - weeks per period
- * @param {number} [offset] - 0 = current period, 1 = the period before
+ * @param {number} [offset] - 0 = latest finished period, 1 = the period before
  * @returns {number} sum
  */
-const periodSum = (weeks, n, offset = 0) => {
-  const end = weeks.length - offset * n;
+const periodSum = (weeks = [], n, offset = 0) => {
+  const end = weeks.length - 1 - offset * n;
   return weeks.slice(Math.max(0, end - n), end).reduce((sum, w) => sum + (w.count || 0), 0);
 };
 
@@ -124,10 +126,14 @@ export default {
   components: { AdminWeeklyBarsComponent },
   data() {
     return {
-      loading: false,
+      pending: 0,
     };
   },
   computed: {
+    /** @returns {boolean} whether any Overview load is still running */
+    loading() {
+      return this.pending > 0;
+    },
     stats() {
       return useAdminStore().stats;
     },
@@ -149,7 +155,7 @@ export default {
     /** @returns {Array<object>} KPI cards, in display order */
     kpis() {
       const n = this.periodWeeks;
-      const period = `the last ${n} weeks`;
+      const period = `the last ${n} full weeks`;
       const created = (series) => {
         if (!series) return { value: null, caption: '', trend: null };
         const current = periodSum(series.weeks, n);
@@ -165,9 +171,9 @@ export default {
           {
             key: 'active',
             label: 'Active accounts',
-            value: audit ? audit.activeUsers.current : null,
+            value: audit?.activeUsers ? audit.activeUsers.current : null,
             caption: `with at least one action in ${period}`,
-            trend: audit ? this.trend(audit.activeUsers.current, audit.activeUsers.previous) : null,
+            trend: audit?.activeUsers ? this.trend(audit.activeUsers.current, audit.activeUsers.previous) : null,
           },
           {
             key: 'events',
@@ -223,11 +229,11 @@ export default {
      * @returns {Promise<void>}
      */
     async load(only) {
-      this.loading = true;
+      this.pending += 1;
       try {
         await useAdminStore().getStats({ audit: this.auditOn, only });
       } finally {
-        this.loading = false;
+        this.pending -= 1;
       }
     },
     /**

@@ -28,8 +28,12 @@ const stubs = {
   AdminWeeklyBarsComponent: { props: ['weeks', 'label'], template: '<div data-testid="bars">{{ label }}</div>' },
 };
 
-/** 8 weeks: previous period 1+1+1+1 = 4, current period 2+2+2+2 = 8. */
-const weeks = (counts = [1, 1, 1, 1, 2, 2, 2, 2]) => counts.map((count, i) => ({ week: `2026-10-${String(i + 1).padStart(2, '0')}`, count }));
+/**
+ * 8 finished weeks (previous period 1+1+1+1 = 4, latest period 2+2+2+2 = 8), then the
+ * week in progress, which the KPIs must leave out.
+ */
+const weeks = (counts = [1, 1, 1, 1, 2, 2, 2, 2], inProgress = 50) =>
+  [...counts, inProgress].map((count, i) => ({ week: `2026-10-${String(i + 1).padStart(2, '0')}`, count }));
 
 const fullStats = () => ({
   users: { total: 1234, weeks: weeks() },
@@ -74,7 +78,7 @@ describe('admin.overview.view', () => {
     await wrapper.vm.$nextTick();
     const users = wrapper.find('[data-test="kpi-users"]');
     expect(users.find('[data-test="value"]').text()).toBe('1,234');
-    expect(users.find('[data-test="caption"]').text()).toBe('8 new in the last 4 weeks');
+    expect(users.find('[data-test="caption"]').text()).toBe('8 new in the last 4 full weeks');
     expect(users.find('[data-test="trend"]').text()).toBe('Up 100% vs previous 4 weeks');
     expect(wrapper.find('[data-test="kpi-organizations"] [data-test="trend"]').text()).toBe('No change vs previous 4 weeks');
     expect(wrapper.find('[data-test="kpi-active"] [data-test="value"]').text()).toBe('6');
@@ -82,6 +86,23 @@ describe('admin.overview.view', () => {
     const events = wrapper.find('[data-test="kpi-events"]');
     expect(events.find('[data-test="value"]').text()).toBe('10');
     expect(events.find('[data-test="trend"]').text()).toBe('Down 50% vs previous 4 weeks');
+  });
+
+  it('should keep the loading bar on while any load is still running', async () => {
+    let finishFirst;
+    store.getStats = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise((resolve) => (finishFirst = resolve)))
+      .mockResolvedValue();
+    const wrapper = mountView();
+    expect(wrapper.vm.loading).toBe(true);
+    const retry = wrapper.vm.load(['users']);
+    await retry;
+    expect(wrapper.vm.loading).toBe(true);
+    finishFirst();
+    await wrapper.vm.$nextTick();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.vm.loading).toBe(false);
   });
 
   it('should colour a rise and a fall differently', () => {
