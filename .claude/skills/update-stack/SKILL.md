@@ -144,7 +144,7 @@ Ownership rule (see `CLAUDE.md` § Downstream file ownership): inside stack fold
 ```bash
 PROJECT="<project>"   # the downstream's project name, as in src/config/defaults/<project>.config.js
 stack_modules=$(git ls-tree -d --name-only devkit-vue/master src/modules/ | sed 's#^src/modules/##')
-stack_deleted=$(git log --diff-filter=D --name-only --format= devkit-vue/master -- src/modules src/lib src/config | sort -u)
+stack_deleted=$(git log --no-renames --diff-filter=D --name-only --format= devkit-vue/master -- src/modules src/lib src/config | sort -u)
 
 warn=0
 while IFS= read -r f; do
@@ -166,6 +166,8 @@ done < <(git ls-tree -r --name-only HEAD -- src/modules src/lib src/config)
 
 [ "$warn" -eq 1 ] && echo "3quater: warnings above — act on them in Phase 2" || echo "3quater: ownership OK"
 ```
+
+`--no-renames` makes a file the stack moved count as deleted at its old path, so a leftover copy there is reported as such.
 
 **What to do with each warning** (in Phase 2, never by reverting the merge):
 - **File the stack deleted:** delete it only when it is a dead copy — nothing imports it (`grep -rn "<file basename without extension>" src`), and it is not a module a downstream router registers. Old `*.spec.js` / `*.test.js` under a stack test dir that test a deleted file go with it. A file still in use → move what it does to the project's own module first.
