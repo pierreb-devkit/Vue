@@ -750,6 +750,18 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
+    it('does not report a completed reset as failed when local storage throws', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'] }, tokenExpiresIn: 1 } });
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await expect(authStore.reset({ token: 't', newPassword: 'p' })).resolves.toBeUndefined();
+
+      setItem.mockRestore();
+      errSpy.mockRestore();
+    });
+
     it('should handle reset password error', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

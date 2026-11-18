@@ -45,9 +45,11 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         if (typeof isLoggedIn !== 'function' || isLoggedIn()) {
           onSignout();
         }
-        snackbar.text = 'Signin failed';
-        snackbar.color = config.vuetify.theme.snackbar.errorColor;
-        snackbar.status = true;
+        if (!err.config.__silent) {
+          snackbar.text = 'Signin failed';
+          snackbar.color = config.vuetify.theme.snackbar.errorColor;
+          snackbar.status = true;
+        }
       }
       if (err?.response?.status === 403 && !err.config?.__isAbilityRetry && onRefreshAbilities) {
         try {

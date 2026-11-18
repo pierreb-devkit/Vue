@@ -495,9 +495,21 @@ export const useAuthStore = defineStore('auth', {
       const api = apiBase();
       const coreStore = useCoreStore();
 
+      let res;
       try {
         // `__silent`: the view shows a failure inline, so no error snackbar on top.
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params, { __silent: true });
+        res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params, { __silent: true });
+      } catch (err) {
+        localStorage.removeItem('token');
+        // Re-throw a sanitized Error so the caller knows the reset failed: the
+        // raw `err` carries the submitted reset token + new password (request
+        // payload) and must never reach the caller or a log.
+        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.', 'description'));
+      }
+
+      // The reset already succeeded server-side: a client-side storage failure
+      // must not be reported as a rejected reset.
+      try {
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
@@ -507,11 +519,7 @@ export const useAuthStore = defineStore('auth', {
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {
-        localStorage.removeItem('token');
-        // Re-throw a sanitized Error so the caller knows the reset failed: the
-        // raw `err` carries the submitted reset token + new password (request
-        // payload) and must never reach the caller or a log.
-        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.', 'description'));
+        console.error('Reset succeeded but local session update failed', err?.message);
       }
     },
 

@@ -272,6 +272,18 @@ describe('Axios Service', () => {
       expect(mockSnackbar.status).toBe(false);
     });
 
+    it('should NOT raise the Signin failed snackbar for a silent 401 request', async () => {
+      const error = {
+        response: { status: 401, data: { message: 'Unauthorized', description: 'Invalid token.' } },
+        config: { method: 'post', __silent: true },
+      };
+
+      await expect(errorInterceptor(error)).rejects.toEqual(error);
+
+      expect(mockSnackbar.text).toBe('');
+      expect(mockSnackbar.status).toBe(false);
+    });
+
     it('should not handle 401 error if retry request', async () => {
       const error = {
         response: {
