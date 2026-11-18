@@ -500,9 +500,9 @@ describe('Theme Helpers', () => {
       expect(roundedProp('rounded')).toBe(true);
     });
 
-    it('falls back to the first token on a mixed bare and suffixed list', () => {
-      expect(roundedProp('rounded rounded-t-0')).toBe(true);
-      expect(roundedProp('rounded-lg rounded')).toBe('lg');
+    it('keeps every token of a mixed bare and suffixed list, bare rounded as md', () => {
+      expect(roundedProp('rounded rounded-t-0')).toBe('md t-0');
+      expect(roundedProp('rounded-t-0 rounded')).toBe('t-0 md');
     });
 
     it('returns undefined when unset', () => {
