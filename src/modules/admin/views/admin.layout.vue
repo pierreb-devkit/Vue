@@ -46,6 +46,7 @@ import { useAdminStore } from '../stores/admin.store';
  * which validates + CASL-filters internally.
  */
 const BUILT_IN_TABS = Object.freeze([
+  { value: 'overview', label: 'Overview', icon: 'fa-solid fa-chart-column', route: 'overview' },
   { value: 'users', label: 'Users', icon: 'fa-solid fa-users', route: 'users' },
   { value: 'organizations', label: 'Organizations', icon: 'fa-solid fa-building', route: 'organizations' },
   { value: 'readiness', label: 'Readiness', icon: 'fa-solid fa-clipboard-check', route: 'readiness' },

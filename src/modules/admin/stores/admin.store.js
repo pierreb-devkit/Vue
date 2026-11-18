@@ -40,6 +40,8 @@ export const useAdminStore = defineStore('admin', {
     error: null,
     currentBreadcrumb: null,
     readiness: [],
+    stats: { users: null, organizations: null, billing: null },
+    statsErrors: [],
     auditLogs: [],
     auditTotal: 0,
     auditPage: 1,
@@ -141,6 +143,34 @@ export const useAdminStore = defineStore('admin', {
         this.error = sanitizeApiError(err);
         logger.error(err);
       }
+    },
+
+    /**
+     * @desc Load the Overview stats: accounts, organizations and (when billing is on)
+     *       subscriptions. Each series loads on its own, so one failing route leaves
+     *       the others on screen; a failed series is null and named in `statsErrors`.
+     * @param {{ billing?: boolean }} [options] - `billing: false` skips the billing route
+     * @returns {Promise<void>}
+     */
+    async getStats({ billing = true } = {}) {
+      const routes = {
+        users: `${apiBase()}/admin/users/stats`,
+        organizations: `${apiBase()}/admin/organizations/stats`,
+        ...(billing ? { billing: `${apiBase()}/admin/billing/stats` } : {}),
+      };
+      const keys = Object.keys(routes);
+      const results = await Promise.allSettled(keys.map((k) => axios.get(routes[k])));
+      const stats = { users: null, organizations: null, billing: null };
+      const errors = [];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') stats[keys[i]] = r.value.data.data;
+        else {
+          errors.push(keys[i]);
+          logger.error(r.reason);
+        }
+      });
+      this.stats = stats;
+      this.statsErrors = errors;
     },
 
     async getOrganizations(params) {

@@ -222,6 +222,55 @@ describe('Admin Store', () => {
     });
   });
 
+  describe('getStats', () => {
+    it('should load every series when billing is on', async () => {
+      const store = useAdminStore();
+      const users = { total: 3, weeks: [{ week: '2026-11-16', count: 1 }] };
+      const organizations = { total: 2, weeks: [{ week: '2026-11-16', count: 0 }] };
+      const billing = { total: 2, byPlan: { free: 1, pro: 1 }, byStatus: { active: 2 } };
+      axios.get.mockImplementation((url) => {
+        if (url.endsWith('/admin/users/stats')) return Promise.resolve({ data: { data: users } });
+        if (url.endsWith('/admin/organizations/stats')) return Promise.resolve({ data: { data: organizations } });
+        if (url.endsWith('/admin/billing/stats')) return Promise.resolve({ data: { data: billing } });
+        return Promise.reject(new Error(`unexpected ${url}`));
+      });
+
+      await store.getStats();
+
+      expect(store.stats).toEqual({ users, organizations, billing });
+      expect(store.statsErrors).toEqual([]);
+      axios.get.mockReset();
+    });
+
+    it('should skip the billing route when billing is off', async () => {
+      const store = useAdminStore();
+      axios.get.mockResolvedValue({ data: { data: { total: 0, weeks: [] } } });
+
+      await store.getStats({ billing: false });
+
+      const urls = axios.get.mock.calls.map((c) => c[0]);
+      expect(urls.some((u) => u.includes('/admin/billing/stats'))).toBe(false);
+      expect(store.stats.billing).toBeNull();
+      axios.get.mockReset();
+    });
+
+    it('should keep the series that loaded when one route fails', async () => {
+      const store = useAdminStore();
+      axios.get.mockImplementation((url) =>
+        url.endsWith('/admin/organizations/stats')
+          ? Promise.reject(new Error('boom'))
+          : Promise.resolve({ data: { data: { total: 1, weeks: [] } } }),
+      );
+
+      await store.getStats({ billing: false });
+
+      expect(store.stats.users).toEqual({ total: 1, weeks: [] });
+      expect(store.stats.organizations).toBeNull();
+      expect(store.statsErrors).toEqual(['organizations']);
+      axios.get.mockReset();
+    });
+  });
+
   describe('sanitizeApiError', () => {
     it('should expose safe short user-facing API messages', async () => {
       const store = useAdminStore();
