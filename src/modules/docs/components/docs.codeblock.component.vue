@@ -41,7 +41,7 @@
           v-for="(ex, i) in examples"
           :key="ex.lang + i"
           :value="i"
-          class="text-none text-caption"
+          class="text-none text-body-small"
           :data-test="`docs-codeblock-tab-${ex.lang}`"
         >
           {{ tabLabel(ex) }}
@@ -66,7 +66,7 @@
         variant="text"
         size="small"
         density="comfortable"
-        class="text-none text-caption"
+        class="text-none text-body-small"
         data-test="docs-codeblock-copy-key"
         :aria-label="`Copy ${tabLabel(current)} example with my API key`"
         @click="copy(true)"

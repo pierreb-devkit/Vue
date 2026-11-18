@@ -1,7 +1,7 @@
 <template>
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
-      <v-card class="mt-8 pa-8" width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+      <v-card class="mt-8 pa-8" width="100%" color="surface">
         <v-col cols="12">
           <h4 class="text-headline-small font-weight-bold">Email Verification</h4>
           <v-divider class="mt-3"></v-divider>

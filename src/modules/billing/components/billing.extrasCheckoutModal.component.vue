@@ -25,7 +25,7 @@
     :fullscreen="$vuetify.display.smAndDown"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <v-card>
+    <v-card :rounded="$vuetify.display.smAndDown ? 0 : undefined">
       <!-- Title — v-card-title adds dialog landmark semantics for screen readers -->
       <v-card-title class="text-title-medium font-weight-bold pt-5 px-5">
         Buy extra units

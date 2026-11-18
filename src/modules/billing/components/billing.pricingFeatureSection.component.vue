@@ -52,7 +52,7 @@
       ></v-icon>
       <span
         :class="[
-          item.highlight ? 'text-body-1 font-weight-bold text-primary' : 'text-body-2',
+          item.highlight ? 'text-body-large font-weight-bold text-primary' : 'text-body-medium',
           { 'text-medium-emphasis': item.enabled === false },
         ]"
       >

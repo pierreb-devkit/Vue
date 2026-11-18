@@ -249,6 +249,20 @@ export const colorModeStyle = (colorMode) => {
 export const lightenColor = (hex, percent) => adjustColor(hex, percent, 'hex');
 
 /**
+ * @desc Turn the config radius class (e.g. 'rounded-lg') into the value of a Vuetify `rounded` prop ('lg').
+ * Vuetify prefixes each token of the prop with `rounded-`, so the prefix is dropped here.
+ * @param {String} roundedClass - Radius class from config.vuetify.theme.rounded ('rounded', 'rounded-lg', 'rounded-t-xl', 'rounded-0')
+ * @returns {String|Boolean|undefined} prop value: true for bare 'rounded', the suffixes otherwise (bare 'rounded' in a list as 'md'), undefined when unset
+ */
+export const roundedProp = (roundedClass) => {
+  if (!roundedClass) return undefined;
+  const tokens = String(roundedClass).trim().split(/\s+/);
+  if (tokens.length === 1 && tokens[0] === 'rounded') return true;
+  // In a mixed list ('rounded rounded-t-0') bare 'rounded' becomes 'md': Vuetify gives rounded-md the same root radius.
+  return tokens.map((token) => (token === 'rounded' ? 'md' : token.replace(/^rounded-/, ''))).join(' ');
+};
+
+/**
  * Exports.
  */
-export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor };
+export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor, roundedProp };

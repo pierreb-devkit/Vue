@@ -69,7 +69,6 @@
       v-else-if="subscriptionError && !subscription && !checkoutProcessing && !checkoutTimeout"
       role="alert"
       aria-live="assertive"
-      :class="config.vuetify.theme.rounded"
       class="billing-subscriptions__error-card pa-6 mb-4"
       elevation="0"
     >
@@ -102,7 +101,6 @@
           <!-- ── Plan summary card (free) ──────────────────────────────── -->
           <v-card
             v-if="!subscription || currentPlan === 'free'"
-            :class="config.vuetify.theme.rounded"
             class="billing-subscriptions__plan-card billing-subscriptions__plan-card--free pa-6 mb-4"
             elevation="0"
           >
@@ -133,7 +131,6 @@
           <!-- ── Plan summary card (paid) ───────────────────────────────── -->
           <v-card
             v-else
-            :class="config.vuetify.theme.rounded"
             class="billing-subscriptions__plan-card billing-subscriptions__plan-card--paid pa-6 mb-4"
             elevation="0"
           >
@@ -214,7 +211,6 @@
 
             <!-- ── Usage meter card (T4 % bar — single source, no BillingUsageBarComponent) -->
             <v-card
-              :class="config.vuetify.theme.rounded"
               class="billing-subscriptions__meter-card px-6 py-3 mb-0"
               elevation="0"
             >
@@ -231,7 +227,6 @@
 
             <!-- ── Breakdown card ─────────────────────────────────────────── -->
             <v-card
-              :class="config.vuetify.theme.rounded"
               class="billing-subscriptions__meter-card--breakdown px-6 py-3 mb-0"
               elevation="0"
             >
@@ -247,7 +242,6 @@
 
           <!-- ── Extras card ──────────────────────────────────────────────── -->
           <v-card
-            :class="config.vuetify.theme.rounded"
             class="billing-subscriptions__extras-card pa-6 mb-4"
             elevation="0"
           >

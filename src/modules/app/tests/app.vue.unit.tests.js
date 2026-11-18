@@ -179,6 +179,18 @@ describe('App.vue — SEO (useHead)', () => {
     expect(resolveHead().htmlAttrs.lang).toBe('en');
   });
 
+  it('sets the app font variables on <html> from config.vuetify.theme.font', () => {
+    const config = { ...makeConfig(), vuetify: { ...testConfig.vuetify, theme: { ...testConfig.vuetify.theme, font: { body: 'Inter, sans-serif', heading: 'Lora, serif' } } } };
+    mountApp(config);
+    expect(resolveHead().htmlAttrs.style).toBe('--v-font-body: Inter, sans-serif; --v-font-heading: Lora, serif');
+  });
+
+  it('sets no html style when no font is configured', () => {
+    const config = { ...makeConfig(), vuetify: { ...testConfig.vuetify, theme: { ...testConfig.vuetify.theme, font: undefined } } };
+    mountApp(config);
+    expect(resolveHead().htmlAttrs.style).toBeUndefined();
+  });
+
   it('includes description meta', () => {
     mountApp(makeConfig());
     const { meta } = resolveHead();
@@ -325,5 +337,26 @@ describe('App.vue — theme wiring (#4462)', () => {
     await nextTick();
 
     expect(wrapper.vm.theme.global.name.value).toBe('dark');
+  });
+});
+
+describe('bare link rule', () => {
+  it('matches class-less anchors and RouterLink output, never Vuetify components', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const { createRouter, createMemoryHistory, RouterLink } = await import('vue-router');
+    const src = readFileSync(resolve(process.cwd(), 'src/modules/app/app.vue'), 'utf8');
+    const selector = src.match(/^ {2}(a:is\(.*\)) \{$/m)[1];
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<i />' } }, { path: '/x', component: { template: '<i />' } }] });
+    await router.push('/');
+    const wrapper = mount({ components: { RouterLink }, template: '<div><RouterLink id="on" to="/" /><RouterLink id="off" to="/x" /></div>' }, { global: { plugins: [router] }, attachTo: document.body });
+    expect(wrapper.find('#on').element.matches(selector)).toBe(true);
+    expect(wrapper.find('#off').element.matches(selector)).toBe(true);
+    for (const cls of ['', 'v-btn', 'v-card v-card--link', 'v-list-item', 'v-chip', 'text-primary']) {
+      const a = document.createElement('a');
+      if (cls) a.className = cls;
+      expect(a.matches(selector)).toBe(!cls);
+    }
+    wrapper.unmount();
   });
 });

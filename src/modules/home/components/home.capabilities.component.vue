@@ -58,7 +58,7 @@
               :class="{ 'capabilities-stack__item--active': activeIndex === index }"
               :aria-hidden="activeIndex !== index"
             >
-              <v-card :class="`${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="cardStyle" class="mx-3">
+              <v-card :style="cardStyle" class="mx-3">
                 <v-row :class="item.reversed ? 'flex-row-reverse' : ''" align="center">
                   <!-- Text Content -->
                   <v-col cols="12" md="6" class="pa-8">

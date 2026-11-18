@@ -28,7 +28,7 @@
     <!-- Empty state -->
     <div
       v-if="entries.length === 0"
-      class="text-caption text-medium-emphasis text-center py-6"
+      class="text-body-small text-medium-emphasis text-center py-6"
     >
       No ledger entries yet
     </div>
@@ -46,7 +46,7 @@
       >
         <!-- at column -->
         <template #[`item.at`]="{ item }">
-          <span class="text-caption">{{ formatDate(item.at) }}</span>
+          <span class="text-body-small">{{ formatDate(item.at) }}</span>
         </template>
 
         <!-- kind column -->
@@ -74,7 +74,7 @@
         <!-- refId / historyId column — truncated with native title tooltip -->
         <template #[`item.refId`]="{ item }">
           <span
-            class="billing-extras-ledger__truncate text-caption text-truncate"
+            class="billing-extras-ledger__truncate text-body-small text-truncate"
             :title="item.refId || item.historyId || '—'"
           >
             {{ truncate(item.refId || item.historyId) }}
@@ -84,7 +84,7 @@
         <!-- stripeSessionId column — truncated with native title tooltip -->
         <template #[`item.stripeSessionId`]="{ item }">
           <span
-            class="billing-extras-ledger__truncate text-caption text-truncate"
+            class="billing-extras-ledger__truncate text-body-small text-truncate"
             :title="item.stripeSessionId || '—'"
           >
             {{ truncate(item.stripeSessionId) }}

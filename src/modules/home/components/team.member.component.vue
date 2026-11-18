@@ -35,7 +35,7 @@
 -->
 <template>
   <v-col sm="12" md="6" lg="4" xl="4">
-    <v-card :class="`mx-auto ${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat">
+    <v-card class="mx-auto">
       <v-img
         src="/images/dark.webp"
         class="`text-white ${config.vuetify.theme.rounded}`"

@@ -19,7 +19,7 @@
       <!-- Personal shareable referral link (Node#4212): hidden when referral is disabled
            (the server then returns no code). Credit only, no reward. -->
       <v-col v-if="referralLink" cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+        <v-card color="surface" class="pa-6">
           <div class="d-flex align-center mb-2">
             <v-icon icon="fa-solid fa-link" color="primary" class="mr-3"></v-icon>
             <span class="text-title-large">Your referral link</span>
@@ -47,7 +47,7 @@
 
       <!-- Invite a contact -->
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+        <v-card color="surface" class="pa-6">
           <div class="d-flex align-center mb-2">
             <v-icon icon="fa-solid fa-gift" color="primary" class="mr-3"></v-icon>
             <span class="text-title-large">Invite a contact</span>
@@ -138,7 +138,7 @@
 
       <!-- My referrals: summary header + the invitations list -->
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+        <v-card color="surface" class="pa-6">
           <div class="d-flex align-center flex-wrap ga-2 mb-4">
             <v-icon icon="fa-solid fa-users" color="primary" class="mr-1"></v-icon>
             <span class="text-title-large">My referrals</span>

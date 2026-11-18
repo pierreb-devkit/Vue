@@ -47,7 +47,7 @@
             <template v-if="setup.showStepLabel && item.title" #opposite>
               <h3 class="text-headline-small text-md-headline-medium text-secondary font-weight-bold" v-text="item.title"></h3>
             </template>
-            <v-card :class="`${config.vuetify.theme.rounded} my-8 pb-2`" :flat="config.vuetify.theme.flat" :style="cardStyle">
+            <v-card class="my-8 pb-2" :style="cardStyle">
               <homeImgComponent v-if="item.img && !item.reversed" :img="item.img"></homeImgComponent>
               <homeContentComponent :setup="item" variant="card" alignment="center"></homeContentComponent>
               <homeImgComponent v-if="item.img && item.reversed" :img="item.img"></homeImgComponent>

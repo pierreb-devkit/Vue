@@ -93,7 +93,7 @@
 
     <!-- Remove confirmation dialog -->
     <v-dialog v-model="removeDialog.show" max-width="440">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+      <v-card class="pa-4">
         <v-card-title class="text-title-large font-weight-medium">
           {{ removeDialog.pending ? 'Cancel Invitation' : 'Remove Member' }}
         </v-card-title>
@@ -129,7 +129,7 @@
 
     <!-- Role change confirmation dialog -->
     <v-dialog v-model="roleDialog.show" max-width="440">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+      <v-card class="pa-4">
         <v-card-title class="text-title-large font-weight-medium">Change Role</v-card-title>
         <v-card-text class="text-body-medium">
           Change <strong>{{ roleDialog.memberName }}</strong> from
@@ -147,7 +147,7 @@
 
     <!-- Add member dialog: search a user by exact email, then invite them -->
     <v-dialog v-model="addDialog.show" max-width="480" data-test="org-add-member-dialog">
-      <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+      <v-card class="pa-4">
         <v-card-title class="text-title-large font-weight-medium">Add member</v-card-title>
         <v-card-text class="text-body-medium">
           <p class="text-medium-emphasis mb-4">
