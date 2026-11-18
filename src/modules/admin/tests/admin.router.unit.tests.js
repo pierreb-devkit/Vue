@@ -165,9 +165,7 @@ describe('admin.router (integration with vue-router)', () => {
   });
 
   it('should preserve layout parent across tab navigation (back/forward)', async () => {
-    const knowledge = [
-      { path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } },
-    ];
+    const knowledge = [{ path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } }];
     const router = buildRouter([{ name: 'knowledge', routes: knowledge }]);
     await router.push('/admin/users');
     const beforeLayout = router.currentRoute.value.matched[0];

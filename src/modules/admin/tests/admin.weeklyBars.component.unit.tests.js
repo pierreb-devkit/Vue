@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import AdminWeeklyBars from '../components/admin.weeklyBars.component.vue';
 
-const weeks = (counts) => counts.map((count, i) => ({ week: `2026-09-${String(i * 7 + 7).padStart(2, '0')}`, count }));
+const weeks = (counts) => counts.map((count, i) => ({ week: new Date(Date.UTC(2026, 8, 7 + i * 7)).toISOString().slice(0, 10), count }));
 
 describe('admin.weeklyBars.component', () => {
   it('should draw one column per week and a bar only for non-zero weeks', () => {
@@ -31,12 +31,18 @@ describe('admin.weeklyBars.component', () => {
   it('should label the first, middle and last weeks', () => {
     const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([1, 1, 1, 1, 1]), label: 'x' } });
     const labels = wrapper.findAll('.admin-weekly-bars__axis span').map((s) => s.text());
-    expect(labels.filter(Boolean)).toHaveLength(3);
-    expect(labels[0]).toBe('Sep 7');
+    expect(labels).toEqual(['Sep 7', '', 'Sep 21', '', 'Oct 5']);
   });
 
   it('should describe the series for screen readers', () => {
     const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([2, 3]), label: 'New accounts' } });
-    expect(wrapper.attributes('aria-label')).toBe('New accounts: 5 over 2 weeks, from the week of Sep 7');
+    expect(wrapper.find('figure').attributes('aria-label')).toBe('New accounts: 5 over 2 weeks, from the week of Sep 7');
+  });
+
+  it('should list each week and its count as text outside the chart', () => {
+    const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([2, 3]), label: 'New accounts' } });
+    const items = wrapper.findAll('.admin-weekly-bars__sr li').map((li) => li.text());
+    expect(items).toEqual(['Week of Sep 7: 2', 'Week of Sep 14: 3']);
+    expect(wrapper.find('figure').find('.admin-weekly-bars__sr').exists()).toBe(false);
   });
 });

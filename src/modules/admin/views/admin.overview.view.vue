@@ -31,7 +31,7 @@
           <div v-if="chart.error" class="d-flex align-center ga-2 text-body-medium" data-test="error">
             <v-icon icon="fa-solid fa-circle-exclamation" color="error" size="small"></v-icon>
             <span>Couldn't load {{ chart.noun }}.</span>
-            <v-btn variant="text" size="small" class="text-none" @click="load">Retry</v-btn>
+            <v-btn variant="text" size="small" class="text-none" @click="load([chart.key])">Retry</v-btn>
           </div>
           <AdminWeeklyBarsComponent v-else-if="chart.weeks" :weeks="chart.weeks" :label="`${chart.title} per week`" />
           <div v-else class="admin-overview__placeholder"></div>
@@ -46,7 +46,7 @@
           <div v-if="statsErrors.includes('audit')" class="d-flex align-center ga-2 text-body-medium" data-test="error">
             <v-icon icon="fa-solid fa-circle-exclamation" color="error" size="small"></v-icon>
             <span>Couldn't load activity.</span>
-            <v-btn variant="text" size="small" class="text-none" @click="load">Retry</v-btn>
+            <v-btn variant="text" size="small" class="text-none" @click="load(['audit'])">Retry</v-btn>
           </div>
           <div v-else-if="stats.audit && !stats.audit.topActions.length" class="text-body-medium text-medium-emphasis">No activity recorded yet.</div>
           <ul v-else-if="stats.audit" class="admin-overview__list">
@@ -68,7 +68,7 @@
           <div v-if="statsErrors.includes('recent')" class="d-flex align-center ga-2 text-body-medium" data-test="error">
             <v-icon icon="fa-solid fa-circle-exclamation" color="error" size="small"></v-icon>
             <span>Couldn't load recent activity.</span>
-            <v-btn variant="text" size="small" class="text-none" @click="load">Retry</v-btn>
+            <v-btn variant="text" size="small" class="text-none" @click="load(['recent'])">Retry</v-btn>
           </div>
           <div v-else-if="stats.recent && !stats.recent.length" class="text-body-medium text-medium-emphasis mt-2">No activity recorded yet.</div>
           <ul v-else-if="stats.recent" class="admin-overview__list">
@@ -218,13 +218,14 @@ export default {
   },
   methods: {
     /**
-     * @desc Fetch every Overview source.
+     * @desc Fetch the Overview sources (all, or only the ones named, for a retry).
+     * @param {string[]} [only] - sources to reload
      * @returns {Promise<void>}
      */
-    async load() {
+    async load(only) {
       this.loading = true;
       try {
-        await useAdminStore().getStats({ audit: this.auditOn });
+        await useAdminStore().getStats({ audit: this.auditOn, only });
       } finally {
         this.loading = false;
       }
@@ -239,7 +240,9 @@ export default {
       const vs = `vs previous ${this.periodWeeks} weeks`;
       if (current === previous) return { text: `No change ${vs}`, icon: null, class: 'text-medium-emphasis' };
       const up = current > previous;
-      const text = previous === 0 ? `Up from 0 ${vs}` : `${up ? 'Up' : 'Down'} ${Math.round((Math.abs(current - previous) / previous) * 100)}% ${vs}`;
+      const pct = previous === 0 ? 0 : Math.round((Math.abs(current - previous) / previous) * 100);
+      const dir = up ? 'Up' : 'Down';
+      const text = previous === 0 ? `Up from 0 ${vs}` : pct === 0 ? `${dir} less than 1% ${vs}` : `${dir} ${pct}% ${vs}`;
       return {
         text,
         icon: up ? 'fa-solid fa-arrow-trend-up' : 'fa-solid fa-arrow-trend-down',

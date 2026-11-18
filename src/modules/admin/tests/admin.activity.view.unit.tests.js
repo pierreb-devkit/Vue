@@ -73,7 +73,12 @@ describe('admin.activity.view', () => {
 
   it('should show loading state while fetching activity logs', async () => {
     let resolveGet;
-    adminStore.getAuditLogs = vi.fn(() => new Promise((r) => { resolveGet = r; }));
+    adminStore.getAuditLogs = vi.fn(
+      () =>
+        new Promise((r) => {
+          resolveGet = r;
+        }),
+    );
     wrapper.vm.fetchActivityLogs();
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.activityLoading).toBe(true);
@@ -101,9 +106,7 @@ describe('admin.activity.view', () => {
     wrapper.vm.activityFilterAction = 'auth.login';
     wrapper.vm.applyActivityFilters();
     expect(wrapper.vm.activityPage).toBe(1);
-    expect(adminStore.getAuditLogs).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'auth.login', page: 1 }),
-    );
+    expect(adminStore.getAuditLogs).toHaveBeenCalledWith(expect.objectContaining({ action: 'auth.login', page: 1 }));
   });
 
   it('should clear filters and reset page', () => {
@@ -256,9 +259,7 @@ describe('admin.activity.view — debounced card-title filters', () => {
     expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(1);
     expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(2);
-    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(
-      expect.objectContaining({ action: 'auth.login', page: 1 }),
-    );
+    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(expect.objectContaining({ action: 'auth.login', page: 1 }));
   });
 
   it('does not fetch while the user-ID filter is not a valid ObjectId', async () => {
@@ -273,9 +274,7 @@ describe('admin.activity.view — debounced card-title filters', () => {
     await wrapper.vm.$nextTick();
     vi.advanceTimersByTime(1000);
     expect(adminStore.getAuditLogs).toHaveBeenCalledTimes(2);
-    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(
-      expect.objectContaining({ userId: '507f1f77bcf86cd799439011', page: 1 }),
-    );
+    expect(adminStore.getAuditLogs).toHaveBeenLastCalledWith(expect.objectContaining({ userId: '507f1f77bcf86cd799439011', page: 1 }));
   });
 
   it('Clear fetches immediately and the trailing debounce does not double-fetch', async () => {

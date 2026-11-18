@@ -123,7 +123,18 @@ describe('Admin Store', () => {
     it('should handle error, set error state, and reset user', async () => {
       const store = useAdminStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      store.user = { firstName: 'Stale', lastName: 'Data', email: 'stale@example.com', bio: '', position: '', avatar: '', roles: [], memberships: [], updated: '', created: '' };
+      store.user = {
+        firstName: 'Stale',
+        lastName: 'Data',
+        email: 'stale@example.com',
+        bio: '',
+        position: '',
+        avatar: '',
+        roles: [],
+        memberships: [],
+        updated: '',
+        created: '',
+      };
 
       axios.get.mockRejectedValueOnce(new Error('Not found'));
 
@@ -262,6 +273,11 @@ describe('Admin Store', () => {
       await store.getStats({ audit: false });
 
       expect(axios.get).toHaveBeenCalledTimes(2);
+      const urls = axios.get.mock.calls.map(([url]) => url);
+      expect(urls.some((u) => u.endsWith('/admin/users/stats'))).toBe(true);
+      expect(urls.some((u) => u.endsWith('/admin/organizations/stats'))).toBe(true);
+      expect(store.stats.users).toEqual(users);
+      expect(store.stats.organizations).toEqual(organizations);
       expect(store.stats.audit).toBeNull();
       expect(store.stats.recent).toBeNull();
       axios.get.mockReset();
@@ -278,6 +294,40 @@ describe('Admin Store', () => {
       expect(store.stats.audit).toBeNull();
       expect(store.stats.recent).toEqual(recent);
       expect(store.statsErrors).toEqual(['organizations', 'audit']);
+      axios.get.mockReset();
+    });
+  });
+
+  describe('getStats refresh rules', () => {
+    it('should clear a stale shared error and retry only the named source', async () => {
+      const store = useAdminStore();
+      store.error = 'Users failed';
+      store.stats = { users: { total: 1, weeks: [] }, organizations: null, audit: null, recent: null };
+      store.statsErrors = ['organizations'];
+      axios.get.mockResolvedValue({ data: { data: { total: 2, weeks: [] } } });
+
+      await store.getStats({ only: ['organizations'] });
+
+      expect(axios.get).toHaveBeenCalledTimes(1);
+      expect(store.error).toBeNull();
+      expect(store.stats.users.total).toBe(1);
+      expect(store.stats.organizations.total).toBe(2);
+      expect(store.statsErrors).toEqual([]);
+      axios.get.mockReset();
+    });
+
+    it('should ignore an older answer that lands after a newer one', async () => {
+      const store = useAdminStore();
+      let failFirst;
+      axios.get.mockImplementationOnce(() => new Promise((_, reject) => (failFirst = reject)));
+      const first = store.getStats({ audit: false, only: ['users'] });
+      axios.get.mockResolvedValueOnce({ data: { data: { total: 9, weeks: [] } } });
+      await store.getStats({ audit: false, only: ['users'] });
+      failFirst(new Error('late'));
+      await first;
+
+      expect(store.stats.users.total).toBe(9);
+      expect(store.statsErrors).not.toContain('users');
       axios.get.mockReset();
     });
   });
@@ -459,18 +509,10 @@ describe('Admin Store', () => {
 
       await store.getAuditLogs({ action: 'auth.login', userId: 'abc123abc123abc123abc123', page: 2, perPage: 10 });
 
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('action=auth.login'),
-      );
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('userId=abc123abc123abc123abc123'),
-      );
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('page=2'),
-      );
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('perPage=10'),
-      );
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('action=auth.login'));
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('userId=abc123abc123abc123abc123'));
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('perPage=10'));
     });
 
     it('should handle error and clear audit logs', async () => {
@@ -511,9 +553,7 @@ describe('Admin Store', () => {
 
       await store.getAuditLogs();
 
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/audit'),
-      );
+      expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/audit'));
     });
   });
 });

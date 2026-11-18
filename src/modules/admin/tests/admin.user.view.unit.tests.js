@@ -90,7 +90,9 @@ describe('admin.user.view — template chrome', () => {
 
 describe('admin.user.view — breadcrumb publishing', () => {
   let wrapper;
-  afterEach(() => { if (wrapper) wrapper.unmount(); });
+  afterEach(() => {
+    if (wrapper) wrapper.unmount();
+  });
 
   it('publishes the breadcrumb to the admin store when user data arrives', async () => {
     wrapper = mountView('u1', { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' });
@@ -133,7 +135,9 @@ describe('admin.user.view — breadcrumb publishing', () => {
 
 describe('admin.user.view — delete flow', () => {
   let wrapper;
-  afterEach(() => { if (wrapper) wrapper.unmount(); });
+  afterEach(() => {
+    if (wrapper) wrapper.unmount();
+  });
 
   it('calls deleteUser and navigates to /admin/users on remove()', async () => {
     wrapper = mountView('u1', { firstName: 'Jane' });

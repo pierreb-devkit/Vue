@@ -241,5 +241,4 @@ describe('admin.layout', () => {
     const readinessTab = tabs.find((t) => t.value === 'readiness');
     expect(readinessTab.badge).toBeUndefined();
   });
-
 });

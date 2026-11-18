@@ -9,34 +9,34 @@
   <AdminWeeklyBarsComponent :weeks="[{ week: '2026-11-16', count: 3 }]" label="New accounts per week" />
 -->
 <template>
-  <figure class="admin-weekly-bars ma-0" :aria-label="ariaLabel" role="img">
-    <div class="admin-weekly-bars__plot">
-      <div class="admin-weekly-bars__ticks text-label-small text-medium-emphasis" aria-hidden="true">
-        <span v-for="tick in ticks" :key="tick" :style="{ bottom: `${(tick / scaleMax) * 100}%` }">{{ tick }}</span>
-      </div>
-      <div class="admin-weekly-bars__area">
-        <div
-          v-for="tick in ticks"
-          :key="`grid-${tick}`"
-          class="admin-weekly-bars__grid"
-          :class="{ 'admin-weekly-bars__grid--base': tick === 0 }"
-          :style="{ bottom: `${(tick / scaleMax) * 100}%` }"
-          aria-hidden="true"
-        ></div>
-        <div
-          v-for="item in weeks"
-          :key="item.week"
-          class="admin-weekly-bars__col"
-          :title="`Week of ${formatWeek(item.week)}: ${item.count}`"
-        >
-          <div v-if="item.count > 0" class="admin-weekly-bars__bar bg-primary" :style="{ height: `${(item.count / scaleMax) * 100}%` }"></div>
+  <div>
+    <figure class="admin-weekly-bars ma-0" :aria-label="ariaLabel" role="img">
+      <div class="admin-weekly-bars__plot">
+        <div class="admin-weekly-bars__ticks text-label-small text-medium-emphasis" aria-hidden="true">
+          <span v-for="tick in ticks" :key="tick" :style="{ bottom: `${(tick / scaleMax) * 100}%` }">{{ tick }}</span>
+        </div>
+        <div class="admin-weekly-bars__area">
+          <div
+            v-for="tick in ticks"
+            :key="`grid-${tick}`"
+            class="admin-weekly-bars__grid"
+            :class="{ 'admin-weekly-bars__grid--base': tick === 0 }"
+            :style="{ bottom: `${(tick / scaleMax) * 100}%` }"
+            aria-hidden="true"
+          ></div>
+          <div v-for="item in weeks" :key="item.week" class="admin-weekly-bars__col" :title="`Week of ${formatWeek(item.week)}: ${item.count}`">
+            <div v-if="item.count > 0" class="admin-weekly-bars__bar bg-primary" :style="{ height: `${(item.count / scaleMax) * 100}%` }"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="admin-weekly-bars__axis text-label-small text-medium-emphasis" aria-hidden="true">
-      <span v-for="(item, i) in weeks" :key="`x-${item.week}`">{{ xLabelIndexes.includes(i) ? formatWeek(item.week) : '' }}</span>
-    </div>
-  </figure>
+      <div class="admin-weekly-bars__axis text-label-small text-medium-emphasis" aria-hidden="true">
+        <span v-for="(item, i) in weeks" :key="`x-${item.week}`">{{ xLabelIndexes.includes(i) ? formatWeek(item.week) : '' }}</span>
+      </div>
+    </figure>
+    <ul class="admin-weekly-bars__sr">
+      <li v-for="item in weeks" :key="`sr-${item.week}`">Week of {{ formatWeek(item.week) }}: {{ item.count }}</li>
+    </ul>
+  </div>
 </template>
 
 <script>
@@ -117,6 +117,16 @@ export default {
 </script>
 
 <style scoped>
+.admin-weekly-bars__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .admin-weekly-bars__plot {
   display: flex;
   height: 160px;

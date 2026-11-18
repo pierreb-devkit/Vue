@@ -22,7 +22,7 @@ const stubs = {
   'v-col': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
   'v-spacer': { template: '<span />' },
-  'v-btn': { template: '<button @click="$attrs.onClick && $attrs.onClick()"><slot /></button>' },
+  'v-btn': { template: '<button><slot /></button>' },
   'v-icon': { template: '<i />' },
   'v-progress-linear': { template: '<div />' },
   AdminWeeklyBarsComponent: { props: ['weeks', 'label'], template: '<div data-testid="bars">{{ label }}</div>' },
@@ -65,7 +65,7 @@ describe('admin.overview.view', () => {
 
   it('should load every source on mount', () => {
     mountView();
-    expect(store.getStats).toHaveBeenCalledWith({ audit: true });
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true, only: undefined });
   });
 
   it('should show the KPIs with their trend against the previous period', async () => {
@@ -89,6 +89,12 @@ describe('admin.overview.view', () => {
     expect(wrapper.vm.trend(8, 4).class).toBe('text-success');
     expect(wrapper.vm.trend(2, 4).class).toBe('text-error');
     expect(wrapper.vm.trend(4, 4).class).toBe('text-medium-emphasis');
+  });
+
+  it('should not print a nonzero change as 0%', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.trend(1001, 1000).text).toBe('Up less than 1% vs previous 4 weeks');
+    expect(wrapper.vm.trend(999, 1000).text).toBe('Down less than 1% vs previous 4 weeks');
   });
 
   it('should never print a future time for a recent event', () => {
@@ -125,12 +131,13 @@ describe('admin.overview.view', () => {
     store.getStats.mockClear();
     const retry = wrapper.findAll('button').find((b) => b.text() === 'Retry');
     await retry.trigger('click');
-    expect(store.getStats).toHaveBeenCalled();
+    expect(store.getStats).toHaveBeenCalledTimes(1);
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true, only: ['users'] });
   });
 
   it('should hide the activity parts when audit logging is disabled', async () => {
     const wrapper = mountView({ audit: { enabled: false } });
-    expect(store.getStats).toHaveBeenCalledWith({ audit: false });
+    expect(store.getStats).toHaveBeenCalledWith({ audit: false, only: undefined });
     store.stats = { ...fullStats(), audit: null, recent: null };
     await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-test="kpi-active"]').exists()).toBe(false);
