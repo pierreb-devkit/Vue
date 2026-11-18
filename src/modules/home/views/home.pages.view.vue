@@ -11,7 +11,7 @@
     <section id="page" :style="style('section', config.pages)">
       <v-container class="py-12" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
         <v-row align="center" justify="center">
-          <v-card :style="style('card', config.pages)" class="rounded-lg w-100" flat>
+          <v-card :style="style('card', config.pages)" class="w-100">
             <v-tabs v-if="contents.length > 1" v-model="tab" fixed-tabs>
               <v-tab v-for="({ title }, i) in contents" :key="i" :value="i" color="secondary">{{ title }}</v-tab>
             </v-tabs>
