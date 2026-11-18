@@ -59,6 +59,7 @@ import { usePageHead } from '@/lib/composables/usePageHead';
 /**
  * Two-pane guides, by slug. A consumer adds `content/docs.<slug>.content.js`
  * (default export: `{ title, lead, base, sections }`); the module ships none.
+ * A downstream uses its project name as the slug: `docs.<project>.content.js`.
  * Bundled with this route only, and a Map so a URL slug never hits a prototype key.
  */
 const PANE_PAGES = new Map(

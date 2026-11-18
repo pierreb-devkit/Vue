@@ -80,4 +80,4 @@ Downstream overrides `config.docs.*`:
 
 ## Two-pane guides (optional)
 
-Add `src/modules/docs/content/docs.<slug>.content.js` with a default export `{ title, lead, base, sections }` and the guide of that slug renders through `<DocsPanes>`: explanation on the left, code and answer held on the right. The module ships no content, so every guide stays markdown until a project adds a file.
+Add `src/modules/docs/content/docs.<slug>.content.js` with a default export `{ title, lead, base, sections }` and the guide of that slug renders through `<DocsPanes>`: explanation on the left, code and answer held on the right. The module ships no content, so every guide stays markdown until a project adds a file. A downstream names its file after its project, `docs.<project>.content.js` (it renders the guide of slug `<project>`), so it never collides with a stack file.

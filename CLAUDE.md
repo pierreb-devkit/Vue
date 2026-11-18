@@ -66,6 +66,16 @@ This repository is open source. **Never reference downstream consumers** — pro
 - `index.html`, `vite.config.js` and `Dockerfile` are stack-managed too: head links come from `app.seo.icons` / `app.seo.manifest`, build plugins from `src/modules/{project}/{project}.vite.js` (default export `(appConfig, mode) => Plugin | Plugin[]`), Docker values from `--build-arg DEVKIT_VUE_*`.
 - This rule applies retroactively: when `/update-stack` reports `src/main.js` as a conflict, the downstream side of the conflict must be moved to a project-only entry, never re-applied as a `--ours` patch.
 
+## Downstream file ownership
+
+A downstream never edits a stack file. Inside stack folders (`src/lib`, `src/config`, every module folder the stack ships under `src/modules`) it adds only its own modules and files that carry its project name:
+
+- `*.<project>.*` overrides (e.g. `modules/{name}/config/{module}.<project>.config.js`)
+- `src/config/defaults/<project>.config.js`, `config/templates/<project>/`
+- docs pane content: `src/modules/docs/content/docs.<project>.content.js` (the file name gives the slug: the guide with slug `<project>` renders it)
+
+Any other file found there: generic → upstream to the stack · project-only → the project's own module · dead copy of a file the stack deleted → deleted at the next stack update. Existing migration files never move (they are recorded by path; moving one re-runs it). `/update-stack` step 3quater warns on both cases; it never blocks.
+
 ## Guardrails
 
 - Never commit secrets (`.env*`, keys, tokens)
