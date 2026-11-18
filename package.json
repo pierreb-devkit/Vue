@@ -15,6 +15,9 @@
   "private": false,
   "author": "https://github.com/pierreb-devkit/Vue/graphs/contributors",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.17"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/pierreb-devkit/Vue.git"

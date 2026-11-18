@@ -625,4 +625,65 @@ describe('seoInjectPlugin', () => {
       expect(out).not.toContain('<script>x');
     });
   });
+
+  describe('icons + manifest links', () => {
+    it('emits one <link> per app.seo.icons entry with optional sizes/type', () => {
+      const result = transform({
+        app: {
+          seo: {
+            icons: [
+              { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+              { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
+            ],
+          },
+        },
+      });
+      expect(result).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">');
+      expect(result).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">');
+    });
+
+    it('skips entries with no rel or an unsafe href', () => {
+      const result = transform({
+        app: {
+          seo: {
+            icons: [
+              { rel: 'icon', href: 'javascript:alert(1)' },
+              { rel: 'icon', href: '//evil.example/x.ico' },
+              { rel: 'icon', href: '/\\evil2.example/x.ico' },
+              { href: '/no-rel.ico' },
+              null,
+              { rel: 'icon', href: 'https://cdn.example.com/f.ico' },
+            ],
+          },
+        },
+      });
+      expect(result).not.toContain('javascript:');
+      expect(result).not.toContain('evil.example');
+      expect(result).not.toContain('evil2.example');
+      expect(result).not.toContain('no-rel.ico');
+      expect(result).toContain('<link rel="icon" href="https://cdn.example.com/f.ico">');
+    });
+
+    it('emits sizes/type only when they are strings', () => {
+      const result = transform({ app: { seo: { icons: [{ rel: 'icon', href: '/f.png', sizes: 32, type: { x: 1 } }] } } });
+      expect(result).toContain('<link rel="icon" href="/f.png">');
+      expect(result).not.toContain('sizes=');
+      expect(result).not.toContain('type="[object');
+    });
+
+    it('ignores a non-array app.seo.icons', () => {
+      expect(transform({ app: { seo: { icons: { rel: 'icon', href: '/x.ico' } } } })).not.toContain('x.ico');
+    });
+
+    it('links manifest.json when seo.manifest.enabled on a build', () => {
+      const result = transform({ app: { seo: { manifest: { enabled: true } } } });
+      expect(result).toContain('<link rel="manifest" href="/manifest.json">');
+    });
+
+    it('does not link the manifest when disabled, or on the dev server', () => {
+      expect(transform({ app: { seo: { manifest: { enabled: false } } } })).not.toContain('rel="manifest"');
+      const dev = seoInjectPlugin({ app: { seo: { manifest: { enabled: true } } } }).transformIndexHtml(baseHtml, { server: {} });
+      expect(dev).not.toContain('rel="manifest"');
+    });
+  });
 });

@@ -325,6 +325,9 @@ describe('isDocsLayerIntended', () => {
     [{ enabled: true, contentUrl: 42 }, false],
     [{ enabled: true, contentUrl: { url: 'x' } }, false],
     [{ enabled: true, contentUrl: 'https://api.example.com/api/public/docs' }, true],
+    [{ enabled: 'false', contentUrl: 'https://api.example.com/api/public/docs' }, false],
+    [{ enabled: 'true', contentUrl: 'https://api.example.com/api/public/docs' }, true],
+    [{ enabled: 1, contentUrl: 'https://api.example.com/api/public/docs' }, false],
   ])('%j → %s', (docs, expected) => {
     expect(isDocsLayerIntended(docs)).toBe(expected);
   });
@@ -362,6 +365,66 @@ describe('augmentSeoConfigWithDocs', () => {
     const out = await augmentSeoConfigWithDocs(config, { fetchImpl });
     expect(out).toBe(config);
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  describe('strict mode (app.seo.docs.strict)', () => {
+    it('production + strict: throws when contentUrl is empty', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn(), production: true })).rejects.toThrow(/contentUrl is empty/);
+    });
+
+    it('production + strict: throws when the fetch fails', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const fetchImpl = vi.fn().mockRejectedValue(new Error('offline'));
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).rejects.toThrow(/fetch failed/);
+    });
+
+    it('production + strict: throws when the tree has no routes', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ categories: [] }) });
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).rejects.toThrow(/no routes/);
+    });
+
+    it('strict outside a production build stays fail-soft', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn() })).resolves.toBe(config);
+    });
+
+    it('strict with the layer disabled never throws', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: false, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn(), production: true })).resolves.toBe(config);
+    });
+
+    it("env-string strict: 'false' never throws, 'true' arms strict", async () => {
+      const off = baseConfig();
+      off.app.seo.docs = { enabled: 'true', strict: 'false', contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(off, { fetchImpl: vi.fn(), production: true })).resolves.toBe(off);
+      const on = baseConfig();
+      on.app.seo.docs = { enabled: 'true', strict: 'true', contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(on, { fetchImpl: vi.fn(), production: true })).rejects.toThrow(/contentUrl is empty/);
+    });
+
+    it("env-string enabled 'false' keeps the layer off even with strict", async () => {
+      const fetchImpl = vi.fn();
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: 'false', strict: 'true', contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).resolves.toBe(config);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    });
+
+    it('production + strict: a healthy tree augments normally', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: treeFixture }) });
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/api/public/docs' };
+      const out = await augmentSeoConfigWithDocs(config, { fetchImpl, production: true });
+      expect(out.app.seo.prerender.routes).toContain('/docs/integrate/webhooks');
+    });
   });
 
   it('ON path (stubbed fetch): merges docs routes into prerender + sitemap + llms, keeping statics', async () => {

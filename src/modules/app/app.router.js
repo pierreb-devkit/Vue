@@ -36,8 +36,8 @@ const _downstreamOptionalModules = [];
 /**
  * Register downstream-specific route extensions.
  *
- * Call this from your downstream module (e.g. `src/modules/<project>/index.js`)
- * BEFORE the router is instantiated.  Calling it mutates the internal registry
+ * Call this from your downstream entry `src/modules/<project>/<project>.app.js`
+ * (eager-imported by `main.js` BEFORE the router is instantiated).  Calling it mutates the internal registry
  * arrays in place; the router composition picks up the additions automatically.
  *
  * @param {object}   [options={}]
@@ -64,6 +64,12 @@ export function registerDownstreamRoutes(options = {}) {
 const getRouter = () => {
   // Core modules — always mounted
   const coreRoutes = [].concat(home, auth, users, ..._downstreamCoreModules);
+
+  // Dev-only: home switched off but no downstream registered a `/` route.
+  if (import.meta.env?.DEV && config?.home?.routes?.home?.activated === false
+    && !coreRoutes.some((r) => r?.path === '/')) {
+    console.warn('[router] home.routes.home.activated is false but no "/" route was registered via registerDownstreamRoutes().');
+  }
 
   /**
    * Admin child modules — routes injected as children of the `/admin` parent

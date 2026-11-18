@@ -96,3 +96,26 @@ describe('home.router — both deactivated', () => {
     expect(routes.map((r) => r.name)).toEqual(['Home', 'NotFound']);
   });
 });
+
+describe('home.router — home deactivated', () => {
+  it('does not register the Home route', async () => {
+    vi.resetModules();
+    vi.doMock('@/config', () => ({
+      default: { home: { routes: { home: { activated: false } } } },
+    }));
+    const { default: routes } = await import('../router/home.router');
+    expect(routes.map((r) => r.name)).toEqual(['Team', 'Pages', 'NotFound']);
+  });
+
+  it('lets a downstream / route win when composed with the home routes', async () => {
+    vi.resetModules();
+    vi.doMock('@/config', () => ({
+      default: { home: { routes: { home: { activated: false } } } },
+    }));
+    const { default: routes } = await import('../router/home.router');
+    const router = buildRouter([...routes, { path: '/', name: 'Home', component: { name: 'DownstreamHome', template: '<div />' } }]);
+    await router.push('/');
+    expect(router.currentRoute.value.name).toBe('Home');
+    expect(router.currentRoute.value.matched[0].components.default.name).toBe('DownstreamHome');
+  });
+});

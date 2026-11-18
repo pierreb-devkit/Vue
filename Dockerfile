@@ -11,17 +11,19 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 # args
 ARG NODE_ENV='development'
-ARG DEVKIT_VUE_app_title='Devkit-Docker'
-ARG DEVKIT_VUE_api_protocol='http'
-ARG DEVKIT_VUE_api_host='localhost'
-ARG DEVKIT_VUE_api_port='3000'
-ARG DEVKIT_VUE_api_base='api'
-ARG DEVKIT_VUE_cookie_prefix='waos'
-# Analytics ARGs: declared without defaults so BuildKit does NOT leak empty
-# strings into process.env at build time. With defaults, BuildKit exposes
-# the ARG as an env var to RUN steps, and generateConfig.js Layer 5
-# (DEVKIT_VUE_* env-var override) silently overrides downstream
-# config-file values with the empty/false defaults. Issue: pierreb-devkit/Vue#4110
+# DEVKIT_VUE_* ARGs are declared WITHOUT defaults. A default is exposed as an
+# env var to RUN steps, and generateConfig.js Layer 5 (DEVKIT_VUE_* env-var
+# override) would then silently override the project's config-file values.
+# Pass a value with --build-arg only when you want it to win over config.
+# Issues: pierreb-devkit/Vue#4110, #4876
+ARG DEVKIT_VUE_app_title
+ARG DEVKIT_VUE_app_version
+ARG DEVKIT_VUE_app_seo_docs_contentUrl
+ARG DEVKIT_VUE_api_protocol
+ARG DEVKIT_VUE_api_host
+ARG DEVKIT_VUE_api_port
+ARG DEVKIT_VUE_api_base
+ARG DEVKIT_VUE_cookie_prefix
 ARG DEVKIT_VUE_analytics_sentry_dsn
 ARG DEVKIT_VUE_analytics_sentry_environment
 ARG DEVKIT_VUE_analytics_posthog_key
