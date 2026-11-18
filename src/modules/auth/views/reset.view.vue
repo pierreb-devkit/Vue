@@ -34,6 +34,9 @@
           Save Password
         </v-btn>
       </v-form>
+      <v-alert v-if="error" type="error" variant="tonal" class="mt-6" :class="config.vuetify.theme.rounded" data-test="reset-error">
+        {{ error }}
+      </v-alert>
       <p class="text-body-medium text-center mt-6">
         <router-link to="/signin" class="text-primary font-weight-bold text-decoration-none">Back to sign in</router-link>
       </p>
@@ -49,9 +52,7 @@ import { useTheme } from 'vuetify';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
-import { createLogger } from '../../../lib/helpers/logger';
 
-const logger = createLogger('auth');
 /**
  * Component definition.
  */
@@ -72,6 +73,7 @@ export default {
     return {
       theme,
       valid: true,
+      error: '',
       password: '',
       showPassword: false,
       rules: {
@@ -96,11 +98,13 @@ export default {
       if (form.valid) {
         const { password } = this;
         const authStore = useAuthStore();
+        this.error = '';
         try {
           await authStore.reset({ newPassword: password, token: this.$route.query.token });
           this.$router.push(this.config.sign.route);
         } catch (err) {
-          logger.error(err);
+          // The store re-throws a sanitized Error (no request payload in it).
+          this.error = err.message;
         }
       }
     },

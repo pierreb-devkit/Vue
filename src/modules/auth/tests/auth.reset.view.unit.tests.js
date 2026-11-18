@@ -101,13 +101,46 @@ describe('auth.reset.view', () => {
 
     it('does not throw when reset rejects', async () => {
       resetMock.mockRejectedValueOnce(new Error('network error'));
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const wrapper = mountView();
 
       wrapper.vm.password = 'NewSecurePass1';
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
-      consoleSpy.mockRestore();
+    });
+
+    it('navigates to the sign-in route on success', async () => {
+      resetMock.mockResolvedValueOnce(undefined);
+      const wrapper = mountView();
+
+      wrapper.vm.password = 'NewSecurePass1';
+      await wrapper.vm.validate();
+
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
+      expect(wrapper.vm.error).toBe('');
+    });
+
+    it('stays on the page and shows the error when reset fails', async () => {
+      resetMock.mockRejectedValueOnce(new Error('Password reset token is invalid or has expired.'));
+      const wrapper = mountView();
+
+      wrapper.vm.password = 'NewSecurePass1';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.vm.$router.push).not.toHaveBeenCalled();
+      expect(wrapper.find('[data-test="reset-error"]').text()).toContain('Password reset token is invalid or has expired.');
+    });
+
+    it('clears the previous error on a new attempt', async () => {
+      resetMock.mockRejectedValueOnce(new Error('first failure')).mockResolvedValueOnce(undefined);
+      const wrapper = mountView();
+
+      wrapper.vm.password = 'NewSecurePass1';
+      await wrapper.vm.validate();
+      expect(wrapper.vm.error).toBe('first failure');
+
+      await wrapper.vm.validate();
+      expect(wrapper.vm.error).toBe('');
     });
   });
 
