@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+        <v-card width="100%" color="surface">
           <v-progress-linear :active="readinessLoading" indeterminate color="primary"></v-progress-linear>
           <v-table v-if="!readinessLoading && readiness.length">
             <thead>

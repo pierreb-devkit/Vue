@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+        <v-card color="surface" class="pa-6">
           <div class="d-flex align-center justify-end mb-4">
             <v-btn
               v-if="id"

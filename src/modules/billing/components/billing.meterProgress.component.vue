@@ -76,14 +76,14 @@
           :size="64"
           :width="6"
         >
-          <span class="text-caption font-weight-bold">{{ clampedProgress }}%</span>
+          <span class="text-body-small font-weight-bold">{{ clampedProgress }}%</span>
         </v-progress-circular>
       </div>
     </template>
 
     <!-- Summary text: % is primary, compute units in tooltip on overflow only -->
     <div
-      class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1 d-flex align-center ga-1"
+      class="billing-meter-progress__summary text-body-small text-medium-emphasis mt-1 d-flex align-center ga-1"
       :aria-live="effectiveOverage > 0 ? 'assertive' : 'polite'"
     >
       <!-- Primary value: always percentage -->

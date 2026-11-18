@@ -4,6 +4,10 @@ export default {
       dark: 'auto', // 'auto' | true | false — auto follows system preference
       flat: true, // true to use flat design (no elevation) by default
       rounded: 'rounded-lg', // Vuetify border-radius class for cards/components
+      font: {
+        body: "'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif", // CSS font-family for body text and body/label/title type classes (--v-font-body)
+        heading: "'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif", // CSS font-family for display/headline type classes (--v-font-heading)
+      },
       maxWidth: '1200px', // max content width for centered layouts
       snackbar: {
         status: true, // true to show snackbar notifications on API responses

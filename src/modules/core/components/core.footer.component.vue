@@ -9,7 +9,7 @@
           :md="12 / visibleSections.length"
           class="text-center"
         >
-          <v-card color="transparent" :flat="config.vuetify.theme.flat" :style="custom && custom.section ? custom.section : null">
+          <v-card color="transparent" :style="custom && custom.section ? custom.section : null">
             <v-card-title class="text-center text-title-medium font-weight-bold text-medium-emphasis">{{ title }}</v-card-title>
             <v-list class="bg-transparent" :style="custom && custom.section ? custom.section : null" density="compact">
               <v-list-item

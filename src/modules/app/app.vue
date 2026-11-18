@@ -277,6 +277,12 @@ export default {
       ...(og.image ? [{ name: 'twitter:image', content: og.image }] : []),
     ];
 
+    // App font, from config: Vuetify reads --v-font-body / --v-font-heading in
+    // html and in every text-* type class, so setting them once on <html>
+    // styles the whole app (and lands in the prerendered HTML).
+    const font = this.config.vuetify?.theme?.font || {};
+    const fontStyle = [font.body && `--v-font-body: ${font.body}`, font.heading && `--v-font-heading: ${font.heading}`].filter(Boolean).join('; ');
+
     // JSON-LD structured data is handled at build time by seo-inject when
     // schema.enabled is true, so the runtime useHead call must not inject a
     // second block.  See #3677.
@@ -290,13 +296,13 @@ export default {
      * @desc Build per-route head tags so canonical and og:url stay self-referential on every navigation.
      * Whole-getter form so unhead resolves it inside a watchEffect (walkResolver), re-emitting
      * on route change — which is what the prerenderer captures per route.
-     * @returns {{title: string, htmlAttrs: {lang: string}, meta: Array<object>, link: Array<object>}}
+     * @returns {{title: string, htmlAttrs: {lang: string, style?: string}, meta: Array<object>, link: Array<object>}}
      */
     useHead(() => {
       const canonicalHref = app.url ? buildCanonicalUrl(app.url, this.$route?.path || '/') : '';
       return {
         title: app.title,
-        htmlAttrs: { lang: app.lang || 'en' },
+        htmlAttrs: { lang: app.lang || 'en', ...(fontStyle ? { style: fontStyle } : {}) },
         meta: [
           ...baseMeta,
           ...(canonicalHref ? [{ property: 'og:url', content: canonicalHref }] : []),
@@ -316,35 +322,17 @@ export default {
 </script>
 
 <style>
-.v-application header a {
-  text-decoration: none !important;
-  color: rgba(var(--v-theme-onPrimary), 1) !important;
-}
-.v-application nav a {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-.v-application main a:not(.v-btn) {
-  text-decoration: none !important;
-  font-weight: 400;
-  color: rgba(var(--v-theme-secondary), 1) !important;
-}
-.v-card {
-  border: none !important;
-}
+/* Bare links (no Vuetify component, no utility class) follow the theme instead of
+   the browser blue. Placed in Vuetify's lowest layer, so every Vuetify component
+   and every text-* / text-decoration-* class still wins over these rules. */
+@layer vuetify-core.base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-.v-application .text-label-medium,
-.v-application .text-label-small,
-.v-application .text-body-medium,
-.v-application .text-body-large,
-.v-application .text-title-medium,
-.v-application .text-title-large,
-.v-application .text-headline-small,
-.v-application .text-headline-medium,
-.v-application .text-headline-large,
-.v-application .text-display-small,
-.v-application .text-display-medium,
-.v-application .text-display-large {
-  font-family: 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+  main a {
+    color: rgb(var(--v-theme-secondary));
+  }
 }
 </style>

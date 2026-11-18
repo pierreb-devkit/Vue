@@ -180,7 +180,7 @@ const isDark = computed(() => theme.global.name.value === 'dark');
 
 ```vue
 <v-dialog v-model="dialog" max-width="440">
-  <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+  <v-card class="pa-4">
     <v-card-title class="text-title-large font-weight-medium">Title</v-card-title>
     <v-card-text class="text-body-medium">Message</v-card-text>
     <v-card-actions>
@@ -196,7 +196,7 @@ const isDark = computed(() => theme.global.name.value === 'dark');
 
 ```vue
 <v-dialog v-model="dialog" max-width="440">
-  <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+  <v-card class="pa-4">
     <v-card-title class="text-title-large font-weight-medium">Delete {{ name }}</v-card-title>
     <v-card-text class="text-body-medium">
       <p class="mb-4">This action <strong>cannot be undone</strong>.</p>

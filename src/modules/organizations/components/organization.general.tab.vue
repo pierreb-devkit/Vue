@@ -6,8 +6,6 @@
       <v-col cols="12" md="4">
         <v-card
           color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
           class="pa-6"
         >
           <h3 class="text-title-medium font-weight-medium mb-4">Details</h3>
@@ -53,8 +51,6 @@
         <v-card
           v-if="Object.keys(roleDescriptions).length > 0"
           color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
           class="pa-6 mt-3"
         >
           <h3 class="text-title-medium font-weight-medium mb-4">Roles & Permissions</h3>
@@ -78,8 +74,6 @@
         <v-card
           v-if="canManage && pendingRequests.length > 0"
           color="surface"
-          :flat="config.vuetify.theme.flat"
-          :class="config.vuetify.theme.rounded"
           class="pa-6 mt-3"
         >
           <h3 class="text-title-medium font-weight-medium mb-4">

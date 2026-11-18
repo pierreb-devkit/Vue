@@ -1,6 +1,6 @@
 <template>
   <v-container style="max-width: 520px">
-    <v-card class="mt-10 pa-8 pa-sm-10" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+    <v-card class="mt-10 pa-8 pa-sm-10" color="surface">
       <h3 class="text-headline-small font-weight-bold text-center">No workspace found</h3>
       <p class="text-body-medium text-medium-emphasis text-center mt-1 mb-6">
         You are not a member of any workspace. Create one or ask for an invitation.
@@ -8,7 +8,7 @@
 
       <!-- Email verification gate -->
       <template v-if="emailVerificationRequired">
-        <v-card variant="tonal" color="warning" class="pa-6 mb-6" :class="config.vuetify.theme.rounded">
+        <v-card variant="tonal" color="warning" class="pa-6 mb-6">
           <div class="d-flex flex-column align-center ga-3">
             <v-icon icon="fa-solid fa-envelope" size="large" color="warning"></v-icon>
             <h4 class="text-title-medium font-weight-bold text-center">Verify your email to continue</h4>

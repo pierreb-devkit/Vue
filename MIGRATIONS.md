@@ -4,6 +4,18 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## theme: no more global `!important` styles; cards, font and type classes come from config (2026-11-18, #4874)
+
+Breaking for visuals. `app.vue` no longer ships a global `<style>` that overrode Vuetify with `!important`.
+
+- **Font:** new key `vuetify.theme.font: { body, heading }` (CSS font-family). It sets `--v-font-body` / `--v-font-heading` on `<html>`, so the body text and every `text-*` type class follow it (before, only 12 classes got the font and the body stayed Roboto). The default keeps the previous SF Pro stack. A project font goes in this key; remove any `font-family: … !important` on type classes.
+- **Cards:** every `v-card` now gets `flat` and the radius from `vuetify.theme.flat` / `vuetify.theme.rounded` through the Vuetify `defaults`. Drop `:flat="config.vuetify.theme.flat"` and `:class="config.vuetify.theme.rounded"` from your own cards. Cards that had neither now turn flat and rounded too; set `:flat="false"` or `rounded="0"` on one that must not.
+- **Outlined cards show their border again:** the global `.v-card { border: none !important }` is gone. Check your `variant="outlined"` cards and any card `border` rule.
+- **Links are no longer forced:** header links were forced to `onPrimary`, nav links to `inherit`, links in `main` to `secondary`, all with `!important`. Plain `<a>` / `<router-link>` without a class still get `inherit` (`secondary` in `main`) and no underline, but from Vuetify's lowest layer: any Vuetify component, `text-*` colour class or your own rule now wins. Remove the counter-rules you wrote against the old `!important` (the stack removed its own in the docs shell).
+- **Vuetify 2 type classes:** `text-caption`, `text-body-1`, `text-body-2`, `text-subtitle-*`, `text-overline`, `text-button`, `text-h1`..`text-h6` do not exist in Vuetify 4 and render unstyled. Replace them: `text-caption` → `text-body-small`, `text-body-1` → `text-body-large`, `text-body-2` → `text-body-medium`, `text-subtitle-1/2` → `text-title-medium/small`, `text-overline` → `text-label-small`, `text-button` → `text-label-large`, `text-h*` → `text-display-*` / `text-headline-*`. Find them with `grep -rnwE 'text-(caption|body-[12]|subtitle-[12]|overline|button|h[1-6])' src`.
+
+---
+
 ## billing: a plain member sees the current organization's usage at /users/billing (2026-11-17, #4865)
 
 Non-breaking: no config key, no API change. `/users/billing` used to send a plain member to the home page (when they owned another organization) or to an "ask your admin" card. A user without the `create BillingPortal` right in the current organization now gets that organization's usage view in place, read-only: Upgrade, Manage Subscription, the status action, Change Plan and Buy compute extras are hidden, with one line saying only owners and admins can change the plan. Owners and admins are unchanged.

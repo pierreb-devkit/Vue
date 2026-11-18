@@ -52,7 +52,9 @@ Consistency + accessibility make a UI *correct*; these seven rules make it *beau
 
 ## Anti-patterns
 
-- `text-h1`..`text-h6` → use MD3: `text-display-large`, `text-headline-medium`
+- Vuetify 2 type classes (gone in Vuetify 4, the text renders unstyled) → use MD3: `text-h1`..`text-h6` → `text-display-*` / `text-headline-*`; `text-subtitle-1/2` → `text-title-medium` / `text-title-small`; `text-body-1` → `text-body-large`; `text-body-2` → `text-body-medium`; `text-caption` → `text-body-small`; `text-overline` / `text-button` → `text-label-small` / `text-label-large`
+- `!important` in a global `<style>` (it beats Vuetify's layered styles and the props) → a theme config key or a Vuetify `defaults` entry
+- Hand-wired `:flat` / `:class="config.vuetify.theme.rounded"` on a `v-card` → the card already gets both from the Vuetify `defaults`
 - Hardcoded colors in templates → use theme variables
 - New components for things existing ones already handle
 - Ignoring dark mode

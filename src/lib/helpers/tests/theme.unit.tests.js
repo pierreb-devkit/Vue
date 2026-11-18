@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor } from '../theme.js';
+import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor, roundedProp } from '../theme.js';
 
 describe('Theme Helpers', () => {
   describe('isDark', () => {
@@ -483,6 +483,26 @@ describe('Theme Helpers', () => {
     it('should handle extreme darken values', () => {
       const result = lightenColor('#FFFFFF', -100);
       expect(result).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    });
+  });
+
+  describe('roundedProp', () => {
+    it('drops the rounded- prefix of a size class', () => {
+      expect(roundedProp('rounded-lg')).toBe('lg');
+      expect(roundedProp('rounded-0')).toBe('0');
+    });
+
+    it('keeps every token of a multi-token class', () => {
+      expect(roundedProp('rounded-t-xl rounded-b-0')).toBe('t-xl b-0');
+    });
+
+    it('returns true for the bare rounded class', () => {
+      expect(roundedProp('rounded')).toBe(true);
+    });
+
+    it('returns undefined when unset', () => {
+      expect(roundedProp('')).toBeUndefined();
+      expect(roundedProp(undefined)).toBeUndefined();
     });
   });
 });

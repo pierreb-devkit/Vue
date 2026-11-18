@@ -69,7 +69,7 @@
               <v-list-item-title class="text-body-medium font-weight-medium">
                 {{ hit.title }}
               </v-list-item-title>
-              <v-list-item-subtitle v-if="hit.categoryTitle" class="text-caption">
+              <v-list-item-subtitle v-if="hit.categoryTitle" class="text-body-small">
                 {{ hit.categoryTitle }}
               </v-list-item-subtitle>
             </v-list-item>
@@ -96,7 +96,7 @@
         </v-card-text>
 
         <v-divider />
-        <v-card-actions class="px-4 py-2 text-caption text-medium-emphasis">
+        <v-card-actions class="px-4 py-2 text-body-small text-medium-emphasis">
           <span class="docs-search__kbd">↑↓</span>
           <span class="ml-1">to navigate</span>
           <span class="docs-search__kbd ml-3">↵</span>

@@ -13,7 +13,7 @@
         >
           <span class="text-body-medium">Audit logging is disabled. Enable it in configuration to start tracking activity.</span>
         </v-alert>
-        <v-card v-else width="100%" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+        <v-card v-else width="100%" color="surface">
     <v-card-title class="d-flex align-center ga-3">
       <span class="text-title-medium">Activity</span>
       <v-spacer></v-spacer>

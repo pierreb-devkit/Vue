@@ -65,7 +65,7 @@
 
     <!-- Create invite dialog — flips to a one-time copy-link panel after create -->
     <v-dialog v-model="createDialog.show" max-width="460">
-      <v-card :class="config.vuetify.theme.rounded">
+      <v-card>
         <v-card-title>Invite a user</v-card-title>
         <template v-if="!createDialog.createdLink">
           <v-card-text>

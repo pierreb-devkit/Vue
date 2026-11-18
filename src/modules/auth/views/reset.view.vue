@@ -1,6 +1,6 @@
 <template>
   <v-container style="max-width: 520px">
-    <v-card class="mt-10 pa-8 pa-sm-10" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+    <v-card class="mt-10 pa-8 pa-sm-10" color="surface">
       <h4 class="text-headline-small font-weight-bold text-center">Reset your password</h4>
       <p class="text-body-medium text-medium-emphasis text-center mt-1 mb-8">
         Enter your new password below.

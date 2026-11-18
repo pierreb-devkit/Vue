@@ -78,7 +78,7 @@
             <v-icon>fa-solid fa-bars</v-icon>
           </v-btn>
         </template>
-        <v-card min-width="300px" class="gradient-border-menu" :class="config.vuetify.theme.rounded" :style="glassStyle()">
+        <v-card min-width="300px" class="gradient-border-menu" :style="glassStyle()">
           <!-- Menu -->
           <v-list density="compact" class="bg-transparent">
             <template v-for="({ title, sublinks }, i) in config.header.links.filter((v) => v.sublinks)" :key="i">

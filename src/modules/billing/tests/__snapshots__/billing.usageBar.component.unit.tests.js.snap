@@ -19,7 +19,7 @@ exports[`BillingUsageBarComponent > matches the meter overage snapshot 1`] = `
       </transition-stub>
       <!---->
     </div><!-- Summary text: % is primary, compute units in tooltip on overflow only -->
-    <div data-v-f7f25334="" class="billing-meter-progress__summary text-caption text-medium-emphasis mt-1 d-flex align-center ga-1" aria-live="assertive">
+    <div data-v-f7f25334="" class="billing-meter-progress__summary text-body-small text-medium-emphasis mt-1 d-flex align-center ga-1" aria-live="assertive">
       <!-- Primary value: always percentage --><span data-v-f7f25334="" class="font-weight-medium text-error">100% </span><!-- Compute detail tooltip — shown only when in overage (overflow state) --><i data-v-f7f25334="" class="fa-solid fa-circle-exclamation mdi v-icon notranslate v-theme--light v-icon--size-x-small text-error" style="cursor: help;" role="img" aria-hidden="true" tabindex="0" aria-describedby="v-tooltip-v-0" aria-label="1100 of 1000 used, 100 over quota"></i>
       <!--teleport start-->
       <!--teleport end-->

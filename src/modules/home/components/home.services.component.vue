@@ -38,7 +38,7 @@
           <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
         <v-col v-for="(item, i) in setup.content" :key="i" cols="12" sm="12" :md="colSize" data-aos="fade">
-          <v-card :class="`py-6 px-2 ${config.vuetify.theme.rounded}`" :flat="config.vuetify.theme.flat" :style="cardStyle">
+          <v-card class="py-6 px-2" :style="cardStyle">
             <v-btn icon :color="item.color ? item.color : 'primary'" width="50" height="50" class="text-white ml-3 mb-4">
               <v-icon :icon="item.serviceIcon" size="x-medium"></v-icon>
             </v-btn>

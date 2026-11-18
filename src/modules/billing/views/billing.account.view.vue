@@ -14,7 +14,7 @@
     <template v-else-if="manageableOrgs.length > 1">
       <v-row class="pa-2 mt-0">
         <v-col cols="12" md="6" offset-md="3">
-          <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+          <v-card color="surface" class="pa-6">
             <h3 class="text-title-medium font-weight-medium mb-2">Select an organization</h3>
             <p class="text-body-medium text-medium-emphasis mb-4">Choose which organization's billing you want to manage.</p>
             <v-list class="pa-0 bg-transparent">
@@ -44,7 +44,7 @@
     <template v-else>
       <v-row class="pa-2 mt-0">
         <v-col cols="12" md="6" offset-md="3">
-          <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-8 text-center">
+          <v-card color="surface" class="pa-8 text-center">
             <v-icon icon="fa-solid fa-credit-card" size="x-large" color="medium-emphasis" class="mb-4" />
             <h3 class="text-title-medium font-weight-medium mb-2">Billing is managed by your organization</h3>
             <p class="text-body-medium text-medium-emphasis">

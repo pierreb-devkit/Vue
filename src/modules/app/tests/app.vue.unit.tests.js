@@ -179,6 +179,18 @@ describe('App.vue — SEO (useHead)', () => {
     expect(resolveHead().htmlAttrs.lang).toBe('en');
   });
 
+  it('sets the app font variables on <html> from config.vuetify.theme.font', () => {
+    const config = { ...makeConfig(), vuetify: { ...testConfig.vuetify, theme: { ...testConfig.vuetify.theme, font: { body: 'Inter, sans-serif', heading: 'Lora, serif' } } } };
+    mountApp(config);
+    expect(resolveHead().htmlAttrs.style).toBe('--v-font-body: Inter, sans-serif; --v-font-heading: Lora, serif');
+  });
+
+  it('sets no html style when no font is configured', () => {
+    const config = { ...makeConfig(), vuetify: { ...testConfig.vuetify, theme: { ...testConfig.vuetify.theme, font: undefined } } };
+    mountApp(config);
+    expect(resolveHead().htmlAttrs.style).toBeUndefined();
+  });
+
   it('includes description meta', () => {
     mountApp(makeConfig());
     const { meta } = resolveHead();
