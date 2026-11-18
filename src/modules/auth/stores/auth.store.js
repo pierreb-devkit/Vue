@@ -11,6 +11,7 @@ import { capture, identify, reset as analyticsReset } from '../../../lib/helpers
 import { getAttribution } from '../../../lib/helpers/attribution';
 import { getRef, clearRef } from '../../../lib/helpers/referral';
 import { clearPostAuthRedirect } from '../lib/postAuthRedirect';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -477,22 +478,41 @@ export const useAuthStore = defineStore('auth', {
     async forgot(params) {
       const api = apiBase();
 
+      let res;
       try {
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
-        this.mail.status = res.data.data.status;
-        this.mail.message = res.data.message;
+        // `__silent`: the view shows the outcome inline, so no snackbar on top.
+        res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params, { __silent: true });
       } catch {
-        // Swallow silently: `err` carries the submitted email (request payload).
-        // The axios interceptor surfaces the user-facing failure message.
+        // Re-throw a fixed message, never the server text: it could reveal
+        // whether an account exists. The raw `err` also carries the submitted
+        // email (request payload) and must never reach the caller or a log.
+        throw new Error('Could not send the reset link. Please try again.');
       }
+
+      // The request succeeded: an unexpected reply shape is not a send failure.
+      this.mail.status = res?.data?.data?.status;
+      this.mail.message = res?.data?.message;
     },
 
     async reset(params) {
       const api = apiBase();
       const coreStore = useCoreStore();
 
+      let res;
       try {
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params);
+        // `__silent`: the view shows a failure inline, so no error snackbar on top.
+        res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params, { __silent: true });
+      } catch (err) {
+        localStorage.removeItem('token');
+        // Re-throw a sanitized Error so the caller knows the reset failed: the
+        // raw `err` carries the submitted reset token + new password (request
+        // payload) and must never reach the caller or a log.
+        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.', 'description'));
+      }
+
+      // The reset already succeeded server-side: a client-side storage failure
+      // must not be reported as a rejected reset.
+      try {
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
@@ -501,11 +521,8 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         coreStore.refreshNav(this.isLoggedIn);
-      } catch {
-        // Swallow silently: `err` carries the submitted reset token + new
-        // password (request payload). The axios interceptor surfaces the
-        // user-facing failure message.
-        localStorage.removeItem('token');
+      } catch (err) {
+        console.error('Reset succeeded but local session update failed', err?.message);
       }
     },
 

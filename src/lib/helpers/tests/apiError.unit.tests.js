@@ -40,5 +40,20 @@ describe('apiError Helper', () => {
       expect(sanitizeApiError({})).toBe(FALLBACK);
       expect(sanitizeApiError(undefined)).toBe(FALLBACK);
     });
+
+    it('should use the caller fallback when given one', () => {
+      expect(sanitizeApiError({}, 'Custom fallback')).toBe('Custom fallback');
+      expect(sanitizeApiError({ response: { data: { message: 'Safe' } } }, 'Custom fallback')).toBe('Safe');
+    });
+
+    it('should read the description field when asked, with the same safety check', () => {
+      // Real API error body shape (responses.error): HTTP title in `message`, reason in `description`.
+      const err = { response: { data: { type: 'error', message: 'Bad Request', code: 400, status: 400, description: 'Password reset token is invalid or has expired.' } } };
+      expect(sanitizeApiError(err, 'Custom fallback', 'description')).toBe('Password reset token is invalid or has expired.');
+      expect(sanitizeApiError(err)).toBe('Bad Request');
+      const unsafe = { response: { data: { message: 'Bad Request', description: 'Error: at handler (/app/x.js:1)' } } };
+      expect(sanitizeApiError(unsafe, 'Custom fallback', 'description')).toBe('Custom fallback');
+      expect(sanitizeApiError({ response: { data: { message: 'Bad Request' } } }, 'Custom fallback', 'description')).toBe('Custom fallback');
+    });
   });
 });

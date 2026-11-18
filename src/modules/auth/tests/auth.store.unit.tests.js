@@ -717,12 +717,19 @@ describe('Auth Store', () => {
       expect(authStore.mail.message).toBe('Reset email sent');
     });
 
+    it('does not report a send failure when the reply shape is unexpected', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: {} });
+
+      await expect(authStore.forgot({ email: 'forgot@test.com' })).resolves.toBeUndefined();
+    });
+
     it('should handle forgot password error', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Forgot password failed'));
-      await authStore.forgot({ email: 'forgot@test.com' });
+      await expect(authStore.forgot({ email: 'forgot@test.com' })).rejects.toThrow('Could not send the reset link. Please try again.');
 
       expect(authStore.mail.status).toBe(false);
       // The submitted email must never be logged to the console.
@@ -750,18 +757,89 @@ describe('Auth Store', () => {
       expect(localStorage.getItem(`${config.cookie.prefix}UserRoles`)).toBe('user');
     });
 
+    it('does not report a completed reset as failed when local storage throws', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'] }, tokenExpiresIn: 1 } });
+      const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await expect(authStore.reset({ token: 't', newPassword: 'p' })).resolves.toBeUndefined();
+      // The storage failure is logged by its message only, never the payload.
+      expect(errSpy).toHaveBeenCalledWith('Reset succeeded but local session update failed', 'quota');
+
+      setItem.mockRestore();
+      errSpy.mockRestore();
+    });
+
+    it('does not report a completed reset as failed when the reply has no user', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { tokenExpiresIn: 1 } });
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await expect(authStore.reset({ token: 't', newPassword: 'p' })).resolves.toBeUndefined();
+      expect(errSpy).toHaveBeenCalledWith('Reset succeeded but local session update failed', expect.any(String));
+      expect(authStore.auth).toBe(false);
+
+      errSpy.mockRestore();
+    });
+
     it('should handle reset password error', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Reset failed'));
-      await authStore.reset({ token: 'resettoken', password: 'newpassword' });
+      await expect(authStore.reset({ token: 'resettoken', password: 'newpassword' })).rejects.toThrow('Could not reset your password. Please try again.');
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
       // The submitted reset token + new password must never be logged.
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('forgot / reset failure reporting', () => {
+    it('marks the forgot and reset requests __silent (the views show the outcome inline)', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockRejectedValueOnce(new Error('x')).mockRejectedValueOnce(new Error('y'));
+
+      await authStore.forgot({ email: 'a@test.com' }).catch(() => {});
+      await authStore.reset({ token: 't', newPassword: 'p' }).catch(() => {});
+
+      expect(axios.post).toHaveBeenNthCalledWith(1, expect.stringContaining('/forgot'), expect.anything(), expect.objectContaining({ __silent: true }));
+      expect(axios.post).toHaveBeenNthCalledWith(2, expect.stringContaining('/reset'), expect.anything(), expect.objectContaining({ __silent: true }));
+    });
+
+    it('reset re-throws the API reason (description) without the request payload', async () => {
+      const authStore = useAuthStore();
+      // Real API error body shape: HTTP title in `message`, reason in `description`.
+      const err = Object.assign(new Error('Request failed'), {
+        config: { data: JSON.stringify({ token: 'secret-token', newPassword: 'secret-pass' }) },
+        response: { status: 400, data: { type: 'error', message: 'Bad Request', code: 400, status: 400, description: 'Password reset token is invalid or has expired.' } },
+      });
+      axios.post.mockRejectedValueOnce(err);
+
+      const thrown = await authStore.reset({ token: 'secret-token', newPassword: 'secret-pass' }).catch((e) => e);
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).not.toBe(err);
+      expect(thrown.message).toBe('Password reset token is invalid or has expired.');
+      expect(JSON.stringify({ ...thrown, message: thrown.message })).not.toMatch(/secret/);
+    });
+
+    it('forgot re-throws a fixed message, never the server text or the payload', async () => {
+      const authStore = useAuthStore();
+      const err = Object.assign(new Error('Request failed'), {
+        config: { data: JSON.stringify({ email: 'private@test.com' }) },
+        response: { status: 422, data: { type: 'error', message: 'Unprocessable Entity', code: 422, status: 422, description: 'No account with that email has been found' } },
+      });
+      axios.post.mockRejectedValueOnce(err);
+
+      const thrown = await authStore.forgot({ email: 'private@test.com' }).catch((e) => e);
+
+      expect(thrown).not.toBe(err);
+      expect(thrown.message).toBe('Could not send the reset link. Please try again.');
+      expect(JSON.stringify({ ...thrown, message: thrown.message })).not.toMatch(/private@test\.com/);
     });
   });
 

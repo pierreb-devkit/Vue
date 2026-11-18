@@ -4,8 +4,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const forgotMock = vi.hoisted(() => vi.fn());
+const mailState = vi.hoisted(() => ({ status: false, message: '' }));
 vi.mock('../stores/auth.store', () => ({
-  useAuthStore: () => ({ mail: { status: false, message: '' }, forgot: forgotMock }),
+  useAuthStore: () => ({ mail: mailState, forgot: forgotMock }),
 }));
 
 const usePageHeadMock = vi.hoisted(() => vi.fn());
@@ -92,6 +93,41 @@ describe('auth.forgot.view', () => {
 
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
       consoleSpy.mockRestore();
+    });
+
+    it('shows the error when forgot fails', async () => {
+      forgotMock.mockRejectedValueOnce(new Error('Could not send the reset link. Please try again.'));
+      const wrapper = mountView();
+
+      wrapper.vm.email = 'forgot@example.com';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-test="forgot-error"]').text()).toContain('Could not send the reset link. Please try again.');
+    });
+
+    it('clears a previous success message when a new submit starts', async () => {
+      mailState.message = 'Reset email sent';
+      forgotMock.mockRejectedValueOnce(new Error('Could not send the reset link. Please try again.'));
+      const wrapper = mountView();
+
+      wrapper.vm.email = 'forgot@example.com';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(mailState.message).toBe('');
+      expect(wrapper.find('[data-test="forgot-error"]').exists()).toBe(true);
+    });
+
+    it('shows no error when forgot succeeds', async () => {
+      forgotMock.mockResolvedValueOnce(undefined);
+      const wrapper = mountView();
+
+      wrapper.vm.email = 'forgot@example.com';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-test="forgot-error"]').exists()).toBe(false);
     });
   });
 });

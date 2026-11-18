@@ -26,8 +26,8 @@ let refreshAbilitiesPromise = null;
 export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilities, isLoggedIn) {
   instance.interceptors.response.use(
     (response) => {
-      // `__silent` requests (e.g. a side-effect signout) suppress the success
-      // snackbar so they never raise a misleading "success: ..." toast.
+      // `__silent` requests (e.g. a side-effect signout, or a form that shows
+      // its outcome inline) suppress the snackbar, success and error alike.
       if (config.vuetify.theme.snackbar.status && response.config && !response.config.__silent && config.vuetify.theme.snackbar.methods.indexOf(response.config.method) > -1) {
         snackbar.text = `${response.data.type}: ${response.data.message}`;
         snackbar.color = config.vuetify.theme.snackbar.successColor
@@ -45,9 +45,11 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         if (typeof isLoggedIn !== 'function' || isLoggedIn()) {
           onSignout();
         }
-        snackbar.text = 'Signin failed';
-        snackbar.color = config.vuetify.theme.snackbar.errorColor;
-        snackbar.status = true;
+        if (!err.config.__silent) {
+          snackbar.text = 'Signin failed';
+          snackbar.color = config.vuetify.theme.snackbar.errorColor;
+          snackbar.status = true;
+        }
       }
       if (err?.response?.status === 403 && !err.config?.__isAbilityRetry && onRefreshAbilities) {
         try {
@@ -68,7 +70,7 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
           refreshAbilitiesPromise = null;
         }
       }
-      if (config.vuetify.theme.snackbar.status && err.response && err.response.data && err.response.data.description) {
+      if (config.vuetify.theme.snackbar.status && !err.config?.__silent && err.response && err.response.data && err.response.data.description) {
         snackbar.text = err.response.data.description;
         snackbar.color = config.vuetify.theme.snackbar.errorColor;
         snackbar.status = true;
