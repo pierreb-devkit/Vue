@@ -322,17 +322,17 @@ export default {
 </script>
 
 <style>
-/* Bare links (an <a> with no class at all) follow the theme instead of the browser
+/* Bare links (an <a> with no class, or only the classes RouterLink adds) follow the theme instead of the browser
    blue. Limited to class-less anchors so Vuetify components (v-btn, v-card,
    v-list-item, v-chip) and any utility class are never touched, whatever the
    layer order of the bundle. */
 @layer vuetify-core.base {
-  a:not([class]) {
+  a:is(:not([class]), [class=""], [class="router-link-active"], [class="router-link-active router-link-exact-active"]) {
     color: inherit;
     text-decoration: none;
   }
 
-  main a:not([class]) {
+  main a:is(:not([class]), [class=""], [class="router-link-active"], [class="router-link-active router-link-exact-active"]) {
     color: rgb(var(--v-theme-secondary));
   }
 }
