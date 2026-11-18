@@ -31,6 +31,8 @@ Breaking at your next stack update: `src/main.js`, `index.html`, `vite.config.js
 4. **`Dockerfile`** — every `DEVKIT_VUE_*` ARG is now declared without a default (a default overrode your config-file values). If your image relied on one of the old defaults, set the value in your project config or pass `--build-arg` in CI. New ARGs: `DEVKIT_VUE_app_version`, `DEVKIT_VUE_app_seo_docs_contentUrl`.
 5. Take the stack versions: `git checkout devkit-vue/master -- src/main.js index.html vite.config.js Dockerfile`, then `/verify` and a production build.
 
+**Node floor:** `package.json` now declares `"engines": { "node": ">=22.17" }`. Check the Node version of your CI (`.nvmrc` / `node-version`) and your Docker build image; anything older must move up before this update.
+
 ---
 
 ## billing: a plain member sees the current organization's usage at /users/billing (2026-11-17, #4865)
