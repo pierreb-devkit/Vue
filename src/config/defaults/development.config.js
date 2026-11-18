@@ -25,6 +25,10 @@ export default {
         twitterCard: 'summary_large_image', // 'summary' | 'summary_large_image'
         twitterSite: '', // Twitter @handle (e.g. '@pierreb'), empty = omitted
       },
+      icons: [ // <link> tags injected in <head> at build time — each { rel, href, sizes?, type? }; href = root-relative path or http(s) URL
+        { rel: 'icon', href: '/favicon.ico' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
       preconnect: [], // URLs to preconnect (e.g. ['https://fonts.googleapis.com'])
       schema: {
         enabled: false, // true to inject JSON-LD structured data in <head>
@@ -40,6 +44,7 @@ export default {
         enabled: false, // true to derive docs SEO (llms.txt + prerender + sitemap) from the content tree at build time — off by default, fail-soft
         contentUrl: '', // absolute URL of the public docs tree endpoint (e.g. 'https://api.example.com/api/public/docs'); empty = layer inert
         basePath: '/docs', // frontend base path the docs module serves guides under (e.g. '/docs' → /docs/:category/:slug)
+        strict: false, // true to fail a production build when the docs layer is enabled but yields nothing (empty contentUrl, fetch failed, no routes) instead of falling back to static config
         timeoutMs: 5000, // build-time fetch timeout (ms) before falling back to static config
         mdTwin: false, // true to also list the raw-markdown `.md` twin of each guide in llms.txt — the twin link is built from docs.contentUrl, which MUST therefore be the PUBLIC API URL (never an internal build-network host), since it is published verbatim in llms.txt
       },
@@ -52,7 +57,7 @@ export default {
         routes: [{ path: '/', priority: 1.0, changefreq: 'weekly' }], // pages to include
       },
       manifest: {
-        enabled: false, // true to generate manifest.json at build time
+        enabled: false, // true to generate manifest.json at build time and link it from <head> (rel="manifest")
         display: 'standalone', // 'standalone' | 'fullscreen' | 'minimal-ui' | 'browser'
       },
     },

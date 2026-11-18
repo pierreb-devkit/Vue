@@ -4,6 +4,35 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## Downstream entry point and root-file override points (2026-11-18, #4876)
+
+Breaking at your next stack update: `src/main.js`, `index.html`, `vite.config.js` and `Dockerfile` are now stack-managed like `src/modules` — the `/update-stack` drift gate blocks on any downstream edit to them. Move your edits to the new override points, then take the stack version of the four files.
+
+1. **`src/main.js`** — create `src/modules/{project}/{project}.app.js`. `main.js` eager-imports every `src/modules/*/*.app.js` before it builds the router (Pinia is not installed yet at import time: no store calls at the top level).
+   - Move your `registerDownstreamRoutes(...)` call and any start-up side-effect imports there.
+   - If you patched the router after `router()` to replace `/`: set `home: { routes: { home: { activated: false } } }` in `src/config/defaults/{project}.config.js` and register your home route in the entry: `registerDownstreamRoutes({ coreModules: [{ path: '/', name: 'Home', component: MyHome, meta: { ... } }] })`. Keep the name `Home`. Removing `/team` or `/pages/:name` is already config (`home.routes.team|pages.activated: false`).
+   - Move any test that guarded your `main.js` lines so it imports the entry file instead.
+2. **`index.html`** — delete your `<link rel="icon|apple-touch-icon|manifest">` lines and set them in config:
+   ```js
+   app: { seo: {
+     icons: [
+       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+       { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
+     ],
+     manifest: { enabled: true }, // also adds <link rel="manifest" href="/manifest.json"> on builds
+   } }
+   ```
+   The stack default is `/favicon.ico` + `/apple-touch-icon.png`; `icons` is an array, so your list replaces it. The stack `index.html` no longer has a hard-coded favicon link.
+3. **`vite.config.js`** — move each project plugin into `src/modules/{project}/{project}.vite.js`:
+   ```js
+   export default (appConfig, mode) => [myPlugin(appConfig), otherPlugin()];
+   ```
+   It runs in Node (no `@/` alias, no `import.meta.glob`) and its plugins are appended after the stack plugins. A production fail-hard gate on the docs layer → `app.seo.docs.strict: true` (a production build then throws when `app.seo.docs.enabled` but the docs tree yields nothing). Template HTML comments are now stripped in every build (`comments: false`).
+4. **`Dockerfile`** — every `DEVKIT_VUE_*` ARG is now declared without a default (a default overrode your config-file values). If your image relied on one of the old defaults, set the value in your project config or pass `--build-arg` in CI. New ARGs: `DEVKIT_VUE_app_version`, `DEVKIT_VUE_app_seo_docs_contentUrl`.
+5. Take the stack versions: `git checkout devkit-vue/master -- src/main.js index.html vite.config.js Dockerfile`, then `/verify` and a production build.
+
+---
+
 ## billing: a plain member sees the current organization's usage at /users/billing (2026-11-17, #4865)
 
 Non-breaking: no config key, no API change. `/users/billing` used to send a plain member to the home page (when they owned another organization) or to an "ask your admin" card. A user without the `create BillingPortal` right in the current organization now gets that organization's usage view in place, read-only: Upgrade, Manage Subscription, the status action, Change Plan and Buy compute extras are hidden, with one line saying only owners and admins can change the plan. Owners and admins are unchanged.

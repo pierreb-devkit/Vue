@@ -8,6 +8,9 @@ export default {
     // either to skip registering that route — the path then falls through
     // to the normal not-found handling instead of rendering the view.
     routes: {
+      home: {
+        activated: true, // '/' — set false to serve your own home page (register a '/' route from your module's *.app.js entry)
+      },
       team: {
         activated: true, // '/team'
       },

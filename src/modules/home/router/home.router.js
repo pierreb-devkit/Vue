@@ -17,7 +17,13 @@ import notFound from '../views/home.notfound.view.vue';
  * (both default `true` — unset behaves exactly like today). When off, the
  * route is not registered at all, so it falls through to the `NotFound`
  * catch-all like any other unknown path — no extra redirect logic needed.
+ *
+ * `/` itself switches off via `config.home.routes.home.activated` (default
+ * `true`) so a downstream can serve its own home page: register a `/` route
+ * through `registerDownstreamRoutes({ coreModules })` from its `*.app.js`
+ * entry (see MIGRATIONS.md).
  */
+const homeActivated = config?.home?.routes?.home?.activated !== false;
 const teamActivated = config?.home?.routes?.team?.activated !== false;
 const pagesActivated = config?.home?.routes?.pages?.activated !== false;
 
@@ -25,7 +31,7 @@ const pagesActivated = config?.home?.routes?.pages?.activated !== false;
  * Router configuration.
  */
 export default [
-  {
+  homeActivated && {
     path: '/',
     name: 'Home', // todo: get from config
     component: home,

@@ -49,6 +49,37 @@ function buildPreconnectTags(urls) {
 }
 
 /**
+ * Check whether a link href is safe: a root-relative path (`/favicon.ico`,
+ * not protocol-relative `//host`) or an http(s) URL.
+ *
+ * @param {unknown} href - href value from config
+ * @returns {boolean} true when the href can be emitted
+ */
+function isSafeHref(href) {
+  return typeof href === 'string' && (/^\/(?!\/)/.test(href) || isSafeUrl(href));
+}
+
+/**
+ * Build icon link tags (favicon, apple-touch-icon, mask-icon...) from
+ * `app.seo.icons`. Entries without a string `rel` or with an unsafe href are
+ * skipped so a misconfigured project cannot break the build.
+ *
+ * @param {unknown} icons - `app.seo.icons`, an array of `{ rel, href, sizes?, type? }`
+ * @returns {string[]} array of HTML tag strings
+ */
+function buildIconTags(icons) {
+  if (!Array.isArray(icons)) return [];
+  return icons
+    .filter((icon) => icon && typeof icon.rel === 'string' && icon.rel && isSafeHref(icon.href))
+    .map((icon) => {
+      let attrs = `rel="${escapeHtml(icon.rel)}" href="${escapeHtml(icon.href)}"`;
+      if (icon.sizes) attrs += ` sizes="${escapeHtml(icon.sizes)}"`;
+      if (icon.type) attrs += ` type="${escapeHtml(icon.type)}"`;
+      return `  <link ${attrs}>`;
+    });
+}
+
+/**
  * Build a noscript fallback block with the app title and description.
  * Tags are only emitted when their value is non-empty to avoid
  * semantically incorrect empty elements (e.g. empty h1).
@@ -72,8 +103,21 @@ export function seoInjectPlugin(config) {
 
   return {
     name: 'seo-inject',
-    transformIndexHtml(html) {
+    /**
+     * Injects the SEO head tags into index.html.
+     *
+     * @param {string} html - index.html source
+     * @param {{ server?: object }} [ctx] - Vite context; `server` is set on the dev server
+     * @returns {string} transformed HTML
+     */
+    transformIndexHtml(html, ctx) {
       const tags = [];
+
+      // Icons + web app manifest. manifest.json is only emitted on a production
+      // build (seo-static.js), so the link is skipped on the dev server.
+      tags.push(...buildIconTags(seo.icons));
+      if (seo.manifest?.enabled && !ctx?.server)
+        tags.push('  <link rel="manifest" href="/manifest.json">');
 
       if (app.description)
         tags.push(`  <meta name="description" content="${escapeHtml(app.description)}">`);

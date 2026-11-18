@@ -17,6 +17,13 @@ const app = createApp(App);
 const head = createHead();
 const pinia = createPinia();
 
+// Downstream entry point — every `src/modules/<module>/<module>.app.js` is
+// imported here, before the router is built, so a downstream module can call
+// `registerDownstreamRoutes()` (and run its other start-up side effects)
+// without editing this stack-managed file. Runs before Pinia is installed:
+// no store access at import time.
+import.meta.glob('./modules/*/*.app.js', { eager: true });
+
 const appRouter = router();
 const routes = appRouter.options.routes;
 app.config.globalProperties.config = config;

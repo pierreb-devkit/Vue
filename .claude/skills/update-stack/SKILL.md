@@ -17,7 +17,13 @@ Two-phase workflow. Phase 1 brings the stack down ISO. Phase 2 aligns the projec
 
 **Goal: stack modules exit this phase identical to upstream. Zero downstream logic in them.**
 
-Stack scope = every file under `src/modules/`, `src/lib/`, `src/config/` that exists in `devkit-vue/master`. Auto-discovered by the step 3ter gate; do not enumerate by hand.
+Stack scope = every file under `src/modules/`, `src/lib/`, `src/config/` that exists in `devkit-vue/master`, plus the root files `src/main.js`, `index.html`, `vite.config.js` and `Dockerfile`. Auto-discovered by the step 3ter gate; do not enumerate by hand.
+
+Downstream code reaches the stack only through its override points, never by editing a stack file:
+- **Routes + start-up side effects** → `src/modules/{project}/{project}.app.js` (eager-imported by `main.js` before the router is built; call `registerDownstreamRoutes()` there). Own home page → `home.routes.home.activated: false` + a `/` route in `coreModules`.
+- **Head links** (favicon, apple-touch-icon, manifest) → `app.seo.icons` / `app.seo.manifest.enabled` in `src/config/defaults/{project}.config.js`.
+- **Build plugins** → `src/modules/{project}/{project}.vite.js` (default export `(appConfig, mode) => Plugin | Plugin[]`).
+- **Docker build values** → `--build-arg DEVKIT_VUE_*` (the stack `Dockerfile` declares them without defaults).
 
 ### 1. Setup remote + merge
 
@@ -31,13 +37,12 @@ git merge devkit-vue/master
 
 | File | Rule |
 |------|------|
-| `src/modules/app/app.router.js` | `git checkout --ours src/modules/app/app.router.js` then merge stack route changes manually — this file always contains downstream routes |
-| Other stack module files (`src/modules/home`, `auth`, `users`, `tasks`, `core`, `app`, `secure`) | `git checkout --theirs <file>` |
+| Stack module files (`src/modules/{admin,app,auth,billing,core,docs,home,invitations,legal,organizations,tasks,users}`, incl. `app.router.js`) and `src/lib/` | `git checkout --theirs <file>` — downstream routes live in `{project}.app.js`, never in `app.router.js` |
+| `src/main.js`, `index.html`, `vite.config.js`, `Dockerfile` | `git checkout --theirs <file>` — move any downstream lines to their override point first (see the red flag below) |
 | `package-lock.json` | `git checkout --theirs package-lock.json` — regenerate after `package.json` is resolved |
 | `ERRORS.md` | Merge stack entries + project entries — never drop lines |
 | `MIGRATIONS.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATIONS.md` |
 | `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
-| `vite.config.js` | `git checkout --ours vite.config.js` then merge upstream changes manually |
 | `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
 | Downstream-only new files (new modules, helpers, composables, lib additions) | Never delete — these do not exist in the stack, `git checkout --ours <file>` if flagged |
 
@@ -64,7 +69,7 @@ Failures typically indicate regressions from conflict resolution — fix these b
 
 ### 3bis. Report stack issues
 
-If `/verify` failures originate from a **stack file** (any file under `src/modules/`, `src/lib/`, or `src/config/` present in `devkit-vue/master`) and not from conflict resolution mistakes, open a GitHub issue on `pierreb-devkit/Vue`.
+If `/verify` failures originate from a **stack file** (any file under `src/modules/`, `src/lib/`, or `src/config/` present in `devkit-vue/master`, or a stack root file: `src/main.js`, `index.html`, `vite.config.js`, `Dockerfile`) and not from conflict resolution mistakes, open a GitHub issue on `pierreb-devkit/Vue`.
 
 **How to determine the failure origin:**
 - **Stack code failure:** error occurs in unmodified stack module files (resolved with `--theirs`)
@@ -115,7 +120,7 @@ while IFS= read -r f; do
     drift_found=1
   fi
   # Downstream-only file (not in upstream) → skip silently
-done < <(git diff --name-only devkit-vue/master HEAD -- src/modules src/lib src/config 2>/dev/null \
+done < <(git diff --name-only devkit-vue/master HEAD -- src/modules src/lib src/config src/main.js index.html vite.config.js Dockerfile 2>/dev/null \
   | grep -vE "/(tests|__tests__)/" | grep -vE "\.(test|spec)\.(js|jsx|ts|tsx|vue)$")
 
 [ "$drift_found" -eq 1 ] && exit 1
@@ -127,7 +132,8 @@ echo "3ter: no drift — OK"
 - Scan source is `git diff --name-only devkit-vue/master HEAD` (bidirectional) — catches both files that differ AND files present upstream but missing locally (deleted downstream). The previous `git ls-files` approach only saw locally-present files.
 - Test files (paths containing `/tests/` or `/__tests__/`, or filenames ending `.test.{js,jsx,ts,tsx,vue}` / `.spec.{js,jsx,ts,tsx,vue}`) are excluded — downstream test adaptations are acceptable.
 - E2E helpers under `src/lib/helpers/e2e/` ARE scanned — they are stack-managed. Downstream modification triggers BLOCK; use Fix B (promote upstream) if a downstream needs e2e helper changes.
-- `src/modules/app/app.router.js` historically diverged on every downstream (downstream routes). Under no-ledger this must be refactored: `app.router.js` does NOT currently expose an extension hook — the refactor needs to add one (e.g. a `registerDownstreamRoutes()` call sourced from a downstream-only module like `src/modules/{project}/{project}.router.js`), then keep `app.router.js` stack-iso. Until that refactor lands, this gate will BLOCK on every Vue downstream `/update-stack`.
+- The gate also scans the root files `src/main.js`, `index.html`, `vite.config.js` and `Dockerfile`: each has an override point (see Phase 1 scope), so they stay byte-identical to upstream.
+- `src/modules/app/app.router.js` stays stack-iso: downstream routes go through `registerDownstreamRoutes()` called from `src/modules/{project}/{project}.app.js`, which `main.js` imports before building the router.
 - This gate runs **after** `/verify` (never blocks on transient verify failures) and **before** Phase 2 (failure is recoverable — no merge commit yet).
 - Ref: the stack/downstream perfect-alignment plan, Tasks E.1 + E.2.
 
@@ -149,21 +155,21 @@ Diff project modules against `src/modules/tasks` (stack reference). Fix any patt
 
 ---
 
-### Red flag: conflicts in `src/main.js`
+### Red flag: drift in `src/main.js` or another root file
 
-`src/main.js` is stack-managed. If `/update-stack` reports a conflict here, do NOT keep the downstream side via `--ours`. Instead:
+`src/main.js`, `index.html`, `vite.config.js` and `Dockerfile` stay byte-identical to upstream. If the merge conflicts on one of them, or the 3ter gate reports drift, do NOT keep the downstream side via `--ours`. Instead:
 
 1. List the downstream-only lines:
 
    ```bash
-   # Show the actual downstream-only lines that exist locally but not in upstream stack
-   git diff devkit-vue/master..HEAD -- src/main.js
-   # (alternatively, check the conflict markers left by the merge)
-   git log --oneline -- src/main.js | head -10
+   git diff devkit-vue/master HEAD -- src/main.js index.html vite.config.js Dockerfile
    ```
 
-2. Move each downstream-only side-effect (`import './modules/.../foo.css'`, posthog/sentry init, custom plugin install) into a project-owned entry — typically `src/modules/{project}/views/{project}.view.vue` (preferred) or a downstream-only module index imported from there.
-3. Take the upstream version of `src/main.js` (`git checkout --theirs src/main.js`) once the migrations are committed.
-4. Add a regression note to `DOWNSTREAM_PATCHES.md` if the migration is non-obvious.
+2. Move each one to its override point (Phase 1 scope):
+   - `main.js` route registration / router patching / side-effect imports → `src/modules/{project}/{project}.app.js` (replacing `/` → `home.routes.home.activated: false` + a `/` route in `registerDownstreamRoutes({ coreModules })`).
+   - `index.html` icon / manifest links → `app.seo.icons`, `app.seo.manifest.enabled`.
+   - `vite.config.js` plugins → `src/modules/{project}/{project}.vite.js`; a docs fail-hard gate → `app.seo.docs.strict: true`.
+   - `Dockerfile` ARG defaults → config values, or `--build-arg` in the project's CI.
+3. Take the upstream version (`git checkout devkit-vue/master -- <file>`) once the moves are committed.
 
-This protects against the silent visual / analytics regressions seen on a downstream project (per-card mesh/grain CSS wiped on stack sync).
+Dropping a route registration this way without moving it first ships a downstream with missing routes — always move, then take upstream. MIGRATIONS.md (entry for #4876) has the step-by-step.

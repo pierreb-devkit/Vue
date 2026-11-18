@@ -36,8 +36,8 @@ const _downstreamOptionalModules = [];
 /**
  * Register downstream-specific route extensions.
  *
- * Call this from your downstream module (e.g. `src/modules/<project>/index.js`)
- * BEFORE the router is instantiated.  Calling it mutates the internal registry
+ * Call this from your downstream entry `src/modules/<project>/<project>.app.js`
+ * (eager-imported by `main.js` BEFORE the router is instantiated).  Calling it mutates the internal registry
  * arrays in place; the router composition picks up the additions automatically.
  *
  * @param {object}   [options={}]

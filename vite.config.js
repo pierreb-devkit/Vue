@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vuetify from 'vite-plugin-vuetify';
 import { fileURLToPath, URL } from 'node:url';
+import { globSync } from 'node:fs';
 import viteCompression from 'vite-plugin-compression';
 import { seoInjectPlugin } from './src/lib/plugins/seo-inject.js';
 import { prerenderPlugin } from './src/lib/plugins/prerender.js';
@@ -18,23 +19,33 @@ try {
   console.warn('Could not load config, using defaults. Run npm run config first.');
 }
 
-// Docs-aware SEO layer (off by default). When app.seo.docs.enabled + contentUrl
-// are set, fetch the docs tree at build time and merge the derived prerender /
-// sitemap / llms.txt routes into the config the SEO plugins consume. Fail-soft:
-// any error falls back to the static config and never breaks the build.
-appConfig = await augmentSeoConfigWithDocs(appConfig);
+// Project plugins — every `src/modules/<module>/<module>.vite.js` default-exports
+// a function `(appConfig, mode) => Plugin | Plugin[]`, appended after the stack
+// plugins, so a downstream adds build plugins without editing this stack file.
+const projectPluginFactories = await Promise.all(
+  globSync('src/modules/*/*.vite.js', { cwd: fileURLToPath(new URL('.', import.meta.url)) })
+    .sort()
+    .map(async (file) => (await import(new URL(file, import.meta.url).href)).default),
+);
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ command, mode }) => {
   assertConfigLoaded(appConfig, mode, { strict: process.env.DEVKIT_VUE_assert_strict === 'true' });
+  // Docs-aware SEO layer (off by default). When app.seo.docs.enabled + contentUrl
+  // are set, fetch the docs tree at build time and merge the derived prerender /
+  // sitemap / llms.txt routes into the config the SEO plugins consume. Fail-soft:
+  // any error falls back to the static config — unless app.seo.docs.strict, which
+  // fails a production build instead.
+  const seoConfig = await augmentSeoConfigWithDocs(appConfig, { production: command === 'build' && mode === 'production' });
   return {
     plugins: [
-      seoInjectPlugin(appConfig),
-      prerenderPlugin(appConfig, mode),
-      seoStaticPlugin(appConfig),
+      seoInjectPlugin(seoConfig),
+      prerenderPlugin(seoConfig, mode),
+      seoStaticPlugin(seoConfig),
       vue({
         template: {
           compilerOptions: {
+            comments: false, // strip HTML comments from templates in every build
             // Support for runtime template compilation
             isCustomElement: (tag) => tag.startsWith('ion-'),
           },
@@ -62,6 +73,7 @@ export default defineConfig(({ mode }) => {
         ext: '.gz',
         deleteOriginFile: false,
       }),
+      ...projectPluginFactories.flatMap((factory) => factory(seoConfig, mode)),
     ],
 
     define: {

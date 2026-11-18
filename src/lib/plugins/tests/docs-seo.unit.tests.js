@@ -364,6 +364,49 @@ describe('augmentSeoConfigWithDocs', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  describe('strict mode (app.seo.docs.strict)', () => {
+    it('production + strict: throws when contentUrl is empty', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn(), production: true })).rejects.toThrow(/contentUrl is empty/);
+    });
+
+    it('production + strict: throws when the fetch fails', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const fetchImpl = vi.fn().mockRejectedValue(new Error('offline'));
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).rejects.toThrow(/fetch failed/);
+    });
+
+    it('production + strict: throws when the tree has no routes', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ categories: [] }) });
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).rejects.toThrow(/no routes/);
+    });
+
+    it('strict outside a production build stays fail-soft', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn() })).resolves.toBe(config);
+    });
+
+    it('strict with the layer disabled never throws', async () => {
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: false, strict: true, contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn(), production: true })).resolves.toBe(config);
+    });
+
+    it('production + strict: a healthy tree augments normally', async () => {
+      const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: treeFixture }) });
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: true, strict: true, contentUrl: 'https://api.example.com/api/public/docs' };
+      const out = await augmentSeoConfigWithDocs(config, { fetchImpl, production: true });
+      expect(out.app.seo.prerender.routes).toContain('/docs/integrate/webhooks');
+    });
+  });
+
   it('ON path (stubbed fetch): merges docs routes into prerender + sitemap + llms, keeping statics', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: treeFixture }) });
     const config = baseConfig();

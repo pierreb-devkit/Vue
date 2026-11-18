@@ -329,25 +329,39 @@ export function isDocsLayerIntended(docs) {
  *
  * FAIL-SOFT + OFF-by-default: when the layer is disabled, the contentUrl is unset,
  * or the fetch fails, the ORIGINAL config is returned untouched (static fallback).
- * Never throws — safe to `await` in `vite.config.js` without a try/catch.
+ * Never throws — safe to `await` in `vite.config.js` without a try/catch — EXCEPT
+ * in strict mode: with `app.seo.docs.enabled` + `app.seo.docs.strict` and
+ * `options.production`, any fallback (empty contentUrl, fetch failed, no routes)
+ * throws so a production build cannot ship without its docs pages.
  *
  * @param {object} config - the full app config (`{ app: { seo, url, ... }, ... }`)
  * @param {object} [options]
  * @param {typeof fetch} [options.fetchImpl=globalThis.fetch] - injectable fetch (tests)
+ * @param {boolean} [options.production=false] - true on a production build (arms `docs.strict`)
  * @returns {Promise<object>} the (possibly augmented) config — same reference when OFF/failed
  */
 export async function augmentSeoConfigWithDocs(config, options = {}) {
   const app = config?.app || {};
   const docs = app.seo?.docs;
-  if (!isDocsLayerIntended(docs)) return config;
+  const strict = Boolean(docs?.enabled && docs?.strict && options.production);
+  /**
+   * Static fallback, or a hard failure in strict mode.
+   * @param {string} reason - why the docs layer produced nothing
+   * @returns {object} the original config
+   */
+  const fallback = (reason) => {
+    if (strict) throw new Error(`[docs-seo] app.seo.docs.strict: ${reason} — refusing a production build without docs pages`);
+    return config;
+  };
+  if (!isDocsLayerIntended(docs)) return docs?.enabled ? fallback('contentUrl is empty') : config;
 
   const tree = await fetchDocsTree(docs.contentUrl, { timeoutMs: docs.timeoutMs, fetchImpl: options.fetchImpl });
-  if (!tree) return config; // fetch failed → static fallback
+  if (!tree) return fallback(`docs tree fetch failed (${docs.contentUrl})`);
 
   const basePath = docs.basePath || DEFAULT_BASE_PATH;
   const baseUrl = (app.url || '').replace(/\/+$/, '');
   const routes = deriveDocsRoutes(tree, basePath);
-  if (routes.length === 0) return config;
+  if (routes.length === 0) return fallback('docs tree has no routes');
 
   const llmsSections = deriveDocsLlmsSections(tree, baseUrl, basePath, {
     mdTwin: docs.mdTwin === true,
