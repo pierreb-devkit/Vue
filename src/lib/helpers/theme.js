@@ -258,6 +258,8 @@ export const roundedProp = (roundedClass) => {
   if (!roundedClass) return undefined;
   const tokens = String(roundedClass).trim().split(/\s+/);
   if (tokens.length === 1 && tokens[0] === 'rounded') return true;
+  // A mixed list ('rounded rounded-t-0') has no single prop value: fall back to the first token.
+  if (tokens.includes('rounded')) return tokens[0] === 'rounded' ? true : tokens[0].replace(/^rounded-/, '');
   return tokens.map((token) => token.replace(/^rounded-/, '')).join(' ');
 };
 

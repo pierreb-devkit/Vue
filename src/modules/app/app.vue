@@ -322,16 +322,17 @@ export default {
 </script>
 
 <style>
-/* Bare links (no Vuetify component, no utility class) follow the theme instead of
-   the browser blue. Placed in Vuetify's lowest layer, so every Vuetify component
-   and every text-* / text-decoration-* class still wins over these rules. */
+/* Bare links (an <a> with no class at all) follow the theme instead of the browser
+   blue. Limited to class-less anchors so Vuetify components (v-btn, v-card,
+   v-list-item, v-chip) and any utility class are never touched, whatever the
+   layer order of the bundle. */
 @layer vuetify-core.base {
-  a {
+  a:not([class]) {
     color: inherit;
     text-decoration: none;
   }
 
-  main a {
+  main a:not([class]) {
     color: rgb(var(--v-theme-secondary));
   }
 }
