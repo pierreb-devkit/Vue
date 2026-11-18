@@ -93,5 +93,27 @@ describe('auth.forgot.view', () => {
       await expect(wrapper.vm.validate()).resolves.toBeUndefined();
       consoleSpy.mockRestore();
     });
+
+    it('shows the error when forgot fails', async () => {
+      forgotMock.mockRejectedValueOnce(new Error('No account with that email has been found'));
+      const wrapper = mountView();
+
+      wrapper.vm.email = 'forgot@example.com';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-test="forgot-error"]').text()).toContain('No account with that email has been found');
+    });
+
+    it('shows no error when forgot succeeds', async () => {
+      forgotMock.mockResolvedValueOnce(undefined);
+      const wrapper = mountView();
+
+      wrapper.vm.email = 'forgot@example.com';
+      await wrapper.vm.validate();
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.find('[data-test="forgot-error"]').exists()).toBe(false);
+    });
   });
 });

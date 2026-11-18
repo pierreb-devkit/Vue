@@ -4,6 +4,14 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## auth: `forgot()` and `reset()` now throw on failure (2026-11-18, #4873)
+
+`useAuthStore().forgot()` and `useAuthStore().reset()` used to swallow API errors, so the reset page sent the user to sign-in even when the reset failed. They now re-throw a sanitized `Error` (the API message, never the request payload). The stack views stay on the page and show the error inline.
+
+- Calling `forgot()` or `reset()` from your own code: wrap the call in `try/catch`, and navigate only on success.
+
+---
+
 ## billing: a plain member sees the current organization's usage at /users/billing (2026-11-17, #4865)
 
 Non-breaking: no config key, no API change. `/users/billing` used to send a plain member to the home page (when they owned another organization) or to an "ask your admin" card. A user without the `create BillingPortal` right in the current organization now gets that organization's usage view in place, read-only: Upgrade, Manage Subscription, the status action, Change Plan and Buy compute extras are hidden, with one line saying only owners and admins can change the plan. Owners and admins are unchanged.

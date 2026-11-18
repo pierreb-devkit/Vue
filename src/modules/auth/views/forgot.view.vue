@@ -31,6 +31,9 @@
           Send Reset Link
         </v-btn>
       </v-form>
+      <v-alert v-if="error" type="error" variant="tonal" class="mt-6" :class="config.vuetify.theme.rounded" data-test="forgot-error">
+        {{ error }}
+      </v-alert>
       <v-alert v-if="mail.message" type="success" variant="tonal" class="mt-6" :class="config.vuetify.theme.rounded">
         {{ mail.message }}
       </v-alert>
@@ -49,9 +52,7 @@ import { useTheme } from 'vuetify';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
-import { createLogger } from '../../../lib/helpers/logger';
 
-const logger = createLogger('auth');
 /**
  * Component definition.
  */
@@ -72,6 +73,7 @@ export default {
     return {
       theme,
       valid: true,
+      error: '',
       email: '',
       rules: {
         required: (v) => !!v || 'Required',
@@ -94,10 +96,12 @@ export default {
       if (form.valid) {
         const { email } = this;
         const authStore = useAuthStore();
+        this.error = '';
         try {
           await authStore.forgot({ email });
         } catch (err) {
-          logger.error(err);
+          // The store re-throws a sanitized Error (no request payload in it).
+          this.error = err.message;
         }
       }
     },

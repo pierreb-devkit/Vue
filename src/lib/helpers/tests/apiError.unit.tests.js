@@ -40,5 +40,10 @@ describe('apiError Helper', () => {
       expect(sanitizeApiError({})).toBe(FALLBACK);
       expect(sanitizeApiError(undefined)).toBe(FALLBACK);
     });
+
+    it('should use the caller fallback when given one', () => {
+      expect(sanitizeApiError({}, 'Custom fallback')).toBe('Custom fallback');
+      expect(sanitizeApiError({ response: { data: { message: 'Safe' } } }, 'Custom fallback')).toBe('Safe');
+    });
   });
 });

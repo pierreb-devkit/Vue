@@ -11,6 +11,7 @@ import { capture, identify, reset as analyticsReset } from '../../../lib/helpers
 import { getAttribution } from '../../../lib/helpers/attribution';
 import { getRef, clearRef } from '../../../lib/helpers/referral';
 import { clearPostAuthRedirect } from '../lib/postAuthRedirect';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 /**
  * @desc Deduce firstName and lastName from an email address.
@@ -481,9 +482,10 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
         this.mail.status = res.data.data.status;
         this.mail.message = res.data.message;
-      } catch {
-        // Swallow silently: `err` carries the submitted email (request payload).
-        // The axios interceptor surfaces the user-facing failure message.
+      } catch (err) {
+        // Re-throw a sanitized Error: the raw `err` carries the submitted
+        // email (request payload) and must never reach the caller or a log.
+        throw new Error(sanitizeApiError(err, 'Could not send the reset link. Please try again.'));
       }
     },
 
@@ -501,11 +503,12 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data.user;
 
         coreStore.refreshNav(this.isLoggedIn);
-      } catch {
-        // Swallow silently: `err` carries the submitted reset token + new
-        // password (request payload). The axios interceptor surfaces the
-        // user-facing failure message.
+      } catch (err) {
         localStorage.removeItem('token');
+        // Re-throw a sanitized Error so the caller knows the reset failed: the
+        // raw `err` carries the submitted reset token + new password (request
+        // payload) and must never reach the caller or a log.
+        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.'));
       }
     },
 

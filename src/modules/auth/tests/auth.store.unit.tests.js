@@ -722,7 +722,7 @@ describe('Auth Store', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Forgot password failed'));
-      await authStore.forgot({ email: 'forgot@test.com' });
+      await expect(authStore.forgot({ email: 'forgot@test.com' })).rejects.toThrow('Could not send the reset link. Please try again.');
 
       expect(authStore.mail.status).toBe(false);
       // The submitted email must never be logged to the console.
@@ -755,13 +755,46 @@ describe('Auth Store', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.post.mockRejectedValueOnce(new Error('Reset failed'));
-      await authStore.reset({ token: 'resettoken', password: 'newpassword' });
+      await expect(authStore.reset({ token: 'resettoken', password: 'newpassword' })).rejects.toThrow('Could not reset your password. Please try again.');
 
       expect(authStore.auth).toBe(false);
       expect(authStore.user).toBe(null);
       // The submitted reset token + new password must never be logged.
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('forgot / reset failure reporting', () => {
+    it('reset re-throws the API message without the request payload', async () => {
+      const authStore = useAuthStore();
+      const err = Object.assign(new Error('Request failed'), {
+        config: { data: JSON.stringify({ token: 'secret-token', newPassword: 'secret-pass' }) },
+        response: { data: { message: 'Password reset token is invalid or has expired.' } },
+      });
+      axios.post.mockRejectedValueOnce(err);
+
+      const thrown = await authStore.reset({ token: 'secret-token', newPassword: 'secret-pass' }).catch((e) => e);
+
+      expect(thrown).toBeInstanceOf(Error);
+      expect(thrown).not.toBe(err);
+      expect(thrown.message).toBe('Password reset token is invalid or has expired.');
+      expect(JSON.stringify({ ...thrown, message: thrown.message })).not.toMatch(/secret/);
+    });
+
+    it('forgot re-throws the API message without the request payload', async () => {
+      const authStore = useAuthStore();
+      const err = Object.assign(new Error('Request failed'), {
+        config: { data: JSON.stringify({ email: 'private@test.com' }) },
+        response: { data: { message: 'No account with that email has been found' } },
+      });
+      axios.post.mockRejectedValueOnce(err);
+
+      const thrown = await authStore.forgot({ email: 'private@test.com' }).catch((e) => e);
+
+      expect(thrown).not.toBe(err);
+      expect(thrown.message).toBe('No account with that email has been found');
+      expect(JSON.stringify({ ...thrown, message: thrown.message })).not.toMatch(/private@test\.com/);
     });
   });
 
