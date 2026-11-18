@@ -11,6 +11,9 @@ import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 const logger = createLogger('admin');
 
+/** Latest Overview request per source; an older answer that lands late is ignored. */
+const statsRuns = {};
+
 /**
  * Whitelists.
  */
@@ -40,6 +43,8 @@ export const useAdminStore = defineStore('admin', {
     error: null,
     currentBreadcrumb: null,
     readiness: [],
+    stats: { users: null, organizations: null, audit: null, recent: null },
+    statsErrors: [],
     auditLogs: [],
     auditTotal: 0,
     auditPage: 1,
@@ -141,6 +146,41 @@ export const useAdminStore = defineStore('admin', {
         this.error = sanitizeApiError(err);
         logger.error(err);
       }
+    },
+
+    /**
+     * @desc Load the Overview data. Each source loads on its own and shows as soon
+     *       as it settles, so one slow or failing route leaves the others on screen;
+     *       a failed source stays null and is named in `statsErrors`. A late answer
+     *       from an older request never replaces a newer one.
+     * @param {{ audit?: boolean, only?: string[] }} [options] - `audit: false` skips the
+     *        activity sources; `only` reloads just those sources (retry), keeping the rest
+     * @returns {Promise<void>}
+     */
+    async getStats({ audit = true, only } = {}) {
+      const sources = {
+        users: '/admin/users/stats',
+        organizations: '/admin/organizations/stats',
+        ...(audit ? { audit: '/audit/stats', recent: '/audit?perPage=6' } : {}),
+      };
+      const keys = only ? Object.keys(sources).filter((k) => only.includes(k)) : Object.keys(sources);
+      this.error = null;
+      if (!only) this.stats = { users: null, organizations: null, audit: null, recent: null };
+      this.statsErrors = this.statsErrors.filter((k) => !keys.includes(k));
+      await Promise.allSettled(
+        keys.map(async (k) => {
+          const run = (statsRuns[k] = (statsRuns[k] || 0) + 1);
+          try {
+            const res = await axios.get(`${apiBase()}${sources[k]}`);
+            if (statsRuns[k] !== run) return;
+            this.stats[k] = k === 'recent' ? res.data.data?.data || [] : res.data.data;
+          } catch (err) {
+            if (statsRuns[k] !== run) return;
+            this.statsErrors.push(k);
+            logger.error(err);
+          }
+        }),
+      );
     },
 
     async getOrganizations(params) {

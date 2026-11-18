@@ -12,9 +12,10 @@ describe('admin.router (structure)', () => {
     expect(Array.isArray(parent.children)).toBe(true);
   });
 
-  it('should expose the parent and the four built-in + detail children', () => {
+  it('should expose the parent and the five built-in + detail children', () => {
     expect(adminRoutes[0].name).toBe('Admin');
     const names = adminRoutes[0].children.map((r) => r.name).filter(Boolean);
+    expect(names).toContain('Admin Overview');
     expect(names).toContain('Admin Users');
     expect(names).toContain('Admin Organizations');
     expect(names).toContain('Admin Readiness');
@@ -23,10 +24,10 @@ describe('admin.router (structure)', () => {
     expect(names).toContain('Admin Organization');
   });
 
-  it('should redirect the empty child path to Admin Users', () => {
+  it('should redirect the empty child path to Admin Overview', () => {
     const empty = adminRoutes[0].children.find((r) => r.path === '');
     expect(empty).toBeDefined();
-    expect(empty.redirect).toEqual({ name: 'Admin Users' });
+    expect(empty.redirect).toEqual({ name: 'Admin Overview' });
   });
 
   it('should use relative paths for all children', () => {
@@ -92,11 +93,11 @@ describe('admin.router (integration with vue-router)', () => {
     });
   };
 
-  it('should redirect /admin to /admin/users', async () => {
+  it('should redirect /admin to /admin/overview', async () => {
     const router = buildRouter();
     await router.push('/admin');
-    expect(router.currentRoute.value.path).toBe('/admin/users');
-    expect(router.currentRoute.value.name).toBe('Admin Users');
+    expect(router.currentRoute.value.path).toBe('/admin/overview');
+    expect(router.currentRoute.value.name).toBe('Admin Overview');
   });
 
   it('should resolve /admin/users to the Admin Users child route via the layout parent', async () => {
@@ -164,9 +165,7 @@ describe('admin.router (integration with vue-router)', () => {
   });
 
   it('should preserve layout parent across tab navigation (back/forward)', async () => {
-    const knowledge = [
-      { path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } },
-    ];
+    const knowledge = [{ path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } }];
     const router = buildRouter([{ name: 'knowledge', routes: knowledge }]);
     await router.push('/admin/users');
     const beforeLayout = router.currentRoute.value.matched[0];

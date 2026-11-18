@@ -60,13 +60,7 @@ describe('admin.organizations.view', () => {
 
   it('should declare the expected organization table headers', () => {
     const headers = wrapper.vm.orgHeaders;
-    expect(headers.map((h) => h.value)).toEqual([
-      'name',
-      'memberCount',
-      'domain',
-      'plan',
-      'createdAt',
-    ]);
+    expect(headers.map((h) => h.value)).toEqual(['name', 'memberCount', 'domain', 'plan', 'createdAt']);
   });
 });
 

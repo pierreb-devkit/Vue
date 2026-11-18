@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 import adminLayout from '../views/admin.layout.vue';
+import adminOverview from '../views/admin.overview.view.vue';
 import adminUsers from '../views/admin.users.view.vue';
 import adminOrganizations from '../views/admin.organizations.view.vue';
 import adminReadiness from '../views/admin.readiness.view.vue';
@@ -15,7 +16,7 @@ import organizationGeneralTab from '../../organizations/components/organization.
  *
  * The admin module exports a **parent route** (`/admin`) whose component
  * is the admin layout (page header + tab bar + `<router-view>`). Each
- * built-in section (Users, Organizations, Readiness, Activity) is a
+ * built-in section (Overview, Users, Organizations, Readiness, Activity) is a
  * routed child so that the tab bar and the downstream-contributed extras
  * (`config.admin.tabs`) live in one flat navigation row.
  *
@@ -44,7 +45,15 @@ export default [
     children: [
       {
         path: '',
-        redirect: { name: 'Admin Users' },
+        redirect: { name: 'Admin Overview' },
+      },
+      {
+        path: 'overview',
+        name: 'Admin Overview',
+        component: adminOverview,
+        meta: {
+          action: 'manage', subject: 'UserAdmin',
+        },
       },
       {
         path: 'users',

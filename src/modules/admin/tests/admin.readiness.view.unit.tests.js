@@ -57,7 +57,12 @@ describe('admin.readiness.view', () => {
 
   it('should flip the loading flag around the fetch', async () => {
     let resolveGet;
-    adminStore.getReadiness = vi.fn(() => new Promise((r) => { resolveGet = r; }));
+    adminStore.getReadiness = vi.fn(
+      () =>
+        new Promise((r) => {
+          resolveGet = r;
+        }),
+    );
     wrapper.vm.fetchReadiness();
     await wrapper.vm.$nextTick();
     expect(wrapper.vm.readinessLoading).toBe(true);
