@@ -717,6 +717,13 @@ describe('Auth Store', () => {
       expect(authStore.mail.message).toBe('Reset email sent');
     });
 
+    it('does not report a send failure when the reply shape is unexpected', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: {} });
+
+      await expect(authStore.forgot({ email: 'forgot@test.com' })).resolves.toBeUndefined();
+    });
+
     it('should handle forgot password error', async () => {
       const authStore = useAuthStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

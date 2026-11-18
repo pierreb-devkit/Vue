@@ -478,17 +478,20 @@ export const useAuthStore = defineStore('auth', {
     async forgot(params) {
       const api = apiBase();
 
+      let res;
       try {
         // `__silent`: the view shows the outcome inline, so no snackbar on top.
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params, { __silent: true });
-        this.mail.status = res.data.data.status;
-        this.mail.message = res.data.message;
+        res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params, { __silent: true });
       } catch {
         // Re-throw a fixed message, never the server text: it could reveal
         // whether an account exists. The raw `err` also carries the submitted
         // email (request payload) and must never reach the caller or a log.
         throw new Error('Could not send the reset link. Please try again.');
       }
+
+      // The request succeeded: an unexpected reply shape is not a send failure.
+      this.mail.status = res?.data?.data?.status;
+      this.mail.message = res?.data?.message;
     },
 
     async reset(params) {

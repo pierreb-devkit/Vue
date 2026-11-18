@@ -97,6 +97,8 @@ export default {
         const { email } = this;
         const authStore = useAuthStore();
         this.error = '';
+        // Hide a previous success alert so it never sits beside a new error.
+        authStore.mail.message = '';
         try {
           await authStore.forgot({ email });
         } catch (err) {
