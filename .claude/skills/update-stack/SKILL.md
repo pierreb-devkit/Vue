@@ -139,7 +139,7 @@ echo "3ter: no drift — OK"
 
 ### 3quater. Warn on files a downstream added in stack folders
 
-Ownership rule (see `CLAUDE.md` § Downstream file ownership): inside stack folders — `src/lib`, `src/config` and every module folder the stack ships under `src/modules` — a downstream adds only its own modules and files carrying its project name (`*.<project>.*` overrides, `src/config/defaults/<project>.config.js`, `config/templates/<project>/`, `docs.<project>.content.js`). This step **warns, it never blocks**: it always ends with exit 0, and Phase 2 starts whatever it prints.
+Ownership rule (`CLAUDE.md` § Downstream file ownership): inside stack folders a downstream adds only its own modules and files carrying its project name. This step **warns, it never blocks**: it always ends with exit 0, and Phase 2 starts whatever it prints.
 
 ```bash
 PROJECT="<project>"   # the downstream's project name, as in src/config/defaults/<project>.config.js
