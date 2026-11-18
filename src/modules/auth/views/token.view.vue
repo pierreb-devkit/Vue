@@ -1,7 +1,7 @@
 <template>
   <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
     <v-row align="start" justify="center">
-      <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }" :flat="config.vuetify.theme.flat">
+      <v-card class="mt-8 pa-8" width="100%" :style="{ background: theme.current.colors.surface }">
         <template v-if="loading">
           <v-col cols="12" class="text-center py-8">
             <AppSpinner color="primary" size="48" />

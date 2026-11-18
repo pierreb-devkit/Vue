@@ -5,7 +5,7 @@
     <v-row class="pa-2 mt-0">
       <!-- Main KPIs -->
       <v-col v-for="kpi in kpis" :key="kpi.key" cols="6" :lg="12 / kpis.length">
-        <v-card color="surface" height="100%" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-5" :data-test="`kpi-${kpi.key}`">
+        <v-card color="surface" height="100%" class="pa-5" :data-test="`kpi-${kpi.key}`">
           <h2 class="text-body-medium text-medium-emphasis">{{ kpi.label }}</h2>
           <div class="text-headline-medium admin-overview__num mt-2" data-test="value">
             <template v-if="kpi.value !== null">{{ formatNumber(kpi.value) }}</template>
@@ -25,7 +25,7 @@
 
       <!-- Trends -->
       <v-col v-for="chart in charts" :key="chart.key" cols="12" md="6" :lg="12 / charts.length">
-        <v-card color="surface" height="100%" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-5" :data-test="`chart-${chart.key}`">
+        <v-card color="surface" height="100%" class="pa-5" :data-test="`chart-${chart.key}`">
           <h2 class="text-title-medium">{{ chart.title }}</h2>
           <div class="text-body-small text-medium-emphasis mt-1 mb-4">{{ chart.note }}</div>
           <div v-if="chart.error" class="d-flex align-center ga-2 text-body-medium" data-test="error">
@@ -40,7 +40,7 @@
 
       <!-- Activity -->
       <v-col v-if="auditOn" cols="12" md="5">
-        <v-card color="surface" height="100%" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-5" data-test="top-actions">
+        <v-card color="surface" height="100%" class="pa-5" data-test="top-actions">
           <h2 class="text-title-medium">Most frequent actions</h2>
           <div class="text-body-small text-medium-emphasis mt-1 mb-4">Last 12 weeks</div>
           <div v-if="statsErrors.includes('audit')" class="d-flex align-center ga-2 text-body-medium" data-test="error">
@@ -62,7 +62,7 @@
         </v-card>
       </v-col>
       <v-col v-if="auditOn" cols="12" md="7">
-        <v-card color="surface" height="100%" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-5" data-test="recent">
+        <v-card color="surface" height="100%" class="pa-5" data-test="recent">
           <h2 class="text-title-medium">Recent activity</h2>
           <div class="text-body-small text-medium-emphasis mt-1 mb-2">Latest recorded actions</div>
           <div v-if="statsErrors.includes('recent')" class="d-flex align-center ga-2 text-body-medium" data-test="error">

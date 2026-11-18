@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-6">
+        <v-card color="surface" class="pa-6">
           <userProfileComponent
             :user="user"
             :organizations="organizations"
@@ -12,12 +12,12 @@
         </v-card>
 
         <!-- Email preferences -->
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="mt-4 pa-6">
+        <v-card color="surface" class="mt-4 pa-6">
           <userEmailPreferencesComponent :user="user" :saving="savingEmailPreferences" @save="updateEmailPreferences" />
         </v-card>
 
         <!-- Danger zone -->
-        <v-card variant="outlined" color="error" class="mt-4 pa-6" :class="config.vuetify.theme.rounded">
+        <v-card variant="outlined" color="error" class="mt-4 pa-6">
           <div class="d-flex align-center flex-wrap ga-4">
             <div class="flex-grow-1">
               <h3 class="text-title-medium font-weight-medium mb-1">Delete Account</h3>

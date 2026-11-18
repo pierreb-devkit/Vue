@@ -54,8 +54,7 @@
 -->
 <template>
   <v-card
-    :class="['billing-card pa-6 d-flex flex-column', config.vuetify.theme.rounded]"
-    :flat="config.vuetify.theme.flat"
+    class="billing-card pa-6 d-flex flex-column"
     :elevation="item.highlight ? 8 : 1"
     height="100%"
   >

@@ -4,7 +4,7 @@
          offline invitee sees on their next login. -->
     <v-row v-if="pendingInvitations.length" class="pa-2 mt-0" data-test="pending-invitations">
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-4">
+        <v-card color="surface" class="pa-4">
           <div class="d-flex align-center mb-2">
             <v-icon icon="fa-solid fa-envelope-open-text" size="small" color="primary" class="mr-2"></v-icon>
             <span class="text-title-medium font-weight-medium">Pending invitations</span>
@@ -65,7 +65,7 @@
 
     <v-row class="pa-2 mt-0">
       <v-col cols="12">
-        <v-card color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded" class="pa-4">
+        <v-card color="surface" class="pa-4">
           <v-list v-if="organizations && organizations.length" lines="two" class="pa-0 bg-transparent">
             <template v-for="(org, i) in organizations" :key="org.id || org._id">
               <v-list-item

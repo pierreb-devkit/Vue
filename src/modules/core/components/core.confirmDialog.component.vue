@@ -4,7 +4,7 @@
     :max-width="maxWidth"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <v-card :class="config.vuetify.theme.rounded" class="pa-4">
+    <v-card class="pa-4">
       <v-card-title class="text-title-large font-weight-medium" :class="titleClass">
         {{ title }}
       </v-card-title>

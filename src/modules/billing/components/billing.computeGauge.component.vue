@@ -25,7 +25,7 @@
       rounded
       aria-labelledby="compute-gauge-label"
     />
-    <div v-show="isExpanded" class="text-caption text-medium-emphasis mt-2">
+    <div v-show="isExpanded" class="text-body-small text-medium-emphasis mt-2">
       {{ remaining }} remaining · resets {{ resetDate }}
     </div>
   </div>

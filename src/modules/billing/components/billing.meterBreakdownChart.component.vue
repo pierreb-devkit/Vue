@@ -11,7 +11,7 @@
   <div class="billing-meter-breakdown-chart">
     <div
       v-if="activeBuckets.length === 0"
-      class="text-caption text-medium-emphasis text-center py-2"
+      class="text-body-small text-medium-emphasis text-center py-2"
       :aria-label="ariaLabel"
     >
       No usage data
@@ -19,7 +19,7 @@
 
     <div v-else :aria-label="ariaLabel">
       <div v-for="bucket in activeBuckets" :key="bucket.key" class="mb-2">
-        <div class="d-flex justify-space-between text-caption text-medium-emphasis mb-1">
+        <div class="d-flex justify-space-between text-body-small text-medium-emphasis mb-1">
           <span>{{ bucket.key }}</span>
           <span class="font-weight-medium">{{ bucket.pct }}%</span>
         </div>

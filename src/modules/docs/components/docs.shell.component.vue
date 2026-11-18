@@ -241,27 +241,28 @@ onBeforeUnmount(() => window.removeEventListener('scroll', markCurrent));
   overflow-wrap: anywhere;
 }
 
-/* The app styles every link in main with !important: these rules answer it. */
-.v-application main .docs-shell a.v-list-item {
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity)) !important;
-  text-decoration: none !important;
+/* Side menu and link cards: medium emphasis at rest, high on hover and when active. */
+.docs-shell a.v-list-item {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  text-decoration: none;
 }
 
-.v-application main .docs-shell a.v-list-item:hover,
-.v-application main .docs-shell a.v-list-item--active,
-.v-application main .docs-shell a.v-list-item[aria-current] {
-  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity)) !important;
+.docs-shell a.v-list-item:hover,
+.docs-shell a.v-list-item--active,
+.docs-shell a.v-list-item[aria-current] {
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
 }
 
-.v-application main .docs-shell a.v-card {
-  color: inherit !important;
-  text-decoration: none !important;
+.docs-shell a.v-card {
+  color: inherit;
+  text-decoration: none;
 }
 
-.v-application main .docs-body a:not(.v-btn, .v-card, .v-list-item) {
-  color: inherit !important;
-  text-decoration: underline !important;
-  text-decoration-color: rgb(var(--v-theme-primary)) !important;
+/* Links in a guide body: underlined in the primary colour, so they stand out from the text. */
+.docs-body a:not(.v-btn, .v-card, .v-list-item) {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--v-theme-primary));
   text-underline-offset: 3px;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <v-card width="100%" class="datatable" color="surface" :flat="config.vuetify.theme.flat" :class="config.vuetify.theme.rounded">
+  <v-card width="100%" class="datatable" color="surface">
     <v-card-title class="d-flex align-center ga-3">
       <span class="text-title-medium">{{ title }}</span>
       <v-spacer></v-spacer>
