@@ -4,6 +4,15 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## auth: `forgot()` and `reset()` now throw on failure (2026-11-18, #4873)
+
+`useAuthStore().forgot()` and `useAuthStore().reset()` used to swallow API errors, so the reset page sent the user to sign-in even when the reset failed. They now throw an `Error` and the stack views stay on the page and show it inline. The message never carries the request payload: `reset()` gives the server reason when it is safe (e.g. "Password reset token is invalid or has expired."), `forgot()` always gives a fixed message so it never tells whether an account exists. Both requests are now `__silent`: no snackbar, success or error (the `__silent` flag now also hides the error snackbar).
+
+- Calling `forgot()` or `reset()` from your own code: wrap the call in `try/catch`, navigate only on success, and show the outcome yourself.
+- `sanitizeApiError(err, fallback, field)` takes two optional arguments: a custom fallback, and `field: 'description'` to read the reason instead of the HTTP title. Existing calls are unchanged.
+
+---
+
 ## Downstream entry point and root-file override points (2026-11-18, #4876)
 
 Breaking at your next stack update: `src/main.js`, `index.html`, `vite.config.js` and `Dockerfile` are now stack-managed like `src/modules` — the `/update-stack` drift gate blocks on any downstream edit to them. Move your edits to the new override points, then take the stack version of the four files.
