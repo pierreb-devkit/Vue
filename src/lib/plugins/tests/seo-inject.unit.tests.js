@@ -649,6 +649,7 @@ describe('seoInjectPlugin', () => {
             icons: [
               { rel: 'icon', href: 'javascript:alert(1)' },
               { rel: 'icon', href: '//evil.example/x.ico' },
+              { rel: 'icon', href: '/\\evil2.example/x.ico' },
               { href: '/no-rel.ico' },
               null,
               { rel: 'icon', href: 'https://cdn.example.com/f.ico' },
@@ -658,8 +659,16 @@ describe('seoInjectPlugin', () => {
       });
       expect(result).not.toContain('javascript:');
       expect(result).not.toContain('evil.example');
+      expect(result).not.toContain('evil2.example');
       expect(result).not.toContain('no-rel.ico');
       expect(result).toContain('<link rel="icon" href="https://cdn.example.com/f.ico">');
+    });
+
+    it('emits sizes/type only when they are strings', () => {
+      const result = transform({ app: { seo: { icons: [{ rel: 'icon', href: '/f.png', sizes: 32, type: { x: 1 } }] } } });
+      expect(result).toContain('<link rel="icon" href="/f.png">');
+      expect(result).not.toContain('sizes=');
+      expect(result).not.toContain('type="[object');
     });
 
     it('ignores a non-array app.seo.icons', () => {

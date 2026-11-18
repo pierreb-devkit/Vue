@@ -50,13 +50,13 @@ function buildPreconnectTags(urls) {
 
 /**
  * Check whether a link href is safe: a root-relative path (`/favicon.ico`,
- * not protocol-relative `//host`) or an http(s) URL.
+ * not protocol-relative `//host` or `/\\host`) or an http(s) URL.
  *
  * @param {unknown} href - href value from config
  * @returns {boolean} true when the href can be emitted
  */
 function isSafeHref(href) {
-  return typeof href === 'string' && (/^\/(?!\/)/.test(href) || isSafeUrl(href));
+  return typeof href === 'string' && (/^\/(?![/\\])/.test(href) || isSafeUrl(href));
 }
 
 /**
@@ -73,8 +73,8 @@ function buildIconTags(icons) {
     .filter((icon) => icon && typeof icon.rel === 'string' && icon.rel && isSafeHref(icon.href))
     .map((icon) => {
       let attrs = `rel="${escapeHtml(icon.rel)}" href="${escapeHtml(icon.href)}"`;
-      if (icon.sizes) attrs += ` sizes="${escapeHtml(icon.sizes)}"`;
-      if (icon.type) attrs += ` type="${escapeHtml(icon.type)}"`;
+      if (typeof icon.sizes === 'string' && icon.sizes) attrs += ` sizes="${escapeHtml(icon.sizes)}"`;
+      if (typeof icon.type === 'string' && icon.type) attrs += ` type="${escapeHtml(icon.type)}"`;
       return `  <link ${attrs}>`;
     });
 }

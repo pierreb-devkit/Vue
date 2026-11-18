@@ -25,7 +25,13 @@ try {
 const projectPluginFactories = await Promise.all(
   globSync('src/modules/*/*.vite.js', { cwd: fileURLToPath(new URL('.', import.meta.url)) })
     .sort()
-    .map(async (file) => (await import(new URL(file, import.meta.url).href)).default),
+    .map(async (file) => {
+      const factory = (await import(new URL(file, import.meta.url).href)).default;
+      if (typeof factory !== 'function') {
+        throw new Error(`[vite.config] ${file} must default-export a function (appConfig, mode) => Plugin | Plugin[]`);
+      }
+      return factory;
+    }),
 );
 
 // https://vitejs.dev/config/

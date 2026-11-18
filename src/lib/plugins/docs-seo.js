@@ -307,6 +307,15 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
 }
 
 /**
+ * Read a config flag that may arrive as a boolean or as an env string
+ * (`DEVKIT_VUE_*` values are strings, so `'false'` must stay off).
+ *
+ * @param {unknown} v - flag value
+ * @returns {boolean} true only for `true` or `'true'`
+ */
+const isOn = (v) => v === true || v === 'true';
+
+/**
  * Whether the docs layer is meant to run: `enabled` is truthy AND `contentUrl`
  * is a non-empty string. A non-string `contentUrl` (number, boolean, object)
  * counts as absent. Single source for `augmentSeoConfigWithDocs` and the
@@ -316,7 +325,7 @@ export async function fetchDocsSnapshot(tree, contentUrl, options = {}) {
  * @returns {boolean} true when the docs layer is intended
  */
 export function isDocsLayerIntended(docs) {
-  return Boolean(docs?.enabled) && typeof docs?.contentUrl === 'string' && docs.contentUrl !== '';
+  return isOn(docs?.enabled) && typeof docs?.contentUrl === 'string' && docs.contentUrl !== '';
 }
 
 /**
@@ -343,7 +352,7 @@ export function isDocsLayerIntended(docs) {
 export async function augmentSeoConfigWithDocs(config, options = {}) {
   const app = config?.app || {};
   const docs = app.seo?.docs;
-  const strict = Boolean(docs?.enabled && docs?.strict && options.production);
+  const strict = isOn(docs?.enabled) && isOn(docs?.strict) && Boolean(options.production);
   /**
    * Static fallback, or a hard failure in strict mode.
    * @param {string} reason - why the docs layer produced nothing
@@ -353,7 +362,7 @@ export async function augmentSeoConfigWithDocs(config, options = {}) {
     if (strict) throw new Error(`[docs-seo] app.seo.docs.strict: ${reason} — refusing a production build without docs pages`);
     return config;
   };
-  if (!isDocsLayerIntended(docs)) return docs?.enabled ? fallback('contentUrl is empty') : config;
+  if (!isDocsLayerIntended(docs)) return isOn(docs?.enabled) ? fallback('contentUrl is empty') : config;
 
   const tree = await fetchDocsTree(docs.contentUrl, { timeoutMs: docs.timeoutMs, fetchImpl: options.fetchImpl });
   if (!tree) return fallback(`docs tree fetch failed (${docs.contentUrl})`);

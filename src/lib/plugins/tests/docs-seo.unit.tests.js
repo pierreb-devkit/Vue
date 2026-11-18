@@ -325,6 +325,9 @@ describe('isDocsLayerIntended', () => {
     [{ enabled: true, contentUrl: 42 }, false],
     [{ enabled: true, contentUrl: { url: 'x' } }, false],
     [{ enabled: true, contentUrl: 'https://api.example.com/api/public/docs' }, true],
+    [{ enabled: 'false', contentUrl: 'https://api.example.com/api/public/docs' }, false],
+    [{ enabled: 'true', contentUrl: 'https://api.example.com/api/public/docs' }, true],
+    [{ enabled: 1, contentUrl: 'https://api.example.com/api/public/docs' }, false],
   ])('%j → %s', (docs, expected) => {
     expect(isDocsLayerIntended(docs)).toBe(expected);
   });
@@ -396,6 +399,23 @@ describe('augmentSeoConfigWithDocs', () => {
       const config = baseConfig();
       config.app.seo.docs = { enabled: false, strict: true, contentUrl: '' };
       await expect(augmentSeoConfigWithDocs(config, { fetchImpl: vi.fn(), production: true })).resolves.toBe(config);
+    });
+
+    it("env-string strict: 'false' never throws, 'true' arms strict", async () => {
+      const off = baseConfig();
+      off.app.seo.docs = { enabled: 'true', strict: 'false', contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(off, { fetchImpl: vi.fn(), production: true })).resolves.toBe(off);
+      const on = baseConfig();
+      on.app.seo.docs = { enabled: 'true', strict: 'true', contentUrl: '' };
+      await expect(augmentSeoConfigWithDocs(on, { fetchImpl: vi.fn(), production: true })).rejects.toThrow(/contentUrl is empty/);
+    });
+
+    it("env-string enabled 'false' keeps the layer off even with strict", async () => {
+      const fetchImpl = vi.fn();
+      const config = baseConfig();
+      config.app.seo.docs = { enabled: 'false', strict: 'true', contentUrl: 'https://api.example.com/x' };
+      await expect(augmentSeoConfigWithDocs(config, { fetchImpl, production: true })).resolves.toBe(config);
+      expect(fetchImpl).not.toHaveBeenCalled();
     });
 
     it('production + strict: a healthy tree augments normally', async () => {
