@@ -37,7 +37,7 @@ git merge devkit-vue/master
 
 | File | Rule |
 |------|------|
-| Stack module files (`src/modules/{admin,app,auth,billing,core,docs,home,invitations,legal,organizations,tasks,users}`, incl. `app.router.js`) and `src/lib/` | `git checkout --theirs <file>` — downstream routes live in `{project}.app.js`, never in `app.router.js` |
+| Stack module files (every module present in `devkit-vue/master` under `src/modules/`, incl. `app.router.js`) and `src/lib/` | `git checkout --theirs <file>` — downstream routes live in `{project}.app.js`, never in `app.router.js` |
 | `src/main.js`, `index.html`, `vite.config.js`, `Dockerfile` | `git checkout --theirs <file>` — move any downstream lines to their override point first (see the red flag below) |
 | `package-lock.json` | `git checkout --theirs package-lock.json` — regenerate after `package.json` is resolved |
 | `ERRORS.md` | Merge stack entries + project entries — never drop lines |

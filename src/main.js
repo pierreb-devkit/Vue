@@ -21,7 +21,11 @@ const pinia = createPinia();
 // imported here, before the router is built, so a downstream module can call
 // `registerDownstreamRoutes()` (and run its other start-up side effects)
 // without editing this stack-managed file. Runs before Pinia is installed:
-// no store access at import time.
+// no store access at import time. Use `.app.js` for registration side effects
+// (routes, plugins), NOT global CSS: Vite hoists these eager imports, so their
+// CSS is emitted before the lib/plugins and App.vue CSS and loses equal-specificity
+// overrides. Import global CSS from a view/layout that always mounts, or use the
+// vuetify/theme config.
 import.meta.glob('./modules/*/*.app.js', { eager: true });
 
 const appRouter = router();

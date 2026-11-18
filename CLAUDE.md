@@ -62,7 +62,7 @@ This repository is open source. **Never reference downstream consumers** — pro
 ## Stack-managed entry points
 
 - `src/main.js` is **strictly stack-managed**. Downstream projects MUST NOT add side-effect imports here — global CSS, analytics config, sentry tags, plugin bootstrap, etc. — because `/update-stack --theirs` will silently wipe them on the next sync.
-- Downstream-only side effects and route registration belong in `src/modules/{project}/{project}.app.js`: `main.js` eager-imports every `src/modules/*/*.app.js` before building the router (no Pinia yet at import time). Component-level side effects can also live in a project view that always mounts.
+- Downstream-only side effects and route registration belong in `src/modules/{project}/{project}.app.js`: `main.js` eager-imports every `src/modules/*/*.app.js` before building the router (no Pinia yet at import time). Component-level side effects can also live in a project view that always mounts. `.app.js` is for registration side effects (routes, plugins), **not global CSS** (Vite hoists the eager imports, so the CSS loses equal-specificity overrides): put global CSS in a project file imported by an always-mounted view/layout, or in the vuetify/theme config.
 - `index.html`, `vite.config.js` and `Dockerfile` are stack-managed too: head links come from `app.seo.icons` / `app.seo.manifest`, build plugins from `src/modules/{project}/{project}.vite.js` (default export `(appConfig, mode) => Plugin | Plugin[]`), Docker values from `--build-arg DEVKIT_VUE_*`.
 - This rule applies retroactively: when `/update-stack` reports `src/main.js` as a conflict, the downstream side of the conflict must be moved to a project-only entry, never re-applied as a `--ours` patch.
 
