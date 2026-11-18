@@ -80,11 +80,18 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
 
   /**
    * @type {import('vue').ComputedRef<number>}
-   * Percentage of weekly quota consumed, clamped to [0, 100].
+   * Percentage of the balance consumed, clamped to [0, 100].
+   * - Something used and net balance (quota - used + extras) <= 0 → 100 (balance spent or in debt).
+   * - quota > 0 → used / quota, quota-only on purpose so it matches the server's
+   *   quota-threshold alerts (extras never dilute the figure).
+   * - quota === 0 (extras-only) → used / extras.
    */
   const progress = computed(() => {
-    if (quota.value === 0) return 0;
-    return Math.max(0, Math.min(100, Math.round((used.value / quota.value) * 100)));
+    // netRemainingRaw is declared below; safe because computeds evaluate lazily.
+    if (used.value > 0 && netRemainingRaw.value <= 0) return 100;
+    const pool = quota.value > 0 ? quota.value : extras.value;
+    if (pool <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.round((used.value / pool) * 100)));
   });
 
   /**

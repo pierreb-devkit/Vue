@@ -123,10 +123,42 @@ describe('useMeter composable', () => {
 
   // ── progress ─────────────────────────────────────────────────────────────
 
-  it('progress is 0 when quota is 0', () => {
-    store.usageMeter = { meterUsed: 500, meterQuota: 0 };
+  it('progress is 0 when quota and extras are 0 and nothing is used', () => {
+    store.usageMeter = { meterUsed: 0, meterQuota: 0, extrasRemaining: 0 };
     const { result } = mountMeter({ pollIntervalMs: 0 });
     expect(result.progress.value).toBe(0);
+  });
+
+  it('progress is 100 when quota is 0 and usage exceeds the (empty) balance', () => {
+    store.usageMeter = { meterUsed: 500, meterQuota: 0 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(-500);
+    expect(result.progress.value).toBe(100);
+  });
+
+  it('progress measures used against extras when quota is 0 (extras-only)', () => {
+    store.usageMeter = { meterUsed: 250, meterQuota: 0, extrasRemaining: 1000 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.progress.value).toBe(25);
+  });
+
+  it('progress is 100 when the net balance is negative (job finished past the limit)', () => {
+    store.usageMeter = { meterUsed: 1300, meterQuota: 1000, extrasRemaining: 200 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.netRemainingRaw.value).toBe(-100);
+    expect(result.progress.value).toBe(100);
+  });
+
+  it('progress is 100 when the net balance is exactly 0 and something was used', () => {
+    store.usageMeter = { meterUsed: 300, meterQuota: 0, extrasRemaining: 300 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.progress.value).toBe(100);
+  });
+
+  it('progress stays quota-only when quota > 0 and extras remain', () => {
+    store.usageMeter = { meterUsed: 800, meterQuota: 1600, extrasRemaining: 400 };
+    const { result } = mountMeter({ pollIntervalMs: 0 });
+    expect(result.progress.value).toBe(50);
   });
 
   it('progress computes correct percentage', () => {

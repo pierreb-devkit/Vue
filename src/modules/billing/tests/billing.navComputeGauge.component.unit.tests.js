@@ -158,6 +158,33 @@ describe('BillingNavComputeGaugeComponent', () => {
     expect(wrapper.vm.pctUsed).toBe(50);
   });
 
+  it('shows a full red ring when meterQuota=0 and the balance is negative (#4883)', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    // No included quota, extras exhausted past zero: net balance = 0 - 1200 + 1000 = -200
+    billingStore.usageMeter = { meterUsed: 1200, meterQuota: 0, extrasRemaining: 1000, weekResetAt: null };
+
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(100);
+    expect(wrapper.vm.iconColor).toBe('error');
+    expect(wrapper.text()).toContain('100% of quota');
+    expect(wrapper.find('[aria-label="Compute usage: 100% of quota"]').exists()).toBe(true);
+  });
+
+  it('measures usage against extras when meterQuota=0 and balance remains (#4883)', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 400, meterQuota: 0, extrasRemaining: 1000, weekResetAt: null };
+
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(40);
+    expect(wrapper.vm.iconColor).toBe('success');
+  });
+
   it('clamps pctUsed to 100 and iconColor to "error" when quota is exceeded while extras remain (#4548 regression)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
