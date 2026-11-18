@@ -760,12 +760,26 @@ describe('Auth Store', () => {
     it('does not report a completed reset as failed when local storage throws', async () => {
       const authStore = useAuthStore();
       axios.post.mockResolvedValueOnce({ data: { user: { id: '1', roles: ['user'] }, tokenExpiresIn: 1 } });
-      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+      const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('quota'); });
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       await expect(authStore.reset({ token: 't', newPassword: 'p' })).resolves.toBeUndefined();
+      // The storage failure is logged by its message only, never the payload.
+      expect(errSpy).toHaveBeenCalledWith('Reset succeeded but local session update failed', 'quota');
 
       setItem.mockRestore();
+      errSpy.mockRestore();
+    });
+
+    it('does not report a completed reset as failed when the reply has no user', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({ data: { tokenExpiresIn: 1 } });
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      await expect(authStore.reset({ token: 't', newPassword: 'p' })).resolves.toBeUndefined();
+      expect(errSpy).toHaveBeenCalledWith('Reset succeeded but local session update failed', expect.any(String));
+      expect(authStore.auth).toBe(false);
+
       errSpy.mockRestore();
     });
 
