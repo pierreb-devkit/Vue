@@ -21,10 +21,6 @@ const stubs = {
   'v-row': { template: '<div><slot /></div>' },
   'v-col': { template: '<div><slot /></div>' },
   'v-card': { template: '<div><slot /></div>' },
-  'v-card-title': { template: '<div><slot /></div>' },
-  'v-card-subtitle': { template: '<div><slot /></div>' },
-  'v-card-text': { template: '<div><slot /></div>' },
-  'v-divider': { template: '<hr />' },
   'v-spacer': { template: '<span />' },
   'v-btn': { template: '<button @click="$attrs.onClick && $attrs.onClick()"><slot /></button>' },
   'v-icon': { template: '<i />' },
@@ -34,13 +30,10 @@ const stubs = {
 
 const weeks = (counts) => counts.map((count, i) => ({ week: `2026-11-${String(i + 1).padStart(2, '0')}`, count }));
 
-const mountView = (config = {}) =>
+const mountView = () =>
   shallowMount(AdminOverview, {
     global: {
-      mocks: {
-        config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } }, ...config },
-        $vuetify: { display: { smAndUp: true } },
-      },
+      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } } } },
       stubs,
     },
   });
@@ -54,53 +47,38 @@ describe('admin.overview.view', () => {
     store.getStats = vi.fn().mockResolvedValue();
   });
 
-  it('should load the stats with billing on by default', () => {
+  it('should load the stats on mount', () => {
     mountView();
-    expect(store.getStats).toHaveBeenCalledWith({ billing: true });
+    expect(store.getStats).toHaveBeenCalled();
   });
 
-  it('should skip billing when the billing module is off', () => {
-    const wrapper = mountView({ modules: { billing: { activated: false } } });
-    expect(store.getStats).toHaveBeenCalledWith({ billing: false });
-    expect(wrapper.find('[data-test="kpi-subscriptions"]').exists()).toBe(false);
-    expect(wrapper.text()).not.toContain('Subscriptions by plan');
-  });
-
-  it('should show totals, this week and the paid plans', async () => {
+  it('should show the total, this week and the chart for each series', async () => {
     const wrapper = mountView();
     store.stats = {
       users: { total: 1234, weeks: weeks([1, 2, 5]) },
       organizations: { total: 40, weeks: weeks([0, 0, 0]) },
-      billing: { total: 40, byPlan: { free: 30, starter: 6, pro: 4 }, byStatus: { active: 38, past_due: 2 } },
     };
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('[data-test="kpi-users"]').text()).toContain('1,234');
-    expect(wrapper.find('[data-test="kpi-users"]').text()).toContain('5 new this week');
-    expect(wrapper.find('[data-test="kpi-organizations"]').text()).toContain('0 new this week');
-    expect(wrapper.find('[data-test="kpi-subscriptions"]').text()).toContain('10');
-    expect(wrapper.find('[data-test="kpi-subscriptions"]').text()).toContain('of 40 subscriptions');
+    const users = wrapper.find('[data-test="series-users"]');
+    expect(users.find('[data-test="total"]').text()).toBe('1,234');
+    expect(users.find('[data-test="this-week"]').text()).toBe('5 new this week');
+    const orgs = wrapper.find('[data-test="series-organizations"]');
+    expect(orgs.find('[data-test="total"]').text()).toBe('40');
+    expect(orgs.find('[data-test="this-week"]').text()).toBe('0 new this week');
     expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(2);
-    expect(wrapper.find('[data-test="plan-free"]').text()).toContain('75%');
-    expect(wrapper.find('[data-test="status-past_due"]').text()).toContain('past due');
   });
 
   it('should print a dash while a figure is missing', () => {
     const wrapper = mountView();
-    expect(wrapper.find('[data-test="kpi-users"]').text()).toContain('—');
+    expect(wrapper.find('[data-test="series-users"] [data-test="total"]').text()).toBe('—');
   });
 
-  it('should say when there are no subscriptions yet', async () => {
-    const wrapper = mountView();
-    store.stats = { users: null, organizations: null, billing: { total: 0, byPlan: {}, byStatus: {} } };
-    await wrapper.vm.$nextTick();
-    expect(wrapper.text()).toContain('No subscriptions yet.');
-  });
-
-  it('should show an error with a retry inside the block that failed', async () => {
+  it('should show an error with a retry inside the card that failed', async () => {
     const wrapper = mountView();
     store.statsErrors = ['users'];
     await wrapper.vm.$nextTick();
-    expect(wrapper.text()).toContain("Couldn't load accounts.");
+    expect(wrapper.find('[data-test="series-users"] [data-test="error"]').text()).toContain("Couldn't load accounts.");
+    expect(wrapper.find('[data-test="series-organizations"] [data-test="error"]').exists()).toBe(false);
     store.getStats.mockClear();
     const retry = wrapper.findAll('button').find((b) => b.text() === 'Retry');
     await retry.trigger('click');
