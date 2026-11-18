@@ -40,20 +40,20 @@
 </template>
 
 <script>
+/** Scale tops per power of ten; each one splits into an integer half once scaled. */
+const STEPS = [1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10];
+
 /**
- * @desc Smallest "nice" integer (1, 2 or 5 × 10^n, at least 4) at or above `value`.
+ * @desc Smallest round integer strictly above `value` (at least 4), so the
+ *       tallest bar never touches the top of the plot.
  * @param {number} value - series maximum
  * @returns {number} scale top
  */
 const niceCeil = (value) => {
-  if (value <= 4) return 4;
+  if (value < 4) return 4;
   const power = 10 ** Math.floor(Math.log10(value));
-  const n = value / power;
-  let mult = 10;
-  if (n <= 1) mult = 1;
-  else if (n <= 2) mult = 2;
-  else if (n <= 5) mult = 5;
-  return mult * power;
+  const top = STEPS.map((m) => m * power).find((t) => Number.isInteger(t) && t > value);
+  return top ?? 10 * power;
 };
 
 export default {
@@ -77,7 +77,7 @@ export default {
   },
 
   computed: {
-    /** @returns {number} top of the y scale (strictly above the max when the max is not round) */
+    /** @returns {number} top of the y scale, strictly above the maximum */
     scaleMax() {
       const max = Math.max(0, ...this.weeks.map((w) => w.count || 0));
       return niceCeil(max);

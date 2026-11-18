@@ -40,7 +40,7 @@ export const useAdminStore = defineStore('admin', {
     error: null,
     currentBreadcrumb: null,
     readiness: [],
-    stats: { users: null, organizations: null },
+    stats: { users: null, organizations: null, audit: null, recent: null },
     statsErrors: [],
     auditLogs: [],
     auditTotal: 0,
@@ -146,18 +146,24 @@ export const useAdminStore = defineStore('admin', {
     },
 
     /**
-     * @desc Load the Overview stats for accounts and organizations. Each series
-     *       loads on its own, so one failing route leaves the other on screen; a
-     *       failed series is null and named in `statsErrors`.
+     * @desc Load the Overview data. Each source loads on its own, so one failing
+     *       route leaves the others on screen; a failed source stays null and is
+     *       named in `statsErrors`.
+     * @param {{ audit?: boolean }} [options] - `audit: false` skips the activity sources
      * @returns {Promise<void>}
      */
-    async getStats() {
-      const keys = ['users', 'organizations'];
-      const results = await Promise.allSettled(keys.map((k) => axios.get(`${apiBase()}/admin/${k}/stats`)));
-      const stats = { users: null, organizations: null };
+    async getStats({ audit = true } = {}) {
+      const sources = {
+        users: '/admin/users/stats',
+        organizations: '/admin/organizations/stats',
+        ...(audit ? { audit: '/audit/stats', recent: '/audit?perPage=6' } : {}),
+      };
+      const keys = Object.keys(sources);
+      const results = await Promise.allSettled(keys.map((k) => axios.get(`${apiBase()}${sources[k]}`)));
+      const stats = { users: null, organizations: null, audit: null, recent: null };
       const errors = [];
       results.forEach((r, i) => {
-        if (r.status === 'fulfilled') stats[keys[i]] = r.value.data.data;
+        if (r.status === 'fulfilled') stats[keys[i]] = keys[i] === 'recent' ? r.value.data.data?.data || [] : r.value.data.data;
         else {
           errors.push(keys[i]);
           logger.error(r.reason);

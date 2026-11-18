@@ -11,16 +11,21 @@ describe('admin.weeklyBars.component', () => {
     expect(wrapper.findAll('.admin-weekly-bars__bar')).toHaveLength(2);
   });
 
-  it('should use a round scale at or above the maximum', () => {
+  it('should use a round scale strictly above the maximum', () => {
     expect(mount(AdminWeeklyBars, { props: { weeks: weeks([1, 2]), label: 'x' } }).vm.scaleMax).toBe(4);
-    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([7]), label: 'x' } }).vm.scaleMax).toBe(10);
-    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([13]), label: 'x' } }).vm.scaleMax).toBe(20);
-    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([260]), label: 'x' } }).vm.scaleMax).toBe(500);
+    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([5]), label: 'x' } }).vm.scaleMax).toBe(6);
+    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([7]), label: 'x' } }).vm.scaleMax).toBe(8);
+    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([14]), label: 'x' } }).vm.scaleMax).toBe(16);
+    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([260]), label: 'x' } }).vm.scaleMax).toBe(300);
+    expect(mount(AdminWeeklyBars, { props: { weeks: weeks([1000]), label: 'x' } }).vm.scaleMax).toBe(1200);
   });
 
   it('should only print integer ticks', () => {
-    const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([5]), label: 'x' } });
-    expect(wrapper.vm.ticks.every(Number.isInteger)).toBe(true);
+    for (const max of [0, 3, 5, 9, 14, 37, 99, 260, 1234]) {
+      const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([max]), label: 'x' } });
+      expect(wrapper.vm.ticks.every(Number.isInteger)).toBe(true);
+      expect(wrapper.vm.scaleMax).toBeGreaterThan(max);
+    }
   });
 
   it('should label the first, middle and last weeks', () => {

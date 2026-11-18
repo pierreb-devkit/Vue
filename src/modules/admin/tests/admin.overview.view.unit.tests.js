@@ -24,16 +24,32 @@ const stubs = {
   'v-spacer': { template: '<span />' },
   'v-btn': { template: '<button @click="$attrs.onClick && $attrs.onClick()"><slot /></button>' },
   'v-icon': { template: '<i />' },
-  'v-progress-linear': { template: '<div data-testid="progress" />' },
+  'v-progress-linear': { template: '<div />' },
   AdminWeeklyBarsComponent: { props: ['weeks', 'label'], template: '<div data-testid="bars">{{ label }}</div>' },
 };
 
-const weeks = (counts) => counts.map((count, i) => ({ week: `2026-11-${String(i + 1).padStart(2, '0')}`, count }));
+/** 8 weeks: previous period 1+1+1+1 = 4, current period 2+2+2+2 = 8. */
+const weeks = (counts = [1, 1, 1, 1, 2, 2, 2, 2]) => counts.map((count, i) => ({ week: `2026-10-${String(i + 1).padStart(2, '0')}`, count }));
 
-const mountView = () =>
+const fullStats = () => ({
+  users: { total: 1234, weeks: weeks() },
+  organizations: { total: 40, weeks: weeks([0, 0, 0, 0, 0, 0, 0, 0]) },
+  audit: {
+    total: 30,
+    weeks: weeks([5, 5, 5, 5, 3, 3, 2, 2]),
+    topActions: [
+      { action: 'auth.signin', count: 20 },
+      { action: 'tasks', count: 10 },
+    ],
+    activeUsers: { current: 6, previous: 0, periodWeeks: 4 },
+  },
+  recent: [{ id: 'r1', action: 'auth.signin', targetType: 'User', createdAt: new Date(Date.now() - 5 * 60000).toISOString() }],
+});
+
+const mountView = (config = {}) =>
   shallowMount(AdminOverview, {
     global: {
-      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } } } },
+      mocks: { config: { vuetify: { theme: { flat: true, rounded: 'rounded-lg' } }, ...config } },
       stubs,
     },
   });
@@ -47,41 +63,75 @@ describe('admin.overview.view', () => {
     store.getStats = vi.fn().mockResolvedValue();
   });
 
-  it('should load the stats on mount', () => {
+  it('should load every source on mount', () => {
     mountView();
-    expect(store.getStats).toHaveBeenCalled();
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true });
   });
 
-  it('should show the total, this week and the chart for each series', async () => {
+  it('should show the KPIs with their trend against the previous period', async () => {
     const wrapper = mountView();
-    store.stats = {
-      users: { total: 1234, weeks: weeks([1, 2, 5]) },
-      organizations: { total: 40, weeks: weeks([0, 0, 0]) },
-    };
+    store.stats = fullStats();
     await wrapper.vm.$nextTick();
-    const users = wrapper.find('[data-test="series-users"]');
-    expect(users.find('[data-test="total"]').text()).toBe('1,234');
-    expect(users.find('[data-test="this-week"]').text()).toBe('5 new this week');
-    const orgs = wrapper.find('[data-test="series-organizations"]');
-    expect(orgs.find('[data-test="total"]').text()).toBe('40');
-    expect(orgs.find('[data-test="this-week"]').text()).toBe('0 new this week');
-    expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(2);
+    const users = wrapper.find('[data-test="kpi-users"]');
+    expect(users.find('[data-test="value"]').text()).toBe('1,234');
+    expect(users.find('[data-test="caption"]').text()).toBe('8 new in the last 4 weeks');
+    expect(users.find('[data-test="trend"]').text()).toBe('100% vs previous 4 weeks');
+    expect(wrapper.find('[data-test="kpi-organizations"] [data-test="trend"]').text()).toBe('No change vs previous 4 weeks');
+    expect(wrapper.find('[data-test="kpi-active"] [data-test="value"]').text()).toBe('6');
+    expect(wrapper.find('[data-test="kpi-active"] [data-test="trend"]').text()).toBe('Up from 0 vs previous 4 weeks');
+    const events = wrapper.find('[data-test="kpi-events"]');
+    expect(events.find('[data-test="value"]').text()).toBe('10');
+    expect(events.find('[data-test="trend"]').text()).toBe('50% vs previous 4 weeks');
+  });
+
+  it('should colour a rise and a fall differently', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.trend(8, 4).class).toBe('text-success');
+    expect(wrapper.vm.trend(2, 4).class).toBe('text-error');
+    expect(wrapper.vm.trend(4, 4).class).toBe('text-medium-emphasis');
+  });
+
+  it('should draw one chart per series and list the activity', async () => {
+    const wrapper = mountView();
+    store.stats = fullStats();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(3);
+    const rows = wrapper.findAll('[data-test="action-row"]');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].text()).toContain('auth.signin');
+    expect(rows[0].text()).toContain('20');
+    const recent = wrapper.findAll('[data-test="recent-row"]');
+    expect(recent).toHaveLength(1);
+    expect(recent[0].text()).toContain('auth.signin');
+    expect(recent[0].text()).toContain('5 min. ago');
   });
 
   it('should print a dash while a figure is missing', () => {
     const wrapper = mountView();
-    expect(wrapper.find('[data-test="series-users"] [data-test="total"]').text()).toBe('—');
+    expect(wrapper.find('[data-test="kpi-users"] [data-test="value"]').text()).toBe('—');
   });
 
   it('should show an error with a retry inside the card that failed', async () => {
     const wrapper = mountView();
     store.statsErrors = ['users'];
     await wrapper.vm.$nextTick();
-    expect(wrapper.find('[data-test="series-users"] [data-test="error"]').text()).toContain("Couldn't load accounts.");
-    expect(wrapper.find('[data-test="series-organizations"] [data-test="error"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="chart-users"] [data-test="error"]').text()).toContain("Couldn't load accounts.");
+    expect(wrapper.find('[data-test="chart-organizations"] [data-test="error"]').exists()).toBe(false);
     store.getStats.mockClear();
     const retry = wrapper.findAll('button').find((b) => b.text() === 'Retry');
     await retry.trigger('click');
     expect(store.getStats).toHaveBeenCalled();
+  });
+
+  it('should hide the activity parts when audit logging is disabled', async () => {
+    const wrapper = mountView({ audit: { enabled: false } });
+    expect(store.getStats).toHaveBeenCalledWith({ audit: false });
+    store.stats = { ...fullStats(), audit: null, recent: null };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="kpi-active"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="kpi-events"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="top-actions"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="recent"]').exists()).toBe(false);
+    expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(2);
   });
 });

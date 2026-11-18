@@ -223,36 +223,61 @@ describe('Admin Store', () => {
   });
 
   describe('getStats', () => {
-    it('should load both series', async () => {
-      const store = useAdminStore();
-      const users = { total: 3, weeks: [{ week: '2026-11-16', count: 1 }] };
-      const organizations = { total: 2, weeks: [{ week: '2026-11-16', count: 0 }] };
+    const users = { total: 3, weeks: [{ week: '2026-11-16', count: 1 }] };
+    const organizations = { total: 2, weeks: [{ week: '2026-11-16', count: 0 }] };
+    const audit = { total: 5, weeks: [], topActions: [], activeUsers: { current: 1, previous: 0, periodWeeks: 4 } };
+    const recent = [{ id: 'a1', action: 'auth.signin' }];
+
+    const mockRoutes = (fail = []) =>
       axios.get.mockImplementation((url) => {
-        if (url.endsWith('/admin/users/stats')) return Promise.resolve({ data: { data: users } });
-        if (url.endsWith('/admin/organizations/stats')) return Promise.resolve({ data: { data: organizations } });
-        return Promise.reject(new Error(`unexpected ${url}`));
+        const key = url.endsWith('/admin/users/stats')
+          ? 'users'
+          : url.endsWith('/admin/organizations/stats')
+            ? 'organizations'
+            : url.endsWith('/audit/stats')
+              ? 'audit'
+              : url.includes('/audit?perPage=')
+                ? 'recent'
+                : null;
+        if (!key || fail.includes(key)) return Promise.reject(new Error(`fail ${url}`));
+        const data = { users, organizations, audit, recent: { data: recent, total: 1 } }[key];
+        return Promise.resolve({ data: { data } });
       });
+
+    it('should load every source', async () => {
+      const store = useAdminStore();
+      mockRoutes();
 
       await store.getStats();
 
-      expect(store.stats).toEqual({ users, organizations });
+      expect(store.stats).toEqual({ users, organizations, audit, recent });
       expect(store.statsErrors).toEqual([]);
       axios.get.mockReset();
     });
 
-    it('should keep the series that loaded when one route fails', async () => {
+    it('should skip the activity sources when audit is off', async () => {
       const store = useAdminStore();
-      axios.get.mockImplementation((url) =>
-        url.endsWith('/admin/organizations/stats')
-          ? Promise.reject(new Error('boom'))
-          : Promise.resolve({ data: { data: { total: 1, weeks: [] } } }),
-      );
+      mockRoutes();
+
+      await store.getStats({ audit: false });
+
+      expect(axios.get).toHaveBeenCalledTimes(2);
+      expect(store.stats.audit).toBeNull();
+      expect(store.stats.recent).toBeNull();
+      axios.get.mockReset();
+    });
+
+    it('should keep the sources that loaded when one route fails', async () => {
+      const store = useAdminStore();
+      mockRoutes(['organizations', 'audit']);
 
       await store.getStats();
 
-      expect(store.stats.users).toEqual({ total: 1, weeks: [] });
+      expect(store.stats.users).toEqual(users);
       expect(store.stats.organizations).toBeNull();
-      expect(store.statsErrors).toEqual(['organizations']);
+      expect(store.stats.audit).toBeNull();
+      expect(store.stats.recent).toEqual(recent);
+      expect(store.statsErrors).toEqual(['organizations', 'audit']);
       axios.get.mockReset();
     });
   });
