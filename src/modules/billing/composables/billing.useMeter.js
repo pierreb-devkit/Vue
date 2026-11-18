@@ -80,6 +80,14 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
 
   /**
    * @type {import('vue').ComputedRef<number>}
+   * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
+   * push usage past quota (e.g. a long-running job finishing after quota is hit).
+   * Use this in detail views / ledger displays that must show the real debt.
+   */
+  const netRemainingRaw = computed(() => quota.value - used.value + extras.value);
+
+  /**
+   * @type {import('vue').ComputedRef<number>}
    * Percentage of the balance consumed, clamped to [0, 100].
    * - Something used and net balance (quota - used + extras) <= 0 → 100 (balance spent or in debt).
    * - quota > 0 → used / quota, quota-only on purpose so it matches the server's
@@ -87,7 +95,6 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
    * - quota === 0 (extras-only) → used / extras.
    */
   const progress = computed(() => {
-    // netRemainingRaw is declared below; safe because computeds evaluate lazily.
     if (used.value > 0 && netRemainingRaw.value <= 0) return 100;
     const pool = quota.value > 0 ? quota.value : extras.value;
     if (pool <= 0) return 0;
@@ -116,14 +123,6 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
    * Used by progress bars and visual indicators — always >= 0 (backward-compat).
    */
   const totalRemaining = computed(() => Math.max(0, quota.value - used.value) + extras.value);
-
-  /**
-   * @type {import('vue').ComputedRef<number>}
-   * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
-   * push usage past quota (e.g. a long-running job finishing after quota is hit).
-   * Use this in detail views / ledger displays that must show the real debt.
-   */
-  const netRemainingRaw = computed(() => quota.value - used.value + extras.value);
 
   /**
    * @type {import('vue').ComputedRef<number>}
