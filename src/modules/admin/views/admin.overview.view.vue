@@ -239,7 +239,7 @@ export default {
       const vs = `vs previous ${this.periodWeeks} weeks`;
       if (current === previous) return { text: `No change ${vs}`, icon: null, class: 'text-medium-emphasis' };
       const up = current > previous;
-      const text = previous === 0 ? `Up from 0 ${vs}` : `${Math.round((Math.abs(current - previous) / previous) * 100)}% ${vs}`;
+      const text = previous === 0 ? `Up from 0 ${vs}` : `${up ? 'Up' : 'Down'} ${Math.round((Math.abs(current - previous) / previous) * 100)}% ${vs}`;
       return {
         text,
         icon: up ? 'fa-solid fa-arrow-trend-up' : 'fa-solid fa-arrow-trend-down',
@@ -269,7 +269,7 @@ export default {
      * @returns {string} relative time
      */
     timeAgo(iso) {
-      const seconds = (Date.now() - new Date(iso).getTime()) / 1000;
+      const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
       if (Number.isNaN(seconds)) return '';
       const rtf = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto', style: 'short' });
       const steps = [

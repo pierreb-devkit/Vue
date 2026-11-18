@@ -75,13 +75,13 @@ describe('admin.overview.view', () => {
     const users = wrapper.find('[data-test="kpi-users"]');
     expect(users.find('[data-test="value"]').text()).toBe('1,234');
     expect(users.find('[data-test="caption"]').text()).toBe('8 new in the last 4 weeks');
-    expect(users.find('[data-test="trend"]').text()).toBe('100% vs previous 4 weeks');
+    expect(users.find('[data-test="trend"]').text()).toBe('Up 100% vs previous 4 weeks');
     expect(wrapper.find('[data-test="kpi-organizations"] [data-test="trend"]').text()).toBe('No change vs previous 4 weeks');
     expect(wrapper.find('[data-test="kpi-active"] [data-test="value"]').text()).toBe('6');
     expect(wrapper.find('[data-test="kpi-active"] [data-test="trend"]').text()).toBe('Up from 0 vs previous 4 weeks');
     const events = wrapper.find('[data-test="kpi-events"]');
     expect(events.find('[data-test="value"]').text()).toBe('10');
-    expect(events.find('[data-test="trend"]').text()).toBe('50% vs previous 4 weeks');
+    expect(events.find('[data-test="trend"]').text()).toBe('Down 50% vs previous 4 weeks');
   });
 
   it('should colour a rise and a fall differently', () => {
@@ -89,6 +89,11 @@ describe('admin.overview.view', () => {
     expect(wrapper.vm.trend(8, 4).class).toBe('text-success');
     expect(wrapper.vm.trend(2, 4).class).toBe('text-error');
     expect(wrapper.vm.trend(4, 4).class).toBe('text-medium-emphasis');
+  });
+
+  it('should never print a future time for a recent event', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.timeAgo(new Date(Date.now() + 30000).toISOString())).not.toMatch(/^in /);
   });
 
   it('should draw one chart per series and list the activity', async () => {
