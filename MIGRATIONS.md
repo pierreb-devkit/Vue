@@ -6,9 +6,10 @@ Breaking changes and upgrade notes for downstream projects.
 
 ## auth: `forgot()` and `reset()` now throw on failure (2026-11-18, #4873)
 
-`useAuthStore().forgot()` and `useAuthStore().reset()` used to swallow API errors, so the reset page sent the user to sign-in even when the reset failed. They now re-throw a sanitized `Error` (the API message, never the request payload). The stack views stay on the page and show the error inline.
+`useAuthStore().forgot()` and `useAuthStore().reset()` used to swallow API errors, so the reset page sent the user to sign-in even when the reset failed. They now throw an `Error` and the stack views stay on the page and show it inline. The message never carries the request payload: `reset()` gives the server reason when it is safe (e.g. "Password reset token is invalid or has expired."), `forgot()` always gives a fixed message so it never tells whether an account exists. Both requests are now `__silent`: no snackbar, success or error (the `__silent` flag now also hides the error snackbar).
 
-- Calling `forgot()` or `reset()` from your own code: wrap the call in `try/catch`, and navigate only on success.
+- Calling `forgot()` or `reset()` from your own code: wrap the call in `try/catch`, navigate only on success, and show the outcome yourself.
+- `sanitizeApiError(err, fallback, field)` takes two optional arguments: a custom fallback, and `field: 'description'` to read the reason instead of the HTTP title. Existing calls are unchanged.
 
 ---
 

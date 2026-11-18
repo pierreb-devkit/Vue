@@ -258,6 +258,20 @@ describe('Axios Service', () => {
       expect(result).toEqual(response);
     });
 
+    it('should NOT raise an error snackbar for a silent request', async () => {
+      // A form that shows its failure inline (password reset) marks the request
+      // __silent so the error is not shown twice.
+      const error = {
+        response: { status: 400, data: { message: 'Bad Request', description: 'Password reset token is invalid or has expired.' } },
+        config: { method: 'post', __silent: true },
+      };
+
+      await expect(errorInterceptor(error)).rejects.toEqual(error);
+
+      expect(mockSnackbar.text).toBe('');
+      expect(mockSnackbar.status).toBe(false);
+    });
+
     it('should not handle 401 error if retry request', async () => {
       const error = {
         response: {

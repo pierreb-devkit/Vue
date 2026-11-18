@@ -479,13 +479,15 @@ export const useAuthStore = defineStore('auth', {
       const api = apiBase();
 
       try {
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params);
+        // `__silent`: the view shows the outcome inline, so no snackbar on top.
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/forgot`, params, { __silent: true });
         this.mail.status = res.data.data.status;
         this.mail.message = res.data.message;
-      } catch (err) {
-        // Re-throw a sanitized Error: the raw `err` carries the submitted
+      } catch {
+        // Re-throw a fixed message, never the server text: it could reveal
+        // whether an account exists. The raw `err` also carries the submitted
         // email (request payload) and must never reach the caller or a log.
-        throw new Error(sanitizeApiError(err, 'Could not send the reset link. Please try again.'));
+        throw new Error('Could not send the reset link. Please try again.');
       }
     },
 
@@ -494,7 +496,8 @@ export const useAuthStore = defineStore('auth', {
       const coreStore = useCoreStore();
 
       try {
-        const res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params);
+        // `__silent`: the view shows a failure inline, so no error snackbar on top.
+        const res = await axios.post(`${api}/${config.api.endPoints.auth}/reset`, params, { __silent: true });
         localStorage.setItem(`${config.cookie.prefix}UserRoles`, res.data.user.roles);
         localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
 
@@ -508,7 +511,7 @@ export const useAuthStore = defineStore('auth', {
         // Re-throw a sanitized Error so the caller knows the reset failed: the
         // raw `err` carries the submitted reset token + new password (request
         // payload) and must never reach the caller or a log.
-        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.'));
+        throw new Error(sanitizeApiError(err, 'Could not reset your password. Please try again.', 'description'));
       }
     },
 

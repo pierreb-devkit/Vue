@@ -95,14 +95,14 @@ describe('auth.forgot.view', () => {
     });
 
     it('shows the error when forgot fails', async () => {
-      forgotMock.mockRejectedValueOnce(new Error('No account with that email has been found'));
+      forgotMock.mockRejectedValueOnce(new Error('Could not send the reset link. Please try again.'));
       const wrapper = mountView();
 
       wrapper.vm.email = 'forgot@example.com';
       await wrapper.vm.validate();
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-test="forgot-error"]').text()).toContain('No account with that email has been found');
+      expect(wrapper.find('[data-test="forgot-error"]').text()).toContain('Could not send the reset link. Please try again.');
     });
 
     it('shows no error when forgot succeeds', async () => {
