@@ -137,6 +137,8 @@ import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import roleColor from '../../../lib/helpers/roleColor';
+import { required } from '../../../lib/helpers/rules';
+import { timeAgo } from '../../../lib/helpers/format';
 import organizationsMembersComponent from './organizations.members.component.vue';
 
 export default {
@@ -177,7 +179,7 @@ export default {
       pendingRequests: [],
       requestActionLoading: null,
       rules: {
-        required: (v) => !!v || 'Required',
+        required: required(),
       },
     };
   },
@@ -294,18 +296,7 @@ export default {
      * @returns {string} Relative time string (e.g. "5m ago", "2d ago")
      */
     formatTimeAgo(date) {
-      if (!date) return '';
-      const now = new Date();
-      const then = new Date(date);
-      const diffMs = now - then;
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return 'just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      if (diffDays < 30) return `${diffDays}d ago`;
-      return `${Math.floor(diffDays / 30)}mo ago`;
+      return date ? timeAgo(date, { style: 'compact' }) : '';
     },
     /**
      * @desc Reject a pending join request and remove it from the local list.

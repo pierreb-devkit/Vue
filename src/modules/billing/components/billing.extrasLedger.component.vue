@@ -106,6 +106,8 @@
 </template>
 
 <script>
+import { formatDate } from '../../../lib/helpers/format';
+
 /** Kind → Vuetify color token mapping. */
 const KIND_COLORS = {
   topup: 'success',
@@ -189,13 +191,7 @@ export default {
     formatDate(value) {
       if (!value) return '—';
       try {
-        return new Date(value).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
+        return formatDate(value, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       } catch {
         return value;
       }

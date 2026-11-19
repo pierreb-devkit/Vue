@@ -170,6 +170,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { required, email } from '../../../lib/helpers/rules';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
@@ -209,8 +210,8 @@ export default {
         { text: 'Expires', value: 'expiresAt', kind: 'date', format: 'DD/MM/YY' },
       ],
       rules: {
-        required: (v) => !!v || 'Required',
-        mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
+        required: required(),
+        mail: email(),
       },
     };
   },

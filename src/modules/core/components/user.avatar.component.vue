@@ -25,6 +25,8 @@
 </template>
 
 <script>
+import { hashColor } from '../../../lib/helpers/orgColor';
+
 /**
  * @desc Reusable user avatar component.
  * Shows uploaded avatar image or falls back to colored initials.
@@ -54,24 +56,13 @@ function isLightColor(hex) {
   return luminance > 0.5;
 }
 
-/**
- * Generate a consistent color from a string using a simple hash.
- * @param {string} str - Input string (email).
- * @returns {string} Hex color code.
- */
-function stringToColor(str) {
-  const palette = [
-    '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
-    '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41',
-    '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B',
-    '#FFB300',
-  ];
-  let hash = 0;
-  for (let i = 0; i < str.length; i += 1) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return palette[Math.abs(hash) % palette.length];
-}
+/** User avatar palette (picked by email hash, see `hashColor`). */
+const USER_PALETTE = [
+  '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
+  '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41',
+  '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B',
+  '#FFB300',
+];
 
 export default {
   name: 'UserAvatarComponent',
@@ -110,7 +101,7 @@ export default {
       return [this.user.firstName, this.user.lastName].filter(Boolean).join(' ') || this.user.email || '';
     },
     avatarColor() {
-      return stringToColor((this.user && this.user.email) || '');
+      return hashColor((this.user && this.user.email) || '', USER_PALETTE);
     },
     textColorClass() {
       return isLightColor(this.avatarColor) ? 'text-black' : 'text-white';
