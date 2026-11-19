@@ -75,8 +75,8 @@ export default {
 
   /**
    * @desc Wires billingStore + authStore + useMeter's `progress` (quota-only while a
-   * quota exists; extras-only plans measure against extras; 100 once the net balance
-   * is spent or negative — see #4883), exposed
+   * quota exists; without one, the share of the pack spent, 100 once extras are spent
+   * or owed — see #4883), exposed
    * directly as `pctUsed` (matches the server's threshold-alert formula exactly —
    * see the computed docblock removed from here, kept as this comment). Deliberately
    * NOT based on totalQuota (quota + extras): mixing an extras-inclusive denominator

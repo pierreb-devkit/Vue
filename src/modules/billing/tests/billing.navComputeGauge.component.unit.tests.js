@@ -158,13 +158,14 @@ describe('BillingNavComputeGaugeComponent', () => {
     expect(wrapper.vm.pctUsed).toBe(50);
   });
 
-  it('shows a full red ring when meterQuota=0 and the balance is negative (#4883)', () => {
+  it('shows a full red ring when meterQuota=0 and the pack is overspent (#4883)', () => {
     const authStore = useAuthStore();
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    // No included quota, extras exhausted past zero: net balance = 0 - 1200 + 1000 = -200
-    billingStore.usageMeter = { meterUsed: 1200, meterQuota: 0, extrasRemaining: 1000, weekResetAt: null };
+    // No included quota, a 1000 pack overspent by 200: the server already debited
+    // the usage, so extrasRemaining reads -200.
+    billingStore.usageMeter = { meterUsed: 1200, meterQuota: 0, extrasRemaining: -200, weekResetAt: null };
 
     wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(100);
@@ -178,11 +179,24 @@ describe('BillingNavComputeGaugeComponent', () => {
     const billingStore = useBillingStore();
     authStore.cookieExpire = Date.now() + 86400000;
     authStore.serverConfig = { billing: { meterMode: true } };
-    billingStore.usageMeter = { meterUsed: 400, meterQuota: 0, extrasRemaining: 1000, weekResetAt: null };
+    // 1000 pack, 400 used: extrasRemaining already excludes the usage.
+    billingStore.usageMeter = { meterUsed: 400, meterQuota: 0, extrasRemaining: 600, weekResetAt: null };
 
     wrapper = mountComponent();
     expect(wrapper.vm.pctUsed).toBe(40);
     expect(wrapper.vm.iconColor).toBe('success');
+  });
+
+  it('shows a full red ring at a new week when meterQuota=0 and the org still owes (#4883)', () => {
+    const authStore = useAuthStore();
+    const billingStore = useBillingStore();
+    authStore.cookieExpire = Date.now() + 86400000;
+    authStore.serverConfig = { billing: { meterMode: true } };
+    billingStore.usageMeter = { meterUsed: 0, meterQuota: 0, extrasRemaining: -50, weekResetAt: null };
+
+    wrapper = mountComponent();
+    expect(wrapper.vm.pctUsed).toBe(100);
+    expect(wrapper.vm.iconColor).toBe('error');
   });
 
   it('clamps pctUsed to 100 and iconColor to "error" when quota is exceeded while extras remain (#4548 regression)', () => {

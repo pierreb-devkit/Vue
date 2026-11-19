@@ -80,25 +80,19 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
 
   /**
    * @type {import('vue').ComputedRef<number>}
-   * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
-   * push usage past quota (e.g. a long-running job finishing after quota is hit).
-   * Use this in detail views / ledger displays that must show the real debt.
-   */
-  const netRemainingRaw = computed(() => quota.value - used.value + extras.value);
-
-  /**
-   * @type {import('vue').ComputedRef<number>}
    * Percentage of the balance consumed, clamped to [0, 100].
-   * - Something used and net balance (quota - used + extras) <= 0 → 100 (balance spent or in debt).
+   * The server debits extras as usage happens (all usage without a quota, the
+   * overflow past it otherwise), so `extras` already excludes what was used.
    * - quota > 0 → used / quota, quota-only on purpose so it matches the server's
    *   quota-threshold alerts (extras never dilute the figure).
-   * - quota === 0 (extras-only) → used / extras.
+   * - quota === 0, extras <= 0 → 100 once something is used or still owed, else 0.
+   * - quota === 0, extras > 0 → used / (used + extras), the share of the pack spent.
    */
   const progress = computed(() => {
-    if (used.value > 0 && netRemainingRaw.value <= 0) return 100;
-    const pool = quota.value > 0 ? quota.value : extras.value;
-    if (pool <= 0) return 0;
-    return Math.max(0, Math.min(100, Math.round((used.value / pool) * 100)));
+    const clamp = (ratio) => Math.max(0, Math.min(100, Math.round(ratio * 100)));
+    if (quota.value > 0) return clamp(used.value / quota.value);
+    if (extras.value <= 0) return used.value > 0 || extras.value < 0 ? 100 : 0;
+    return clamp(used.value / (used.value + extras.value));
   });
 
   /**
@@ -123,6 +117,14 @@ export function useMeter({ pollIntervalMs = 30000, refreshOnFocus = true } = {})
    * Used by progress bars and visual indicators — always >= 0 (backward-compat).
    */
   const totalRemaining = computed(() => Math.max(0, quota.value - used.value) + extras.value);
+
+  /**
+   * @type {import('vue').ComputedRef<number>}
+   * Unclamped balance: quota - used + extras. Can be negative when in-flight jobs
+   * push usage past quota (e.g. a long-running job finishing after quota is hit).
+   * Use this in detail views / ledger displays that must show the real debt.
+   */
+  const netRemainingRaw = computed(() => quota.value - used.value + extras.value);
 
   /**
    * @type {import('vue').ComputedRef<number>}
