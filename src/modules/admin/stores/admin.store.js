@@ -56,7 +56,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(`${apiBase()}/admin/users/page/${params}`);
         this.users = res.data.data;
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
       }
     },
@@ -67,7 +67,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(`${apiBase()}/admin/users/${params.id}`);
         this.user = res.data.data;
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         this.resetUser();
         logger.error(err);
       }
@@ -90,7 +90,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.put(`${apiBase()}/admin/users/${params.id}`, obj);
         assign(this.user, res.data.data);
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
         throw err;
       }
@@ -102,7 +102,7 @@ export const useAdminStore = defineStore('admin', {
         await axios.delete(`${apiBase()}/admin/users/${params.id}`);
         this.resetUser();
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
         throw err;
       }
@@ -142,7 +142,7 @@ export const useAdminStore = defineStore('admin', {
         this.readiness = res.data.data;
       } catch (err) {
         this.readiness = [];
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
       }
     },
@@ -189,7 +189,7 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(url);
         this.organizations = res.data.data;
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
       }
     },
@@ -221,7 +221,7 @@ export const useAdminStore = defineStore('admin', {
       } catch (err) {
         this.auditLogs = [];
         this.auditTotal = 0;
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
       }
     },
