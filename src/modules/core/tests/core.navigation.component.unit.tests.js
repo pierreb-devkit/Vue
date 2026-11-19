@@ -378,3 +378,49 @@ describe('core.navigation.component — sidenav logo', () => {
     expect(wrapper.vm.logoOffsetStyle.maxWidth).toBe('none');
   });
 });
+
+describe('core.navigation.component — colours', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    coreStoreState.nav = [];
+    coreStoreState.navBottom = [];
+    authStoreState.serverConfig = { organizations: { enabled: false } };
+  });
+
+  it('sets the solid background and text colour once, on the drawer', () => {
+    const wrapper = mountNav();
+    expect(wrapper.vm.drawerStyle).toEqual({ background: '#ffffff', color: '#000000' });
+  });
+
+  it('gives every list a transparent background that inherits the drawer colour', () => {
+    const wrapper = mountNav({ nav: [{ path: '/a', name: 'A', meta: { icon: 'fa-solid fa-a' } }] });
+    const lists = wrapper.findAllComponents({ name: 'VList' }).filter((list) => list.props('nav'));
+    expect(lists.length).toBeGreaterThan(0);
+    lists.forEach((list) => {
+      expect(list.classes()).toContain('bg-transparent');
+      expect(list.attributes('style') || '').not.toContain('color');
+    });
+  });
+
+  it('pins the mobile menu button with the position-fixed utility', async () => {
+    coreStoreState.nav = [];
+    coreStoreState.navBottom = [];
+    // A mobile breakpoint above the test viewport makes Vuetify report a mobile display (drawer closed).
+    const vuetify = createVuetify({ components, directives, display: { mobileBreakpoint: 'xxl' } });
+    const wrapper = mount(CoreNavigation, {
+      global: {
+        plugins: [vuetify],
+        mocks: { config: makeConfig() },
+        stubs: {
+          'router-link': { template: '<a><slot /></a>' },
+          'v-navigation-drawer': { template: '<div class="v-navigation-drawer"><slot /><slot name="append" /></div>' },
+        },
+      },
+    });
+    await wrapper.setData({ drawer: false });
+    const button = wrapper.findComponent({ name: 'VBtn' });
+    expect(button.classes()).toContain('position-fixed');
+    // jsdom drops color-mix() from inline styles, so the tint itself is checked in the browser.
+    expect(button.attributes('style')).toContain('top: 7px');
+  });
+});
