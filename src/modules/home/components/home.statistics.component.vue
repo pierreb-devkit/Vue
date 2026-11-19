@@ -54,7 +54,7 @@
       :halo-count="haloCount"
       no-margin
     >
-      <v-container class="fill-height" :class="{ 'py-12': isMobile }" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+      <v-container class="fill-height" :class="{ 'py-12': isMobile }" :max-width="config.vuetify.theme.maxWidth">
         <v-row v-if="setup && setup.length > 0" class="fill-height" align="center" justify="center">
           <v-col v-for="({ value, title }, i) in setup" :key="i" cols="6" md="3">
             <div class="text-center" :class="colorMode ? '' : 'text-white'" data-aos="fade">

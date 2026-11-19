@@ -34,8 +34,8 @@
   }
 -->
 <template>
-  <section id="gallery" :style="sectionStyle">
-    <v-container ref="slideShowContainer" :style="containerStyle">
+  <section id="gallery" :style="styles.section">
+    <v-container ref="slideShowContainer" :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
@@ -68,7 +68,8 @@
             <v-carousel-item v-for="({ img, subtitle, subimg, text, reversed }, i) in setup.content" :key="i" :src="img.src" :alt="subtitle || 'Slide ' + (i + 1)" cover>
               <v-container
                 class="fill-height"
-                :style="{ 'max-width': config.vuetify.theme.maxWidth, ...style('carousel', setup), background: img.gradient }"
+                :max-width="config.vuetify.theme.maxWidth"
+                :style="{ ...style('carousel', setup), background: img.gradient }"
               >
                 <v-row align="center" justify="center">
                   <v-col v-if="subimg && reversed" class="px-10" cols="12" sm="12" md="6">
@@ -105,8 +106,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { style, sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeDynamicIsland from './utils/home.dynamicIsland.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
@@ -128,32 +128,21 @@ export default {
     },
   },
   data() {
-    const theme = useTheme();
     return {
       step: 0,
       slideShowContainer: null,
-      theme,
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     variant() {
       return this.setup.variant || 'default';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      if (!this.theme?.current?.colors) return { ...style('section', this.setup), ...colorModeStyle(this.setup.colorMode) };
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
     },
     steps() {
       return this.setup.content.length - 1;

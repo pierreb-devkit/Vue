@@ -33,13 +33,14 @@
 <template>
   <v-card ref="tabsContainer" class="tabs-container">
     <div v-if="!showArrows" class="sliding-indicator" :style="indicatorStyle"></div>
-    <v-tabs :model-value="modelValue" class="custom-tabs" show-arrows v-bind="$attrs" @update:model-value="(val) => $emit('update:modelValue', val)">
+    <v-tabs :model-value="modelValue" class="custom-tabs" show-arrows hide-slider v-bind="$attrs" @update:model-value="(val) => $emit('update:modelValue', val)">
       <v-tab
         v-for="(item, index) in items"
         :key="item.id"
         :ref="(el) => setBtnRef(el, index)"
         :value="index"
         :style="tabStyle(index)"
+        :ripple="false"
         class="rounded-pill"
       >
         <div v-if="showArrows && modelValue === index" class="tab-indicator" :style="tabIndicatorStyle"></div>
@@ -267,7 +268,6 @@ export default {
   position: relative;
   z-index: 1;
   color: var(--tabs-color);
-  text-transform: none;
   letter-spacing: normal;
   min-width: auto;
   margin: 0 4px;
@@ -275,26 +275,14 @@ export default {
   font-weight: 500;
 }
 
-/* Désactiver tous les styles par défaut de sélection de v-tab */
+/* The sliding indicator marks the selected tab: Vuetify's own selected look and hover overlay have no prop to turn off. */
 .custom-tabs :deep(.v-tab.v-tab--selected) {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.custom-tabs :deep(.v-tab__slider) {
-  display: none;
-}
-
 .custom-tabs :deep(.v-tab .v-btn__overlay) {
   display: none;
-}
-
-.custom-tabs :deep(.v-tab .v-ripple__container) {
-  display: none;
-}
-
-.custom-tabs :deep(.v-tabs__container) {
-  justify-content: center;
 }
 
 .sliding-indicator {

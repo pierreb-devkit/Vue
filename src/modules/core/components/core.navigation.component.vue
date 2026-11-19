@@ -5,12 +5,13 @@
       v-if="$vuetify.display.mobile && !drawer"
       :flat="config.vuetify.theme.flat"
       icon
+      class="position-fixed"
       :style="{
         color: navColor,
-        background: isGlass ? undefined : `${navBackground}99`,
+        background: isGlass ? undefined : `color-mix(in srgb, ${navBackground} 60%, transparent)`,
         ...glassButtonStyle,
       }"
-      style="position: fixed; top: 7px; left: 5px; z-index: 9999"
+      style="top: 7px; left: 5px; z-index: 9999"
       @click="drawer = true"
     >
       <v-icon icon="fa-solid fa-bars"></v-icon>
@@ -26,10 +27,9 @@
       :elevation="0"
     >
       <!-- Logo / drawer on mobile-->
-      <v-list :style="listStyle" nav class="pt-4">
+      <v-list nav class="bg-transparent pt-4">
         <v-list-item
           class="devkit-logo-item"
-          :style="{ color: navColor }"
           to="/"
         >
           <template #prepend>
@@ -44,18 +44,17 @@
             ></v-img>
             <v-icon
               v-else-if="config.app.icon"
-              :style="{ color: navColor, opacity: 1 }"
               :icon="config.app.icon"
               size="large"
-              class="ms-n1"
+              class="ms-n1 opacity-100"
             ></v-icon>
           </template>
           <v-list-item-title class="text-headline-small font-weight-bold">{{ config.app.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
-      <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
+      <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :opacity="isGlass ? 0.15 : undefined"></v-divider>
       <!-- Navigation -->
-      <v-list :style="listStyle" nav>
+      <v-list class="bg-transparent" nav>
         <v-list-item v-for="item in nav" :key="item.path" v-bind="navItemBind(item)">
           <template #prepend>
             <v-icon
@@ -74,11 +73,11 @@
         <!-- Extras: ABOVE account row. Registry seam (useNavExtras) — populated
              by optional modules (e.g. billing's compute gauge) so core never
              hard-imports them. Empty when nothing is registered. -->
-        <v-list v-if="navExtras.length" :style="listStyle" nav class="py-0">
+        <v-list v-if="navExtras.length" nav class="bg-transparent py-0">
           <component :is="extra.component" v-for="extra in navExtras" :key="extra._id" />
         </v-list>
         <!-- Bottom nav items (account row lives here) -->
-        <v-list v-if="navBottom.length" :style="listStyle" nav>
+        <v-list v-if="navBottom.length" class="bg-transparent" nav>
           <v-list-item v-for="item in navBottom" :key="item.path" v-bind="navItemBind(item)">
             <template #prepend>
               <v-icon
@@ -102,16 +101,12 @@
             </v-list-item>
           </v-list>
         </template>
-        <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :style="isGlass ? { opacity: 0.15 } : {}"></v-divider>
+        <v-divider :color="navColor" :thickness="isGlass ? 1 : 3" :opacity="isGlass ? 0.15 : undefined"></v-divider>
         <!-- Sign out -->
-        <v-list :style="listStyle" nav>
-          <v-list-item
-            :style="{ color: navColor }"
-            @click="signout"
-          >
+        <v-list class="bg-transparent" nav>
+          <v-list-item @click="signout">
             <template #prepend>
               <v-icon
-                :style="{ color: navColor }"
                 icon="fa-solid fa-arrow-right"
                 size="small"
               ></v-icon>
@@ -256,17 +251,7 @@ export default {
             : {}),
         };
       }
-      return { background: this.navBackground };
-    },
-    /**
-     * @desc Transparent list background in glass mode, solid otherwise.
-     * @returns {Object} CSS style object
-     */
-    listStyle() {
-      return {
-        background: this.isGlass ? 'transparent' : this.navBackground,
-        color: this.navColor,
-      };
+      return { background: this.navBackground, color: this.navColor };
     },
     /**
      * @desc Glass style for mobile button (only in glass mode).

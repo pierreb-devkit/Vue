@@ -28,8 +28,8 @@
   }
 -->
 <template>
-  <section id="steps" :style="sectionStyle">
-    <v-container ref="timelineContainer" :style="containerStyle">
+  <section id="steps" :style="styles.section">
+    <v-container ref="timelineContainer" :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
@@ -47,7 +47,7 @@
             <template v-if="setup.showStepLabel && item.title" #opposite>
               <h3 class="text-headline-small text-md-headline-medium text-secondary font-weight-bold" v-text="item.title"></h3>
             </template>
-            <v-card class="my-8 pb-2" :style="cardStyle">
+            <v-card class="my-8 pb-2" :style="styles.card">
               <homeImgComponent v-if="item.img && !item.reversed" :img="item.img"></homeImgComponent>
               <homeContentComponent :setup="item" variant="card" alignment="center"></homeContentComponent>
               <homeImgComponent v-if="item.img && item.reversed" :img="item.img"></homeImgComponent>
@@ -63,8 +63,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 /**
@@ -82,42 +81,17 @@ export default {
       default: () => {},
     },
   },
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     variant() {
       return this.setup.variant || 'default';
     },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
-    },
-    cardStyle() {
-      // Inverse la couleur de la card par rapport à la section
-      const cardColor = this.variant === 'alternate' ? this.theme.current.colors.background : this.theme.current.colors.surface;
-      return {
-        ...style('card', this.setup),
-        background: cardColor,
-      };
-    },
-  },
-  methods: {
-    style,
   },
 };
 </script>

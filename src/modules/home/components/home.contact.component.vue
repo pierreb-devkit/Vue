@@ -16,8 +16,8 @@
   }
 -->
 <template>
-  <section id="contact" :style="sectionStyle">
-    <v-container :style="containerStyle">
+  <section id="contact" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="config.home.contact"></homeContentComponent>
@@ -51,7 +51,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useHomeStore } from '../stores/home.store';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 
 /**
@@ -71,6 +71,13 @@ export default {
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.config.home.contact, this.$vuetify?.display);
+    },
     variant() {
       return this.config.home.contact?.variant || 'default';
     },
@@ -84,21 +91,6 @@ export default {
         right: 'text-right',
       };
       return alignments[this.alignment] || 'text-left';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.config.home.contact?.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.config.home.contact?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.config.home.contact),
-        ...colorModeStyle(this.config.home.contact?.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
     },
     contact() {
       const homeStore = useHomeStore();
@@ -126,7 +118,6 @@ export default {
     },
   },
   methods: {
-    style,
     sendMail() {
       window.location.href = `${this.config.home.contact.mail}?subject=${this.contact.subject}&body=${this.contact.body.replace(/\n/g, '%0D%0A')}`;
       this.$refs.form.reset();

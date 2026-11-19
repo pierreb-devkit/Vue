@@ -22,8 +22,8 @@
   }
 -->
 <template>
-  <section id="faq" :style="sectionStyle">
-    <v-container :style="containerStyle">
+  <section id="faq" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="{ icon: setup.icon, title: setup.title, alignment: setup.alignment }"></homeContentComponent>
@@ -37,7 +37,7 @@
               <v-expansion-panel
                 v-for="(item, index) in column"
                 :key="`${ci}-${index}`"
-                :style="cardStyle"
+                :style="styles.card"
                 :class="`mb-3 ${config.vuetify.theme.rounded}`"
                 elevation="0"
               >
@@ -65,9 +65,8 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
 import { useHead } from '@unhead/vue';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 
 /**
@@ -111,42 +110,20 @@ export default {
 
     return {};
   },
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     /**
      * Active visual variant of the section.
      * @returns {string} 'default' or 'alternate'
      */
     variant() {
       return this.setup.variant || 'default';
-    },
-    /**
-     * Inline styles for the v-container, including max-width and optional overlap.
-     * @returns {Object}
-     */
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    /**
-     * Inline styles for the section element, using theme background based on variant.
-     * @returns {Object}
-     */
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
     },
     /**
      * Splits FAQ content into 1 or 2 columns; empty columns are filtered out.
@@ -167,17 +144,6 @@ export default {
      */
     colWidth() {
       return (this.setup.columns || 1) === 2 ? 6 : 8;
-    },
-    /**
-     * Inline styles for each expansion panel card, using theme surface/background.
-     * @returns {Object}
-     */
-    cardStyle() {
-      const cardColor = this.variant === 'alternate' ? this.theme.current.colors.background : this.theme.current.colors.surface;
-      return {
-        ...style('card', this.setup),
-        background: cardColor,
-      };
     },
   },
   mounted() {

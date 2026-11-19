@@ -12,15 +12,6 @@ vi.mock('../components/utils/home.content.component.vue', () => ({
   default: { name: 'homeContentComponent', template: '<div class="mock-content" />', props: ['setup'] },
 }));
 
-/**
- * Mock the theme helpers to isolate component logic.
- */
-vi.mock('../../../lib/helpers/theme', () => ({
-  style: vi.fn(() => ({ padding: '0' })),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
-}));
-
 const mockConfig = {
   vuetify: { theme: { rounded: 'rounded-xl', maxWidth: '1200px', flat: false } },
 };
@@ -141,12 +132,12 @@ describe('HomeCtaComponent', () => {
     expect(wrapper.vm.variant).toBe('alternate');
   });
 
-  it('computes containerStyle with maxWidth from config', () => {
+  it('gives the container the theme maxWidth from config', () => {
     const wrapper = mount(HomeCtaComponent, {
       props: { setup: baseSetup },
       global: globalOpts(vuetify),
     });
-    expect(wrapper.vm.containerStyle['max-width']).toBe('1200px');
+    expect(wrapper.findComponent({ name: 'VContainer' }).props('maxWidth')).toBe('1200px');
   });
 
   it('uses href attribute for button links', () => {

@@ -20,8 +20,8 @@
 -->
 <template>
   <div class="text-center">
-    <div class="d-flex align-center justify-center ga-2" :style="{ opacity: disabled ? 0.4 : 1 }">
-      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 0.5 : 1 }">Monthly</span>
+    <div class="d-flex align-center justify-center ga-2" :class="{ 'opacity-40': disabled }">
+      <span class="text-body-medium font-weight-medium text-white" :class="{ 'opacity-50': annual }">Monthly</span>
       <v-switch
         :model-value="annual"
         color="primary"
@@ -32,7 +32,7 @@
         aria-label="Annual"
         @update:model-value="$emit('update:annual', $event)"
       ></v-switch>
-      <span class="text-body-medium font-weight-medium text-white" :style="{ opacity: annual ? 1 : 0.5 }">Annual</span>
+      <span class="text-body-medium font-weight-medium text-white" :class="{ 'opacity-50': !annual }">Annual</span>
     </div>
   </div>
 </template>

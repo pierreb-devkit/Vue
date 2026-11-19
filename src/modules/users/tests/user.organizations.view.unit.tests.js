@@ -16,7 +16,7 @@ vi.mock('../../../lib/services/config', () => ({
 
 vi.mock('../../../lib/helpers/ability', () => ({ updateAbilities: vi.fn() }));
 vi.mock('../../../lib/helpers/roleColor', () => ({ default: () => 'primary' }));
-vi.mock('../../../lib/helpers/orgColor', () => ({ default: () => 'blue' }));
+vi.mock('../../../lib/helpers/orgColor', async (importOriginal) => ({ ...(await importOriginal()), default: () => 'blue' }));
 
 const sharedStubs = {
   orgAvatarComponent: { template: '<div />' },

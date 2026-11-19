@@ -90,7 +90,7 @@
     <!-- Rendered snippet: highlighted HTML with the STATIC placeholder only -->
     <!-- eslint-disable vue/no-v-html -- highlightedHtml is highlight.js over the raw snippet, sanitized below; never contains a real key -->
     <pre
-      class="docs-codeblock__code"
+      class="docs-codeblock__code text-mono"
       data-test="docs-codeblock-code"
     ><code :class="`language-${current.lang}`" v-html="highlightedHtml" /></pre>
     <!-- eslint-enable vue/no-v-html -->
@@ -275,7 +275,6 @@ export default {
   line-height: 1.6;
   overflow-x: auto;
   white-space: pre;
-  font-family: monospace;
 }
 
 /* highlight.js only tags the tokens; no highlight theme is loaded. */

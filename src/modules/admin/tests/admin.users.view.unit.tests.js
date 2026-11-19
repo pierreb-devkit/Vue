@@ -25,7 +25,7 @@ vi.mock('../../../lib/services/config', () => ({
 
 // Mock helpers
 vi.mock('../../../lib/helpers/roleColor', () => ({ default: () => 'primary' }));
-vi.mock('../../../lib/helpers/orgColor', () => ({ default: () => 'blue' }));
+vi.mock('../../../lib/helpers/orgColor', async (importOriginal) => ({ ...(await importOriginal()), default: () => 'blue' }));
 
 const vuetifyStubs = {
   coreDataTableComponent: true,

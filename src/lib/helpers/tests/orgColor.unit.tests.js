@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import orgColor, { hashColor } from '../orgColor';
+import orgColor, { hashColor, avatarTextClass, palette as sharedPalette, userPalette as sharedUserPalette } from '../orgColor';
 
 const palette = [
   '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e67e22',
@@ -82,5 +82,51 @@ describe('hashColor Helper', () => {
 
   it('backs orgColor with the organization palette', () => {
     expect(orgColor('Acme Corp')).toBe(hashColor('Acme Corp', palette));
+  });
+});
+
+describe('avatar palettes', () => {
+  it('keeps the user palette of origin/master', () => {
+    expect(sharedUserPalette).toEqual(['#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00', '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41', '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B', '#FFB300']);
+  });
+
+  it('is the organization palette hashColor uses by default', () => {
+    expect(sharedPalette).toEqual(palette);
+    expect(hashColor('john@doe.com')).toBe(hashColor('john@doe.com', palette));
+  });
+});
+
+describe('avatarTextClass Helper', () => {
+  it('puts dark text on light colours', () => {
+    expect(avatarTextClass('#ffffff')).toBe('text-black');
+    expect(avatarTextClass('#2ecc71')).toBe('text-black');
+  });
+
+  it('puts white text on dark colours', () => {
+    expect(avatarTextClass('#000000')).toBe('text-white');
+    expect(avatarTextClass('#9b59b6')).toBe('text-white');
+    expect(avatarTextClass('#3949ab')).toBe('text-white');
+  });
+
+  /** WCAG contrast ratio between a hex colour and black or white text. */
+  const contrast = (hex, text) => {
+    const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const [r, g, b] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16) / 255));
+    const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return text === 'text-black' ? (l + 0.05) / 0.05 : 1.05 / (l + 0.05);
+  };
+
+  it.each(['#e74c3c', '#ee5a24'])('puts dark text on the mid red %s (white would fail 4.5:1)', (hex) => {
+    expect(avatarTextClass(hex)).toBe('text-black');
+    expect(contrast(hex, 'text-black')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(hex, 'text-white')).toBeLessThan(4.5);
+  });
+
+  it('always picks the higher-contrast text across both palettes', () => {
+    [...sharedPalette, ...sharedUserPalette].forEach((hex) => {
+      const picked = avatarTextClass(hex);
+      const other = picked === 'text-black' ? 'text-white' : 'text-black';
+      expect(contrast(hex, picked)).toBeGreaterThanOrEqual(contrast(hex, other));
+    });
   });
 });

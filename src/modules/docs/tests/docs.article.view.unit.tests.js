@@ -187,14 +187,18 @@ describe('docs.article.view', () => {
 
   it('styles prose tables with borders, padding and a scroll wrapper using theme tokens only', () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    const sfc = readFileSync(resolve(here, '../views/docs.article.view.vue'), 'utf8');
-    const style = sfc.slice(sfc.indexOf('<style scoped>'));
-    const rule = (selector) => {
+    const styleOf = (file) => {
+      const sfc = readFileSync(resolve(here, file), 'utf8');
+      return sfc.slice(sfc.indexOf('<style scoped>'));
+    };
+    const shared = styleOf('../../core/components/core.prose.component.vue');
+    const local = styleOf('../views/docs.article.view.vue');
+    const rule = (style, selector) => {
       const start = style.indexOf(`${selector} {`);
       expect(start).toBeGreaterThan(-1);
       return style.slice(start, style.indexOf('}', start));
     };
-    const table = rule('.docs-prose :deep(table)');
+    const table = rule(shared, '.core-prose :deep(table)');
     // The table keeps its native display (no `display: block`) so screen
     // readers retain table semantics; the wrapper below owns the scroll.
     expect(table).not.toMatch(/display:/);
@@ -204,24 +208,25 @@ describe('docs.article.view', () => {
     // truly cannot shrink.
     expect(table).not.toMatch(/max-content/);
     expect(table).toMatch(/border-collapse: collapse;/);
-    const scroll = rule('.docs-prose :deep(.docs-table-scroll)');
+    const scroll = rule(local, '.docs-prose :deep(.docs-table-scroll)');
     expect(scroll).toMatch(/max-width: 100%;/);
     expect(scroll).toMatch(/overflow-x: auto;/);
-    const cell = rule('.docs-prose :deep(td)');
-    expect(style).toMatch(/\.docs-prose :deep\(th\),\s*\.docs-prose :deep\(td\) \{/);
+    const cell = rule(shared, '.core-prose :deep(td)');
+    expect(shared).toMatch(/\.core-prose :deep\(th\),\s*\.core-prose :deep\(td\) \{/);
     expect(cell).toMatch(/border-bottom: 1px solid rgba\(var\(--v-border-color\), var\(--v-border-opacity\)\);/);
     expect(cell).toMatch(/padding: 10px 24px 10px 0;/);
     // No unconditional `text-align` on th/td: that would override marked's
     // `align="center"`/`align="right"` attribute on an aligned column, so
     // every column would render left-aligned regardless of the markdown.
     expect(cell).not.toMatch(/text-align:/);
-    const unalignedHeader = rule('.docs-prose :deep(th:not([align]))');
+    const unalignedHeader = rule(shared, '.core-prose :deep(th:not([align]))');
     expect(unalignedHeader).toMatch(/text-align: start;/);
-    const head = rule('.docs-prose :deep(thead th)');
+    const head = rule(shared, '.core-prose :deep(thead th)');
     // Ledger look: a stronger rule under the header, never a filled one.
     expect(head).toMatch(/border-bottom-color: rgba\(var\(--v-theme-on-surface\), [\d.]+\);/);
     expect(head).not.toMatch(/background:/);
     // theme tokens only: no hardcoded hex colors, so light and dark both work
-    expect(style).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(shared).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(local).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 });

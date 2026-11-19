@@ -81,6 +81,23 @@ const darkText = colorModeStyle('dark');    // { color: 'rgba(0,0,0,0.87)' }
 const auto = colorModeStyle(null);          // {} (inherits from theme)
 ```
 
+### `sectionStyles(setup, display, cardKind = 'card')`
+
+Inline styles of a home section, its container and its cards, from the section config. The section gets `background` (or `surface` for `variant: 'alternate'`) unless the config sets its own background; cards get the other token.
+
+```javascript
+import { sectionStyles } from '@/lib/helpers/theme.js';
+const styles = sectionStyles(setup, this.$vuetify.display); // { section, container, card, background }
+```
+
+```vue
+<section :style="styles.section">
+  <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
+    <v-card :style="styles.card">…</v-card>
+  </v-container>
+</section>
+```
+
 ### `lightenColor(hex, percent)`
 
 Adjust hex color brightness.
@@ -160,8 +177,12 @@ Available effects: `fade-up`, `fade-down`, `fade-left`, `fade-right`, `zoom-in`,
 
 ### Markdown content rendering
 
+Rendered markdown cannot take Vuetify classes, so it is styled by one shared sheet: wrap it in `CoreProseComponent` (`src/modules/core/components/core.prose.component.vue`).
+
 ```vue
-<div v-html="$markdown.render(content)" class="text-body-large" />
+<CoreProseComponent tag="article" class="my-page-prose">
+  <VMarkdown :source="markdown" />
+</CoreProseComponent>
 ```
 
 ### Dark mode-aware custom styles

@@ -5,15 +5,6 @@ import * as directives from 'vuetify/directives';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 
 /**
- * Mock theme helpers.
- */
-vi.mock('../../../lib/helpers/theme', () => ({
-  style: vi.fn(() => ({ padding: '0' })),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
-}));
-
-/**
  * Mock DOMPurify (required by homeImgComponent).
  */
 vi.mock('dompurify', () => ({
@@ -314,12 +305,12 @@ describe('HomeAboutComponent', () => {
     expect(wrapper.vm.variant).toBe('alternate');
   });
 
-  it('computes containerStyle with maxWidth from config', () => {
+  it('gives the container the theme maxWidth from config', () => {
     const wrapper = mount(HomeAboutComponent, {
       props: { setup: baseSetup },
       global: globalOpts(vuetify),
     });
-    expect(wrapper.vm.containerStyle['max-width']).toBe('1200px');
+    expect(wrapper.findComponent({ name: 'VContainer' }).props('maxWidth')).toBe('1200px');
   });
 
   it('applies section background color', () => {

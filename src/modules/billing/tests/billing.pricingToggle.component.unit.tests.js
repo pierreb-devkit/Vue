@@ -36,8 +36,8 @@ describe('BillingPricingToggleComponent', () => {
     const monthlySpan = spans.find((s) => s.text() === 'Monthly');
     expect(monthlySpan).toBeDefined();
     expect(monthlySpan.classes()).toContain('text-white');
-    // Inactive label should be dimmed via inline style
-    expect(monthlySpan.attributes('style')).toContain('opacity: 0.5');
+    // Inactive label is dimmed with the Vuetify opacity utility
+    expect(monthlySpan.classes()).toContain('opacity-50');
   });
 
   it('Annual label has text-white class and full opacity when annual is true', () => {
@@ -46,21 +46,21 @@ describe('BillingPricingToggleComponent', () => {
     const annualSpan = spans.find((s) => s.text() === 'Annual');
     expect(annualSpan).toBeDefined();
     expect(annualSpan.classes()).toContain('text-white');
-    expect(annualSpan.attributes('style')).toContain('opacity: 1');
+    expect(annualSpan.classes()).not.toContain('opacity-50');
   });
 
   it('Monthly label has full opacity when annual is false (active)', () => {
     const wrapper = mountComponent({ annual: false });
     const spans = wrapper.findAll('span');
     const monthlySpan = spans.find((s) => s.text() === 'Monthly');
-    expect(monthlySpan.attributes('style')).toContain('opacity: 1');
+    expect(monthlySpan.classes()).not.toContain('opacity-50');
   });
 
   it('Annual label has reduced opacity when annual is false (inactive)', () => {
     const wrapper = mountComponent({ annual: false });
     const spans = wrapper.findAll('span');
     const annualSpan = spans.find((s) => s.text() === 'Annual');
-    expect(annualSpan.attributes('style')).toContain('opacity: 0.5');
+    expect(annualSpan.classes()).toContain('opacity-50');
   });
 
   it('does not render a savings caption below the toggle (savings moved to price.chip on card)', () => {
@@ -104,16 +104,16 @@ describe('BillingPricingToggleComponent', () => {
     expect(vSwitch.props('disabled')).toBe(true);
   });
 
-  it('wrapper inner div has reduced opacity (0.4) when disabled=true', () => {
+  it('wrapper inner div is dimmed (opacity-40) when disabled=true', () => {
     const wrapper = mountComponent({ annual: false, disabled: true });
     const innerDiv = wrapper.find('.d-flex.align-center.justify-center');
-    expect(innerDiv.attributes('style')).toContain('opacity: 0.4');
+    expect(innerDiv.classes()).toContain('opacity-40');
   });
 
-  it('wrapper inner div has full opacity (1) when disabled=false', () => {
+  it('wrapper inner div is not dimmed when disabled=false', () => {
     const wrapper = mountComponent({ annual: false, disabled: false });
     const innerDiv = wrapper.find('.d-flex.align-center.justify-center');
-    expect(innerDiv.attributes('style')).toContain('opacity: 1');
+    expect(innerDiv.classes()).not.toContain('opacity-40');
   });
 
   it('v-switch is disabled=true when disabled prop is true (Vuetify blocks interaction at native level)', () => {
