@@ -277,9 +277,10 @@ const statusColor = (status) => {
 
 onMounted(async () => {
   // Tree powers the sidebar + guide cross-links; spec powers the reference.
-  // Both degrade independently (a missing tree just drops the cross-links).
-  await store.fetchTree().catch(() => {});
-  const spec = await store.fetchSpec().catch(() => null);
+  // Both degrade independently: the store resolves null on failure (a missing
+  // tree just drops the cross-links).
+  await store.fetchTree();
+  const spec = await store.fetchSpec();
   parsed.value = parseSpec(spec);
 });
 </script>

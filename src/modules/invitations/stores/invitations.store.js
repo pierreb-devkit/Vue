@@ -54,7 +54,7 @@ export const useInvitationsStore = defineStore('invitations', {
         this.invitations = res.data.data;
       } catch (err) {
         this.invitations = [];
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, undefined, 'description');
         logger.error(err);
       }
     },
@@ -77,7 +77,7 @@ export const useInvitationsStore = defineStore('invitations', {
         capture('invitation_created', { source: 'platform' });
         return res.data.data;
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, 'Could not send the invitation. Please try again.', 'description');
         logger.error(err);
         throw err;
       }
@@ -97,7 +97,7 @@ export const useInvitationsStore = defineStore('invitations', {
         const res = await axios.post(`${apiBase()}/invitations/${id}/resend`);
         return res.data.data;
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, 'Could not resend the invitation. Please try again.', 'description');
         logger.error(err);
         throw err;
       }
@@ -113,7 +113,7 @@ export const useInvitationsStore = defineStore('invitations', {
       try {
         await axios.delete(`${apiBase()}/invitations/${id}`);
       } catch (err) {
-        this.error = sanitizeApiError(err);
+        this.error = sanitizeApiError(err, 'Could not revoke the invitation. Please try again.', 'description');
         logger.error(err);
         throw err;
       }

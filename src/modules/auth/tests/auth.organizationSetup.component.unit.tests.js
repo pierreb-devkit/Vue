@@ -147,8 +147,8 @@ describe('auth.organizationSetup.component', () => {
     expect(wrapper.vm.error).toBeNull();
   });
 
-  it('sets error from response data message on createOrganization failure', async () => {
-    const apiError = { response: { data: { message: 'Name already taken' } } };
+  it('sets error from the response description on createOrganization failure', async () => {
+    const apiError = { response: { data: { message: 'Unprocessable Entity', description: 'Name already taken' } } };
     createOrganizationMock.mockRejectedValueOnce(apiError);
 
     const wrapper = mountComponent();
@@ -160,7 +160,7 @@ describe('auth.organizationSetup.component', () => {
     expect(wrapper.vm.error).toBe('Name already taken');
   });
 
-  it('falls back to err.message when no response data message', async () => {
+  it('never shows err.message: falls back to the generic message', async () => {
     const apiError = new Error('Network error');
     createOrganizationMock.mockRejectedValueOnce(apiError);
 
@@ -170,7 +170,19 @@ describe('auth.organizationSetup.component', () => {
     wrapper.vm.organizationName = 'Test Org';
     await wrapper.vm.submit();
 
-    expect(wrapper.vm.error).toBe('Network error');
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
+  });
+
+  it('never shows an unsafe server description (stack trace)', async () => {
+    createOrganizationMock.mockRejectedValueOnce({ response: { data: { description: 'Error: at handler (/app/x.js:1)' } } });
+
+    const wrapper = mountComponent();
+    await flushPromises();
+
+    wrapper.vm.organizationName = 'Test Org';
+    await wrapper.vm.submit();
+
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
   });
 
   it('falls back to generic message when error has no message', async () => {
@@ -193,7 +205,7 @@ describe('auth.organizationSetup.component', () => {
     createOrganizationMock.mockRejectedValueOnce(new Error('First error'));
     wrapper.vm.organizationName = 'Test Org';
     await wrapper.vm.submit();
-    expect(wrapper.vm.error).toBe('First error');
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
 
     // Second submission succeeds — error must be cleared
     createOrganizationMock.mockResolvedValueOnce({ name: 'Test Org', _id: '456' });
@@ -231,8 +243,8 @@ describe('auth.organizationSetup.component', () => {
     expect(wrapper.emitted('requestSent')[0]).toEqual([suggestedOrg]);
   });
 
-  it('sets error from response data message on createJoinRequest failure', async () => {
-    const apiError = { response: { data: { message: 'You are already a member' } } };
+  it('sets error from the response description on createJoinRequest failure', async () => {
+    const apiError = { response: { data: { message: 'Unprocessable Entity', description: 'You are already a member' } } };
     createJoinRequestMock.mockRejectedValueOnce(apiError);
 
     const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
@@ -244,7 +256,7 @@ describe('auth.organizationSetup.component', () => {
     expect(wrapper.vm.requestSent).toBe(false);
   });
 
-  it('falls back to err.message when a join request has no response data message', async () => {
+  it('never shows err.message on a failed join request: falls back to the generic message', async () => {
     createJoinRequestMock.mockRejectedValueOnce(new Error('Network error'));
 
     const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
@@ -252,7 +264,7 @@ describe('auth.organizationSetup.component', () => {
 
     await wrapper.vm.requestJoin();
 
-    expect(wrapper.vm.error).toBe('Network error');
+    expect(wrapper.vm.error).toBe('Could not send join request. Please try again.');
   });
 
   it('falls back to a generic join message when the error has no message', async () => {

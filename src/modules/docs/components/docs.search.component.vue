@@ -269,7 +269,7 @@ watch(dialog, async (isOpen) => {
     return;
   }
   // Ensure the tree is loaded so the search has something to match.
-  store.fetchTree().catch(() => {});
+  store.fetchTree();
   await nextTick();
   inputRef.value?.focus?.();
 });

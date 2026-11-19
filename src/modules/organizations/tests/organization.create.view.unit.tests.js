@@ -125,7 +125,7 @@ describe('organization.create.view — error surfacing (#4447)', () => {
   });
 
   it('sets error from response data message on createOrganization failure and resets loading', async () => {
-    const apiError = { response: { data: { message: 'An organization with this name already exists' } } };
+    const apiError = { response: { data: { message: 'Unprocessable Entity', description: 'An organization with this name already exists' } } };
     createOrganizationMock.mockRejectedValueOnce(apiError);
 
     const wrapper = mountView();
@@ -139,7 +139,7 @@ describe('organization.create.view — error surfacing (#4447)', () => {
   });
 
   it('renders the error alert with the message in the DOM', async () => {
-    const apiError = { response: { data: { message: 'An organization with this name already exists' } } };
+    const apiError = { response: { data: { message: 'Unprocessable Entity', description: 'An organization with this name already exists' } } };
     createOrganizationMock.mockRejectedValueOnce(apiError);
 
     const wrapper = mountView();
@@ -151,7 +151,7 @@ describe('organization.create.view — error surfacing (#4447)', () => {
     expect(wrapper.text()).toContain('An organization with this name already exists');
   });
 
-  it('falls back to err.message when a create failure has no response data message', async () => {
+  it('never shows err.message: falls back to the generic message', async () => {
     createOrganizationMock.mockRejectedValueOnce(new Error('Network error'));
 
     const wrapper = mountView();
@@ -159,7 +159,18 @@ describe('organization.create.view — error surfacing (#4447)', () => {
     await wrapper.vm.create();
     await flushPromises();
 
-    expect(wrapper.vm.error).toBe('Network error');
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
+  });
+
+  it('never shows an unsafe server description (database detail)', async () => {
+    createOrganizationMock.mockRejectedValueOnce({ response: { data: { description: 'E11000 duplicate key error collection: organizations' } } });
+
+    const wrapper = mountView();
+    wrapper.vm.name = 'Acme';
+    await wrapper.vm.create();
+    await flushPromises();
+
+    expect(wrapper.vm.error).toBe('Could not create organization. Please try again.');
   });
 
   it('falls back to a generic message when the error has no message', async () => {

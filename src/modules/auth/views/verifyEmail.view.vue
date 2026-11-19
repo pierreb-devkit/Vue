@@ -39,6 +39,7 @@
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
 import { consumePostAuthRedirect, peekPostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 /**
  * Component definition.
  */
@@ -92,7 +93,7 @@ export default {
       this.success = true;
     } catch (err) {
       this.error = true;
-      this.errorMessage = err.response?.data?.message || 'Verification failed. The token may be invalid or expired.';
+      this.errorMessage = sanitizeApiError(err, 'Verification failed. The token may be invalid or expired.', 'description');
     } finally {
       this.loading = false;
     }

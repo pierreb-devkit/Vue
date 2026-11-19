@@ -22,18 +22,13 @@ export const useUsersStore = defineStore('users', {
      * @returns {Promise<Object>} Resolved updated user data
      */
     async updateProfile(formData) {
-      try {
-        const res = await axios.put(`${apiBase()}/users`, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          bio: formData.bio,
-          position: formData.position,
-        });
-        return res.data.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
+      const res = await axios.put(`${apiBase()}/users`, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        bio: formData.bio,
+        position: formData.position,
+      });
+      return res.data.data;
     },
 
     /**
@@ -45,15 +40,10 @@ export const useUsersStore = defineStore('users', {
      * @returns {Promise<Object>} Resolved updated user data
      */
     async updateEmailPreferences(prefs) {
-      try {
-        const res = await axios.put(`${apiBase()}/users`, {
-          emailPreferences: { onboarding: prefs.onboarding, news: prefs.news },
-        });
-        return res.data.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
+      const res = await axios.put(`${apiBase()}/users`, {
+        emailPreferences: { onboarding: prefs.onboarding, news: prefs.news },
+      });
+      return res.data.data;
     },
 
     /**
@@ -61,12 +51,7 @@ export const useUsersStore = defineStore('users', {
      * @returns {Promise<void>}
      */
     async deleteAccount() {
-      try {
-        await axios.delete(`${apiBase()}/users`);
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
+      await axios.delete(`${apiBase()}/users`);
     },
   },
 });

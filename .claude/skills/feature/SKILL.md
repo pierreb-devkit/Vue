@@ -169,9 +169,23 @@ Follow layered approach: **UI → Store → API**. Each layer references only th
 
 **If the feature has visual components**, apply `/ui` skill guidelines (design-system, components, patterns references).
 
-**Feedback:**
-- No `console.log(err)` in catch blocks — the axios interceptor handles snackbar display
-- Use `catch { /* interceptor handles */ }` or re-throw
+**Error contract (stores + callers):** each store action follows ONE of three styles; when it is not **Propagate**, its JSDoc says which.
+
+| Style | Action does | Caller does |
+|-------|-------------|-------------|
+| **Propagate** (default, the `tasks` template) | no `try/catch`; the error rejects | `catch { /* interceptor shows it */ }` only when it must react (reset a flag, stay on the page) |
+| **Swallow** | `catch (err)` → `this.error = sanitizeApiError(err, '<fallback>', 'description')` + `logger.error(err)`, then resolves (`null` / empty) | never wraps the call — a caller `catch` there is dead code |
+| **Re-throw** | catches to set state (`this.error`, a reset), then `throw err` — or `throw new Error('<fixed text>')` when the raw error carries a secret or an account hint | must catch |
+
+- A store never catches only to log and re-throw — that is **Propagate** with noise.
+- The axios interceptor already shows the server `description` in a snackbar; pass `{ __silent: true }` when the view shows the error inline instead.
+
+**Showing an error to a user:**
+- Never put `err.response.data.message` (or `err.message`) on screen. Always `sanitizeApiError(err, '<fallback>', 'description')` from `lib/helpers/apiError` — `message` is the HTTP title ("Unprocessable Entity"), `description` is the reason.
+
+**Logging:**
+- One logger: `createLogger('<module>')` from `lib/helpers/logger`. ESLint `no-console` warns everywhere else; only the logger, the build-time Node code (Vite plugins, config guard) and the e2e helpers may call `console`.
+- Views do not log a caught request error: the raw axios error carries the request payload (passwords, emails). Stores log on the **Swallow** path only.
 
 **Destructive actions — confirmation proportional to impact:**
 - Low impact (remove member): simple confirm dialog

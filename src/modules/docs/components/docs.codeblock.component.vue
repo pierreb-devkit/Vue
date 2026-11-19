@@ -101,6 +101,9 @@
 import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('docs');
 
 /**
  * The placeholder token rendered in the DOM AND copied verbatim. The stack
@@ -242,7 +245,7 @@ export default {
       // (insecure context / older browsers) so the checkmark only flashes on a
       // real copy.
       if (!navigator?.clipboard?.writeText) {
-        console.warn('docs codeblock: clipboard API unavailable');
+        logger.warn('docs codeblock: clipboard API unavailable');
         return;
       }
 
@@ -256,7 +259,7 @@ export default {
           this.copied = null;
         }, 1800);
       } catch (err) {
-        console.warn('docs codeblock: clipboard write failed', err);
+        logger.warn('docs codeblock: clipboard write failed', err);
       }
     },
   },

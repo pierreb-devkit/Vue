@@ -223,8 +223,8 @@ export default {
             const redirect = resolvePostAuthRedirect(this.config, this.$route.query.redirect);
             this.$router.push(redirect || this.config.sign.route);
           }
-        } catch (err) {
-          console.error(err);
+        } catch {
+          // The axios interceptor shows the error snackbar.
         }
       }
     },
