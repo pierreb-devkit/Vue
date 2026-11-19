@@ -392,6 +392,24 @@ describe('core.navigation.component — colours', () => {
     expect(wrapper.vm.drawerStyle).toEqual({ background: '#ffffff', color: '#000000' });
   });
 
+  it('in glass mode, the drawer carries the same text colour the items used to set', () => {
+    const config = makeConfig();
+    config.vuetify.theme.navigation.glass = true;
+    const wrapper = mount(CoreNavigation, {
+      global: {
+        plugins: [createVuetify({ components, directives })],
+        mocks: { config, $vuetify: { display: { mobile: false } } },
+        stubs: {
+          'router-link': { template: '<a><slot /></a>' },
+          'v-navigation-drawer': { template: '<div class="v-navigation-drawer"><slot /><slot name="append" /></div>' },
+        },
+      },
+    });
+    expect(wrapper.vm.isGlass).toBe(true);
+    expect(wrapper.vm.drawerStyle.color).toBe(wrapper.vm.navColor);
+    expect(wrapper.vm.navColor).toBe(wrapper.vm.theme.current.colors.onSurface);
+  });
+
   it('gives every list a transparent background that inherits the drawer colour', () => {
     const wrapper = mountNav({ nav: [{ path: '/a', name: 'A', meta: { icon: 'fa-solid fa-a' } }] });
     const lists = wrapper.findAllComponents({ name: 'VList' }).filter((list) => list.props('nav'));
@@ -420,7 +438,7 @@ describe('core.navigation.component — colours', () => {
     await wrapper.setData({ drawer: false });
     const button = wrapper.findComponent({ name: 'VBtn' });
     expect(button.classes()).toContain('position-fixed');
-    // jsdom drops color-mix() from inline styles, so the tint itself is checked in the browser.
+    // jsdom drops color-mix() from inline styles, so only the placement is asserted here.
     expect(button.attributes('style')).toContain('top: 7px');
   });
 });
