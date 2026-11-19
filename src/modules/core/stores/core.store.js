@@ -7,7 +7,7 @@ import { isDark } from '../../../lib/helpers/theme';
 import { ability } from '../../../lib/helpers/ability';
 import config from '../../../lib/services/config';
 
-// Variable globale pour stocker les routes
+// Module-level copy of the app routes
 let routes = null;
 
 /**
@@ -15,9 +15,7 @@ let routes = null;
  */
 export const useCoreStore = defineStore('core', {
   state: () => ({
-    drawer: false,
     theme: 'light',
-    mini: false,
     nav: [],
     navBottom: [],
     routes: [],
@@ -41,14 +39,6 @@ export const useCoreStore = defineStore('core', {
     syncOsTheme() {
       if (config.vuetify.theme.dark !== 'auto') return;
       this.theme = isDark(config.vuetify.theme.dark) ? 'dark' : 'light';
-    },
-
-    setDrawer(value) {
-      this.drawer = value;
-    },
-
-    setMini(value) {
-      this.mini = value;
     },
 
     /**

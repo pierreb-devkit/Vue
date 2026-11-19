@@ -36,7 +36,6 @@ describe('Admin Store', () => {
     expect(store.readiness).toEqual([]);
     expect(store.auditLogs).toEqual([]);
     expect(store.auditTotal).toBe(0);
-    expect(store.auditPage).toBe(1);
     expect(store.user).toEqual({
       firstName: '',
       lastName: '',
@@ -497,7 +496,6 @@ describe('Admin Store', () => {
 
       expect(store.auditLogs).toEqual(mockLogs);
       expect(store.auditTotal).toBe(42);
-      expect(store.auditPage).toBe(1);
     });
 
     it('should pass filters as query parameters', async () => {
@@ -541,7 +539,6 @@ describe('Admin Store', () => {
 
       expect(store.auditLogs).toEqual(mockLogs);
       expect(store.auditTotal).toBe(100);
-      expect(store.auditPage).toBe(3);
     });
 
     it('should call audit endpoint without query params when no filters', async () => {

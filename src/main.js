@@ -31,7 +31,6 @@ import.meta.glob('./modules/*/*.app.js', { eager: true });
 const appRouter = router();
 const routes = appRouter.options.routes;
 app.config.globalProperties.config = config;
-app.config.globalProperties.routes = routes;
 
 app
   .use(plugins.attribution)

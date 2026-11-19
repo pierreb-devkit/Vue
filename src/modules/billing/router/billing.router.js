@@ -6,7 +6,6 @@ import billingAccount from '../views/billing.account.view.vue';
 
 /**
  * @desc Redirect legacy /billing route to the account billing view.
- *       C5 will implement additional legacy-redirect rules (e.g. ?tab=subscriptions).
  * @param {import('vue-router').RouteLocationNormalized} to - Incoming route location.
  * @returns {{ path: string, query: Object }} Redirect target route.
  */
@@ -43,8 +42,7 @@ export const organizationRoutes = [
  *   detects the user's manageable orgs and either auto-redirects (single org)
  *   or renders an org-selector (multiple orgs) or a read-only "ask admin" state.
  *
- * `/billing` — legacy entry point. Redirects to `/users/billing` (C5 will add
- *   further legacy redirect rules such as `?tab=subscriptions`).
+ * `/billing` — legacy entry point. Redirects to `/users/billing`.
  */
 export default [
   {

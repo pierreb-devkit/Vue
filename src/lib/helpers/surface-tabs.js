@@ -6,18 +6,15 @@
  * the inline method previously living in `admin.layout.vue` so downstream
  * surfaces (org-settings, future contexts) can reuse it without duplication.
  *
- * Accepted route shapes:
- *  - Relative path (preferred): `'billing'`, `'billing/invoices'` — no leading
- *    slash, non-empty, no dot segments, no whitespace, no `?` / `#`.
- *  - Legacy absolute under `/admin/`: `'/admin/billing'` — still accepted during
- *    the migration window (dev-mode warning emitted by the caller).
+ * Accepted route shape: a relative path, e.g. `'billing'`, `'billing/invoices'` —
+ * no leading slash, non-empty, no dot segments, no whitespace, no `?` / `#`.
  *
  * Rejected:
  *  - Missing required keys (`value`, `label`, `route`) or non-string `route`.
  *  - Whitespace, `?`, `#` anywhere in the route.
  *  - Whole-route dots: `''`, `'/'`, `'.'`, `'..'`.
  *  - Segments of `'.'` or `'..'` inside a path.
- *  - Absolute paths not under `/admin/`.
+ *  - Absolute paths (a leading `/`).
  */
 
 /**
@@ -45,11 +42,8 @@ export function isValidTab(tab) {
   // Reject dot-traversal segments anywhere in the path.
   const segments = route.split('/');
   if (segments.some((seg) => seg === '..' || seg === '.')) return false;
-  // Relative path (preferred): accept immediately.
-  if (!route.startsWith('/')) return true;
-  // Absolute path: only the legacy `/admin/<child>` pattern is allowed.
-  if (route.startsWith('/admin/')) return true;
-  return false;
+  // Only relative paths are accepted; the bar prepends the surface base path.
+  return !route.startsWith('/');
 }
 
 /**

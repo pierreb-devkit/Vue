@@ -62,7 +62,7 @@ Runs dev server with hot-reload at `http://localhost:8080/`
 **CORS Note:** When connecting to the Node stack, ensure CORS is configured:
 
 ```bash
-WAOS_NODE_cors_origin=['http://localhost:8080'] npm start
+DEVKIT_NODE_cors_origin=['http://localhost:8080'] npm start
 ```
 
 ### Production

@@ -286,7 +286,7 @@ const extractExamples = (markdown, lexer, nonce) => {
  */
 const collectHeadingIds = (markdown) => {
   const ids = new Set();
-  const scanner = new Marked({ mangle: false, headerIds: false });
+  const scanner = new Marked();
   scanner.use({
     renderer: {
       heading({ tokens }) {
@@ -389,7 +389,7 @@ export async function useDocsPage(slug, { fetcher, meta = {}, tree = null } = {}
 
   // marked.use is global+stateful; scope the renderer to a local instance so
   // concurrent renders don't share ToC accumulators.
-  const instance = new Marked({ mangle: false, headerIds: false });
+  const instance = new Marked();
 
   // Pre-pass: lift fenced code-block groups into structured examples and replace
   // them with markers (rendered later as <DocsCodeblock> by the article view).

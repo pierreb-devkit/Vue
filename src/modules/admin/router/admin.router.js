@@ -24,7 +24,7 @@ import organizationGeneralTab from '../../organizations/components/organization.
  * children of the same parent — they deep-link inside the layout.
  *
  * Downstream modules that contribute an "admin tab" must register their
- * routes via the `injectAdminChildren` helper in `@/lib/helpers/router`
+ * routes via the `injectModuleChildren` helper in `@/lib/helpers/router`
  * with **relative** paths (e.g. `'knowledge'`, not `'/admin/knowledge'`).
  *
  * C3 note: Admin Organization reuses the shared `organizationLayout` +

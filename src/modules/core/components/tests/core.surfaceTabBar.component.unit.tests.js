@@ -125,14 +125,13 @@ describe('SurfaceTabBar — path composition', () => {
     expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/users/organizations/1/general');
   });
 
-  it('(c) legacy absolute route is passed through verbatim without prepending basePath', () => {
+  it('(c) an absolute route is rejected and renders no tab', () => {
     const wrapper = mountBar({
-      // resolveSurfaceTabs accepts legacy absolute routes (/admin/...) that pass isValidTab
       tabs: [{ value: 'admin-x', label: 'AdminX', route: '/admin/x' }],
       can: () => true,
       basePath: '/users/organizations/1',
     });
-    expect(wrapper.find('.v-tab-stub').attributes('href')).toBe('/admin/x');
+    expect(wrapper.find('.v-tab-stub').exists()).toBe(false);
   });
 });
 

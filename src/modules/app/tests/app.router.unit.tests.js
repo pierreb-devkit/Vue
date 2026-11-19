@@ -490,7 +490,7 @@ describe('app.router', () => {
     const router = getRouter();
     await router.push('/billing');
     await router.isReady();
-    // /billing is now a redirect → /users?tab=subscriptions; /users requiresAuth.
+    // /billing is a redirect → /users/billing, which requiresAuth.
     expect(router.currentRoute.value.path).toBe('/signin');
   });
 
@@ -939,7 +939,7 @@ describe('registerDownstreamRoutes', () => {
     expect(paths).toContain('/ds-core');
   });
 
-  it('(b) registerDownstreamRoutes({ adminChildModules }) populates adminChildModules before injectAdminChildren runs', async () => {
+  it('(b) registerDownstreamRoutes({ adminChildModules }) populates adminChildModules before injectModuleChildren runs', async () => {
     // We verify indirectly: the downstream admin module entry must not throw and
     // the router must still create without error.
     const fakeAdminChild = { path: 'ds-admin-tab', name: 'DsAdminTab', component: { template: '<div />' } };

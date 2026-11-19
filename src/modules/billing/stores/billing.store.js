@@ -136,8 +136,6 @@ export const useBillingStore = defineStore('billing', {
     // Loading state = counter > 0; idle state = counter === 0.
     usageMeterRequests: 0,
     extrasBalanceRequests: 0,
-    extrasLedgerRequests: 0,
-    extrasCheckoutRequests: 0,
     // meter billing (meterMode: true)
     usageMeter: null, // { plan, planVersion, weekKey, weekResetAt, meterUsed, meterQuota, meterBreakdown, extrasRemaining, packsAvailable }
     extrasBalance: null, // { balance, packsAvailable }
@@ -246,7 +244,7 @@ export const useBillingStore = defineStore('billing', {
         const api = apiBase();
         const res = await axios.post(`${api}/${config.api.endPoints.billing}/checkout`, {
           priceId,
-          successUrl: `${window.location.origin}/users?tab=subscriptions&success=true`,
+          successUrl: `${window.location.origin}/users/billing?success=true`,
           cancelUrl: `${window.location.origin}/pricing?canceled=true`,
         });
         capture('plan_upgraded', { price_id: priceId });
@@ -339,7 +337,6 @@ export const useBillingStore = defineStore('billing', {
      * @returns {Promise<Object>} Resolved extrasLedger object { entries, total, page, limit }
      */
     async fetchExtrasLedger({ page = 1, limit = 20 } = {}) {
-      this.extrasLedgerRequests += 1;
       try {
         const api = apiBase();
         const res = await axios.get(`${api}/${config.api.endPoints.billing}/extras/ledger`, {
@@ -350,22 +347,18 @@ export const useBillingStore = defineStore('billing', {
       } catch (err) {
         console.error(err);
         throw err;
-      } finally {
-        this.extrasLedgerRequests -= 1;
       }
     },
 
     /**
      * @desc Purchase an extras credit pack and redirect to Stripe Checkout.
-     * Uses a per-action in-flight counter so concurrent calls cannot race.
      * @param {string} packId - The pack identifier to purchase
      * @returns {Promise<void>}
      */
     async createExtrasCheckout(packId) {
-      this.extrasCheckoutRequests += 1;
       try {
         const api = apiBase();
-        const successUrl = `${window.location.origin}/users?tab=subscriptions&success=true&type=extras`;
+        const successUrl = `${window.location.origin}/users/billing?success=true&type=extras`;
         // type=extras + pack={packId} let the pricing view drop the persisted
         // intentId on cancel-redirect so the next attempt generates a fresh
         // UUID — Stripe's 24h idempotency cache would otherwise replay the
@@ -384,8 +377,6 @@ export const useBillingStore = defineStore('billing', {
       } catch (err) {
         console.error(err);
         throw err;
-      } finally {
-        this.extrasCheckoutRequests -= 1;
       }
     },
   },

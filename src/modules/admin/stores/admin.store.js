@@ -47,7 +47,6 @@ export const useAdminStore = defineStore('admin', {
     statsErrors: [],
     auditLogs: [],
     auditTotal: 0,
-    auditPage: 1,
   }),
 
   actions: {
@@ -219,7 +218,6 @@ export const useAdminStore = defineStore('admin', {
         const res = await axios.get(url);
         this.auditLogs = res.data.data?.data || [];
         this.auditTotal = res.data.data?.total || 0;
-        this.auditPage = res.data.data?.page || 1;
       } catch (err) {
         this.auditLogs = [];
         this.auditTotal = 0;

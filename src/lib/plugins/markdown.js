@@ -9,14 +9,6 @@ import { createLogger } from '../helpers/logger';
 const logger = createLogger('markdown');
 
 /**
- * Configure marked options
- */
-marked.setOptions({
-  mangle: false,
-  headerIds: false,
-});
-
-/**
  * Plugin setup.
  */
 export default {

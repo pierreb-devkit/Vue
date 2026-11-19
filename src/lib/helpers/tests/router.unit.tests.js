@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { injectAdminChildren, injectModuleChildren } from '../router';
+import { injectModuleChildren } from '../router';
 
 /**
  * Build a fresh admin route array for each test so mutations don't leak.
@@ -24,17 +24,17 @@ const costsRoutes = [
   { path: 'costs', name: 'Admin Costs', component: { name: 'Costs' } },
 ];
 
-describe('injectAdminChildren', () => {
+describe('injectModuleChildren (default /admin parent)', () => {
   it('should be a no-op when childModules is empty (0 modules)', () => {
     const admin = makeAdminRoutes();
     const before = admin[0].children.length;
-    injectAdminChildren(admin, [], () => true);
+    injectModuleChildren(admin, [], () => true);
     expect(admin[0].children.length).toBe(before);
   });
 
   it('should inject 1 active module', () => {
     const admin = makeAdminRoutes();
-    injectAdminChildren(
+    injectModuleChildren(
       admin,
       [{ name: 'knowledge', routes: knowledgeRoutes }],
       () => true,
@@ -45,7 +45,7 @@ describe('injectAdminChildren', () => {
 
   it('should inject N active modules in order', () => {
     const admin = makeAdminRoutes();
-    injectAdminChildren(
+    injectModuleChildren(
       admin,
       [
         { name: 'knowledge', routes: knowledgeRoutes },
@@ -63,7 +63,7 @@ describe('injectAdminChildren', () => {
   it('should skip disabled modules', () => {
     const admin = makeAdminRoutes();
     const isModuleActive = vi.fn((name) => name !== 'costs');
-    injectAdminChildren(
+    injectModuleChildren(
       admin,
       [
         { name: 'knowledge', routes: knowledgeRoutes },
@@ -80,7 +80,7 @@ describe('injectAdminChildren', () => {
 
   it('should be a no-op when no admin parent route is present', () => {
     const admin = [{ path: '/other', component: { name: 'Other' } }];
-    const result = injectAdminChildren(
+    const result = injectModuleChildren(
       admin,
       [{ name: 'knowledge', routes: knowledgeRoutes }],
       () => true,
@@ -91,13 +91,13 @@ describe('injectAdminChildren', () => {
 
   it('should return the same admin reference (chaining)', () => {
     const admin = makeAdminRoutes();
-    const result = injectAdminChildren(admin, [], () => true);
+    const result = injectModuleChildren(admin, [], () => true);
     expect(result).toBe(admin);
   });
 
   it('should skip malformed module entries (missing routes)', () => {
     const admin = makeAdminRoutes();
-    injectAdminChildren(
+    injectModuleChildren(
       admin,
       [
         null,
@@ -113,13 +113,13 @@ describe('injectAdminChildren', () => {
 
   it('should accept a missing isModuleActive callback as always-active', () => {
     const admin = makeAdminRoutes();
-    injectAdminChildren(admin, [{ name: 'knowledge', routes: knowledgeRoutes }]);
+    injectModuleChildren(admin, [{ name: 'knowledge', routes: knowledgeRoutes }]);
     expect(admin[0].children.length).toBe(3);
   });
 
   it('should return adminRoutes unchanged when it is not an array', () => {
-    expect(injectAdminChildren(null, [{ name: 'x', routes: [] }], () => true)).toBeNull();
-    expect(injectAdminChildren(undefined, [], () => true)).toBeUndefined();
+    expect(injectModuleChildren(null, [{ name: 'x', routes: [] }], () => true)).toBeNull();
+    expect(injectModuleChildren(undefined, [], () => true)).toBeUndefined();
   });
 
   it('should filter out routes with absolute paths and warn', () => {
@@ -129,7 +129,7 @@ describe('injectAdminChildren', () => {
       { path: '/admin/bad', name: 'Bad', component: { name: 'Bad' } },
       { path: 'good', name: 'Good', component: { name: 'Good' } },
     ];
-    injectAdminChildren(admin, [{ name: 'mixed', routes: bad }], () => true);
+    injectModuleChildren(admin, [{ name: 'mixed', routes: bad }], () => true);
     const names = admin[0].children.map((r) => r.name);
     expect(names).toContain('Good');
     expect(names).not.toContain('Bad');
@@ -145,7 +145,7 @@ describe('injectAdminChildren', () => {
       { path: '', name: 'EmptyPath', component: { name: 'X' } },
       { path: 'ok', name: 'Ok', component: { name: 'Ok' } },
     ];
-    injectAdminChildren(admin, [{ name: 'test', routes: bad }], () => true);
+    injectModuleChildren(admin, [{ name: 'test', routes: bad }], () => true);
     const names = admin[0].children.map((r) => r.name);
     expect(names).toContain('Ok');
     expect(names).not.toContain('NoPath');
@@ -161,7 +161,7 @@ describe('injectAdminChildren', () => {
       { path: 'no-component', name: 'NoComp' },
       { path: 'ok', name: 'Ok', component: { name: 'Ok' } },
     ];
-    injectAdminChildren(admin, [{ name: 'test', routes: bad }], () => true);
+    injectModuleChildren(admin, [{ name: 'test', routes: bad }], () => true);
     const names = admin[0].children.map((r) => r.name);
     expect(names).toContain('Ok');
     expect(names).not.toContain('NoComp');
@@ -179,7 +179,7 @@ describe('injectAdminChildren', () => {
         meta: { action: 'manage', subject: 'UserAdmin' },
       },
     ];
-    injectAdminChildren(admin, [{ name: 'secret', routes: guarded }], () => true);
+    injectModuleChildren(admin, [{ name: 'secret', routes: guarded }], () => true);
     const injected = admin[0].children.find((r) => r.name === 'Admin Secret');
     expect(injected.meta.action).toBe('manage');
     expect(injected.meta.subject).toBe('UserAdmin');
@@ -190,12 +190,10 @@ describe('injectAdminChildren', () => {
  * injectModuleChildren — generalized form.
  *
  * Signature: injectModuleChildren(routes, childModules, isModuleActive, parentPath, callerName)
- *  - parentPath defaults to '/admin' for back-compat with injectAdminChildren.
- *  - callerName defaults to 'injectModuleChildren'; injectAdminChildren passes
- *    'injectAdminChildren' so dev-mode warnings identify the wrapper correctly.
+ *  - parentPath defaults to '/admin'.
+ *  - callerName defaults to 'injectModuleChildren' so dev-mode warnings identify the entry point.
  *
- * These tests verify the same contracts as injectAdminChildren to confirm
- * the wrapper delegates faithfully, plus additional cases for custom parentPath.
+ * These tests cover a custom parentPath.
  */
 describe('injectModuleChildren', () => {
   it('appends each active module\'s valid routes to the parent', () => {
@@ -237,7 +235,7 @@ describe('injectModuleChildren', () => {
     expect(admin[0].children.length).toBe(before);
   });
 
-  it('filters invalid routes just like injectAdminChildren', () => {
+  it('filters invalid routes under a custom parent', () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const admin = makeAdminRoutes();
     const bad = [
@@ -268,15 +266,5 @@ describe('injectModuleChildren', () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('/org'));
     expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('use a relative path'));
     consoleWarnSpy.mockRestore();
-  });
-});
-
-describe('injectAdminChildren (back-compat wrapper)', () => {
-  it('delegates identically to injectModuleChildren for /admin parent', () => {
-    const admin1 = makeAdminRoutes();
-    const admin2 = makeAdminRoutes();
-    injectModuleChildren(admin1, [{ name: 'knowledge', routes: knowledgeRoutes }], () => true);
-    injectAdminChildren(admin2, [{ name: 'knowledge', routes: knowledgeRoutes }], () => true);
-    expect(admin1[0].children).toEqual(admin2[0].children);
   });
 });

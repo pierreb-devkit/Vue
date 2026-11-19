@@ -26,14 +26,6 @@ const { currentPlan, isPlanActive, hasPlan } = useBilling();
 
 ## Components
 
-### `<BillingUsageBarComponent>`
-
-```vue
-<BillingUsageBarComponent resource="documents" action="create" label="Documents" />
-```
-
-Auto-colored progress bar (green/orange/red). Shows "Unlimited" for uncapped plans.
-
 ### `<BillingUpgradePrompt>`
 
 ```vue
