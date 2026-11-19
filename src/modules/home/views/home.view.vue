@@ -116,9 +116,3 @@ export default {
 };
 </script>
 
-<style>
-.centered-input :deep(input) {
-  text-align: center;
-  font-size: 20px;
-}
-</style>
