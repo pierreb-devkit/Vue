@@ -1,5 +1,5 @@
 <template>
-  <v-container style="max-width: 520px">
+  <v-container max-width="520">
     <v-card class="mt-10 pa-8 pa-sm-10" color="surface">
       <h4 class="text-headline-small font-weight-bold text-center">Reset your password</h4>
       <p class="text-body-medium text-medium-emphasis text-center mt-1 mb-8">

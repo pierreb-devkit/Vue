@@ -13,7 +13,7 @@
         <!-- Header -->
         <div class="text-center mb-10">
           <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || 'Pricing' }}</h1>
-          <p class="text-body-large text-white" :style="{ opacity: 0.85 }">{{ header.subtitle || 'Choose the plan that fits your needs.' }}</p>
+          <p class="text-body-large text-white opacity-80">{{ header.subtitle || 'Choose the plan that fits your needs.' }}</p>
         </div>
 
         <!-- Tab bar — rendered only when the config declares more than one tab -->

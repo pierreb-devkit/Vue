@@ -222,7 +222,7 @@ describe('BillingPricingFeatureSectionComponent', () => {
       },
       global: { plugins: [vuetify] },
     });
-    const srTexts = wrapper.findAll('.sr-only').map((s) => s.text().trim());
+    const srTexts = wrapper.findAll('.d-sr-only').map((s) => s.text().trim());
     expect(srTexts).toContain('Included:');
     expect(srTexts).toContain('Not included:');
     // The state icon is decorative — hidden from assistive tech (Vuetify would

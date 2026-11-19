@@ -32,8 +32,8 @@
         </h2>
         <p
           v-if="subtitle || $slots.subtitle"
-          class="core-page-header__subtitle text-body-medium text-medium-emphasis text-truncate"
-          style="margin: 0; line-height: 1;"
+          class="core-page-header__subtitle text-body-medium text-medium-emphasis text-truncate ma-0"
+          style="line-height: 1;"
         >
           <slot name="subtitle">{{ subtitle }}</slot>
         </p>

@@ -19,8 +19,8 @@
           <div
             v-for="tick in ticks"
             :key="`grid-${tick}`"
-            class="admin-weekly-bars__grid"
-            :class="{ 'admin-weekly-bars__grid--base': tick === 0 }"
+            class="admin-weekly-bars__grid border-t"
+            :class="{ 'border-opacity-25': tick === 0 }"
             :style="{ bottom: `${(tick / scaleMax) * 100}%` }"
             aria-hidden="true"
           ></div>
@@ -33,7 +33,7 @@
         <span v-for="(item, i) in weeks" :key="`x-${item.week}`">{{ xLabelIndexes.includes(i) ? formatWeek(item.week) : '' }}</span>
       </div>
     </figure>
-    <ul class="admin-weekly-bars__sr">
+    <ul class="d-sr-only">
       <li v-for="item in weeks" :key="`sr-${item.week}`">Week of {{ formatWeek(item.week) }}: {{ item.count }}</li>
     </ul>
   </div>
@@ -119,16 +119,6 @@ export default {
 </script>
 
 <style scoped>
-.admin-weekly-bars__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 .admin-weekly-bars__plot {
   display: flex;
   height: 160px;
@@ -155,10 +145,6 @@ export default {
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px solid rgba(var(--v-border-color), 0.08);
-}
-.admin-weekly-bars__grid--base {
-  border-top-color: rgba(var(--v-border-color), 0.24);
 }
 .admin-weekly-bars__col {
   position: relative;

@@ -41,8 +41,8 @@ describe('admin.weeklyBars.component', () => {
 
   it('should list each week and its count as text outside the chart', () => {
     const wrapper = mount(AdminWeeklyBars, { props: { weeks: weeks([2, 3]), label: 'New accounts' } });
-    const items = wrapper.findAll('.admin-weekly-bars__sr li').map((li) => li.text());
+    const items = wrapper.findAll('.d-sr-only li').map((li) => li.text());
     expect(items).toEqual(['Week of Sep 7: 2', 'Week of Sep 14: 3']);
-    expect(wrapper.find('figure').find('.admin-weekly-bars__sr').exists()).toBe(false);
+    expect(wrapper.find('figure').find('.d-sr-only').exists()).toBe(false);
   });
 });

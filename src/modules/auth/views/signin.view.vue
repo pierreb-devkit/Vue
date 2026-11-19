@@ -1,5 +1,5 @@
 <template>
-  <v-container style="max-width: 520px">
+  <v-container max-width="520">
     <v-card class="mt-10 pa-8 pa-sm-10" color="surface">
       <img v-if="config.sign?.accentImage" :src="config.sign.accentImage" alt="" class="d-block mx-auto mb-4" style="max-height: 64px; max-width: 100%" data-test="sign-accent-image" />
       <h4 class="text-headline-small font-weight-bold text-center">Sign in to your account</h4>
