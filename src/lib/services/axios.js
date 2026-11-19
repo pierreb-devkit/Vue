@@ -3,6 +3,7 @@
  */
 import axios from 'axios';
 import { createLogger } from '../helpers/logger';
+import { sanitizeApiError } from '../helpers/apiError';
 
 const logger = createLogger('axios');
 
@@ -73,7 +74,7 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
         }
       }
       if (config.vuetify.theme.snackbar.status && !err.config?.__silent && err.response && err.response.data && err.response.data.description) {
-        snackbar.text = err.response.data.description;
+        snackbar.text = sanitizeApiError(err, 'Something went wrong. Please try again.', 'description');
         snackbar.color = config.vuetify.theme.snackbar.errorColor;
         snackbar.status = true;
       }

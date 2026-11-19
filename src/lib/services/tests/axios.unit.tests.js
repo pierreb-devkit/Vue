@@ -305,6 +305,24 @@ describe('Axios Service', () => {
       expect(mockSnackbar.status).toBe(true);
     });
 
+    it('should replace an unsafe error description with the fallback', async () => {
+      const error = {
+        response: {
+          status: 500,
+          data: {
+            description: 'MongoServerError: E11000 duplicate key in collection users at /app/modules/users/users.service.js:42',
+          },
+        },
+        config: {},
+      };
+
+      await expect(errorInterceptor(error)).rejects.toEqual(error);
+
+      expect(mockSnackbar.text).toBe('Something went wrong. Please try again.');
+      expect(mockSnackbar.color).toBe('error');
+      expect(mockSnackbar.status).toBe(true);
+    });
+
     it('should handle error without response', async () => {
       const error = {
         message: 'Network error',
