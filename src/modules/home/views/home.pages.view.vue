@@ -18,7 +18,8 @@
             <v-card-text class="pa-12">
               <v-window v-model="tab">
                 <v-window-item v-for="({ markdown, style: styleClass }, i) in contents" :key="i" :value="i">
-                  <CoreProseComponent :class="styleClass">
+                  <!-- A table too wide for the card scrolls sideways instead of being clipped. -->
+                  <CoreProseComponent :class="[styleClass, 'home-prose', 'overflow-x-auto']">
                     <VMarkdown :source="markdown" />
                   </CoreProseComponent>
                 </v-window-item>
@@ -95,6 +96,14 @@ export default {
 </script>
 
 <style scoped>
+/*
+ * CMS pages are prose, not reference tables: a first-column code span wraps
+ * like any other cell (the shared sheet keeps it on one line for the docs).
+ */
+.home-prose.core-prose :deep(td:first-child code) {
+  white-space: normal;
+}
+
 /*
  * CMS page look (`style: 'classic'`), on top of the shared prose sheet
  * (CoreProseComponent): rendered markdown cannot take Vuetify classes.

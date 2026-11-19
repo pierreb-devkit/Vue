@@ -15,16 +15,6 @@ vi.mock('../components/utils/home.content.component.vue', () => ({
 }));
 
 /**
- * Mock theme helpers.
- */
-vi.mock('../../../lib/helpers/theme', async (importOriginal) => ({
-  ...(await importOriginal()),
-  style: vi.fn(() => ({})),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
-}));
-
-/**
  * Spy on @unhead/vue while keeping the real head behaviour (removed on unmount).
  */
 vi.mock('@unhead/vue', async (importOriginal) => {

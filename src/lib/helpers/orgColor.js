@@ -29,16 +29,29 @@ export const userPalette = [
 ];
 
 /**
- * @desc Text colour class that stays readable on an avatar colour.
- * Uses relative luminance per WCAG 2.x: light backgrounds get dark text.
+ * @desc Relative luminance of a colour per WCAG 2.x (linearised sRGB channels).
+ * @param {string} hex - Six-digit hex color code.
+ * @returns {number} Luminance from 0 (black) to 1 (white).
+ */
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/**
+ * @desc Text colour class that stays readable on an avatar colour: black or
+ * white, whichever has the higher WCAG contrast ratio against it.
  * @param {string} hex - Six-digit hex color code.
  * @returns {'text-black'|'text-white'} Vuetify text colour class.
  */
 export const avatarTextClass = (hex) => {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.5 ? 'text-black' : 'text-white';
+  const l = luminance(hex);
+  const onBlack = (l + 0.05) / 0.05;
+  const onWhite = 1.05 / (l + 0.05);
+  return onBlack > onWhite ? 'text-black' : 'text-white';
 };
 
 /**

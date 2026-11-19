@@ -12,16 +12,6 @@ vi.mock('../components/utils/home.content.component.vue', () => ({
   default: { name: 'homeContentComponent', template: '<div class="mock-content" />', props: ['setup'] },
 }));
 
-/**
- * Mock the theme helpers to isolate component logic.
- */
-vi.mock('../../../lib/helpers/theme', async (importOriginal) => ({
-  ...(await importOriginal()),
-  style: vi.fn(() => ({ padding: '0' })),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
-}));
-
 const mockConfig = {
   vuetify: { theme: { rounded: 'rounded-xl', maxWidth: '1200px', flat: false } },
 };

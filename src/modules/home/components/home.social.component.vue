@@ -61,7 +61,9 @@
                   :href="item.link"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="logo-link text-decoration-none"
+                  aria-hidden="true"
+                  tabindex="-1"
+                  class="logo-link logo-duplicate text-decoration-none"
                 >
                   <v-sheet class="d-flex align-center ga-3" color="transparent">
                     <v-img :src="item.img" :height="logoSize" :width="logoSize" cover :alt="item.name"></v-img>
@@ -163,10 +165,22 @@ export default {
   }
 }
 
-/* Reduced motion: the logos stand still. */
+/*
+ * Reduced motion: the logos stand still and wrap, centred, so none sits
+ * outside the clipped strip; the loop copy and the edge fades go away.
+ */
 @media (prefers-reduced-motion: reduce) {
   .scroll-content {
     animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .logo-duplicate,
+  .scroll-wrapper::before,
+  .scroll-wrapper::after {
+    display: none;
   }
 }
 </style>

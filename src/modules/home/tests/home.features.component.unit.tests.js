@@ -24,8 +24,6 @@ vi.mock('../components/utils/home.img.component.vue', () => ({
 vi.mock('../../../lib/helpers/theme', async (importOriginal) => ({
   ...(await importOriginal()),
   style: vi.fn(() => ({ padding: '0' })),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
 }));
 
 const mockConfig = {

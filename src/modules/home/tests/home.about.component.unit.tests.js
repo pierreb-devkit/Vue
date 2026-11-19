@@ -5,16 +5,6 @@ import * as directives from 'vuetify/directives';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 
 /**
- * Mock theme helpers.
- */
-vi.mock('../../../lib/helpers/theme', async (importOriginal) => ({
-  ...(await importOriginal()),
-  style: vi.fn(() => ({ padding: '0' })),
-  overlapStyle: vi.fn(() => ({})),
-  colorModeStyle: vi.fn(() => ({})),
-}));
-
-/**
  * Mock DOMPurify (required by homeImgComponent).
  */
 vi.mock('dompurify', () => ({

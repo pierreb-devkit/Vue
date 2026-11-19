@@ -105,5 +105,28 @@ describe('avatarTextClass Helper', () => {
   it('puts white text on dark colours', () => {
     expect(avatarTextClass('#000000')).toBe('text-white');
     expect(avatarTextClass('#9b59b6')).toBe('text-white');
+    expect(avatarTextClass('#3949ab')).toBe('text-white');
+  });
+
+  /** WCAG contrast ratio between a hex colour and black or white text. */
+  const contrast = (hex, text) => {
+    const lin = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const [r, g, b] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16) / 255));
+    const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return text === 'text-black' ? (l + 0.05) / 0.05 : 1.05 / (l + 0.05);
+  };
+
+  it.each(['#e74c3c', '#ee5a24'])('puts dark text on the mid red %s (white would fail 4.5:1)', (hex) => {
+    expect(avatarTextClass(hex)).toBe('text-black');
+    expect(contrast(hex, 'text-black')).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(hex, 'text-white')).toBeLessThan(4.5);
+  });
+
+  it('always picks the higher-contrast text across both palettes', () => {
+    [...sharedPalette, ...sharedUserPalette].forEach((hex) => {
+      const picked = avatarTextClass(hex);
+      const other = picked === 'text-black' ? 'text-white' : 'text-black';
+      expect(contrast(hex, picked)).toBeGreaterThanOrEqual(contrast(hex, other));
+    });
   });
 });

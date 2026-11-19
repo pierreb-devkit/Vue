@@ -21,6 +21,13 @@ describe('home keyframes honour prefers-reduced-motion', () => {
     expect(style).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.scroll-content \{\s*animation: none;/);
   });
 
+  it('wraps the stopped marquee so no logo sits outside the strip', () => {
+    const style = styleOf('home.social.component.vue');
+    const guard = style.slice(style.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(guard).toMatch(/\.scroll-content \{[^}]*flex-wrap: wrap;[^}]*justify-content: center;/);
+    expect(guard).toMatch(/\.logo-duplicate,[^{]*\{\s*display: none;/);
+  });
+
   it('shows the dynamic island at its expanded end state without animating', () => {
     const style = styleOf('utils/home.dynamicIsland.component.vue');
     const guard = style.slice(style.indexOf('@media (prefers-reduced-motion: reduce)'));
