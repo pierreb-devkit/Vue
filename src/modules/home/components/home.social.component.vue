@@ -29,8 +29,8 @@
   }
 -->
 <template>
-  <section id="social" :style="sectionStyle">
-    <v-container :style="containerStyle" class="py-8">
+  <section id="social" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container" class="py-8">
       <v-row align="center" justify="center">
         <v-col cols="12" md="9" lg="8">
           <v-row align="center" class="flex-column flex-sm-row">
@@ -61,7 +61,9 @@
                   :href="item.link"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="logo-link text-decoration-none"
+                  aria-hidden="true"
+                  tabindex="-1"
+                  class="logo-link logo-duplicate text-decoration-none"
                 >
                   <v-sheet class="d-flex align-center ga-3" color="transparent">
                     <v-img :src="item.img" :height="logoSize" :width="logoSize" cover :alt="item.name"></v-img>
@@ -81,8 +83,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 
 /**
  * Export default
@@ -95,32 +96,17 @@ export default {
       required: true,
     },
   },
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      const styles = sectionStyles(this.setup, this.$vuetify?.display);
+      return { ...styles, section: { ...styles.section, overflow: 'hidden', '--gradient-bg-color': styles.background } };
+    },
     variant() {
       return this.setup.variant || 'default';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-        overflow: 'hidden',
-        '--gradient-bg-color': bgColor,
-      };
     },
     logoSize() {
       return this.setup.style?.logoHeight || '20px';
@@ -176,6 +162,25 @@ export default {
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+/*
+ * Reduced motion: the logos stand still and wrap, centred, so none sits
+ * outside the clipped strip; the loop copy and the edge fades go away.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-content {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .logo-duplicate,
+  .scroll-wrapper::before,
+  .scroll-wrapper::after {
+    display: none;
   }
 }
 </style>

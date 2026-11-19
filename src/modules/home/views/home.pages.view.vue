@@ -9,7 +9,7 @@
       :halo-colors="themeName === 'dark' ? config.home.banner?.blur?.dark?.haloColors : config.home.banner?.blur?.light?.haloColors"
     ></homeHeroComponent>
     <section id="page" :style="style('section', config.pages)">
-      <v-container class="py-12" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+      <v-container class="py-12" :max-width="config.vuetify.theme.maxWidth">
         <v-row align="center" justify="center">
           <v-card :style="style('card', config.pages)" class="w-100">
             <v-tabs v-if="contents.length > 1" v-model="tab" fixed-tabs>
@@ -18,7 +18,10 @@
             <v-card-text class="pa-12">
               <v-window v-model="tab">
                 <v-window-item v-for="({ markdown, style: styleClass }, i) in contents" :key="i" :value="i">
-                  <VMarkdown :source="markdown" :class="styleClass" />
+                  <!-- A table too wide for the card scrolls sideways instead of being clipped. -->
+                  <CoreProseComponent :class="[styleClass, 'home-prose', 'overflow-x-auto']">
+                    <VMarkdown :source="markdown" />
+                  </CoreProseComponent>
                 </v-window-item>
               </v-window>
             </v-card-text>
@@ -37,6 +40,7 @@ import { useTheme } from 'vuetify';
 import { useHomeStore } from '../stores/home.store';
 import { style } from '../../../lib/helpers/theme';
 import homeHeroComponent from '../components/home.hero.component.vue';
+import CoreProseComponent from '../../core/components/core.prose.component.vue';
 
 /**
  * Component definition.
@@ -44,6 +48,7 @@ import homeHeroComponent from '../components/home.hero.component.vue';
 export default {
   components: {
     homeHeroComponent,
+    CoreProseComponent,
   },
   data() {
     const theme = useTheme();
@@ -90,326 +95,127 @@ export default {
 };
 </script>
 
-<style>
-@media print {
-  .air *,
-  .air :after,
-  .air :before {
-    background: 0 0 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-  .air a,
-  .air a:visited {
-    text-decoration: underline;
-  }
-  .air a[href]:after {
-    content: ' (' attr(href) ')';
-  }
-  .air abbr[title]:after {
-    content: ' (' attr(title) ')';
-  }
-  .air a[href^='#']:after,
-  .air a[href^='javascript:']:after {
-    content: '';
-  }
-  .air blockquote,
-  .air pre {
-    border: 1px solid #999;
-    page-break-inside: avoid;
-  }
-  .air thead {
-    display: table-header-group;
-  }
-  .air img,
-  .air tr {
-    page-break-inside: avoid;
-  }
-  .air img {
-    max-width: 100% !important;
-  }
-  .air h2,
-  .air h3,
-  .air p {
-    orphans: 3;
-    widows: 3;
-  }
-  .air h2,
-  .air h3 {
-    page-break-after: avoid;
-  }
+<style scoped>
+/*
+ * CMS pages are prose, not reference tables: a first-column code span wraps
+ * like any other cell (the shared sheet keeps it on one line for the docs).
+ */
+.home-prose.core-prose :deep(td:first-child code) {
+  white-space: normal;
 }
-.air {
-  font-size: 12px;
-}
-@media screen and (min-width: 32rem) and (max-width: 48rem) {
-  .air {
-    font-size: 15px;
-  }
-}
-@media screen and (min-width: 48rem) {
-  .air {
-    font-size: 16px;
-  }
-}
-.air {
-  line-height: 1.85;
-}
-.air .air-p,
-.air p {
+
+/*
+ * CMS page look (`style: 'classic'`), on top of the shared prose sheet
+ * (CoreProseComponent): rendered markdown cannot take Vuetify classes.
+ */
+.classic {
   font-size: 1rem;
-  margin-bottom: 1.3rem;
-}
-.air .air-h1,
-.air .air-h2,
-.air .air-h3,
-.air .air-h4,
-.air h1,
-.air h2,
-.air h3,
-.air h4 {
-  margin: 1.414rem 0 0.5rem;
-  font-weight: 700;
-  line-height: 1.42;
-}
-.air .air-h1,
-.air h1 {
-  margin-top: 0;
-  font-size: 200%;
-}
-.air .air-h2,
-.air h2 {
-  font-size: 180%;
-}
-.air .air-h3,
-.air h3 {
-  font-size: 160%;
-}
-.air .air-h4,
-.air h4 {
-  font-size: 140%;
-}
-.air .air-h5,
-.air h5 {
-  font-size: 120%;
-}
-.air .air-h6,
-.air h6 {
-  font-size: 100%;
-}
-.air .air-small,
-.air small {
-  font-size: 0.707em;
-}
-.air canvas,
-.air iframe,
-.air img,
-.air select,
-.air svg,
-.air textarea,
-.air video {
-  max-width: 100%;
-}
-.air {
-  font-family: 'Open Sans', Helvetica, sans-serif;
-  font-weight: 300;
-  margin: 2rem auto 1rem;
-  max-width: 48rem;
-  text-align: center;
-}
-.air img {
-  border-radius: 50%;
-  height: 250px;
-  margin: 5px auto;
-  width: 250px;
-}
-.air a,
-.air a:visited {
-  color: #3498db;
-}
-.air a:active,
-.air a:focus,
-.air a:hover {
-  color: #2980b9;
-}
-.air pre {
-  background-color: #fafafa;
-  padding: 1rem;
-  text-align: left;
-}
-.air blockquote {
-  margin: 0;
-  border-left: 5px solid #7a7a7a;
-  font-style: italic;
-  padding: 1.33em;
-  text-align: left;
-}
-.air li,
-.air ol,
-.air ul {
-  text-align: left;
-}
-@media print {
-  .classic *,
-  .classic :after,
-  .classic :before {
-    background: 0 0 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-  .classic a,
-  .classic a:visited {
-    text-decoration: underline;
-  }
-  .classic a[href]:after {
-    content: ' (' attr(href) ')';
-  }
-  .classic abbr[title]:after {
-    content: ' (' attr(title) ')';
-  }
-  .classic a[href^='#']:after,
-  .classic a[href^='javascript:']:after {
-    content: '';
-  }
-  .classic blockquote,
-  .classic pre {
-    border: 1px solid #999;
-    page-break-inside: avoid;
-  }
-  .classic thead {
-    display: table-header-group;
-  }
-  .classic img,
-  .classic tr {
-    page-break-inside: avoid;
-  }
-  .classic img {
-    max-width: 100% !important;
-  }
-  .classic h2,
-  .classic h3,
-  .classic p {
-    orphans: 3;
-    widows: 3;
-  }
-  .classic h2,
-  .classic h3 {
-    page-break-after: avoid;
-  }
-}
-.classic {
-  font-size: 12px;
-}
-@media screen and (min-width: 32rem) and (max-width: 48rem) {
-  .classic {
-    font-size: 15px;
-  }
-}
-@media screen and (min-width: 48rem) {
-  .classic {
-    font-size: 16px;
-  }
-}
-.classic {
-  line-height: 1.85;
-}
-.classic .classic-p,
-.classic p {
-  font-size: 1rem;
-  margin-bottom: 1.3rem;
-}
-.classic .classic-h1,
-.classic .classic-h2,
-.classic .classic-h3,
-.classic .classic-h4,
-.classic h1,
-.classic h2,
-.classic h3,
-.classic h4 {
-  margin: 1.414rem 0 0.5rem;
-  font-weight: 700;
-  line-height: 1.42;
-}
-.classic .classic-h1,
-.classic h1 {
-  margin-top: 0;
-  font-size: 200%;
-}
-.classic .classic-h2,
-.classic h2 {
-  font-size: 180%;
-}
-.classic .classic-h3,
-.classic h3 {
-  font-size: 160%;
-}
-.classic .classic-h4,
-.classic h4 {
-  font-size: 140%;
-}
-.classic .classic-h5,
-.classic h5 {
-  font-size: 120%;
-}
-.classic .classic-h6,
-.classic h6 {
-  font-size: 100%;
-}
-.classic .classic-small,
-.classic small {
-  font-size: 0.707em;
-}
-.classic canvas,
-.classic iframe,
-.classic img,
-.classic select,
-.classic svg,
-.classic textarea,
-.classic video {
-  max-width: 100%;
-}
-.classic {
-  font-family: 'Open Sans', Helvetica, sans-serif;
-  font-weight: 300;
+  line-height: 1.6;
   margin: 2rem auto 1rem;
   max-width: 48rem;
   text-align: justify;
 }
-.classic a,
-.classic a:visited {
-  color: #3498db;
+
+.classic :deep(h1) {
+  font-size: 1.75rem;
+  line-height: 1.3;
+  font-weight: 500;
+  margin-block: 0 16px;
 }
-.classic a:active,
-.classic a:focus,
-.classic a:hover {
-  color: #2980b9;
+
+.classic :deep(li),
+.classic :deep(ol),
+.classic :deep(ul),
+.classic :deep(pre),
+.classic :deep(blockquote) {
+  text-align: start;
 }
-.classic pre {
-  background-color: #fafafa;
-  padding: 1rem;
-  text-align: left;
+
+.classic :deep(canvas),
+.classic :deep(iframe),
+.classic :deep(img),
+.classic :deep(select),
+.classic :deep(svg),
+.classic :deep(textarea),
+.classic :deep(video) {
+  max-width: 100%;
 }
-.classic blockquote {
-  margin: 0;
-  border-left: 5px solid #7a7a7a;
+
+.classic :deep(pre) {
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  background: rgba(var(--v-theme-on-surface), 0.05);
+}
+
+.classic :deep(blockquote) {
+  margin: 0 0 12px;
+  padding: 8px 16px;
+  border-inline-start: 4px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   font-style: italic;
-  padding: 1.33em;
-  text-align: left;
 }
-.classic li,
-.classic ol,
-.classic ul {
-  text-align: left;
-}
-.classic hr {
+
+.classic :deep(hr) {
   padding: 0;
   margin-bottom: 30px;
   opacity: 25%;
 }
-.classic img[alt='icon'] {
+
+.classic :deep(img[alt='icon']) {
   border-radius: 50%;
   width: 25px;
   height: 25px;
   margin: 0 10px -7px 10px;
+}
+
+/* Print: no backgrounds, printed link targets, no page break inside a block. */
+@media print {
+  .classic :deep(*),
+  .classic :deep(:after),
+  .classic :deep(:before) {
+    background: 0 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .classic :deep(a),
+  .classic :deep(a:visited) {
+    text-decoration: underline;
+  }
+  .classic :deep(a[href]:after) {
+    content: ' (' attr(href) ')';
+  }
+  .classic :deep(abbr[title]:after) {
+    content: ' (' attr(title) ')';
+  }
+  .classic :deep(a[href^='#']:after),
+  .classic :deep(a[href^='javascript:']:after) {
+    content: '';
+  }
+  .classic :deep(blockquote),
+  .classic :deep(pre) {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  .classic :deep(thead) {
+    display: table-header-group;
+  }
+  .classic :deep(img),
+  .classic :deep(tr) {
+    page-break-inside: avoid;
+  }
+  .classic :deep(img) {
+    max-width: 100% !important;
+  }
+  .classic :deep(h2),
+  .classic :deep(h3),
+  .classic :deep(p) {
+    orphans: 3;
+    widows: 3;
+  }
+  .classic :deep(h2),
+  .classic :deep(h3) {
+    page-break-after: avoid;
+  }
 }
 </style>

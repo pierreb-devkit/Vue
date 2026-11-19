@@ -7,7 +7,7 @@
     class="devkit-app-bar"
     :class="{ 'devkit-app-bar--float': isFloatMode, 'devkit-app-bar--scrolled': isFloatMode && isScrolled }"
   >
-    <v-container :style="{ maxWidth: config.vuetify.theme.maxWidth }" class="d-flex align-center px-4 py-0">
+    <v-container :max-width="config.vuetify.theme.maxWidth" class="d-flex align-center px-4 py-0">
       <!-- Logo/Title lockup -->
       <router-link
         v-if="config.header.logo && config.header.logo.file"

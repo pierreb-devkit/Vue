@@ -70,8 +70,8 @@ export default {
     const tasksStore = useTasksStore();
     try {
       await tasksStore.getTasks();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // The axios interceptor shows the error snackbar.
     }
   },
 };

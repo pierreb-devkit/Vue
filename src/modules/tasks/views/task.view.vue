@@ -109,8 +109,8 @@ export default {
       try {
         await tasksStore.getTask({ id: this.id });
         this.save = false;
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // The axios interceptor shows the error snackbar.
       }
     } else {
       tasksStore.resetTask();
@@ -125,8 +125,8 @@ export default {
           await tasksStore.createTask(this.task);
           this.save = false;
           this.$router.push('/tasks');
-        } catch (err) {
-          console.error(err);
+        } catch {
+          // The axios interceptor shows the error snackbar.
         }
       }
     },
@@ -138,8 +138,8 @@ export default {
           await tasksStore.updateTask({ id: this.id });
           this.save = false;
           this.$router.push('/tasks');
-        } catch (err) {
-          console.error(err);
+        } catch {
+          // The axios interceptor shows the error snackbar.
         }
       }
     },
@@ -150,8 +150,8 @@ export default {
         try {
           await tasksStore.deleteTask({ id: this.id });
           this.$router.push('/tasks');
-        } catch (err) {
-          console.error(err);
+        } catch {
+          // The axios interceptor shows the error snackbar.
         }
       }
     },

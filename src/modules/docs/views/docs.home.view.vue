@@ -174,6 +174,6 @@ const resultExamples = computed(() => [{
 }]);
 
 onMounted(() => {
-  store.fetchTree().catch(() => {});
+  store.fetchTree();
 });
 </script>

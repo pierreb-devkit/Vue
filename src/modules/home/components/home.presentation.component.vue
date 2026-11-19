@@ -21,13 +21,13 @@
   - To position under hero with overlap, set hero.overlap in config
 -->
 <template>
-  <section v-if="setup && setup.file" id="presentation" :style="sectionStyle" class="pa-8 pb-10">
-    <v-container class="text-center" :style="containerStyle">
+  <section v-if="setup && setup.file" id="presentation" :style="styles.section" class="pa-8 pb-10">
+    <v-container class="text-center" :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <video-player
         :src="setup.file"
         :poster="setup.poster"
         :controls="false"
-        :background-color="setup.style?.video?.background || '#101115'"
+        :background-color="setup.style?.video?.background"
         :rounded="config.vuetify.theme.rounded"
         :playback-rate="setup.playbackRate || 1.0"
         loop
@@ -45,7 +45,7 @@
  */
 import { useTheme } from 'vuetify';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
-import { style, liquidGlassStyle, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { liquidGlassStyle, sectionStyles } from '../../../lib/helpers/theme';
 
 /**
  * Component definition.
@@ -73,29 +73,20 @@ export default {
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      const styles = sectionStyles(this.setup, this.$vuetify?.display);
+      return {
+        ...styles,
+        container: { ...styles.container, padding: '12px', ...liquidGlassStyle({ vuetifyTheme: this.theme, opacity: 0.25, variant: 'card' }) },
+      };
+    },
     variant() {
       return this.setup.variant || 'default';
     },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-        padding: '12px',
-        ...liquidGlassStyle({ vuetifyTheme: this.theme, opacity: 0.25, variant: 'card' }),
-      };
-    },
-  },
-  methods: {
-    style,
   },
 };
 </script>

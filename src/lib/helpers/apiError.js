@@ -9,7 +9,7 @@
 export const sanitizeApiError = (err, fallback = 'Failed to load data. Please try again.', field = 'message') => {
   const raw = err?.response?.data?.[field];
   const msg = typeof raw === 'string' ? raw : '';
-  if (msg && msg.length <= 200 && !/\b(collection|stack)\b|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
+  if (msg && msg.length <= 200 && !/\b(collection|stack)\b|E11000|Error:|^\s*at\s+|\/[a-z]+\/|\.[jt]s:\d+/.test(msg)) {
     return msg;
   }
   return fallback;

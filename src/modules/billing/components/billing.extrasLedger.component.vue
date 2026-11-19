@@ -64,7 +64,7 @@
         <!-- amount column -->
         <template #[`item.amount`]="{ item }">
           <span
-            class="billing-extras-ledger__amount font-weight-medium"
+            class="text-mono font-weight-medium"
             :class="item.amount >= 0 ? 'text-success' : 'text-error'"
           >
             {{ item.amount >= 0 ? '+' : '' }}{{ item.amount }}
@@ -220,10 +220,6 @@ export default {
 </script>
 
 <style scoped>
-.billing-extras-ledger__amount {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 .billing-extras-ledger__truncate {
   display: inline-block;
   max-width: 6.25rem;

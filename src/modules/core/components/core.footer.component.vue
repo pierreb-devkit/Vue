@@ -36,9 +36,9 @@
             :is="appVersionHref ? 'a' : 'span'"
             v-if="appVersion"
             v-bind="appVersionHref ? { href: appVersionHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
-            class="text-label-small text-medium-emphasis footer-version"
+            class="text-label-small text-medium-emphasis text-decoration-none opacity-60 footer-version"
           >Web {{ appVersion }}</component>
-          <span v-if="backendVersion" class="text-label-small text-medium-emphasis footer-version">{{ appVersion ? ' · ' : '' }}API {{ backendVersion }}</span>
+          <span v-if="backendVersion" class="text-label-small text-medium-emphasis text-decoration-none opacity-60 footer-version">{{ appVersion ? ' · ' : '' }}API {{ backendVersion }}</span>
         </v-col>
       </v-row>
     </v-container>
@@ -265,16 +265,12 @@ export default {
 </script>
 
 <style>
+/* The app footer scrolls with the page instead of Vuetify's fixed app position. */
 .footer {
   position: relative !important;
 }
 
-.footer-version {
-  font-size: 0.7rem;
-  text-decoration: none;
-  opacity: 0.6;
-}
-
+/* No utility class changes opacity on hover. */
 .footer-version:hover {
   opacity: 1;
 }

@@ -111,7 +111,7 @@ export default {
       const store = useAdminStore();
       store.resetUser();
       if (this.id) {
-        try { await store.getUser({ id: this.id }); } catch (err) { console.error(err); }
+        await store.getUser({ id: this.id });
       }
     },
     /**
@@ -120,7 +120,11 @@ export default {
      * @returns {Promise<void>}
      */
     async update(formData) {
-      try { await useAdminStore().updateUser({ id: this.id }, formData); } catch (err) { console.error(err); }
+      try {
+        await useAdminStore().updateUser({ id: this.id }, formData);
+      } catch {
+        // The axios interceptor shows the error snackbar.
+      }
     },
     /**
      * @desc Refresh the local user record after an avatar upload.
@@ -140,8 +144,8 @@ export default {
       try {
         await useAdminStore().deleteUser({ id: this.id });
         this.$router.push('/admin/users');
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // The axios interceptor shows the error snackbar.
       } finally {
         this.removing = false;
       }

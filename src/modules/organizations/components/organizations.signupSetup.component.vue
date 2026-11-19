@@ -64,6 +64,7 @@ import { requiredTrim } from '../../../lib/helpers/rules';
  * Module dependencies.
  */
 import { useOrganizationsStore } from '../stores/organizations.store';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 /**
  * Organization setup component shown after signup (step 2): a create form
@@ -119,7 +120,7 @@ export default {
           this.$emit('created', organization);
         }
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
+        this.error = sanitizeApiError(err, 'Could not create organization. Please try again.', 'description');
       } finally {
         this.loading = false;
       }

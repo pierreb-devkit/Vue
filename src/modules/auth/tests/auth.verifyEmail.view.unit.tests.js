@@ -88,7 +88,7 @@ describe('auth.verifyEmail.view', () => {
 
   it('sets error state when verification fails', async () => {
     const err = new Error('Invalid token');
-    err.response = { data: { message: 'Token expired' } };
+    err.response = { data: { message: 'Bad Request', description: 'Token expired' } };
     verifyEmailMock.mockRejectedValueOnce(err);
 
     const wrapper = mountView();
@@ -100,6 +100,19 @@ describe('auth.verifyEmail.view', () => {
     expect(wrapper.vm.errorMessage).toBe('Token expired');
     expect(wrapper.vm.success).toBe(false);
     expect(wrapper.vm.loading).toBe(false);
+  });
+
+  it('never shows the HTTP title or an unsafe description', async () => {
+    const err = new Error('Request failed');
+    err.response = { data: { message: 'Bad Request', description: 'Error: at verify (/app/auth.js:12)' } };
+    verifyEmailMock.mockRejectedValueOnce(err);
+
+    const wrapper = mountView();
+
+    await wrapper.vm.$nextTick();
+    await vi.dynamicImportSettled();
+
+    expect(wrapper.vm.errorMessage).toBe('Verification failed. The token may be invalid or expired.');
   });
 
   it('shows a fallback error message when response has no message', async () => {

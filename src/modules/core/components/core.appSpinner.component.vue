@@ -9,6 +9,9 @@
  */
 import { defineAsyncComponent } from 'vue';
 import config from '../../../lib/services/config';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('core');
 
 /**
  * Glob of module-provided loader components, matched by filename convention.
@@ -30,7 +33,7 @@ export function resolveLoaderComponent(globMap, path) {
   if (!path) return null;
   const loader = globMap?.[path];
   if (!loader) {
-    console.warn(
+    logger.warn(
       `[CoreAppSpinner] config.ui.loader.component "${path}" did not match any loader component ` +
         '(expected a path like /src/modules/<module>/components/<name>.loader.component.vue). ' +
         'Falling back to the built-in spinner.',

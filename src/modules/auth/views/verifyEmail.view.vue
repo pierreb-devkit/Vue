@@ -1,5 +1,5 @@
 <template>
-  <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+  <v-container :max-width="config.vuetify.theme.maxWidth">
     <v-row align="start" justify="center">
       <v-card class="mt-8 pa-8" width="100%" color="surface">
         <v-col cols="12">
@@ -40,6 +40,7 @@ import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
 import { isModuleActive } from '../../../lib/helpers/modules';
 import { consumePostAuthRedirect, peekPostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 /**
  * Component definition.
  */
@@ -93,7 +94,7 @@ export default {
       this.success = true;
     } catch (err) {
       this.error = true;
-      this.errorMessage = err.response?.data?.message || 'Verification failed. The token may be invalid or expired.';
+      this.errorMessage = sanitizeApiError(err, 'Verification failed. The token may be invalid or expired.', 'description');
     } finally {
       this.loading = false;
     }

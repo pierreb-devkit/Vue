@@ -34,7 +34,7 @@
             <v-btn variant="text" size="small" class="text-none" @click="load([chart.key])">Retry</v-btn>
           </div>
           <AdminWeeklyBarsComponent v-else-if="chart.weeks" :weeks="chart.weeks" :label="`${chart.title} per week`" />
-          <div v-else class="admin-overview__placeholder"></div>
+          <v-sheet v-else height="182" color="transparent"></v-sheet>
         </v-card>
       </v-col>
 
@@ -49,7 +49,7 @@
             <v-btn variant="text" size="small" class="text-none" @click="load(['audit'])">Retry</v-btn>
           </div>
           <div v-else-if="stats.audit && !stats.audit.topActions?.length" class="text-body-medium text-medium-emphasis">No activity recorded yet.</div>
-          <ul v-else-if="stats.audit" class="admin-overview__list">
+          <ul v-else-if="stats.audit" class="admin-overview__list pa-0 ma-0">
             <li v-for="item in stats.audit.topActions" :key="item.action" class="mb-3" data-test="action-row">
               <div class="d-flex align-baseline text-body-medium">
                 <span class="text-truncate">{{ item.action }}</span>
@@ -71,8 +71,8 @@
             <v-btn variant="text" size="small" class="text-none" @click="load(['recent'])">Retry</v-btn>
           </div>
           <div v-else-if="stats.recent && !stats.recent.length" class="text-body-medium text-medium-emphasis mt-2">No activity recorded yet.</div>
-          <ul v-else-if="stats.recent" class="admin-overview__list">
-            <li v-for="item in stats.recent" :key="item._id || item.id" class="d-flex align-center py-2 admin-overview__row" data-test="recent-row">
+          <ul v-else-if="stats.recent" class="admin-overview__list pa-0 ma-0">
+            <li v-for="(item, i) in stats.recent" :key="item._id || item.id" class="d-flex align-center py-2" :class="{ 'border-t': i > 0 }" data-test="recent-row">
               <div class="text-truncate">
                 <div class="text-body-medium text-truncate">{{ item.action }}</div>
                 <div v-if="item.targetType" class="text-body-small text-medium-emphasis">{{ item.targetType }}</div>
@@ -295,15 +295,8 @@ export default {
 .admin-overview__line {
   min-height: 1.25rem;
 }
-.admin-overview__placeholder {
-  height: 182px;
-}
+/* No utility class sets list-style. */
 .admin-overview__list {
   list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.admin-overview__row + .admin-overview__row {
-  border-top: 1px solid rgba(var(--v-border-color), 0.08);
 }
 </style>

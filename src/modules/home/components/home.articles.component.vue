@@ -30,8 +30,8 @@
   ]
 -->
 <template>
-  <section id="articles" :style="sectionStyle">
-    <v-container ref="imagesContainer" :style="containerStyle">
+  <section id="articles" :style="styles.section">
+    <v-container ref="imagesContainer" :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
@@ -80,8 +80,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 import homeDynamicIsland from './utils/home.dynamicIsland.component.vue';
@@ -103,31 +102,21 @@ export default {
     },
   },
   data() {
-    const theme = useTheme();
     return {
       step: 0,
       imagesContainer: null,
-      theme,
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     variant() {
       return this.setup.variant || 'default';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
     },
     steps() {
       return this.$vuetify.display.smAndDown ? this.setup.content.length - 1 : Math.ceil(this.setup.content.length / 2) - 1;
@@ -144,7 +133,6 @@ export default {
     });
   },
   methods: {
-    style,
     stepper(input) {
       this.step = input;
     },

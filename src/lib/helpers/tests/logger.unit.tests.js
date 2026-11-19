@@ -49,4 +49,44 @@ describe('Logger Helper', () => {
 
     expect(spy).toHaveBeenCalledWith('[app][home]', 'fetch failed', err);
   });
+  it('should never log the request payload of an axios error', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const log = createLogger('auth');
+    const err = Object.assign(new Error('Request failed with status code 422'), {
+      isAxiosError: true,
+      code: 'ERR_BAD_REQUEST',
+      config: { method: 'post', url: '/api/auth/signin', data: '{"password":"secret"}', headers: { Authorization: 'x' } },
+      response: { status: 422, data: { description: 'raw' } },
+    });
+
+    log.error('signin failed', err);
+
+    const logged = spy.mock.calls[0][2];
+    expect(logged).toEqual({
+      name: 'Error',
+      message: 'Request failed with status code 422',
+      code: 'ERR_BAD_REQUEST',
+      status: 422,
+      method: 'post',
+      url: '/api/auth/signin',
+    });
+    expect(JSON.stringify(spy.mock.calls)).not.toContain('secret');
+  });
+  it('should drop tokens from a logged axios error url', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const log = createLogger('auth');
+    const err = { isAxiosError: true, message: 'x', config: { url: '/api/auth/verify-email/0123456789abcdef0123456789?next=a' } };
+
+    log.error(err);
+
+    expect(spy.mock.calls[0][1].url).toBe('/api/auth/verify-email/:token');
+  });
+  it('should keep a non-string url as is on a logged axios error', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const log = createLogger('auth');
+
+    log.error({ isAxiosError: true, message: 'Network Error', code: 'ERR_NETWORK' });
+
+    expect(spy.mock.calls[0][1]).toEqual({ name: undefined, message: 'Network Error', code: 'ERR_NETWORK', status: undefined, method: undefined, url: undefined });
+  });
 });

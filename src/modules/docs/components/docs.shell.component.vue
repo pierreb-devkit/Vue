@@ -231,9 +231,8 @@ onBeforeUnmount(() => window.removeEventListener('scroll', markCurrent));
   }
 }
 
-/* Inline code in authored text and rendered markdown. */
+/* Inline code in authored text and rendered markdown (the browser already sets a monospace font). */
 .docs-body :not(pre) > code {
-  font-family: monospace;
   font-size: 0.875em;
   padding: 1px 4px;
   border-radius: 4px;

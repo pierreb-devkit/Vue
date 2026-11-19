@@ -36,7 +36,7 @@
 <template>
   <div
     class="billing-meter-progress"
-    :class="{ 'billing-meter-progress--clickable': hasClickListener }"
+    :class="{ 'cursor-pointer': hasClickListener }"
     :role="hasClickListener ? 'button' : undefined"
     :aria-label="ariaLabel"
     :tabindex="hasClickListener ? 0 : undefined"
@@ -108,8 +108,8 @@
             size="x-small"
             tabindex="0"
             role="img"
+            class="cursor-help"
             :aria-label="`${used} of ${quota} used, ${effectiveOverage} over quota`"
-            style="cursor: help"
           />
         </template>
       </v-tooltip>
@@ -289,8 +289,3 @@ export default {
 };
 </script>
 
-<style scoped>
-.billing-meter-progress--clickable {
-  cursor: pointer;
-}
-</style>

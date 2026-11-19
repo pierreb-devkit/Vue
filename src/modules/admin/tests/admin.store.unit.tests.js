@@ -83,7 +83,7 @@ describe('Admin Store', () => {
       const store = useAdminStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      axios.get.mockRejectedValueOnce({ response: { data: { message: 'Forbidden' } } });
+      axios.get.mockRejectedValueOnce({ response: { data: { description: 'Forbidden' } } });
 
       await store.getUsers('0&10');
 
@@ -373,7 +373,7 @@ describe('Admin Store', () => {
       const store = useAdminStore();
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      axios.get.mockRejectedValueOnce({ response: { data: { message: 'User not found' } } });
+      axios.get.mockRejectedValueOnce({ response: { data: { description: 'User not found' } } });
 
       await store.getUsers('0&10');
 
@@ -386,7 +386,7 @@ describe('Admin Store', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({
-        response: { data: { message: 'Error: at Object.<anonymous> (/app/path/to/file.js:42)' } },
+        response: { data: { description: 'Error: at Object.<anonymous> (/app/path/to/file.js:42)' } },
       });
 
       await store.getUsers('0&10');
@@ -400,7 +400,7 @@ describe('Admin Store', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       axios.get.mockRejectedValueOnce({
-        response: { data: { message: 'x'.repeat(201) } },
+        response: { data: { description: 'x'.repeat(201) } },
       });
 
       await store.getUsers('0&10');
@@ -415,7 +415,7 @@ describe('Admin Store', () => {
       const safeMsg = 'x'.repeat(200);
 
       axios.get.mockRejectedValueOnce({
-        response: { data: { message: safeMsg } },
+        response: { data: { description: safeMsg } },
       });
 
       await store.getUsers('0&10');

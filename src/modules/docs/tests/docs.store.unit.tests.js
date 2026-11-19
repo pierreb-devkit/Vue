@@ -120,7 +120,7 @@ describe('Docs Store', () => {
 
     it('sets error and returns null on failure', async () => {
       const store = useDocsStore();
-      axios.get.mockRejectedValueOnce({ response: { data: { message: 'boom' } } });
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'Bad Request', description: 'boom' } } });
 
       const tree = await store.fetchTree();
 
@@ -263,13 +263,13 @@ describe('Docs Store', () => {
       const md = await store.fetchArticle('missing');
 
       expect(md).toBeNull();
-      expect(store.error).toBe('network down');
+      expect(store.error).toBe('An error occurred');
       expect(store.loading).toBe(false);
     });
 
-    it('uses response.data.message when present in a fetch error', async () => {
+    it('uses response.data.description when present in a fetch error', async () => {
       const store = useDocsStore();
-      axios.get.mockRejectedValueOnce({ response: { data: { message: 'article not found' } } });
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'Not Found', description: 'article not found' } } });
 
       const md = await store.fetchArticle('notfound');
 
@@ -391,18 +391,28 @@ describe('Docs Store', () => {
 
       expect(spec).toBeNull();
       expect(store.spec).toBeNull();
-      expect(store.error).toBe('spec down');
+      expect(store.error).toBe('An error occurred');
       expect(store.loading).toBe(false);
     });
 
-    it('uses response.data.message when present in a fetch error', async () => {
+    it('uses response.data.description when present in a fetch error', async () => {
       const store = useDocsStore();
-      axios.get.mockRejectedValueOnce({ response: { data: { message: 'spec forbidden' } } });
+      axios.get.mockRejectedValueOnce({ response: { data: { message: 'Forbidden', description: 'spec forbidden' } } });
 
       const spec = await store.fetchSpec();
 
       expect(spec).toBeNull();
       expect(store.error).toBe('spec forbidden');
+    });
+
+    it('never shows an unsafe server description (internal path)', async () => {
+      const store = useDocsStore();
+      axios.get.mockRejectedValueOnce({ response: { data: { description: 'ENOENT /srv/app/docs/spec.json' } } });
+
+      const spec = await store.fetchSpec();
+
+      expect(spec).toBeNull();
+      expect(store.error).toBe('An error occurred');
     });
 
     it('falls back to "An error occurred" when the spec error has no message', async () => {

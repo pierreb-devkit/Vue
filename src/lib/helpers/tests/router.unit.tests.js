@@ -133,7 +133,7 @@ describe('injectModuleChildren (default /admin parent)', () => {
     const names = admin[0].children.map((r) => r.name);
     expect(names).toContain('Good');
     expect(names).not.toContain('Bad');
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('absolute path'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('absolute path'));
     consoleWarnSpy.mockRestore();
   });
 
@@ -154,6 +154,15 @@ describe('injectModuleChildren (default /admin parent)', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  it('should silently skip route records that are not objects', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    injectModuleChildren(admin, [{ name: 'test', routes: [null, 'users', { path: 'ok', name: 'Ok', component: { name: 'Ok' } }] }], () => true);
+    expect(admin[0].children.map((r) => r.name)).toEqual(['Admin Users', 'Admin User', 'Ok']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
+  });
+
   it('should filter out routes without a component', () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const admin = makeAdminRoutes();
@@ -165,7 +174,7 @@ describe('injectModuleChildren (default /admin parent)', () => {
     const names = admin[0].children.map((r) => r.name);
     expect(names).toContain('Ok');
     expect(names).not.toContain('NoComp');
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('missing component'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('missing component'));
     consoleWarnSpy.mockRestore();
   });
 
@@ -263,8 +272,8 @@ describe('injectModuleChildren', () => {
       { path: 'relative', name: 'RelOrg', component: { name: 'RelOrg' } },
     ];
     injectModuleChildren(routes, [{ name: 'org-mod', routes: bad }], () => true, '/org');
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('/org'));
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('use a relative path'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('/org'));
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[app][router]', expect.stringContaining('use a relative path'));
     consoleWarnSpy.mockRestore();
   });
 });

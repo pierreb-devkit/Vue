@@ -16,8 +16,8 @@
   }
 -->
 <template>
-  <section id="cta" :style="sectionStyle">
-    <v-container :style="containerStyle">
+  <section id="cta" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="{ title: setup.title, subtitle: setup.subtitle, alignment: 'center' }"></homeContentComponent>
@@ -52,8 +52,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 
 /**
@@ -70,46 +69,20 @@ export default {
       required: true,
     },
   },
-  /**
-   * Initialise component data with the current Vuetify theme instance.
-   * @returns {{ theme: import('vuetify').ThemeInstance }} Reactive theme reference.
-   */
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     /**
      * Active visual variant of the section.
      * @returns {string} 'default' or 'alternate'
      */
     variant() {
       return this.setup.variant || 'default';
-    },
-    /**
-     * Inline styles for the v-container, including max-width and optional overlap.
-     * @returns {Object}
-     */
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    /**
-     * Inline styles for the section element, using theme background based on variant.
-     * @returns {Object}
-     */
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
     },
   },
 };

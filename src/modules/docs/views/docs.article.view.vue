@@ -29,7 +29,7 @@
             one markdown renderer (useDocsPage) while letting fenced code use
             the tabbed, copy-with-my-key component.
           -->
-          <article class="docs-prose" data-test="docs-article-body">
+          <CoreProse tag="article" class="docs-prose" data-test="docs-article-body">
             <template v-for="(seg, i) in bodySegments" :key="i">
               <!-- eslint-disable-next-line vue/no-v-html -- Markdown fragment sanitized by DOMPurify in useDocsPage -->
               <div v-if="seg.type === 'html'" v-html="seg.html" />
@@ -39,7 +39,7 @@
                 class="my-6"
               />
             </template>
-          </article>
+          </CoreProse>
         </template>
     </v-sheet>
   </DocsShell>
@@ -54,6 +54,7 @@ import DocsShell from '../components/docs.shell.component.vue';
 import DocsCodeblock from '../components/docs.codeblock.component.vue';
 import DocsPanes from '../components/docs.panes.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
+import CoreProse from '../../core/components/core.prose.component.vue';
 import { usePageHead } from '@/lib/composables/usePageHead';
 
 /**
@@ -163,7 +164,7 @@ const load = async (s) => {
     page.value = { title: '', html: '', toc: [], examples: [], notFound: true };
     return;
   }
-  await store.fetchTree().catch(() => {});
+  await store.fetchTree();
   if (PANE_PAGES.has(s)) return;
   const result = await useDocsPage(s, {
     fetcher: (sl) => store.fetchArticle(sl),
@@ -181,18 +182,16 @@ watch(slug, (s) => load(s), { immediate: true });
 </script>
 
 <style scoped>
-/* Everything below styles rendered markdown, which cannot take Vuetify classes. */
+/*
+ * Rendered markdown takes the shared prose sheet (CoreProse); below are the
+ * guide-only rules: reading measure, lead paragraph, section rules, anchors.
+ */
 
 /* Prose: one reading measure; tables and code may use the whole column. */
-.docs-prose {
-  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
-}
-
 .docs-prose :deep(p),
 .docs-prose :deep(ul),
 .docs-prose :deep(ol) {
   max-width: 600px;
-  margin-block: 0 12px;
 }
 
 /* A guide's opening paragraph, with or without an anchor paragraph before it. */
@@ -204,39 +203,10 @@ watch(slug, (s) => load(s), { immediate: true });
   margin-bottom: 8px;
 }
 
-.docs-prose :deep(ul),
-.docs-prose :deep(ol) {
-  padding-inline-start: 20px;
-}
-
-.docs-prose :deep(li) {
-  margin-bottom: 8px;
-  padding-inline-start: 4px;
-}
-
-.docs-prose :deep(li::marker) {
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-}
-
-.docs-prose :deep(strong) {
-  font-weight: 600;
-}
-
 /* A section opens as on a two-pane page: rule, then title. */
 .docs-prose :deep(h2) {
-  font-size: 1.375rem;
-  line-height: 1.3;
-  font-weight: 500;
-  margin-block: 40px 8px;
   padding-top: 40px;
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-}
-
-.docs-prose :deep(h3) {
-  font-size: 1rem;
-  line-height: 1.4;
-  font-weight: 500;
-  margin-block: 24px 8px;
 }
 
 /* Guides put `<a id>` anchors in a paragraph of their own: it takes no room. */
@@ -259,89 +229,14 @@ watch(slug, (s) => load(s), { immediate: true });
   }
 }
 
-.docs-prose :deep(pre code) {
-  padding: 0;
-  background: none;
-  font-size: inherit;
-}
-
-.docs-prose :deep(pre.hljs) {
-  border-radius: 8px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
 /*
- * The table sizes and wraps like any normal block table (no `width:
- * max-content` — that would force every cell onto one line, so a prose
- * column never wraps and even a short table goes wide). The wrapper
- * (emitted by useDocsPage's table renderer) scrolls horizontally so the
- * table only overflows sideways when a cell truly cannot shrink (e.g. a
- * long unbreakable code span), instead of forcing the whole article
- * sideways. The table itself keeps its native `display: table` —
- * overriding it (e.g. `display: block`) can strip table semantics from the
- * accessibility tree in some browser/screen-reader combinations.
+ * The wrapper (emitted by useDocsPage's table renderer) scrolls horizontally
+ * so the table only overflows sideways when a cell truly cannot shrink (e.g.
+ * a long unbreakable code span), instead of forcing the whole article sideways.
  */
-.docs-prose :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  line-height: 1.5;
-}
-
 .docs-prose :deep(.docs-table-scroll) {
   max-width: 100%;
   overflow-x: auto;
   margin: 16px 0 24px;
-}
-
-/* Ledger tables: rows only, no boxes and no filled header. */
-.docs-prose :deep(th),
-.docs-prose :deep(td) {
-  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
-  padding: 10px 24px 10px 0;
-  vertical-align: top;
-}
-
-.docs-prose :deep(th:last-child),
-.docs-prose :deep(td:last-child) {
-  padding-inline-end: 0;
-}
-
-/*
- * A column-aligned header (marked's `:-:` / `--:` syntax emits `align="..."`)
- * must keep the browser's attribute-driven alignment — an unconditional
- * `text-align` here would override it, so every column would render
- * left-aligned regardless of the markdown source. Left-align only the
- * headers with NO explicit alignment (browsers default a bare `<th>` to
- * `center`, which would otherwise mismatch the left-aligned body cells).
- */
-.docs-prose :deep(th:not([align])) {
-  text-align: start;
-}
-
-.docs-prose :deep(thead th) {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  white-space: nowrap;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-  border-bottom-color: rgba(var(--v-theme-on-surface), 0.3);
-}
-
-/* A name in a table breaks at its hyphens only, never inside a word. */
-.docs-prose :deep(td code) {
-  overflow-wrap: normal;
-}
-
-/* The first column is the key you look for: bare code on one line. */
-.docs-prose :deep(td:first-child code) {
-  padding: 0;
-  background: none;
-  font-weight: 500;
-}
-
-@media (min-width: 600px) {
-  .docs-prose :deep(td:first-child code) {
-    white-space: nowrap;
-  }
 }
 </style>

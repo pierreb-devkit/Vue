@@ -58,17 +58,14 @@ describe('Users Store', () => {
       expect(result).toEqual(updatedUser);
     });
 
-    it('logs and rethrows on failure', async () => {
+    it('rethrows on failure', async () => {
       const usersStore = useUsersStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.put.mockRejectedValueOnce(new Error('Failed to update profile'));
 
       await expect(
         usersStore.updateProfile({ firstName: 'Jane', lastName: 'Smith', bio: '', position: '' }),
       ).rejects.toThrow('Failed to update profile');
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -87,17 +84,14 @@ describe('Users Store', () => {
       expect(result).toEqual(updatedUser);
     });
 
-    it('logs and rethrows on failure', async () => {
+    it('rethrows on failure', async () => {
       const usersStore = useUsersStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.put.mockRejectedValueOnce(new Error('Failed to update email preferences'));
 
       await expect(
         usersStore.updateEmailPreferences({ onboarding: true, news: false }),
       ).rejects.toThrow('Failed to update email preferences');
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -111,15 +105,12 @@ describe('Users Store', () => {
       expect(axios.delete).toHaveBeenCalledWith(expect.stringContaining('/users'));
     });
 
-    it('logs and rethrows on failure', async () => {
+    it('rethrows on failure', async () => {
       const usersStore = useUsersStore();
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       axios.delete.mockRejectedValueOnce(new Error('Failed to delete account'));
 
       await expect(usersStore.deleteAccount()).rejects.toThrow('Failed to delete account');
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 });

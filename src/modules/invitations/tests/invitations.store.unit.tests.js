@@ -127,7 +127,7 @@ describe('invitations store', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     axios.post.mockRejectedValueOnce(new Error('Server error'));
     await expect(store.createInvitation('fail@b.co')).rejects.toThrow('Server error');
-    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(store.error).toBe('Could not send the invitation. Please try again.');
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
@@ -137,15 +137,15 @@ describe('invitations store', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     axios.delete.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(store.deleteInvitation('99')).rejects.toThrow('Forbidden');
-    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(store.error).toBe('Could not revoke the invitation. Please try again.');
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
-  it('surfaces a safe API message when the backend returns a clean one', async () => {
+  it('surfaces a safe API reason from `description` when the backend returns a clean one', async () => {
     const store = useInvitationsStore();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    axios.get.mockRejectedValueOnce({ response: { data: { message: 'You are not allowed to invite users.' } } });
+    axios.get.mockRejectedValueOnce({ response: { data: { message: 'Forbidden', description: 'You are not allowed to invite users.' } } });
     await store.getInvitations();
     expect(store.error).toBe('You are not allowed to invite users.');
     consoleErrorSpy.mockRestore();
@@ -154,9 +154,24 @@ describe('invitations store', () => {
   it('does NOT leak internal error details (stack/db paths) in the surfaced message', async () => {
     const store = useInvitationsStore();
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    axios.get.mockRejectedValueOnce({ response: { data: { message: 'Error: at /app/modules/invitations/x.js:42 collection invitations' } } });
+    axios.get.mockRejectedValueOnce({
+      response: { data: { message: 'Error', description: 'Error: at /app/modules/invitations/x.js:42 collection invitations' } },
+    });
     await store.getInvitations();
     expect(store.error).toBe('Failed to load data. Please try again.');
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('shows the reason from `description` and falls back when the body only has the HTTP title', async () => {
+    const store = useInvitationsStore();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    axios.post.mockRejectedValueOnce({ response: { data: { type: 'error', message: 'Conflict', description: 'An invitation is already pending for this email.' } } });
+    await expect(store.createInvitation('dup@b.co')).rejects.toBeDefined();
+    expect(store.error).toBe('An invitation is already pending for this email.');
+
+    axios.post.mockRejectedValueOnce({ response: { data: { type: 'error', message: 'Unprocessable Entity' } } });
+    await expect(store.createInvitation('dup@b.co')).rejects.toBeDefined();
+    expect(store.error).toBe('Could not send the invitation. Please try again.');
     consoleErrorSpy.mockRestore();
   });
 
@@ -185,7 +200,7 @@ describe('invitations store', () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     axios.post.mockRejectedValueOnce(new Error('Conflict'));
     await expect(store.resendInvitation('9')).rejects.toThrow('Conflict');
-    expect(store.error).toBe('Failed to load data. Please try again.');
+    expect(store.error).toBe('Could not resend the invitation. Please try again.');
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });

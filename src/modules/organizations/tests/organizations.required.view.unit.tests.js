@@ -41,7 +41,7 @@ vi.mock('../../core/stores/core.store', () => ({
   useCoreStore: () => ({ refreshNav: vi.fn() }),
 }));
 
-vi.mock('../../../lib/helpers/orgColor', () => ({
+vi.mock('../../../lib/helpers/orgColor', async (importOriginal) => ({ ...(await importOriginal()),
   default: () => 'primary',
 }));
 

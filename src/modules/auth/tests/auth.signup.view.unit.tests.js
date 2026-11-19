@@ -270,6 +270,19 @@ describe('auth.signup.view', () => {
       await flushPromises();
       expect(wrapper.vm.signupError).toBe('Registration is currently deactivated');
     });
+
+    it('never shows an unsafe server text (stack trace): falls back to the generic message', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 500, data: { description: 'Error: boom\n    at handler (/app/src/signup.js:12:3)' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Unable to create your account. Please try again.');
+    });
   });
 
   describe('password visibility toggle', () => {

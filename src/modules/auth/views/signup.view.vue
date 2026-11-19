@@ -1,5 +1,5 @@
 <template>
-  <v-container style="max-width: 520px">
+  <v-container max-width="520">
     <v-card class="mt-10 pa-8 pa-sm-10" color="surface">
       <img v-if="config.sign?.accentImage" :src="config.sign.accentImage" alt="" class="d-block mx-auto mb-4" style="max-height: 64px; max-width: 100%" data-test="sign-accent-image" />
       <h4 class="text-headline-small font-weight-bold text-center">
@@ -175,6 +175,7 @@ import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 import { useSignupSteps } from '../../../lib/composables/useSignupSteps';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 /**
  * Component definition.
  */
@@ -394,8 +395,9 @@ export default {
       if (typeof data === 'string' && data.trim()) return data;
       // The API error envelope carries the precise reason in `description`
       // (e.g. signup disabled) while `message` is often generic — prefer it.
-      if (typeof data?.description === 'string' && data.description.trim()) return data.description;
-      if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+      // Both go through sanitizeApiError: an unsafe server text (stack trace, DB path) is dropped.
+      const safeText = sanitizeApiError(error, '', 'description').trim() || sanitizeApiError(error, '', 'message').trim();
+      if (safeText) return safeText;
       if (typeof data?.error === 'string' && data.error.trim()) return data.error;
       if (Array.isArray(data?.errors) && data.errors.length > 0) {
         return data.errors
