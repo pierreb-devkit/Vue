@@ -29,8 +29,8 @@
   }
 -->
 <template>
-  <section id="social" :style="sectionStyle">
-    <v-container :style="containerStyle" class="py-8">
+  <section id="social" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container" class="py-8">
       <v-row align="center" justify="center">
         <v-col cols="12" md="9" lg="8">
           <v-row align="center" class="flex-column flex-sm-row">
@@ -81,8 +81,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 
 /**
  * Export default
@@ -95,32 +94,17 @@ export default {
       required: true,
     },
   },
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      const styles = sectionStyles(this.setup, this.$vuetify?.display);
+      return { ...styles, section: { ...styles.section, overflow: 'hidden', '--gradient-bg-color': styles.background } };
+    },
     variant() {
       return this.setup.variant || 'default';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-        overflow: 'hidden',
-        '--gradient-bg-color': bgColor,
-      };
     },
     logoSize() {
       return this.setup.style?.logoHeight || '20px';

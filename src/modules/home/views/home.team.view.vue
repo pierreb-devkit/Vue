@@ -8,7 +8,7 @@
       :background-colors="themeName === 'dark' ? config.home.hero?.blur?.dark?.backgroundColors : config.home.hero?.blur?.light?.backgroundColors"
       :halo-colors="themeName === 'dark' ? config.home.hero?.blur?.dark?.haloColors : config.home.hero?.blur?.light?.haloColors"
     ></homeHeroComponent>
-    <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+    <v-container :max-width="config.vuetify.theme.maxWidth">
       <v-layout wrap align-content-space-around text-xs-center>
         <teamMemberComponent v-for="(item, index) in team" :key="item.id" :item="item" :index="index"></teamMemberComponent>
       </v-layout>

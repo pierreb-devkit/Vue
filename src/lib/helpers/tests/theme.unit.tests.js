@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor, roundedProp } from '../theme.js';
+import { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, sectionStyles, lightenColor, roundedProp } from '../theme.js';
 
 describe('Theme Helpers', () => {
   describe('isDark', () => {
@@ -508,6 +508,54 @@ describe('Theme Helpers', () => {
     it('returns undefined when unset', () => {
       expect(roundedProp('')).toBeUndefined();
       expect(roundedProp(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('sectionStyles', () => {
+    it('paints the section with the theme background and its cards with the surface by default', () => {
+      const styles = sectionStyles({});
+      expect(styles.section.background).toBe('rgb(var(--v-theme-background))');
+      expect(styles.card.background).toBe('rgb(var(--v-theme-surface))');
+      expect(styles.background).toBe('rgb(var(--v-theme-background))');
+      expect(styles.container).toEqual({});
+    });
+
+    it('swaps the two colours for the alternate variant', () => {
+      const styles = sectionStyles({ variant: 'alternate' });
+      expect(styles.section.background).toBe('rgb(var(--v-theme-surface))');
+      expect(styles.card.background).toBe('rgb(var(--v-theme-background))');
+    });
+
+    it('keeps a config section background instead of the variant colour', () => {
+      const styles = sectionStyles({ style: { section: { background: '#123456' } } });
+      expect(styles.section.background).toBe('#123456');
+    });
+
+    it('keeps a config gradient without painting a colour under it', () => {
+      const gradient = 'linear-gradient(red, blue)';
+      const styles = sectionStyles({ style: { section: { background: gradient } } });
+      expect(styles.section['background-image']).toBe(gradient);
+      expect(styles.section.background).toBeUndefined();
+    });
+
+    it('adds the colour mode, the overlap offset and the named card style', () => {
+      const styles = sectionStyles(
+        { colorMode: 'light', overlap: '10vh', style: { contentCard: { borderRadius: '8px' } } },
+        { smAndDown: false },
+        'contentCard',
+      );
+      expect(styles.section.color).toBe('#ffffff');
+      expect(styles.container['margin-top']).toBe('-10vh');
+      expect(styles.card['border-radius']).toBe('8px !important');
+    });
+
+    it('lets the theme colour win over a config card background, as before', () => {
+      const styles = sectionStyles({ style: { card: { background: '#abcdef' } } });
+      expect(styles.card.background).toBe('rgb(var(--v-theme-surface))');
+    });
+
+    it('accepts a missing config', () => {
+      expect(sectionStyles(undefined).section.background).toBe('rgb(var(--v-theme-background))');
     });
   });
 });

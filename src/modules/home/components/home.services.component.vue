@@ -31,14 +31,14 @@
   }
 -->
 <template>
-  <section id="services" :style="sectionStyle">
-    <v-container :style="containerStyle">
+  <section id="services" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
         </v-col>
         <v-col v-for="(item, i) in setup.content" :key="i" cols="12" sm="12" :md="colSize" data-aos="fade">
-          <v-card class="py-6 px-2" :style="cardStyle">
+          <v-card class="py-6 px-2" :style="styles.card">
             <v-btn icon :color="item.color ? item.color : 'primary'" width="50" height="50" class="text-white ml-3 mb-4">
               <v-icon :icon="item.serviceIcon" size="x-medium"></v-icon>
             </v-btn>
@@ -54,8 +54,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 /**
  * Component definition.
@@ -71,13 +70,14 @@ export default {
       required: true,
     },
   },
-  data() {
-    const theme = useTheme();
-    return {
-      theme,
-    };
-  },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     colSize() {
       const cols = [2, 3, 4, 6].includes(this.setup.cols) ? this.setup.cols : 3;
       return 12 / cols;
@@ -85,32 +85,6 @@ export default {
     variant() {
       return this.setup.variant || 'default';
     },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
-    },
-    cardStyle() {
-      // Inverse la couleur de la card par rapport à la section
-      const cardColor = this.variant === 'alternate' ? this.theme.current.colors.background : this.theme.current.colors.surface;
-      return {
-        ...style('card', this.setup),
-        background: cardColor,
-      };
-    },
-  },
-  methods: {
-    style,
   },
 };
 </script>

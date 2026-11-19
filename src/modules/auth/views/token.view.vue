@@ -1,5 +1,5 @@
 <template>
-  <v-container :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+  <v-container :max-width="config.vuetify.theme.maxWidth">
     <v-row align="start" justify="center">
       <v-card class="mt-8 pa-8" width="100%" color="surface">
         <template v-if="loading">

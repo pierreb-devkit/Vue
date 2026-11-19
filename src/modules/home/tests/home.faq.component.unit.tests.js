@@ -17,7 +17,8 @@ vi.mock('../components/utils/home.content.component.vue', () => ({
 /**
  * Mock theme helpers.
  */
-vi.mock('../../../lib/helpers/theme', () => ({
+vi.mock('../../../lib/helpers/theme', async (importOriginal) => ({
+  ...(await importOriginal()),
   style: vi.fn(() => ({})),
   overlapStyle: vi.fn(() => ({})),
   colorModeStyle: vi.fn(() => ({})),
@@ -197,12 +198,12 @@ describe('HomeFaqComponent', () => {
     expect(wrapper.vm.variant).toBe('alternate');
   });
 
-  it('computes containerStyle with maxWidth from config', () => {
+  it('gives the container the theme maxWidth from config', () => {
     const wrapper = mount(HomeFaqComponent, {
       props: { setup: makeFaq() },
       global: globalOpts(vuetify),
     });
-    expect(wrapper.vm.containerStyle['max-width']).toBe('1200px');
+    expect(wrapper.findComponent({ name: 'VContainer' }).props('maxWidth')).toBe('1200px');
   });
 
   // --- JSON-LD ---

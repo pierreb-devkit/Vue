@@ -9,7 +9,7 @@
       :halo-colors="themeName === 'dark' ? config.home.banner?.blur?.dark?.haloColors : config.home.banner?.blur?.light?.haloColors"
     ></homeHeroComponent>
     <section id="page" :style="style('section', config.pages)">
-      <v-container class="py-12" :style="`max-width: ${config.vuetify.theme.maxWidth}`">
+      <v-container class="py-12" :max-width="config.vuetify.theme.maxWidth">
         <v-row align="center" justify="center">
           <v-card :style="style('card', config.pages)" class="w-100">
             <v-tabs v-if="contents.length > 1" v-model="tab" fixed-tabs>

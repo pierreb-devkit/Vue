@@ -9,7 +9,7 @@
       :halo-colors="haloPalette.haloColors"
       :animation-speed="1"
     >
-      <v-container class="py-12" :style="{ 'max-width': config.vuetify.theme.maxWidth }">
+      <v-container class="py-12" :max-width="config.vuetify.theme.maxWidth">
         <!-- Header -->
         <div class="text-center mb-10">
           <h1 class="text-display-small text-sm-display-medium text-md-display-large font-weight-bold mb-3 text-white">{{ header.title || 'Pricing' }}</h1>

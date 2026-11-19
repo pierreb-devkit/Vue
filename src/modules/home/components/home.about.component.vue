@@ -35,8 +35,8 @@
   }
 -->
 <template>
-  <section id="about" :style="sectionStyle">
-    <v-container :style="containerStyle">
+  <section id="about" :style="styles.section">
+    <v-container :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row v-if="setup.content.length > 0" align="center" justify="center" class="px-0 py-8">
         <v-col cols="12">
           <homeContentComponent :setup="setup"></homeContentComponent>
@@ -90,7 +90,7 @@
  */
 import { useTheme } from 'vuetify';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import homeImgComponent from './utils/home.img.component.vue';
 
@@ -117,27 +117,18 @@ export default {
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display);
+    },
     variant() {
       return this.setup.variant || 'default';
     },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
-    },
   },
   methods: {
-    style,
     resolveImgBackground(item) {
       const bg = item.imgBackground;
       if (!bg) return null;

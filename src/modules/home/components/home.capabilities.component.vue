@@ -32,8 +32,8 @@
   }
 -->
 <template>
-  <section id="capabilities" :style="sectionStyle">
-    <v-container ref="capabilitiesContainer" :style="containerStyle">
+  <section id="capabilities" :style="styles.section">
+    <v-container ref="capabilitiesContainer" :max-width="config.vuetify.theme.maxWidth" :style="styles.container">
       <v-row align="center" justify="center" class="px-0 py-8">
         <!-- Title Section -->
         <v-col v-if="setup.title" cols="12">
@@ -58,7 +58,7 @@
               :class="{ 'capabilities-stack__item--active': activeIndex === index }"
               :aria-hidden="activeIndex !== index"
             >
-              <v-card :style="cardStyle" class="mx-3">
+              <v-card :style="styles.card" class="mx-3">
                 <v-row :class="item.reversed ? 'flex-row-reverse' : ''" align="center">
                   <!-- Text Content -->
                   <v-col cols="12" md="6" class="pa-8">
@@ -110,8 +110,7 @@
 /**
  * Module dependencies.
  */
-import { useTheme } from 'vuetify';
-import { style, overlapStyle, colorModeStyle } from '../../../lib/helpers/theme';
+import { sectionStyles } from '../../../lib/helpers/theme';
 import homeContentComponent from './utils/home.content.component.vue';
 import HomeTabs from './utils/home.tabs.component.vue';
 import VideoPlayer from './utils/home.videoplayer.component.vue';
@@ -133,38 +132,20 @@ export default {
     },
   },
   data() {
-    const theme = useTheme();
     return {
       activeIndex: 0,
-      theme,
     };
   },
   computed: {
+    /**
+     * Inline styles of the section, its container and its cards (theme helper).
+     * @returns {{ section: Object, container: Object, card: Object, background: String }}
+     */
+    styles() {
+      return sectionStyles(this.setup, this.$vuetify?.display, 'contentCard');
+    },
     variant() {
       return this.setup.variant || 'default';
-    },
-    containerStyle() {
-      return {
-        'max-width': this.config.vuetify.theme.maxWidth,
-        ...overlapStyle(this.setup.overlap, this.$vuetify?.display),
-      };
-    },
-    sectionStyle() {
-      const hasCustomBg = this.setup?.style?.section?.background;
-      const bgColor = this.variant === 'alternate' ? this.theme.current.colors.surface : this.theme.current.colors.background;
-      return {
-        ...style('section', this.setup),
-        ...colorModeStyle(this.setup.colorMode),
-        ...(hasCustomBg ? {} : { background: bgColor }),
-      };
-    },
-    cardStyle() {
-      // Inverse la couleur de la card par rapport à la section
-      const cardColor = this.variant === 'alternate' ? this.theme.current.colors.background : this.theme.current.colors.surface;
-      return {
-        ...style('contentCard', this.setup),
-        background: cardColor,
-      };
     },
   },
   mounted() {
@@ -194,7 +175,6 @@ export default {
     window.removeEventListener('keydown', this.handleKeydown);
   },
   methods: {
-    style,
     onTabChange(index) {
       const featureId = this.setup.items[index].id;
       window.location.hash = `#feature=${featureId}`;

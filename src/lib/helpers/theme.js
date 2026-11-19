@@ -241,6 +241,34 @@ export const colorModeStyle = (colorMode) => {
 };
 
 /**
+ * @desc Inline styles of a home section, its container and its cards, from the section config.
+ * The section takes the theme `background` colour, or `surface` with `variant: 'alternate'`, and its
+ * cards take the other one; a config `style.section.background` replaces the section colour.
+ * The container only carries the overlap offset: its width comes from `<v-container :max-width>`.
+ * @param {Object} setup - Section config (style, colorMode, overlap, variant)
+ * @param {Object} [display] - Vuetify display object ($vuetify.display), for the overlap offset
+ * @param {String} [cardKind='card'] - Key of the card style in `setup.style`
+ * @returns {{ section: Object, container: Object, card: Object, background: String }} styles, plus the section colour
+ */
+export const sectionStyles = (setup, display, cardKind = 'card') => {
+  const alternate = setup?.variant === 'alternate';
+  const background = `rgb(var(--v-theme-${alternate ? 'surface' : 'background'}))`;
+  return {
+    section: {
+      ...style('section', setup),
+      ...colorModeStyle(setup?.colorMode),
+      ...(setup?.style?.section?.background ? {} : { background }),
+    },
+    container: overlapStyle(setup?.overlap, display),
+    card: {
+      ...style(cardKind, setup),
+      background: `rgb(var(--v-theme-${alternate ? 'background' : 'surface'}))`,
+    },
+    background,
+  };
+};
+
+/**
  * @desc Helper to lighten a hex color
  * @param {String} hex - Hex color (e.g. #RRGGBB)
  * @param {Number} percent - Percentage to lighten (0-100)
@@ -265,4 +293,4 @@ export const roundedProp = (roundedClass) => {
 /**
  * Exports.
  */
-export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, lightenColor, roundedProp };
+export default { isDark, style, liquidGlassStyle, overlapStyle, colorModeStyle, sectionStyles, lightenColor, roundedProp };
