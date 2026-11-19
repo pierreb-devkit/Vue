@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { hashColor } from '../../../lib/helpers/orgColor';
+import { hashColor, avatarTextClass } from '../../../lib/helpers/orgColor';
 
 /**
  * @desc Reusable user avatar component.
@@ -41,28 +41,6 @@ import { hashColor } from '../../../lib/helpers/orgColor';
  * change one, update the other.
  */
 const SHARP_SIZES = [128, 256, 512, 1024];
-
-/**
- * Determine whether a hex color is light (needs dark text for contrast).
- * Uses relative luminance per WCAG 2.x.
- * @param {string} hex - Hex color code.
- * @returns {boolean} True if the background is light.
- */
-function isLightColor(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance > 0.5;
-}
-
-/** User avatar palette (picked by email hash, see `hashColor`). */
-const USER_PALETTE = [
-  '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
-  '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41',
-  '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B',
-  '#FFB300',
-];
 
 export default {
   name: 'UserAvatarComponent',
@@ -101,10 +79,10 @@ export default {
       return [this.user.firstName, this.user.lastName].filter(Boolean).join(' ') || this.user.email || '';
     },
     avatarColor() {
-      return hashColor((this.user && this.user.email) || '', USER_PALETTE);
+      return hashColor((this.user && this.user.email) || '');
     },
     textColorClass() {
-      return isLightColor(this.avatarColor) ? 'text-black' : 'text-white';
+      return avatarTextClass(this.avatarColor);
     },
   },
 };

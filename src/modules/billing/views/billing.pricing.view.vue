@@ -395,23 +395,14 @@ export default {
       };
     },
     /**
-     * @desc Pick halo palette based on current Vuetify theme (light vs dark).
-     *       Uses config-driven colors when provided; falls back to default brand palettes.
-     * @returns {{ backgroundColors: string[], haloColors: string[] }}
+     * @desc Pick the config halo palette for the current theme (light vs dark).
+     *       Without one, the blur background falls back to its own default palettes.
+     * @returns {{ backgroundColors?: string[], haloColors?: string[] }}
      */
     haloPalette() {
       const isDark = this.theme.global.name.value === 'dark';
       const fromConfig = isDark ? this.halo?.dark : this.halo?.light;
-      if (fromConfig?.backgroundColors && fromConfig?.haloColors) return fromConfig;
-      return isDark
-        ? {
-            backgroundColors: ['#0a0a1a', '#1a1a3e', '#2d2d6b', '#3d3d8a', '#2563eb'],
-            haloColors: ['#4f46e5', '#7c3aed', '#2563eb', '#6366f1', '#8b5cf6'],
-          }
-        : {
-            backgroundColors: ['#4a90c2', '#3d7eb0', '#2d6a9e', '#1e5a8c', '#164578'],
-            haloColors: ['#0891b2', '#0ea5e9', '#3b82f6', '#0284c7', '#0369a1'],
-          };
+      return fromConfig?.backgroundColors && fromConfig?.haloColors ? fromConfig : {};
     },
   },
   /**

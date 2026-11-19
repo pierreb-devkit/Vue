@@ -27,7 +27,7 @@
         :src="setup.file"
         :poster="setup.poster"
         :controls="false"
-        :background-color="setup.style?.video?.background || '#101115'"
+        :background-color="setup.style?.video?.background"
         :rounded="config.vuetify.theme.rounded"
         :playback-rate="setup.playbackRate || 1.0"
         loop

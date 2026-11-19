@@ -48,7 +48,7 @@
               :src="item.video.file"
               :controls="false"
               :poster="item.video.poster"
-              :background-color="item.video.background || setup.style?.video?.background || '#101115'"
+              :background-color="item.video.background || setup.style?.video?.background"
               :rounded="config.vuetify.theme.rounded"
               :playback-rate="item.video.playbackRate || 1.0"
               loop

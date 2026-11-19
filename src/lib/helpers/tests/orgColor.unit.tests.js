@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import orgColor, { hashColor } from '../orgColor';
+import orgColor, { hashColor, avatarTextClass, palette as sharedPalette } from '../orgColor';
 
 const palette = [
   '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e67e22',
@@ -82,5 +82,24 @@ describe('hashColor Helper', () => {
 
   it('backs orgColor with the organization palette', () => {
     expect(orgColor('Acme Corp')).toBe(hashColor('Acme Corp', palette));
+  });
+});
+
+describe('shared avatar palette', () => {
+  it('is the palette hashColor uses by default', () => {
+    expect(sharedPalette).toEqual(palette);
+    expect(hashColor('john@doe.com')).toBe(hashColor('john@doe.com', palette));
+  });
+});
+
+describe('avatarTextClass Helper', () => {
+  it('puts dark text on light colours', () => {
+    expect(avatarTextClass('#ffffff')).toBe('text-black');
+    expect(avatarTextClass('#2ecc71')).toBe('text-black');
+  });
+
+  it('puts white text on dark colours', () => {
+    expect(avatarTextClass('#000000')).toBe('text-white');
+    expect(avatarTextClass('#9b59b6')).toBe('text-white');
   });
 });

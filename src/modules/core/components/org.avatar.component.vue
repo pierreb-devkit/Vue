@@ -12,8 +12,7 @@
     </v-tooltip>
     <span
       class="font-weight-bold"
-      :class="fontClass"
-      style="color: white;"
+      :class="[fontClass, textClass]"
     >
       {{ initial }}
     </span>
@@ -24,7 +23,7 @@
 /**
  * Module dependencies.
  */
-import orgColor from '../../../lib/helpers/orgColor';
+import orgColor, { avatarTextClass } from '../../../lib/helpers/orgColor';
 
 /**
  * Component definition.
@@ -55,6 +54,13 @@ export default {
      */
     color() {
       return orgColor(this.org);
+    },
+    /**
+     * @desc Initial colour that stays readable on the avatar colour.
+     * @returns {string}
+     */
+    textClass() {
+      return avatarTextClass(this.color);
     },
     /**
      * @desc Full organization name for the tooltip.
