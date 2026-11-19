@@ -103,10 +103,10 @@
 </template>
 
 <script>
+import { requiredTrim } from '../../../lib/helpers/rules';
 /**
  * Module dependencies.
  */
-import { requiredTrim } from '../../../lib/helpers/rules';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 
 /**
