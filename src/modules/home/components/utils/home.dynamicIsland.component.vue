@@ -182,21 +182,6 @@ export default {
 </script>
 
 <style scoped>
-@keyframes resize {
-  0% {
-    width: 56px;
-    height: 56px;
-  }
-  50% {
-    width: 50px;
-    height: 50px;
-  }
-  100% {
-    width: 56px;
-    height: 56px;
-  }
-}
-
 @keyframes expand {
   0% {
     width: 56px;
@@ -307,5 +292,23 @@ export default {
 
 .dynamicIsland .step:last-child.active {
   margin-left: calc(auto + 8px);
+}
+
+/* Reduced motion: jump to each end state (the expanded width only exists through the animation fill). */
+@media (prefers-reduced-motion: reduce) {
+  .dynamicIsland.expand {
+    animation: none;
+    width: 260px;
+  }
+
+  .dynamicIsland.minimize {
+    animation: none;
+  }
+
+  .dynamicIsland .content.fadeIn,
+  .dynamicIsland .content.fadeOut,
+  .dynamicIsland .step {
+    transition: none;
+  }
 }
 </style>

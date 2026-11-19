@@ -162,4 +162,11 @@ export default {
     transform: translateX(-50%);
   }
 }
+
+/* Reduced motion: the logos stand still. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-content {
+    animation: none;
+  }
+}
 </style>
