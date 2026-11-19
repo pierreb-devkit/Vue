@@ -4,6 +4,17 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## helpers: shared form rules, display formats and one session setter (2026-11-19, #4879)
+
+Nothing renders differently in an en-US browser. New helpers to use in your own modules: `lib/helpers/rules.js` (`required()`, `requiredTrim()`, `email()`, `isEmail()`, each rule factory takes an optional message) and `lib/helpers/format.js` (`LOCALE`, `formatDate()`, `formatNumber()`, `timeAgo()`).
+
+- **Auth store:** new `applySession({ user, tokenExpiresIn })` writes the session (expiry in state + localStorage, user, auth flag), each part only when present. `organizations.switchOrganization()` now calls it instead of writing `authStore.user` / `cookieExpire`. A test that mocks the auth store by hand around `switchOrganization()` needs an `applySession` mock.
+- **One locale:** every date and number format uses `LOCALE` (`en-US`). The sidenav compute gauge used the browser locale: its counts and reset date now read en-US for every visitor.
+- **Avatar colours:** `orgColor.js` also exports `hashColor(str, palette)`; the user avatar uses it with its own palette (same colours as before).
+- **Pricing:** `pricingMath` exports `planDisplayAmount(plan, annual)` and `planAnnualSavingsPct(plan)` (the plan card price and savings chip, same results).
+
+---
+
 ## cleanup: dead components, build leftovers and back-compat paths removed (2026-11-19, #4875)
 
 Nothing here renders differently; each removed piece had no reader in the stack. Check your own project code for the names below after `/update-stack`.
