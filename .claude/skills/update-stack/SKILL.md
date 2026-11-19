@@ -154,7 +154,8 @@ while IFS= read -r f; do
     warn=1; continue
   fi
   case "$f" in
-    src/modules/*) mod=${f#src/modules/}; mod=${mod%%/*}
+    */tests/*|*/__tests__/*) continue ;;   # downstream test adaptations are accepted (as in 3ter)
+    src/modules/*/*) mod=${f#src/modules/}; mod=${mod%%/*}
       printf '%s\n' "$stack_modules" | grep -qxF "$mod" || continue ;;   # the project's own module
   esac
   case "$f" in
@@ -172,7 +173,7 @@ done < <(git ls-tree -r --name-only HEAD -- src/modules src/lib src/config)
 **What to do with each warning** (in Phase 2, never by reverting the merge):
 - **File the stack deleted:** delete it only when it is a dead copy — nothing imports it (`grep -rn "<file basename without extension>" src`), and it is not a module a downstream router registers. Old `*.spec.js` / `*.test.js` under a stack test dir that test a deleted file go with it. A file still in use → move what it does to the project's own module first.
 - **File without the project name:** generic code → upstream it to the stack (devkit PR, then `/update-stack`); project-only code → move it to the project's own module, or rename it `*.<project>.*` when it is an override.
-- **Never move an existing migration file**, even when it sits in the wrong place: migrations are recorded by path, and a moved one runs again.
+- **Never move an existing migration file**, even when it sits in the wrong place: migrations are recorded by path, and a moved one runs again. Its warning stays on each update: that is accepted.
 
 ---
 
