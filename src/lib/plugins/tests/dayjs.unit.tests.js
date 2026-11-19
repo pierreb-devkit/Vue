@@ -19,17 +19,18 @@ describe('dayjs plugin', () => {
     expect(typeof dayjs().fromNow).toBe('function');
   });
 
-  it('dayjs has utc plugin (utc method available)', () => {
+  it('dayjs has localizedFormat plugin (L tokens format)', () => {
     const app = { config: { globalProperties: {} } };
     dayjsPlugin.install(app);
     const dayjs = app.config.globalProperties.dayjs;
-    expect(typeof dayjs().utc).toBe('function');
+    expect(dayjs('2026-01-02').format('L')).not.toBe('L');
   });
 
-  it('dayjs has timezone plugin (tz method available)', () => {
+  it('dayjs no longer extends utc or timezone', () => {
     const app = { config: { globalProperties: {} } };
     dayjsPlugin.install(app);
     const dayjs = app.config.globalProperties.dayjs;
-    expect(typeof dayjs.tz).toBe('function');
+    expect(dayjs().utc).toBeUndefined();
+    expect(dayjs.tz).toBeUndefined();
   });
 });

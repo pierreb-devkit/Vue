@@ -33,8 +33,6 @@ describe('Billing Store', () => {
     // Per-action in-flight counters — all start at 0
     expect(store.usageMeterRequests).toBe(0);
     expect(store.extrasBalanceRequests).toBe(0);
-    expect(store.extrasLedgerRequests).toBe(0);
-    expect(store.extrasCheckoutRequests).toBe(0);
   });
 
   describe('fetchPlans', () => {
@@ -149,7 +147,7 @@ describe('Billing Store', () => {
         expect.stringContaining('/billing/checkout'),
         expect.objectContaining({
           priceId: 'price_abc',
-          successUrl: expect.stringContaining('/users?tab=subscriptions&success=true'),
+          successUrl: expect.stringContaining('/users/billing?success=true'),
           cancelUrl: expect.stringContaining('/pricing?canceled=true'),
         }),
       );
@@ -417,20 +415,7 @@ describe('Billing Store', () => {
       const result = await store.fetchExtrasLedger();
       expect(store.extrasLedger).toEqual(mockLedger);
       expect(result).toEqual(mockLedger);
-      expect(store.extrasLedgerRequests).toBe(0);
       expect(store.loading).toBe(false);
-    });
-
-    it('should set extrasLedgerRequests > 0 during fetch, 0 after', async () => {
-      const store = useBillingStore();
-      let flagDuringFetch = false;
-      axios.get.mockImplementationOnce(() => {
-        flagDuringFetch = store.extrasLedgerRequests;
-        return Promise.resolve({ data: { data: { entries: [], total: 0, page: 1, limit: 20 } } });
-      });
-      await store.fetchExtrasLedger();
-      expect(flagDuringFetch).toBe(1);
-      expect(store.extrasLedgerRequests).toBe(0);
     });
 
     it('should call API endpoint with correct pagination params', async () => {
@@ -463,7 +448,6 @@ describe('Billing Store', () => {
       axios.get.mockRejectedValueOnce(new Error('Ledger fetch failed'));
       await expect(store.fetchExtrasLedger()).rejects.toThrow('Ledger fetch failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasLedgerRequests).toBe(0);
       spy.mockRestore();
     });
   });
@@ -488,37 +472,12 @@ describe('Billing Store', () => {
         expect.stringContaining('/billing/extras/checkout'),
         expect.objectContaining({
           packId: 'pack_500',
-          successUrl: 'https://app.example.com/users?tab=subscriptions&success=true&type=extras',
+          successUrl: 'https://app.example.com/users/billing?success=true&type=extras',
           cancelUrl: 'https://app.example.com/pricing?canceled=true&type=extras&pack=pack_500#units',
         }),
       );
       expect(window.location.assign).toHaveBeenCalledWith(checkoutUrl);
-      expect(store.extrasCheckoutRequests).toBe(0);
       expect(store.loading).toBe(false);
-
-      window.location = originalLocation;
-    });
-
-    it('should set extrasCheckoutRequests > 0 during checkout, 0 after', async () => {
-      const store = useBillingStore();
-      let flagDuringFetch = false;
-      const checkoutUrl = 'https://checkout.stripe.com/extras_session_flag';
-      axios.post.mockImplementationOnce(() => {
-        flagDuringFetch = store.extrasCheckoutRequests;
-        return Promise.resolve({ data: { data: { url: checkoutUrl } } });
-      });
-
-      const originalLocation = window.location;
-      delete window.location;
-      window.location = {
-        ...originalLocation,
-        origin: 'https://app.example.com',
-        assign: vi.fn(),
-      };
-
-      await store.createExtrasCheckout('pack_500');
-      expect(flagDuringFetch).toBe(1);
-      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
     });
@@ -538,7 +497,6 @@ describe('Billing Store', () => {
 
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Checkout URL missing in response');
       expect(window.location.assign).not.toHaveBeenCalled();
-      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
       spy.mockRestore();
@@ -560,7 +518,6 @@ describe('Billing Store', () => {
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Stripe URL must use HTTPS');
       expect(window.location.assign).not.toHaveBeenCalled();
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasCheckoutRequests).toBe(0);
 
       window.location = originalLocation;
       spy.mockRestore();
@@ -572,7 +529,6 @@ describe('Billing Store', () => {
       axios.post.mockRejectedValueOnce(new Error('Extras checkout failed'));
       await expect(store.createExtrasCheckout('pack_500')).rejects.toThrow('Extras checkout failed');
       expect(spy).toHaveBeenCalled();
-      expect(store.extrasCheckoutRequests).toBe(0);
       spy.mockRestore();
     });
 

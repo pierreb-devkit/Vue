@@ -4,6 +4,24 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## cleanup: dead components, build leftovers and back-compat paths removed (2026-11-19, #4875)
+
+Nothing here renders differently; each removed piece had no reader in the stack. Check your own project code for the names below after `/update-stack`.
+
+- **Billing components:** `billing.usageBar.component.vue` (`BillingUsageBarComponent`) and `billing.computeGauge.component.vue` (`BillingComputeGaugeComponent`) are gone. If you mount one, keep your own copy in your project module. `BillingUpgradePrompt`, `useQuota`, `fetchUsage` and `signupGrant` stay.
+- **Build leftovers:** `vue.config.js`, `jest.config.js`, `babel.config.js`, `scripts/check-vite-migration.js`, `scripts/migrate-to-vite.sh`, `documentation/Vue3Migration.md` and `src/lib/plugins/axios.js` (it never installed `globalProperties.axios`) are deleted, with the `check:migration` npm script and the `chalk` devDependency. Take the deletions.
+- **`billing.development.config.js` deleted:** it merged `config.billing.{pricingMode,faqs,signupGrant,tabs,header,halo}`, which nothing reads, and `billing.static-content.js` no longer has a default export. Billing copy goes through `config.billing.staticContent` (unchanged). If you imported `billing.development.config`, import the named exports from `billing.static-content.js`.
+- **Auth store:** `localStorage` no longer gets `{prefix}UserRoles` or `{prefix}LastLoginAt` (nothing read them; use `useAuthStore().user`); a signin / signup / token / reset reply without a `user` keeps the session signed out, as before; and `clearSuggestedJoinIfMember()` is removed (requesting access already dismisses the suggestion: call `dismissSuggestedJoin()`).
+- **Other store members removed:** `organizations.fetchMyRequests()`, `home.setContact()` (use `updateContact()`), `core.drawer` / `core.mini` / `setDrawer()` / `setMini()`, `billing.extrasLedgerRequests` / `extrasCheckoutRequests`, `admin.auditPage`.
+- **`injectAdminChildren` removed:** call `injectModuleChildren(routes, modules, isModuleActive, '/admin')`. Downstream admin tabs normally go through `registerDownstreamRoutes({ adminChildModules })`, which is unchanged.
+- **Surface tabs:** a tab `route` must be relative (`'knowledge'`, not `'/admin/knowledge'`). An absolute route is now rejected and its tab is hidden.
+- **Stripe return URL:** checkout now returns to `/users/billing?success=true` directly, and the `/users?tab=subscriptions` redirect is gone. An old bookmark with `?tab=subscriptions` now opens the profile page. A checkout started before your deploy and paid after it returns to that old URL too: the payment is fine, the user just lands on the profile page and finds the plan under Billing.
+- **Snackbar:** the misspelled `vuetify.theme.snackbar.sucessColor` fallback is gone; set `successColor`.
+- **dayjs:** the `utc` and `timezone` plugins are no longer extended (`relativeTime` and `localizedFormat` stay). If you call `.utc()` or `.tz()`, extend them in your project module.
+- **Small:** `app.config.globalProperties.routes` is removed (use `useCoreStore().routes`); the Vuetify 2 key `vuetify.theme.options.customProperties` is dropped (remove it from your config override too); the marked options `mangle` / `headerIds` (gone from marked) are dropped; the production default `app.title` is `DevKit`; `hooks/build` defaults to image `devkit-vue` and cookie prefix `devkit`.
+
+---
+
 ## theme: no more global `!important` styles; cards, font and type classes come from config (2026-11-18, #4874)
 
 Breaking for visuals. `app.vue` no longer ships a global `<style>` that overrode Vuetify with `!important`.

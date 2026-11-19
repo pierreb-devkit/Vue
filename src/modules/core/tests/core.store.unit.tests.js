@@ -41,32 +41,8 @@ describe('Core Store', () => {
 
   it('should initialize with default state', () => {
     const coreStore = useCoreStore();
-    expect(coreStore.drawer).toBe(false);
-    expect(coreStore.mini).toBe(false);
     expect(coreStore.nav).toEqual([]);
     expect(coreStore.routes).toEqual([]);
-  });
-
-  it('should update drawer state', () => {
-    const coreStore = useCoreStore();
-    expect(coreStore.drawer).toBe(false);
-
-    coreStore.setDrawer(true);
-    expect(coreStore.drawer).toBe(true);
-
-    coreStore.setDrawer(false);
-    expect(coreStore.drawer).toBe(false);
-  });
-
-  it('should update mini state', () => {
-    const coreStore = useCoreStore();
-    expect(coreStore.mini).toBe(false);
-
-    coreStore.setMini(true);
-    expect(coreStore.mini).toBe(true);
-
-    coreStore.setMini(false);
-    expect(coreStore.mini).toBe(false);
   });
 
   it('should initialize routes', () => {

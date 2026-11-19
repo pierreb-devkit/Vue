@@ -233,14 +233,6 @@ describe('BillingSubscriptionsComponent — meter mode (meterMode: true)', () =>
     expect(wrapper.vm.extrasCheckoutDialog).toBe(false);
   });
 
-  it('does NOT render BillingUsageBarComponent in meter mode (T6: single bar only)', async () => {
-    wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
-    await flushPromises();
-    // T6 drops BillingUsageBarComponent — only BillingMeterProgressComponent remains
-    const usageBars = wrapper.findAllComponents({ name: 'BillingUsageBarComponent' });
-    expect(usageBars.length).toBe(0);
-  });
-
   it('fetches extras ledger when meterMode is true', async () => {
     const store = useBillingStore();
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
@@ -704,7 +696,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
       router,
     });
     await flushPromises();
@@ -715,7 +707,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     // URL cleanup fires after 100ms
     vi.advanceTimersByTime(100);
     expect(router.replace).toHaveBeenCalledWith({
-      query: { tab: 'subscriptions', success: undefined, type: undefined, packPurchased: undefined },
+      query: { success: undefined, type: undefined, packPurchased: undefined },
     });
   });
 
@@ -723,7 +715,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', success: 'true', type: 'extras' },
+      routeQuery: { success: 'true', type: 'extras' },
       router,
     });
     await flushPromises();
@@ -735,7 +727,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', packPurchased: 'true' },
+      routeQuery: { packPurchased: 'true' },
       router,
     });
     await flushPromises();
@@ -747,7 +739,7 @@ describe('BillingSubscriptionsComponent — checkout success query flow', () => 
     const router = { replace: vi.fn(), push: vi.fn() };
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', packPurchased: 'false' },
+      routeQuery: { packPurchased: 'false' },
       router,
     });
     await flushPromises();
@@ -891,7 +883,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
   it('shows processing spinner when ?success=true (non-extras)', async () => {
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
     expect(wrapper.vm.checkoutProcessing).toBe(true);
@@ -909,7 +901,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
     expect(wrapper.vm.checkoutProcessing).toBe(true);
@@ -931,7 +923,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -947,7 +939,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -963,7 +955,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -997,7 +989,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -1013,7 +1005,7 @@ describe('BillingSubscriptionsComponent — checkout success polling (P1-2)', ()
     vi.spyOn(store, 'fetchSubscription').mockResolvedValue(null);
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: true } },
-      routeQuery: { tab: 'subscriptions', success: 'true', type: 'extras' },
+      routeQuery: { success: 'true', type: 'extras' },
     });
     await flushPromises();
 
@@ -1622,7 +1614,7 @@ describe('BillingSubscriptionsComponent — pollAborted abort flag', () => {
 
     wrapper = mountSubscriptions({
       serverConfig: { billing: { meterMode: false } },
-      routeQuery: { tab: 'subscriptions', success: 'true' },
+      routeQuery: { success: 'true' },
     });
     await flushPromises();
 
@@ -1674,14 +1666,11 @@ describe('BillingSubscriptionsComponent — T6: 2-col layout, single meter bar, 
     expect(cols.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('renders only one meter component — no duplicate bar (BillingUsageBarComponent dropped)', async () => {
+  it('renders at most one meter component — no duplicate bar', async () => {
     wrapper = mountSubscriptions({ serverConfig: { billing: { meterMode: true } } });
     await flushPromises();
-    // After 2-col redesign: only BillingMeterProgressComponent remains; BillingUsageBarComponent is removed
-    const usageBars = wrapper.findAllComponents({ name: 'BillingUsageBarComponent' });
     const meterProgress = wrapper.findAllComponents({ name: 'BillingMeterProgressComponent' });
-    // Either usageBar OR meterProgress, not both — total must be ≤ 1
-    expect(usageBars.length + meterProgress.length).toBeLessThanOrEqual(1);
+    expect(meterProgress.length).toBeLessThanOrEqual(1);
   });
 
   it('CTA "Buy compute extras" button navigates to /pricing#units (not a modal trigger)', async () => {

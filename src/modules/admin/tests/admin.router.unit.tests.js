@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import adminRoutes from '../router/admin.router';
-import { injectAdminChildren } from '../../../lib/helpers/router';
+import { injectModuleChildren } from '../../../lib/helpers/router';
 import { isValidTab } from '../../../lib/helpers/surface-tabs';
 
 describe('admin.router (structure)', () => {
@@ -85,7 +85,7 @@ describe('admin.router (integration with vue-router)', () => {
   const buildRouter = (childInjections = []) => {
     const routes = cloneRoutes();
     if (childInjections.length) {
-      injectAdminChildren(routes, childInjections, () => true);
+      injectModuleChildren(routes, childInjections, () => true);
     }
     return createRouter({
       history: createMemoryHistory(),
@@ -194,7 +194,7 @@ describe('admin.router (integration with vue-router)', () => {
 
   it('should not inject disabled modules', async () => {
     const routes = cloneRoutes();
-    injectAdminChildren(
+    injectModuleChildren(
       routes,
       [{ name: 'knowledge', routes: [{ path: 'knowledge', name: 'Admin Knowledge', component: { template: '<div />' } }] }],
       (name) => name !== 'knowledge',
@@ -220,7 +220,7 @@ describe('admin.router (integration with vue-router)', () => {
 /**
  * Downstream-shape regression guard.
  *
- * A downstream app.router calls injectAdminChildren with adminChildModules of shape
+ * A downstream app.router calls injectModuleChildren with adminChildModules of shape
  *   [{ name, routes }]
  * where each route looks like:
  *   { path: 'costs', name: 'Admin Costs', component: () => import(...),
@@ -256,7 +256,7 @@ describe('admin.router (downstream-shape regression)', () => {
 
   it('injects the costs route under /admin with meta intact (action, subject, display)', () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, downstreamAdminChildModules, () => true);
+    injectModuleChildren(routes, downstreamAdminChildModules, () => true);
     const parent = routes[0];
     const injected = parent.children.find((r) => r.name === 'Admin Costs');
 
@@ -281,7 +281,7 @@ describe('admin.router (downstream-shape regression)', () => {
 
   it('does NOT inject the costs module when it is inactive', () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, downstreamAdminChildModules, (name) => name !== 'costs');
+    injectModuleChildren(routes, downstreamAdminChildModules, (name) => name !== 'costs');
     const parent = routes[0];
     const injected = parent.children.find((r) => r.name === 'Admin Costs');
 
@@ -291,7 +291,7 @@ describe('admin.router (downstream-shape regression)', () => {
 
   it('resolves /admin/costs in vue-router when the costs module is active', async () => {
     const routes = cloneRoutes();
-    injectAdminChildren(routes, downstreamAdminChildModules, () => true);
+    injectModuleChildren(routes, downstreamAdminChildModules, () => true);
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/', name: 'Home', component: { template: '<div />' } }, ...routes],

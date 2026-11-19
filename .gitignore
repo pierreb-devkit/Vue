@@ -25,7 +25,7 @@ coverage/
 # Graphify code knowledge graph (transient, regen via `graphify update .`)
 graphify-out/
 
-# waos Vue app and assets
+# Vue app and assets
 # ======================
 /src/config/index.js
 /src/config/index.cjs

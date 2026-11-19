@@ -7,7 +7,7 @@ import { isSafeRedirect } from '../auth/lib/postAuthRedirect';
 import { ability } from '../../lib/helpers/ability';
 import { capturePageview } from '../../lib/helpers/analytics';
 import { isModuleActive, warnUnknownModuleKeys } from '../../lib/helpers/modules';
-import { injectAdminChildren, injectModuleChildren } from '../../lib/helpers/router';
+import { injectModuleChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
@@ -73,7 +73,7 @@ const getRouter = () => {
 
   /**
    * Admin child modules — routes injected as children of the `/admin` parent
-   * route via `injectAdminChildren`. Downstream projects should register any
+   * route via `injectModuleChildren`. Downstream projects should register any
    * module that contributes an admin tab here (see MIGRATIONS.md).
    *
    * Each module's router file should export routes with **relative** paths
@@ -90,7 +90,7 @@ const getRouter = () => {
     { name: 'invitations', routes: invitationsAdminRoutes },
     ..._downstreamAdminChildModules,
   ];
-  injectAdminChildren(admin, adminChildModules, isModuleActive);
+  injectModuleChildren(admin, adminChildModules, isModuleActive, '/admin');
 
   /**
    * Account child modules — routes injected as children of the `/users` parent

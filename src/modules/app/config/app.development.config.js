@@ -69,9 +69,6 @@ export default {
           },
         },
       },
-      options: {
-        customProperties: true, // true to generate CSS custom properties for theme colors
-      },
     },
     icons: {
       defaultSet: 'fa', // icon set — 'fa' (FontAwesome) | 'mdi' (Material Design Icons)

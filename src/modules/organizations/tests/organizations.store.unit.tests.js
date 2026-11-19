@@ -546,30 +546,6 @@ describe('Organizations Store', () => {
     });
   });
 
-  describe('fetchMyRequests', () => {
-    it('should fetch user requests', async () => {
-      const store = useOrganizationsStore();
-      const mockRequests = [{ id: 'req1' }];
-
-      axios.get.mockResolvedValueOnce({ data: { data: mockRequests } });
-
-      const result = await store.fetchMyRequests();
-
-      expect(axios.get).toHaveBeenCalledWith(`${API}/membership-requests/mine`);
-      expect(result).toEqual(mockRequests);
-    });
-
-    it('should return empty array when no data', async () => {
-      const store = useOrganizationsStore();
-
-      axios.get.mockResolvedValueOnce({ data: { data: null } });
-
-      const result = await store.fetchMyRequests();
-
-      expect(result).toEqual([]);
-    });
-  });
-
   describe('org email-invite removal (P7 — Node endpoints gone in P4)', () => {
     it('should not expose the removed inviteMember/getInvite/acceptInvite actions', () => {
       const store = useOrganizationsStore();

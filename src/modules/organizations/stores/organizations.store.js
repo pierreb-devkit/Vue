@@ -267,16 +267,6 @@ export const useOrganizationsStore = defineStore('organizations', {
     },
 
     /**
-     * @desc Fetch the authenticated user's own membership requests.
-     * @returns {Promise<Array>} List of user's requests
-     */
-    async fetchMyRequests() {
-      const api = apiBase();
-      const res = await axios.get(`${api}/membership-requests/mine`);
-      return res.data.data || [];
-    },
-
-    /**
      * @desc Search organizations matching the current user's email domain.
      * @returns {Promise<Array>}
      */

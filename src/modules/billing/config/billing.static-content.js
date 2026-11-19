@@ -304,17 +304,3 @@ export const header = {
  * @type {{ light?: {backgroundColors: string[], haloColors: string[]}, dark?: {backgroundColors: string[], haloColors: string[]} } | null}
  */
 export const halo = null;
-
-/**
- * Exports.
- */
-export default {
-  billing: {
-    pricingMode,
-    faqs,
-    signupGrant,
-    tabs,
-    header,
-    halo,
-  },
-};
