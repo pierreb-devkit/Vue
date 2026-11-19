@@ -74,7 +74,9 @@ export default {
   components: { BillingEquivalencesChipsComponent },
 
   /**
-   * @desc Wires billingStore + authStore + useMeter's quota-only `progress`, exposed
+   * @desc Wires billingStore + authStore + useMeter's `progress` (quota-only while a
+   * quota exists; without one, the share of the pack spent, 100 once extras are spent
+   * or owed — see #4883), exposed
    * directly as `pctUsed` (matches the server's threshold-alert formula exactly —
    * see the computed docblock removed from here, kept as this comment). Deliberately
    * NOT based on totalQuota (quota + extras): mixing an extras-inclusive denominator
