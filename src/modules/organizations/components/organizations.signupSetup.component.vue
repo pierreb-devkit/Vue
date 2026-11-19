@@ -10,50 +10,6 @@
           </p>
         </div>
 
-        <!-- Request sent confirmation -->
-        <template v-if="requestSent">
-          <v-alert type="info" variant="tonal" class="mb-6" prominent :class="config.vuetify.theme.rounded">
-            <span class="text-body-large font-weight-medium">
-              Your request to join <strong>{{ suggestedOrganization.name }}</strong> has been sent.
-              An admin will review it shortly.
-            </span>
-          </v-alert>
-          <p class="text-body-medium text-medium-emphasis mb-4 text-center">
-            Or create your own organization instead:
-          </p>
-        </template>
-
-        <!-- Suggested organization (domain match found) -->
-        <template v-if="suggestedOrganization && !requestSent">
-          <v-card variant="outlined" class="mb-6 pa-4">
-            <v-row align="center" density="compact">
-              <v-avatar color="primary" size="40" class="mr-3">
-                <span class="text-white font-weight-bold">{{ suggestedOrganization.name?.charAt(0)?.toUpperCase() }}</span>
-              </v-avatar>
-              <div class="flex-grow-1">
-                <p class="text-body-large font-weight-medium mb-0">{{ suggestedOrganization.name }}</p>
-                <p class="text-body-small text-medium-emphasis mb-0">
-                  Organization matching your email domain
-                </p>
-              </div>
-              <v-btn
-                :loading="requestLoading"
-                :disabled="requestLoading"
-                color="primary"
-                variant="flat"
-                :class="config.vuetify.theme.rounded"
-                class="text-none text-body-medium"
-                @click="requestJoin"
-              >
-                Request to join
-              </v-btn>
-            </v-row>
-          </v-card>
-          <v-divider class="mb-4">
-            <span class="text-body-small text-medium-emphasis px-4">or create your own</span>
-          </v-divider>
-        </template>
-
         <!-- Error alert -->
         <v-alert
           v-if="error"
@@ -107,35 +63,27 @@ import { requiredTrim } from '../../../lib/helpers/rules';
 /**
  * Module dependencies.
  */
-import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useOrganizationsStore } from '../stores/organizations.store';
 import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 /**
- * Organization setup component shown after signup (step 2).
- * Handles 3 cases:
- * - Public domain: just show create form
- * - Private domain + existing org: show "Request to join" + create form
- * - Private domain + no org: show create form with pre-filled name
+ * Organization setup component shown after signup (step 2): a create form
+ * pre-filled from the user's first name. Joining an existing organization
+ * goes through the join-request flow, not this step.
  */
 export default {
-  name: 'AuthOrganizationSetupComponent',
+  name: 'OrganizationsSignupSetupComponent',
   props: {
     defaultName: {
       type: String,
       default: '',
     },
-    suggestedOrganization: {
-      type: Object,
-      default: null,
-    },
   },
-  emits: ['created', 'requestSent'],
+  emits: ['created'],
   data() {
     return {
       valid: false,
       loading: false,
-      requestLoading: false,
-      requestSent: false,
       error: null,
       organizationName: this.defaultName ? `${this.defaultName}'s organization` : '',
       rules: {
@@ -175,27 +123,6 @@ export default {
         this.error = sanitizeApiError(err, 'Could not create organization. Please try again.', 'description');
       } finally {
         this.loading = false;
-      }
-    },
-    /**
-     * @desc Request to join the suggested organization.
-     */
-    async requestJoin() {
-      if (!this.suggestedOrganization) return;
-      const organizationId = this.suggestedOrganization._id || this.suggestedOrganization.id;
-      if (!organizationId) return;
-
-      this.requestLoading = true;
-      this.error = null;
-      const organizationsStore = useOrganizationsStore();
-      try {
-        await organizationsStore.createJoinRequest(organizationId);
-        this.requestSent = true;
-        this.$emit('requestSent', this.suggestedOrganization);
-      } catch (err) {
-        this.error = sanitizeApiError(err, 'Could not send join request. Please try again.', 'description');
-      } finally {
-        this.requestLoading = false;
       }
     },
   },

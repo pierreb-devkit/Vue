@@ -14,33 +14,15 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <!-- billing.alerts.threshold80 / threshold100 toasts — emitted once per meter week cycle.
-         Gated by `isLoggedIn && meterMode` so non-billing apps stay dormant. -->
-    <v-snackbar
-      v-if="isLoggedIn && meterMode"
-      v-model="meterAlert.visible"
-      location="top right"
-      :timeout="6000"
-      :color="meterAlert.color"
-    >
-      {{ meterAlert.text }}
-      <template #actions>
-        <v-btn icon @click="meterAlert.visible = false">
-          <v-icon icon="fa-solid fa-circle-xmark" />
-        </v-btn>
-      </template>
-    </v-snackbar>
-    <billingNavExtras />
+    <!-- Shell parts of the optional modules, registered by each module's
+         `<module>.app.js` entry only while the module is active. -->
+    <component :is="extra.component" v-for="extra in beforeNavExtras" :key="extra._id" />
     <devkitNav v-if="isLoggedIn && !$route.meta.marketing" />
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
     <authPendingRequestBanner />
 
-    <organizationsAdminPendingBanner />
-    <organizationsLoginNotices />
-    <organizationsHeaderAction />
-    <legalCookieBanner />
-    <legalFooterSection />
+    <component :is="extra.component" v-for="extra in afterBannerExtras" :key="extra._id" />
     <v-main class="pb-0" :style="mainStyle">
       <appErrorBoundary>
         <router-view />
@@ -58,7 +40,6 @@ import { useHead } from '@unhead/vue';
 import { useTheme } from 'vuetify';
 import { buildCanonicalUrl } from '@/lib/helpers/canonical.js';
 import { useAuthStore } from '../auth/stores/auth.store';
-import { useBillingStore } from '../billing/stores/billing.store';
 import { useCoreStore } from '../core/stores/core.store';
 import { setupInterceptors } from '../../lib/services/axios';
 import devkitHeader from '../core/components/core.header.component.vue';
@@ -66,13 +47,7 @@ import devkitNav from '../core/components/core.navigation.component.vue';
 import devkitFooter from '../core/components/core.footer.component.vue';
 import authEmailBanner from '../auth/components/emailBanner.component.vue';
 import authPendingRequestBanner from '../auth/components/pendingRequestBanner.component.vue';
-
-import organizationsAdminPendingBanner from '../organizations/components/organizations.adminPendingBanner.component.vue';
-import organizationsLoginNotices from '../organizations/components/organizations.loginNotices.component.vue';
-import organizationsHeaderAction from '../organizations/components/organizations.headerAction.component.vue';
-import legalCookieBanner from '../legal/components/legal.cookieBanner.component.vue';
-import legalFooterSection from '../legal/components/legal.footerSection.component.vue';
-import billingNavExtras from '../billing/components/billing.navExtras.component.vue';
+import { useShellExtras } from '../../lib/composables/useShellExtras';
 import appErrorBoundary from './components/app.errorBoundary.component.vue';
 
 /**
@@ -87,25 +62,19 @@ export default {
     authEmailBanner,
     authPendingRequestBanner,
 
-    organizationsAdminPendingBanner,
-    organizationsLoginNotices,
-    organizationsHeaderAction,
-    legalCookieBanner,
-    legalFooterSection,
-    billingNavExtras,
     appErrorBoundary,
   },
   /**
    * @desc Initialise Pinia stores once so computed properties reference them
-   * via `this.authStore` / `this.billingStore` / `this.coreStore` instead of
-   * calling the store factory on every evaluation.
-   * @returns {{ authStore: Object, billingStore: Object, coreStore: Object }}
+   * via `this.authStore` / `this.coreStore` instead of calling the store
+   * factory on every evaluation, and expose the shell-extras registry.
+   * @returns {{ authStore: Object, coreStore: Object, shellExtras: import('vue').Ref<Array<object>> }}
    */
   setup() {
     const authStore = useAuthStore();
-    const billingStore = useBillingStore();
     const coreStore = useCoreStore();
-    return { authStore, billingStore, coreStore };
+    const { extras: shellExtras } = useShellExtras();
+    return { authStore, coreStore, shellExtras };
   },
   data() {
     const theme = useTheme();
@@ -117,24 +86,6 @@ export default {
         timeout: 4000,
         text: '',
       },
-      /**
-       * @desc In-app compute threshold toast state.
-       * Deduped per meter week cycle via `meterAlertedKeys`.
-       */
-      meterAlert: {
-        visible: false,
-        color: 'warning',
-        text: '',
-      },
-      /**
-       * @desc Tracks which `${orgId}:${weekKey}:${level}` tuple has already been alerted.
-       * Deduplication guard so the same threshold is only toasted once per billing week
-       * per organization. Including the org ID prevents cross-org suppression when
-       * the user switches organizations within the same billing week.
-       * Format: `"{orgId}:{weekKey}:{level}"` — e.g. `"org_abc:2026-W18:80"`.
-       * @type {Set<string>}
-       */
-      meterAlertedKeys: new Set(),
     };
   },
   computed: {
@@ -142,41 +93,18 @@ export default {
       return this.authStore.isLoggedIn;
     },
     /**
-     * @desc Whether compute meter mode is active for this session.
-     * Gate: `serverConfig.billing.meterMode === true`. Defaults to `false` so
-     * non-billing apps stay dormant.
-     * @returns {boolean}
+     * @desc Optional-module shell parts mounted before the navigation drawer.
+     * @returns {Array<object>}
      */
-    meterMode() {
-      return this.authStore.serverConfig?.billing?.meterMode === true;
+    beforeNavExtras() {
+      return this.shellExtras.filter((e) => e.placement === 'beforeNav');
     },
     /**
-     * @desc Reactive meter progress percentage (0–100) for threshold watches.
-     * Derived from billingStore.usageMeter, returns 0 when no data.
-     * @returns {number}
+     * @desc Optional-module shell parts mounted after the auth banners.
+     * @returns {Array<object>}
      */
-    meterProgress() {
-      const meter = this.billingStore.usageMeter;
-      if (!meter || !meter.meterQuota) return 0;
-      return Math.max(0, Math.min(100, Math.round((meter.meterUsed / meter.meterQuota) * 100)));
-    },
-    /**
-     * @desc Current meter week key — used to namespace dedup guards so alerts
-     * reset automatically each new billing week.
-     * @returns {string|null}
-     */
-    meterWeekKey() {
-      return this.billingStore.usageMeter?.weekKey ?? null;
-    },
-    /**
-     * @desc Active organization ID — included in the meter alert dedupe key so
-     * switching organizations within the same billing week does not suppress
-     * alerts for the newly selected org.
-     * @returns {string}
-     */
-    activeOrgId() {
-      const org = this.authStore.user?.currentOrganization;
-      return (org?._id || org?.id || org) ?? 'global';
+    afterBannerExtras() {
+      return this.shellExtras.filter((e) => e.placement !== 'beforeNav');
     },
     /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.
@@ -213,40 +141,6 @@ export default {
       handler(v) {
         this.theme.change(v);
       },
-    },
-    /**
-     * @desc Fire a warning toast once per week cycle when meter crosses 80 % / 100 %.
-     * Uses `meterAlertedKeys` set to dedup — key format: `"{weekKey}:{level}"`.
-     * Gated on `meterMode && isLoggedIn` so non-billing apps stay dormant.
-     * @param {number} newVal - Updated progress percentage
-     */
-    meterProgress(newVal) {
-      if (!this.meterMode || !this.isLoggedIn) return;
-      const orgId = this.activeOrgId;
-      const weekKey = this.meterWeekKey ?? 'unknown';
-      if (newVal >= 100) {
-        const key = `${orgId}:${weekKey}:100`;
-        if (!this.meterAlertedKeys.has(key)) {
-          this.meterAlertedKeys.add(key);
-          this.meterAlert = {
-            visible: true,
-            color: 'error',
-            text: 'Quota reached — extras consumed',
-          };
-          // Also suppress the 80 dedup so it doesn't fire afterwards
-          this.meterAlertedKeys.add(`${orgId}:${weekKey}:80`);
-        }
-      } else if (newVal >= 80) {
-        const key = `${orgId}:${weekKey}:80`;
-        if (!this.meterAlertedKeys.has(key)) {
-          this.meterAlertedKeys.add(key);
-          this.meterAlert = {
-            visible: true,
-            color: 'warning',
-            text: "You've used 80% of your weekly quota",
-          };
-        }
-      }
     },
   },
   /**

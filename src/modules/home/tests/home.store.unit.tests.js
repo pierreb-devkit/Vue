@@ -10,6 +10,12 @@ vi.mock('../../../lib/services/axios', () => ({
   },
 }));
 
+// Module activation — flipped per test (default: everything on)
+const inactiveModules = vi.hoisted(() => new Set());
+vi.mock('../../../lib/helpers/modules', () => ({
+  isModuleActive: (name) => !inactiveModules.has(name),
+}));
+
 // Mock GhostContentAPI
 vi.mock('@tryghost/content-api', () => {
   return {
@@ -210,57 +216,130 @@ describe('Home Store', () => {
       expect(homeStore.news).toEqual([]);
       consoleWarnSpy.mockRestore();
     });
+
+    it('loads the latest articles, and logs a failed load', async () => {
+      const config = (await import('../../../lib/services/config')).default;
+      const GhostContentAPI = (await import('@tryghost/content-api')).default;
+      const saved = config.home.articles;
+      config.home.articles = { url: 'https://blog.example.com', key: 'k' };
+      const browse = vi.fn().mockResolvedValueOnce([{ title: 'Post' }]).mockRejectedValueOnce(new Error('down'));
+      GhostContentAPI.mockImplementation(function Ghost() { return { posts: { browse } }; });
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const homeStore = useHomeStore();
+        await homeStore.getNews();
+        expect(browse).toHaveBeenCalledWith({ limit: 6, filter: 'tag:article' });
+        expect(homeStore.news).toEqual([{ title: 'Post' }]);
+
+        await homeStore.getNews();
+        expect(errSpy).toHaveBeenCalled();
+        expect(homeStore.news).toEqual([{ title: 'Post' }]);
+      } finally {
+        config.home.articles = saved;
+        errSpy.mockRestore();
+      }
+    });
+  });
+
+  describe('initStatistics', () => {
+    beforeEach(() => inactiveModules.clear());
+
+    it('copies the configured items (the config itself is never mutated)', async () => {
+      const config = (await import('../../../lib/services/config')).default;
+      const homeStore = useHomeStore();
+      homeStore.initStatistics();
+      expect(homeStore.statistics.map((i) => i.title)).toEqual(config.home.statistics.content.map((i) => i.title));
+      homeStore.statistics[0].value = 'changed';
+      expect(config.home.statistics.content[0].value).not.toBe('changed');
+    });
+
+    it('drops an item whose module is switched off', () => {
+      inactiveModules.add('tasks');
+      const homeStore = useHomeStore();
+      homeStore.initStatistics();
+      expect(homeStore.statistics.map((i) => i.title)).not.toContain('Tasks');
+      expect(homeStore.statistics.map((i) => i.title)).toContain('Users');
+    });
+
+    it('sets statistics to null when the config has no content list', async () => {
+      const config = (await import('../../../lib/services/config')).default;
+      const saved = config.home.statistics.content;
+      config.home.statistics.content = undefined;
+      try {
+        const homeStore = useHomeStore();
+        homeStore.initStatistics();
+        expect(homeStore.statistics).toBeNull();
+      } finally {
+        config.home.statistics.content = saved;
+      }
+    });
   });
 
   describe('getStatistics', () => {
-    it('should fetch and update tasks and users statistics', async () => {
+    beforeEach(() => axios.get.mockReset());
+
+    it('fetches each item that names a source and fills its value', async () => {
       const homeStore = useHomeStore();
-      homeStore.initStatistics();
-
-      if (!homeStore.statistics) {
-        homeStore.statistics = [{ value: 0 }, { value: 0 }];
-      }
-
-      const mockTasksData = { data: { data: 150 } };
-      const mockUsersData = { data: { data: 1000 } };
-
-      axios.get
-        .mockResolvedValueOnce(mockTasksData)
-        .mockResolvedValueOnce(mockUsersData);
+      homeStore.statistics = [
+        { title: 'Tasks', value: '0', source: 'tasks' },
+        { title: 'Users', value: '0', source: 'account' },
+        { title: 'Downloads', value: '50m' },
+      ];
+      axios.get.mockImplementation(async (url) => ({ data: { data: String(url).includes('/tasks/') ? 150 : 1000 } }));
 
       await homeStore.getStatistics();
 
-      expect(homeStore.statistics[0].value).toBe(150);
-      expect(homeStore.statistics[1].value).toBe(1000);
+      expect(axios.get).toHaveBeenCalledTimes(2);
+      expect(axios.get.mock.calls.map(([url]) => url).some((u) => u.endsWith('/tasks/stats'))).toBe(true);
+      expect(axios.get.mock.calls.map(([url]) => url).some((u) => u.endsWith('/account/stats'))).toBe(true);
+      expect(homeStore.statistics.map((i) => i.value)).toEqual([150, 1000, '50m']);
     });
 
-    it('should handle getStatistics error', async () => {
+    it('logs a failed fetch and still fills the other items', async () => {
       const homeStore = useHomeStore();
-      homeStore.initStatistics();
-
+      homeStore.statistics = [
+        { title: 'Tasks', value: '0', source: 'tasks' },
+        { title: 'Users', value: '0', source: 'account' },
+      ];
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      axios.get.mockRejectedValueOnce(new Error('Failed to fetch statistics'));
+      axios.get.mockImplementation(async (url) => {
+        if (String(url).includes('/tasks/')) throw new Error('Failed to fetch statistics');
+        return { data: { data: 1000 } };
+      });
 
       await homeStore.getStatistics();
 
       expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(homeStore.statistics.map((i) => i.value)).toEqual(['0', 1000]);
       consoleErrorSpy.mockRestore();
     });
 
-    it('should handle null statistics gracefully', async () => {
+    it('skips, with a warning, an item whose source is not a key of api.endPoints', async () => {
       const homeStore = useHomeStore();
-      homeStore.statistics = null;
-
-      const mockTasksData = { data: { data: 150 } };
-      const mockUsersData = { data: { data: 1000 } };
-
-      axios.get
-        .mockResolvedValueOnce(mockTasksData)
-        .mockResolvedValueOnce(mockUsersData);
+      homeStore.statistics = [
+        { title: 'Unknown', value: '7', source: 'not-an-endpoint' },
+        { title: 'Tasks', value: '0', source: 'tasks' },
+      ];
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      axios.get.mockResolvedValue({ data: { data: 42 } });
 
       await homeStore.getStatistics();
 
+      expect(axios.get).toHaveBeenCalledTimes(1);
+      expect(axios.get.mock.calls[0][0]).toMatch(/\/tasks\/stats$/);
+      expect(axios.get.mock.calls.some(([url]) => String(url).includes('not-an-endpoint'))).toBe(false);
+      expect(warnSpy).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('not-an-endpoint'));
+      expect(homeStore.statistics.map((i) => i.value)).toEqual(['7', 42]);
+      warnSpy.mockRestore();
+    });
+
+    it('does nothing when statistics are not initialised', async () => {
+      const homeStore = useHomeStore();
+      homeStore.statistics = null;
+
+      await homeStore.getStatistics();
+
+      expect(axios.get).not.toHaveBeenCalled();
       expect(homeStore.statistics).toBeNull();
     });
   });

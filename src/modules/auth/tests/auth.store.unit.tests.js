@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import { useBillingStore } from '../../billing/stores/billing.store';
+// The billing entry registers its sign-in hook (meter refresh) on import, as
+// main.js does at boot via the `src/modules/*/*.app.js` glob.
+import { refreshMeterOnSignin } from '../../billing/billing.app.js';
+import { offSignin, onSignin } from '../../../lib/helpers/signinHooks';
 import axios from '../../../lib/services/axios';
 import config from '../../../lib/services/config';
 
@@ -474,6 +478,27 @@ describe('Auth Store', () => {
       // sets serverConfig=null on failure — no keep-previous-value fallback.
       expect(authStore.serverConfig).toBe(null);
       expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call billingStore.fetchUsageMeter when the billing module registered no sign-in hook (module off)', async () => {
+      offSignin('billing-meter-refresh');
+      try {
+        const authStore = useAuthStore();
+        authStore.serverConfig = { sign: { in: true, up: true } };
+        axios.post.mockResolvedValueOnce({
+          data: { user: { id: '123', email: 'test@test.com', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000 },
+        });
+        axios.get.mockResolvedValueOnce({ data: { data: { sign: { in: true, up: true }, billing: { meterMode: true } } } });
+
+        const fetchUsageMeterSpy = vi.spyOn(useBillingStore(), 'fetchUsageMeter');
+
+        await authStore.signin({ email: 'test@test.com', password: 'password' });
+
+        expect(authStore.serverConfig.billing.meterMode).toBe(true);
+        expect(fetchUsageMeterSpy).not.toHaveBeenCalled();
+      } finally {
+        onSignin('billing-meter-refresh', refreshMeterOnSignin);
+      }
     });
   });
 
@@ -1118,6 +1143,11 @@ describe('Auth Store', () => {
       const result = deduceNamesFromEmail('123456@example.com');
       expect(result).toEqual({ firstName: '', lastName: '' });
     });
+
+    it('should return empty strings for a missing or empty email', () => {
+      expect(deduceNamesFromEmail(undefined)).toEqual({ firstName: '', lastName: '' });
+      expect(deduceNamesFromEmail('@example.com')).toEqual({ firstName: '', lastName: '' });
+    });
   });
 
   describe('signup name deduction', () => {
@@ -1137,6 +1167,18 @@ describe('Auth Store', () => {
       const body = axios.post.mock.calls[0][1];
       expect(body.firstName).toBe('Jane');
       expect(body.lastName).toBe('Smith');
+    });
+
+    it('should keep the names the user typed instead of deducing them', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({
+        data: { user: { id: '457', email: 'jane.smith@test.com', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000 },
+      });
+      await authStore.signup({ email: 'jane.smith@test.com', password: 'password123', firstName: 'J' });
+
+      const body = axios.post.mock.calls[0][1];
+      expect(body.firstName).toBe('J');
+      expect(body.lastName).toBeUndefined();
     });
   });
 

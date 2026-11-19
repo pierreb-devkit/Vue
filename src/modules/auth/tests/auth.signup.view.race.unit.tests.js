@@ -67,7 +67,7 @@ vi.mock('../../../lib/helpers/analytics', () => ({
 
 /**
  * @desc Stub the organizations store. signup.view.vue only reaches it via the stubbed
- * AuthOrganizationSetupComponent, which this suite never instantiates.
+ * OrganizationsSignupSetupComponent, which this suite never instantiates.
  * @returns {{useOrganizationsStore: Function}} organizations store module shape
  */
 vi.mock('../../organizations/stores/organizations.store', () => ({
@@ -106,7 +106,7 @@ const mountView = (routeQuery = {}) =>
     global: {
       plugins: [createVuetify()],
       mocks: { config: mockConfig, $route: { query: routeQuery }, $router: { push: vi.fn() } },
-      stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+      stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
     },
   });
 

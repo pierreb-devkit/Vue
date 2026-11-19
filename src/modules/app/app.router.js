@@ -15,7 +15,7 @@ const logger = createLogger('router');
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
-import organizations, { ORG_PARENT_PATH } from '../organizations/router/organizations.router';
+import organizations, { ORG_PARENT_PATH, organizationsAccountRoutes } from '../organizations/router/organizations.router';
 import admin from '../admin/router/admin.router';
 import users, { ACCOUNT_PARENT_PATH } from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
@@ -107,6 +107,7 @@ const getRouter = () => {
    * `'invitations'`) so they resolve under the `/users` parent.
    */
   const accountChildModules = [
+    { name: 'organizations', routes: organizationsAccountRoutes },
     { name: 'invitations', routes: invitationsAccountRoutes },
     ..._downstreamAccountChildModules,
   ];
@@ -217,7 +218,7 @@ const getRouter = () => {
     // Redirect authenticated users away from auth pages (signin, signup, etc.)
     const authPages = ['/signin', '/signup', '/forgot', '/reset', '/token'];
     if (authStore.isLoggedIn && authPages.some((p) => to.path === p || to.path.startsWith(`${p}/`))) {
-      if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
+      if (authStore.serverConfig?.organizations?.enabled && isModuleActive('organizations') && !authStore.user?.currentOrganization) {
         return '/organization-required';
       }
       return config.sign.route;
@@ -244,6 +245,7 @@ const getRouter = () => {
     if (
       authStore.isLoggedIn
       && authStore.serverConfig?.organizations?.enabled
+      && isModuleActive('organizations')
       && !authStore.user?.currentOrganization
       && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
       && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))

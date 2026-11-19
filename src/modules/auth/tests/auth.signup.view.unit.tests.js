@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
+import { useSignupSteps } from '../../../lib/composables/useSignupSteps';
 
 const signupMock = vi.hoisted(() => vi.fn());
 const fetchServerConfigMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
@@ -58,7 +59,7 @@ const mountView = (formStub = makeFormStub(), routeQuery = {}) =>
     global: {
       plugins: [createVuetify()],
       mocks: { config: mockConfig, $route: { query: routeQuery }, $router: { push: vi.fn() } },
-      stubs: { RouterLink: true, VForm: formStub, AuthOrganizationSetupComponent: true },
+      stubs: { RouterLink: true, VForm: formStub, OrganizationsSignupSetupComponent: true },
     },
   });
 
@@ -80,7 +81,7 @@ describe('auth.signup.view', () => {
         global: {
           plugins: [createVuetify()],
           mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, upNotice: 'We send tips. <b>Unsubscribe</b> any time.' } }, $route: { query: {} }, $router: { push: vi.fn() } },
-          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+          stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
         },
       });
       await flushPromises();
@@ -95,7 +96,7 @@ describe('auth.signup.view', () => {
         global: {
           plugins: [createVuetify()],
           mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, accentImage: '/img/accent.png' } }, $route: { query: {} }, $router: { push: vi.fn() } },
-          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+          stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
         },
       });
       await flushPromises();
@@ -269,6 +270,19 @@ describe('auth.signup.view', () => {
       await flushPromises();
       expect(wrapper.vm.signupError).toBe('Registration is currently deactivated');
     });
+
+    it('never shows an unsafe server text (stack trace): falls back to the generic message', async () => {
+      signupMock.mockRejectedValueOnce({
+        response: { status: 500, data: { description: 'Error: boom\n    at handler (/app/src/signup.js:12:3)' } },
+      });
+      const wrapper = mountView();
+      await flushPromises();
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+      await wrapper.vm.validate();
+      await flushPromises();
+      expect(wrapper.vm.signupError).toBe('Unable to create your account. Please try again.');
+    });
   });
 
   describe('password visibility toggle', () => {
@@ -357,7 +371,35 @@ describe('auth.signup.view', () => {
       expect(wrapper.vm.organizationWelcomeMessage).toContain('Acme Inc');
     });
 
-    it('shows organization setup form when organizationSetupRequired is true', async () => {
+    it('shows the organization setup step registered by the organizations module when organizationSetupRequired is true', async () => {
+      const { register, unregister } = useSignupSteps();
+      register('organizationSetup', { name: 'StubOrgSetup', template: '<div class="stub-org-setup" />' });
+      try {
+        signupMock.mockResolvedValueOnce({
+          user: { roles: ['user'] },
+          tokenExpiresIn: 123,
+          organizationSetupRequired: true,
+        });
+        const wrapper = mountView();
+        await flushPromises();
+
+        wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+        wrapper.vm.firstName = 'John';
+        wrapper.vm.lastName = 'Doe';
+        wrapper.vm.email = 'john@example.com';
+        wrapper.vm.password = 'password123';
+
+        await wrapper.vm.validate();
+        await flushPromises();
+
+        expect(wrapper.vm.signupStep).toBe('organizationSetup');
+        expect(wrapper.find('.stub-org-setup').exists()).toBe(true);
+      } finally {
+        unregister('organizationSetup');
+      }
+    });
+
+    it('skips the setup step and proceeds to the app when no module registered it (organizations off)', async () => {
       signupMock.mockResolvedValueOnce({
         user: { roles: ['user'] },
         tokenExpiresIn: 123,
@@ -367,15 +409,14 @@ describe('auth.signup.view', () => {
       await flushPromises();
 
       wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
-      wrapper.vm.firstName = 'John';
-      wrapper.vm.lastName = 'Doe';
       wrapper.vm.email = 'john@example.com';
       wrapper.vm.password = 'password123';
 
       await wrapper.vm.validate();
       await flushPromises();
 
-      expect(wrapper.vm.signupStep).toBe('organizationSetup');
+      expect(wrapper.vm.signupStep).not.toBe('organizationSetup');
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
     });
 
     it('proceeds to app after clicking Get Started on welcome step', async () => {
@@ -788,7 +829,7 @@ describe('auth.signup.view — page head', () => {
       global: {
         plugins: [createVuetify(), head],
         mocks: { config: mockConfig, $route: { query: {} }, $router: { push: vi.fn() } },
-        stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+        stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
       },
     });
     await flushPromises();

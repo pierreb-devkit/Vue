@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import config from '../../../lib/services/config';
 import AdminOverview from '../views/admin.overview.view.vue';
 
 vi.mock('../../../lib/services/axios', () => ({
@@ -65,11 +67,12 @@ describe('admin.overview.view', () => {
     setActivePinia(createPinia());
     store = useAdminStore();
     store.getStats = vi.fn().mockResolvedValue();
+    delete config.modules;
   });
 
   it('should load every source on mount', () => {
     mountView();
-    expect(store.getStats).toHaveBeenCalledWith({ audit: true, only: undefined });
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true, organizations: true, only: undefined });
   });
 
   it('should show the KPIs with their trend against the previous period', async () => {
@@ -153,12 +156,13 @@ describe('admin.overview.view', () => {
     const retry = wrapper.findAll('button').find((b) => b.text() === 'Retry');
     await retry.trigger('click');
     expect(store.getStats).toHaveBeenCalledTimes(1);
-    expect(store.getStats).toHaveBeenCalledWith({ audit: true, only: ['users'] });
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true, organizations: true, only: ['users'] });
   });
 
-  it('should hide the activity parts when audit logging is disabled', async () => {
-    const wrapper = mountView({ audit: { enabled: false } });
-    expect(store.getStats).toHaveBeenCalledWith({ audit: false, only: undefined });
+  it('should hide the activity parts when the server config reports audit off', async () => {
+    useAuthStore().serverConfig = { audit: { enabled: false } };
+    const wrapper = mountView();
+    expect(store.getStats).toHaveBeenCalledWith({ audit: false, organizations: true, only: undefined });
     store.stats = { ...fullStats(), audit: null, recent: null };
     await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-test="kpi-active"]').exists()).toBe(false);
@@ -166,5 +170,26 @@ describe('admin.overview.view', () => {
     expect(wrapper.find('[data-test="top-actions"]').exists()).toBe(false);
     expect(wrapper.find('[data-test="recent"]').exists()).toBe(false);
     expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(2);
+  });
+
+  it('should hide the organizations KPI and chart, and skip their stats, when the module is off', async () => {
+    config.modules = { organizations: { activated: false } };
+    const wrapper = mountView();
+    expect(store.getStats).toHaveBeenCalledWith({ audit: true, organizations: false, only: undefined });
+    store.stats = { ...fullStats(), organizations: null };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="kpi-organizations"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="chart-organizations"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="kpi-users"]').exists()).toBe(true);
+    expect(wrapper.findAll('[data-testid="bars"]')).toHaveLength(2);
+  });
+
+  it('should show the organizations KPI and chart when the module is on', async () => {
+    config.modules = { organizations: { activated: true } };
+    const wrapper = mountView();
+    store.stats = fullStats();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="kpi-organizations"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="chart-organizations"]').exists()).toBe(true);
   });
 });

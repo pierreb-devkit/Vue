@@ -144,7 +144,7 @@
 
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { useOrganizationsStore } from '../stores/organizations.store';
 import roleColor from '../../../lib/helpers/roleColor';
 import orgAvatarComponent from '../../core/components/org.avatar.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';

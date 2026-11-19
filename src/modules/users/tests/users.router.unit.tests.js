@@ -40,7 +40,7 @@ describe('users.router – Gamma: Account child routes (route-driven tabs)', () 
   it('Account route has children array', () => {
     const route = getAccountRoute();
     expect(Array.isArray(route.children)).toBe(true);
-    expect(route.children.length).toBeGreaterThanOrEqual(3);
+    expect(route.children.length).toBeGreaterThanOrEqual(2);
   });
 
   it('bare path "" child redirects to Account Profile', () => {
@@ -60,13 +60,8 @@ describe('users.router – Gamma: Account child routes (route-driven tabs)', () 
     expect(profile.meta.subject).toBeUndefined();
   });
 
-  it('Account Organizations child has path "organizations" and requires auth (no CASL — matches pre-Gamma)', () => {
+  it('does not own the Account Organizations child (the organizations module injects it)', () => {
     const route = getAccountRoute();
-    const orgs = route.children.find((c) => c.name === 'Account Organizations');
-    expect(orgs).toBeDefined();
-    expect(orgs.path).toBe('organizations');
-    expect(orgs.meta.requiresAuth).toBe(true);
-    expect(orgs.meta.action).toBeUndefined();
-    expect(orgs.meta.subject).toBeUndefined();
+    expect(route.children.find((c) => c.name === 'Account Organizations')).toBeUndefined();
   });
 });

@@ -357,6 +357,30 @@ describe('app.router', () => {
       expect(router.currentRoute.value.path).toBe('/organization-required');
     });
 
+    it('never redirects to /organization-required when the organizations module is off', async () => {
+      mockIsModuleActive = (name) => name !== 'organizations';
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      router.addRoute({ path: '/not-exempt', name: 'NotExemptOrgsOff', component: { template: '<div />' } });
+      await router.push('/not-exempt');
+      await router.isReady();
+      expect(router.currentRoute.value.path).toBe('/not-exempt');
+    });
+
+    it('sends a signed-in user away from /signin to the sign route (not /organization-required) when the organizations module is off', async () => {
+      mockIsModuleActive = (name) => name !== 'organizations';
+      mockAuthStore.isLoggedIn = true;
+      mockAuthStore.serverConfig = { organizations: { enabled: true } };
+      mockAuthStore.user = { currentOrganization: null };
+      const router = getRouter();
+      await router.push('/signin');
+      await router.isReady();
+      expect(router.currentRoute.value.path).not.toBe('/organization-required');
+      expect(router.currentRoute.value.path).not.toBe('/signin');
+    });
+
     it('default behavior unchanged with the shipped default ([]) as well as when the key is absent', async () => {
       testConfig.app.orgExemptRoutes = [];
       mockAuthStore.isLoggedIn = true;
@@ -670,6 +694,7 @@ describe('app.router', () => {
       // parent route with the injection seam (empty children array).
       vi.doMock('../../organizations/router/organizations.router', () => ({
         ORG_PARENT_PATH: orgParentPath,
+        organizationsAccountRoutes: [],
         default: [
           {
             path: orgParentPath,
@@ -760,6 +785,24 @@ describe('app.router', () => {
       // ...but the invitations tab/route is absent from both.
       expect((adminParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
       expect((accountParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
+    });
+
+    it('injects Account Organizations under /users only while the organizations module is active', async () => {
+      vi.resetModules();
+      mockIsModuleActive = () => true;
+      let router = (await setupRouterModule()).default();
+      let accountParent = router.options.routes.find((r) => r.path === '/users');
+      const orgs = accountParent.children.find((c) => c.name === 'Account Organizations');
+      expect(orgs).toBeDefined();
+      expect(orgs.path).toBe('organizations');
+      expect(orgs.meta.requiresAuth).toBe(true);
+
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'organizations';
+      router = (await setupRouterModule()).default();
+      accountParent = router.options.routes.find((r) => r.path === '/users');
+      expect(accountParent.children.find((c) => c.name === 'Account Organizations')).toBeUndefined();
+      expect(accountParent.children.find((c) => c.name === 'Account Profile')).toBeDefined();
     });
   });
 

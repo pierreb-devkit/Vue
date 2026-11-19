@@ -4,7 +4,7 @@
       <v-col cols="12">
         <!-- Audit disabled info state -->
         <v-alert
-          v-if="config.audit && config.audit.enabled === false"
+          v-if="!auditOn"
           type="info"
           variant="tonal"
           density="compact"
@@ -134,6 +134,8 @@
 import dayjs from 'dayjs';
 import { debounce } from 'lodash-es';
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { isAuditOn } from '../lib/admin.audit';
 
 /**
  * Mongo ObjectId shape — GET /audit rejects malformed `userId` values with
@@ -167,6 +169,10 @@ export default {
     };
   },
   computed: {
+    /** @returns {boolean} whether the API records an audit log (server config `audit.enabled`) */
+    auditOn() {
+      return isAuditOn(useAuthStore().serverConfig);
+    },
     auditLogs() {
       return useAdminStore().auditLogs;
     },
@@ -207,7 +213,7 @@ export default {
     this.$watch('activityFilterUserId', this.debouncedApplyFilters);
   },
   mounted() {
-    if (!(this.config?.audit && this.config.audit.enabled === false)) {
+    if (this.auditOn) {
       this.fetchActivityLogs();
     }
   },

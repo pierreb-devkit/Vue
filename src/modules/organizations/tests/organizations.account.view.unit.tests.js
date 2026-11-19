@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { shallowMount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import UserOrganizationsView from '../views/user.organizations.view.vue';
+import UserOrganizationsView from '../views/organizations.account.view.vue';
 
 // Mock config service
 vi.mock('../../../lib/services/config', () => ({
@@ -46,13 +46,13 @@ const sharedMocks = ($router = { push: vi.fn() }) => ({
   },
 });
 
-describe('user.organizations.view', () => {
+describe('organizations.account.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
   test('renders the new-org button with data-test="users-orgs-new"', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
@@ -68,7 +68,7 @@ describe('user.organizations.view', () => {
   });
 
   test('leaveDialog defaults to false', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
@@ -84,7 +84,7 @@ describe('user.organizations.view', () => {
   });
 
   test('confirmLeave sets orgToLeave and opens leaveDialog', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
@@ -104,7 +104,7 @@ describe('user.organizations.view', () => {
   });
 
   test('leaveOrg redirects to /organization-required when no orgs remain', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const store = useOrganizationsStore();
     const authStore = useAuthStore();
@@ -136,13 +136,13 @@ describe('user.organizations.view', () => {
   });
 });
 
-describe('user.organizations.view — pending invitations', () => {
+describe('organizations.account.view — pending invitations', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
   test('fetches pending invitations on created', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     const fetchInvites = vi.fn().mockResolvedValue([]);
@@ -157,7 +157,7 @@ describe('user.organizations.view — pending invitations', () => {
   });
 
   test('exposes the store pendingInvitations via computed', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
@@ -172,7 +172,7 @@ describe('user.organizations.view — pending invitations', () => {
   });
 
   test('acceptInvitation accepts, soft-refreshes abilities via token(), and re-fetches orgs + invitations', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const store = useOrganizationsStore();
     const authStore = useAuthStore();
@@ -200,7 +200,7 @@ describe('user.organizations.view — pending invitations', () => {
     // token() only console.error on failure (unlike refreshAbilities which calls signout()).
     // The accept has already succeeded server-side; a hiccup in token() must not
     // interrupt the UI reflection or throw out of the flow.
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const store = useOrganizationsStore();
     const authStore = useAuthStore();
@@ -229,7 +229,7 @@ describe('user.organizations.view — pending invitations', () => {
   });
 
   test('invitationOrgName + invitationRole helpers read the populated membership', async () => {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const store = useOrganizationsStore();
     store.fetchOrganizations = vi.fn().mockResolvedValue([]);
     store.fetchMyPendingInvitations = vi.fn().mockResolvedValue([]);
@@ -245,10 +245,10 @@ describe('user.organizations.view — pending invitations', () => {
   });
 });
 
-describe('user.organizations.view — template chrome', () => {
+describe('organizations.account.view — template chrome', () => {
   it('wraps content in <v-row class="pa-2 mt-0"> + <v-col cols="12"> + <v-card color="surface">', () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    const sfc = readFileSync(resolve(here, '../views/user.organizations.view.vue'), 'utf8');
+    const sfc = readFileSync(resolve(here, '../views/organizations.account.view.vue'), 'utf8');
     const tmpl = sfc.split('<script>')[0];
     expect(tmpl).toMatch(/<v-row[^>]*class="[^"]*pa-2\s+mt-0/);
     expect(tmpl).toMatch(/<v-col\s+cols="12"/);
@@ -256,17 +256,17 @@ describe('user.organizations.view — template chrome', () => {
   });
 });
 
-describe('user.organizations.view — confirm dialog', () => {
+describe('organizations.account.view — confirm dialog', () => {
   it('uses coreConfirmDialog for Leave Org (no inline v-dialog)', () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    const sfc = readFileSync(resolve(here, '../views/user.organizations.view.vue'), 'utf8');
+    const sfc = readFileSync(resolve(here, '../views/organizations.account.view.vue'), 'utf8');
     const tmpl = sfc.split('<script>')[0];
     expect(tmpl).toMatch(/<coreConfirmDialog/);
     expect(tmpl).not.toMatch(/<v-dialog/);
   });
 });
 
-describe('user.organizations.view — decline invitation', () => {
+describe('organizations.account.view — decline invitation', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
@@ -276,7 +276,7 @@ describe('user.organizations.view — decline invitation', () => {
    * @returns {Promise<{ wrapper: object, store: object, authStore: object }>}
    */
   async function mountWithInvitation() {
-    const { useOrganizationsStore } = await import('../../organizations/stores/organizations.store');
+    const { useOrganizationsStore } = await import('../stores/organizations.store');
     const { useAuthStore } = await import('../../auth/stores/auth.store');
     const store = useOrganizationsStore();
     const authStore = useAuthStore();

@@ -95,11 +95,10 @@
 
       <!-- Organization setup -->
       <template v-else-if="signupStep === 'organizationSetup'">
-        <AuthOrganizationSetupComponent
+        <component
+          :is="organizationSetupComponent"
           :default-name="deducedFirstName"
-          :suggested-organization="suggestedOrganization"
           @created="onOrganizationCreated"
-          @request-sent="onJoinRequestSent"
         />
       </template>
 
@@ -175,24 +174,24 @@ import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore, deduceNamesFromEmail } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
 import { isSafeRedirect, savePostAuthRedirect, clearPostAuthRedirect, resolvePostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
-import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
+import { useSignupSteps } from '../../../lib/composables/useSignupSteps';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 /**
  * Component definition.
  */
 export default {
-  components: {
-    AuthOrganizationSetupComponent,
-  },
   /**
-   * @desc Give the sign-up page its own search title and description.
-   * @returns {Object} No bindings.
+   * @desc Give the sign-up page its own search title and description, and
+   * expose the sign-up steps registered by optional modules.
+   * @returns {{ signupSteps: import('vue').Ref<Array<{_id: string, component: object}>> }}
    */
   setup() {
     usePageHead({
       title: 'Sign up',
       description: config.app?.title ? `Create your ${config.app.title} account.` : 'Create your account.',
     });
-    return {};
+    const { extras: signupSteps } = useSignupSteps();
+    return { signupSteps };
   },
   /**
    * @desc Initialize signup view reactive state including form fields, OAuth URL,
@@ -210,7 +209,6 @@ export default {
       invite: null, // { valid, email } once verified
       signupStep: 'form',
       organizationWelcomeMessage: '',
-      suggestedOrganization: null,
       resending: false,
       resent: false,
       email: '',
@@ -226,6 +224,14 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc Organization setup step component, registered by the organizations
+     * module (`organizations.app.js`) while it is active; null otherwise.
+     * @returns {object|null}
+     */
+    organizationSetupComponent() {
+      return this.signupSteps.find((step) => step._id === 'organizationSetup')?.component || null;
+    },
     /**
      * @desc Compute the signup step title based on the current step.
      * @returns {string} Title for the current signup step.
@@ -363,9 +369,8 @@ export default {
               const organizationName = result.organization.name || result.organization.slug || 'your organization';
               this.organizationWelcomeMessage = `Welcome! Your organization "${organizationName}" has been created.`;
               this.signupStep = 'organizationWelcome';
-            } else if (result.organizationSetupRequired) {
+            } else if (result.organizationSetupRequired && this.organizationSetupComponent) {
               // Manual organization setup needed
-              this.suggestedOrganization = result.suggestedOrganization || null;
               this.signupStep = 'organizationSetup';
             } else {
               // Organizations enabled but no setup needed — proceed normally
@@ -390,8 +395,9 @@ export default {
       if (typeof data === 'string' && data.trim()) return data;
       // The API error envelope carries the precise reason in `description`
       // (e.g. signup disabled) while `message` is often generic — prefer it.
-      if (typeof data?.description === 'string' && data.description.trim()) return data.description;
-      if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+      // Both go through sanitizeApiError: an unsafe server text (stack trace, DB path) is dropped.
+      const safeText = sanitizeApiError(error, '', 'description').trim() || sanitizeApiError(error, '', 'message').trim();
+      if (safeText) return safeText;
       if (typeof data?.error === 'string' && data.error.trim()) return data.error;
       if (Array.isArray(data?.errors) && data.errors.length > 0) {
         return data.errors
@@ -408,15 +414,6 @@ export default {
      */
     onOrganizationCreated(organization) {
       this.organizationWelcomeMessage = `Welcome! Your organization "${organization.name}" has been created.`;
-      this.signupStep = 'organizationWelcome';
-    },
-    /**
-     * @desc Handle join request sent from the setup component.
-     * @param {Object} organization - The organization the request was sent to
-     * @returns {void}
-     */
-    onJoinRequestSent(organization) {
-      this.organizationWelcomeMessage = `Your request to join "${organization.name}" has been sent. An admin will review it shortly.`;
       this.signupStep = 'organizationWelcome';
     },
     /**

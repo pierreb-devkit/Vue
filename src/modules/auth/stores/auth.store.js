@@ -5,7 +5,7 @@ import { defineStore } from 'pinia';
 import axios from '../../../lib/services/axios';
 import config, { apiBase } from '../../../lib/services/config';
 import { useCoreStore } from '../../core/stores/core.store';
-import { useBillingStore } from '../../billing/stores/billing.store';
+import { runSigninHooks } from '../../../lib/helpers/signinHooks';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture, identify, reset as analyticsReset } from '../../../lib/helpers/analytics';
 import { getAttribution } from '../../../lib/helpers/attribution';
@@ -213,7 +213,7 @@ export const useAuthStore = defineStore('auth', {
         // anonymous fetch (pre-login) never carries auth-gated keys such as
         // billing.{enabled,meterMode,equivalences} (Node#3566), so without this
         // the whole first in-SPA session runs on stale anonymous config. Must
-        // happen before the meterMode guard below so it evaluates the
+        // happen before the sign-in hooks below so they read the
         // authenticated config, not the anonymous one. Failure semantics are
         // unchanged: fetchServerConfig() sets serverConfig=null on failure.
         // Deferred until here (not right after the auth-state block above) so
@@ -221,12 +221,9 @@ export const useAuthStore = defineStore('auth', {
         // which don't depend on it.
         await this.fetchServerConfig();
 
-        // Refresh compute meter immediately on login so the sidenav gauge
-        // populates without waiting for mount/focus (guard: only when meterMode is on).
-        if (this.serverConfig?.billing?.meterMode === true) {
-          const billingStore = useBillingStore();
-          billingStore.fetchUsageMeter().catch(() => { /* meter refresh is best-effort; do not log err (avoids leaking response internals to the console) */ });
-        }
+        // Sign-in hooks registered by optional modules (e.g. billing refreshes
+        // its compute meter). Best-effort and not awaited.
+        runSigninHooks({ serverConfig: this.serverConfig, user: this.user });
 
         // PostHog identify on signin
         identifyUser(res.data.user);

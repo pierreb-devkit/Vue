@@ -340,6 +340,126 @@ describe('App.vue — theme wiring (#4462)', () => {
   });
 });
 
+describe('App.vue — optional module shell parts', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useHeadMock.mockClear();
+  });
+
+  /**
+   * @desc Mount App with a slot-rendering v-app so shell parts are reachable.
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
+  const mountShell = () => {
+    const config = {
+      ...makeConfig(),
+      vuetify: { theme: { snackbar: { status: false }, navigation: {} } },
+      header: { display: false },
+      footer: { links: [], variant: 'default' },
+    };
+    return mount(App, {
+      global: {
+        mocks: { config, $route: { path: '/', matched: [{ path: '/' }], meta: {} } },
+        stubs: {
+          RouterView: true,
+          'v-app': { template: '<div><slot /></div>' },
+          'v-snackbar': true,
+          'v-main': true,
+          authEmailBanner: true,
+          authPendingRequestBanner: true,
+        },
+      },
+    });
+  };
+
+  it('imports no optional module (billing, organizations, legal, tasks, docs, invitations)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const sfc = readFileSync(resolve(process.cwd(), 'src/modules/app/app.vue'), 'utf8');
+    expect(sfc).not.toMatch(/from '\.\.\/(billing|organizations|legal|tasks|docs|invitations)\//);
+  });
+
+  it('renders every part registered in the shell registry, and drops it once unregistered', async () => {
+    const { useShellExtras } = await import('../../../lib/composables/useShellExtras');
+    const { register, unregister } = useShellExtras();
+    register('test-shell-part', { name: 'TestShellPart', template: '<div class="test-shell-part" />' });
+    try {
+      const wrapper = mountShell();
+      expect(wrapper.find('.test-shell-part').exists()).toBe(true);
+      unregister('test-shell-part');
+      await nextTick();
+      expect(wrapper.find('.test-shell-part').exists()).toBe(false);
+    } finally {
+      unregister('test-shell-part');
+    }
+  });
+
+  it('mounts every shell part, all modules on, in the historical DOM order', async () => {
+    // Marker stubs for each part, so the test reads the order, not the parts' internals.
+    const marker = (cls) => ({ default: { name: cls, template: `<i class="${cls}" />` } });
+    vi.doMock('../../billing/components/billing.meterAlert.component.vue', () => marker('billing-meter-alert'));
+    vi.doMock('../../billing/components/billing.navExtras.component.vue', () => marker('billing-nav-extras'));
+    vi.doMock('../../organizations/components/organizations.adminPendingBanner.component.vue', () => marker('org-admin-pending'));
+    vi.doMock('../../organizations/components/organizations.loginNotices.component.vue', () => marker('org-login-notices'));
+    vi.doMock('../../organizations/components/organizations.headerAction.component.vue', () => marker('org-header-action'));
+    vi.doMock('../../organizations/components/organizations.signupSetup.component.vue', () => marker('org-signup-setup'));
+    vi.doMock('../../legal/components/legal.cookieBanner.component.vue', () => marker('legal-cookie-banner'));
+    vi.doMock('../../legal/components/legal.footerSection.component.vue', () => marker('legal-footer-section'));
+    const { useShellExtras } = await import('../../../lib/composables/useShellExtras');
+    const { extras } = useShellExtras();
+    const before = extras.value.slice();
+    try {
+      // Import order of main.js's glob (alphabetical): billing, legal, organizations.
+      for (const entry of ['../../billing/billing.app.js', '../../legal/legal.app.js', '../../organizations/organizations.app.js']) {
+        (await import(entry)).register();
+      }
+      authState.isLoggedIn = true;
+      const config = {
+        ...makeConfig(),
+        vuetify: { theme: { snackbar: { status: false }, navigation: {} } },
+        header: { display: false },
+        footer: { links: [], variant: 'default' },
+      };
+      const wrapper = mount(App, {
+        global: {
+          mocks: { config, $route: { path: '/', matched: [{ path: '/' }], meta: {} } },
+          stubs: {
+            RouterView: true,
+            'v-app': { template: '<div><slot /></div>' },
+            'v-snackbar': true,
+            'v-main': true,
+            devkitNav: { template: '<i class="core-nav" />' },
+            authEmailBanner: { template: '<i class="auth-email-banner" />' },
+            authPendingRequestBanner: { template: '<i class="auth-pending-banner" />' },
+          },
+        },
+      });
+      const order = wrapper.findAll('i').map((n) => n.classes()[0]);
+      // Same order as the hard-coded shell before #4877.
+      expect(order).toEqual([
+        'billing-meter-alert',
+        'billing-nav-extras',
+        'core-nav',
+        'auth-email-banner',
+        'auth-pending-banner',
+        'org-admin-pending',
+        'org-login-notices',
+        'org-header-action',
+        'legal-cookie-banner',
+        'legal-footer-section',
+      ]);
+    } finally {
+      extras.value = before;
+      authState.isLoggedIn = false;
+    }
+  });
+
+  it('renders no optional part when no module registered one', () => {
+    const wrapper = mountShell();
+    expect(wrapper.find('.test-shell-part').exists()).toBe(false);
+  });
+});
+
 describe('bare link rule', () => {
   it('matches class-less anchors and RouterLink output, never Vuetify components', async () => {
     const { readFileSync } = await import('node:fs');
