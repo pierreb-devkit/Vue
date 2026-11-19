@@ -22,6 +22,9 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLegalPage } from '../composables/useLegalPage';
 import config from '@/config';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('legal');
 
 const route = useRoute();
 const page = ref({ title: '', html: '', notFound: false });
@@ -37,7 +40,7 @@ const load = async (slug) => {
   try {
     page.value = await useLegalPage(slug, { config });
   } catch (err) {
-    console.warn('[legal] page load failed', err);
+    logger.warn('[legal] page load failed', err);
     page.value = { title: '', html: '', notFound: true };
   }
 };

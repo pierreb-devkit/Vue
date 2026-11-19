@@ -25,6 +25,9 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useUserHeaderActions } from '../../../lib/composables/useUserHeaderActions';
 import organizationsSwitcherComponent from './organizations.switcher.component.vue';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('organizations');
 
 const ENTRY_ID = 'organizations-switcher';
 const authStore = useAuthStore();
@@ -47,7 +50,7 @@ watch(
     try {
       await organizationsStore.fetchOrganizations();
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     }
   },
   { immediate: true },

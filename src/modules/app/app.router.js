@@ -9,6 +9,9 @@ import { capturePageview } from '../../lib/helpers/analytics';
 import { isModuleActive, warnUnknownModuleKeys } from '../../lib/helpers/modules';
 import { injectAdminChildren, injectModuleChildren } from '../../lib/helpers/router';
 import config from '../../lib/services/config';
+import { createLogger } from '../../lib/helpers/logger';
+
+const logger = createLogger('router');
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
@@ -68,7 +71,7 @@ const getRouter = () => {
   // Dev-only: home switched off but no downstream registered a `/` route.
   if (import.meta.env?.DEV && config?.home?.routes?.home?.activated === false
     && !coreRoutes.some((r) => r?.path === '/')) {
-    console.warn('[router] home.routes.home.activated is false but no "/" route was registered via registerDownstreamRoutes().');
+    logger.warn('[router] home.routes.home.activated is false but no "/" route was registered via registerDownstreamRoutes().');
   }
 
   /**
@@ -208,7 +211,7 @@ const getRouter = () => {
         await authStore.refreshAbilities();
       }
     } catch (err) {
-      console.error('Router guard: failed to load server config or abilities, proceeding anyway', err);
+      logger.error('Router guard: failed to load server config or abilities, proceeding anyway', err);
     }
 
     // Redirect authenticated users away from auth pages (signin, signup, etc.)
@@ -283,7 +286,7 @@ const getRouter = () => {
           try {
             await authStore.refreshAbilities();
           } catch (err) {
-            console.error('Router guard: failed to refresh abilities, proceeding anyway', err);
+            logger.error('Router guard: failed to refresh abilities, proceeding anyway', err);
           }
         }
         if (ability && ability.rules && ability.rules.length > 0) {

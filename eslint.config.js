@@ -21,9 +21,24 @@ export default [
       globals: globals.browser,
     },
     rules: {
-      'no-console': 'off',
+      // App code logs through `createLogger` (src/lib/helpers/logger.js), never console.
+      'no-console': 'warn',
       'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
       'vue/multi-word-component-names': 'off',
+    },
+  },
+  // Files allowed to call console: the logger itself, the code that runs in
+  // Node at build time (Vite plugins, config guard) and the e2e helpers.
+  {
+    files: [
+      'src/lib/helpers/logger.js',
+      'src/lib/plugins/prerender.js',
+      'src/lib/plugins/docs-seo.js',
+      'src/lib/helpers/configGuard.js',
+      'src/lib/helpers/e2e/**/*.js',
+    ],
+    rules: {
+      'no-console': 'off',
     },
   },
   // Config files (Node environment)
@@ -54,6 +69,7 @@ export default [
     rules: {
       // Test files use inline defineComponent wrappers — multiple components per file is expected
       'vue/one-component-per-file': 'off',
+      'no-console': 'off',
     },
   },
 ];

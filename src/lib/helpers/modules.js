@@ -6,6 +6,9 @@
  */
 import { once } from 'lodash-es';
 import config from '../services/config';
+import { createLogger } from './logger';
+
+const logger = createLogger('modules');
 
 const CORE_MODULES = new Set(['home', 'auth', 'users', 'app', 'core']);
 
@@ -85,7 +88,7 @@ export const warnUnknownModuleKeys = once((registeredModuleNames = [], registere
     if (hasActivatedProp) {
       // Activation intent — must resolve against a registered MODULE name.
       if (!knownModules.has(key)) {
-        console.warn(`[isModuleActive] config.modules.${key} sets "activated" but matches no registered module — either a typo/wrong case or dead leftover config; module activation is NOT affected.`);
+        logger.warn(`[isModuleActive] config.modules.${key} sets "activated" but matches no registered module — either a typo/wrong case or dead leftover config; module activation is NOT affected.`);
       }
       continue;
     }
@@ -96,7 +99,7 @@ export const warnUnknownModuleKeys = once((registeredModuleNames = [], registere
     // pattern; a module-name match is the coincidental case (module and
     // route happen to share a name) — either is treated as intentional.
     if (!knownRoutes.has(key) && !knownModules.has(key)) {
-      console.warn(`[isModuleActive] config.modules.${key} matches no registered module or route name — either a typo/wrong case or dead leftover config; module activation is NOT affected.`);
+      logger.warn(`[isModuleActive] config.modules.${key} matches no registered module or route name — either a typo/wrong case or dead leftover config; module activation is NOT affected.`);
     }
   }
 });

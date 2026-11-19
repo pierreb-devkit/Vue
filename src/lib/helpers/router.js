@@ -6,6 +6,9 @@
  * downstream-added tabs render inline within the admin layout instead
  * of navigating away to sibling pages.
  */
+import { createLogger } from './logger';
+
+const logger = createLogger('router');
 
 /**
  * @desc Validate a single child route record before injection.
@@ -29,19 +32,19 @@ const isValidChildRoute = (route, moduleName, parentPath, callerName = 'injectMo
   if (!route || typeof route !== 'object') return false;
   if (typeof route.path !== 'string' || route.path.length === 0) {
     if (import.meta.env?.MODE !== 'production') {
-      console.warn(`[${callerName}] "${moduleName}": child route missing string path — skipped`);
+      logger.warn(`[${callerName}] "${moduleName}": child route missing string path — skipped`);
     }
     return false;
   }
   if (route.path.startsWith('/')) {
     if (import.meta.env?.MODE !== 'production') {
-      console.warn(`[${callerName}] "${moduleName}": absolute path "${route.path}" cannot be a child of "${parentPath}" — use a relative path`);
+      logger.warn(`[${callerName}] "${moduleName}": absolute path "${route.path}" cannot be a child of "${parentPath}" — use a relative path`);
     }
     return false;
   }
   if (!route.component) {
     if (import.meta.env?.MODE !== 'production') {
-      console.warn(`[${callerName}] "${moduleName}": child route "${route.path}" missing component — skipped`);
+      logger.warn(`[${callerName}] "${moduleName}": child route "${route.path}" missing component — skipped`);
     }
     return false;
   }

@@ -2,6 +2,9 @@
  * Module dependencies.
  */
 import axios from 'axios';
+import { createLogger } from '../helpers/logger';
+
+const logger = createLogger('axios');
 
 /**
  * Axios instance configuration.
@@ -64,7 +67,7 @@ export function setupInterceptors(config, snackbar, onSignout, onRefreshAbilitie
           }
         } catch (refreshErr) {
           // Queued requests may await an already-rejected promise; swallow gracefully
-          console.error('Axios 403 interceptor: ability refresh failed', refreshErr);
+          logger.error('Axios 403 interceptor: ability refresh failed', refreshErr);
         } finally {
           isRefreshingAbilities = false;
           refreshAbilitiesPromise = null;

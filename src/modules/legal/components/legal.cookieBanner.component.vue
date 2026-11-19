@@ -50,6 +50,9 @@ import { useTheme } from 'vuetify';
 import { useCookieConsent } from '../composables/useCookieConsent';
 import { liquidGlassStyle } from '../../../lib/helpers/theme';
 import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('legal');
 
 const instance = getCurrentInstance();
 const theme = useTheme();
@@ -89,12 +92,10 @@ const enabled = computed(() => {
   if (!cfgEnabled) return false;
   const hasPosthog = Boolean(instance?.proxy?.$posthog || instance?.appContext?.config?.globalProperties?.$posthog);
   if (!hasPosthog) {
-    if (typeof console !== 'undefined') {
-      console.warn(
-        '[legal.cookieBanner] cookieConsent.enabled is true but $posthog is not available. ' +
-        'The banner will not render. Set analytics.posthog.key to enable PostHog and the consent banner together.',
-      );
-    }
+    logger.warn(
+      '[legal.cookieBanner] cookieConsent.enabled is true but $posthog is not available. ' +
+      'The banner will not render. Set analytics.posthog.key to enable PostHog and the consent banner together.',
+    );
     return false;
   }
   return true;

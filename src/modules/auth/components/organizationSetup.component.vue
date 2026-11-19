@@ -107,6 +107,7 @@
  * Module dependencies.
  */
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 
 /**
  * Organization setup component shown after signup (step 2).
@@ -170,7 +171,7 @@ export default {
           this.$emit('created', organization);
         }
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
+        this.error = sanitizeApiError(err, 'Could not create organization. Please try again.', 'description');
       } finally {
         this.loading = false;
       }
@@ -191,7 +192,7 @@ export default {
         this.requestSent = true;
         this.$emit('requestSent', this.suggestedOrganization);
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'Could not send join request. Please try again.';
+        this.error = sanitizeApiError(err, 'Could not send join request. Please try again.', 'description');
       } finally {
         this.requestLoading = false;
       }

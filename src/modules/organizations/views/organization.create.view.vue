@@ -78,6 +78,7 @@
 <script>
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
 
 export default {
@@ -148,7 +149,7 @@ export default {
             await this.refreshAndNavigate(authStore, org, isFirstOrg);
           }
         } catch (err) {
-          this.error = err?.response?.data?.message || err?.message || 'Could not create organization. Please try again.';
+          this.error = sanitizeApiError(err, 'Could not create organization. Please try again.', 'description');
         } finally {
           this.loading = false;
         }

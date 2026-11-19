@@ -163,7 +163,7 @@ const load = async (s) => {
     page.value = { title: '', html: '', toc: [], examples: [], notFound: true };
     return;
   }
-  await store.fetchTree().catch(() => {});
+  await store.fetchTree();
   if (PANE_PAGES.has(s)) return;
   const result = await useDocsPage(s, {
     fetcher: (sl) => store.fetchArticle(sl),

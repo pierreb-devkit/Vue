@@ -3,6 +3,10 @@
  */
 import { defineStore } from 'pinia';
 import docsService from '../services/docs.service';
+import { sanitizeApiError } from '../../../lib/helpers/apiError';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('docs');
 
 /**
  * Normalize the public docs API tree to the frontend's canonical shape.
@@ -129,8 +133,8 @@ export const useDocsStore = defineStore('docs', {
         this.tree = normalizeTree(res?.data?.data ?? res?.data ?? null);
         return this.tree;
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
-        console.error(err);
+        this.error = sanitizeApiError(err, 'An error occurred', 'description');
+        logger.error(err);
         return null;
       } finally {
         this.loading = false;
@@ -154,8 +158,8 @@ export const useDocsStore = defineStore('docs', {
         this.articles = { ...this.articles, [slug]: markdown };
         return markdown;
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
-        console.error(err);
+        this.error = sanitizeApiError(err, 'An error occurred', 'description');
+        logger.error(err);
         return null;
       } finally {
         this.loading = false;
@@ -176,8 +180,8 @@ export const useDocsStore = defineStore('docs', {
         this.spec = res?.data?.data ?? res?.data ?? null;
         return this.spec;
       } catch (err) {
-        this.error = err?.response?.data?.message || err?.message || 'An error occurred';
-        console.error(err);
+        this.error = sanitizeApiError(err, 'An error occurred', 'description');
+        logger.error(err);
         return null;
       } finally {
         this.loading = false;

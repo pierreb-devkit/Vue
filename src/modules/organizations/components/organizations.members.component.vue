@@ -463,8 +463,8 @@ export default {
       try {
         await organizationsStore.removeMember(this.organizationId, this.removeDialog.memberId);
         this.removeDialog.show = false;
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // The axios interceptor shows the error snackbar.
       }
     },
     /**

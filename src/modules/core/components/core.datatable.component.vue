@@ -138,6 +138,9 @@
 import { debounce } from 'lodash-es';
 import * as tools from '../../../lib/helpers/tools';
 import userAvatarComponent from './user.avatar.component.vue';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('core');
 /**
  * Component definition.
  */
@@ -252,7 +255,7 @@ export default {
         try {
           await this.fetchAction(params);
         } catch (err) {
-          console.error('fetchAction failed:', err);
+          logger.error('fetchAction failed:', err);
         }
       }
     },

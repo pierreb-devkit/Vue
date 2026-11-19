@@ -4,6 +4,9 @@
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { h } from 'vue';
+import { createLogger } from '../helpers/logger';
+
+const logger = createLogger('markdown');
 
 /**
  * Configure marked options
@@ -40,7 +43,7 @@ export default {
           const safe = DOMPurify.sanitize(html);
           return this.inline ? h('span', { innerHTML: safe }) : h('div', { innerHTML: safe });
         } catch (error) {
-          console.error('Markdown parsing error:', error);
+          logger.error('Markdown parsing error:', error);
           return this.inline ? h('span', this.source) : h('div', this.source);
         }
       },
