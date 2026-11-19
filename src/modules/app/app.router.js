@@ -71,7 +71,7 @@ const getRouter = () => {
   // Dev-only: home switched off but no downstream registered a `/` route.
   if (import.meta.env?.DEV && config?.home?.routes?.home?.activated === false
     && !coreRoutes.some((r) => r?.path === '/')) {
-    logger.warn('[router] home.routes.home.activated is false but no "/" route was registered via registerDownstreamRoutes().');
+    logger.warn('home.routes.home.activated is false but no "/" route was registered via registerDownstreamRoutes().');
   }
 
   /**

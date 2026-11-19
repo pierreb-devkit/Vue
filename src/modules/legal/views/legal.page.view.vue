@@ -40,7 +40,7 @@ const load = async (slug) => {
   try {
     page.value = await useLegalPage(slug, { config });
   } catch (err) {
-    logger.warn('[legal] page load failed', err);
+    logger.warn('page load failed', err);
     page.value = { title: '', html: '', notFound: true };
   }
 };

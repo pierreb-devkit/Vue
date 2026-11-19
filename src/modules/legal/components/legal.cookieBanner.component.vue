@@ -93,7 +93,7 @@ const enabled = computed(() => {
   const hasPosthog = Boolean(instance?.proxy?.$posthog || instance?.appContext?.config?.globalProperties?.$posthog);
   if (!hasPosthog) {
     logger.warn(
-      '[legal.cookieBanner] cookieConsent.enabled is true but $posthog is not available. ' +
+      'cookieBanner: cookieConsent.enabled is true but $posthog is not available. ' +
       'The banner will not render. Set analytics.posthog.key to enable PostHog and the consent banner together.',
     );
     return false;
