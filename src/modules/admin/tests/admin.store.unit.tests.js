@@ -282,6 +282,20 @@ describe('Admin Store', () => {
       axios.get.mockReset();
     });
 
+    it('should skip the organizations source when the module is off', async () => {
+      const store = useAdminStore();
+      mockRoutes();
+
+      await store.getStats({ organizations: false });
+
+      const urls = axios.get.mock.calls.map(([url]) => url);
+      expect(urls.some((u) => u.endsWith('/admin/organizations/stats'))).toBe(false);
+      expect(urls).toHaveLength(3);
+      expect(store.stats.organizations).toBeNull();
+      expect(store.stats.users).toEqual(users);
+      axios.get.mockReset();
+    });
+
     it('should keep the sources that loaded when one route fails', async () => {
       const store = useAdminStore();
       mockRoutes(['organizations', 'audit']);

@@ -96,6 +96,7 @@
 import { useAdminStore } from '../stores/admin.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { isAuditOn } from '../lib/admin.audit';
+import { isModuleActive } from '../../../lib/helpers/modules';
 import AdminWeeklyBarsComponent from '../components/admin.weeklyBars.component.vue';
 
 /** Weeks in a KPI period when the API does not say (matches the audit stats default). */
@@ -121,7 +122,8 @@ const periodSum = (weeks = [], n, offset = 0) => {
  * Overview tab of the admin section: main KPIs with their trend against the
  * previous period, weekly trend charts, then what the audit log records (most
  * frequent actions, latest events). Activity parts are hidden when audit
- * logging is disabled. Data comes from `useAdminStore().getStats()`.
+ * logging is disabled, organization parts when the organizations module is
+ * off. Data comes from `useAdminStore().getStats()`.
  */
 export default {
   name: 'AdminOverview',
@@ -146,6 +148,10 @@ export default {
     auditOn() {
       return isAuditOn(useAuthStore().serverConfig);
     },
+    /** @returns {boolean} whether the organizations module is active (its KPI and chart show) */
+    orgsOn() {
+      return isModuleActive('organizations');
+    },
     /** @returns {number} weeks per KPI period */
     periodWeeks() {
       return this.stats.audit?.activeUsers?.periodWeeks || DEFAULT_PERIOD_WEEKS;
@@ -163,10 +169,8 @@ export default {
         const current = periodSum(series.weeks, n);
         return { value: series.total, caption: `${this.formatNumber(current)} new in ${period}`, trend: this.trend(current, periodSum(series.weeks, n, 1)) };
       };
-      const list = [
-        { key: 'users', label: 'Accounts', ...created(this.stats.users) },
-        { key: 'organizations', label: 'Organizations', ...created(this.stats.organizations) },
-      ];
+      const list = [{ key: 'users', label: 'Accounts', ...created(this.stats.users) }];
+      if (this.orgsOn) list.push({ key: 'organizations', label: 'Organizations', ...created(this.stats.organizations) });
       if (this.auditOn) {
         const audit = this.stats.audit;
         list.push(
@@ -199,15 +203,17 @@ export default {
           weeks: this.stats.users?.weeks,
           error: this.statsErrors.includes('users'),
         },
-        {
+      ];
+      if (this.orgsOn) {
+        list.push({
           key: 'organizations',
           title: 'New organizations',
           noun: 'organizations',
           note: 'Per week, last 12 weeks. Deleted organizations are not counted.',
           weeks: this.stats.organizations?.weeks,
           error: this.statsErrors.includes('organizations'),
-        },
-      ];
+        });
+      }
       if (this.auditOn) {
         list.push({
           key: 'audit',
@@ -233,7 +239,7 @@ export default {
     async load(only) {
       this.pending += 1;
       try {
-        await useAdminStore().getStats({ audit: this.auditOn, only });
+        await useAdminStore().getStats({ audit: this.auditOn, organizations: this.orgsOn, only });
       } finally {
         this.pending -= 1;
       }

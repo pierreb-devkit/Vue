@@ -152,14 +152,15 @@ export const useAdminStore = defineStore('admin', {
      *       as it settles, so one slow or failing route leaves the others on screen;
      *       a failed source stays null and is named in `statsErrors`. A late answer
      *       from an older request never replaces a newer one.
-     * @param {{ audit?: boolean, only?: string[] }} [options] - `audit: false` skips the
-     *        activity sources; `only` reloads just those sources (retry), keeping the rest
+     * @param {{ audit?: boolean, organizations?: boolean, only?: string[] }} [options] - `audit: false`
+     *        skips the activity sources; `organizations: false` skips the organizations source
+     *        (module off); `only` reloads just those sources (retry), keeping the rest
      * @returns {Promise<void>}
      */
-    async getStats({ audit = true, only } = {}) {
+    async getStats({ audit = true, organizations = true, only } = {}) {
       const sources = {
         users: '/admin/users/stats',
-        organizations: '/admin/organizations/stats',
+        ...(organizations ? { organizations: '/admin/organizations/stats' } : {}),
         ...(audit ? { audit: '/audit/stats', recent: '/audit?perPage=6' } : {}),
       };
       const keys = only ? Object.keys(sources).filter((k) => only.includes(k)) : Object.keys(sources);
