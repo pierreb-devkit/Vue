@@ -30,6 +30,11 @@ vi.mock('../../auth/stores/auth.store', () => ({
 vi.mock('../../../lib/services/config', () => ({
   default: testConfig,
 }));
+// Module routers (home, legal) read the generated `@/config` directly: pin it to the
+// stack test config too, so a project override of its routes cannot change these tests.
+vi.mock('@/config', () => ({
+  default: testConfig,
+}));
 
 const mockAbility = { rules: [], can: vi.fn(() => false) };
 vi.mock('../../../lib/helpers/ability.js', () => ({
@@ -74,6 +79,9 @@ async function setupRouterModule() {
     useAuthStore: () => mockAuthStore,
   }));
   vi.doMock('../../../lib/services/config', () => ({
+    default: testConfig,
+  }));
+  vi.doMock('@/config', () => ({
     default: testConfig,
   }));
   vi.doMock('../../../lib/helpers/ability.js', () => ({
@@ -922,6 +930,9 @@ describe('registerDownstreamRoutes', () => {
       useAuthStore: () => mockAuthStore,
     }));
     vi.doMock('../../../lib/services/config', () => ({
+      default: testConfig,
+    }));
+    vi.doMock('@/config', () => ({
       default: testConfig,
     }));
     vi.doMock('../../../lib/helpers/ability.js', () => ({

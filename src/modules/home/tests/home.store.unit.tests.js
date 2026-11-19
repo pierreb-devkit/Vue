@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useHomeStore } from '../stores/home.store';
 import axios from '../../../lib/services/axios';
+import config from '../../../lib/services/config';
 
 // Mock axios
 vi.mock('../../../lib/services/axios', () => ({
@@ -218,7 +219,6 @@ describe('Home Store', () => {
     });
 
     it('loads the latest articles, and logs a failed load', async () => {
-      const config = (await import('../../../lib/services/config')).default;
       const GhostContentAPI = (await import('@tryghost/content-api')).default;
       const saved = config.home.articles;
       config.home.articles = { url: 'https://blog.example.com', key: 'k' };
@@ -242,10 +242,23 @@ describe('Home Store', () => {
   });
 
   describe('initStatistics', () => {
-    beforeEach(() => inactiveModules.clear());
+    // Own fixture: a project overriding `home.statistics` must not change what these tests expect.
+    let savedStatistics;
+    beforeEach(() => {
+      inactiveModules.clear();
+      savedStatistics = config.home.statistics;
+      config.home.statistics = {
+        content: [
+          { value: '0', title: 'Tasks', source: 'tasks', module: 'tasks' },
+          { value: '0', title: 'Users', source: 'account' },
+        ],
+      };
+    });
+    afterEach(() => {
+      config.home.statistics = savedStatistics;
+    });
 
-    it('copies the configured items (the config itself is never mutated)', async () => {
-      const config = (await import('../../../lib/services/config')).default;
+    it('copies the configured items (the config itself is never mutated)', () => {
       const homeStore = useHomeStore();
       homeStore.initStatistics();
       expect(homeStore.statistics.map((i) => i.title)).toEqual(config.home.statistics.content.map((i) => i.title));
@@ -261,17 +274,11 @@ describe('Home Store', () => {
       expect(homeStore.statistics.map((i) => i.title)).toContain('Users');
     });
 
-    it('sets statistics to null when the config has no content list', async () => {
-      const config = (await import('../../../lib/services/config')).default;
-      const saved = config.home.statistics.content;
+    it('sets statistics to null when the config has no content list', () => {
       config.home.statistics.content = undefined;
-      try {
-        const homeStore = useHomeStore();
-        homeStore.initStatistics();
-        expect(homeStore.statistics).toBeNull();
-      } finally {
-        config.home.statistics.content = saved;
-      }
+      const homeStore = useHomeStore();
+      homeStore.initStatistics();
+      expect(homeStore.statistics).toBeNull();
     });
   });
 
