@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { shallowMount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 
-const authState = vi.hoisted(() => ({ isLoggedIn: true, serverConfig: { billing: { meterMode: true } }, user: { currentOrganization: 'org_a' } }));
-const billingState = vi.hoisted(() => ({ usageMeter: null }));
+// Reactive store stand-ins so a mounted alert tracks store updates like a real Pinia store.
+const { authState, billingState } = await vi.hoisted(async () => {
+  const { reactive } = await import('vue');
+  return {
+    authState: reactive({ isLoggedIn: true, serverConfig: { billing: { meterMode: true } }, user: { currentOrganization: 'org_a' } }),
+    billingState: reactive({ usageMeter: null }),
+  };
+});
 vi.mock('../../auth/stores/auth.store', () => ({ useAuthStore: () => authState }));
 vi.mock('../stores/billing.store', () => ({ useBillingStore: () => billingState }));
 
@@ -37,6 +44,23 @@ describe('billing.meterAlert.component', () => {
     expect(wrapper.vm.meterAlert).toMatchObject({ visible: true, color: 'warning' });
     wrapper.vm.meterAlert.visible = false;
     wrapper.vm.$options.watch.meterProgress.call(wrapper.vm, 90);
+    expect(wrapper.vm.meterAlert.visible).toBe(false);
+  });
+
+  it('reacts to a live usage change on the mounted alert, once per threshold', async () => {
+    billingState.usageMeter = { meterUsed: 50, meterQuota: 100, weekKey: 'W1' };
+    const wrapper = mountAlert();
+    expect(wrapper.vm.meterAlert.visible).toBe(false);
+
+    billingState.usageMeter = { meterUsed: 85, meterQuota: 100, weekKey: 'W1' };
+    await nextTick();
+    expect(wrapper.vm.meterProgress).toBe(85);
+    expect(wrapper.vm.meterAlert).toMatchObject({ visible: true, color: 'warning' });
+
+    wrapper.vm.meterAlert.visible = false;
+    billingState.usageMeter = { meterUsed: 90, meterQuota: 100, weekKey: 'W1' };
+    await nextTick();
+    expect(wrapper.vm.meterProgress).toBe(90);
     expect(wrapper.vm.meterAlert.visible).toBe(false);
   });
 
