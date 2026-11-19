@@ -44,7 +44,7 @@ git merge devkit-vue/master
 | `MIGRATIONS.md` (if present) | Read it (needed for Phase 2), then `git checkout --theirs MIGRATIONS.md` |
 | `src/config/defaults/<project>.js` | `git checkout --ours src/config/defaults/<project>.js` (downstream-only file) |
 | `package.json` | `git checkout --ours package.json` then merge upstream version bumps |
-| Downstream-only new files (new modules, helpers, composables, lib additions) | Never delete — these do not exist in the stack, `git checkout --ours <file>` if flagged |
+| Downstream-only files (own modules, files carrying the project name) | Keep — `git checkout --ours <file>` if flagged. Any other downstream file inside a stack folder is handled by step 3quater (ownership rule) |
 
 After resolving `package.json`, regenerate the lockfile with a **full install** (not `--package-lock-only`):
 
@@ -119,7 +119,7 @@ while IFS= read -r f; do
     echo "  Fix — restore: git checkout devkit-vue/master -- $f"
     drift_found=1
   fi
-  # Downstream-only file (not in upstream) → skip silently
+  # Downstream-only file (not in upstream) → not drift; step 3quater checks where it lives
 done < <(git diff --name-only devkit-vue/master HEAD -- src/modules src/lib src/config src/main.js index.html vite.config.js Dockerfile 2>/dev/null \
   | grep -vE "/(tests|__tests__)/" | grep -vE "\.(test|spec)\.(js|jsx|ts|tsx|vue)$")
 
@@ -136,6 +136,44 @@ echo "3ter: no drift — OK"
 - `src/modules/app/app.router.js` stays stack-iso: downstream routes go through `registerDownstreamRoutes()` called from `src/modules/{project}/{project}.app.js`, which `main.js` imports before building the router.
 - This gate runs **after** `/verify` (never blocks on transient verify failures) and **before** Phase 2 (failure is recoverable — no merge commit yet).
 - Ref: the stack/downstream perfect-alignment plan, Tasks E.1 + E.2.
+
+### 3quater. Warn on files a downstream added in stack folders
+
+Ownership rule (`CLAUDE.md` § Downstream file ownership): inside stack folders a downstream adds only its own modules and files carrying its project name. This step **warns, it never blocks**: it always ends with exit 0, and Phase 2 starts whatever it prints.
+
+```bash
+PROJECT="<project>"   # the downstream's project name, as in src/config/defaults/<project>.config.js
+stack_modules=$(git ls-tree -d --name-only devkit-vue/master src/modules/ | sed 's#^src/modules/##')
+stack_deleted=$(git log --no-renames --diff-filter=D --name-only --format= devkit-vue/master -- src/modules src/lib src/config | sort -u)
+
+warn=0
+while IFS= read -r f; do
+  git cat-file -e "devkit-vue/master:$f" 2>/dev/null && continue   # stack file: step 3ter's job
+  if printf '%s\n' "$stack_deleted" | grep -qxF "$f"; then
+    echo "WARN: the stack deleted this file, it is still here: $f"
+    warn=1; continue
+  fi
+  case "$f" in
+    */tests/*|*/__tests__/*) continue ;;   # downstream test adaptations are accepted (as in 3ter)
+    src/modules/*/*) mod=${f#src/modules/}; mod=${mod%%/*}
+      printf '%s\n' "$stack_modules" | grep -qxF "$mod" || continue ;;   # the project's own module
+  esac
+  case "$f" in
+    *."$PROJECT".*|*/"$PROJECT".*|*/"$PROJECT"/*) continue ;;   # carries the project name
+  esac
+  echo "WARN: file without the project name in a stack folder: $f"
+  warn=1
+done < <(git ls-tree -r --name-only HEAD -- src/modules src/lib src/config)
+
+[ "$warn" -eq 1 ] && echo "3quater: warnings above — act on them in Phase 2" || echo "3quater: ownership OK"
+```
+
+`--no-renames` makes a file the stack moved count as deleted at its old path, so a leftover copy there is reported as such.
+
+**What to do with each warning** (in Phase 2, never by reverting the merge):
+- **File the stack deleted:** delete it only when it is a dead copy — nothing imports it (`grep -rn "<file basename without extension>" src`), and it is not a module a downstream router registers. Old `*.spec.js` / `*.test.js` under a stack test dir that test a deleted file go with it. A file still in use → move what it does to the project's own module first.
+- **File without the project name:** generic code → upstream it to the stack (devkit PR, then `/update-stack`); project-only code → move it to the project's own module, or rename it `*.<project>.*` when it is an override.
+- **Never move an existing migration file**, even when it sits in the wrong place: migrations are recorded by path, and a moved one runs again. Its warning stays on each update: that is accepted.
 
 ---
 
