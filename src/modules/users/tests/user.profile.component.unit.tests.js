@@ -67,3 +67,12 @@ describe('user.profile.component — template hygiene (source-grep)', () => {
     expect(tmpl).not.toMatch(/<label\s+class=["'][^"']*text-label-large/);
   });
 });
+
+describe('user.profile.component — no organizations coupling', () => {
+  it('declares no organizations prop and fills the form from the user alone', () => {
+    const wrapper = mountProfile({ user: { firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', memberships: [{ _id: 'm1', role: 'owner' }] } });
+    expect(Object.keys(userProfile.props)).toEqual(['user']);
+    expect(wrapper.vm.form.firstName).toBe('Jane');
+    expect(wrapper.vm.form.email).toBe('jane@example.com');
+  });
+});

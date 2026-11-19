@@ -4,11 +4,9 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createVuetify } from 'vuetify';
 
 const createOrganizationMock = vi.hoisted(() => vi.fn());
-const createJoinRequestMock = vi.hoisted(() => vi.fn());
 vi.mock('../stores/organizations.store', () => ({
   useOrganizationsStore: () => ({
     createOrganization: createOrganizationMock,
-    createJoinRequest: createJoinRequestMock,
   }),
 }));
 
@@ -34,7 +32,7 @@ const makeFormStub = (valid = true) => ({
 /**
  * Mount the organization setup component with Vuetify and stubbed form.
  * @param {object} formStub - VForm component definition controlling validation outcome.
- * @param {object} props - Component props (e.g. suggestedOrganization).
+ * @param {object} props - Component props (e.g. defaultName).
  * @param {object} [config] - `this.config` override (defaults to the shared mockConfig).
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
@@ -52,7 +50,6 @@ describe('organizations.signupSetup.component', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     createOrganizationMock.mockReset();
-    createJoinRequestMock.mockReset();
   });
 
   it('renders the organization name field and heading', async () => {
@@ -201,91 +198,15 @@ describe('organizations.signupSetup.component', () => {
     expect(wrapper.vm.error).toBeNull();
   });
 
-  // --- request to join an existing organization ---
+  // --- no suggested-organization branch (the API stopped sending it) ---
 
-  const suggestedOrg = { name: 'Acme Inc.', _id: 'org-1' };
-
-  it('calls createJoinRequest with the organization id and leaves no error on success', async () => {
-    createJoinRequestMock.mockResolvedValueOnce(undefined);
-
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    await wrapper.vm.requestJoin();
-
-    expect(createJoinRequestMock).toHaveBeenCalledTimes(1);
-    expect(createJoinRequestMock).toHaveBeenCalledWith('org-1');
-    expect(wrapper.vm.error).toBeNull();
-  });
-
-  it('sets requestSent and emits requestSent on a successful join request', async () => {
-    createJoinRequestMock.mockResolvedValueOnce(undefined);
-
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    await wrapper.vm.requestJoin();
-
-    expect(wrapper.vm.requestSent).toBe(true);
-    expect(wrapper.emitted('requestSent')).toBeTruthy();
-    expect(wrapper.emitted('requestSent')[0]).toEqual([suggestedOrg]);
-  });
-
-  it('sets error from response data message on createJoinRequest failure', async () => {
-    const apiError = { response: { data: { message: 'You are already a member' } } };
-    createJoinRequestMock.mockRejectedValueOnce(apiError);
-
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    await wrapper.vm.requestJoin();
-
-    expect(wrapper.vm.error).toBe('You are already a member');
-    expect(wrapper.vm.requestSent).toBe(false);
-  });
-
-  it('falls back to err.message when a join request has no response data message', async () => {
-    createJoinRequestMock.mockRejectedValueOnce(new Error('Network error'));
-
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    await wrapper.vm.requestJoin();
-
-    expect(wrapper.vm.error).toBe('Network error');
-  });
-
-  it('falls back to a generic join message when the error has no message', async () => {
-    createJoinRequestMock.mockRejectedValueOnce({});
-
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    await wrapper.vm.requestJoin();
-
-    expect(wrapper.vm.error).toBe('Could not send join request. Please try again.');
-  });
-
-  it('clears a stale error at the start of a join request', async () => {
-    const wrapper = mountComponent(makeFormStub(), { suggestedOrganization: suggestedOrg });
-    await flushPromises();
-
-    // A prior create-org failure left an error on the component
-    wrapper.vm.error = 'Could not create organization. Please try again.';
-
-    createJoinRequestMock.mockResolvedValueOnce(undefined);
-    await wrapper.vm.requestJoin();
-
-    expect(wrapper.vm.error).toBeNull();
-  });
-
-  it('does nothing when there is no suggested organization', async () => {
+  it('renders only the create form: no suggested organization prop, no join request', async () => {
     const wrapper = mountComponent();
     await flushPromises();
 
-    await wrapper.vm.requestJoin();
-
-    expect(createJoinRequestMock).not.toHaveBeenCalled();
+    expect(AuthOrganizationSetupComponent.props).not.toHaveProperty('suggestedOrganization');
+    expect(AuthOrganizationSetupComponent.emits).toEqual(['created']);
+    expect(wrapper.text()).not.toContain('Request to join');
   });
 
   // --- config-driven item noun (#4474) ---

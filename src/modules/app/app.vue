@@ -14,14 +14,15 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <!-- Shell parts of the optional modules, registered by each module's
+         `<module>.app.js` entry only while the module is active. -->
+    <component :is="extra.component" v-for="extra in beforeNavExtras" :key="extra._id" />
     <devkitNav v-if="isLoggedIn && !$route.meta.marketing" />
     <devkitHeader v-if="config.header.display" />
     <authEmailBanner />
     <authPendingRequestBanner />
 
-    <!-- Shell parts of the optional modules, registered by each module's
-         `<module>.app.js` entry only while the module is active. -->
-    <component :is="extra.component" v-for="extra in shellExtras" :key="extra._id" />
+    <component :is="extra.component" v-for="extra in afterBannerExtras" :key="extra._id" />
     <v-main class="pb-0" :style="mainStyle">
       <appErrorBoundary>
         <router-view />
@@ -90,6 +91,20 @@ export default {
   computed: {
     isLoggedIn() {
       return this.authStore.isLoggedIn;
+    },
+    /**
+     * @desc Optional-module shell parts mounted before the navigation drawer.
+     * @returns {Array<object>}
+     */
+    beforeNavExtras() {
+      return this.shellExtras.filter((e) => e.placement === 'beforeNav');
+    },
+    /**
+     * @desc Optional-module shell parts mounted after the auth banners.
+     * @returns {Array<object>}
+     */
+    afterBannerExtras() {
+      return this.shellExtras.filter((e) => e.placement !== 'beforeNav');
     },
     /**
      * @desc Main content styles — removes left padding when nav is in glass (overlay) mode.

@@ -27,7 +27,7 @@ describe('billing.app.js entry', () => {
 
   it('registers the nav extras and the meter alert at the shell when billing is active', async () => {
     const { shell } = await loadEntry();
-    expect(shell.extras.value.map((e) => e._id)).toEqual(['billing-nav-extras', 'billing-meter-alert']);
+    expect(shell.extras.value.map((e) => e._id)).toEqual(['billing-meter-alert', 'billing-nav-extras']);
   });
 
   it('registers nothing when billing is switched off', async () => {

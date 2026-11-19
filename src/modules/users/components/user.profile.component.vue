@@ -86,7 +86,6 @@ export default {
   },
   props: {
     user: { type: Object, required: true },
-    organizations: { type: Array, default: () => [] },
   },
   emits: ['save', 'avatar-uploaded'],
   data() {
@@ -100,7 +99,6 @@ export default {
         bio: '',
         position: '',
       },
-      orgItems: [],
       rules: {
         bio: [(v) => !v || v.length <= 200 || 'Max 200 characters'],
       },
@@ -109,17 +107,9 @@ export default {
   watch: {
     user: {
       handler(u) {
-        if (u) {
-          this.syncForm(u);
-          this.syncOrganizations();
-        }
+        if (u) this.syncForm(u);
       },
       immediate: true,
-    },
-    organizations: {
-      handler() {
-        this.syncOrganizations();
-      },
     },
     form: {
       handler() { this.dirty = true; },
@@ -139,44 +129,6 @@ export default {
       this.form.bio = u.bio || '';
       this.form.position = u.position || '';
       this.$nextTick(() => { this.dirty = false; });
-    },
-    /**
-     * @desc Build the `orgItems` list from `user.memberships` (preferred) or
-     *       the `organizations` prop (legacy flat format).
-     * @returns {void}
-     */
-    syncOrganizations() {
-      const memberships = this.getMemberships();
-      this.orgItems = memberships.map((m) => ({
-        title: `${m.orgName} (${m.role})`,
-        value: m.id,
-        role: m.role,
-        orgName: m.orgName,
-        orgId: m.orgId,
-      }));
-    },
-    /**
-     * @desc Normalize the user's memberships into a flat shape.
-     * @returns {Array<{ id: string, orgId: string, orgName: string, role: string }>}
-     */
-    getMemberships() {
-      if (this.user.memberships && this.user.memberships.length) {
-        return this.user.memberships.map((m) => ({
-          id: String(m._id || m.id),
-          orgId: String(m.organizationId?._id || m.organizationId?.id || m.organizationId || ''),
-          orgName: (m.organizationId && m.organizationId.name) || '—',
-          role: m.role || '—',
-        }));
-      }
-      if (this.organizations && this.organizations.length) {
-        return this.organizations.map((org) => ({
-          id: String(org._id || org.id),
-          orgId: String(org._id || org.id),
-          orgName: org.name || '—',
-          role: org.role || '—',
-        }));
-      }
-      return [];
     },
     /**
      * @desc Emit the form payload on user save (after Vuetify form validation).

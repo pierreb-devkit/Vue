@@ -32,8 +32,9 @@ export const refreshMeterOnSignin = ({ serverConfig }) => {
 export const register = () => {
   if (!isModuleActive('billing')) return;
   const shell = useShellExtras();
-  shell.register('billing-nav-extras', billingNavExtras);
-  shell.register('billing-meter-alert', billingMeterAlert);
+  // Before the navigation drawer, toast first, as the shell has always mounted them.
+  shell.register('billing-meter-alert', billingMeterAlert, { placement: 'beforeNav', order: 10 });
+  shell.register('billing-nav-extras', billingNavExtras, { placement: 'beforeNav', order: 20 });
   onSignin('billing-meter-refresh', refreshMeterOnSignin);
 };
 

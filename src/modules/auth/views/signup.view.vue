@@ -98,9 +98,7 @@
         <component
           :is="organizationSetupComponent"
           :default-name="deducedFirstName"
-          :suggested-organization="suggestedOrganization"
           @created="onOrganizationCreated"
-          @request-sent="onJoinRequestSent"
         />
       </template>
 
@@ -209,7 +207,6 @@ export default {
       invite: null, // { valid, email } once verified
       signupStep: 'form',
       organizationWelcomeMessage: '',
-      suggestedOrganization: null,
       resending: false,
       resent: false,
       email: '',
@@ -372,7 +369,6 @@ export default {
               this.signupStep = 'organizationWelcome';
             } else if (result.organizationSetupRequired && this.organizationSetupComponent) {
               // Manual organization setup needed
-              this.suggestedOrganization = result.suggestedOrganization || null;
               this.signupStep = 'organizationSetup';
             } else {
               // Organizations enabled but no setup needed — proceed normally
@@ -415,15 +411,6 @@ export default {
      */
     onOrganizationCreated(organization) {
       this.organizationWelcomeMessage = `Welcome! Your organization "${organization.name}" has been created.`;
-      this.signupStep = 'organizationWelcome';
-    },
-    /**
-     * @desc Handle join request sent from the setup component.
-     * @param {Object} organization - The organization the request was sent to
-     * @returns {void}
-     */
-    onJoinRequestSent(organization) {
-      this.organizationWelcomeMessage = `Your request to join "${organization.name}" has been sent. An admin will review it shortly.`;
       this.signupStep = 'organizationWelcome';
     },
     /**

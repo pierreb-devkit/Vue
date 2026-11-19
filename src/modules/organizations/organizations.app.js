@@ -18,10 +18,11 @@ import organizationsSignupSetup from './components/organizations.signupSetup.com
  */
 export const register = () => {
   if (!isModuleActive('organizations')) return;
+  // After the auth banners, ahead of the legal parts (order 20+).
   const shell = useShellExtras();
-  shell.register('organizations-admin-pending-banner', organizationsAdminPendingBanner);
-  shell.register('organizations-login-notices', organizationsLoginNotices);
-  shell.register('organizations-header-action', organizationsHeaderAction);
+  shell.register('organizations-admin-pending-banner', organizationsAdminPendingBanner, { order: 10 });
+  shell.register('organizations-login-notices', organizationsLoginNotices, { order: 11 });
+  shell.register('organizations-header-action', organizationsHeaderAction, { order: 12 });
   useSignupSteps().register('organizationSetup', organizationsSignupSetup);
 };
 

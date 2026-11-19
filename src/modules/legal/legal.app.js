@@ -14,9 +14,10 @@ import legalFooterSection from './components/legal.footerSection.component.vue';
  */
 export const register = () => {
   if (!isModuleActive('legal')) return;
+  // After the auth banners and the organizations parts (order 10+).
   const shell = useShellExtras();
-  shell.register('legal-cookie-banner', legalCookieBanner);
-  shell.register('legal-footer-section', legalFooterSection);
+  shell.register('legal-cookie-banner', legalCookieBanner, { order: 20 });
+  shell.register('legal-footer-section', legalFooterSection, { order: 21 });
 };
 
 register();
