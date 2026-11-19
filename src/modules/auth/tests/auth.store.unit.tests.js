@@ -502,6 +502,41 @@ describe('Auth Store', () => {
     });
   });
 
+  describe('applySession', () => {
+    it('writes the expiry (state + localStorage), the user and the auth flag', () => {
+      const authStore = useAuthStore();
+      authStore.applySession({ user: { id: 'u1' }, tokenExpiresIn: 1234 });
+      expect(authStore.auth).toBe(true);
+      expect(authStore.user).toEqual({ id: 'u1' });
+      expect(authStore.cookieExpire).toBe(1234);
+      expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBe('1234');
+    });
+
+    it('keeps the user when the reply carries only an expiry', () => {
+      const authStore = useAuthStore();
+      authStore.user = { id: 'u1' };
+      authStore.applySession({ tokenExpiresIn: 99 });
+      expect(authStore.user).toEqual({ id: 'u1' });
+      expect(authStore.cookieExpire).toBe(99);
+    });
+
+    it('keeps the expiry when the reply carries only a user', () => {
+      const authStore = useAuthStore();
+      authStore.cookieExpire = 42;
+      authStore.applySession({ user: { id: 'u2' } });
+      expect(authStore.user).toEqual({ id: 'u2' });
+      expect(authStore.cookieExpire).toBe(42);
+      expect(localStorage.getItem(`${config.cookie.prefix}CookieExpire`)).toBeNull();
+    });
+
+    it('is a no-op on an empty reply', () => {
+      const authStore = useAuthStore();
+      authStore.applySession();
+      expect(authStore.auth).toBe(false);
+      expect(authStore.user).toBeNull();
+    });
+  });
+
   describe('clearLockout', () => {
     it('should reset lockout state', () => {
       const authStore = useAuthStore();

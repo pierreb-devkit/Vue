@@ -98,6 +98,7 @@ import { useAuthStore } from '../../auth/stores/auth.store';
 import { isAuditOn } from '../lib/admin.audit';
 import { isModuleActive } from '../../../lib/helpers/modules';
 import AdminWeeklyBarsComponent from '../components/admin.weeklyBars.component.vue';
+import { formatDate, formatNumber, timeAgo } from '../../../lib/helpers/format';
 
 /** Weeks in a KPI period when the API does not say (matches the audit stats default). */
 const DEFAULT_PERIOD_WEEKS = 4;
@@ -268,37 +269,21 @@ export default {
      * @param {number} n - count
      * @returns {string} formatted count
      */
-    formatNumber(n) {
-      return Number(n || 0).toLocaleString('en-US');
-    },
+    formatNumber,
     /**
      * @desc Full date and time, for the tooltip of a recent event.
      * @param {string} iso - ISO date
      * @returns {string} formatted date
      */
     formatDate(iso) {
-      const d = new Date(iso);
-      return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+      return Number.isNaN(new Date(iso).getTime()) ? '' : formatDate(iso, { dateStyle: 'medium', timeStyle: 'short' });
     },
     /**
      * @desc Short relative time, e.g. "5 min ago", "3 days ago".
      * @param {string} iso - ISO date
      * @returns {string} relative time
      */
-    timeAgo(iso) {
-      const seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
-      if (Number.isNaN(seconds)) return '';
-      const rtf = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto', style: 'short' });
-      const steps = [
-        [60, 'second', 1],
-        [3600, 'minute', 60],
-        [86400, 'hour', 3600],
-        [604800, 'day', 86400],
-        [Infinity, 'week', 604800],
-      ];
-      const [, unit, size] = steps.find(([limit]) => seconds < limit);
-      return rtf.format(-Math.round(seconds / size), unit);
-    },
+    timeAgo,
   },
 };
 </script>

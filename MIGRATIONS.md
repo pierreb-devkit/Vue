@@ -4,6 +4,17 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## helpers: shared form rules, display formats and one session setter (2026-11-19, #4879)
+
+Nothing renders differently. New helpers to use in your own modules: `lib/helpers/rules.js` (`required()`, `requiredTrim()`, `email()`, `isEmail()`, each rule factory takes an optional message) and `lib/helpers/format.js` (`LOCALE`, `formatDate()`, `formatNumber()`, `timeAgo()`).
+
+- **Auth store:** new `applySession({ user, tokenExpiresIn })` writes the session (expiry in state + localStorage, user, auth flag), each part only when present. `organizations.switchOrganization()` now calls it instead of writing `authStore.user` / `cookieExpire`. A test that mocks the auth store by hand around `switchOrganization()` needs an `applySession` mock.
+- **One locale:** the shared helpers format with `LOCALE` (`en-US`), the locale every migrated site already used. The sidenav compute gauge still uses the browser locale for now.
+- **Avatar colours:** `orgColor.js` also exports `hashColor(str, palette)`; the user avatar uses it with its own palette (same colours as before).
+- **Pricing:** `pricingMath` exports `planDisplayAmount(plan, annual)` and `planAnnualSavingsPct(plan)` (the plan card price and savings chip, same results).
+
+---
+
 ## modules: switching an optional module off removes its shell, core and admin parts (2026-11-19, #4877)
 
 The shell, auth, users and home no longer import billing, organizations or legal. Each of those modules now ships a `src/modules/<module>/<module>.app.js` entry (the same `main.js` glob as your own `<project>.app.js`) that registers its parts only while `isModuleActive('<module>')` is true. With `modules.<name>.activated: false`, nothing of that module mounts.

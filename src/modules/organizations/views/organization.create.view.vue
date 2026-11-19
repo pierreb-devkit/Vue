@@ -79,6 +79,7 @@
 import { useOrganizationsStore } from '../stores/organizations.store';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
+import { requiredTrim } from '../../../lib/helpers/rules';
 
 export default {
   name: 'OrganizationCreateView',
@@ -95,7 +96,7 @@ export default {
       // (yet) populate currentOrganization — lets retryRefresh() re-attempt
       // the refresh without recreating the organization.
       pendingOrg: null,
-      rules: { required: (v) => (!!v && !!v.trim()) || 'Required' },
+      rules: { required: requiredTrim() },
     };
   },
   methods: {

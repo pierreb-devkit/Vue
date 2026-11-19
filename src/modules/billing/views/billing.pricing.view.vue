@@ -141,7 +141,7 @@ import { usePricing } from '../composables/billing.usePricing.js';
 import { useCurrencyFormat } from '../composables/billing.useCurrencyFormat.js';
 import { validateStripeUrl } from '../lib/stripeRedirect';
 import { lacksPayRight } from '../lib/payRights.js';
-import { computeAnnualSavingsPct, findPlan, resolveTabIndexFromHash } from '../lib/pricingMath.js';
+import { findPlan, planAnnualSavingsPct, planDisplayAmount, resolveTabIndexFromHash } from '../lib/pricingMath.js';
 import { isPrerenderCrawl } from '../../../lib/helpers/prerender';
 import { usePageHead } from '../../../lib/composables/usePageHead';
 import BillingPricingToggleComponent from '../components/billing.pricingToggle.component.vue';
@@ -292,19 +292,13 @@ export default {
           : (plan.monthlyPriceObject?.id ?? plan.monthlyPrice?.id ?? null);
 
         // Resolve price display — Stripe price objects (when present) override static-content amounts.
-        // Supports BOTH plan shapes:
-        //  - V4 (downstream static content): plan.meta.{monthlyPrice,annualPrice} (raw numbers)
-        //  - Devkit (post usePricing normalization): plan.{monthlyPrice,annualPrice} (raw numbers)
+        // Both plan shapes (static plan.{monthly,annual}Price or plan.meta.*): see pricingMath.
         let priceAmount;
         let pricePeriod = null;
         if (isFree) {
           priceAmount = 'Free';
         } else {
-          const staticMonthly = (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : null) ?? plan.meta?.monthlyPrice ?? null;
-          const staticAnnual = (typeof plan.annualPrice === 'number' ? plan.annualPrice : null) ?? plan.meta?.annualPrice ?? null;
-          const displayAmt = this.effectiveAnnual
-            ? (plan.annualPriceObject?.amount ?? (typeof staticAnnual === 'number' && staticAnnual > 0 ? staticAnnual : null))
-            : (plan.monthlyPriceObject?.amount ?? (typeof staticMonthly === 'number' && staticMonthly > 0 ? staticMonthly : null));
+          const displayAmt = planDisplayAmount(plan, this.effectiveAnnual);
           if (displayAmt != null) {
             priceAmount = this.formatPrice(displayAmt);
             pricePeriod = this.effectiveAnnual ? '/year' : '/month';
@@ -344,16 +338,7 @@ export default {
         }
 
         // Annual savings — rendered as a tonal chip next to the price on annual when discount > 0.
-        // Supports BOTH plan shapes:
-        //  - V4 (downstream static content): plan.meta.monthlyPrice / plan.meta.annualPrice (raw numbers)
-        //  - Devkit (post usePricing normalization): plan.monthlyPrice / plan.annualPrice (raw numbers)
-        const annualSavingsPct = (() => {
-          const metaM = plan.meta?.monthlyPrice ?? null;
-          const metaA = plan.meta?.annualPrice ?? null;
-          const mp = plan.monthlyPriceObject?.amount ?? (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : (typeof metaM === 'number' ? metaM : 0));
-          const ap = plan.annualPriceObject?.amount ?? (typeof plan.annualPrice === 'number' ? plan.annualPrice : (typeof metaA === 'number' ? metaA : 0));
-          return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
-        })();
+        const annualSavingsPct = planAnnualSavingsPct(plan);
         const priceChip = (this.effectiveAnnual && annualSavingsPct > 0)
           ? { text: `Save ${annualSavingsPct}%`, color: 'success' }
           : null;

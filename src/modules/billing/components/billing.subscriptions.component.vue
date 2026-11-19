@@ -310,6 +310,7 @@ import BillingMeterBreakdownChartComponent from './billing.meterBreakdownChart.c
 import BillingExtrasLedgerComponent from './billing.extrasLedger.component.vue';
 import BillingExtrasCheckoutModalComponent from './billing.extrasCheckoutModal.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
+import { formatDate } from '../../../lib/helpers/format';
 
 const { tabs: tabsConfig } = resolveStaticContent();
 
@@ -320,11 +321,7 @@ const { tabs: tabsConfig } = resolveStaticContent();
  */
 const formatLongDate = (date) => {
   if (!date) return null;
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  return formatDate(date, { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
 /**

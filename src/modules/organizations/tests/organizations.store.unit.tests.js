@@ -26,7 +26,7 @@ vi.mock('../../../lib/services/config', async () => {
 });
 
 // Mock auth store — return one shared object so mutations are observable
-const mockAuthStore = { user: null, cookieExpire: null };
+const mockAuthStore = { user: null, cookieExpire: null, applySession: vi.fn() };
 vi.mock('../../auth/stores/auth.store', () => ({
   useAuthStore: vi.fn(() => mockAuthStore),
 }));
@@ -241,6 +241,7 @@ describe('Organizations Store', () => {
       expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/1/switch`);
       expect(store.currentOrganization).toEqual(switchedOrg);
       expect(updateAbilities).toHaveBeenCalledWith(['read', 'write']);
+      expect(mockAuthStore.applySession).toHaveBeenCalledWith({ abilities: ['read', 'write'], user: { name: 'User1' }, tokenExpiresIn: 3600 });
     });
 
     it('should fall back to organizations list when no data returned', async () => {

@@ -140,6 +140,25 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
+     * @desc Write the session a reply carries (signin, signup, token refresh,
+     *       password reset, organization switch): the token expiry (state +
+     *       localStorage) and the signed-in user. Each part is written only
+     *       when present, so a partial reply never clears the other.
+     * @param {{ user?: Object, tokenExpiresIn?: number }} data - Reply payload.
+     * @returns {void}
+     */
+    applySession({ user, tokenExpiresIn } = {}) {
+      if (tokenExpiresIn) {
+        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, tokenExpiresIn);
+        this.cookieExpire = tokenExpiresIn;
+      }
+      if (user) {
+        this.auth = true;
+        this.user = user;
+      }
+    },
+
+    /**
      * @desc Fetch public auth config flags from the API
      * @returns {Object|null} Server auth config or null on failure
      */
@@ -182,11 +201,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.post(`${api}/${config.api.endPoints.auth}/signin`, params);
         // A reply without a user cannot open a session: stay signed out.
         if (!res?.data?.user) throw new Error('signin reply carries no user');
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-
-        this.auth = true;
-        this.cookieExpire = res.data.tokenExpiresIn;
-        this.user = res.data.user;
+        this.applySession(res.data);
         this.lockout = { locked: false, retryAfter: 0 };
 
         if (res.data.abilities) updateAbilities(res.data.abilities);
@@ -290,11 +305,7 @@ export const useAuthStore = defineStore('auth', {
       clearRef();
       // A reply without a user cannot open a session: stay signed out.
       if (!res?.data?.user) throw new Error('signup reply carries no user');
-      localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-
-      this.auth = true;
-      this.cookieExpire = res.data.tokenExpiresIn;
-      this.user = res.data.user;
+      this.applySession(res.data);
 
       if (res.data.suggestedJoin) {
         this.setSuggestedJoin(res.data.suggestedJoin);
@@ -429,11 +440,7 @@ export const useAuthStore = defineStore('auth', {
         if (generation !== _authGeneration) return; // signout() won the race
         // A reply without a user cannot open a session: stay signed out.
         if (!res?.data?.user) throw new Error('token reply carries no user');
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-
-        this.auth = true;
-        this.cookieExpire = res.data.tokenExpiresIn;
-        this.user = res.data.user;
+        this.applySession(res.data);
         // Soft-refresh must carry pendingRequests too, so the org-required wall's
         // join banner + duplicate-request guard stay accurate after a token()
         // soft-refresh (mirrors refreshAbilities()). /token already returns it.
@@ -488,11 +495,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         // A reply without a user cannot open a session: stay signed out.
         if (!res?.data?.user) throw new Error('reset reply carries no user');
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, res.data.tokenExpiresIn);
-
-        this.auth = true;
-        this.cookieExpire = res.data.tokenExpiresIn;
-        this.user = res.data.user;
+        this.applySession(res.data);
 
         coreStore.refreshNav(this.isLoggedIn);
       } catch (err) {

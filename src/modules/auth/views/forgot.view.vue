@@ -49,6 +49,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { required, email } from '../../../lib/helpers/rules';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
@@ -76,8 +77,8 @@ export default {
       error: '',
       email: '',
       rules: {
-        required: (v) => !!v || 'Required',
-        mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
+        required: required(),
+        mail: email(),
       },
     };
   },
