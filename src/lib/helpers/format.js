@@ -33,6 +33,9 @@ const RELATIVE_STEPS = [
   [Infinity, 'week', 604800],
 ];
 
+/** Built once: Intl formatters are costly to construct and this one never changes. */
+const RELATIVE_FORMAT = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto', style: 'short' });
+
 /**
  * @desc Relative time from now. Two styles:
  *  - `'short'` (default): Intl short style, e.g. "5 min. ago", "yesterday", "3 wk. ago";
@@ -57,5 +60,5 @@ export const timeAgo = (value, { style = 'short' } = {}) => {
   }
   const seconds = Math.max(0, diffMs / 1000);
   const [, unit, size] = RELATIVE_STEPS.find(([limit]) => seconds < limit);
-  return new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto', style: 'short' }).format(-Math.round(seconds / size), unit);
+  return RELATIVE_FORMAT.format(-Math.round(seconds / size), unit);
 };
