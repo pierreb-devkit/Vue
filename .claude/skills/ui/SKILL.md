@@ -32,9 +32,23 @@ This skill is an **enforcer** of the design system (Vuetify 4 + MD3 + theme help
 - **Colors**: Theme tokens via config or CSS variables (`rgb(var(--v-theme-primary))`), never hardcoded hex in templates
 - **Dark/light**: Everything must work in both modes
 - **Config-driven**: Prefer config options over hardcoded values
-- **CSS last resort**: Prefer in order: Vuetify props (`flat`, `elevation`, `variant`, `density`) → Vuetify utility classes (`pa-0`, `d-flex`) → Vuetify transitions (`v-fade-transition`, `v-scale-transition`) → `<style scoped>` only if no Vuetify alternative exists
+- **CSS last resort**: Prefer in order: Vuetify props (`flat`, `elevation`, `variant`, `density`, `max-width`) → Vuetify utility classes (`pa-0`, `d-flex`, `d-sr-only`, `border-t`, `opacity-60`, `cursor-pointer`, `text-mono`, `bg-transparent`) → Vuetify transitions (`v-fade-transition`, `v-scale-transition`) → `<style scoped>` only for a case on the list below
 - **Reuse**: Check existing components before creating new ones
 - **Verify**: Screenshot desktop+mobile, light+dark after visual changes
+
+## No custom CSS, except
+
+Write CSS (a `<style>` block or an inline style object) only for these cases, and say which one in a comment when it is not obvious. Vuetify utilities sit in a CSS layer without `!important`, so a scoped rule always beats them: when you swap a rule for a class, delete the rule.
+
+- **Keyframe animations**, each with a `@media (prefers-reduced-motion: reduce)` guard that shows the end state.
+- **Liquid glass and masks** (`backdrop-filter`, `mask-composite`): through `liquidGlassStyle()`, colours from theme tokens.
+- **Rendered markdown** (marked output cannot take classes): wrap it in `CoreProseComponent`, the one prose sheet; a page adds only what is its own.
+- **Print** (`@media print`).
+- **Runtime geometry**: sizes, offsets or positions computed from props or the DOM.
+- **Config style helpers**: `style()`, `overlapStyle()`, `colorModeStyle()`, `sectionStyles()` (home sections).
+- **Sign-in brand buttons** (each provider's own colours).
+- **Layout details with no utility**: `font-variant-numeric`, flex `min-width: 0`, `scroll-margin-top`, a sticky offset, `white-space: pre-line`, the footer position.
+- **Avatar identity colours**: `hashColor()` and `avatarTextClass()` from `lib/helpers/orgColor.js`, one palette.
 
 ## Beauty pass (correct → beautiful)
 
