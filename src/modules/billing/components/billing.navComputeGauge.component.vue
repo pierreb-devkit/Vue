@@ -67,7 +67,6 @@ import { useBillingStore } from '../stores/billing.store.js';
 import { useAuthStore } from '../../auth/stores/auth.store.js';
 import { useMeter } from '../composables/billing.useMeter';
 import BillingEquivalencesChipsComponent from './billing.equivalencesChips.component.vue';
-import { formatDate, LOCALE } from '../../../lib/helpers/format';
 
 export default {
   name: 'BillingNavComputeGaugeComponent',
@@ -216,17 +215,22 @@ export default {
     },
 
     usedDisplay() {
-      return this.meterUsed.toLocaleString(LOCALE);
+      return this.meterUsed.toLocaleString();
     },
 
     totalDisplay() {
-      return this.totalQuota.toLocaleString(LOCALE);
+      return this.totalQuota.toLocaleString();
     },
 
     resetLabel() {
       const resetAt = this.usageMeter?.weekResetAt || this.nextMondayIso();
       try {
-        const formatted = formatDate(resetAt, { weekday: 'short', month: 'short', day: 'numeric' });
+        const d = new Date(resetAt);
+        const formatted = d.toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
         return `resets ${formatted}`;
       } catch {
         return null;
