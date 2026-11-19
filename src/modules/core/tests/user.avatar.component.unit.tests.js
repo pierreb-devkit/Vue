@@ -145,6 +145,21 @@ describe('user.avatar.component', () => {
   });
 
   describe('avatarColor computed', () => {
+    /** origin/master's user avatar colour, verbatim (inline hash + user palette). */
+    const masterUserColor = (email) => {
+      const pal = ['#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00', '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41', '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B', '#FFB300'];
+      let hash = 0;
+      for (let i = 0; i < email.length; i += 1) {
+        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return pal[Math.abs(hash) % pal.length];
+    };
+
+    it.each(['john@example.com', 'jane@example.com', 'test@test.com', 'a@b.com', ''])('keeps the master colour for %j', (email) => {
+      const wrapper = createWrapper({ user: email ? { email } : { firstName: 'John' } });
+      expect(wrapper.vm.avatarColor).toBe(masterUserColor(email));
+    });
+
     it('returns a consistent color for the same email', () => {
       const wrapper1 = createWrapper({ user: { email: 'john@example.com' } });
       const wrapper2 = createWrapper({ user: { email: 'john@example.com' } });

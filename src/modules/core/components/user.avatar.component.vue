@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { hashColor, avatarTextClass } from '../../../lib/helpers/orgColor';
+import { hashColor, avatarTextClass, userPalette } from '../../../lib/helpers/orgColor';
 
 /**
  * @desc Reusable user avatar component.
@@ -79,7 +79,7 @@ export default {
       return [this.user.firstName, this.user.lastName].filter(Boolean).join(' ') || this.user.email || '';
     },
     avatarColor() {
-      return hashColor((this.user && this.user.email) || '');
+      return hashColor((this.user && this.user.email) || '', userPalette);
     },
     textColorClass() {
       return avatarTextClass(this.avatarColor);

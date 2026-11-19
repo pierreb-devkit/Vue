@@ -4,6 +4,19 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## ui: Vuetify utilities and props instead of custom CSS; shared prose and section helpers (2026-11-19, #4880)
+
+Mostly visual parity; check the points below if you override the nav, the pages view or the home sections.
+
+- **Nav drawer:** the drawer root now carries the nav colour (`background` + `color`); its lists are `bg-transparent` and the per-item `:style="{ color: navColor }"` is gone, so items inherit the colour. The `listStyle` computed is removed. A project that overrides the navigation component, reads `listStyle`, or targets `.v-list` backgrounds inside the drawer must follow the new shape.
+- **Rendered markdown:** new `CoreProseComponent` (`core/components/core.prose.component.vue`), the one stylesheet for marked + DOMPurify output, theme tokens only. Wrap your own rendered markdown in it instead of keeping a copy of the prose CSS. The docs article view uses it.
+- **`/pages` restyle:** the pages view uses `CoreProseComponent` too, so it now looks like the docs (theme colours, the theme font, no Open Sans). The `.air` print/page sheet is removed: the home store only ever sets `classic`; a project that overrides the store to return `'air'` loses that style and should keep its own copy.
+- **Home sections:** new `sectionStyles(setup, display, cardKind)` in `lib/helpers/theme.js` returns the section, container and card styles (theme `background`, or `surface` with `variant: 'alternate'`). Use it in your own home sections instead of rebuilding the styles.
+- **Avatar helpers:** `hashColor(str, colors = palette)` now defaults to the organization palette; `orgColor.js` also exports `palette`, `userPalette` and `avatarTextClass(hex)` (`text-black` / `text-white` by luminance). The organization initial now uses `avatarTextClass` instead of always white; user avatars keep their own palette and the same colours.
+- **Reduced motion:** the social marquee and the dynamic island stop animating under `prefers-reduced-motion: reduce`.
+
+---
+
 ## helpers: shared form rules, display formats and one session setter (2026-11-19, #4879)
 
 Nothing renders differently. New helpers to use in your own modules: `lib/helpers/rules.js` (`required()`, `requiredTrim()`, `email()`, `isEmail()`, each rule factory takes an optional message) and `lib/helpers/format.js` (`LOCALE`, `formatDate()`, `formatNumber()`, `timeAgo()`).

@@ -1,8 +1,8 @@
 /**
  * @desc Pick a deterministic color for a string from a palette (same string, same color).
- * Shared by the organization and user avatars.
+ * Shared by the organization and user avatars, which keep their own palettes.
  * @param {string} str - Input string (name, email, id).
- * @param {string[]} [colors] - Hex colors to pick from (default: the avatar palette).
+ * @param {string[]} [colors] - Hex colors to pick from (default: the organization palette).
  * @returns {string} A hex color from the palette
  */
 export const hashColor = (str, colors = palette) => {
@@ -13,11 +13,19 @@ export const hashColor = (str, colors = palette) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-/** Avatar palette, shared by organization and user avatars. */
+/** Organization avatar palette (the `hashColor` default). */
 export const palette = [
   '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e67e22',
   '#e74c3c', '#1e90ff', '#ff6348', '#a55eea', '#0abde3',
   '#10ac84', '#ee5a24',
+];
+
+/** User avatar palette (picked by email hash). */
+export const userPalette = [
+  '#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00',
+  '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41',
+  '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B',
+  '#FFB300',
 ];
 
 /**
