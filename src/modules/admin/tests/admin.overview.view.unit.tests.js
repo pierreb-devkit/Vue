@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import AdminOverview from '../views/admin.overview.view.vue';
 
 vi.mock('../../../lib/services/axios', () => ({
@@ -156,8 +157,9 @@ describe('admin.overview.view', () => {
     expect(store.getStats).toHaveBeenCalledWith({ audit: true, only: ['users'] });
   });
 
-  it('should hide the activity parts when audit logging is disabled', async () => {
-    const wrapper = mountView({ audit: { enabled: false } });
+  it('should hide the activity parts when the server config reports audit off', async () => {
+    useAuthStore().serverConfig = { audit: { enabled: false } };
+    const wrapper = mountView();
     expect(store.getStats).toHaveBeenCalledWith({ audit: false, only: undefined });
     store.stats = { ...fullStats(), audit: null, recent: null };
     await wrapper.vm.$nextTick();

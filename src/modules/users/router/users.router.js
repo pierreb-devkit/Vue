@@ -42,15 +42,6 @@ export default [
           requiresAuth: true,
         },
       },
-      {
-        path: 'organizations',
-        name: 'Account Organizations',
-        component: () => import('../views/user.organizations.view.vue'),
-        meta: {
-          display: false,
-          requiresAuth: true,
-        },
-      },
     ],
   },
   {

@@ -624,6 +624,10 @@ export default {
     // Content items:
     // - value (String): Number/metric to display (e.g., '100+', '50K')
     // - title (String): Metric label/description
+    // - source (String, optional): key of `api.endPoints` whose `GET /<endpoint>/stats`
+    //   replaces `value` at runtime (when `dynamic` is not false)
+    // - module (String, optional): optional module that owns the metric; the item is
+    //   dropped when that module is switched off (`modules.<name>.activated: false`)
     //
     // Tip: Use compelling numbers that build credibility
     statistics: {
@@ -650,10 +654,13 @@ export default {
         {
           value: '0',
           title: 'Tasks',
+          source: 'tasks',
+          module: 'tasks',
         },
         {
           value: '0',
           title: 'Users',
+          source: 'account',
         },
         {
           value: '50m',

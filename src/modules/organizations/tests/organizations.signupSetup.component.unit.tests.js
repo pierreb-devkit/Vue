@@ -5,14 +5,14 @@ import { createVuetify } from 'vuetify';
 
 const createOrganizationMock = vi.hoisted(() => vi.fn());
 const createJoinRequestMock = vi.hoisted(() => vi.fn());
-vi.mock('../../organizations/stores/organizations.store', () => ({
+vi.mock('../stores/organizations.store', () => ({
   useOrganizationsStore: () => ({
     createOrganization: createOrganizationMock,
     createJoinRequest: createJoinRequestMock,
   }),
 }));
 
-import AuthOrganizationSetupComponent from '../components/organizationSetup.component.vue';
+import AuthOrganizationSetupComponent from '../components/organizations.signupSetup.component.vue';
 
 const mockConfig = {
   vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
@@ -48,7 +48,7 @@ const mountComponent = (formStub = makeFormStub(), props = {}, config = mockConf
     },
   });
 
-describe('auth.organizationSetup.component', () => {
+describe('organizations.signupSetup.component', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     createOrganizationMock.mockReset();

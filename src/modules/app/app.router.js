@@ -12,7 +12,7 @@ import config from '../../lib/services/config';
 
 import home from '../home/router/home.router';
 import auth from '../auth/router/auth.router';
-import organizations, { ORG_PARENT_PATH } from '../organizations/router/organizations.router';
+import organizations, { ORG_PARENT_PATH, organizationsAccountRoutes } from '../organizations/router/organizations.router';
 import admin from '../admin/router/admin.router';
 import users, { ACCOUNT_PARENT_PATH } from '../users/router/users.router';
 import tasks from '../tasks/router/tasks.router';
@@ -104,6 +104,7 @@ const getRouter = () => {
    * `'invitations'`) so they resolve under the `/users` parent.
    */
   const accountChildModules = [
+    { name: 'organizations', routes: organizationsAccountRoutes },
     { name: 'invitations', routes: invitationsAccountRoutes },
     ..._downstreamAccountChildModules,
   ];

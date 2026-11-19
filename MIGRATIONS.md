@@ -4,6 +4,18 @@ Breaking changes and upgrade notes for downstream projects.
 
 ---
 
+## modules: switching an optional module off removes its shell, core and admin parts (2026-11-19, #4877)
+
+The shell, auth, users and home no longer import billing, organizations or legal. Each of those modules now ships a `src/modules/<module>/<module>.app.js` entry (the same `main.js` glob as your own `<project>.app.js`) that registers its parts only while `isModuleActive('<module>')` is true. With `modules.<name>.activated: false`, nothing of that module mounts.
+
+- **Shell parts:** `app.vue` renders one registry (`useShellExtras`, in `src/lib/composables`) where it mounted the organizations banners and header action, the legal cookie banner and footer links, and the billing nav extras. The billing 80 % / 100 % meter toast moved out of `app.vue` into `billing.meterAlert.component.vue`. If you mount your own shell part, register it from your `<project>.app.js`: `useShellExtras().register('<id>', Component)`.
+- **Sign-in hook:** the auth store no longer refreshes the billing meter itself; billing registers it with `onSignin(id, fn)` (`src/lib/helpers/signinHooks.js`), which the auth store runs after every sign-in.
+- **Moved files:** `auth/components/organizationSetup.component.vue` → `organizations/components/organizations.signupSetup.component.vue` (the sign-up view renders it through `useSignupSteps`; with organizations off the step is skipped). `users/views/user.organizations.view.vue` → `organizations/views/organizations.account.view.vue`; its route `Account Organizations` (`/users/organizations`) is now injected by the organizations module, and the `organizations` tab in `users.tabs` carries `module: 'organizations'`. Update any import of the old paths.
+- **Home statistics:** live counts now come from each item's own `source` (a key of `api.endPoints`; `GET /<endpoint>/stats` fills `value`), and an item with `module: '<name>'` is dropped when that module is off. Before, the first two items were always filled with the tasks and users counts. If you override `home.statistics.content`, add `source: 'tasks', module: 'tasks'` and `source: 'account'` to the items that showed them.
+- **Admin:** Overview and Activity read `serverConfig.audit.enabled` from the API (needs Node#4302) instead of `config.audit.enabled`, which no Vue config set. A Vue-side `audit.enabled: false` override no longer does anything; switch audit off in the API. The built-in Organizations admin tab carries `module: 'organizations'`.
+
+---
+
 ## cleanup: dead components, build leftovers and back-compat paths removed (2026-11-19, #4875)
 
 Nothing here renders differently; each removed piece had no reader in the stack. Check your own project code for the names below after `/update-stack`.

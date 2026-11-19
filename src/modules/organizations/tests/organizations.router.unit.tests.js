@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import routes from '../router/organizations.router';
+import routes, { organizationsAccountRoutes } from '../router/organizations.router';
 
 describe('organizations router', () => {
   test('Account Organization General child path is "general" not ""', () => {
@@ -23,5 +23,14 @@ describe('organizations router', () => {
     const route = routes.find((r) => r.path === '/organization-required');
     expect(route).toBeTruthy();
     expect(route.meta.orgGate).toBe(true);
+  });
+
+  test('exports the Account Organizations child (relative path, auth required) for injection under /users', () => {
+    expect(organizationsAccountRoutes).toHaveLength(1);
+    const [route] = organizationsAccountRoutes;
+    expect(route.name).toBe('Account Organizations');
+    expect(route.path).toBe('organizations');
+    expect(route.meta.requiresAuth).toBe(true);
+    expect(typeof route.component).toBe('function');
   });
 });

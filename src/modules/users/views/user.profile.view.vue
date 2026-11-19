@@ -5,7 +5,6 @@
         <v-card color="surface" class="pa-6">
           <userProfileComponent
             :user="user"
-            :organizations="organizations"
             @save="updateProfile"
             @avatar-uploaded="onAvatarUploaded"
           />
@@ -54,7 +53,6 @@
 
 <script>
 import { useAuthStore } from '../../auth/stores/auth.store';
-import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 import { useUsersStore } from '../stores/users.store';
 import userProfileComponent from '../components/user.profile.component.vue';
 import userEmailPreferencesComponent from '../components/user.emailPreferences.component.vue';
@@ -64,13 +62,12 @@ export default {
   name: 'UserProfileView',
   components: { userProfileComponent, userEmailPreferencesComponent, coreConfirmDialog },
   /**
-   * @desc Wires auth, organizations, and users stores for computed properties and methods.
-   * @returns {{ authStore: Object, organizationsStore: Object, usersStore: Object }}
+   * @desc Wires auth and users stores for computed properties and methods.
+   * @returns {{ authStore: Object, usersStore: Object }}
    */
   setup() {
     return {
       authStore: useAuthStore(),
-      organizationsStore: useOrganizationsStore(),
       usersStore: useUsersStore(),
     };
   },
@@ -90,13 +87,6 @@ export default {
      */
     user() {
       return this.authStore.user || {};
-    },
-    /**
-     * @desc Organizations the user belongs to (passed to profile form for avatar context).
-     * @returns {Array}
-     */
-    organizations() {
-      return this.organizationsStore.organizations;
     },
   },
   methods: {

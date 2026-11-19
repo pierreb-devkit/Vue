@@ -670,6 +670,7 @@ describe('app.router', () => {
       // parent route with the injection seam (empty children array).
       vi.doMock('../../organizations/router/organizations.router', () => ({
         ORG_PARENT_PATH: orgParentPath,
+        organizationsAccountRoutes: [],
         default: [
           {
             path: orgParentPath,
@@ -760,6 +761,24 @@ describe('app.router', () => {
       // ...but the invitations tab/route is absent from both.
       expect((adminParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
       expect((accountParent.children || []).find((c) => c.path === 'invitations')).toBeUndefined();
+    });
+
+    it('injects Account Organizations under /users only while the organizations module is active', async () => {
+      vi.resetModules();
+      mockIsModuleActive = () => true;
+      let router = (await setupRouterModule()).default();
+      let accountParent = router.options.routes.find((r) => r.path === '/users');
+      const orgs = accountParent.children.find((c) => c.name === 'Account Organizations');
+      expect(orgs).toBeDefined();
+      expect(orgs.path).toBe('organizations');
+      expect(orgs.meta.requiresAuth).toBe(true);
+
+      vi.resetModules();
+      mockIsModuleActive = (name) => name !== 'organizations';
+      router = (await setupRouterModule()).default();
+      accountParent = router.options.routes.find((r) => r.path === '/users');
+      expect(accountParent.children.find((c) => c.name === 'Account Organizations')).toBeUndefined();
+      expect(accountParent.children.find((c) => c.name === 'Account Profile')).toBeDefined();
     });
   });
 

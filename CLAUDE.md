@@ -18,6 +18,7 @@ This repository is open source. **Never reference downstream consumers** — pro
 - Modules are independent — no cross-module imports without justification.
 - Shared code in `src/modules/core` only with justification.
 - Modularity, UI rules, and definition of done → see `/feature`
+- **Optional modules never leak into always-on code** (`home`, `auth`, `users`, `app`, `core`): an optional module plugs its shell parts, sign-up steps and sign-in hooks in from its own `<module>.app.js` (`useShellExtras`, `useSignupSteps`, `onSignin`), gated by `isModuleActive`; only `app.router.js` imports optional routers.
 
 ## CASL abilities & organizations
 

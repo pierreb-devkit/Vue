@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { shallowMount } from '@vue/test-utils';
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
 import AdminActivity from '../views/admin.activity.view.vue';
 
 // Mock axios
@@ -175,13 +176,25 @@ describe('admin.activity.view', () => {
     expect(wrapper.vm.activityPage).toBe(1);
   });
 
-  it('should not fetch activity on mount when audit is disabled via config', () => {
+  it('should not fetch activity on mount and show the disabled notice when the server config reports audit off', () => {
     const getAuditLogs = vi.fn().mockResolvedValue();
     setActivePinia(createPinia());
     const store = useAdminStore();
     store.getAuditLogs = getAuditLogs;
-    mountActivity({ audit: { enabled: false } });
+    useAuthStore().serverConfig = { audit: { enabled: false } };
+    const view = mountActivity();
     expect(getAuditLogs).not.toHaveBeenCalled();
+    expect(view.vm.auditOn).toBe(false);
+  });
+
+  it('should fetch activity on mount when the server config has no audit key (older API)', () => {
+    const getAuditLogs = vi.fn().mockResolvedValue();
+    setActivePinia(createPinia());
+    const store = useAdminStore();
+    store.getAuditLogs = getAuditLogs;
+    useAuthStore().serverConfig = { sign: { in: true } };
+    mountActivity();
+    expect(getAuditLogs).toHaveBeenCalled();
   });
 });
 

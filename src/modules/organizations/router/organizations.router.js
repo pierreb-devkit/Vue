@@ -15,6 +15,25 @@ import organizationGeneralTab from '../components/organization.general.tab.vue';
 export const ORG_PARENT_PATH = '/users/organizations/:organizationId';
 
 /**
+ * Account-surface child route — the user's organizations list, injected by
+ * `app.router.js` under the `/users` parent via `injectModuleChildren`, gated by
+ * `isModuleActive('organizations')`. Relative path so it resolves under `/users`.
+ * The matching tab descriptor lives in `config.users.tabs` (`module: 'organizations'`).
+ * @type {Array<object>}
+ */
+export const organizationsAccountRoutes = [
+  {
+    path: 'organizations',
+    name: 'Account Organizations',
+    component: () => import('../views/organizations.account.view.vue'),
+    meta: {
+      display: false,
+      requiresAuth: true,
+    },
+  },
+];
+
+/**
  * Router configuration.
  */
 export default [

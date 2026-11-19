@@ -48,7 +48,7 @@ import { useAdminStore } from '../stores/admin.store';
 const BUILT_IN_TABS = Object.freeze([
   { value: 'overview', label: 'Overview', icon: 'fa-solid fa-chart-column', route: 'overview' },
   { value: 'users', label: 'Users', icon: 'fa-solid fa-users', route: 'users' },
-  { value: 'organizations', label: 'Organizations', icon: 'fa-solid fa-building', route: 'organizations' },
+  { value: 'organizations', label: 'Organizations', icon: 'fa-solid fa-building', route: 'organizations', module: 'organizations' },
   { value: 'readiness', label: 'Readiness', icon: 'fa-solid fa-clipboard-check', route: 'readiness' },
   { value: 'activity', label: 'Activity', icon: 'fa-solid fa-clock-rotate-left', route: 'activity' },
 ]);

@@ -340,6 +340,66 @@ describe('App.vue — theme wiring (#4462)', () => {
   });
 });
 
+describe('App.vue — optional module shell parts', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useHeadMock.mockClear();
+  });
+
+  /**
+   * @desc Mount App with a slot-rendering v-app so shell parts are reachable.
+   * @returns {import('@vue/test-utils').VueWrapper} Mounted wrapper
+   */
+  const mountShell = () => {
+    const config = {
+      ...makeConfig(),
+      vuetify: { theme: { snackbar: { status: false }, navigation: {} } },
+      header: { display: false },
+      footer: { links: [], variant: 'default' },
+    };
+    return mount(App, {
+      global: {
+        mocks: { config, $route: { path: '/', matched: [{ path: '/' }], meta: {} } },
+        stubs: {
+          RouterView: true,
+          'v-app': { template: '<div><slot /></div>' },
+          'v-snackbar': true,
+          'v-main': true,
+          authEmailBanner: true,
+          authPendingRequestBanner: true,
+        },
+      },
+    });
+  };
+
+  it('imports no optional module (billing, organizations, legal, tasks, docs, invitations)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const sfc = readFileSync(resolve(process.cwd(), 'src/modules/app/app.vue'), 'utf8');
+    expect(sfc).not.toMatch(/from '\.\.\/(billing|organizations|legal|tasks|docs|invitations)\//);
+  });
+
+  it('renders every part registered in the shell registry, and drops it once unregistered', async () => {
+    const { useShellExtras } = await import('../../../lib/composables/useShellExtras');
+    const { register, unregister } = useShellExtras();
+    register('test-shell-part', { name: 'TestShellPart', template: '<div class="test-shell-part" />' });
+    try {
+      const wrapper = mountShell();
+      expect(wrapper.find('.test-shell-part').exists()).toBe(true);
+      unregister('test-shell-part');
+      await nextTick();
+      expect(wrapper.find('.test-shell-part').exists()).toBe(false);
+    } finally {
+      unregister('test-shell-part');
+    }
+  });
+
+  it('renders no optional part when no module registered one', () => {
+    const wrapper = mountShell();
+    expect(wrapper.find('.test-shell-part').exists()).toBe(false);
+  });
+});
+
 describe('bare link rule', () => {
   it('matches class-less anchors and RouterLink output, never Vuetify components', async () => {
     const { readFileSync } = await import('node:fs');

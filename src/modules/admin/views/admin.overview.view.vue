@@ -94,6 +94,8 @@
  * Module dependencies.
  */
 import { useAdminStore } from '../stores/admin.store';
+import { useAuthStore } from '../../auth/stores/auth.store';
+import { isAuditOn } from '../lib/admin.audit';
 import AdminWeeklyBarsComponent from '../components/admin.weeklyBars.component.vue';
 
 /** Weeks in a KPI period when the API does not say (matches the audit stats default). */
@@ -140,9 +142,9 @@ export default {
     statsErrors() {
       return useAdminStore().statsErrors;
     },
-    /** @returns {boolean} whether audit logging is on (same rule as the Activity tab) */
+    /** @returns {boolean} whether the API records an audit log (same rule as the Activity tab) */
     auditOn() {
-      return !(this.config.audit && this.config.audit.enabled === false);
+      return isAuditOn(useAuthStore().serverConfig);
     },
     /** @returns {number} weeks per KPI period */
     periodWeeks() {
