@@ -4,7 +4,7 @@
 import { defineStore } from 'pinia';
 import posthog from 'posthog-js';
 import axios from '../../../lib/services/axios';
-import config, { apiBase } from '../../../lib/services/config';
+import { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture } from '../../../lib/helpers/analytics';
@@ -120,15 +120,8 @@ export const useOrganizationsStore = defineStore('organizations', {
       if (result.abilities) {
         updateAbilities(result.abilities);
       }
-      // Refresh user data in auth store
-      const authStore = useAuthStore();
-      if (result.user) {
-        authStore.user = result.user;
-      }
-      if (result.tokenExpiresIn) {
-        authStore.cookieExpire = result.tokenExpiresIn;
-        localStorage.setItem(`${config.cookie.prefix}CookieExpire`, result.tokenExpiresIn);
-      }
+      // Refresh user data and token expiry in the auth store (each only when returned)
+      useAuthStore().applySession(result);
 
       // PostHog group on org switch
       if (posthog.__loaded && this.currentOrganization) {

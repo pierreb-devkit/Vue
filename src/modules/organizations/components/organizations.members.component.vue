@@ -265,6 +265,7 @@ import { subject } from '@casl/ability';
 import { ability } from '../../../lib/helpers/ability';
 import { useOrganizationsStore } from '../stores/organizations.store';
 import roleColor from '../../../lib/helpers/roleColor';
+import { isEmail } from '../../../lib/helpers/rules';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import userAvatarComponent from '../../core/components/user.avatar.component.vue';
 /**
@@ -305,7 +306,7 @@ export default {
         })),
       // Email validity rule — mirrors the auth forms' `rules.mail` (signin/signup).
       // Gates the search so obvious garbage doesn't round-trip to the endpoint.
-      emailRules: [(v) => !v || /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid'],
+      emailRules: [(v) => !v || isEmail(v) || 'E-mail must be valid'],
       removeDialog: {
         show: false,
         memberId: null,
@@ -352,7 +353,7 @@ export default {
      * @returns {boolean}
      */
     isValidAddEmail() {
-      return /\S+@\S+\.\S+/.test((this.addDialog.email || '').trim());
+      return isEmail((this.addDialog.email || '').trim());
     },
   },
   methods: {

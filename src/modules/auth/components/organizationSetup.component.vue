@@ -106,6 +106,7 @@
 /**
  * Module dependencies.
  */
+import { requiredTrim } from '../../../lib/helpers/rules';
 import { useOrganizationsStore } from '../../organizations/stores/organizations.store';
 
 /**
@@ -137,7 +138,7 @@ export default {
       error: null,
       organizationName: this.defaultName ? `${this.defaultName}'s organization` : '',
       rules: {
-        required: (v) => (!!v && !!v.trim()) || 'Organization name is required',
+        required: requiredTrim('Organization name is required'),
       },
     };
   },

@@ -49,6 +49,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { required, email } from '../../../lib/helpers/rules';
 import config from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
@@ -77,8 +78,8 @@ export default {
       password: '',
       showPassword: false,
       rules: {
-        required: (v) => !!v || 'Required',
-        mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
+        required: required(),
+        mail: email(),
         password: (v) => (v && v.length >= 8) || 'Password must be at least 8 characters',
       },
     };

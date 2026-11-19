@@ -40,6 +40,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { required } from '../../../lib/helpers/rules';
 import { useTasksStore } from '../stores/tasks.store';
 import taskComponent from '../components/task.component.vue';
 import PageHeader from '../../core/components/core.pageHeader.component.vue';
@@ -62,7 +63,7 @@ export default {
       // Description
       valid: false,
       rules: {
-        required: (v) => !!v || 'Required',
+        required: required(),
       },
       // request
       loading: false,
