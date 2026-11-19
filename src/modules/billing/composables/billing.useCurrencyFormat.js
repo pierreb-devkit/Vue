@@ -2,7 +2,7 @@
  * billing.useCurrencyFormat
  * =========================
  * Composable for formatting monetary amounts using Intl.NumberFormat.
- * Currency is hardcoded to USD / en-US — no multi-currency or locale support.
+ * Currency is hardcoded to USD, in the app locale (`LOCALE`, lib/helpers/format) — no multi-currency support.
  *
  * USAGE:
  *   const { formatPrice } = useCurrencyFormat()
@@ -11,8 +11,9 @@
  * NOTE: `amount` is expected in major units (dollars), not cents.
  */
 
+import { LOCALE } from '../../../lib/helpers/format';
+
 const CURRENCY = 'USD';
-const LOCALE = 'en-US';
 const fmt = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENCY });
 
 /**
@@ -20,7 +21,7 @@ const fmt = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: CURRENC
  */
 export function useCurrencyFormat() {
   /**
-   * @desc Format a price amount as USD currency string using fixed en-US locale.
+   * @desc Format a price amount as USD currency string in the app locale (en-US).
    * Returns '—' for non-finite inputs (NaN, Infinity, undefined, null) — defensive only,
    * callers are expected to pass valid dollar amounts.
    * @param {number} amount - Price in dollars (major units)

@@ -103,6 +103,7 @@
 </template>
 
 <script>
+import { requiredTrim } from '../../../lib/helpers/rules';
 /**
  * Module dependencies.
  */
@@ -137,7 +138,7 @@ export default {
       error: null,
       organizationName: this.defaultName ? `${this.defaultName}'s organization` : '',
       rules: {
-        required: (v) => (!!v && !!v.trim()) || 'Organization name is required',
+        required: requiredTrim('Organization name is required'),
       },
     };
   },

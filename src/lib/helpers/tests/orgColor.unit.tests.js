@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import orgColor from '../orgColor';
+import orgColor, { hashColor } from '../orgColor';
 
 const palette = [
   '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#e67e22',
@@ -62,5 +62,25 @@ describe('orgColor Helper', () => {
   it('should handle an empty object', () => {
     const color = orgColor({});
     expect(palette).toContain(color);
+  });
+});
+
+describe('hashColor Helper', () => {
+  /** The user avatar inline hash, verbatim. */
+  const oldStringToColor = (str, pal) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i += 1) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return pal[Math.abs(hash) % pal.length];
+  };
+  const userPalette = ['#1E88E5', '#43A047', '#E53935', '#8E24AA', '#FB8C00', '#00ACC1', '#3949AB', '#D81B60', '#7CB342', '#6D4C41', '#5E35B1', '#039BE5', '#C0CA33', '#F4511E', '#00897B', '#FFB300'];
+
+  it.each(['', 'a', 'john@doe.com', 'very.long.address+tag@example.org'])('matches the user avatar inline hash for %j', (s) => {
+    expect(hashColor(s, userPalette)).toBe(oldStringToColor(s, userPalette));
+  });
+
+  it('backs orgColor with the organization palette', () => {
+    expect(orgColor('Acme Corp')).toBe(hashColor('Acme Corp', palette));
   });
 });

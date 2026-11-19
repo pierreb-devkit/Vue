@@ -11,6 +11,8 @@ import {
   findPlan,
   collectPlans,
   collectPacks,
+  planDisplayAmount,
+  planAnnualSavingsPct,
 } from '../lib/pricingMath.js';
 
 /**
@@ -295,5 +297,54 @@ describe('findPlan / collectPlans / collectPacks', () => {
     expect(collectPlans(null)).toEqual([]);
     expect(collectPacks(undefined)).toEqual([]);
     expect(collectPacks([{ id: 'x', plans: [{ id: 'p' }], packs: null }])).toEqual([]);
+  });
+});
+
+describe('planDisplayAmount / planAnnualSavingsPct', () => {
+  /** The pricing view inline derivations, verbatim. */
+  const oldDisplay = (plan, effectiveAnnual) => {
+    const staticMonthly = (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : null) ?? plan.meta?.monthlyPrice ?? null;
+    const staticAnnual = (typeof plan.annualPrice === 'number' ? plan.annualPrice : null) ?? plan.meta?.annualPrice ?? null;
+    return effectiveAnnual
+      ? (plan.annualPriceObject?.amount ?? (typeof staticAnnual === 'number' && staticAnnual > 0 ? staticAnnual : null))
+      : (plan.monthlyPriceObject?.amount ?? (typeof staticMonthly === 'number' && staticMonthly > 0 ? staticMonthly : null));
+  };
+  const oldSavings = (plan) => {
+    const metaM = plan.meta?.monthlyPrice ?? null;
+    const metaA = plan.meta?.annualPrice ?? null;
+    const mp = plan.monthlyPriceObject?.amount ?? (typeof plan.monthlyPrice === 'number' ? plan.monthlyPrice : (typeof metaM === 'number' ? metaM : 0));
+    const ap = plan.annualPriceObject?.amount ?? (typeof plan.annualPrice === 'number' ? plan.annualPrice : (typeof metaA === 'number' ? metaA : 0));
+    return computeAnnualSavingsPct({ monthlyPrice: mp, annualPrice: ap });
+  };
+
+  const PLANS = [
+    {},
+    { monthlyPrice: 10, annualPrice: 100 },
+    { monthlyPrice: 0, annualPrice: 0, meta: { monthlyPrice: 5, annualPrice: 50 } },
+    { meta: { monthlyPrice: 12, annualPrice: 120 } },
+    { meta: { monthlyPrice: '12', annualPrice: null } },
+    { monthlyPrice: null, meta: { monthlyPrice: 9 } },
+    { monthlyPrice: -3, annualPrice: NaN },
+    { monthlyPriceObject: { amount: 20 }, annualPriceObject: { amount: 200 }, monthlyPrice: 10 },
+    { monthlyPriceObject: { amount: 0 }, annualPriceObject: { amount: null }, annualPrice: 90 },
+    { monthlyPriceObject: {}, meta: { monthlyPrice: 8, annualPrice: 80 } },
+  ];
+
+  it.each(PLANS)('matches the pricing view inline derivation for %j', (plan) => {
+    expect(planDisplayAmount(plan, false)).toBe(oldDisplay(plan, false));
+    expect(planDisplayAmount(plan, true)).toBe(oldDisplay(plan, true));
+    expect(planAnnualSavingsPct(plan)).toBe(oldSavings(plan));
+  });
+
+  it('keeps a live amount of 0 (renders a $0.00 price)', () => {
+    expect(planDisplayAmount({ monthlyPriceObject: { amount: 0 } }, false)).toBe(0);
+  });
+
+  it('returns null when a plan has no positive price to show', () => {
+    expect(planDisplayAmount({ monthlyPrice: 0 }, false)).toBeNull();
+  });
+
+  it('computes savings from live amounts first', () => {
+    expect(planAnnualSavingsPct({ monthlyPriceObject: { amount: 10 }, annualPriceObject: { amount: 96 } })).toBe(20);
   });
 });

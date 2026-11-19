@@ -40,6 +40,8 @@
 </template>
 
 <script>
+import { formatDate } from '../../../lib/helpers/format';
+
 /** Scale tops per power of ten; each one splits into an integer half once scaled. */
 const STEPS = [1, 1.2, 1.6, 2, 2.4, 3, 4, 5, 6, 8, 10];
 
@@ -110,7 +112,7 @@ export default {
     formatWeek(week) {
       const d = new Date(`${week}T00:00:00Z`);
       if (Number.isNaN(d.getTime())) return week;
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      return formatDate(d, { month: 'short', day: 'numeric', timeZone: 'UTC' });
     },
   },
 };

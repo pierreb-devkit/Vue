@@ -120,6 +120,7 @@
  * Module dependencies.
  */
 import { useInvitationsStore } from '../stores/invitations.store';
+import { required, email } from '../../../lib/helpers/rules';
 import { inviteStatus as deriveInviteStatus } from '../lib/invitations.status';
 import coreDataTableComponent from '../../core/components/core.datatable.component.vue';
 import coreConfirmDialog from '../../core/components/core.confirmDialog.component.vue';
@@ -155,8 +156,8 @@ export default {
       // Single-flight guard for the resend icon-button (id in flight, or null).
       resendingId: null,
       rules: {
-        required: (v) => !!v || 'Required',
-        mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
+        required: required(),
+        mail: email(),
       },
     };
   },

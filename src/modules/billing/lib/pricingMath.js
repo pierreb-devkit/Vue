@@ -30,6 +30,46 @@ export function computeAnnualSavingsPct(plan) {
 }
 
 /**
+ * @desc Static (config) price of a plan for one period. Supports BOTH plan shapes:
+ *  - Devkit (post usePricing normalization): plan.{monthlyPrice,annualPrice} (raw numbers)
+ *  - V4 (downstream static content): plan.meta.{monthlyPrice,annualPrice} (raw numbers)
+ * @param {Object} plan
+ * @param {'monthlyPrice'|'annualPrice'} key
+ * @returns {number|null} The first numeric price found, else null.
+ */
+function staticPrice(plan, key) {
+  if (typeof plan?.[key] === 'number') return plan[key];
+  const meta = plan?.meta?.[key];
+  return typeof meta === 'number' ? meta : null;
+}
+
+/**
+ * @desc Price to show on a plan card: the live Stripe amount
+ * (`plan.{monthly,annual}PriceObject.amount`) first, else a positive static price.
+ * @param {Object} plan - Pricing plan (either shape, see `staticPrice`).
+ * @param {boolean} annual - True for the yearly price, false for the monthly one.
+ * @returns {number|null} Amount in major units, or null when the plan has no price to show.
+ */
+export function planDisplayAmount(plan, annual) {
+  const key = annual ? 'annualPrice' : 'monthlyPrice';
+  const fallback = staticPrice(plan, key);
+  return plan?.[`${key}Object`]?.amount ?? (fallback > 0 ? fallback : null);
+}
+
+/**
+ * @desc Annual savings percentage of a plan card, from its live amounts first,
+ * else its static prices (missing prices count as 0, so no saving).
+ * @param {Object} plan - Pricing plan (either shape, see `staticPrice`).
+ * @returns {number} Integer percentage in [0, 100]
+ */
+export function planAnnualSavingsPct(plan) {
+  return computeAnnualSavingsPct({
+    monthlyPrice: plan?.monthlyPriceObject?.amount ?? staticPrice(plan, 'monthlyPrice') ?? 0,
+    annualPrice: plan?.annualPriceObject?.amount ?? staticPrice(plan, 'annualPrice') ?? 0,
+  });
+}
+
+/**
  * @desc Compute the maximum savings percentage across an array of plans.
  * Used by the toggle to display a single representative "Save up to X%" copy.
  * @param {Array<{ monthlyPrice: number, annualPrice: number|null|undefined }>} plans

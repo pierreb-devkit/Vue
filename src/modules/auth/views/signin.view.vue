@@ -105,6 +105,7 @@
  * Module dependencies.
  */
 import { useTheme } from 'vuetify';
+import { required, email } from '../../../lib/helpers/rules';
 import config, { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../stores/auth.store';
 import { usePageHead } from '../../../lib/composables/usePageHead';
@@ -136,9 +137,9 @@ export default {
       lockoutTimer: null,
       oAuth: `${apiBase()}/${config.api.endPoints.auth}`,
       rules: {
-        required: (v) => !!v || 'Required',
-        mail: (v) => /\S+@\S+\.\S+/.test(v) || 'E-mail must be valid',
-        password: (v) => !!v || 'Password is required',
+        required: required(),
+        mail: email(),
+        password: required('Password is required'),
       },
     };
   },
