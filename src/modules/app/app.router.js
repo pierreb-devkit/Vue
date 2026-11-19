@@ -215,7 +215,7 @@ const getRouter = () => {
     // Redirect authenticated users away from auth pages (signin, signup, etc.)
     const authPages = ['/signin', '/signup', '/forgot', '/reset', '/token'];
     if (authStore.isLoggedIn && authPages.some((p) => to.path === p || to.path.startsWith(`${p}/`))) {
-      if (authStore.serverConfig?.organizations?.enabled && !authStore.user?.currentOrganization) {
+      if (authStore.serverConfig?.organizations?.enabled && isModuleActive('organizations') && !authStore.user?.currentOrganization) {
         return '/organization-required';
       }
       return config.sign.route;
@@ -242,6 +242,7 @@ const getRouter = () => {
     if (
       authStore.isLoggedIn
       && authStore.serverConfig?.organizations?.enabled
+      && isModuleActive('organizations')
       && !authStore.user?.currentOrganization
       && !orgExemptPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
       && !orgExemptExact.some((p) => to.path === p || to.path.startsWith(p + '/'))

@@ -71,7 +71,7 @@ import { useOrganizationsStore } from '../stores/organizations.store';
  * goes through the join-request flow, not this step.
  */
 export default {
-  name: 'AuthOrganizationSetupComponent',
+  name: 'OrganizationsSignupSetupComponent',
   props: {
     defaultName: {
       type: String,

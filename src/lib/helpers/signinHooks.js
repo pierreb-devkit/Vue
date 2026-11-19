@@ -6,6 +6,9 @@
  * authenticated server config is loaded. This keeps auth (always on) free of
  * imports into optional modules.
  */
+import { createLogger } from './logger';
+
+const log = createLogger('signin-hooks');
 
 /** @type {Map<string, (ctx: { serverConfig: object|null, user: object|null }) => unknown>} */
 const hooks = new Map();
@@ -31,16 +34,17 @@ export const offSignin = (id) => {
 
 /**
  * @desc Run every registered hook. Best-effort: a hook that throws or rejects
- * never breaks the sign-in, and nothing is awaited.
+ * is logged and never breaks the sign-in; nothing is awaited.
  * @param {{ serverConfig: object|null, user: object|null }} ctx - Session context.
  * @returns {void}
  */
 export const runSigninHooks = (ctx) => {
-  for (const fn of hooks.values()) {
+  for (const [id, fn] of hooks) {
+    // best-effort: a hook failure is logged and never blocks sign-in
     try {
-      Promise.resolve(fn(ctx)).catch(() => { /* best-effort: a hook failure never blocks sign-in */ });
-    } catch {
-      /* best-effort: a hook failure never blocks sign-in */
+      Promise.resolve(fn(ctx)).catch((err) => log.error(`hook "${id}" failed`, err));
+    } catch (err) {
+      log.error(`hook "${id}" failed`, err);
     }
   }
 };

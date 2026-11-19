@@ -17,6 +17,10 @@ const storeMock = vi.hoisted(() => ({
 vi.mock('../stores/auth.store', () => ({
   useAuthStore: () => storeMock,
 }));
+const inactiveModules = vi.hoisted(() => new Set());
+vi.mock('../../../lib/helpers/modules', () => ({
+  isModuleActive: (name) => !inactiveModules.has(name),
+}));
 
 import AuthVerifyEmailView from '../views/verifyEmail.view.vue';
 
@@ -54,6 +58,7 @@ describe('auth.verifyEmail.view', () => {
     storeMock.isLoggedIn = false;
     storeMock.user = null;
     storeMock.serverConfig = null;
+    inactiveModules.clear();
     localStorage.clear();
   });
 
@@ -143,6 +148,21 @@ describe('auth.verifyEmail.view', () => {
 
       expect(wrapper.vm.success).toBe(true);
       expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/organization-required');
+    });
+
+    it('redirects to the sign route, not /organization-required, when the organizations module is off', async () => {
+      inactiveModules.add('organizations');
+      storeMock.isLoggedIn = true;
+      storeMock.user = { emailVerified: true };
+      storeMock.serverConfig = { organizations: { enabled: true } };
+      verifyEmailMock.mockResolvedValueOnce({ message: 'Email verified' });
+
+      const wrapper = mountView();
+      await wrapper.vm.$nextTick();
+      await vi.dynamicImportSettled();
+
+      expect(wrapper.vm.$router.push).not.toHaveBeenCalledWith('/organization-required');
+      expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/tasks');
     });
 
     it('redirects to home route when logged in with an org', async () => {

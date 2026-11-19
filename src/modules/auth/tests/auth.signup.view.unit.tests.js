@@ -59,7 +59,7 @@ const mountView = (formStub = makeFormStub(), routeQuery = {}) =>
     global: {
       plugins: [createVuetify()],
       mocks: { config: mockConfig, $route: { query: routeQuery }, $router: { push: vi.fn() } },
-      stubs: { RouterLink: true, VForm: formStub, AuthOrganizationSetupComponent: true },
+      stubs: { RouterLink: true, VForm: formStub, OrganizationsSignupSetupComponent: true },
     },
   });
 
@@ -81,7 +81,7 @@ describe('auth.signup.view', () => {
         global: {
           plugins: [createVuetify()],
           mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, upNotice: 'We send tips. <b>Unsubscribe</b> any time.' } }, $route: { query: {} }, $router: { push: vi.fn() } },
-          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+          stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
         },
       });
       await flushPromises();
@@ -96,7 +96,7 @@ describe('auth.signup.view', () => {
         global: {
           plugins: [createVuetify()],
           mocks: { config: { ...mockConfig, sign: { ...mockConfig.sign, accentImage: '/img/accent.png' } }, $route: { query: {} }, $router: { push: vi.fn() } },
-          stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+          stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
         },
       });
       await flushPromises();
@@ -816,7 +816,7 @@ describe('auth.signup.view — page head', () => {
       global: {
         plugins: [createVuetify(), head],
         mocks: { config: mockConfig, $route: { query: {} }, $router: { push: vi.fn() } },
-        stubs: { RouterLink: true, VForm: makeFormStub(), AuthOrganizationSetupComponent: true },
+        stubs: { RouterLink: true, VForm: makeFormStub(), OrganizationsSignupSetupComponent: true },
       },
     });
     await flushPromises();

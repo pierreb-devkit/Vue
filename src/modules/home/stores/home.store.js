@@ -90,7 +90,8 @@ export const useHomeStore = defineStore('home', {
      * Fetch the live value of every statistic that names a `source` (a key of
      * `config.api.endPoints`, e.g. 'tasks' → GET /api/tasks/stats). Items
      * without a source keep their configured value; one failed fetch leaves
-     * the others untouched.
+     * the others untouched. A source that is not a key of `api.endPoints` is
+     * skipped with a warning.
      * @returns {Promise<void>}
      */
     async getStatistics() {
@@ -98,8 +99,13 @@ export const useHomeStore = defineStore('home', {
       const api = apiBase();
 
       await Promise.all(this.statistics.filter((item) => item?.source).map(async (item) => {
+        const endPoint = config.api.endPoints?.[item.source];
+        if (!endPoint) {
+          log.warn(`statistic source "${item.source}" is not a key of api.endPoints, skipped`);
+          return;
+        }
         try {
-          const res = await axios.get(`${api}/${config.api.endPoints?.[item.source] || item.source}/stats`);
+          const res = await axios.get(`${api}/${endPoint}/stats`);
           item.value = res.data.data;
         } catch (err) {
           log.error(err);

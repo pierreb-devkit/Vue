@@ -12,6 +12,7 @@
     </span>
     <template #actions>
       <v-btn
+        v-if="canCreateOrganization"
         variant="text"
         size="small"
         class="text-none"
@@ -34,6 +35,7 @@
  * Module dependencies.
  */
 import { useAuthStore } from '../stores/auth.store';
+import { isModuleActive } from '../../../lib/helpers/modules';
 /**
  * Component definition.
  */
@@ -45,6 +47,14 @@ export default {
     };
   },
   computed: {
+    /**
+     * @desc The "Create your own" link targets an organizations route, so it
+     * only shows while the organizations module is on.
+     * @returns {boolean}
+     */
+    canCreateOrganization() {
+      return isModuleActive('organizations');
+    },
     isLoggedIn() {
       const authStore = useAuthStore();
       return authStore.isLoggedIn;

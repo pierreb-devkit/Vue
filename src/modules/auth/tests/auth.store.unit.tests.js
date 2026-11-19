@@ -1143,6 +1143,11 @@ describe('Auth Store', () => {
       const result = deduceNamesFromEmail('123456@example.com');
       expect(result).toEqual({ firstName: '', lastName: '' });
     });
+
+    it('should return empty strings for a missing or empty email', () => {
+      expect(deduceNamesFromEmail(undefined)).toEqual({ firstName: '', lastName: '' });
+      expect(deduceNamesFromEmail('@example.com')).toEqual({ firstName: '', lastName: '' });
+    });
   });
 
   describe('signup name deduction', () => {
@@ -1162,6 +1167,18 @@ describe('Auth Store', () => {
       const body = axios.post.mock.calls[0][1];
       expect(body.firstName).toBe('Jane');
       expect(body.lastName).toBe('Smith');
+    });
+
+    it('should keep the names the user typed instead of deducing them', async () => {
+      const authStore = useAuthStore();
+      axios.post.mockResolvedValueOnce({
+        data: { user: { id: '457', email: 'jane.smith@test.com', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000 },
+      });
+      await authStore.signup({ email: 'jane.smith@test.com', password: 'password123', firstName: 'J' });
+
+      const body = axios.post.mock.calls[0][1];
+      expect(body.firstName).toBe('J');
+      expect(body.lastName).toBeUndefined();
     });
   });
 

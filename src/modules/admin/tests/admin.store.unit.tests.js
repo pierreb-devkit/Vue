@@ -343,6 +343,29 @@ describe('Admin Store', () => {
       expect(store.statsErrors).not.toContain('users');
       axios.get.mockReset();
     });
+
+    it('should ignore an older success that lands after a newer one', async () => {
+      const store = useAdminStore();
+      let resolveFirst;
+      axios.get.mockImplementationOnce(() => new Promise((resolve) => (resolveFirst = resolve)));
+      const first = store.getStats({ audit: false, only: ['users'] });
+      axios.get.mockResolvedValueOnce({ data: { data: { total: 9, weeks: [] } } });
+      await store.getStats({ audit: false, only: ['users'] });
+      resolveFirst({ data: { data: { total: 1, weeks: [] } } });
+      await first;
+
+      expect(store.stats.users.total).toBe(9);
+      axios.get.mockReset();
+    });
+
+    it('should keep recent activity an empty list when the reply has no rows', async () => {
+      const store = useAdminStore();
+      axios.get.mockResolvedValueOnce({ data: { data: {} } });
+      await store.getStats({ only: ['recent'] });
+
+      expect(store.stats.recent).toEqual([]);
+      axios.get.mockReset();
+    });
   });
 
   describe('sanitizeApiError', () => {
@@ -495,6 +518,14 @@ describe('Admin Store', () => {
   // { type: 'success', message: '...', data: { data: Array, total, page, perPage } }
   // so axios sees res.data = { type, message, data: { data, total, page, perPage } }
   describe('getAuditLogs', () => {
+    it('should default the total to 0 when the reply has none', async () => {
+      const store = useAdminStore();
+      axios.get.mockResolvedValueOnce({ data: { data: {} } });
+      await store.getAuditLogs();
+      expect(store.auditLogs).toEqual([]);
+      expect(store.auditTotal).toBe(0);
+    });
+
     it('should fetch and set audit logs', async () => {
       const store = useAdminStore();
       const mockLogs = [

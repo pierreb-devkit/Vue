@@ -10,7 +10,7 @@ vi.mock('../stores/organizations.store', () => ({
   }),
 }));
 
-import AuthOrganizationSetupComponent from '../components/organizations.signupSetup.component.vue';
+import OrganizationsSignupSetupComponent from '../components/organizations.signupSetup.component.vue';
 
 const mockConfig = {
   vuetify: { theme: { flat: true, rounded: 'rounded-lg' } },
@@ -37,7 +37,7 @@ const makeFormStub = (valid = true) => ({
  * @returns {import('@vue/test-utils').VueWrapper} mounted wrapper
  */
 const mountComponent = (formStub = makeFormStub(), props = {}, config = mockConfig) =>
-  mount(AuthOrganizationSetupComponent, {
+  mount(OrganizationsSignupSetupComponent, {
     props,
     global: {
       plugins: [createVuetify()],
@@ -204,8 +204,8 @@ describe('organizations.signupSetup.component', () => {
     const wrapper = mountComponent();
     await flushPromises();
 
-    expect(AuthOrganizationSetupComponent.props).not.toHaveProperty('suggestedOrganization');
-    expect(AuthOrganizationSetupComponent.emits).toEqual(['created']);
+    expect(OrganizationsSignupSetupComponent.props).not.toHaveProperty('suggestedOrganization');
+    expect(OrganizationsSignupSetupComponent.emits).toEqual(['created']);
     expect(wrapper.text()).not.toContain('Request to join');
   });
 

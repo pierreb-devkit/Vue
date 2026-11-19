@@ -38,6 +38,7 @@
  */
 import { useTheme } from 'vuetify';
 import { useAuthStore } from '../stores/auth.store';
+import { isModuleActive } from '../../../lib/helpers/modules';
 import { consumePostAuthRedirect, peekPostAuthRedirect, withRedirectQuery } from '../lib/postAuthRedirect';
 /**
  * Component definition.
@@ -108,7 +109,7 @@ export default {
   methods: {
     /**
      * @desc Redirect the user after successful email verification based on auth state.
-     * - Logged in + no org + orgs enabled → /organization-required
+     * - Logged in + no org + orgs enabled (API and Vue module) → /organization-required
      * - Logged in + has org → home route
      * - Logged in but soft-refresh fails (no user in store) → stay on page
      * - Not logged in → stay on page with sign-in link
@@ -131,7 +132,7 @@ export default {
         }
         this.redirecting = true;
         const serverConfig = authStore.serverConfig || (await authStore.fetchServerConfig());
-        if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled) {
+        if (!authStore.user?.currentOrganization && serverConfig?.organizations?.enabled && isModuleActive('organizations')) {
           this.$router.push('/organization-required');
         } else {
           // The verification link opens in a NEW TAB — the original `?redirect=`

@@ -46,4 +46,16 @@ describe('signinHooks', () => {
     await Promise.resolve();
     expect(b).toHaveBeenCalled();
   });
+
+  it('logs a hook that throws or rejects, with its id', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    onSignin('a', () => { throw new Error('boom'); });
+    onSignin('b', () => Promise.reject(new Error('async boom')));
+    runSigninHooks({});
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(errSpy).toHaveBeenCalledWith(expect.any(String), 'hook "a" failed', expect.objectContaining({ message: 'boom' }));
+    expect(errSpy).toHaveBeenCalledWith(expect.any(String), 'hook "b" failed', expect.objectContaining({ message: 'async boom' }));
+    errSpy.mockRestore();
+  });
 });
