@@ -81,4 +81,12 @@ describe('Logger Helper', () => {
 
     expect(spy.mock.calls[0][1].url).toBe('/api/auth/verify-email/:token');
   });
+  it('should keep a non-string url as is on a logged axios error', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const log = createLogger('auth');
+
+    log.error({ isAxiosError: true, message: 'Network Error', code: 'ERR_NETWORK' });
+
+    expect(spy.mock.calls[0][1]).toEqual({ name: undefined, message: 'Network Error', code: 'ERR_NETWORK', status: undefined, method: undefined, url: undefined });
+  });
 });

@@ -154,6 +154,15 @@ describe('injectModuleChildren (default /admin parent)', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  it('should silently skip route records that are not objects', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdminRoutes();
+    injectModuleChildren(admin, [{ name: 'test', routes: [null, 'users', { path: 'ok', name: 'Ok', component: { name: 'Ok' } }] }], () => true);
+    expect(admin[0].children.map((r) => r.name)).toEqual(['Admin Users', 'Admin User', 'Ok']);
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    consoleWarnSpy.mockRestore();
+  });
+
   it('should filter out routes without a component', () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const admin = makeAdminRoutes();
