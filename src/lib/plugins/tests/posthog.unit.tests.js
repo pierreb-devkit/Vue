@@ -6,6 +6,7 @@ vi.mock('posthog-js', () => ({
 
 import posthog from 'posthog-js';
 import posthogPlugin from '../posthog';
+import { stripSensitiveEventUrls } from '../../helpers/analytics';
 
 const makeApp = (posthogConfig) => ({
   config: {
@@ -33,6 +34,14 @@ describe('posthog plugin', () => {
       expect.objectContaining({ api_host: 'https://app.posthog.com' }),
     );
     expect(app.config.globalProperties.$posthog).toBe(posthog);
+  });
+
+  it('strips credential params from every event URL before sending', () => {
+    posthogPlugin.install(makeApp({ key: 'phc_testkey' }));
+    expect(posthog.init).toHaveBeenCalledWith(
+      'phc_testkey',
+      expect.objectContaining({ before_send: stripSensitiveEventUrls }),
+    );
   });
 
   it('uses default host when host is not set', () => {

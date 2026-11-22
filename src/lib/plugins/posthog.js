@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 import posthog from 'posthog-js';
+import { stripSensitiveEventUrls } from '../helpers/analytics';
 
 /**
  * Normalise a boolean-like value.
@@ -43,6 +44,9 @@ export default {
       opt_out_capturing_by_default: true,
       persistence: 'memory',
       opt_in_site_apps: false,
+
+      // Credential query params (OAuth `req`, `code`, `state`) never leave in an event URL.
+      before_send: stripSensitiveEventUrls,
 
       autocapture: isEnabled(phConfig.autoCapture),
       capture_pageleave: isEnabled(phConfig.capturePageleave),
