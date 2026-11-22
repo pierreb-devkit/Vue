@@ -119,6 +119,10 @@ describe('analytics helper', () => {
       expect(stripSensitiveParams(undefined)).toBeUndefined();
     });
 
+    it('cleans every repeated redirect entry', () => {
+      expect(stripSensitiveParams('/signin?redirect=%2Fsafe&redirect=%2Fconnect%3Freq%3DTOKEN')).toBe('/signin?redirect=%2Fsafe&redirect=%2Fconnect');
+    });
+
     it('keeps the origin of a full URL', () => {
       expect(stripSensitiveParams('https://app.example.com/connect?req=TOKEN&tab=1#x')).toBe('https://app.example.com/connect?tab=1#x');
     });
@@ -158,6 +162,17 @@ describe('analytics helper', () => {
       expect(JSON.stringify(out)).not.toContain('TOKEN');
       expect(out.properties.$elements[0].attr__href).toBe('/signup?redirect=%2Fconnect');
       expect(out.properties.$elements_chain).toContain('attr__href="/signup?redirect=%2Fconnect"href="/signup?redirect=%2Fconnect"nth-child="1"');
+    });
+
+    it('cleans a $set_once nested in the event properties', () => {
+      const out = stripSensitiveEventUrls({ properties: { $set_once: { $initial_current_url: 'https://a.com/p?req=TOKEN' } } });
+      expect(out.properties.$set_once.$initial_current_url).toBe('https://a.com/p');
+    });
+
+    it('cleans an elements_chain href holding escaped quotes', () => {
+      const out = stripSensitiveEventUrls({ properties: { $elements_chain: 'a:href="/connect?label=\\"x\\"&req=TOKEN"nth-child="1"' } });
+      expect(out.properties.$elements_chain).not.toContain('TOKEN');
+      expect(out.properties.$elements_chain).toContain('nth-child="1"');
     });
 
     it('cleans $external_click_url', () => {

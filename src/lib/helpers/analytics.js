@@ -54,12 +54,14 @@ function stripSensitiveParams(value) {
       changed = true;
     }
   });
-  const redirect = url.searchParams.get('redirect');
-  const cleanRedirect = redirect && redirect.startsWith('/') ? stripSensitiveParams(redirect) : redirect;
-  if (cleanRedirect !== redirect) {
-    url.searchParams.set('redirect', cleanRedirect);
-    changed = true;
-  }
+  // Every `redirect` entry is cleaned, not only the first one.
+  const entries = [...url.searchParams].map(([key, val]) => {
+    if (key !== 'redirect' || !val.startsWith('/')) return [key, val];
+    const clean = stripSensitiveParams(val);
+    if (clean !== val) changed = true;
+    return [key, clean];
+  });
+  if (changed) url.search = new URLSearchParams(entries).toString();
   // Untouched values go out as they came (re-serializing would re-encode them).
   if (!changed) return value;
   const origin = url.origin === PLACEHOLDER_ORIGIN ? '' : url.origin;
@@ -80,7 +82,7 @@ const URL_PROPERTIES = ['$current_url', '$session_entry_url', '$referrer', '$ses
  * @returns {Object|null} The same event, its URLs cleaned.
  */
 function stripSensitiveEventUrls(event) {
-  [event?.properties, event?.$set_once].forEach((props) => {
+  [event?.properties, event?.$set_once, event?.properties?.$set_once].forEach((props) => {
     if (!props) return;
     URL_PROPERTIES.forEach((key) => {
       if (typeof props[key] === 'string') props[key] = stripSensitiveParams(props[key]);
@@ -103,7 +105,7 @@ function stripSensitiveEventUrls(event) {
       props.$heatmap_data = clean;
     }
     if (typeof props.$elements_chain === 'string') {
-      props.$elements_chain = props.$elements_chain.replace(/href="([^"]*)"/g, (_m, href) => `href="${stripSensitiveParams(href)}"`);
+      props.$elements_chain = props.$elements_chain.replace(/href="((?:[^"\\]|\\.)*)"/g, (_m, href) => `href="${stripSensitiveParams(href)}"`);
     }
   });
   return event;
