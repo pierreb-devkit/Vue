@@ -6,7 +6,7 @@ Breaking changes and upgrade notes for downstream projects.
 
 ## analytics: credential query params dropped from PostHog URLs (2026-11-22, #4899)
 
-Analytics now drops the `req`, `code` and `state` query params from every URL sent to PostHog. A project that uses those names as ordinary query params (a filter, a coupon) no longer sees them in analytics URLs. No action needed otherwise.
+Analytics now drops the `req`, `code` and `state` query params from every URL sent to PostHog. A project that uses those names as ordinary query params (a filter, a coupon) no longer sees them in analytics URLs. No action needed otherwise. Session replay recordings are not cleaned (their page address is not rewritten): a project that turns replay on should mask those params in PostHog.
 
 ---
 

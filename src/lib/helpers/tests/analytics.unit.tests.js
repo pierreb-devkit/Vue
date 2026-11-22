@@ -91,6 +91,16 @@ describe('analytics helper', () => {
   });
 
   describe('stripSensitiveParams', () => {
+    it('drops the whole query of an unparseable url holding a credential', () => {
+      const out = stripSensitiveParams('https://a b.com/x?req=TOKEN');
+      expect(out).not.toContain('TOKEN');
+      expect(out).toBe('https://a b.com/x');
+    });
+
+    it('leaves an unparseable url without a credential unchanged', () => {
+      expect(stripSensitiveParams('https://a b.com/x?q=1')).toBe('https://a b.com/x?q=1');
+    });
+
     it('returns a path without a query unchanged', () => {
       expect(stripSensitiveParams('/scraps')).toBe('/scraps');
     });

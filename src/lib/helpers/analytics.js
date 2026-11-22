@@ -43,7 +43,8 @@ function stripSensitiveParams(value) {
   try {
     url = new URL(value, PLACEHOLDER_ORIGIN);
   } catch {
-    return value;
+    // Unparseable: cannot be cleaned param by param, so drop the whole query and hash.
+    return /[?&](req|code|state)=/.test(value) ? value.split('?')[0] : value;
   }
   // mailto:, capacitor: and the like are not rebuilt (origin would be "null").
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return value;
