@@ -151,13 +151,30 @@ describe('analytics helper', () => {
         properties: {
           $session_entry_referrer: 'https://app.example.com/cb?code=TOKEN',
           $elements: [{ tag_name: 'a', attr__href: href }],
-          $elements_chain: `a:attr__class="x"href="${href}"nth-child="1";div:nth-child="2"`,
+          $elements_chain: `a:attr__class="x"attr__href="${href}"href="${href}"nth-child="1";div:nth-child="2"`,
         },
       };
       const out = stripSensitiveEventUrls(event);
       expect(JSON.stringify(out)).not.toContain('TOKEN');
       expect(out.properties.$elements[0].attr__href).toBe('/signup?redirect=%2Fconnect');
-      expect(out.properties.$elements_chain).toContain('href="/signup?redirect=%2Fconnect"nth-child="1"');
+      expect(out.properties.$elements_chain).toContain('attr__href="/signup?redirect=%2Fconnect"href="/signup?redirect=%2Fconnect"nth-child="1"');
+    });
+
+    it('cleans $external_click_url', () => {
+      const out = stripSensitiveEventUrls({ properties: { $external_click_url: 'https://x.com/cb?code=TOKEN&a=1' } });
+      expect(out.properties.$external_click_url).toBe('https://x.com/cb?a=1');
+    });
+
+    it('cleans $heatmap_data keys and merges collapsed ones', () => {
+      const out = stripSensitiveEventUrls({
+        properties: { $heatmap_data: { 'https://a.com/p?code=1': [{ x: 1 }], 'https://a.com/p?state=2': [{ x: 2 }], 'https://a.com/q?a=1': [] } },
+      });
+      expect(out.properties.$heatmap_data).toEqual({ 'https://a.com/p': [{ x: 1 }, { x: 2 }], 'https://a.com/q?a=1': [] });
+    });
+
+    it('leaves non-http urls untouched', () => {
+      expect(stripSensitiveParams('mailto:a@b.com?subject=x&state=1')).toBe('mailto:a@b.com?subject=x&state=1');
+      expect(stripSensitiveParams('/a?state=1&b=2')).toBe('/a?b=2');
     });
 
     it('passes an event without properties through', () => {

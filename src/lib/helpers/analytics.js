@@ -45,6 +45,8 @@ function stripSensitiveParams(value) {
   } catch {
     return value;
   }
+  // mailto:, capacitor: and the like are not rebuilt (origin would be "null").
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return value;
   let changed = false;
   SENSITIVE_QUERY_PARAMS.forEach((key) => {
     if (url.searchParams.has(key)) {
@@ -67,7 +69,7 @@ function stripSensitiveParams(value) {
 /**
  * Event properties the PostHog SDK fills with the page URL or the referrer.
  */
-const URL_PROPERTIES = ['$current_url', '$session_entry_url', '$referrer', '$session_entry_referrer', '$initial_current_url', '$initial_referrer'];
+const URL_PROPERTIES = ['$current_url', '$session_entry_url', '$referrer', '$session_entry_referrer', '$initial_current_url', '$initial_referrer', '$external_click_url'];
 
 /**
  * @desc PostHog `before_send` hook: strips the sensitive query params from
@@ -88,6 +90,17 @@ function stripSensitiveEventUrls(event) {
       props.$elements.forEach((el) => {
         if (el && typeof el.attr__href === 'string') el.attr__href = stripSensitiveParams(el.attr__href);
       });
+    }
+    // Heatmap data is keyed by the page URL.
+    const heatmap = props.$heatmap_data;
+    if (heatmap && typeof heatmap === 'object' && !Array.isArray(heatmap)) {
+      const clean = {};
+      Object.keys(heatmap).forEach((key) => {
+        const next = stripSensitiveParams(key);
+        const value = heatmap[key];
+        clean[next] = Array.isArray(clean[next]) && Array.isArray(value) ? [...clean[next], ...value] : value;
+      });
+      props.$heatmap_data = clean;
     }
     if (typeof props.$elements_chain === 'string') {
       props.$elements_chain = props.$elements_chain.replace(/href="([^"]*)"/g, (_m, href) => `href="${stripSensitiveParams(href)}"`);
