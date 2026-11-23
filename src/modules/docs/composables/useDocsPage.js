@@ -221,11 +221,14 @@ const langOf = (lang) => (lang || '').match(/\S*/)?.[0] || '';
 
 /**
  * Split a markdown source into ordered segments, grouping *consecutive* fenced
- * code blocks into runnable example groups. The guide convention:
+ * code blocks into runnable example cards. The guide convention:
  *
- *   - Two or more fenced blocks with only whitespace between them = ONE
- *     multi-language example (curl / Node / Python tabs).
- *   - A lone fenced block = a single-language example (degrades to no tabs).
+ *   - Fenced blocks with only whitespace between them = ONE multi-language card
+ *     (curl / Node / Python tabs) while each fence adds a new language; a
+ *     repeated language starts a new card.
+ *   - A fence marked as an answer (info string `<lang> answer`, e.g. `json answer`)
+ *     is a card of its own, labelled « Response ».
+ *   - A lone fenced block = a single-language card (degrades to no tabs).
  *   - Each example may carry the `<YOUR_API_KEY>` placeholder; the component
  *     renders it verbatim and copies it as-is.
  *
@@ -234,7 +237,7 @@ const langOf = (lang) => (lang || '').match(/\S*/)?.[0] || '';
  *
  * @param {string} markdown - Raw article markdown.
  * @param {import('marked').Marked} lexer - A Marked instance (for tokenizing).
- * @returns {{ stitched: string, examples: Array<Array<{ lang: string, code: string }>> }}
+ * @returns {{ stitched: string, examples: Array<Array<{ lang: string, label?: string, code: string }>> }}
  *   `stitched` is markdown with example groups replaced by markers; `examples`
  *   is the ordered list of groups (each group = an array of language snippets).
  */
@@ -246,22 +249,33 @@ const extractExamples = (markdown, lexer, nonce) => {
   while (i < tokens.length) {
     const tok = tokens[i];
     if (tok.type === 'code') {
-      // Greedily collect this run of code blocks, skipping whitespace-only space
-      // tokens between them so visually-adjacent fences group together.
-      const group = [{ lang: langOf(tok.lang), code: tok.text }];
-      let j = i + 1;
-      while (j < tokens.length) {
-        const next = tokens[j];
-        if (next.type === 'space') { j += 1; continue; }
-        if (next.type === 'code') {
-          group.push({ lang: langOf(next.lang), code: next.text });
-          j += 1;
-          continue;
+      // Collect this run of code blocks, skipping whitespace-only space tokens
+      // between them, and cut it into cards: an answer fence stands alone, and a
+      // language already in the current card starts a new one.
+      const cards = [];
+      let card = [];
+      let j = i;
+      while (j < tokens.length && (tokens[j].type === 'code' || tokens[j].type === 'space')) {
+        const fence = tokens[j];
+        j += 1;
+        if (fence.type === 'space') continue;
+        const lang = langOf(fence.lang);
+        const isAnswer = (fence.lang || '').split(/\s+/)[1] === 'answer';
+        if (card.length && (isAnswer || card.some((ex) => ex.lang === lang))) {
+          cards.push(card);
+          card = [];
         }
-        break;
+        if (isAnswer) {
+          cards.push([{ lang, label: 'Response', code: fence.text }]);
+        } else {
+          card.push({ lang, code: fence.text });
+        }
       }
-      out.push(`\n\n${EXAMPLE_MARKER(nonce, examples.length)}\n\n`);
-      examples.push(group);
+      if (card.length) cards.push(card);
+      for (const c of cards) {
+        out.push(`\n\n${EXAMPLE_MARKER(nonce, examples.length)}\n\n`);
+        examples.push(c);
+      }
       i = j;
     } else {
       // Re-emit the original markdown slice verbatim so marked renders it.

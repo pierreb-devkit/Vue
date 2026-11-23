@@ -46,10 +46,14 @@ truth for this contract.
 heading ToC + extracted runnable examples. One pipeline (marked + DOMPurify), with:
 
 - **Heading anchors** — h2/h3 ids feed the left menu's section list; deep-linkable.
-- **Runnable examples** — consecutive fenced blocks are lifted into `examples` and
-  replaced with a `data-docs-example="N"` marker the article view splits on to mount a
-  `<DocsCodeblock>` (language tabs + copy-with-my-key). Each emitted marker carries a
-  per-render nonce so author-injected markers are stripped before the split.
+- **Runnable examples** — fenced blocks are lifted into `examples` and replaced with a
+  `data-docs-example="N"` marker the article view splits on to mount a `<DocsCodeblock>`
+  (language tabs + one copy button). Consecutive fences form one card while each adds a
+  new language; a repeated language starts a new card. Mark an answer with the info
+  string `<lang> answer` (e.g. ```` ```json answer ````): it gets a card of its own,
+  labelled « Response ». The picked language follows across cards. Snippets keep the
+  `<YOUR_API_KEY>` placeholder as plain text. Each emitted marker carries a per-render
+  nonce so author-injected markers are stripped before the split.
 - **Cross-links** — a bare `#anchor` that targets a *different* guide is rewritten to
   that guide's `/docs/:category/:slug#anchor` route; in-file anchors are left
   untouched. The index is built from `tree`: keyed by each guide's `slug` (resolves

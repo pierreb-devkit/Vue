@@ -60,53 +60,22 @@ describe('docs.codeblock.component', () => {
     expect(wrapper.find('[data-test="docs-codeblock-lang"]').text()).toBe('cURL');
   });
 
-  it('hides "Copy with my key" when anonymous, shows it when logged in', async () => {
-    const { wrapper } = mountBlock();
-    // anon by default (no cookieExpire)
-    expect(wrapper.find('[data-test="docs-codeblock-copy-key"]').exists()).toBe(false);
-
+  it('shows one copy button and no key button, even when logged in', async () => {
     const auth = useAuthStore();
     auth.cookieExpire = 12345; // isLoggedIn getter → true
-    await wrapper.vm.$nextTick();
-    expect(wrapper.find('[data-test="docs-codeblock-copy-key"]').exists()).toBe(true);
-  });
-
-  it('copies the STATIC placeholder verbatim when anonymous', async () => {
-    const { wrapper, writeText } = mountBlock();
-    await wrapper.find('[data-test="docs-codeblock-copy"]').trigger('click');
-    expect(writeText).toHaveBeenCalledTimes(1);
-    const copied = writeText.mock.calls[0][0];
-    expect(copied).toContain(API_KEY_PLACEHOLDER);
-  });
-
-  it('copies the STATIC placeholder verbatim via "Copy with my key" (no key substitution in the stack)', async () => {
-    const auth = useAuthStore();
-    auth.cookieExpire = 12345;
-
-    const { wrapper, writeText } = mountBlock();
-    await wrapper.vm.$nextTick();
-    await wrapper.find('[data-test="docs-codeblock-copy-key"]').trigger('click');
-    await wrapper.vm.$nextTick();
-
-    expect(writeText).toHaveBeenCalledTimes(1);
-    const copied = writeText.mock.calls[0][0];
-    // The placeholder is preserved — the stack never substitutes a real key.
-    expect(copied).toContain(API_KEY_PLACEHOLDER);
-  });
-
-  it('NEVER injects a real key into the rendered HTML (placeholder stays literal)', async () => {
-    const auth = useAuthStore();
-    auth.cookieExpire = 12345;
-
     const { wrapper } = mountBlock();
     await wrapper.vm.$nextTick();
+    expect(wrapper.findAll('[data-test="docs-codeblock-copy"]')).toHaveLength(1);
+    expect(wrapper.find('[data-test="docs-codeblock-copy-key"]').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('Copy with my key');
+  });
 
-    // Rendered DOM shows the static placeholder.
-    expect(wrapper.find('[data-test="docs-codeblock-code"]').text()).toContain(API_KEY_PLACEHOLDER);
-
-    // After copy-with-my-key, the DOM STILL shows the static placeholder.
-    await wrapper.find('[data-test="docs-codeblock-copy-key"]').trigger('click');
+  it('copies the placeholder verbatim and keeps it in the rendered snippet', async () => {
+    const { wrapper, writeText } = mountBlock();
+    await wrapper.find('[data-test="docs-codeblock-copy"]').trigger('click');
     await wrapper.vm.$nextTick();
+    expect(writeText).toHaveBeenCalledWith(CURL);
+    expect(wrapper.vm.copied).toBe(true);
     expect(wrapper.find('[data-test="docs-codeblock-code"]').text()).toContain(API_KEY_PLACEHOLDER);
   });
 
@@ -131,6 +100,6 @@ describe('docs.codeblock.component', () => {
     });
     await wrapper.find('[data-test="docs-codeblock-copy"]').trigger('click');
     await wrapper.vm.$nextTick();
-    expect(wrapper.vm.copied).toBe(null);
+    expect(wrapper.vm.copied).toBe(false);
   });
 });
