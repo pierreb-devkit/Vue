@@ -343,6 +343,24 @@ describe('parseSpec — examples and body fields', () => {
     expect(create.responses[0].examples).toEqual([]);
   });
 
+  it('keeps the root schema own properties and required next to an allOf, and dedupes a repeated field (last wins)', () => {
+    const body = (schema) => ({
+      paths: { '/a': { post: { requestBody: { content: { 'application/json': { schema } } }, responses: {} } } },
+    });
+    const fields = (schema) => parseSpec(body(schema)).groups[0].endpoints[0].bodyFields;
+    expect(fields({
+      required: ['x'],
+      allOf: [{ properties: { x: { type: 'string' } } }],
+      properties: { y: { type: 'number' } },
+    })).toEqual([
+      { name: 'y', type: 'number', required: false, description: '' },
+      { name: 'x', type: 'string', required: true, description: '' },
+    ]);
+    expect(fields({
+      allOf: [{ properties: { x: { type: 'string' } } }, { properties: { x: { type: 'number' } } }],
+    })).toEqual([{ name: 'x', type: 'number', required: false, description: '' }]);
+  });
+
   it('renders response examples, resolving a $ref response and its named examples', () => {
     const list = find('GET', '/api/tasks');
     expect(list.responses[0].examples).toEqual([{ lang: 'plaintext', label: '', code: 'id,title' }]);

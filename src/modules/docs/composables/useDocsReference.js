@@ -96,10 +96,10 @@ const normalizeBodyFields = (spec, content) => {
   const media = content && typeof content === 'object' ? Object.values(content)[0] : null;
   const root = resolveRef(spec, media?.schema);
   if (!root) return [];
-  const parts = Array.isArray(root.allOf) ? root.allOf.map((s) => resolveRef(spec, s)).filter(Boolean) : [root];
+  const parts = Array.isArray(root.allOf) ? [root, ...root.allOf.map((s) => resolveRef(spec, s)).filter(Boolean)] : [root];
   const required = new Set(parts.flatMap((s) => (Array.isArray(s.required) ? s.required : [])));
-  return parts
-    .flatMap((s) => Object.entries(s.properties && typeof s.properties === 'object' ? s.properties : {}))
+  const props = new Map(parts.flatMap((s) => Object.entries(s.properties && typeof s.properties === 'object' ? s.properties : {})));
+  return [...props.entries()]
     .map(([name, prop]) => {
       const field = resolveRef(spec, prop) || {};
       return {
