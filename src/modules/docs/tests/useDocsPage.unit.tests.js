@@ -141,6 +141,52 @@ describe('useDocsPage', () => {
     expect(page.examples[0][0].code).toBe('echo hi');
   });
 
+  it('puts a call in 3 languages and its answer in 2 cards', async () => {
+    const md = [
+      '## List items',
+      '',
+      '```bash',
+      'curl https://api.example.com/api/items -H "Authorization: Bearer <YOUR_API_KEY>"',
+      '```',
+      '',
+      '```js',
+      'await fetch("https://api.example.com/api/items");',
+      '```',
+      '',
+      '```python',
+      'requests.get("https://api.example.com/api/items")',
+      '```',
+      '',
+      'The answer:',
+      '',
+      '```json answer',
+      '{ "data": [] }',
+      '```',
+    ].join('\n');
+    const page = await useDocsPage('items', { fetcher: async () => md });
+    expect(page.examples).toHaveLength(2);
+    expect(page.examples[0].map((e) => e.lang)).toEqual(['bash', 'js', 'python']);
+    expect(page.examples[1]).toEqual([{ lang: 'json', label: 'Response', code: '{ "data": [] }' }]);
+    expect(page.html.match(/data-docs-example="\d+"/g)).toHaveLength(2);
+  });
+
+  it('starts a new card for an answer fence right after a call', async () => {
+    const md = '```bash\ncurl /api/tasks\n```\n\n```json answer\n{ "ok": true }\n```\n\n```bash\ncurl /api/items\n```';
+    const page = await useDocsPage('x', { fetcher: async () => md });
+    expect(page.examples.map((card) => card.map((e) => e.label || e.lang))).toEqual([['bash'], ['Response'], ['bash']]);
+  });
+
+  it('starts a new card when a language repeats in a run of fences', async () => {
+    const md = '```bash\necho a\n```\n\n```js\nconst a = 1;\n```\n\n```bash\necho b\n```';
+    const page = await useDocsPage('x', { fetcher: async () => md });
+    expect(page.examples.map((card) => card.map((e) => e.lang))).toEqual([['bash', 'js'], ['bash']]);
+  });
+
+  it('keeps a lone fence as one card', async () => {
+    const page = await useDocsPage('x', { fetcher: async () => 'Run:\n\n```bash\necho hi\n```\n' });
+    expect(page.examples).toEqual([[{ lang: 'bash', code: 'echo hi' }]]);
+  });
+
   it('still builds the ToC when articles contain example groups', async () => {
     const md = [
       '# Title',
