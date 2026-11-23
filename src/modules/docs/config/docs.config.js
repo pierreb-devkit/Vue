@@ -114,6 +114,11 @@ export default {
       },
     },
 
+    // Markdown guides in two panes: each `##` section is one row, its prose on
+    // the left, its code cards on the right (one column under `lg`). Off by
+    // default so current guides keep their single column.
+    twoPanes: false,
+
     // Docs search (⌘K / "/"). A dependency-free, client-side fuzzy match over the
     // guide titles/summaries/categories from the docs store — works everywhere
     // with zero external setup. Only the user-facing copy is configurable.
