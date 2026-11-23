@@ -69,7 +69,7 @@ Downstream overrides `config.docs.*`:
   `quickstart` — hero copy + shell snippet.
 - `reference.tagGuides` — OpenAPI tag → docs category map (renders a "Read the guide"
   cross-link when both exist; empty by default so nothing 404s).
-- `twoPanes` — `true` renders every markdown guide in two panes (see below); off by default.
+- `twoPanes` — `true` renders every markdown guide in two panes (see below); off by default. Set it in a config file (`src/config/defaults/<project>.config.js`): a `DEVKIT_VUE_docs_twoPanes` env var arrives as the string `"true"` and leaves it off.
 - `search` — `label`/`placeholder`/`idleLabel` copy for the search modal, a
   dependency-free client-side fuzzy match (subsequence over guide titles/summaries) —
   no external service or setup.
