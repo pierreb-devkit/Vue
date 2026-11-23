@@ -171,16 +171,15 @@ const paneLayout = computed(() => {
   const sections = [];
   const titles = new Map(page.value.toc.map((h) => [h.id, h.text]));
   for (const seg of bodySegments.value) {
-    const current = sections[sections.length - 1];
     if (seg.type !== 'html') {
-      if (current) current.examples.push(seg.index);
+      if (sections.length) sections.at(-1).examples.push(seg.index);
       else header.push(seg);
       continue;
     }
     for (const part of seg.html.split(SECTION_START)) {
       const id = part.match(/^<h2 id="([^"]*)"/)?.[1];
       if (id !== undefined) sections.push({ id, title: titles.get(id) || '', html: part, examples: [] });
-      else if (sections.length) sections[sections.length - 1].html += part;
+      else if (sections.length) sections.at(-1).html += part;
       else header.push({ type: 'html', html: part });
     }
   }
