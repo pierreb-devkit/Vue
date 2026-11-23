@@ -157,8 +157,6 @@ describe('useDocsPage', () => {
       'requests.get("https://api.example.com/api/items")',
       '```',
       '',
-      'The answer:',
-      '',
       '```json answer',
       '{ "data": [] }',
       '```',
