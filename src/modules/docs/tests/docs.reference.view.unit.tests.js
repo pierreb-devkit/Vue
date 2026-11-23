@@ -152,6 +152,71 @@ describe('docs.reference.view', () => {
     expect(wrapper.find('[data-test="docs-reference-guide-link"]').exists()).toBe(false);
   });
 
+  /** A spec whose first operation holds a request and a response example; the second holds neither. */
+  const exampleSpec = {
+    tags: [{ name: 'Items' }],
+    paths: {
+      '/api/items': {
+        post: {
+          tags: ['Items'],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: { type: 'object', required: ['name'], properties: { name: { type: 'string', description: 'Item name' } } },
+                example: { name: 'First' },
+              },
+            },
+          },
+          responses: {
+            200: { description: 'Created', content: { 'application/json': { example: { id: '1' } } } },
+            422: { description: 'Invalid' },
+          },
+        },
+        delete: {
+          tags: ['Items'],
+          requestBody: { $ref: '#/components/requestBodies/Missing' },
+          responses: { 204: { description: 'Deleted' } },
+        },
+      },
+    },
+  };
+
+  /**
+   * Mount with the example spec and open every endpoint panel (panel text renders lazily).
+   * @returns {Promise<import('@vue/test-utils').VueWrapper>}
+   */
+  const mountOpen = async () => {
+    const wrapper = mountReference({ specData: exampleSpec });
+    await flushPromises();
+    for (const title of wrapper.findAll('.v-expansion-panel-title')) {
+      await title.trigger('click');
+    }
+    await flushPromises();
+    return wrapper;
+  };
+
+  it('renders the request example, the body fields and the answer card apart', async () => {
+    const wrapper = await mountOpen();
+    const [post] = wrapper.findAll('[data-test="docs-reference-endpoint"]');
+    expect(post.find('[data-test="docs-reference-body"]').text()).toContain('Item name');
+    const request = post.find('[data-test="docs-reference-request-example"]');
+    expect(request.text()).toContain('Request');
+    expect(request.find('[data-test="docs-reference-request-example"] code').text()).toContain('"name": "First"');
+    const answers = post.findAll('[data-test="docs-reference-response-example"]');
+    expect(answers).toHaveLength(1);
+    expect(answers[0].text()).toContain('Response 200');
+    expect(answers[0].find('code').text()).toContain('"id": "1"');
+  });
+
+  it('renders no example card when the spec holds none', async () => {
+    const wrapper = await mountOpen();
+    const [, remove] = wrapper.findAll('[data-test="docs-reference-endpoint"]');
+    expect(remove.text()).toContain('Accepts a JSON request body.');
+    expect(remove.find('[data-test="docs-reference-request-example"]').exists()).toBe(false);
+    expect(remove.find('[data-test="docs-reference-response-example"]').exists()).toBe(false);
+    expect(remove.find('[data-test="docs-reference-body"]').exists()).toBe(false);
+  });
+
   it('shows the empty state when the spec is unavailable', async () => {
     const store = useDocsStore();
     store.tree = tree;

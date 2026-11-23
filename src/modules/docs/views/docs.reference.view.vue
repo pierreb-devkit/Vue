@@ -123,15 +123,6 @@
                     data-test="docs-reference-description"
                   />
 
-                  <!-- Request body indicator -->
-                  <p
-                    v-if="endpoint.hasRequestBody"
-                    class="text-body-small text-medium-emphasis mb-4"
-                    data-test="docs-reference-requestbody"
-                  >
-                    <v-icon icon="fa-solid fa-arrow-up-from-bracket" size="x-small" class="mr-1" />
-                    Accepts a JSON request body.
-                  </p>
 
                   <!-- Parameters -->
                   <div v-if="endpoint.parameters.length" class="mb-4" data-test="docs-reference-params">
@@ -159,6 +150,44 @@
                     </v-table>
                   </div>
 
+                  <!-- Request body: its fields, else a plain indicator; then the spec's request examples -->
+                  <div v-if="endpoint.bodyFields.length" class="mb-4" data-test="docs-reference-body">
+                    <p class="text-title-small mb-1">Body</p>
+                    <v-table density="compact">
+                      <thead>
+                        <tr>
+                          <th class="text-left">Field</th>
+                          <th class="text-left">Type</th>
+                          <th class="text-left">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="field in endpoint.bodyFields" :key="field.name">
+                          <td>
+                            <code class="text-body-small">{{ field.name }}</code>
+                            <span v-if="field.required" class="text-error text-body-small ml-1" title="Required">*</span>
+                          </td>
+                          <td class="text-body-small text-medium-emphasis">{{ field.type || '—' }}</td>
+                          <td class="text-body-small text-medium-emphasis">{{ field.description || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </v-table>
+                  </div>
+                  <p
+                    v-else-if="endpoint.hasRequestBody"
+                    class="text-body-small text-medium-emphasis mb-4"
+                    data-test="docs-reference-requestbody"
+                  >
+                    <v-icon icon="fa-solid fa-arrow-up-from-bracket" size="x-small" class="mr-1" />
+                    Accepts a JSON request body.
+                  </p>
+                  <DocsCodeblock
+                    v-if="endpoint.requestExamples.length"
+                    :examples="titled(endpoint.requestExamples, 'Request')"
+                    class="mb-4"
+                    data-test="docs-reference-request-example"
+                  />
+
                   <!-- Responses -->
                   <div v-if="endpoint.responses.length" data-test="docs-reference-responses">
                     <p class="text-title-small mb-1">Responses</p>
@@ -180,6 +209,15 @@
                         <span class="text-body-small text-medium-emphasis">{{ response.description || '—' }}</span>
                       </div>
                     </div>
+                    <!-- The spec's answer examples: one card per response, apart from the request -->
+                    <template v-for="response in endpoint.responses" :key="`example-${response.status}`">
+                      <DocsCodeblock
+                        v-if="response.examples.length"
+                        :examples="titled(response.examples, `Response ${response.status}`)"
+                        class="mt-3"
+                        data-test="docs-reference-response-example"
+                      />
+                    </template>
                   </div>
                 </v-expansion-panel-text>
               </v-expansion-panel>
@@ -196,6 +234,7 @@ import { parseSpec } from '../composables/useDocsReference';
 import { resolveDocsTarget } from '../composables/useDocsNav';
 import { slugifyHeading } from '../composables/useDocsPage';
 import DocsShell from '../components/docs.shell.component.vue';
+import DocsCodeblock from '../components/docs.codeblock.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import config from '@/config';
 import { usePageHead } from '@/lib/composables/usePageHead';
@@ -274,6 +313,18 @@ const statusColor = (status) => {
   if (code < 500) return 'warning';
   return 'error';
 };
+
+/**
+ * Label a card's example rows with the card title ("Request", "Response 200"),
+ * keeping a named example's own name after it.
+ * @param {Array<{ lang: string, label: string, code: string }>} examples - Rows from the parser.
+ * @param {string} title - The card title.
+ * @returns {Array<{ lang: string, label: string, code: string }>} Rows for the code block.
+ */
+const titled = (examples, title) => examples.map((ex) => ({
+  ...ex,
+  label: ex.label ? `${title} · ${ex.label}` : title,
+}));
 
 onMounted(async () => {
   // Tree powers the sidebar + guide cross-links; spec powers the reference.

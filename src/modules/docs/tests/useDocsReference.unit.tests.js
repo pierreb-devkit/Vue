@@ -275,6 +275,117 @@ describe('parseSpec', () => {
   });
 });
 
+describe('parseSpec — examples and body fields', () => {
+  /** A spec fragment whose operations hold a request example, a response example, and neither. */
+  const exampleSpec = {
+    components: {
+      schemas: {
+        Base: { type: 'object', required: ['title'], properties: { title: { type: 'string', description: 'Title' } } },
+        TaskCreate: {
+          allOf: [
+            { $ref: '#/components/schemas/Base' },
+            { type: 'object', properties: { done: { type: 'boolean' }, owner: { $ref: '#/components/schemas/Base' } } },
+          ],
+        },
+      },
+      responses: {
+        NotFound: {
+          description: 'Not found',
+          content: { 'application/json': { examples: { missing: { summary: 'Missing', value: { type: 'error' } } } } },
+        },
+      },
+      examples: { Zero: { value: 0 } },
+    },
+    paths: {
+      '/api/tasks': {
+        post: {
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/TaskCreate' },
+                example: { title: 'Write docs' },
+              },
+            },
+          },
+          responses: { 200: { description: 'Created' } },
+        },
+        get: {
+          responses: {
+            200: { description: 'OK', content: { 'text/csv': { example: 'id,title' } } },
+            404: { $ref: '#/components/responses/NotFound' },
+          },
+        },
+      },
+      '/api/tasks/{taskId}': {
+        delete: { responses: { 204: { description: 'Deleted' } } },
+        put: {
+          requestBody: {
+            content: { 'application/json': { examples: { zero: { $ref: '#/components/examples/Zero' }, gone: { $ref: '#/nope' } } } },
+          },
+          responses: { 200: { $ref: '#/components/responses/Loop' } },
+        },
+      },
+    },
+  };
+  exampleSpec.components.responses.Loop = { $ref: '#/components/responses/Loop' };
+
+  const find = (method, path) => parseSpec(exampleSpec).groups[0].endpoints
+    .find((ep) => ep.method === method && ep.path === path);
+
+  it('renders a request example as pretty JSON and lists the body fields (allOf + $ref)', () => {
+    const create = find('POST', '/api/tasks');
+    expect(create.requestExamples).toEqual([{ lang: 'json', label: '', code: '{\n  "title": "Write docs"\n}' }]);
+    expect(create.bodyFields).toEqual([
+      { name: 'title', type: 'string', required: true, description: 'Title' },
+      { name: 'done', type: 'boolean', required: false, description: '' },
+      { name: 'owner', type: 'object', required: false, description: '' },
+    ]);
+    expect(create.responses[0].examples).toEqual([]);
+  });
+
+  it('keeps the root schema own properties and required next to an allOf, and dedupes a repeated field (last wins)', () => {
+    const body = (schema) => ({
+      paths: { '/a': { post: { requestBody: { content: { 'application/json': { schema } } }, responses: {} } } },
+    });
+    const fields = (schema) => parseSpec(body(schema)).groups[0].endpoints[0].bodyFields;
+    expect(fields({
+      required: ['x'],
+      allOf: [{ properties: { x: { type: 'string' } } }],
+      properties: { y: { type: 'number' } },
+    })).toEqual([
+      { name: 'y', type: 'number', required: false, description: '' },
+      { name: 'x', type: 'string', required: true, description: '' },
+    ]);
+    expect(fields({
+      allOf: [{ properties: { x: { type: 'string' } } }, { properties: { x: { type: 'number' } } }],
+    })).toEqual([{ name: 'x', type: 'number', required: false, description: '' }]);
+  });
+
+  it('renders response examples, resolving a $ref response and its named examples', () => {
+    const list = find('GET', '/api/tasks');
+    expect(list.responses[0].examples).toEqual([{ lang: 'plaintext', label: '', code: 'id,title' }]);
+    expect(list.responses[1]).toEqual({
+      status: '404',
+      description: 'Not found',
+      examples: [{ lang: 'json', label: 'Missing', code: '{\n  "type": "error"\n}' }],
+    });
+  });
+
+  it('keeps a falsy example value and drops unresolvable or circular references', () => {
+    const update = find('PUT', '/api/tasks/{taskId}');
+    expect(update.requestExamples).toEqual([{ lang: 'json', label: 'zero', code: '0' }]);
+    expect(update.bodyFields).toEqual([]);
+    expect(update.responses[0]).toEqual({ status: '200', description: '', examples: [] });
+  });
+
+  it('adds nothing when the spec holds no example', () => {
+    const remove = find('DELETE', '/api/tasks/{taskId}');
+    expect(remove.requestExamples).toEqual([]);
+    expect(remove.bodyFields).toEqual([]);
+    expect(remove.responses[0].examples).toEqual([]);
+  });
+});
+
 describe('useDocsReference', () => {
   it('parses the spec returned by an injected fetcher', async () => {
     const ref = await useDocsReference({ fetcher: async () => spec });
