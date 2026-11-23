@@ -8,7 +8,7 @@
   >
     <DocsPanes v-if="panes" :page="panes" />
 
-    <v-sheet v-else color="transparent" max-width="720">
+    <v-sheet v-else color="transparent" :max-width="twoPanes ? undefined : 720">
       <!-- Loading -->
       <v-row v-if="loading" justify="center" class="py-12">
         <AppSpinner color="primary" size="48" data-test="docs-article-loading" />
@@ -18,6 +18,48 @@
       <v-alert v-else-if="page.notFound" type="warning" variant="tonal" data-test="docs-article-notfound">
         This documentation page does not exist.
       </v-alert>
+
+      <!-- Article in two panes (config.docs.twoPanes): one row per `##`, its prose left, its code right -->
+      <template v-else-if="twoPanes">
+        <h1 class="text-headline-large font-weight-medium mb-3" data-test="docs-article-title">{{ page.title }}</h1>
+        <CoreProse tag="article" class="docs-prose docs-prose--panes" data-test="docs-article-body">
+          <template v-for="(seg, i) in paneLayout.header" :key="`h${i}`">
+            <!-- eslint-disable-next-line vue/no-v-html -- Markdown fragment sanitized by DOMPurify in useDocsPage -->
+            <div v-if="seg.type === 'html'" v-html="seg.html" />
+            <DocsCodeblock v-else v-model:lang="lang" :examples="page.examples[seg.index]" class="my-6" />
+          </template>
+          <v-row
+            v-for="(section, i) in paneLayout.sections"
+            :key="i"
+            tag="section"
+            no-gutters
+            class="py-10 border-t"
+            data-test="docs-panes-section"
+          >
+            <v-col cols="12" :lg="section.examples.length ? 6 : 12" class="pe-lg-6" data-test="docs-panes-text">
+              <!-- eslint-disable-next-line vue/no-v-html -- Markdown fragment sanitized by DOMPurify in useDocsPage -->
+              <div v-html="section.html" />
+            </v-col>
+            <v-col
+              v-if="section.examples.length"
+              cols="12"
+              lg="6"
+              class="docs-cards--held d-flex flex-column ga-3 ps-lg-6 mt-6 mt-lg-0"
+              tabindex="0"
+              :aria-label="`Code for ${section.title}`"
+              role="region"
+              data-test="docs-panes-code"
+            >
+              <DocsCodeblock
+                v-for="index in section.examples"
+                :key="index"
+                v-model:lang="lang"
+                :examples="page.examples[index]"
+              />
+            </v-col>
+          </v-row>
+        </CoreProse>
+      </template>
 
       <!-- Article -->
       <template v-else>
@@ -56,6 +98,7 @@ import DocsPanes from '../components/docs.panes.component.vue';
 import AppSpinner from '../../core/components/core.appSpinner.component.vue';
 import CoreProse from '../../core/components/core.prose.component.vue';
 import { usePageHead } from '@/lib/composables/usePageHead';
+import config from '@/config';
 
 /**
  * Two-pane guides, by slug. A consumer adds `content/docs.<slug>.content.js`
@@ -106,6 +149,42 @@ const bodySegments = computed(() => {
   const tail = html.slice(lastIndex);
   if (tail) segments.push({ type: 'html', html: tail });
   return segments;
+});
+
+/** Markdown guides render in two panes when the project turns it on. */
+const twoPanes = computed(() => config.docs?.twoPanes === true);
+
+/** The language picked on any code card of a two-pane guide: every card follows it. */
+const lang = ref();
+
+/** The renderer's own `##` opening (an id is always set), where a two-pane section starts. */
+const SECTION_START = /(?=<h2 id=")/;
+
+/**
+ * Group the body segments for the two-pane layout: what comes before the first
+ * `##` is the header; each `##` opens a section whose prose goes left and whose
+ * code cards go right, both in source order.
+ * @returns {{ header: Array, sections: Array<{ id: string, title: string, html: string, examples: number[] }> }}
+ */
+const paneLayout = computed(() => {
+  const header = [];
+  const sections = [];
+  const titles = new Map(page.value.toc.map((h) => [h.id, h.text]));
+  for (const seg of bodySegments.value) {
+    const current = sections[sections.length - 1];
+    if (seg.type !== 'html') {
+      if (current) current.examples.push(seg.index);
+      else header.push(seg);
+      continue;
+    }
+    for (const part of seg.html.split(SECTION_START)) {
+      const id = part.match(/^<h2 id="([^"]*)"/)?.[1];
+      if (id !== undefined) sections.push({ id, title: titles.get(id) || '', html: part, examples: [] });
+      else if (sections.length) sections[sections.length - 1].html += part;
+      else header.push({ type: 'html', html: part });
+    }
+  }
+  return { header, sections };
 });
 
 /**
@@ -207,6 +286,12 @@ watch(slug, (s) => load(s), { immediate: true });
 .docs-prose :deep(h2) {
   padding-top: 40px;
   border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+/* Two panes: the section row carries the rule and the space, not its title. */
+.docs-prose--panes :deep(h2) {
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* Guides put `<a id>` anchors in a paragraph of their own: it takes no room. */

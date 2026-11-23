@@ -69,6 +69,7 @@ Downstream overrides `config.docs.*`:
   `quickstart` — hero copy + shell snippet.
 - `reference.tagGuides` — OpenAPI tag → docs category map (renders a "Read the guide"
   cross-link when both exist; empty by default so nothing 404s).
+- `twoPanes` — `true` renders every markdown guide in two panes (see below); off by default.
 - `search` — `label`/`placeholder`/`idleLabel` copy for the search modal, a
   dependency-free client-side fuzzy match (subsequence over guide titles/summaries) —
   no external service or setup.
@@ -85,3 +86,5 @@ Downstream overrides `config.docs.*`:
 ## Two-pane guides (optional)
 
 Add `src/modules/docs/content/docs.<slug>.content.js` with a default export `{ title, lead, base, sections }` and the guide of that slug renders through `<DocsPanes>`: explanation on the left, code and answer held on the right. The module ships no content, so every guide stays markdown until a project adds a file. A downstream names its file after its project, `docs.<project>.content.js` (it renders the guide of slug `<project>`), so it never collides with a stack file.
+
+Markdown guides can take the same layout with no extra file: set `config.docs.twoPanes: true`. Each `##` section becomes one row, its prose, tables and lists on the left and its code cards on the right in their order (one column under `lg`, code under its text); a section with no code stays full width, and what comes before the first `##` is the header. Write a guide as prose, the call's fences, a line such as `The answer:`, then a `<lang> answer` fence: the line stays on the left, the call card and the Response card stack on the right. Headings, the section rail, search and prerender are unchanged. A `docs.<slug>.content.js` file still wins for its slug.

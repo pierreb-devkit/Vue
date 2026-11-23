@@ -13,12 +13,12 @@ import { setActivePinia, createPinia } from 'pinia';
 import { createHead } from '@unhead/vue/client';
 import { renderSSRHead } from '@unhead/vue/server';
 import { useDocsStore } from '../stores/docs.store';
+import DocsCodeblock from '../components/docs.codeblock.component.vue';
 
-vi.mock('@/config', () => ({
-  default: {
-    docs: { home: { title: 'Documentation' } },
-  },
+const mockConfig = vi.hoisted(() => ({
+  docs: { home: { title: 'Documentation' } },
 }));
+vi.mock('@/config', () => ({ default: mockConfig }));
 
 import DocsArticle from '../views/docs.article.view.vue';
 
@@ -79,6 +79,7 @@ const mountArticle = async (slug, overrides = {}) => {
 describe('docs.article.view', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    mockConfig.docs.twoPanes = undefined;
   });
 
   it('gives the page the guide search title and summary', async () => {
@@ -228,5 +229,100 @@ describe('docs.article.view', () => {
     // theme tokens only: no hardcoded hex colors, so light and dark both work
     expect(shared).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(local).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+  });
+
+  describe('two panes (config.docs.twoPanes)', () => {
+    const guide = [
+      '# Alpha',
+      '',
+      'The lead.',
+      '',
+      '## Get an item',
+      '',
+      'Call the route with its id.',
+      '',
+      '```bash',
+      'curl https://api.example.com/api/items/1',
+      '```',
+      '',
+      '```javascript',
+      "await fetch('https://api.example.com/api/items/1');",
+      '```',
+      '',
+      'The answer:',
+      '',
+      '```json answer',
+      '{ "id": "1" }',
+      '```',
+      '',
+      '## Limits',
+      '',
+      '| Plan | Calls |',
+      '| --- | --- |',
+      '| Free | 10 |',
+      '',
+    ].join('\n');
+
+    const mountGuide = (twoPanes) => {
+      mockConfig.docs.twoPanes = twoPanes;
+      return mountArticle('alpha', { fetchArticle: vi.fn().mockResolvedValue(guide) });
+    };
+
+    it('keeps one column when the switch is off', async () => {
+      const { wrapper } = await mountGuide(false);
+      await flushPromises();
+      expect(wrapper.find('[data-test="docs-panes-section"]').exists()).toBe(false);
+      expect(wrapper.findAllComponents(DocsCodeblock)).toHaveLength(2);
+    });
+
+    it('puts each section prose left and its cards right, in order', async () => {
+      const { wrapper } = await mountGuide(true);
+      await flushPromises();
+      const body = wrapper.find('[data-test="docs-article-body"]');
+      // The header: what comes before the first `##`.
+      expect(body.element.firstElementChild.textContent).toContain('The lead.');
+
+      const [withCode, withoutCode] = body.findAll('[data-test="docs-panes-section"]');
+      const text = withCode.find('[data-test="docs-panes-text"]');
+      expect(text.find('h2#get-an-item').exists()).toBe(true);
+      expect(text.text().indexOf('Call the route')).toBeLessThan(text.text().indexOf('The answer:'));
+
+      const code = withCode.find('[data-test="docs-panes-code"]');
+      expect(code.attributes('aria-label')).toBe('Code for Get an item');
+      const cards = code.findAllComponents(DocsCodeblock);
+      expect(cards.map((c) => c.props('examples').map((ex) => ex.lang))).toEqual([['bash', 'javascript'], ['json']]);
+      expect(cards[1].props('examples')[0].label).toBe('Response');
+
+      // Phone width: one column, the text before its code.
+      expect(text.classes()).toEqual(expect.arrayContaining(['v-col--cols-12', 'v-col--cols-lg-6']));
+      expect(code.classes()).toEqual(expect.arrayContaining(['v-col--cols-12', 'v-col--cols-lg-6']));
+      expect(text.element.compareDocumentPosition(code.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      // A section with no code stays full width.
+      expect(withoutCode.find('[data-test="docs-panes-code"]').exists()).toBe(false);
+      expect(withoutCode.find('[data-test="docs-panes-text"]').classes()).toContain('v-col--cols-lg-12');
+      expect(withoutCode.find('table').exists()).toBe(true);
+    });
+
+    it('moves every card to the language picked on one', async () => {
+      const { wrapper } = await mountGuide(true);
+      await flushPromises();
+      const [call] = wrapper.findAllComponents(DocsCodeblock);
+      call.vm.active = 1;
+      await flushPromises();
+      expect(wrapper.vm.lang).toBe('javascript');
+    });
+
+    it('keeps the same section rail with the switch on or off', async () => {
+      const rail = async (twoPanes) => {
+        setActivePinia(createPinia());
+        const { wrapper } = await mountGuide(twoPanes);
+        await flushPromises();
+        return wrapper.vm.railSections;
+      };
+      const off = await rail(false);
+      expect(off.map((s) => s.id)).toEqual(['get-an-item', 'limits']);
+      expect(await rail(true)).toEqual(off);
+    });
   });
 });
