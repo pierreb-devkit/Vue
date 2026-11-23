@@ -27,7 +27,7 @@
             HTML fragments (v-html) interleaved with runnable <DocsCodeblock>
             components hydrated at each `data-docs-example` marker. This keeps
             one markdown renderer (useDocsPage) while letting fenced code use
-            the tabbed, copy-with-my-key component.
+            the tabbed code block component.
           -->
           <CoreProse tag="article" class="docs-prose" data-test="docs-article-body">
             <template v-for="(seg, i) in bodySegments" :key="i">
