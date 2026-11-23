@@ -41,17 +41,94 @@ const normalizeParameters = (parameters) => {
 };
 
 /**
- * Normalize an OpenAPI `responses` object into a status-sorted list.
- * @param {Object} [responses] - Raw OpenAPI responses keyed by status code.
- * @returns {Array<{ status: string, description: string }>}
+ * Follow a local `$ref` (`#/components/...`) inside the spec until a plain
+ * object is reached. The served spec is merged, not dereferenced, so request
+ * bodies, responses and schemas commonly arrive as references. Unknown,
+ * external or circular references resolve to `null`.
+ * @param {Object} spec - The whole OpenAPI spec (the reference root).
+ * @param {*} node - A spec node that may be a `{ $ref }` object.
+ * @returns {Object|null} The referenced object, or `node` itself when it is not a reference.
  */
-const normalizeResponses = (responses) => {
+const resolveRef = (spec, node) => {
+  let current = node;
+  const seen = new Set();
+  while (current && typeof current === 'object' && typeof current.$ref === 'string') {
+    const ref = current.$ref;
+    if (!ref.startsWith('#/') || seen.has(ref)) return null;
+    seen.add(ref);
+    current = ref.slice(2).split('/')
+      .map((key) => key.replace(/~1/g, '/').replace(/~0/g, '~'))
+      .reduce((acc, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), spec);
+  }
+  return current && typeof current === 'object' ? current : null;
+};
+
+/**
+ * Turn a media type's `example` / `examples` into code-block rows.
+ * Presence is tested with `in`, so falsy examples (`0`, `false`, `null`) still
+ * render. Strings render as-is; anything else is pretty-printed JSON.
+ * @param {Object} spec - The whole spec (for `$ref` examples).
+ * @param {Object} [content] - An OpenAPI `content` map (media type → media object).
+ * @returns {Array<{ lang: string, label: string, code: string }>} One row per example (empty when the spec has none).
+ */
+const normalizeExamples = (spec, content) => {
+  if (!content || typeof content !== 'object') return [];
+  const [mediaType, media] = Object.entries(content)[0] || [];
+  if (!media || typeof media !== 'object') return [];
+  const lang = /json/i.test(mediaType) ? 'json' : 'plaintext';
+  const toCode = (value) => (typeof value === 'string' ? value : JSON.stringify(value, null, 2));
+  if ('example' in media) return [{ lang, label: '', code: toCode(media.example) }];
+  if (!media.examples || typeof media.examples !== 'object') return [];
+  return Object.entries(media.examples)
+    .map(([key, raw]) => [key, resolveRef(spec, raw)])
+    .filter(([, ex]) => ex && 'value' in ex)
+    .map(([key, ex]) => ({ lang, label: ex.summary || key, code: toCode(ex.value) }));
+};
+
+/**
+ * List a request body's top-level fields (no recursion into nested objects).
+ * Resolves the schema `$ref` and merges the properties of an `allOf`.
+ * @param {Object} spec - The whole spec (for `$ref` schemas).
+ * @param {Object} [content] - The request body's `content` map.
+ * @returns {Array<{ name: string, type: string, required: boolean, description: string }>}
+ */
+const normalizeBodyFields = (spec, content) => {
+  const media = content && typeof content === 'object' ? Object.values(content)[0] : null;
+  const root = resolveRef(spec, media?.schema);
+  if (!root) return [];
+  const parts = Array.isArray(root.allOf) ? root.allOf.map((s) => resolveRef(spec, s)).filter(Boolean) : [root];
+  const required = new Set(parts.flatMap((s) => (Array.isArray(s.required) ? s.required : [])));
+  return parts
+    .flatMap((s) => Object.entries(s.properties && typeof s.properties === 'object' ? s.properties : {}))
+    .map(([name, prop]) => {
+      const field = resolveRef(spec, prop) || {};
+      return {
+        name,
+        type: field.type || (prop?.$ref ? 'object' : ''),
+        required: required.has(name),
+        description: field.description || '',
+      };
+    });
+};
+
+/**
+ * Normalize an OpenAPI `responses` object into a status-sorted list.
+ * Response `$ref`s (e.g. shared error responses) are resolved.
+ * @param {Object} spec - The whole spec (for `$ref` responses).
+ * @param {Object} [responses] - Raw OpenAPI responses keyed by status code.
+ * @returns {Array<{ status: string, description: string, examples: Array<{ lang: string, label: string, code: string }> }>}
+ */
+const normalizeResponses = (spec, responses) => {
   if (!responses || typeof responses !== 'object') return [];
   return Object.entries(responses)
-    .map(([status, body]) => ({
-      status: String(status),
-      description: (body && typeof body === 'object' && body.description) || '',
-    }))
+    .map(([status, raw]) => {
+      const body = resolveRef(spec, raw) || {};
+      return {
+        status: String(status),
+        description: body.description || '',
+        examples: normalizeExamples(spec, body.content),
+      };
+    })
     .sort((a, b) => a.status.localeCompare(b.status, undefined, { numeric: true }));
 };
 
@@ -97,10 +174,11 @@ const mergeParameters = (pathParams, opParams) => {
  * Flatten one path-item's operations into endpoint descriptors.
  * @param {string} path - The URL path (e.g. `/api/items`).
  * @param {Object} pathItem - The OpenAPI path-item object (method → operation).
- * @param {Array|undefined} [globalSecurity] - Root `spec.security` (inherited when op omits its own).
+ * @param {Object} spec - The whole spec (root for local `$ref`s).
  * @returns {Array<Object>} Endpoint descriptors for this path.
  */
-const flattenPathItem = (path, pathItem, globalSecurity) => {
+const flattenPathItem = (path, pathItem, spec) => {
+  const globalSecurity = Array.isArray(spec.security) ? spec.security : undefined;
   if (!pathItem || typeof pathItem !== 'object') return [];
   // Path-level parameters apply to every operation under the path.
   const sharedParams = Array.isArray(pathItem.parameters) ? pathItem.parameters : [];
@@ -109,6 +187,7 @@ const flattenPathItem = (path, pathItem, globalSecurity) => {
     .map((method) => {
       const op = pathItem[method];
       const opTags = Array.isArray(op.tags) && op.tags.length ? op.tags : ['Other'];
+      const bodyContent = resolveRef(spec, op.requestBody)?.content;
       return {
         method: method.toUpperCase(),
         path,
@@ -119,8 +198,10 @@ const flattenPathItem = (path, pathItem, globalSecurity) => {
         deprecated: Boolean(op.deprecated),
         secured: isSecured(op, globalSecurity),
         parameters: normalizeParameters(mergeParameters(sharedParams, op.parameters || [])),
-        responses: normalizeResponses(op.responses),
+        responses: normalizeResponses(spec, op.responses),
         hasRequestBody: hasRequestBody(op),
+        bodyFields: normalizeBodyFields(spec, bodyContent),
+        requestExamples: normalizeExamples(spec, bodyContent),
         // Stable, unique id for v-expansion-panel keys + deep-linking.
         id: `${method}-${path}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       };
@@ -167,10 +248,8 @@ export function parseSpec(spec) {
     return { ...EMPTY };
   }
 
-  const globalSecurity = Array.isArray(spec.security) ? spec.security : undefined;
-
   const endpoints = Object.entries(spec.paths).flatMap(([path, item]) =>
-    flattenPathItem(path, item, globalSecurity));
+    flattenPathItem(path, item, spec));
 
   if (!endpoints.length) return { ...EMPTY };
 

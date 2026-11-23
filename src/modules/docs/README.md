@@ -37,6 +37,7 @@ truth for this contract.
 ```text
 /docs                  — guide home (persona doors + quickstart + category grid)
 /docs/api              — in-theme OpenAPI reference (renders /api/spec.json natively)
+                         body fields + the spec's request/response examples as code cards
 /docs/:category/:slug  — article (markdown body + section list + prev/next)
 ```
 
