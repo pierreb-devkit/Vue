@@ -5,15 +5,9 @@
   language tabs (curl / Node / Python …) when the guide supplies a multi-language
   group, and degrades to a single block when only one language is present.
 
-  COPY-WITH-MY-KEY (placeholder-only in the stack):
-  - The rendered snippet always shows the static `<YOUR_API_KEY>` placeholder.
-  - The "Copy with my key" affordance (shown when logged in) copies the snippet
-    verbatim — the user pastes their own key in place of the placeholder.
-  - A downstream project MAY extend this to substitute a real per-user key into
-    the CLIPBOARD text only (never the rendered DOM). The stack ships the
-    placeholder-only behaviour: NO key fetch, no key in the DOM, ever.
-
-  INVARIANT: a real key is NEVER injected into the rendered/prerendered DOM.
+  COPY: one button copies the current snippet verbatim. The `<YOUR_API_KEY>`
+  placeholder stays plain text, rendered and copied as-is; the reader pastes
+  their own key in its place.
 
   PROPS:
   - examples (Array<{ lang, label?, code }>): One entry per language. `lang` is a
@@ -57,38 +51,20 @@
 
       <v-spacer />
 
-      <!-- Copy with my key (only when logged in) — copies the snippet verbatim
-           with the static placeholder; the user pastes their own key in. -->
       <v-btn
-        v-if="isLoggedIn"
-        :prepend-icon="copied === 'key' ? 'fa-solid fa-check' : 'fa-solid fa-key'"
-        :color="copied === 'key' ? 'success' : undefined"
-        variant="text"
-        size="small"
-        density="comfortable"
-        class="text-none text-body-small"
-        data-test="docs-codeblock-copy-key"
-        :aria-label="`Copy ${tabLabel(current)} example with my API key`"
-        @click="copy(true)"
-      >
-        {{ copied === 'key' ? 'Copied' : 'Copy with my key' }}
-      </v-btn>
-
-      <!-- Plain copy -->
-      <v-btn
-        :icon="copied === 'plain' ? 'fa-solid fa-check' : 'fa-regular fa-copy'"
-        :color="copied === 'plain' ? 'success' : undefined"
+        :icon="copied ? 'fa-solid fa-check' : 'fa-regular fa-copy'"
+        :color="copied ? 'success' : undefined"
         variant="text"
         size="x-small"
         class="ml-1 mr-1"
         data-test="docs-codeblock-copy"
         :aria-label="`Copy ${tabLabel(current)} example`"
-        @click="copy(false)"
+        @click="copy"
       />
     </div>
 
-    <!-- Rendered snippet: highlighted HTML with the STATIC placeholder only -->
-    <!-- eslint-disable vue/no-v-html -- highlightedHtml is highlight.js over the raw snippet, sanitized below; never contains a real key -->
+    <!-- Rendered snippet: highlighted HTML of the raw code -->
+    <!-- eslint-disable vue/no-v-html -- highlightedHtml is highlight.js over the raw snippet, sanitized below -->
     <pre
       class="docs-codeblock__code text-mono"
       data-test="docs-codeblock-code"
@@ -100,15 +76,12 @@
 <script>
 import hljs from 'highlight.js/lib/common';
 import DOMPurify from 'dompurify';
-import { useAuthStore } from '../../auth/stores/auth.store';
 import { createLogger } from '../../../lib/helpers/logger';
 
 const logger = createLogger('docs');
 
 /**
- * The placeholder token rendered in the DOM AND copied verbatim. The stack
- * never substitutes a real key; a downstream project may extend `copy()` to
- * substitute it into the CLIPBOARD text only.
+ * The placeholder token guides write in their snippets, rendered and copied verbatim.
  */
 export const API_KEY_PLACEHOLDER = '<YOUR_API_KEY>';
 
@@ -142,26 +115,15 @@ export default {
     lang: { type: String, default: undefined },
   },
   emits: ['update:lang'],
-  setup() {
-    const authStore = useAuthStore();
-    return { authStore };
-  },
   data() {
     return {
       active: 0,
-      /** @type {'plain'|'key'|null} which copy button last succeeded (for the checkmark) */
-      copied: null,
+      /** Whether the last copy succeeded (shows the checkmark briefly). */
+      copied: false,
       copyTimer: null,
     };
   },
   computed: {
-    /**
-     * @desc Whether a logged-in user is present (drives the "Copy with my key" button).
-     * @returns {boolean}
-     */
-    isLoggedIn() {
-      return !!this.authStore.isLoggedIn;
-    },
     /**
      * @desc The currently selected example (clamped to a valid index).
      * @returns {{ lang: string, label?: string, code: string }}
@@ -172,8 +134,6 @@ export default {
     },
     /**
      * @desc The current snippet highlighted via highlight.js, sanitized.
-     *       Operates on the RAW code (placeholder intact) — no real key is ever
-     *       highlighted or rendered.
      * @returns {string} Sanitized HTML for the <code> body.
      */
     highlightedHtml() {
@@ -233,14 +193,10 @@ export default {
       return LANG_LABELS[ex.lang] || ex.lang;
     },
     /**
-     * @desc Copy the current snippet verbatim (the static `<YOUR_API_KEY>`
-     *   placeholder is preserved). `withKey` only drives which button flashes
-     *   the success checkmark — the stack never substitutes a real key (a
-     *   downstream project may extend this to do clipboard-only substitution).
-     * @param {boolean} withKey - Which affordance triggered the copy.
+     * @desc Copy the current snippet verbatim (the `<YOUR_API_KEY>` placeholder is preserved).
      * @returns {Promise<void>}
      */
-    async copy(withKey) {
+    async copy() {
       // Bail before showing success feedback if the clipboard API is unavailable
       // (insecure context / older browsers) so the checkmark only flashes on a
       // real copy.
@@ -249,14 +205,12 @@ export default {
         return;
       }
 
-      const text = this.current.code;
-
       try {
-        await navigator.clipboard.writeText(text);
-        this.copied = withKey ? 'key' : 'plain';
+        await navigator.clipboard.writeText(this.current.code);
+        this.copied = true;
         if (this.copyTimer) clearTimeout(this.copyTimer);
         this.copyTimer = setTimeout(() => {
-          this.copied = null;
+          this.copied = false;
         }, 1800);
       } catch (err) {
         logger.warn('docs codeblock: clipboard write failed', err);
