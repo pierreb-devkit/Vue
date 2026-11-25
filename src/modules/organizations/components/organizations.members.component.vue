@@ -90,42 +90,44 @@
         <!-- Role change only makes sense once the invitee has accepted; the
              remove button stays on pending rows — it is the owner's cancel
              affordance for the invitation. -->
-        <v-menu v-if="!item.invitation && canUpdateMember() && item.status !== 'pending'" location="bottom end">
-          <template #activator="{ props }">
-            <v-btn
-              v-bind="props"
-              icon
-              variant="text"
-              size="small"
-              class="mr-1"
-              data-test="member-role-menu"
-            >
-              <v-icon icon="fa-solid fa-user-pen" size="small"></v-icon>
-            </v-btn>
-          </template>
-          <v-list density="compact" min-width="160" :class="config.vuetify.theme.rounded">
-            <v-list-subheader class="text-label-small">CHANGE ROLE</v-list-subheader>
-            <v-list-item
-              v-for="role in availableRoles"
-              :key="role.value"
-              :active="item.role === role.value"
-              @click="changeRole(item, role.value)"
-            >
-              <v-list-item-title class="text-body-medium">{{ role.title }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-        <v-btn
-          v-if="!item.invitation && canRemoveMember()"
-          icon
-          variant="text"
-          size="small"
-          color="error"
-          data-test="member-remove"
-          @click="openRemoveDialog(item)"
-        >
-          <v-icon icon="fa-solid fa-user-minus" size="small"></v-icon>
-        </v-btn>
+        <template v-else>
+          <v-menu v-if="canUpdateMember() && item.status !== 'pending'" location="bottom end">
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                icon
+                variant="text"
+                size="small"
+                class="mr-1"
+                data-test="member-role-menu"
+              >
+                <v-icon icon="fa-solid fa-user-pen" size="small"></v-icon>
+              </v-btn>
+            </template>
+            <v-list density="compact" min-width="160" :class="config.vuetify.theme.rounded">
+              <v-list-subheader class="text-label-small">CHANGE ROLE</v-list-subheader>
+              <v-list-item
+                v-for="role in availableRoles"
+                :key="role.value"
+                :active="item.role === role.value"
+                @click="changeRole(item, role.value)"
+              >
+                <v-list-item-title class="text-body-medium">{{ role.title }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-btn
+            v-if="canRemoveMember()"
+            icon
+            variant="text"
+            size="small"
+            color="error"
+            data-test="member-remove"
+            @click="openRemoveDialog(item)"
+          >
+            <v-icon icon="fa-solid fa-user-minus" size="small"></v-icon>
+          </v-btn>
+        </template>
       </template>
     </coreDataTableComponent>
 
@@ -284,27 +286,16 @@
           >
             Cancel
           </v-btn>
+          <!-- Found user → membership invite; not found → email invitation -->
           <v-btn
-            v-if="addDialog.foundUser"
+            v-if="addDialog.foundUser || (isNotFound && canInviteEmail())"
             color="primary"
             variant="flat"
             :class="config.vuetify.theme.rounded"
             class="text-none text-body-medium"
             :loading="addDialog.adding"
-            data-test="org-add-member-submit"
-            @click="confirmAddMember"
-          >
-            Send invitation
-          </v-btn>
-          <v-btn
-            v-else-if="isNotFound && canInviteEmail()"
-            color="primary"
-            variant="flat"
-            :class="config.vuetify.theme.rounded"
-            class="text-none text-body-medium"
-            :loading="addDialog.adding"
-            data-test="org-add-member-invite"
-            @click="confirmInviteEmail"
+            :data-test="addDialog.foundUser ? 'org-add-member-submit' : 'org-add-member-invite'"
+            @click="addDialog.foundUser ? confirmAddMember() : confirmInviteEmail()"
           >
             Send invitation
           </v-btn>
