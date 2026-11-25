@@ -1421,11 +1421,11 @@ describe('Auth Store', () => {
       expect(r).toEqual({ valid: true, email: 'a@b.co' });
     });
 
-    it('verifyInvite returns { valid: false, email: null } when the API rejects', async () => {
+    it('verifyInvite returns { valid: false, email: null, organization: null } when the API rejects', async () => {
       const authStore = useAuthStore();
       axios.get.mockRejectedValueOnce(new Error('Not found'));
       const r = await authStore.verifyInvite('bad-token');
-      expect(r).toEqual({ valid: false, email: null });
+      expect(r).toEqual({ valid: false, email: null, organization: null });
     });
   });
 

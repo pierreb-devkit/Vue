@@ -104,8 +104,9 @@
 
       <!-- Credentials form -->
       <template v-else-if="serverConfig === null || serverConfig?.sign?.up === true || invite?.valid">
-        <v-alert v-if="invite?.valid" type="success" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
-          <span class="text-body-medium">You've been invited. Create your account below.</span>
+        <v-alert v-if="invite?.valid" type="success" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded" data-test="signup-invite-banner">
+          <span v-if="invite.organization?.name" class="text-body-medium">You're joining {{ invite.organization.name }}. Create your account below.</span>
+          <span v-else class="text-body-medium">You've been invited. Create your account below.</span>
         </v-alert>
         <v-alert
           v-if="signupError"
@@ -206,7 +207,7 @@ export default {
       serverConfig: undefined,
       inviteToken: (() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })(),
       inviteChecking: !!((() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })()),
-      invite: null, // { valid, email } once verified
+      invite: null, // { valid, email, organization } once verified (organization = { name } for an org invite)
       signupStep: 'form',
       organizationWelcomeMessage: '',
       resending: false,

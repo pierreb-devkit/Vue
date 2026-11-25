@@ -691,6 +691,30 @@ describe('auth.signup.view', () => {
       expect(wrapper.vm.email).toBe('guest@example.com');
     });
 
+    test('an organization invite shows "You\'re joining <org>"', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: true, email: 'guest@example.com', organization: { name: 'Acme' } },
+      });
+      await flushPromises();
+      const banner = wrapper.find('[data-test="signup-invite-banner"]');
+      expect(banner.text()).toContain("You're joining Acme.");
+      expect(banner.text()).not.toContain("You've been invited");
+    });
+
+    test('a platform invite (no organization) keeps the generic invited banner', async () => {
+      const wrapper = await mountSignup({
+        query: { inviteToken: 'tok123' },
+        serverConfig: { sign: { up: false } },
+        verifyInvite: { valid: true, email: 'guest@example.com', organization: null },
+      });
+      await flushPromises();
+      const banner = wrapper.find('[data-test="signup-invite-banner"]');
+      expect(banner.text()).toContain("You've been invited");
+      expect(banner.text()).not.toContain('joining');
+    });
+
     test('with no invite and signup disabled, the disabled alert is shown and no form', async () => {
       const wrapper = await mountSignup({ query: {}, serverConfig: { sign: { up: false } } });
       await flushPromises();
