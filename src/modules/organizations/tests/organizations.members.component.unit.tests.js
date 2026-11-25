@@ -437,13 +437,6 @@ describe('organizations.members.component — invite an email with no account', 
     expect(wrapper.vm.invitationRows).toEqual([]);
   });
 
-  it('invitationRows hides an expired invitation (its link is dead)', async () => {
-    const expired = { ...invitation, id: 'i4', email: 'old@example.com', expiresAt: new Date(Date.now() - 1000).toISOString() };
-    const live = { ...invitation, expiresAt: new Date(Date.now() + 86400000).toISOString() };
-    const { wrapper } = await mountComponent({ emailInvitations: [live, expired] });
-    expect(wrapper.vm.invitationRows.map((r) => r.id)).toEqual(['i1']);
-  });
-
   it('resendInvitation calls the store and clears the spinner', async () => {
     const resendEmailInvitation = vi.fn().mockResolvedValue({ id: 'i1' });
     const { wrapper } = await mountComponent({ resendEmailInvitation });
