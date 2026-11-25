@@ -714,7 +714,7 @@ describe('Organizations Store', () => {
 
       const result = await store.acceptMembership('inv1');
 
-      expect(axios.get).toHaveBeenCalledWith(`${API}/organizations`);
+      expect(axios.get).toHaveBeenCalledWith(`${API}/organizations`, { __silent: true });
       expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org9/switch`, undefined, { __silent: true });
       expect(store.currentOrganization).toEqual({ id: 'org9', name: 'Acme' });
       expect(result).toEqual(accepted);
