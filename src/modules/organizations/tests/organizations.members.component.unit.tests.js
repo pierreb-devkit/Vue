@@ -103,6 +103,7 @@ describe('organizations.members.component — add member', () => {
 
   it('canAddMember is false when the ability has no rules yet', async () => {
     abilityMock.rules = [];
+    abilityMock.can.mockReturnValue(false); // the real ability: no rules → can() is false
     const { wrapper } = await mountComponent();
     expect(wrapper.vm.canAddMember()).toBe(false);
   });

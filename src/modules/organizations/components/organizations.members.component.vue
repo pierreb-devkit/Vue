@@ -548,10 +548,10 @@ export default {
      * @returns {boolean}
      */
     canAddMember() {
-      if (ability && ability.rules && ability.rules.length > 0) {
-        return ability.can('create', subject('Membership', { organizationId: this.organizationId }));
-      }
-      return false;
+      // Always ask ability.can (false with no rules): it is the reactive read, so a
+      // watcher re-runs when the rules land after mount.
+      if (!ability) return false;
+      return ability.can('create', subject('Membership', { organizationId: this.organizationId }));
     },
     /**
      * @desc Whether this viewer can invite an email with no account: the optional
