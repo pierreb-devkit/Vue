@@ -239,7 +239,7 @@ describe('Organizations Store', () => {
 
       await store.switchOrganization('1');
 
-      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/1/switch`);
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/1/switch`, undefined, { __silent: false });
       expect(store.currentOrganization).toEqual(switchedOrg);
       expect(updateAbilities).toHaveBeenCalledWith(['read', 'write']);
       expect(mockAuthStore.applySession).toHaveBeenCalledWith({ abilities: ['read', 'write'], user: { name: 'User1' }, tokenExpiresIn: 3600 });
@@ -787,6 +787,55 @@ describe('Organizations Store', () => {
       await store.acceptMembership('a');
 
       expect(store.pendingInvitations).toEqual([{ _id: 'b' }]);
+    });
+
+    it('should switch to the accepted organization, fetching the list when it is missing', async () => {
+      const store = useOrganizationsStore();
+      store.pendingInvitations = [{ id: 'inv1' }];
+      const accepted = { id: 'inv1', status: 'active', organizationId: 'org9' };
+
+      axios.put.mockResolvedValueOnce({ data: { data: accepted } });
+      axios.get.mockResolvedValueOnce({ data: { data: [{ id: 'org9', name: 'Acme' }] } });
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      const result = await store.acceptMembership('inv1');
+
+      expect(axios.get).toHaveBeenCalledWith(`${API}/organizations`, { __silent: true });
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org9/switch`, undefined, { __silent: true });
+      expect(store.currentOrganization).toEqual({ id: 'org9', name: 'Acme' });
+      expect(result).toEqual(accepted);
+    });
+
+    it('should not refetch the list when the accepted organization is already known', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: 'org9' }];
+      store.pendingInvitations = [{ id: 'inv1' }];
+
+      axios.put.mockResolvedValueOnce({ data: { data: { id: 'inv1', organizationId: { _id: 'org9' } } } });
+      axios.post.mockResolvedValueOnce({ data: { data: {} } });
+
+      await store.acceptMembership('inv1');
+
+      expect(axios.get).not.toHaveBeenCalled();
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org9/switch`, undefined, { __silent: true });
+    });
+
+    it('should still report the accept as done when the switch fails', async () => {
+      const store = useOrganizationsStore();
+      store.organizations = [{ id: 'org9' }];
+      store.pendingInvitations = [{ id: 'inv1' }];
+      const accepted = { id: 'inv1', status: 'active', organizationId: 'org9' };
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      axios.put.mockResolvedValueOnce({ data: { data: accepted } });
+      axios.post.mockRejectedValueOnce(new Error('switch down'));
+
+      const result = await store.acceptMembership('inv1');
+
+      expect(result).toEqual(accepted);
+      expect(store.pendingInvitations).toEqual([]);
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
     });
   });
 
