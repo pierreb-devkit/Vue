@@ -406,11 +406,8 @@ export default {
       if (this.membersPage !== 0 || !this.canInviteEmail()) return [];
       const organizationsStore = useOrganizationsStore();
       const search = this.membersSearch.trim().toLowerCase();
-      const now = Date.now();
       return organizationsStore.emailInvitations
         .filter((inv) => String(inv.organizationId) === this.organizationId)
-        // An expired invite's link is dead: hide it (a new invite can be sent).
-        .filter((inv) => !inv.expiresAt || new Date(inv.expiresAt).getTime() > now)
         .filter((inv) => !search || (inv.email || '').toLowerCase().includes(search))
         .map((inv) => ({
           id: inv.id || inv._id,
