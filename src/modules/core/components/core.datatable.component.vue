@@ -124,7 +124,7 @@
         <v-icon icon="fa-solid fa-angle-left" size="small"></v-icon>
       </v-btn>
       <span class="text-body-medium mx-1">{{ options.page }}</span>
-      <v-btn :disabled="!items || items.length < options.itemsPerPage" variant="text" icon size="small" class="mr-1" @click="switchPage('+')">
+      <v-btn :disabled="fetchedCount < options.itemsPerPage" variant="text" icon size="small" class="mr-1" @click="switchPage('+')">
         <v-icon icon="fa-solid fa-angle-right" size="small"></v-icon>
       </v-btn>
     </v-card-actions>
@@ -182,6 +182,12 @@ export default {
       type: String,
       default: '',
     },
+    // Rows the fetch action returned for this page, when `items` carries extra
+    // rows (e.g. local rows appended to a server page). Drives the next-page button.
+    pageLength: {
+      type: Number,
+      default: null,
+    },
   },
   emits: ['dispatch'],
   data() {
@@ -195,6 +201,15 @@ export default {
         itemsPerPage: 5,
       },
     };
+  },
+  computed: {
+    /**
+     * @desc Rows the server returned for the current page (next-page check).
+     * @returns {number}
+     */
+    fetchedCount() {
+      return this.pageLength ?? (this.items ? this.items.length : 0);
+    },
   },
   watch: {
     options: {
@@ -268,7 +283,7 @@ export default {
       if (sign === '-' && this.options.page > 1) {
         this.options.page -= 1;
       }
-      if (sign === '+' && this.items.length === this.options.itemsPerPage) {
+      if (sign === '+' && this.fetchedCount === this.options.itemsPerPage) {
         this.options.page += 1;
       }
     },

@@ -72,6 +72,7 @@ describe('Organizations Store', () => {
     expect(store.members).toEqual([]);
     expect(store.adminPendingRequests).toEqual([]);
     expect(store.pendingInvitations).toEqual([]);
+    expect(store.emailInvitations).toEqual([]);
   });
 
   describe('fetchOrganizations', () => {
@@ -455,11 +456,13 @@ describe('Organizations Store', () => {
       const store = useOrganizationsStore();
       store.viewedOrganization = { id: '1', name: 'Org1' };
       store.members = [{ id: 'm1' }];
+      store.emailInvitations = [{ id: 'i1' }];
 
       store.resetOrganization();
 
       expect(store.viewedOrganization).toBeNull();
       expect(store.members).toEqual([]);
+      expect(store.emailInvitations).toEqual([]);
     });
   });
 
@@ -645,6 +648,121 @@ describe('Organizations Store', () => {
       expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/members`, {
         userId: 'u1',
       });
+    });
+  });
+
+  describe('email invitations (no account yet)', () => {
+    it('fetchEmailInvitations GETs the org invitations and stores them', async () => {
+      const store = useOrganizationsStore();
+      const list = [{ id: 'i1', email: 'new@example.com', role: 'member', organizationId: 'org1' }];
+      axios.get.mockResolvedValueOnce({ data: { data: list } });
+
+      const result = await store.fetchEmailInvitations('org1');
+
+      expect(axios.get).toHaveBeenCalledWith(`${API}/organizations/org1/invitations`);
+      expect(store.emailInvitations).toEqual(list);
+      expect(result).toEqual(list);
+    });
+
+    it('fetchEmailInvitations drops an older response that lands after a newer request (org switch)', async () => {
+      const store = useOrganizationsStore();
+      let resolveA;
+      axios.get
+        .mockImplementationOnce(() => new Promise((r) => { resolveA = r; }))
+        .mockResolvedValueOnce({ data: { data: [{ id: 'b1', organizationId: 'orgB' }] } });
+
+      const first = store.fetchEmailInvitations('orgA');
+      await store.fetchEmailInvitations('orgB');
+      resolveA({ data: { data: [{ id: 'a1', organizationId: 'orgA' }] } });
+      await first;
+
+      expect(store.emailInvitations).toEqual([{ id: 'b1', organizationId: 'orgB' }]);
+    });
+
+    it('fetchEmailInvitations keeps the newest request when the same org is fetched twice (A, B, A)', async () => {
+      const store = useOrganizationsStore();
+      let resolveFirst;
+      axios.get
+        .mockImplementationOnce(() => new Promise((r) => { resolveFirst = r; }))
+        .mockResolvedValueOnce({ data: { data: [{ id: 'b1', organizationId: 'orgB' }] } })
+        .mockResolvedValueOnce({ data: { data: [{ id: 'a2', organizationId: 'orgA' }] } });
+
+      const first = store.fetchEmailInvitations('orgA');
+      await store.fetchEmailInvitations('orgB');
+      await store.fetchEmailInvitations('orgA');
+      resolveFirst({ data: { data: [{ id: 'a1-stale', organizationId: 'orgA' }] } });
+      await first;
+
+      expect(store.emailInvitations).toEqual([{ id: 'a2', organizationId: 'orgA' }]);
+    });
+
+    it('fetchEmailInvitations falls back to an empty list when data is missing', async () => {
+      const store = useOrganizationsStore();
+      store.emailInvitations = [{ id: 'old' }];
+      axios.get.mockResolvedValueOnce({ data: {} });
+
+      await store.fetchEmailInvitations('org1');
+
+      expect(store.emailInvitations).toEqual([]);
+    });
+
+    it('inviteEmail POSTs the trimmed email and role and captures the event', async () => {
+      const store = useOrganizationsStore();
+      const created = { id: 'i9', email: 'new@example.com', role: 'admin' };
+      axios.post.mockResolvedValueOnce({ data: { data: created } });
+
+      const result = await store.inviteEmail('org1', '  new@example.com ', 'admin');
+
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/invitations`, { email: 'new@example.com', role: 'admin' });
+      expect(mockCapture).toHaveBeenCalledWith('invitation_created', { source: 'organization', organization_id: 'org1', role: 'admin' });
+      expect(result).toEqual(created);
+    });
+
+    it('inviteEmail omits role from the body when not provided', async () => {
+      const store = useOrganizationsStore();
+      axios.post.mockResolvedValueOnce({ data: { data: { id: 'i9' } } });
+
+      await store.inviteEmail('org1', 'new@example.com');
+
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/invitations`, { email: 'new@example.com' });
+    });
+
+    it('inviteEmail does not capture on error', async () => {
+      const store = useOrganizationsStore();
+      axios.post.mockRejectedValueOnce(new Error('409'));
+
+      await expect(store.inviteEmail('org1', 'new@example.com', 'member')).rejects.toThrow('409');
+      expect(mockCapture).not.toHaveBeenCalled();
+    });
+
+    it('resendEmailInvitation POSTs to the resend route', async () => {
+      const store = useOrganizationsStore();
+      axios.post.mockResolvedValueOnce({ data: { data: { id: 'i1' } } });
+
+      const result = await store.resendEmailInvitation('org1', 'i1');
+
+      expect(axios.post).toHaveBeenCalledWith(`${API}/organizations/org1/invitations/i1/resend`);
+      expect(result).toEqual({ id: 'i1' });
+    });
+
+    it('revokeEmailInvitation DELETEs the invitation and drops it from the list', async () => {
+      const store = useOrganizationsStore();
+      store.emailInvitations = [{ id: 'i1' }, { _id: 'i2' }];
+      axios.delete.mockResolvedValueOnce({ data: { data: { id: 'i1' } } });
+
+      await store.revokeEmailInvitation('org1', 'i1');
+
+      expect(axios.delete).toHaveBeenCalledWith(`${API}/organizations/org1/invitations/i1`);
+      expect(store.emailInvitations).toEqual([{ _id: 'i2' }]);
+    });
+
+    it('revokeEmailInvitation keeps the list on error', async () => {
+      const store = useOrganizationsStore();
+      store.emailInvitations = [{ id: 'i1' }];
+      axios.delete.mockRejectedValueOnce(new Error('409'));
+
+      await expect(store.revokeEmailInvitation('org1', 'i1')).rejects.toThrow('409');
+      expect(store.emailInvitations).toEqual([{ id: 'i1' }]);
     });
   });
 

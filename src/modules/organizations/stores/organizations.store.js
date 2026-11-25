@@ -15,6 +15,13 @@ const logger = createLogger('organizations');
 /**
  * Store definition.
  */
+/**
+ * Counter of email-invitation list requests: an older response that lands after a
+ * newer request (fast org switch, refetch after an invite) is dropped, never written.
+ * @type {number}
+ */
+let invitationsRequestSeq = 0;
+
 export const useOrganizationsStore = defineStore('organizations', {
   state: () => ({
     currentOrganization: null,
@@ -25,6 +32,9 @@ export const useOrganizationsStore = defineStore('organizations', {
     // Pending owner_add invitations the current user must accept (source:'owner_add').
     // Fetched on mount of the My Organizations view — the durable, offline-safe surface.
     pendingInvitations: [],
+    // Pending email invitations of the viewed organization (people with no account yet),
+    // served by the optional invitations module's org routes. Owner/admin only.
+    emailInvitations: [],
   }),
 
   actions: {
@@ -218,6 +228,7 @@ export const useOrganizationsStore = defineStore('organizations', {
     resetOrganization() {
       this.viewedOrganization = null;
       this.members = [];
+      this.emailInvitations = [];
     },
 
     /**
@@ -328,6 +339,64 @@ export const useOrganizationsStore = defineStore('organizations', {
       const res = await axios.post(`${api}/organizations/${organizationId}/members`, body);
       capture('org_member_added', { organization_id: organizationId, role: role || 'member' });
       return res.data.data;
+    },
+
+    /**
+     * @desc Fetch the pending email invitations of an organization (owner/admin only) —
+     *       people invited by email who have no account yet. Served by the optional
+     *       invitations module; callers gate on `isModuleActive('invitations')`.
+     * @param {string} organizationId - The organization the owner/admin manages
+     * @returns {Promise<Array>} The pending invitations (no token)
+     */
+    async fetchEmailInvitations(organizationId) {
+      const api = apiBase();
+      const seq = ++invitationsRequestSeq;
+      const res = await axios.get(`${api}/organizations/${organizationId}/invitations`);
+      // A newer fetch started meanwhile: only the latest request writes.
+      if (seq !== invitationsRequestSeq) return this.emailInvitations;
+      this.emailInvitations = res.data.data || [];
+      return this.emailInvitations;
+    },
+
+    /**
+     * @desc Invite an email that has no account into an organization with a role
+     *       (owner/admin only). The person signs up from the emailed link. Success/error
+     *       toast is fired by the axios POST interceptor.
+     * @param {string} organizationId - The organization to invite into
+     * @param {string} email - The email to invite
+     * @param {string} [role] - The role granted on join (member/admin)
+     * @returns {Promise<Object>} The created invitation (no token)
+     */
+    async inviteEmail(organizationId, email, role) {
+      const api = apiBase();
+      const body = { email: (email || '').trim(), ...(role ? { role } : {}) };
+      const res = await axios.post(`${api}/organizations/${organizationId}/invitations`, body);
+      capture('invitation_created', { source: 'organization', organization_id: organizationId, role: role || 'member' });
+      return res.data.data;
+    },
+
+    /**
+     * @desc Re-send the email of a pending organization invitation (same link).
+     * @param {string} organizationId - The organization owning the invitation
+     * @param {string} invitationId - The pending invitation
+     * @returns {Promise<Object>} The invitation (no token)
+     */
+    async resendEmailInvitation(organizationId, invitationId) {
+      const api = apiBase();
+      const res = await axios.post(`${api}/organizations/${organizationId}/invitations/${invitationId}/resend`);
+      return res.data.data;
+    },
+
+    /**
+     * @desc Revoke a pending organization invitation and drop it from the local list.
+     * @param {string} organizationId - The organization owning the invitation
+     * @param {string} invitationId - The pending invitation
+     * @returns {Promise<void>}
+     */
+    async revokeEmailInvitation(organizationId, invitationId) {
+      const api = apiBase();
+      await axios.delete(`${api}/organizations/${organizationId}/invitations/${invitationId}`);
+      this.emailInvitations = this.emailInvitations.filter((inv) => inv.id !== invitationId && inv._id !== invitationId);
     },
 
     /**

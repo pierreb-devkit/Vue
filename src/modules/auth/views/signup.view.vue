@@ -104,8 +104,8 @@
 
       <!-- Credentials form -->
       <template v-else-if="serverConfig === null || serverConfig?.sign?.up === true || invite?.valid">
-        <v-alert v-if="invite?.valid" type="success" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded">
-          <span class="text-body-medium">You've been invited. Create your account below.</span>
+        <v-alert v-if="invite?.valid" type="success" variant="tonal" class="mb-4" :class="config.vuetify.theme.rounded" data-test="signup-invite-banner">
+          <span class="text-body-medium">{{ invite.organization?.name ? `You're joining ${invite.organization.name}.` : "You've been invited." }} Create your account below.</span>
         </v-alert>
         <v-alert
           v-if="signupError"
@@ -206,7 +206,7 @@ export default {
       serverConfig: undefined,
       inviteToken: (() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })(),
       inviteChecking: !!((() => { const q = this.$route.query.inviteToken; return (Array.isArray(q) ? q[0] : q) || null; })()),
-      invite: null, // { valid, email } once verified
+      invite: null, // { valid, email, organization } once verified (organization = { name } for an org invite)
       signupStep: 'form',
       organizationWelcomeMessage: '',
       resending: false,
@@ -365,9 +365,11 @@ export default {
               this.organizationWelcomeMessage = `Your request to join "${organizationName}" has been sent. An admin will review it shortly.`;
               this.signupStep = 'organizationWelcome';
             } else if (result.organization) {
-              // Backend auto-created an organization
+              // Backend joined an invited organization (joined) or auto-created one
               const organizationName = result.organization.name || result.organization.slug || 'your organization';
-              this.organizationWelcomeMessage = `Welcome! Your organization "${organizationName}" has been created.`;
+              this.organizationWelcomeMessage = result.joined
+                ? `Welcome! You've joined ${organizationName}.`
+                : `Welcome! Your organization "${organizationName}" has been created.`;
               this.signupStep = 'organizationWelcome';
             } else if (result.organizationSetupRequired && this.organizationSetupComponent) {
               // Manual organization setup needed

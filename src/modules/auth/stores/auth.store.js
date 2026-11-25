@@ -532,8 +532,9 @@ export const useAuthStore = defineStore('auth', {
      * reveal the form + prefill the invited email when public signup is closed.
      * Canonical mount (modules/invitations); the legacy /auth/invitations alias
      * is removed post-P9.
+     * An organization invite also carries the organization's name.
      * @param {string} token
-     * @returns {Promise<{valid: boolean, email: string|null}>}
+     * @returns {Promise<{valid: boolean, email: string|null, organization: {name: string}|null}>}
      */
     async verifyInvite(token) {
       const api = apiBase();
@@ -541,7 +542,7 @@ export const useAuthStore = defineStore('auth', {
         const res = await axios.get(`${api}/invitations/verify/${encodeURIComponent(token)}`);
         return res.data.data;
       } catch {
-        return { valid: false, email: null };
+        return { valid: false, email: null, organization: null };
       }
     },
   },

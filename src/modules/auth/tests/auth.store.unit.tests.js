@@ -556,6 +556,17 @@ describe('Auth Store', () => {
       expect(authStore.auth).toBe(false);
     });
 
+    it('returns the reply with joined + organization intact so the view can say "joined" (invite signup)', async () => {
+      const authStore = useAuthStore();
+      const organization = { id: 'org1', name: 'Acme Inc' };
+      axios.post.mockResolvedValueOnce({
+        data: { user: { id: '456', email: 'new@test.com', roles: ['user'] }, tokenExpiresIn: Date.now() + 3600000, organization, joined: true },
+      });
+      const result = await authStore.signup({ email: 'new@test.com', password: 'password123', inviteToken: 'tok' });
+      expect(result.joined).toBe(true);
+      expect(result.organization).toEqual(organization);
+    });
+
     it('includes attribution in the POST payload when captured for this session (#4520)', async () => {
       const authStore = useAuthStore();
       const attribution = { landingPath: '/pricing', utmSource: 'newsletter' };
@@ -1421,11 +1432,11 @@ describe('Auth Store', () => {
       expect(r).toEqual({ valid: true, email: 'a@b.co' });
     });
 
-    it('verifyInvite returns { valid: false, email: null } when the API rejects', async () => {
+    it('verifyInvite returns { valid: false, email: null, organization: null } when the API rejects', async () => {
       const authStore = useAuthStore();
       axios.get.mockRejectedValueOnce(new Error('Not found'));
       const r = await authStore.verifyInvite('bad-token');
-      expect(r).toEqual({ valid: false, email: null });
+      expect(r).toEqual({ valid: false, email: null, organization: null });
     });
   });
 
