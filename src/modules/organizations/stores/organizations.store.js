@@ -30,11 +30,15 @@ export const useOrganizationsStore = defineStore('organizations', {
   actions: {
     /**
      * @desc Fetch all organizations for the current user.
+     * @param {Object} [options]
+     * @param {boolean} [options.silent=false] - Suppress the error toast for this request
      * @returns {Promise<Array>} Resolved list of organizations
      */
-    async fetchOrganizations() {
+    async fetchOrganizations({ silent = false } = {}) {
       const api = apiBase();
-      const res = await axios.get(`${api}/organizations`);
+      const res = silent
+        ? await axios.get(`${api}/organizations`, { __silent: true })
+        : await axios.get(`${api}/organizations`);
       this.organizations = res.data.data;
       return this.organizations;
     },
@@ -362,7 +366,7 @@ export const useOrganizationsStore = defineStore('organizations', {
         try {
           // switchOrganization resolves currentOrganization from the local list.
           if (!this.organizations.some((o) => o.id === organizationId || o._id === organizationId)) {
-            await this.fetchOrganizations();
+            await this.fetchOrganizations({ silent: true });
           }
           // Silent: the accept toast stays the visible outcome.
           await this.switchOrganization(organizationId, { silent: true });
