@@ -8,6 +8,9 @@ import { apiBase } from '../../../lib/services/config';
 import { useAuthStore } from '../../auth/stores/auth.store';
 import { updateAbilities } from '../../../lib/helpers/ability';
 import { capture } from '../../../lib/helpers/analytics';
+import { createLogger } from '../../../lib/helpers/logger';
+
+const logger = createLogger('organizations');
 
 /**
  * Store definition.
@@ -107,11 +110,13 @@ export const useOrganizationsStore = defineStore('organizations', {
     /**
      * @desc Switch active organization context, refreshing JWT and abilities.
      * @param {string} organizationId - The organization ID to switch to
+     * @param {Object} [options={}] - Switch options
+     * @param {boolean} [options.silent=false] - Suppress the interceptor snackbar
      * @returns {Promise<void>}
      */
-    async switchOrganization(organizationId) {
+    async switchOrganization(organizationId, { silent = false } = {}) {
       const api = apiBase();
-      const res = await axios.post(`${api}/organizations/${organizationId}/switch`);
+      const res = await axios.post(`${api}/organizations/${organizationId}/switch`, undefined, { __silent: silent });
       const result = res.data.data || {};
       this.currentOrganization =
         this.organizations.find((org) => org.id === organizationId || org._id === organizationId)
@@ -337,8 +342,10 @@ export const useOrganizationsStore = defineStore('organizations', {
     /**
      * @desc Accept a pending owner_add invitation (the invited user consents),
      *       flipping the membership PENDING → ACTIVE. Drops it from the local
-     *       pending list on success. Success/error toast is fired by the axios PUT
-     *       interceptor.
+     *       pending list on success, then switches the user into the accepted
+     *       organization so they land in it right away. A failed switch never undoes
+     *       or hides the accept: it is logged and the user can still switch by hand.
+     *       Success/error toast is fired by the axios PUT interceptor.
      * @param {string} membershipId - The pending membership to accept
      * @returns {Promise<Object>} The activated membership
      */
@@ -348,7 +355,22 @@ export const useOrganizationsStore = defineStore('organizations', {
       this.pendingInvitations = this.pendingInvitations.filter(
         (inv) => inv.id !== membershipId && inv._id !== membershipId,
       );
-      return res.data.data;
+      const membership = res.data.data;
+      const org = membership?.organizationId;
+      const organizationId = org?._id || org?.id || org;
+      if (organizationId) {
+        try {
+          // switchOrganization resolves currentOrganization from the local list.
+          if (!this.organizations.some((o) => o.id === organizationId || o._id === organizationId)) {
+            await this.fetchOrganizations();
+          }
+          // Silent: the accept toast stays the visible outcome.
+          await this.switchOrganization(organizationId, { silent: true });
+        } catch (err) {
+          logger.warn('Switch to the accepted organization failed', err);
+        }
+      }
+      return membership;
     },
 
     /**
