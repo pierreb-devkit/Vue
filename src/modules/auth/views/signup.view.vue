@@ -366,9 +366,11 @@ export default {
               this.organizationWelcomeMessage = `Your request to join "${organizationName}" has been sent. An admin will review it shortly.`;
               this.signupStep = 'organizationWelcome';
             } else if (result.organization) {
-              // Backend auto-created an organization
+              // Backend joined an invited organization (joined) or auto-created one
               const organizationName = result.organization.name || result.organization.slug || 'your organization';
-              this.organizationWelcomeMessage = `Welcome! Your organization "${organizationName}" has been created.`;
+              this.organizationWelcomeMessage = result.joined
+                ? `Welcome! You've joined ${organizationName}.`
+                : `Welcome! Your organization "${organizationName}" has been created.`;
               this.signupStep = 'organizationWelcome';
             } else if (result.organizationSetupRequired && this.organizationSetupComponent) {
               // Manual organization setup needed

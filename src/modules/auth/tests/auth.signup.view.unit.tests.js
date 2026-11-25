@@ -344,7 +344,30 @@ describe('auth.signup.view', () => {
 
       expect(wrapper.vm.signupStep).toBe('organizationWelcome');
       expect(wrapper.vm.organizationWelcomeMessage).toContain('Acme Inc');
+      expect(wrapper.vm.organizationWelcomeMessage).toContain('has been created');
       expect(wrapper.text()).toContain('Acme Inc');
+    });
+
+    it('shows a joined message (not "created") when the signup joined an invited organization', async () => {
+      signupMock.mockResolvedValueOnce({
+        user: { roles: ['user'] },
+        tokenExpiresIn: 123,
+        organization: { name: 'Acme Inc', slug: 'acme-inc' },
+        joined: true,
+      });
+      const wrapper = mountView();
+      await flushPromises();
+
+      wrapper.vm.serverConfig = { sign: { in: true, up: true }, organizations: { enabled: true } };
+      wrapper.vm.email = 'john@example.com';
+      wrapper.vm.password = 'password123';
+
+      await wrapper.vm.validate();
+      await flushPromises();
+
+      expect(wrapper.vm.signupStep).toBe('organizationWelcome');
+      expect(wrapper.vm.organizationWelcomeMessage).toBe("Welcome! You've joined Acme Inc.");
+      expect(wrapper.vm.organizationWelcomeMessage).not.toContain('has been created');
     });
 
     it('shows pending message when backend auto-joined with pending status', async () => {

@@ -257,6 +257,7 @@ describe('organizations.members.component — pending status', () => {
     const { wrapper } = await mountComponent();
     expect(wrapper.vm.statusChip({ status: 'active' })).toEqual({ label: 'Active', color: 'success' });
     expect(wrapper.vm.statusChip({ status: 'pending' })).toEqual({ label: 'Invited', color: 'warning' });
+    expect(wrapper.vm.statusChip({ invitation: true, status: 'pending' })).toEqual({ label: 'Invited', color: 'warning', hint: 'No account yet' });
     // Defensive: rows without a status field render as active members.
     expect(wrapper.vm.statusChip({})).toEqual({ label: 'Active', color: 'success' });
   });
@@ -309,11 +310,13 @@ describe('organizations.members.component — pending status', () => {
   });
 });
 
-// Renders the status + actions slots per row, so row-level branches are exercised.
+// Renders the avatar, name, status + actions slots per row, so row-level branches are exercised.
 const rowsStub = {
   props: ['items'],
   template: `<div>
     <div v-for="item in items" :key="item.id" :data-test="'row-' + item.id">
+      <slot name="avatar" :item="item" />
+      <span data-test="name-cell"><slot name="name" :item="item" /></span>
       <slot name="status" :item="item" />
       <slot name="actions" :item="item" />
     </div>
@@ -398,11 +401,15 @@ describe('organizations.members.component — invite an email with no account', 
     expect(wrapper.vm.tableItems).toEqual(members);
   });
 
-  it('renders invitation rows as "Invited — no account yet" with resend + revoke, not member actions', async () => {
+  it('renders invitation rows as "Invited" + "No account yet" with resend + revoke, not member actions', async () => {
     const members = [{ id: 'm2', role: 'member', status: 'pending', userId: { email: 'b@example.com' } }];
     const { wrapper } = await mountComponent({ members, emailInvitations: [invitation] }, { coreDataTableComponent: rowsStub });
     const row = wrapper.find('[data-test="row-i1"]');
-    expect(row.text()).toContain('Invited — no account yet');
+    expect(row.text()).toContain('Invited');
+    expect(row.text()).toContain('No account yet');
+    // Name cell shows the email; avatar is the envelope, not "?" initials.
+    expect(row.find('[data-test="name-cell"]').text()).toBe('new@example.com');
+    expect(row.find('[data-test="invitation-avatar"]').exists()).toBe(true);
     expect(row.find('[data-test="invitation-resend"]').exists()).toBe(true);
     expect(row.find('[data-test="invitation-revoke"]').exists()).toBe(true);
     expect(row.find('[data-test="member-remove"]').exists()).toBe(false);
@@ -410,7 +417,9 @@ describe('organizations.members.component — invite an email with no account', 
     // The owner_add pending membership keeps its own label and remove button.
     const pending = wrapper.find('[data-test="row-m2"]');
     expect(pending.text()).toContain('Invited');
-    expect(pending.text()).not.toContain('no account yet');
+    expect(pending.text()).not.toContain('No account yet');
+    expect(pending.find('[data-test="invitation-avatar"]').exists()).toBe(false);
+    expect(pending.find('[data-test="name-cell"]').text()).toBe('');
     expect(pending.find('[data-test="member-remove"]').exists()).toBe(true);
     expect(pending.find('[data-test="invitation-resend"]').exists()).toBe(false);
   });

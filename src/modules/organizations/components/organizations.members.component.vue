@@ -24,7 +24,16 @@
       </template>
       <!-- Avatar column -->
       <template #avatar="{ item }">
-        <userAvatarComponent :user="item.userId || item" :size="37" />
+        <!-- Email invitation: no account, so no initials — an envelope stands in. -->
+        <v-avatar v-if="item.invitation" :size="37" color="surface-variant" data-test="invitation-avatar">
+          <v-icon icon="fa-solid fa-envelope" size="small"></v-icon>
+        </v-avatar>
+        <userAvatarComponent v-else :user="item.userId || item" :size="37" />
+      </template>
+      <!-- Name column: an email invitation has no name yet, show its email -->
+      <template #name="{ item }">
+        <span v-if="item.invitation">{{ item.userId?.email }}</span>
+        <span v-else class="text-capitalize">{{ item.userId?.firstName }}</span>
       </template>
       <!-- Role column with chip -->
       <template #role="{ item }">
@@ -46,6 +55,9 @@
         >
           {{ statusChip(item).label }}
         </v-chip>
+        <div v-if="statusChip(item).hint" class="text-label-small text-medium-emphasis text-no-wrap mt-1">
+          {{ statusChip(item).hint }}
+        </div>
       </template>
       <!-- Actions column -->
       <template #actions="{ item }">
@@ -333,7 +345,7 @@ export default {
     return {
       headers: [
         { text: 'Avatar', value: 'avatar', kind: 'slot', slotName: 'avatar' },
-        { text: 'Name', value: 'userId.firstName', kind: 'capitalize' },
+        { text: 'Name', value: 'userId.firstName', kind: 'slot', slotName: 'name' },
         { text: 'Email', value: 'userId.email', kind: 'email' },
         { text: 'Org Role', value: 'role', kind: 'slot', slotName: 'role' },
         { text: 'Status', value: 'status', kind: 'slot', slotName: 'status' },
@@ -495,12 +507,13 @@ export default {
     /**
      * @desc Status chip descriptor for a membership row. Pending owner_add rows
      *       (awaiting the invitee's consent) render as Invited; everything else
-     *       is an active member. Mirrors the role-chip slot pattern.
+     *       is an active member. An email invitation row is Invited too, with a
+     *       short `hint` line under the chip (kept out of the chip so it stays narrow).
      * @param {Object} member - Membership row from the members list.
-     * @returns {{ label: string, color: string }}
+     * @returns {{ label: string, color: string, hint?: string }}
      */
     statusChip(member) {
-      if (member?.invitation) return { label: 'Invited — no account yet', color: 'warning' };
+      if (member?.invitation) return { label: 'Invited', color: 'warning', hint: 'No account yet' };
       if (member?.status === 'pending') return { label: 'Invited', color: 'warning' };
       return { label: 'Active', color: 'success' };
     },
