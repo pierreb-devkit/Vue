@@ -47,6 +47,22 @@ describe('core.datatable.component', () => {
     expect(wrapper.text()).toContain('John');
   });
 
+  it('pageLength drives the next page instead of the rendered rows (extra local rows)', async () => {
+    const headers = [{ text: 'First Name', value: 'firstName' }];
+    const items = [1, 2, 3, 4, 5].map((i) => ({ _id: String(i), firstName: `U${i}` }));
+    const wrapper = mount(CoreDatatable, {
+      props: { headers, items, fetchAction: vi.fn().mockResolvedValue(), pageLength: 3 },
+      global: globalOpts(vuetify),
+    });
+    expect(wrapper.vm.fetchedCount).toBe(3);
+    wrapper.vm.switchPage('+');
+    expect(wrapper.vm.options.page).toBe(1);
+    await wrapper.setProps({ pageLength: null });
+    expect(wrapper.vm.fetchedCount).toBe(5);
+    wrapper.vm.switchPage('+');
+    expect(wrapper.vm.options.page).toBe(2);
+  });
+
   it('renders capitalize kind header', () => {
     const headers = [{ text: 'Role', value: 'role', kind: 'capitalize' }];
     const items = [{ _id: '1', role: 'admin' }];

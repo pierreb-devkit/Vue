@@ -3,6 +3,7 @@
     <coreDataTableComponent
       :headers="filteredHeaders"
       :items="tableItems"
+      :page-length="members.length"
       :fetch-action="fetchMembers"
       :search="true"
     >
@@ -84,7 +85,7 @@
             data-test="invitation-revoke"
             @click="openRevokeDialog(item)"
           >
-            <v-icon icon="fa-solid fa-user-minus" size="small"></v-icon>
+            <v-icon icon="fa-solid fa-ban" size="small"></v-icon>
           </v-btn>
         </template>
         <!-- Role change only makes sense once the invitee has accepted; the
@@ -405,8 +406,11 @@ export default {
       if (this.membersPage !== 0 || !this.canInviteEmail()) return [];
       const organizationsStore = useOrganizationsStore();
       const search = this.membersSearch.trim().toLowerCase();
+      const now = Date.now();
       return organizationsStore.emailInvitations
         .filter((inv) => String(inv.organizationId) === this.organizationId)
+        // An expired invite's link is dead: hide it (a new invite can be sent).
+        .filter((inv) => !inv.expiresAt || new Date(inv.expiresAt).getTime() > now)
         .filter((inv) => !search || (inv.email || '').toLowerCase().includes(search))
         .map((inv) => ({
           id: inv.id || inv._id,
@@ -416,6 +420,13 @@ export default {
           status: 'pending',
           createdAt: inv.createdAt,
         }));
+    },
+    /**
+     * @desc Changes when the viewed org or the invite permission changes (fetch trigger).
+     * @returns {string}
+     */
+    invitationsKey() {
+      return `${this.organizationId}:${this.canInviteEmail()}`;
     },
     /**
      * @desc Rows of the members table: memberships, then pending email invitations.
@@ -450,7 +461,8 @@ export default {
     },
   },
   watch: {
-    organizationId() {
+    // Org switch, or permissions landing after mount: (re)load the pending invites.
+    invitationsKey() {
       this.fetchInvitations();
     },
   },

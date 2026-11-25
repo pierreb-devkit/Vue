@@ -16,11 +16,11 @@ const logger = createLogger('organizations');
  * Store definition.
  */
 /**
- * Organization whose email invitations were requested last: an older response that
- * lands after a newer request (fast org switch) is dropped, never written.
- * @type {string|null}
+ * Counter of email-invitation list requests: an older response that lands after a
+ * newer request (fast org switch, refetch after an invite) is dropped, never written.
+ * @type {number}
  */
-let latestInvitationsOrgId = null;
+let invitationsRequestSeq = 0;
 
 export const useOrganizationsStore = defineStore('organizations', {
   state: () => ({
@@ -350,10 +350,10 @@ export const useOrganizationsStore = defineStore('organizations', {
      */
     async fetchEmailInvitations(organizationId) {
       const api = apiBase();
-      latestInvitationsOrgId = organizationId;
+      const seq = ++invitationsRequestSeq;
       const res = await axios.get(`${api}/organizations/${organizationId}/invitations`);
-      // A quick org switch can start a second fetch: only the latest request writes.
-      if (latestInvitationsOrgId !== organizationId) return this.emailInvitations;
+      // A newer fetch started meanwhile: only the latest request writes.
+      if (seq !== invitationsRequestSeq) return this.emailInvitations;
       this.emailInvitations = res.data.data || [];
       return this.emailInvitations;
     },

@@ -679,6 +679,23 @@ describe('Organizations Store', () => {
       expect(store.emailInvitations).toEqual([{ id: 'b1', organizationId: 'orgB' }]);
     });
 
+    it('fetchEmailInvitations keeps the newest request when the same org is fetched twice (A, B, A)', async () => {
+      const store = useOrganizationsStore();
+      let resolveFirst;
+      axios.get
+        .mockImplementationOnce(() => new Promise((r) => { resolveFirst = r; }))
+        .mockResolvedValueOnce({ data: { data: [{ id: 'b1', organizationId: 'orgB' }] } })
+        .mockResolvedValueOnce({ data: { data: [{ id: 'a2', organizationId: 'orgA' }] } });
+
+      const first = store.fetchEmailInvitations('orgA');
+      await store.fetchEmailInvitations('orgB');
+      await store.fetchEmailInvitations('orgA');
+      resolveFirst({ data: { data: [{ id: 'a1-stale', organizationId: 'orgA' }] } });
+      await first;
+
+      expect(store.emailInvitations).toEqual([{ id: 'a2', organizationId: 'orgA' }]);
+    });
+
     it('fetchEmailInvitations falls back to an empty list when data is missing', async () => {
       const store = useOrganizationsStore();
       store.emailInvitations = [{ id: 'old' }];
