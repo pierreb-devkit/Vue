@@ -54,7 +54,7 @@
     "@casl/vue": "^3.1.0",
     "@fortawesome/fontawesome-free": "^7.3.1",
     "@tryghost/content-api": "^1.12.15",
-    "@unhead/vue": "^3.4.3",
+    "@unhead/vue": "^3.5.1",
     "aos": "^2.3.4",
     "axios": "^1.21.1",
     "dayjs": "^1.11.23",
